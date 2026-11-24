@@ -15,7 +15,7 @@ description: >-
   pronunciation", "the narration cuts into the next word", "add a summary quiz", or "restructure the
   narration around context, problem, solution, and consequences". Covers choosing the example,
   structuring the narration as a pattern description, writing cues, diagrams, four-language code, and
-  conceptual quizzes, rendering Kokoro speech, wiring the chapter, and verifying the result. The
+  conceptual quizzes, rendering Drama 3 speech, wiring the chapter, and verifying the result. The
   shared player itself is documented in docs/narrated-pattern.md.
 ---
 
@@ -25,7 +25,7 @@ Read [narration-authoring](../narration-authoring/SKILL.md) first for the common
 source format, compiler, player boundary, and speech workflow. Use `kind: pattern`;
 keep the narration readable and the renderer state in its separate JSON package.
 
-A narrated lesson is an approximately 11–13 minute, Kokoro-voiced walk through one
+A narrated lesson is an approximately 11–13 minute, synthetically voiced walk through one
 design pattern at the top of its SEBook chapter (see `/SEBook/designpatterns/observer.html`,
 `/SEBook/designpatterns/state.html`, and `/SEBook/designpatterns/strategy.html`). A lesson is **data plus a few topic
 illustrations**: the player, transport, reader, print, and editable notes views are shared. The architecture
@@ -290,28 +290,28 @@ position references), plus these lesson-specific rules:
 
 ## 7. Render the speech
 
-`scripts/render-explainer-narration.py --topic <topic>` renders each cue with Kokoro (voice
-`af_heart`, speed 0.95), adds `pause_after` silence (0.55 s by default), and writes the MP3,
-WebVTT captions, the spoken script, and `_data/explainers/<topic>_timing.json` with the
-speech fingerprint. Topic discovery is automatic; never add a topic allowlist.
-Validate first with `--check` (no speech model needed). Setup and the espeak-ng
-long-path workaround are in `docs/nodejs-animation.md` and `docs/state-narration.md`.
+`scripts/render-explainer-narration.py --topic <topic>` renders each cue in the lesson's
+voice (`drama3-female6`, Fish Audio Drama 3, speed 1), adds `pause_after` silence (0.55 s by
+default), and writes the MP3, WebVTT captions, the spoken script, and
+`_data/explainers/<topic>_timing.json` with the speech fingerprint. Topic discovery is
+automatic; never add a topic allowlist. Validate first with `--check` (no speech engine
+needed). Server setup, the render environment, and review are in
+`docs/narration-format.md#speech-engines`.
 
 - Run `node scripts/narration.js check <topic>` after editing. Re-render after changes
   to `say`, pauses, voice, speed, pronunciation rules, or scene/cue order or IDs.
   Visual state, diagram layout, navigation, citations, and descriptions do not affect
-  the speech fingerprint. Unchanged speech reuses the per-cue WAV cache.
-- Listen to every cue that contains code identifiers, acronyms, or symbols. Typical fixes:
-  `UML: U M L`, `C++: C plus plus`, `enum: E num`, camelCase names split into words
-  (`setState: set state`). Captions keep the written form.
-- Abbreviations with periods break inside: written "p.m." phonemizes as `pˈiː.ˈɛm.`, a stop
-  between letters that sounds like "pee. em.", so map it (`p.m.: PM.`, keeping the sentence's
-  full stop). Check a doubtful word by its phonemes, not by ear alone:
-  `Kokoro(...).tokenizer.phonemize(text, 'en-us')` shows what the voice will say. Whisper
-  transcripts normalize such words back to their written form, so they cannot catch it.
-- Heteronyms take the wrong reading after a noun: in "the plan lives on the wall" espeak reads
-  `lˈaɪvz` (the plural of "life"). Respell the phrase (`plan lives: plan livs`). Check every
-  "lives", "read", "lead", "close", "live", "wind", "tear", and "minute" by its phonemes.
+  the speech fingerprint. Unchanged speech reuses the per-cue cache.
+- The renderer ends with the cues whose Whisper transcript differs from the script. Listen
+  to each: a dropped or repeated word is a slip; re-render it with `--retake <scene>/<cue>`.
+  Drama 3 tends to drop a label that opens a sentence before a colon ("Context:",
+  "Predict:"); when every take drops it, reword it for speech only
+  (`"Consequences: interchangeable": "And the consequences: interchangeable"`).
+- Whisper writes what it expects, so it cannot catch a mispronounced word. Listen to every
+  cue that contains code identifiers, acronyms, symbols, or heteronyms ("lives", "read",
+  "lead", "close"). Typical fixes: `UML: U M L`, `C++: C plus plus`, `enum: E num`,
+  camelCase names split into words (`setState: set state`). Captions keep the written form.
+  Drama 3 reads words in context, so Kokoro-era phonetic respellings are not needed.
 - **Every quiz needs a short viewing pause after the final word.** On the last cue of every
   section with a knowledge check (including the final summary quiz), author `pause_after: 2.5`
   or longer. The player stops 0.3 s before the section boundary, so this leaves 2.2 s to inspect

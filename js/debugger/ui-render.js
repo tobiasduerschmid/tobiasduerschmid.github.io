@@ -545,6 +545,7 @@
       return;
     }
     var snap = state.history[hi];
+    helpers.inspectJava = state.backend === 'java' && hi === state.liveIdx && state.paused && state.session?.active;
     var frameIdx = (state.selectedFrameIdx != null && state.selectedFrameIdx >= 0)
       ? state.selectedFrameIdx
       : (snap.stack.length - 1);
@@ -574,7 +575,11 @@
       html = '<p class="tvm-debug-language-note">Resolution goals and query bindings show the current search state.</p>' + html;
     }
     view.innerHTML = html;
-    wireExpanders(view);
+    wireExpanders(view, function (button) {
+      if (!helpers.inspectJava || !button.dataset.inspection) return;
+      const path = JSON.parse(button.dataset.debugFocus.slice('expand:locals:'.length));
+      dispatch({type:'inspectJavaValue',frame:frameIdx,path,sequence:snap.sequence});
+    });
     restoreExpandedVariables(view, expandedValues);
     wireSubsectionToggles(view, helpers);
     wireVarEdits(view, dispatch);
@@ -647,9 +652,11 @@
     var valueHtml = '<' + (editKey ? 'button' : 'span') + ' class="tvm-debug-var-value' + (editKey ? ' tvm-debug-var-editable' : '') + '"' + editAttr +
                     '>' + helpers.escape(val.repr || val.preview || '') +
                     (val.note ? ' <span class="tvm-debug-var-type">(' + helpers.escape(val.note) + ')</span>' : '') + '</' + (editKey ? 'button' : 'span') + '>';
-    var hasChildren = val.kind === 'collection' || (val.kind === 'object' && val.attrs && Object.keys(val.attrs).length);
+    var lazy = val.handle && !val.inspected;
+    var inspect = helpers.inspectJava && lazy;
+    var hasChildren = inspect || (!lazy && (val.kind === 'collection' || (val.kind === 'object' && val.attrs && Object.keys(val.attrs).length)));
     var expander = hasChildren
-      ? '<button type="button" class="tvm-debug-expander" data-expanded="false" aria-expanded="false" aria-label="Expand ' + helpers.escape(name) + '">▶</button>'
+      ? '<button type="button" class="tvm-debug-expander"' + (inspect ? ' data-inspection="true"' : '') + ' data-expanded="false" aria-expanded="false" aria-label="Expand ' + helpers.escape(name) + '">▶</button>'
       : '<span class="tvm-debug-expander-spacer"></span>';
     var row = '<div class="tvm-debug-var-row" style="padding-left:' + (depth * 14) + 'px">' +
               expander + nameHtml + typeHtml + valueHtml + (aliasBadge || '') + '</div>';
@@ -686,7 +693,7 @@
     return '';
   }
 
-  function wireExpanders(view) {
+  function wireExpanders(view, onExpand) {
     var expanders = view.querySelectorAll('.tvm-debug-expander');
     for (var i = 0; i < expanders.length; i++) {
       (function (ex) {
@@ -696,6 +703,7 @@
           ex.setAttribute('aria-expanded', String(!expanded));
           ex.setAttribute('aria-label', ex.getAttribute('aria-label').replace(/^(Expand|Collapse) /, expanded ? 'Expand ' : 'Collapse '));
           ex.textContent = expanded ? '▶' : '▼';
+          if (!expanded && onExpand) onExpand(ex);
           var children = ex.parentElement.nextElementSibling;
           if (children && children.classList.contains('tvm-debug-var-children')) {
             children.hidden = expanded;
@@ -886,6 +894,7 @@
       return;
     }
     var isProlog = state.backend === 'prolog';
+    var isJava = state.backend === 'java';
     var snap = (state.historyIdx != null && state.historyIdx >= 0 && state.history)
       ? state.history[state.historyIdx]
       : null;
@@ -910,10 +919,11 @@
     view.innerHTML =
       '<div class="tvm-debug-watch-list">' + rows.join('') + '</div>' +
       '<form class="tvm-debug-watch-add">' +
-      '<input type="text" class="tvm-debug-watch-input" data-debug-focus="watch-expression" data-debug-draft="true" placeholder="' + (isProlog ? 'Query variable (e.g. X)' : 'Add a Python expression to watch (e.g. len(items))') + '" aria-label="' + (isProlog ? 'Query variable to watch' : 'Watch expression') + '" />' +
+      '<input type="text" class="tvm-debug-watch-input" data-debug-focus="watch-expression" data-debug-draft="true" placeholder="' + (isProlog ? 'Query variable (e.g. X)' : isJava ? 'Java value (e.g. account.balance)' : 'Add a Python expression to watch (e.g. len(items))') + '" aria-label="' + (isProlog ? 'Query variable to watch' : 'Watch expression') + '" />' +
       '<button type="submit" class="tvm-debug-watch-add-btn" data-debug-focus="watch-add">+ Add</button>' +
       '</form>' +
       (isProlog ? '<p class="tvm-debug-language-note">Watch a named variable from your query. Arbitrary Prolog goals are not evaluated.</p>' :
+        isJava ? '<p class="tvm-debug-language-note">Watch a local variable, field, array element, or numeric comparison.</p>' :
         (watches.length === 0 ? '<div class="tvm-debug-empty">Watches are evaluated on every step. Avoid expressions with side effects.</div>' : ''));
 
     var input = view.querySelector('.tvm-debug-watch-input');

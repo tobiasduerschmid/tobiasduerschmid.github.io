@@ -45,7 +45,7 @@
 
 - term: AMQP
   definition: Advanced Message Queuing Protocol
-  description: An open standard protocol for sending messages between applications through a message broker, such as RabbitMQ. A relationship that travels through a queue often names it as its technology.
+  description: An open protocol for message brokers, such as RabbitMQ. Producers publish messages to exchanges, which copy each message into the queues whose bindings match it, and consumers read the messages from those queues. A relationship that travels through a queue often names it as its technology.
   related: [TCP]
 
 - term: API
@@ -162,8 +162,8 @@
 
 - term: DB
   definition: Database
-  description: An organized, persistent store of data that programs read and write, usually through a database management system. In a C4 model, a database that a system's own code reads and writes is one of that system's containers.
-  related: [DBMS, C4 model]
+  description: An organized, persistent store of data that programs query and update, usually through a database management system. Component names such as Order DB name one running database. In a C4 model, a database that a system's own code reads and writes is one of that system's containers.
+  related: [DBMS, SQL, C4 model]
 
 - term: DBMS
   definition: Database Management System
@@ -194,6 +194,11 @@
   description: The in-memory tree representation of an HTML or XML document that scripts manipulate. Browser DOM APIs let JavaScript add, remove, and modify nodes.
   related: [HTML, CSS]
 
+- term: DSN
+  definition: Data Source Name
+  description: A string that tells a program how to reach a database, such as postgres://host/name. Services usually read it from configuration, so the connection does not appear in the code that opens it.
+  related: [DB, SQL]
+
 - term: EAFP
   definition: Easier to Ask Forgiveness than Permission
   description: A programming style that attempts an operation and handles a specific expected exception if it fails. Keep the protected operation narrow so unrelated failures are not hidden.
@@ -217,6 +222,11 @@
   definition: ECMAScript
   description: The standardized language underlying JavaScript. ES modules use import and export to share code between files.
   related: [JS]
+
+- term: ETL
+  definition: Extract, Transform, Load
+  description: A data pipeline that extracts records from operational systems, transforms them, and loads them into a reporting store such as a data warehouse.
+  related: [DB]
 
 - term: FTP
   definition: File Transfer Protocol
@@ -271,6 +281,11 @@
   definition: Hierarchical Data Format version 5
   description: A file format for large scientific and numeric datasets. An HDF5 file can store its data in other files, so software that opens untrusted HDF5 files must restrict which files those references may reach.
   related: [CSV, JSON]
+
+- term: HF
+  definition: Hugging Face
+  description: A platform for hosting and sharing machine-learning models and datasets. The security song preserves this abbreviation in a quoted agent reaction from the 2026 incident investigation.
+  related: [AI, METR]
 
 - term: HTML
   definition: HyperText Markup Language
@@ -465,6 +480,10 @@
   definition: Object-Oriented Programming
   description: A programming paradigm built around objects — bundles of state and behaviour — interacting through method calls. Inheritance, encapsulation, and polymorphism are its three classical pillars.
   related: [GoF, UML, MVC]
+
+- term: OPC
+  definition: Order Processing Center
+  description: In the Adventure Builder example of Documenting Software Architectures, and in Headliner, the festival-trip system of the UML design questions tutorial, the service that coordinates each order. It charges the customer and orders every part of the trip from its supplier.
 
 - term: ORM
   definition: Object-Relational Mapping
@@ -694,6 +713,11 @@
   description: A cryptographic protocol that provides authenticated, encrypted communication between two parties over a network. HTTPS is HTTP carried over TLS.
   related: [HTTP, HTTPS, SSH]
 
+- term: TOML
+  definition: Tom's Obvious, Minimal Language
+  description: A configuration file format of key-value pairs grouped into tables. Python 3.11 and later read it with the standard tomllib module.
+  related: [YAML, JSON]
+
 - term: TTL
   definition: Time To Live
   description: A limit on how long data should be considered valid or how far a network packet may travel. In DNS, TTL controls how long resolvers can cache an answer.
@@ -737,6 +761,10 @@
   definition: V8 JavaScript engine
   description: Google's JavaScript engine used by Chrome and Node.js. It compiles and runs JavaScript, including just-in-time optimization.
   related: [JS, JIT]
+
+- term: VIP
+  definition: Very Important Person
+  description: A premium tier of a service, such as a VIP shuttle that includes lounge access.
 
 - term: VM
   definition: Virtual Machine

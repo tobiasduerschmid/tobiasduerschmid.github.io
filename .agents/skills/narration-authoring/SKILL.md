@@ -81,14 +81,21 @@ Players compose shared chrome from `_includes/narration-player-*.html`; add
 or change a common control there, never in one player. Every player wraps its
 stage, checkpoint, and captions in one video (`.vn-video` > `.vn-surface` >
 `.vn-frame`) and ends it with `narration-player-controls.html`: one thin bar
-like the song player's, with the scene, speed, caption size, and landscape
-choices behind its settings toggle. Pass player-specific choices as
-`settings`, controls that lead the transport (case-study steps) as `lead`,
-and `text_only=true` for a story without rendered speech; add
+that is the song player's, with its icons (`player-icon.html`, shared with
+`_layouts/song-player.html`), its layout, and its floating settings panel
+(`js/song-video/settings-panel.js`), which holds the scene, speed, caption
+size, and landscape choices. Every narration shows the same controls in the
+same order; keep it that way. Pass choices that must stay on screen as
+`view` (a lesson's code language, `narration-player-language.html`, so it
+is never hidden in settings), player-specific settings as `settings`,
+controls that lead the transport (case-study steps) as `lead`, and
+`text_only=true` for a story without rendered speech; add
 `narration-player-tips.html` and load `narration-player-scripts.html` before
 the player's own scripts. `js/narration-player-controls.js` gives every
 player the song player's keys, auto-hiding full-screen controls, captions,
-settings, and landscape surface; a checkpoint replaces the picture and the
+mute and volume, settings, and landscape surface;
+`tests/narration-player-controls.spec.js` checks every lesson's bar against
+that order. A checkpoint replaces the picture and the
 bar steps aside until it is answered or skipped. Full screen fills the screen
 with the video: the stage (or checkpoint) scrolls inside, and captions and
 the bar overlay its lower edge. Mark scrolling panels
@@ -189,11 +196,21 @@ representative saved PDFs and keep verification artifacts outside the repo.
    2.5 seconds of viewing silence before section checks, including the summary.
 2. Run `node scripts/narration.js compile <id>` and
    `python3 scripts/render-explainer-narration.py --topic <id> --check`.
-   These validate without loading Kokoro or writing media.
-3. To render, omit `--check` and provide `--model /path/kokoro.onnx` and
-   `--voices /path/voices.bin`. Use the existing installation and cache. Topic
-   discovery is automatic. Regenerate audio, captions, script, and timing together.
-4. Run `node scripts/narration.js check <id>`; omit the ID to validate all lessons.
+   These validate without loading a speech engine or writing media.
+3. To render, omit `--check`. `speech.voice` picks the engine through
+   `scripts/narration_speech/voices.py`: every lesson uses the registered Fish
+   Audio Drama 3 voice `drama3-female6` (speed must be 1), which needs a running
+   Drama 3 server and Whisper on Apple silicon; an unregistered ID is a Kokoro
+   voice needing `--model` and `--voices`. Setup and review are in
+   `docs/narration-format.md#speech-engines`. Topic discovery is automatic.
+   Regenerate audio, captions, script, and timing together; the per-cue cache in
+   `~/.cache/sebook-narration/<id>` keeps unchanged cues as published.
+4. Listen to every cue the renderer lists for review. Re-render a dropped or
+   repeated word with `--retake <scene>/<cue>`, or reword it for speech only
+   with a pronunciation entry when every take drops it. Whisper cannot hear a
+   mispronunciation, so also listen to identifiers, acronyms, and heteronyms.
+5. Run `node scripts/narration.js check <id>`; omit the ID to validate all lessons.
+   Changes to `scripts/narration_speech/` run `scripts/tests/test_narration_speech.py`.
 
 The fingerprint includes ordered scene/cue IDs, written speech, pauses, voice,
 speed, and pronunciation rules. Those changes require regeneration. Visual

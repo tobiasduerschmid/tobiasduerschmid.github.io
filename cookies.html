@@ -373,6 +373,12 @@ info_nav_title: "Browser storage"
         <td class="status-cell"></td>
         <td class="action-cell"></td>
       </tr>
+      <tr data-storage="localStorage" data-key="tutorial-instructions-hidden">
+        <td class="storage-key">tutorial-instructions-hidden</td>
+        <td>Set to <code>1</code> after you choose <strong>Hide instructions</strong> in a tutorial, so every tutorial opens with its instructions hidden to a narrow rail. Removed when you choose <strong>Show instructions</strong>.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
     </tbody>
   </table>
   <table class="storage-table" data-category="tutorial-dynamic" id="tutorial-dynamic-table">
@@ -390,7 +396,7 @@ info_nav_title: "Browser storage"
   </table>
   <p class="cookies-prefix-note">
     <em>Prefixes:</em>
-    <code>tutorial-progress-&lt;id&gt;</code> &mdash; saved code (including separate lesson drafts for files that reuse a name and per-step shell pipeline commands), current step, completion records, and lesson identities used to match progress after tutorial updates. Smalltalk includes accepted code and unaccepted drafts; live objects and terminal variables are not saved &middot;
+    <code>tutorial-progress-&lt;id&gt;</code> &mdash; saved code (including separate lesson drafts for files that reuse a name and per-step shell pipeline commands), current step, completion records, and lesson identities used to match progress after tutorial updates. Diagram challenge steps add your answers there: what you chose from the code and with the diagram, your sentences and pinned file lines, your confidence, and how long each part took while the step was shown. Smalltalk includes accepted code and unaccepted drafts; live objects and terminal variables are not saved &middot;
     <code>tutorial-editor-split-&lt;id&gt;</code> &mdash; split-pane editor on/off &middot;
     <code>tutorial-cooldown-&lt;id&gt;</code> &mdash; per-step "Test My Work" cooldown end times &middot;
     <code>tutorial-time-practice-&lt;id&gt;</code> &mdash; timed-practice deadlines and lockout windows &middot;
@@ -685,6 +691,13 @@ info_nav_title: "Browser storage"
       are loaded.
     </li>
     <li>
+      <strong>Java tutorial runtime</strong> &mdash; opening a Java coding exercise warms the
+      compiler in your browser. CheerpJ downloads its Java runtime from
+      <code>cjrtnc.leaningtech.com</code>. Tutorial sources, compiled classes, and grading
+      checks run locally. Vendor helper frames may cache runtime resources on their origin.
+      The tutorial autosave setting controls whether your drafts and progress are saved.
+    </li>
+    <li>
       <strong>TLA+ browser runtime</strong> &mdash; TLA+ tutorials download the pinned
       CheerpJ 4.3 Java runtime from <code>cjrtnc.leaningtech.com</code> when you first
       check syntax, verify a model, or explore a behavior. The model checker runs
@@ -924,7 +937,7 @@ info_nav_title: "Browser storage"
 
   // -------- Render dynamic per-tutorial keys --------
   var DYNAMIC_PREFIXES = [
-    { prefix: 'tutorial-progress-',                       label: 'Saved tutorial work (code, command drafts, current lesson, completion records &amp; lesson identities)' },
+    { prefix: 'tutorial-progress-',                       label: 'Saved tutorial work (code, command drafts, diagram challenge answers and times, current lesson, completion records &amp; lesson identities)' },
     { prefix: 'tutorial-editor-split-',                   label: 'Tutorial split-pane editor preference' },
     { prefix: 'tutorial-cooldown-',                       label: '"Test My Work" cooldown end times (per step)' },
     { prefix: 'tutorial-time-practice-',                  label: 'Timed-practice deadlines and lockout windows' },

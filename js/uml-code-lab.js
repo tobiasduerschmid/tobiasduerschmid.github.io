@@ -104,6 +104,7 @@
     const languageSwitcher = global.SEBookLanguageSwitcher.initSwitcher(root);
     const source = root.querySelector('[data-uml-source]');
     const preview = root.querySelector('[data-uml-preview]');
+    const resultPanel = root.querySelector('.uml-code-lab-result');
     const status = root.querySelector('[data-uml-status]');
     const task = root.querySelector('[data-uml-task]');
     const explanation = root.querySelector('[data-uml-explanation]');
@@ -159,6 +160,8 @@
     }
 
     function clearPreview() {
+      global.UMLSourceLinks.unlink(preview);
+      global.UMLSourceLinks.clearList(resultPanel);
       preview.replaceChildren();
       for (const attribute of ['role', 'aria-label', 'tabindex', 'data-uml-scroll-tabindex']) {
         preview.removeAttribute(attribute);
@@ -240,11 +243,24 @@
           return;
         }
         const rendered = await client.render({ type: example.type, syntax, target: preview, isCurrent, readOnly: true });
-        if (rendered && isCurrent()) setStatus(warnings.length ? warningText : 'Diagram updated.', warnings.length ? 'warning' : 'ready');
+        if (rendered && isCurrent()) {
+          linkSources(syntax, projected[example.type + 'DiagramSources']);
+          setStatus(warnings.length ? warningText : 'Diagram updated.', warnings.length ? 'warning' : 'ready');
+        }
       } catch (error) {
         if (!isCurrent() || global.UMLLive.isSuperseded(error)) return;
         setStatus('Could not update the diagram. ' + error.message, 'error');
       }
+    }
+
+    /** Diagram elements reveal the lines of the shown file they came from. */
+    function linkSources(syntax, sources) {
+      const filename = languageTabs.find(button => button.dataset.languageOption === selectedLanguage).dataset.filename;
+      global.UMLSourceLinks.link(preview, {
+        type: example.type, syntax, sources, listHost: resultPanel,
+        canReveal: range => range.file === filename,
+        onReveal: range => codeEditor.highlight(range)
+      });
     }
 
     function listen(element, name, callback) {

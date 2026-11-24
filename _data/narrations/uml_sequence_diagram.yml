@@ -29,8 +29,8 @@ lesson:
     the same outcome for the pebble and the boulder. The docking-station example is the transfer
     exercise; it reuses SoundPlayer.
 speech:
-  voice: af_heart
-  speed: 0.95
+  voice: drama3-female6
+  speed: 1.0
   pronunciations:
     UML: U M L
     scanAll: scan all

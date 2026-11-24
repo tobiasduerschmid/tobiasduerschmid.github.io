@@ -204,6 +204,16 @@ html, body {
   flex: 0 0 33.333%;
 }
 
+/* `instructions_width: narrow`: about a third of the width, never so narrow
+   that questions and their options get cramped. Side by side only: stacked
+   panels (900px and below) keep their own height. A dragged width is an
+   inline flex value and still wins. */
+@media screen and (min-width: 901px) {
+  .tvm-instructions-panel--narrow {
+    flex-basis: max(32%, 26em);
+  }
+}
+
 /* Left-panel tab switcher (Steps / UML Diagram) */
 .tvm-left-tab-bar {
   display: flex;
@@ -218,7 +228,7 @@ html, body {
   border-bottom: 2px solid transparent;
   background: transparent;
   color: #aeb4c6;
-  font-size: 12px;
+  font: inherit;
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -229,8 +239,9 @@ html, body {
   justify-content: center;
   gap: 6px;
 }
+/* Icons beside uppercase labels read as large as the capitals at 0.85em. */
 .tvm-left-tab i {
-  font-size: 13px;
+  font-size: 0.85em;
 }
 .tvm-left-tab:hover {
   color: #aab;
@@ -662,6 +673,15 @@ html:not(.dark-mode) .tvm-left-tab.active {
   background: #1e1e1e;
   border-bottom: 1px solid #2a2a2e;
 }
+/* No bottom panel (`run: false`, or Output moved to the left column): the
+   editor takes the workspace's height, and there is nothing to resize. */
+.tvm-workspace--editor-only > .tvm-editor-panel {
+  flex: 1 1 auto;
+  border-bottom: 0;
+}
+.tvm-workspace--editor-only > .tvm-vsplitter {
+  display: none;
+}
 
 .tvm-editor-tabs {
   display: flex;
@@ -680,7 +700,6 @@ html:not(.dark-mode) .tvm-left-tab.active {
   padding: 7px 16px;
   color: #a8b0bd;
   cursor: pointer;
-  font-size: 12.5px;
   font-weight: 500;
   white-space: nowrap;
   display: flex;
@@ -720,7 +739,7 @@ html:not(.dark-mode) .tvm-left-tab.active {
 .tvm-tab-reattach {
   appearance: none;
   border: 0;
-  font-size: 13px;
+  font: inherit;
   line-height: 1;
   opacity: 0;
   transition: opacity 0.15s, color 0.15s, background 0.15s;
@@ -750,6 +769,48 @@ html:not(.dark-mode) .tvm-left-tab.active {
   border-radius: 2px;
 }
 
+/* Close button on opened tabs when the Files tree is on (`file_tree`). It
+   stays visible: closing must not depend on hovering the tab. */
+.tvm-tab-close {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  margin: 0 -6px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: #b9c5d8;
+  font: inherit;
+  font-size: 1.25em;
+  line-height: 1;
+  cursor: pointer;
+}
+.tvm-tab-close:hover { color: #e0e0f0; background: #383848; }
+.tvm-tab-close:focus-visible {
+  outline: 3px solid #FFD100;
+  outline-offset: 1px;
+  color: #e0e0f0;
+}
+
+/* Line briefly highlighted after a search result or evidence link opens it. */
+.monaco-editor .tvm-source-reveal-line { background: rgba(255, 209, 0, 0.22); }
+.monaco-editor .tvm-source-reveal-gutter { background: #ffd100; width: 4px !important; margin-left: 2px; }
+
+/* A line pinned as evidence in a diagram challenge: a dot in the margin
+   that stays (setEditorLineMarks). The pin list names the line in text. */
+.monaco-editor .tvm-editor-line-mark {
+  width: 9px !important;
+  margin-left: 1px;
+  background: radial-gradient(circle, #79c0ff 0 3.5px, transparent 4px);
+}
+html:not(.dark-mode) .monaco-editor .tvm-editor-line-mark {
+  background: radial-gradient(circle, #0a5ca8 0 3.5px, transparent 4px);
+}
+
 .tvm-tab.detached {
   font-style: italic;
   color: #a0a0a0;
@@ -759,8 +820,9 @@ html:not(.dark-mode) .tvm-left-tab.active {
     rgba(255,255,255,0.025) 6px, rgba(255,255,255,0.025) 12px);
 }
 .tvm-tab.detached .tvm-tab-label { opacity: 0.7; }
+/* A short uppercase status pill: micro-label size. */
 .tvm-tab-detached-badge {
-  font-size: 10px;
+  font-size: 0.85em;
   font-weight: 600;
   color: #9aa6b2;
   background: #20202c;
@@ -796,74 +858,171 @@ html:not(.dark-mode) .tvm-left-tab.active {
   gap: 8px;
 }
 
-.tvm-instructions-detached-placeholder {
+/* "Hide instructions" in the step nav bar (js/tutorial-instructions-rail.js).
+   Text inherits the paragraph size. */
+.tvm-instructions-hide-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  min-height: 2em;
+  padding: 0.15em 0.6em;
+  border: 1px solid #8a8aa8;
+  border-radius: 4px;
+  background: #252538;
+  color: #e0e8f0;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+/* Right-aligned; beside a shown popout button, which takes the spare room. */
+.tvm-instructions-hide-btn {
+  margin-left: auto;
+}
+.tvm-instructions-popout-btn:not([hidden]) + .tvm-instructions-hide-btn {
+  margin-left: 0;
+}
+.tvm-instructions-hide-btn:hover {
+  background: #35354e;
+  color: #ffffff;
+}
+
+/* Lecture mode shows no step numbers; the bar keeps "Hide instructions". */
+.tvm-step-nav-bar--lecture > :not(.tvm-instructions-hide-btn) {
+  display: none !important;
+}
+.tvm-step-nav-bar--lecture > .tvm-instructions-popout-btn + .tvm-instructions-hide-btn {
+  margin-left: auto;
+}
+
+/* The rail: the instructions are hidden or popped out. Its one button shows
+   them again or brings them back from the popout. */
+.tvm-instructions-rail {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 8px 6px;
-  color: #888;
-  font-size: 11.5px;
+  gap: 0.6em;
+  padding: 0.5em 0.4em;
+  color: #c8d4e4;
   text-align: center;
   background: rgba(255, 255, 255, 0.02);
   flex-shrink: 0;
 }
-.tvm-instructions-detached-placeholder .tvm-btn-reattach {
-  padding: 3px 8px;
-  border: 1px solid #5a5a78;
+.tvm-instructions-rail[hidden] { display: none; }
+.tvm-instructions-rail-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.4em 0.7em;
+  border: 1px solid #8a8aa8;
   border-radius: 4px;
   background: #252538;
-  color: #c8d4e4;
-  font-size: 13px;
+  color: #e0e8f0;
+  font: inherit;
   font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
-  line-height: 1;
-  transition: background 0.1s, color 0.1s;
 }
-.tvm-instructions-detached-placeholder .tvm-btn-reattach:hover {
-  background: #35354e; border-color: #5a5a78;
+.tvm-instructions-rail-btn:hover {
+  background: #35354e;
+  color: #ffffff;
 }
-.tvm-instructions-panel.tvm-instructions-detached .tvm-steps-view { display: none; }
+.tvm-instructions-hide-btn:focus-visible,
+.tvm-instructions-rail-btn:focus-visible {
+  outline: 3px solid #8bb8e8;
+  outline-offset: 2px;
+}
+.tvm-instructions-rail-msg {
+  margin: 0;
+  color: #c8d4e4;
+}
+.tvm-instructions-panel.tvm-instructions-railed .tvm-steps-view { display: none; }
 
-/* Width-shrink (default): collapse the whole panel to a thin vertical strip. */
-.tvm-instructions-panel.tvm-instructions-detached.tvm-instructions-detached-horizontal {
-  flex: 0 0 56px !important;
-  min-width: 56px !important;
-  max-width: 56px !important;
-  overflow: hidden;
+/* Horizontal (default): the whole panel becomes a rail beside the workspace,
+   and its divider goes, since there is nothing to resize. Inline sizes from a
+   divider drag return when the instructions do. Screen only: print shows the
+   instructions. */
+@media screen {
+  .tvm-instructions-panel.tvm-instructions-rail-horizontal {
+    flex: 0 0 3.5em !important;
+    min-width: 3.5em !important;
+    max-width: 3.5em !important;
+    overflow: hidden;
+  }
+  .tvm-instructions-panel.tvm-instructions-rail-horizontal > :not(.tvm-instructions-rail),
+  .tvm-instructions-panel.tvm-instructions-rail-horizontal + .tvm-hsplitter {
+    display: none;
+  }
 }
-.tvm-instructions-panel.tvm-instructions-detached-horizontal .tvm-instructions-detached-placeholder {
+.tvm-instructions-panel.tvm-instructions-rail-horizontal .tvm-instructions-rail {
   flex-direction: column;
+  justify-content: flex-start;
   height: 100%;
-  padding: 14px 4px;
-  gap: 10px;
-  writing-mode: horizontal-tb;
+  padding: 0.75em 0.25em;
 }
-.tvm-instructions-panel.tvm-instructions-detached-horizontal .tvm-detached-msg {
+.tvm-instructions-panel.tvm-instructions-rail-horizontal .tvm-instructions-rail-btn {
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  padding: 0.6em 0;
+}
+/* The labels read from the bottom up, like a book spine. */
+.tvm-instructions-panel.tvm-instructions-rail-horizontal :is(.tvm-instructions-rail-btn-label, .tvm-instructions-rail-msg) {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   white-space: nowrap;
-  letter-spacing: 0.04em;
-  font-size: 10.5px;
-  color: #777;
-}
-.tvm-instructions-panel.tvm-instructions-detached-horizontal .tvm-instructions-popout-btn {
-  display: none;
 }
 
-/* Height-shrink (UML below variants): keep panel width, collapse the
-   instructions strip so the UML region below expands to fill the column. */
-.tvm-instructions-panel.tvm-instructions-detached-vertical .tvm-instructions-detached-placeholder {
+/* Vertical (UML below the instructions): keep the column's width and shrink
+   the instructions to a bar, so the UML view below fills the column. */
+.tvm-instructions-panel.tvm-instructions-rail-vertical .tvm-instructions-rail {
   flex-direction: row;
-  padding: 6px 12px;
+  justify-content: flex-start;
+  padding: 0.4em 0.75em;
   border-bottom: 1px solid #2a2a2e;
 }
-.tvm-instructions-panel.tvm-instructions-detached-vertical .tvm-uml-below-view,
-.tvm-instructions-panel.tvm-instructions-detached-vertical .tvm-uml-bottom-left-view {
+.tvm-instructions-panel.tvm-instructions-rail-vertical .tvm-uml-below-view,
+.tvm-instructions-panel.tvm-instructions-rail-vertical .tvm-uml-bottom-left-view {
   flex: 1 1 auto;
 }
-.tvm-instructions-panel.tvm-instructions-detached-vertical .tvm-instructions-popout-btn {
-  display: none;
+
+/* Where the panels stack, the horizontal rail is a bar above the workspace. */
+@media screen and (max-width: 900px) {
+  .tvm-instructions-panel.tvm-instructions-rail-horizontal {
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+  .tvm-instructions-panel.tvm-instructions-rail-horizontal .tvm-instructions-rail {
+    flex-direction: row;
+    justify-content: flex-start;
+    height: auto;
+    padding: 0.4em 0.75em;
+  }
+  .tvm-instructions-panel.tvm-instructions-rail-horizontal .tvm-instructions-rail-btn {
+    flex-direction: row;
+    width: auto;
+    padding: 0.4em 0.7em;
+  }
+  .tvm-instructions-panel.tvm-instructions-rail-horizontal :is(.tvm-instructions-rail-btn-label, .tvm-instructions-rail-msg) {
+    writing-mode: horizontal-tb;
+    transform: none;
+  }
+}
+
+/* Print shows the instructions, hidden or not, without the rail. */
+@media print {
+  .tvm-instructions-rail,
+  .tvm-instructions-hide-btn {
+    display: none !important;
+  }
+  .tvm-instructions-panel.tvm-instructions-railed .tvm-steps-view {
+    display: flex !important;
+  }
 }
 
 .tvm-popup-blocked-toast {
@@ -876,7 +1035,6 @@ html:not(.dark-mode) .tvm-left-tab.active {
   border: 1px solid #5a5a78;
   padding: 10px 16px;
   border-radius: 6px;
-  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
@@ -929,7 +1087,6 @@ html:not(.dark-mode) .tvm-left-tab.active {
 
 .tvm-editor-pane-label {
   padding: 0 14px;
-  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -951,7 +1108,7 @@ html:not(.dark-mode) .tvm-left-tab.active {
   border-radius: 3px;
   background: #1f1f2a;
   color: #b9c5d8;
-  font-size: 12px;
+  font: inherit;
   line-height: 1;
   cursor: pointer;
   transition: background 0.1s, color 0.1s, border-color 0.1s, opacity 0.1s;
@@ -1013,7 +1170,7 @@ html:not(.dark-mode) .tvm-left-tab.active {
    of the editor body — that's the detached pane's label row in column mode. */
 .tvm-editor-panel.tvm-editor-pane-detached-left  .tvm-editor-pane-left .tvm-editor-pane-tab-row,
 .tvm-editor-panel.tvm-editor-pane-detached-right .tvm-editor-pane-right .tvm-editor-pane-tab-row {
-  padding-right: 160px !important;
+  padding-right: 11em !important;
 }
 /* Divider becomes a horizontal line in column mode */
 .tvm-editor-panel.tvm-editor-pane-detached-left  .tvm-editor-pane-divider,
@@ -1072,7 +1229,7 @@ html:not(.dark-mode) .tvm-left-tab.active {
   border-radius: 3px;
   background: #1f1f2a;
   color: #9ba8c0;
-  font-size: 12px;
+  font: inherit;
   line-height: 1;
   cursor: pointer;
   transition: background 0.1s, color 0.1s, border-color 0.1s;
@@ -1122,16 +1279,16 @@ html:not(.dark-mode) .tvm-output-popout-btn:hover {
   background: #20202c;
   border: 1px solid #5a5a78;
   border-radius: 6px;
-  font-size: 12px;
   color: #aab4c5;
   box-shadow: 0 4px 14px rgba(0,0,0,0.4);
 }
+/* Here the pill is the notice's whole message, so it is readable text. */
 .tvm-output-detached-chip .tvm-tab-detached-badge {
   background: #2a2a3a;
   color: #c8d4e4;
   padding: 1px 6px;
   border-radius: 3px;
-  font-size: 10.5px;
+  font-size: inherit;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   font-weight: 600;
@@ -1142,10 +1299,9 @@ html:not(.dark-mode) .tvm-output-popout-btn:hover {
   background: #1f1f2a;
   color: #c8d4e4;
   padding: 2px 9px;
-  font-size: 13px;
+  font: inherit;
   line-height: 1;
   cursor: pointer;
-  font-family: inherit;
 }
 .tvm-output-detached-chip .tvm-tab-reattach:hover {
   background: #303046; border-color: #5a5a78; color: #fff;
@@ -1179,10 +1335,9 @@ html:not(.dark-mode) .tvm-output-detached-chip .tvm-tab-reattach:hover {
   background: #1f1f2a;
   color: #c8d4e4;
   padding: 1px 7px;
-  font-size: 12px;
+  font: inherit;
   line-height: 1.3;
   cursor: pointer;
-  font-family: inherit;
 }
 .tvm-output-detached-indicator .tvm-tab-reattach:hover {
   background: #303046; border-color: #5a5a78; color: #fff;
@@ -1208,10 +1363,9 @@ html:not(.dark-mode) .tvm-output-detached-indicator .tvm-tab-reattach:hover {
   background: #1f1f2a;
   color: #c8d4e4;
   padding: 1px 7px;
-  font-size: 12px;
+  font: inherit;
   line-height: 1.3;
   cursor: pointer;
-  font-family: inherit;
 }
 .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
   background: #303046; border-color: #5a5a78; color: #fff;
@@ -1250,14 +1404,13 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
   border-radius: 4px;
   background: transparent;
   color: #888;
-  font-size: 12px;
+  font: inherit;
   font-weight: 500;
   cursor: pointer;
-  font-family: inherit;
   transition: background 0.15s, color 0.15s;
 }
 
-.tvm-editor-mode-btn i { font-size: 11px; }
+.tvm-editor-mode-btn i { font-size: 0.85em; }
 
 .tvm-editor-mode-btn:hover:not(.active) {
   color: #c0c0d0;
@@ -1270,11 +1423,12 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
 }
 
 /* Reserve space for the floating toggle in whichever pane sits on the right.
+   11em fits its two labelled buttons and grows with their text.
    In tabs mode that's the left pane (full-width); in split mode the right pane.
    Applied to the tab-row wrapper only so the padding isn't doubled. */
 .tvm-editor-split-supported:not(.tvm-editor-split-active) .tvm-editor-pane-left  .tvm-editor-pane-tab-row,
 .tvm-editor-split-supported.tvm-editor-split-active        .tvm-editor-pane-right .tvm-editor-pane-tab-row {
-  padding-right: 160px;
+  padding-right: 11em;
 }
 
 /* Body wraps the pane(s). Row layout; left pane fills when split is inactive. */
@@ -1314,7 +1468,8 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
   flex: 1 1 50%;
 }
 
-.tvm-editor-pane-divider {
+.tvm-editor-pane-divider,
+.tutorial-diagram-pane-divider {
   flex: 0 0 var(--tvm-splitter-hit-size);
   flex-shrink: 0;
   margin-inline: var(--tvm-splitter-overhang);
@@ -1328,12 +1483,16 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
 
 .tvm-editor-pane-divider:hover,
 .tvm-editor-pane-divider.active,
-.tvm-editor-pane-divider:focus-visible {
+.tvm-editor-pane-divider:focus-visible,
+.tutorial-diagram-pane-divider:hover,
+.tutorial-diagram-pane-divider.active,
+.tutorial-diagram-pane-divider:focus-visible {
   background: transparent;
   outline: none;
   box-shadow: none;
 }
-.tvm-editor-pane-divider::before {
+.tvm-editor-pane-divider::before,
+.tutorial-diagram-pane-divider::before {
   content: "";
   position: absolute;
   top: 0;
@@ -1353,7 +1512,10 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
 }
 .tvm-editor-pane-divider:hover::before,
 .tvm-editor-pane-divider.active::before,
-.tvm-editor-pane-divider:focus-visible::before {
+.tvm-editor-pane-divider:focus-visible::before,
+.tutorial-diagram-pane-divider:hover::before,
+.tutorial-diagram-pane-divider.active::before,
+.tutorial-diagram-pane-divider:focus-visible::before {
   background: linear-gradient(
     var(--tvm-splitter-rail-direction),
     var(--tvm-splitter-rail-hover-highlight) 0 25%,
@@ -1361,7 +1523,8 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
     var(--tvm-splitter-rail-hover-shadow) 75% 100%
   );
 }
-.tvm-editor-pane-divider::after {
+.tvm-editor-pane-divider::after,
+.tutorial-diagram-pane-divider::after {
   content: "";
   position: absolute;
   left: 50%;
@@ -1375,14 +1538,17 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
   pointer-events: none;
   transition: opacity 0.15s;
 }
-.tvm-editor-pane-divider:focus-visible {
+.tvm-editor-pane-divider:focus-visible,
+.tutorial-diagram-pane-divider:focus-visible {
   outline: 2px solid rgba(95, 102, 112, 0.01) !important;
   box-shadow: none;
 }
-.tvm-editor-pane-divider:focus-visible::before {
+.tvm-editor-pane-divider:focus-visible::before,
+.tutorial-diagram-pane-divider:focus-visible::before {
   box-shadow: none;
 }
-.tvm-editor-pane-divider:focus-visible::after {
+.tvm-editor-pane-divider:focus-visible::after,
+.tutorial-diagram-pane-divider:focus-visible::after {
   opacity: 1;
 }
 
@@ -1443,13 +1609,17 @@ html:not(.dark-mode) .tvm-editor-mode-btn.active {
   background: #0078d4;
 }
 
-html:not(.dark-mode) .tvm-editor-pane-divider {
+html:not(.dark-mode) .tvm-editor-pane-divider,
+html:not(.dark-mode) .tutorial-diagram-pane-divider {
   background: transparent;
 }
 
 html:not(.dark-mode) .tvm-editor-pane-divider:hover,
 html:not(.dark-mode) .tvm-editor-pane-divider.active,
-html:not(.dark-mode) .tvm-editor-pane-divider:focus-visible {
+html:not(.dark-mode) .tvm-editor-pane-divider:focus-visible,
+html:not(.dark-mode) .tutorial-diagram-pane-divider:hover,
+html:not(.dark-mode) .tutorial-diagram-pane-divider.active,
+html:not(.dark-mode) .tutorial-diagram-pane-divider:focus-visible {
   background: transparent;
   outline: none;
 }
@@ -1508,11 +1678,10 @@ html:not(.dark-mode) .tvm-editor-pane-divider:focus-visible {
   /* Bumped from #777 (~4.04:1 against the workspace's #1f1f2a) to #a0a8b8
      which clears 4.5:1 in dark mode and stays legible in light mode. */
   color: #a0a8b8;
-  font-size: 12px;
+  font: inherit;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
-  font-family: inherit;
 }
 .tvm-view-btn:hover {
   background: #2a2a36;
@@ -1544,7 +1713,6 @@ html:not(.dark-mode) .tvm-editor-pane-divider:focus-visible {
   min-height: 36px;
   flex-shrink: 0;
   color: #b0b0c0;
-  font-size: 12.5px;
   font-weight: 600;
   letter-spacing: 0.03em;
 }
@@ -1562,13 +1730,13 @@ html:not(.dark-mode) .tvm-editor-pane-divider:focus-visible {
   color: #aaa;
   padding: 2px 10px;
   border-radius: 4px;
-  font-size: 12px;
+  font: inherit;
+  font-weight: 400;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
 .tvm-git-graph-popout-btn {
   padding: 2px 8px;
-  font-size: 13px;
   line-height: 1;
 }
 .tvm-git-graph-refresh:hover,
@@ -1602,7 +1770,7 @@ html:not(.dark-mode) .tvm-editor-pane-divider:focus-visible {
   border-right: 1px solid #2a2a2e;
   color: #b0b0c0;
   padding: 6px 14px;
-  font-size: 12.5px;
+  font: inherit;
   font-weight: 600;
   letter-spacing: 0.03em;
   cursor: pointer;
@@ -1888,6 +2056,9 @@ html:not(.dark-mode) .tvm-git-graph-container {
    *texture* as well as color (WCAG 1.4.1). */
 .tvm-make-dag-node-stale .tvm-make-dag-node-stripe { fill: url(#tvm-mg-stale-hatch); }
 
+/* Stays 13px for now: js/make-graph.js draws every node as a fixed 140x40 box
+   and truncates names to 17 characters to fit that size. Larger text needs the
+   renderer to size nodes from their labels. */
 .tvm-make-dag-node-label {
   fill: var(--mg-fg);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -1897,8 +2068,6 @@ html:not(.dark-mode) .tvm-git-graph-container {
   user-select: none;
 }
 .tvm-make-dag-node-glyph {
-  font-size: 13px;
-  font-weight: 700;
   pointer-events: none;
   user-select: none;
 }
@@ -1948,7 +2117,6 @@ html:not(.dark-mode) .tvm-git-graph-container {
   margin-top: 14px;
   background: rgba(0,0,0,0.25);
   border-top: 1px solid color-mix(in srgb, var(--mg-edge) 40%, transparent);
-  font-size: 12px;
   color: var(--mg-muted);
   border-radius: 4px;
 }
@@ -2079,7 +2247,7 @@ html.dark-mode .tvm-diagram-fullscreen-overlay .tvm-diagram-fs-content svg {
   border-radius: 3px;
   background: transparent;
   color: #8090a8;
-  font-size: 12px;
+  font: inherit;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
@@ -2111,7 +2279,7 @@ html.dark-mode .tvm-diagram-fullscreen-overlay .tvm-diagram-fs-content svg {
   border-radius: 2px;
   background: transparent;
   color: #b6c4d8;
-  font-size: 13px;
+  font: inherit;
   font-weight: 700;
   cursor: pointer;
   line-height: 1.4;
@@ -2125,7 +2293,6 @@ html.dark-mode .tvm-diagram-fullscreen-overlay .tvm-diagram-fs-content svg {
   color: #c8d4e4;
 }
 .tvm-diagram-zoom-label {
-  font-size: 11px;
   color: #c2cee0;
   min-width: 38px;
   text-align: center;
@@ -2160,7 +2327,7 @@ html.dark-mode .tvm-diagram-fullscreen-overlay .tvm-diagram-fs-content svg {
   border-radius: 3px;
   background: #252538;
   color: #95a5ba;
-  font-size: 12px;
+  font: inherit;
   cursor: pointer;
   margin-left: 3px;
   transition: background 0.1s, color 0.1s;
@@ -2245,6 +2412,8 @@ html.dark-mode .tvm-diagram-fullscreen-overlay .tvm-diagram-fs-content svg {
 }
 .tvm-diagram-fs-toolbar {
   display: flex;
+  /* Wraps on narrow screens so Close and the colour controls stay on screen. */
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   padding: 7px 14px;
@@ -2258,7 +2427,7 @@ html.dark-mode .tvm-diagram-fullscreen-overlay .tvm-diagram-fs-content svg {
   border-radius: 3px;
   background: transparent;
   color: #8090a8;
-  font-size: 13px;
+  font: inherit;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
@@ -2280,7 +2449,7 @@ html.dark-mode .tvm-diagram-fullscreen-overlay .tvm-diagram-fs-content svg {
   border-radius: 2px;
   background: transparent;
   color: #7a8aa0;
-  font-size: 13px;
+  font: inherit;
   font-weight: 700;
   cursor: pointer;
   line-height: 1.4;
@@ -2293,7 +2462,6 @@ html.dark-mode .tvm-diagram-fullscreen-overlay .tvm-diagram-fs-content svg {
   color: #c8d4e4;
 }
 .tvm-diagram-fs-zoom-label {
-  font-size: 11px;
   color: #6a7a90;
   min-width: 38px;
   text-align: center;
@@ -2309,7 +2477,7 @@ html.dark-mode .tvm-diagram-fullscreen-overlay .tvm-diagram-fs-content svg {
   border-radius: 3px;
   background: rgba(180, 50, 50, 0.15);
   color: #e88;
-  font-size: 12px;
+  font: inherit;
   font-weight: 600;
   cursor: pointer;
   margin-left: 6px;
@@ -2771,6 +2939,15 @@ html.prm-reduce .tvm-terminal-loading .tvm-loading-spinner { animation: none; }
   min-width: 0;
 }
 
+/* js/debugger/debugger.css keeps this row on one line so the debugger can
+   detect when its step toolbar no longer fits. With the paragraph-sized args
+   field and stream filter shown, the row outgrows the panel and a single line
+   pushes them past its left edge, out of reach. Wrapping keeps every control
+   in view; the step toolbar then wraps with the rest. */
+.tvm-output-header > .tvm-output-actions.tvm-debug-actions {
+  flex-wrap: wrap;
+}
+
 .tvm-run-btn,
 .tvm-stop-btn,
 .tvm-clear-btn {
@@ -2851,7 +3028,7 @@ html.prm-reduce .tvm-terminal-loading .tvm-loading-spinner { animation: none; }
 .tvm-output-pre {
   margin: 0;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-  font-size: 13px;
+  font-size: inherit;
   line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;
@@ -2871,9 +3048,12 @@ html.prm-reduce .tvm-terminal-loading .tvm-loading-spinner { animation: none; }
   color: #ccc;
   padding: 3px 8px;
   border-radius: 4px;
-  font-size: 11px;
-  width: 140px;
+  font: inherit;
+  font-weight: 400;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  /* Room for the "Program args..." placeholder at the inherited size. */
+  width: 18ch;
+  max-width: 100%;
 }
 html:not(.dark-mode) .tvm-args-input {
   background: #fff;
@@ -2892,7 +3072,8 @@ html:not(.dark-mode) .tvm-args-input {
   color: #888;
   padding: 3px 6px;
   border-radius: 4px;
-  font-size: 11px;
+  font: inherit;
+  font-weight: 400;
   cursor: pointer;
 }
 html:not(.dark-mode) .tvm-stream-filter {
@@ -3140,8 +3321,11 @@ html:not(.dark-mode) .monaco-editor .mtk21 {
   color: #333333 !important;
 }
 
+/* The label's markup in js/tutorial-code.js carries an inline 11px size and
+   grey colour; !important overrides them until that inline style is removed. */
 .tvm-args-label {
   color: #d4d8e2 !important;
+  font-size: inherit !important;
 }
 
 html:not(.dark-mode) .tvm-args-label {
@@ -3179,7 +3363,7 @@ html:not(.dark-mode) .tvm-args-label {
   border-bottom: 2px solid transparent;
   background: transparent;
   color: #aeb4c6;
-  font-size: 12px;
+  font: inherit;
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -3191,7 +3375,7 @@ html:not(.dark-mode) .tvm-args-label {
   white-space: nowrap;
 }
 
-.tvm-right-tab i { font-size: 12px; }
+.tvm-right-tab i { font-size: 0.85em; }
 
 .tvm-right-tab:hover { color: #aab; }
 
@@ -3663,12 +3847,12 @@ html:not(.dark-mode) .tvm-step-timer.is-locked {
   border: 2px solid #6a6a78;
   background: transparent;
   color: #aab4c0;
+  font: inherit;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
   transition: all 0.15s;
 }
 
@@ -3682,6 +3866,58 @@ html:not(.dark-mode) .tvm-step-timer.is-locked {
   border-color: #0078d4;
   color: #fff;
   box-shadow: 0 0 8px rgba(0, 120, 212, 0.35);
+}
+
+/* A completed step: a green ring and a check badge, so shape tells it too;
+   its name says "(completed)". The active and hover looks still win. */
+.tvm-step-btn.done {
+  position: relative;
+}
+.tvm-step-btn.done:not(.active):not(:hover) {
+  border-color: #3fb950;
+  color: #7ee787;
+}
+.tvm-step-btn.done::after {
+  content: "\2713";
+  content: "\2713" / "";
+  position: absolute;
+  top: -0.5em;
+  right: -0.45em;
+  width: 1.25em;
+  height: 1.25em;
+  border-radius: 50%;
+  background: #3fb950;
+  color: #0d1117;
+  font-size: 0.85em;
+  font-weight: 700;
+  line-height: 1.25em;
+  text-align: center;
+}
+html:not(.dark-mode) .tvm-step-btn.done:not(.active):not(:hover) {
+  border-color: #1a7f37;
+  color: #116329;
+}
+html:not(.dark-mode) .tvm-step-btn.done::after {
+  background: #1a7f37;
+  color: #ffffff;
+}
+
+/* The current step's title and time estimate, on its own row under the
+   step buttons (order keeps it after the bar's other controls). */
+.tvm-step-nav-current {
+  order: 1;
+  flex-basis: 100%;
+  margin: 0;
+  color: #c9d2dc;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.tvm-step-nav-current[hidden] {
+  display: none;
+}
+html:not(.dark-mode) .tvm-step-nav-current {
+  color: #2c3138;
 }
 
 /* ───────────────────────────────────────────
@@ -3746,7 +3982,37 @@ html:not(.dark-mode) .tvm-step-timer.is-locked {
 
 .tvm-btn-next:disabled::after {
   content: " \1F512";
-  font-size: 11px;
+  font-size: 0.85em;
+}
+
+/* Why Next is locked, as text beside it (a disabled button shows no
+   tooltip). Shown only while Next is disabled, whoever disables it. */
+.tvm-next-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px 10px;
+}
+/* In a narrow column the reason wraps beside Next. Without this the group
+   keeps its one-line width and the bar scrolls sideways, which a keyboard
+   cannot reach on a first step: nothing in the bar takes focus there. */
+.tvm-step-controls > .tvm-next-group {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.tvm-next-lock-reason {
+  flex: 1 1 8em;
+  min-width: 0;
+  text-align: right;
+  color: #c9d2dc;
+  font-weight: 600;
+}
+html:not(.dark-mode) .tvm-next-lock-reason {
+  color: #2c3138;
+}
+.tvm-next-group:not(:has(.tvm-btn-next:disabled)) .tvm-next-lock-reason {
+  display: none;
 }
 
 /* ───────────────────────────────────────────
@@ -3989,6 +4255,12 @@ body.tutorial-layout #navnav .navbar-right > #tts-read-btn {
   border-radius: var(--radius-md, 8px) !important;
 }
 
+/* While Read Aloud reads, a red tint marks the button that stops it. The
+   navbar is dark in both themes, and print hides it. */
+body.tutorial-layout #navnav .navbar-right > #tts-read-btn.is-reading {
+  background: rgba(200, 50, 50, 0.3);
+}
+
 /* ───────────────────────────────────────────
    Responsive
 ─────────────────────────────────────────── */
@@ -4110,7 +4382,7 @@ body.tutorial-layout #navnav .navbar-right > #tts-read-btn {
   }
 
   /* These dividers resize viewport fractions; natural document flow has none. */
-  body.tutorial-layout :is(.tvm-hsplitter, .tvm-vsplitter, .tvm-editor-pane-divider) {
+  body.tutorial-layout :is(.tvm-hsplitter, .tvm-vsplitter, .tvm-editor-pane-divider, .tutorial-diagram-pane-divider) {
     display: none !important;
   }
 }
@@ -4315,6 +4587,11 @@ html:not(.dark-mode) .tvm-tab-reattach:focus-visible {
 html:not(.dark-mode) .tvm-tab-label:focus-visible {
   outline-color: #005587;
 }
+html:not(.dark-mode) .tvm-tab-close { color: #5a6573; }
+html:not(.dark-mode) .tvm-tab-close:hover { background: #e0e0e0; color: #1f2530; }
+html:not(.dark-mode) .tvm-tab-close:focus-visible { outline-color: #005587; color: #1f2530; }
+html:not(.dark-mode) .monaco-editor .tvm-source-reveal-line { background: rgba(255, 209, 0, 0.35); }
+html:not(.dark-mode) .monaco-editor .tvm-source-reveal-gutter { background: #946200; }
 html:not(.dark-mode) .tvm-tab.detached {
   color: #888;
   background: repeating-linear-gradient(
@@ -4335,20 +4612,26 @@ html:not(.dark-mode) .tvm-instructions-popout-btn:hover {
   color: #333;
   border-color: #999;
 }
-html:not(.dark-mode) .tvm-instructions-detached-placeholder {
-  color: #555;
+html:not(.dark-mode) :is(.tvm-instructions-hide-btn, .tvm-instructions-rail-btn) {
+  background: #f3f3f6;
+  border-color: #6b6b80;
+  color: #1f2530;
+}
+html:not(.dark-mode) :is(.tvm-instructions-hide-btn, .tvm-instructions-rail-btn):hover {
+  background: #e4e6ee;
+  color: #111111;
+}
+html:not(.dark-mode) :is(.tvm-instructions-hide-btn, .tvm-instructions-rail-btn):focus-visible {
+  outline-color: #005587;
+}
+html:not(.dark-mode) .tvm-instructions-rail {
+  color: #3a3f4a;
   background: rgba(0, 0, 0, 0.02);
 }
-html:not(.dark-mode) .tvm-instructions-detached-placeholder .tvm-btn-reattach {
-  background: #f3f3f3; border-color: #ccc; color: #333;
+html:not(.dark-mode) .tvm-instructions-rail-msg {
+  color: #3a3f4a;
 }
-html:not(.dark-mode) .tvm-instructions-detached-placeholder .tvm-btn-reattach:hover {
-  background: #e8e8e8; border-color: #999;
-}
-html:not(.dark-mode) .tvm-instructions-panel.tvm-instructions-detached-horizontal .tvm-detached-msg {
-  color: #666;
-}
-html:not(.dark-mode) .tvm-instructions-panel.tvm-instructions-detached-vertical .tvm-instructions-detached-placeholder {
+html:not(.dark-mode) .tvm-instructions-panel.tvm-instructions-rail-vertical .tvm-instructions-rail {
   border-bottom-color: #d4d4d4;
 }
 html:not(.dark-mode) .tvm-popup-blocked-toast {
@@ -5259,7 +5542,6 @@ html:not(.dark-mode) .parsons-reset-btn { background: #eee; color: #333; }
 
 /* Controls bar quiz status label */
 .tvm-quiz-status {
-  font-size: 12px;
   color: #7090a0;
   font-weight: 600;
   letter-spacing: 0.02em;

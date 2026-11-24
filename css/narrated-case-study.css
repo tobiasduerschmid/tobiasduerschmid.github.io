@@ -38,7 +38,8 @@
 .narrated-case-study .case-step-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em; }
 .narrated-case-study .case-step-actions output { margin-left: 0.3em; font: inherit; color: var(--nja-text); }
 .narrated-case-study .nja-controls .case-step-actions button,
-.narrated-case-study .vn-video.is-fullscreen .vn-toolbar .case-step-actions button { width: auto; height: auto; padding: 0.4em 0.75em; }
+.narrated-case-study .vn-video.is-fullscreen .vn-toolbar .case-step-actions button { width: auto; height: auto; min-height: 2.75em; padding: 0.4em 0.75em; border-color: var(--nja-line); background: var(--nja-bg); }
+.narrated-case-study .vn-video.is-fullscreen .vn-toolbar .case-step-actions button { min-height: 32px; padding-block: 0.2em; }
 .narrated-case-study .case-reading-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.65em; margin-bottom: 1em; }
 .narrated-case-study .case-reading-actions button {
   font: inherit; min-height: 2.6em; padding: 0.6em 0.8em; border: 2px solid var(--nja-line);

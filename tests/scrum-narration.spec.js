@@ -504,8 +504,9 @@ test('the video controls match the music player: skips, keys, captions, volume, 
   await animation.getByRole('combobox', { name: 'Caption size' }).selectOption('1.5');
   await expect.poll(size).toBeCloseTo(before * 1.5, 0);
 
-  // Escape closes the settings and returns focus to their button.
-  await animation.getByRole('combobox', { name: 'Speed' }).focus();
+  // Escape closes the settings and returns focus to their button; a focused
+  // dropdown keeps Escape for its own picker, as in the music player.
+  await animation.getByRole('checkbox', { name: 'Landscape in full screen' }).focus();
   await page.keyboard.press('Escape');
   await expect(animation.getByRole('region', { name: 'Player settings' })).toBeHidden();
   await expect(animation.getByRole('button', { name: 'Player settings' })).toBeFocused();

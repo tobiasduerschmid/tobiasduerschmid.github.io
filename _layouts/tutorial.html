@@ -284,6 +284,7 @@
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/uml-view-controls.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/uml-source-links.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/object-reference-lab.css' | relative_url }}">
   {% if tutorial_backend == 'tla' %}
   <link rel="stylesheet" href="{{ '/css/tla-workspace.css' | relative_url }}">
@@ -308,6 +309,16 @@
   {% include tutorial-llm.html %}
   <link rel="stylesheet" href="{{ '/css/tutorial-llm.css' | relative_url }}">
   {% endif %}
+  {% if tutorial_data.file_tree or tutorial_data.project_search %}
+  <link rel="stylesheet" href="{{ '/css/tutorial-file-tree.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/tutorial-project-search.css' | relative_url }}">
+  {% endif %}
+  <link rel="stylesheet" href="{{ '/css/tutorial-diagram-pane.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/tutorial-source-links.css' | relative_url }}">
+  {% assign tutorial_challenge_steps = tutorial_data.steps | where_exp: "step", "step.diagram_challenge" %}
+  {% if tutorial_challenge_steps.size > 0 %}
+  <link rel="stylesheet" href="{{ '/css/tutorial-diagram-challenge.css' | relative_url }}">
+  {% endif %}
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 
   <!-- Tutorial engine — unified (v86 / pyodide / webcontainer) -->
@@ -325,17 +336,29 @@
   <script src="{{ '/js/python-ast-service.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-refactorings.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-popout-manager.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-instructions-rail.js' | relative_url }}"></script>
   <script src="{{ '/js/parsons-grading.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-quiz.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-inline-markdown.js' | relative_url }}"></script>
   <script src="{{ '/js/keyboard-shortcut-labels.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-live.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-source-links.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-view-controls.js' | relative_url }}"></script>
   {% if tutorial_llm_enabled and tutorial_data.ai_tutor %}
   <script src="{{ '/js/vendor/dompurify/3.4.17/purify.min.js' | relative_url }}"></script>
   {% endif %}
   <script src="{{ '/js/monaco-loader.js' | relative_url }}"></script>
+  {% if tutorial_data.file_tree or tutorial_data.project_search %}
+  <script src="{{ '/js/tutorial-file-tree.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-project-search.js' | relative_url }}"></script>
+  {% endif %}
+  <script src="{{ '/js/tutorial-source-links.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-code.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-diagram-pane.js' | relative_url }}"></script>
+  {% if tutorial_challenge_steps.size > 0 %}
+  <script src="{{ '/js/tutorial-diagram-challenge-core.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-diagram-challenge.js' | relative_url }}"></script>
+  {% endif %}
   {% if tutorial_llm_enabled %}
   <script src="{{ '/js/tutorial-llm.js' | relative_url }}"></script>
   {% endif %}
@@ -391,7 +414,7 @@
   {% assign tutorial_requires_coi = false %}
   {% if tutorial_uses_webcontainer or tutorial_llm_enabled %}
     {% assign tutorial_requires_coi = true %}
-  {% elsif tutorial_data.debugger and tutorial_data.backend != 'prolog' and tutorial_data.backend != 'haskell' %}
+  {% elsif tutorial_data.debugger and tutorial_data.backend != 'prolog' and tutorial_data.backend != 'haskell' and tutorial_data.backend != 'java' %}
     {% assign tutorial_requires_coi = true %}
   {% endif %}
   {% if tutorial_requires_coi or tutorial_uses_v86 %}
@@ -423,7 +446,7 @@
       // on each jsonified string converts literal closing-script-tags inside embedded
       // GitCommandLab specs to the safe <\/script form so the outer script block cannot
       // be terminated prematurely by the HTML parser.
-      var instructionHTML = [{% for step in tutorial_data.steps %}{% capture rendered_step_instructions %}{% include tutorial-step-instructions.html tutorial=tutorial_data step=step %}{% endcapture %}{{ rendered_step_instructions | jsonify | replace: "</script", "<\/script" }}{% unless forloop.last %},{% endunless %}{% endfor %}];
+      var instructionHTML = [{% for step in tutorial_data.steps %}{% capture rendered_step_instructions %}{% include tutorial-step-instructions.html tutorial=tutorial_data step=step index=forloop.index0 %}{% endcapture %}{{ rendered_step_instructions | jsonify | replace: "</script", "<\/script" }}{% unless forloop.last %},{% endunless %}{% endfor %}];
       config.steps.forEach(function (step, i) { step.instructionsHTML = instructionHTML[i]; });
 
       // Pre-render solution explanation markdown (same Rouge highlighting)
@@ -467,6 +490,11 @@
         {% if tutorial_backend == 'shell-pipeline' %}shellManuals: {{ site.data.shell_command_manuals | jsonify | replace: '</script', '<\/script' }},{% endif %}
         tutorialId:   '{{ page.tutorial }}',
         steps:        config.steps,
+        // Multi-folder projects: steps without `files` use `shared_files`;
+        // `file_tree` and `project_search` add the Files tree and Search.
+        sharedFiles:   config.shared_files || null,
+        fileTree:      config.file_tree === true,
+        projectSearch: config.project_search === true,
         ai_tutor:     config.ai_tutor === true,
         ai_tutor_mode: config.ai_tutor_mode,
         progressVersion: config.progress_version || null,
@@ -488,7 +516,6 @@
         workerPath:    '{{ "/js/pyodide-worker.js" | relative_url }}',
         sqlWorkerPath: '{{ "/js/sql-worker.js"    | relative_url }}',
         prologWorkerPath: '{{ "/js/prolog-worker.js" | relative_url }}',
-        javaWorkerPath:   '{{ "/js/java-worker.js"   | relative_url }}',
         cppWorkerPath:    '{{ "/js/cpp-worker.js"    | relative_url }}',
         haskellFramePath: '{{ "/haskell-runtime-frame.html" | relative_url }}',
         gitGraphPath: config.git_graph || null,
@@ -509,7 +536,7 @@
         postFileloadSetupCommands: config.post_fileload_setup     || [],
         uml_diagram: config.uml_diagram || false,
         uml_position: config.uml_position || 'left',
-        uml_class_layout: config.uml_class_layout || 'portrait',
+        uml_class_layout: config.uml_class_layout || 'compact',
         uml_default_view: config.uml_default_view || false,
         uml_default_type: config.uml_default_type || 'class',
         umlPopupUrl: '{{ "/uml-popup.html" | relative_url }}',
@@ -531,6 +558,10 @@
         // UML-bottom-right / Output-bottom-left swap.
         output_position: config.output_position || null,
         run_label: config.run_label || 'Run',
+        // `run: false` — no Run button, OUTPUT panel, or Run shortcut.
+        run: config.run !== false,
+        // `instructions_width: narrow` — a narrower instructions column by default.
+        instructions_width: config.instructions_width || null,
         // `pytest: true` — run test_*.py files via `pytest.main([path, "-v"])`
         // when the Run button is clicked, and rename the button to "Test"
         // automatically when a test file is the active file. Steps may set
@@ -568,7 +599,9 @@
           e.preventDefault();
           window.SebookConfirmation.confirm({
             title: 'Reset the current step?',
-            message: 'This will discard your edits in this step and restore the starter files.',
+            message: tutorial.currentStepHasDiagramChallenge && tutorial.currentStepHasDiagramChallenge()
+              ? 'This will discard your edits and your diagram challenge answers and times in this step, and restore the starter files.'
+              : 'This will discard your edits in this step and restore the starter files.',
             confirmLabel: 'Reset step',
             trigger: resetBtn
           }).then(function (confirmed) {
@@ -741,6 +774,20 @@
           });
         });
 
+        // The button names what it does now. Speech-input users say its
+        // visible label, so the accessible name starts with that label.
+        var readButtonShowsStop = false;
+        function renderReadButton(reading) {
+          if (reading === readButtonShowsStop) return;
+          readButtonShowsStop = reading;
+          readBtn.innerHTML = reading
+            ? '<i class="fa fa-stop" aria-hidden="true"></i> Stop'
+            : '<i class="fa fa-volume-up" aria-hidden="true"></i> Read Aloud';
+          readBtn.setAttribute('aria-label', reading ? 'Stop reading the current step aloud' : 'Read Aloud: read current step aloud');
+          readBtn.setAttribute('data-original-title', reading ? 'Stop reading aloud' : 'Read current step aloud');
+          readBtn.classList.toggle('is-reading', reading);
+        }
+
         function updateBar() {
           var speaking = TTSPlayer.isSpeaking();
           var paused   = TTSPlayer.isPaused();
@@ -758,11 +805,7 @@
             playPauseBtn.setAttribute('aria-pressed', paused ? 'false' : 'true');
           }
           if (rateDisplay) rateDisplay.textContent = TTSPlayer.rateLabel();
-          if (!speaking && !paused) {
-            readBtn.innerHTML = '<i class="fa fa-volume-up" aria-hidden="true"></i> Read Aloud';
-            readBtn.style.background = 'none';
-            readBtn.style.color = '';
-          }
+          renderReadButton(speaking || paused);
         }
 
         readBtn.addEventListener('click', function () {
@@ -777,9 +820,6 @@
             : TTSPlayer.extractText(document.querySelector('.tutorial-page'));
           if (!text) return;
 
-          readBtn.innerHTML = '<i class="fa fa-stop" aria-hidden="true"></i> Stop';
-          readBtn.style.background = 'rgba(200,50,50,0.3)';
-          readBtn.style.color = '#f99';
           TTSPlayer.speak(text, { onUpdate: updateBar, onEnd: updateBar });
           updateBar();
         });

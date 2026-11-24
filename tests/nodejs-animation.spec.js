@@ -22,7 +22,7 @@ async function seekToCue(page, sceneId, pose) {
   const time = Number(((cue.start + cue.end) / 2).toFixed(2));
   await animation.getByRole('slider', { name: 'Animation position' }).fill(String(time));
   await expect(animation.getByRole('region', { name: 'Narration' })).toHaveText(story.scenes[index].cues[cueIndex].text);
-  const audio = animation.getByLabel('Node.js narration by Kokoro');
+  const audio = animation.getByLabel('Node.js narration by Fish Audio Drama 3');
   await expect.poll(() => audio.evaluate((element) => element.currentTime)).toBeCloseTo(time, 1);
   return animation.getByRole('img');
 }
@@ -56,14 +56,14 @@ test('scene navigation synchronizes the blocking and non-blocking explanations',
   await expect(animation.getByRole('heading', { name: 'Blocking: the thread waits' })).toBeVisible();
 });
 
-test('Kokoro narration plays and pauses with synchronized animation progress', async ({ page }) => {
+test('narration plays and pauses with synchronized animation progress', async ({ page }) => {
   await page.goto(pageURL);
   const animation = player(page);
   await animation.getByRole('button', { name: 'Play narration' }).click();
   await expect(animation.getByRole('button', { name: 'Pause narration' })).toBeVisible();
   const position = animation.getByRole('slider', { name: 'Animation position' });
   await expect.poll(async () => Number(await position.inputValue())).toBeGreaterThan(0.2);
-  const audio = animation.getByLabel('Node.js narration by Kokoro');
+  const audio = animation.getByLabel('Node.js narration by Fish Audio Drama 3');
   expect(await audio.evaluate((element) => element.currentSrc)).toMatch(/nodejs-basics\.mp3$/);
   expect(await audio.evaluate((element) => element.duration)).toBeCloseTo(timing.duration, 0);
   await animation.getByRole('button', { name: 'Pause narration' }).click();
@@ -84,7 +84,7 @@ test('narration downloads as a compressed MP3 and the credit omits the music not
   expect(response.ok()).toBe(true);
   expect(response.headers()['content-type']).toMatch(/^audio\/(?:mpeg|mp3)\b/);
   expect((await response.body()).length * 8 / timing.duration).toBeLessThan(64000);
-  await expect(animation.getByText('Narration: Kokoro.', { exact: false })).toBeVisible();
+  await expect(animation.getByText('Narration: Fish Audio Drama 3. Built with Fish Audio.', { exact: false })).toBeVisible();
   await expect(animation.getByText('No music.', { exact: false })).toHaveCount(0);
 });
 
@@ -96,7 +96,8 @@ test('keyboard seeking reaches the last scene and replay returns to the start', 
   await seek.press('End');
   await expect(animation.getByRole('heading', { name: 'Predict the output' })).toBeVisible();
   await expect(animation.getByRole('region', { name: 'Narration' })).toContainText('A, C, B');
-  await animation.getByRole('button', { name: 'Restart narration' }).click();
+  // 0 jumps to the start, as in the music player.
+  await seek.press('0');
   await expect(seek).toHaveValue('0');
   await expect(animation.getByRole('heading', { name: 'JavaScript beyond the browser' })).toBeVisible();
 });
@@ -136,7 +137,7 @@ test('a newer seek wins when metadata arrives during a chapter jump', async ({ p
   const animation = player(page);
   const cue = timing.scenes.find((scene) => scene.id === 'blocking').cues[1];
   const target = Number(((cue.start + cue.end) / 2).toFixed(2));
-  const audio = animation.getByLabel('Node.js narration by Kokoro');
+  const audio = animation.getByLabel('Node.js narration by Fish Audio Drama 3');
   // Model a new control input after metadata becomes readable but before its
   // queued listener applies the chapter selection. No network or audio is mocked.
   await audio.evaluate((element, time) => {

@@ -1,0 +1,698 @@
+/*
+ * Scrum kit (js/song-video/scrum-kit.js): the Scrum pieces of "Inspect and
+ * Adapt" on the review stage, beside pattern-kit.js's cream cards. Text is
+ * dark on cream, white, or gold (≥ 10:1) and white or gold on the deep navy
+ * panels (≥ 7:1). Every meaning is written in words (a tick comes with its
+ * row's words, "now" tags the lit event, the stop sign says STOP); colour
+ * only repeats them (WCAG 1.4.1). Like stage.css this styles the fixed
+ * 960×540 stage, which looks the same in both site themes and which the
+ * player's print styles hide; sizes are stage pixels, scaled with the player.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Shared: highlights, captions                                         */
+/* ------------------------------------------------------------------ */
+
+.sk-lit {
+  position: absolute;
+  inset: -4px;
+  border: 3px solid #ffd66e;
+  border-radius: 12px;
+  box-shadow: 0 0 18px rgba(255, 214, 110, 0.65);
+  pointer-events: none;
+}
+
+.sk-lit--frame { inset: -3px; border-radius: 14px; }
+.sk-lit--loop { inset: -3px; border-radius: 10px; }
+.sk-lit--event { inset: -3px; border-radius: 10px; background: rgba(255, 214, 110, 0.28); }
+
+.sk-caption {
+  margin-top: 6px;
+  color: #fff3d0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.sk-tag {
+  position: absolute;
+  left: 78px;
+  top: -8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #ffd66e;
+  color: #24160a;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 900;
+  white-space: nowrap;
+  rotate: 6deg;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+}
+
+/* ------------------------------------------------------------------ */
+/* The Sprint strip                                                     */
+/* ------------------------------------------------------------------ */
+
+/* The frame's name and caption sit on its top border, like a legend, so
+   the four events get the frame's whole height. */
+.sk-strip {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 12px 8px 6px;
+  border: 2px solid #8fa6d9;
+  border-radius: 12px;
+  background: #13204a;
+  color: #eef3ff;
+  font-family: var(--font-display);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+.sk-strip-head {
+  position: absolute;
+  left: 12px;
+  top: -11px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: #13204a;
+  height: 18px;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 18px;
+}
+
+.sk-strip-name { color: #ffd66e; letter-spacing: 0.04em; }
+.sk-strip-name--next { margin-left: -10px; }
+.sk-strip-caption { color: #dfe7ff; font-size: 14px; font-weight: 700; }
+
+.sk-strip-row {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  height: 100%;
+}
+
+.sk-event {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fffaf0, #fff0d2);
+  color: #24160a;
+  text-align: center;
+  line-height: 1.1;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.08), 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+.sk-event-name { font-size: 15px; font-weight: 900; }
+
+.sk-strip-arrow {
+  align-self: center;
+  color: #ffd66e;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.sk-strip-back {
+  position: absolute;
+  right: 12px;
+  top: -11px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: #13204a;
+  color: #ffd66e;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 18px;
+}
+
+/* ------------------------------------------------------------------ */
+/* The Scrum board                                                      */
+/* ------------------------------------------------------------------ */
+
+.sk-board {
+  position: absolute;
+  font-family: var(--font-display);
+}
+
+.sk-column {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid #8fa6d9;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(22, 36, 78, 0.96), rgba(10, 20, 48, 0.94) 45%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+/* The column's name on a band of its own, ruled off from its cards. */
+.sk-column-title {
+  height: 25px;
+  border-bottom: 1px solid rgba(143, 166, 217, 0.4);
+  border-radius: 8px 8px 0 0;
+  background: rgba(143, 166, 217, 0.14);
+  color: #ffe7a6;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 26px;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+/* An empty slot: where a card can go. */
+.sk-slot {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1.5px dashed rgba(143, 166, 217, 0.3);
+  border-radius: 6px;
+}
+
+.sk-card {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 2px 8px 2px 13px;
+  white-space: nowrap;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #fffbf2, #fff2d8);
+  color: #24160a;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.15;
+  box-shadow: 0 0 0 1.5px #d8a948, 0 6px 12px rgba(0, 0, 0, 0.45);
+  transform-origin: 50% 50%;
+}
+
+/* A card's edge says what it is: a story (blue), the goal (bronze), a note (amber). */
+.sk-card::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 5px;
+  bottom: 5px;
+  width: 3px;
+  border-radius: 2px;
+  background: #3f6fd8;
+}
+
+.sk-card--goal { background: linear-gradient(180deg, #ffe08a, #ffd05c); box-shadow: 0 0 0 2px #fff3d0, 0 6px 12px rgba(0, 0, 0, 0.45); }
+.sk-card--goal::before { background: #8a5a00; }
+.sk-card--note { background: linear-gradient(180deg, #fff6c2, #ffeb94); }
+.sk-card--note::before { background: #c27c00; }
+
+.sk-lock {
+  position: absolute;
+  right: -12px;
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #24160a;
+  color: #ffd66e;
+}
+
+.sk-lock svg { width: 16px; height: 16px; }
+
+/* A story's task notes, in a row at the card's right end. */
+.sk-tasks {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  translate: 0 -50%;
+  display: flex;
+  gap: 3px;
+}
+
+/* Each task a small sticky note, its corner folded, stuck on a little askew. */
+.sk-task {
+  width: 11px;
+  height: 11px;
+  border-radius: 1.5px;
+  background: linear-gradient(135deg, #fff4b0 0 68%, #e3cf62 68%);
+  box-shadow: 0 0 0 1px rgba(150, 118, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.sk-task:nth-child(1) { rotate: -6deg; }
+.sk-task:nth-child(2) { rotate: 4deg; }
+.sk-task:nth-child(3) { rotate: -2deg; }
+
+.sk-block {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 0 8px;
+  border-radius: 5px;
+  background: #4fb37d;
+  color: #08210f;
+  font-size: 14px;
+  font-weight: 900;
+  text-align: left;
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.22), 0 4px 8px rgba(0, 0, 0, 0.45);
+}
+
+/* A plain panel over the board, under a scene laid on it. */
+.sk-cover {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid #8fa6d9;
+  border-radius: 10px;
+  background: #0d1838;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+.sk-bar {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 3px 10px;
+  border-radius: 8px;
+  background: #ffd66e;
+  color: #24160a;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5);
+}
+
+/* ------------------------------------------------------------------ */
+/* Checklists and the quiz card                                         */
+/* ------------------------------------------------------------------ */
+
+.sk-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 5px 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sk-check-box {
+  position: relative;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #6b4718;
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+.sk-check-mark {
+  position: absolute;
+  inset: -4px;
+  display: grid;
+  place-items: center;
+}
+
+.sk-check-mark svg { width: 22px; height: 22px; stroke-width: 3.4; }
+.sk-check-mark--check { color: #136b34; }
+.sk-check-mark--cross { color: #a3132a; }
+
+.sk-quiz {
+  position: absolute;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff7e2;
+  color: #24160a;
+  font-family: var(--font-display);
+  box-shadow: 0 0 0 2px #d8a948, 0 16px 34px rgba(0, 0, 0, 0.5);
+}
+
+/* The quiz card's header band: the quiz, the scenario's team, the count. */
+.sk-quiz-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 12px;
+  background: linear-gradient(90deg, #0e1838, #19275a);
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.sk-quiz-pill {
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: #ffd66e;
+  color: #24160a;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sk-quiz-team { color: #ffe7a6; font-size: 15px; font-weight: 800; }
+.sk-quiz-number { margin-left: auto; color: #dfe7ff; font-size: 14px; font-weight: 800; }
+
+.sk-quiz-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 14px 4px;
+}
+
+.sk-quiz-art {
+  display: flex;
+  flex: none;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 10px;
+  background: #f3e3b8;
+  color: #6b4718;
+}
+
+.sk-quiz-art svg { width: 28px; height: 28px; }
+.sk-quiz-question { font-size: 18px; font-weight: 800; line-height: 1.25; text-wrap: balance; }
+
+.sk-quiz-answer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 12px 12px;
+  padding: 6px 10px;
+  border-radius: 9px;
+  background: #ffd66e;
+  box-shadow: 0 0 0 2px #24160a;
+}
+
+.sk-quiz-emblem {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #24160a;
+  color: #ffd66e;
+}
+
+.sk-quiz-emblem svg { width: 22px; height: 22px; }
+.sk-quiz-answer-text { font-size: 18px; font-weight: 900; }
+.sk-quiz-reason { margin-top: 1px; font-size: 15px; font-weight: 700; line-height: 1.25; text-wrap: balance; }
+
+/* ------------------------------------------------------------------ */
+/* Pictures                                                             */
+/* ------------------------------------------------------------------ */
+
+.sk-wallet { position: absolute; }
+.sk-wallet-back { fill: #7a4a26; stroke: #3d230f; stroke-width: 2.5; }
+.sk-wallet-stitch { fill: none; stroke: #e2b37a; stroke-width: 1.4; stroke-dasharray: 4 3; }
+.sk-wallet-flap { fill: #915b31; stroke: #3d230f; stroke-width: 2.5; stroke-linejoin: round; }
+.sk-wallet-clasp { fill: #e4b84f; stroke: #6b4718; stroke-width: 2; }
+.sk-wallet-card { fill: #7fb1e0; stroke: #2a4a72; stroke-width: 1.5; }
+
+.sk-team { display: flex; gap: 8px; margin: 4px 0 20px; }
+
+.sk-team-person {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #d9e3f5;
+  color: #1d2c55;
+}
+
+.sk-team-person svg { width: 26px; height: 26px; }
+
+.sk-team-you {
+  position: absolute;
+  bottom: -20px;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.sk-org {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 190px;
+  font-family: var(--font-display);
+}
+
+.sk-org-box {
+  position: relative;
+  width: 52px;
+  height: 30px;
+  border: 2px solid #d9e3f5;
+  border-radius: 6px;
+  background: #13204a;
+}
+
+.sk-org-box--top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 120px;
+  height: 46px;
+  border-color: #ffd66e;
+  color: #ffd66e;
+}
+
+.sk-org-mark { font-size: 30px; font-weight: 900; line-height: 1; }
+.sk-org-label { color: #fff3d0; font-size: 16px; font-weight: 900; }
+.sk-org-lines { width: 140px; height: 18px; border: 2px solid #d9e3f5; border-bottom: 0; margin-top: 8px; }
+.sk-org-row { display: flex; gap: 22px; }
+
+.sk-stopwatch { position: absolute; width: 150px; display: flex; flex-direction: column; align-items: center; }
+.sk-stopwatch-crown { fill: #aeb6c2; stroke: #3b4352; stroke-width: 2; }
+.sk-stopwatch-case { fill: #e8edf3; stroke: #3b4352; stroke-width: 3; }
+.sk-stopwatch-track { fill: #ffffff; stroke: #d0d6df; stroke-width: 10; }
+.sk-stopwatch-ring { fill: none; stroke: #d6402e; stroke-width: 10; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.sk-stopwatch-hand { fill: none; stroke: #24160a; stroke-width: 4; stroke-linecap: round; }
+.sk-stopwatch-pin { fill: #24160a; }
+
+.sk-wall { position: absolute; }
+.sk-brick { fill: #b5532f; stroke: #5c2412; stroke-width: 1.5; }
+
+.sk-wall-label {
+  margin-top: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #fff7e2;
+  color: #24160a;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.sk-person {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-display);
+}
+
+.sk-person-head {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #d9e3f5;
+  color: #1d2c55;
+}
+
+.sk-person-head svg { width: 32px; height: 32px; }
+.sk-person-label { color: #fff3d0; font-size: 15px; font-weight: 800; }
+
+.sk-speech {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #24160a;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.sk-speech::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  border: 6px solid transparent;
+  border-top: 8px solid #ffffff;
+}
+
+.sk-speech--left::after { left: 14px; }
+.sk-speech--right::after { right: 14px; }
+
+.sk-sticky {
+  position: absolute;
+  padding: 10px 12px;
+  background: #fff1a8;
+  color: #24160a;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 900;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.45);
+}
+
+.sk-stop { position: absolute; display: flex; align-items: center; gap: 10px; width: 200px; font-family: var(--font-display); }
+.sk-stop-art { flex: none; }
+.sk-stop-face { fill: #c8102e; }
+.sk-stop-rim { fill: none; stroke: #ffffff; stroke-width: 3; }
+
+.sk-stop-word {
+  position: absolute;
+  left: 0;
+  top: 22px;
+  width: 64px;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.sk-stop-rule {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fff7e2;
+  color: #24160a;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.sk-timeline {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px 10px;
+  border-radius: 12px;
+  background: #fff7e2;
+  color: #24160a;
+  font-family: var(--font-display);
+  box-shadow: 0 0 0 2px #d8a948, 0 16px 34px rgba(0, 0, 0, 0.5);
+}
+
+.sk-timeline-title { font-size: 16px; font-weight: 900; }
+.sk-timeline-title--after { position: absolute; left: 12px; top: 8px; }
+
+/* The track keeps to the card's foot when the card is given a height. */
+.sk-timeline-track {
+  position: relative;
+  display: flex;
+  height: 76px;
+  margin-top: auto;
+  border-bottom: 3px solid #6b4718;
+}
+
+.sk-timeline-day {
+  flex: 1 1 0;
+  align-self: flex-end;
+  padding-bottom: 2px;
+  color: #5a3a12;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.sk-merge {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-left: -10px;
+  border-radius: 50%;
+  background: #2f8a5c;
+  color: #ffffff;
+}
+
+.sk-merge svg { width: 14px; height: 14px; }
+.sk-merge--conflict { background: #c8102e; }
+
+/* ------------------------------------------------------------------ */
+/* Layout variants used by the choreography                             */
+/* ------------------------------------------------------------------ */
+
+/* The Developers' card: its rows in two columns, so it stays above the
+   Developers standing under the screen. */
+.pk-card.sk-card--two-columns .pk-card-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 16px;
+}
+
+/* A checklist on one row (the Definition of Done over the Sprint strip). */
+.sk-checklist--inline .pk-card-body {
+  display: flex;
+  gap: 18px;
+}
+
+.sk-checklist--inline .pk-card-title { margin-bottom: 2px; }
+.sk-checklist--inline .sk-check-row { margin: 2px 0; }
+
+.sk-progress-track {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 1px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(36, 22, 10, 0.25);
+  overflow: hidden;
+}
+
+.sk-progress {
+  display: block;
+  height: 100%;
+  background: #136b34;
+  transform-origin: 0 50%;
+  scale: 0 1;
+}
+
+
+/* Emblems: on the strip's events, the board's columns and goal card, the
+   explanation bar, and the Scrum Team's members. */
+.sk-event-name svg { width: 14px; height: 14px; margin-right: 4px; vertical-align: -2px; }
+.sk-column-title { display: flex; align-items: center; justify-content: center; gap: 5px; }
+.sk-column-title svg { width: 15px; height: 15px; flex: none; }
+.sk-card svg { width: 14px; height: 14px; flex: none; margin-right: 5px; }
+
+.sk-bar { display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+.sk-bar-emblem {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #24160a;
+  color: #ffd66e;
+}
+
+.sk-bar-emblem svg { width: 15px; height: 15px; }
+.sk-team-person--coach { background: #13808a; color: #ffffff; }
+.sk-team-person--navigator { background: #7a2348; color: #ffffff; }
+.sk-team-person--builders { background: #f2b51f; color: #24160a; }
+.sk-team-person--you { box-shadow: 0 0 0 3px #2774ae; }
+
+/* The Scrum Team card's caption keeps "4 Developers" together. */
+.sk-team-caption { text-wrap: balance; }
+.sk-bar { text-wrap: balance; }

@@ -1,0 +1,338 @@
+/*
+ * The "brick-site" stage theme (js/song-video/brick-site.js): a construction
+ * site of toy bricks at sunrise behind "Not a One-Time Investment", after
+ * the title picture of Lecture 12 (UCLA blue, gold, and tan bricks, a crane
+ * lifting a prebuilt module). Only the backdrop changes. The teaching labels retain their opaque surfaces as daylight grows;
+ * nothing large changes brightness quickly. Like stage.css this styles the 960×540 stage,
+ * which keeps its own artwork in both page themes; the player's print styles
+ * hide it.
+ */
+
+.theme-brick-site {
+  --bs-blue: #2774ae;
+  --bs-blue-light: #5eb5e4;
+  --bs-blue-dark: #175789;
+  --bs-brass: #ffd100;
+  --bs-brass-light: #ffe66e;
+  --bs-brass-dark: #ba8f09;
+  background: #263f72;
+}
+
+.bs-room {
+  overflow: hidden;
+}
+
+.bs-art {
+  position: absolute;
+  inset: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Sky                                                                  */
+/* ------------------------------------------------------------------ */
+
+.bs-sky { fill: url(#bs-sky); }
+/* First light warms the eastern horizon while the upper sky stays blue.
+   After the sun clears it, the morning layer reveals a clearer azure sky. */
+.bs-sky-0 { stop-color: color-mix(in srgb, #122d72, #3156a5 var(--bs-first-light, 0%)); }
+.bs-sky-1 { stop-color: color-mix(in srgb, #354c9c, #8565b5 var(--bs-first-light, 0%)); }
+.bs-sky-2 { stop-color: color-mix(in srgb, #a05b99, #f18b9b var(--bs-first-light, 0%)); }
+.bs-sky-3 { stop-color: color-mix(in srgb, #ec8d83, #ffa45b var(--bs-first-light, 0%)); }
+.bs-sky-4 { stop-color: color-mix(in srgb, #ffc48c, #ffd47b var(--bs-first-light, 0%)); }
+
+.bs-sun { fill: url(#bs-sun); }
+.bs-sun-0 { stop-color: color-mix(in srgb, #ff8c56, #ffe9a8 var(--bs-golden, 0%)); stop-opacity: 0.66; }
+.bs-sun-1 { stop-color: #ffb269; stop-opacity: 0.3; }
+.bs-sun-2 { stop-color: rgba(255, 184, 105, 0); }
+
+/* Golden shafts of light become clearer as the sun climbs. */
+.bs-ray { fill: url(#bs-ray-soft); }
+.bs-ray-soft-0 { stop-color: #fff1c4; stop-opacity: 0.42; }
+.bs-ray-soft-1 { stop-color: #ffd08a; stop-opacity: 0.18; }
+.bs-ray-soft-2 { stop-color: #ffd08a; stop-opacity: 0; }
+.bs-ray-0 { stop-color: rgba(255, 196, 140, 0.13); }
+.bs-ray-1 { stop-color: rgba(255, 196, 140, 0); }
+
+.bs-star { fill: #fff3d0; opacity: 0.75; }
+
+/* Two ranges of hills, the far one paler in the morning haze, and a warm
+   glow low over the horizon. */
+.bs-hills { fill: color-mix(in srgb, #304b72, #62958d var(--bs-ambient, 0%)); }
+.bs-hills--far { fill: color-mix(in srgb, #667198, #a6c1cd var(--bs-ambient, 0%)); }
+.bs-haze { fill: url(#bs-haze); }
+.bs-haze-0 { stop-color: rgba(255, 170, 120, 0); }
+.bs-haze-1 { stop-color: rgba(255, 180, 110, 0.22); }
+
+/* The lower surfaces catch rose light before sunrise, reach coral/amber
+   around the horizon crossing, then turn peach and cream as the sun climbs.
+   Cool shadows preserve the cloud volume. Ambient warmth remains beneath
+   the clouds; the stronger direct highlights face the sun as each bank drifts.
+   Both colour transitions follow solar elevation. Same art in both themes. */
+.bs-cloud-body { fill: url(#bs-cloud); }
+.bs-cloud-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #233263, #654b83 var(--bs-first-light, 0%)), #7d94ba var(--bs-golden, 0%)); }
+.bs-cloud-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #64518c, #cc6c91 var(--bs-first-light, 0%)), #c6c2d3 var(--bs-golden, 0%)); }
+.bs-cloud-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #bb6699, #ff9b69 var(--bs-first-light, 0%)), #ffe0b3 var(--bs-golden, 0%)); }
+.bs-cloud-3 { stop-color: color-mix(in srgb, color-mix(in srgb, #ec999e, #ffcf7d var(--bs-first-light, 0%)), #fff2ca var(--bs-golden, 0%)); }
+.bs-cloud-roll { fill: color-mix(in srgb, #3a3b79, #8b9fbe var(--bs-golden, 0%)); opacity: 0.18; }
+.bs-cloud-scrap { fill: color-mix(in srgb, #6569a1, #b1bdd7 var(--bs-golden, 0%)); opacity: 0.45; }
+.bs-cloud-edge-0, .bs-cloud-edge-1, .bs-cloud-edge-2 { stop-color: color-mix(in srgb, #ffbe82, #fff3c8 var(--bs-golden, 0%)); }
+.bs-cloud-edge-0 { stop-opacity: 0; }
+.bs-cloud-edge-1 { stop-opacity: 0.2; }
+.bs-cloud-edge-2 { stop-opacity: 1; }
+.bs-cloud-sunlight { opacity: calc(var(--bs-cloud-warmth, 0) * 0.55); }
+.bs-cloud-light { opacity: calc(var(--bs-cloud-warmth, 0) * 0.4); }
+.bs-cloud-filament { opacity: calc(var(--bs-cloud-warmth, 0) * 0.24); }
+.bs-cloud-wisp { fill: color-mix(in srgb, #aa91ce, #e5d7e3 var(--bs-golden, 0%)); opacity: 0.24; }
+.bs-sun-disc { fill: color-mix(in srgb, #ffd2a0, #fffaf0 var(--bs-golden, 0%)); }
+.bs-sun-disc-core { fill: url(#bs-sun-core); }
+.bs-sun-core-0 { stop-color: #ffffff; }
+.bs-sun-core-1 { stop-color: #fffbee; stop-opacity: 0.9; }
+.bs-sun-core-2 { stop-color: color-mix(in srgb, #ffc890, #fff3c8 var(--bs-golden, 0%)); stop-opacity: 0.6; }
+.bs-sun-bloom { fill: url(#bs-sun-bloom); }
+.bs-sun-bloom-0 { stop-color: #fff6dc; stop-opacity: 0.95; }
+.bs-sun-bloom-1 { stop-color: color-mix(in srgb, #ffb27a, #ffe6a8 var(--bs-golden, 0%)); stop-opacity: 0.55; }
+.bs-sun-bloom-2 { stop-color: #ffb27a; stop-opacity: 0; }
+.bs-sun-corona-disc { fill: url(#bs-sun-corona); }
+.bs-sun-corona-0 { stop-color: color-mix(in srgb, #ff9a5c, #fff0bd var(--bs-golden, 0%)); stop-opacity: 0.85; }
+.bs-sun-corona-1 { stop-color: color-mix(in srgb, #ff7a4a, #ffd27a var(--bs-golden, 0%)); stop-opacity: 0.38; }
+.bs-sun-corona-2 { stop-color: #ffb36b; stop-opacity: 0; }
+.bs-horizon-glow { fill: url(#bs-horizon-glow); }
+.bs-horizon-glow-0 { stop-color: color-mix(in srgb, #ff7f5a, #ffd38f var(--bs-golden, 0%)); stop-opacity: 0.6; }
+.bs-horizon-glow-1 { stop-color: color-mix(in srgb, #e8608a, #ffb37a var(--bs-golden, 0%)); stop-opacity: 0.22; }
+.bs-horizon-glow-2 { stop-color: #e8608a; stop-opacity: 0; }
+.bs-flare-dot { mix-blend-mode: screen; }
+.bs-flare-dot--0 { fill: rgba(255, 214, 160, 0.1); }
+.bs-flare-dot--1 { fill: rgba(255, 170, 120, 0.08); }
+.bs-flare-dot--2 { fill: rgba(190, 220, 255, 0.07); }
+.bs-morning-sky { fill: url(#bs-morning); opacity: 0; }
+.bs-morning-0 { stop-color: #277ac7; }
+.bs-morning-1 { stop-color: #82b5e5; }
+.bs-morning-2 { stop-color: #c2d6e8; }
+.bs-morning-3 { stop-color: #ffe3a0; }
+
+
+.bs-far-shape { fill: color-mix(in srgb, #29446c, #709ba8 var(--bs-ambient, 0%)); }
+.bs-far-window { fill: #ffd58b; opacity: 0; }
+.bs-far-back { fill: color-mix(in srgb, #4a6590, #a3bfc8 var(--bs-ambient, 0%)); }
+.bs-far-back-line { fill: none; stroke: color-mix(in srgb, #4a6590, #a3bfc8 var(--bs-ambient, 0%)); stroke-width: 2; }
+.bs-far-line { fill: none; stroke: color-mix(in srgb, #29446c, #709ba8 var(--bs-ambient, 0%)); stroke-width: 1.6; }
+
+/* ------------------------------------------------------------------ */
+/* Brick walls                                                          */
+/* ------------------------------------------------------------------ */
+
+/* A tan face lit from the left; the side face recedes into shadow. */
+.bs-face { fill: url(#bs-lit); }
+.bs-lit-0 { stop-color: color-mix(in srgb, #9294ae, #ffdfa7 var(--bs-ambient, 0%)); }
+.bs-lit-1 { stop-color: color-mix(in srgb, #828398, #eac18a var(--bs-ambient, 0%)); }
+.bs-lit-2 { stop-color: color-mix(in srgb, #64687e, #be935f var(--bs-ambient, 0%)); }
+
+.bs-side { fill: url(#bs-side); }
+.bs-side-0 { stop-color: #9c7c56; }
+.bs-side-1 { stop-color: #755b41; }
+
+.bs-band--blue { fill: var(--bs-blue); }
+.bs-band--gold { fill: var(--bs-brass); }
+.bs-band-light { fill: rgba(255, 240, 210, 0.35); }
+.bs-band-shadow { fill: rgba(20, 12, 4, 0.35); }
+
+.bs-shade { fill: url(#bs-shadow); }
+.bs-shadow-0 { stop-color: rgba(255, 228, 185, 0.1); }
+.bs-shadow-1 { stop-color: rgba(0, 0, 0, 0); }
+.bs-shadow-2 { stop-color: rgba(0, 0, 0, 0.22); }
+
+.bs-rim { fill: rgba(255, 214, 160, 0.42); }
+.bs-bond { fill: url(#bs-bond); }
+.bs-tinted { fill: url(#bs-tint); }
+.bs-tint--light { fill: rgba(255, 240, 210, 0.08); }
+.bs-tint--dark { fill: rgba(30, 18, 6, 0.1); }
+.bs-mortar { fill: none; stroke: rgba(28, 16, 6, 0.3); stroke-width: 1; }
+.bs-edge { fill: none; stroke: rgba(255, 236, 200, 0.4); stroke-width: 1.5; }
+.bs-course { fill: #cfb081; }
+
+.bs-stud { fill: #e7c996; stroke: rgba(40, 26, 8, 0.45); stroke-width: 0.8; }
+.bs-stud--module { fill: var(--bs-brass-light); }
+.bs-stud-shine { fill: rgba(255, 245, 220, 0.45); }
+
+/* Roofs: terracotta tiles, the sunlit facet left, the far facet in shade. */
+.bs-roof { fill: url(#bs-roof); stroke: rgba(50, 18, 6, 0.5); stroke-width: 1; }
+.bs-roof-0 { stop-color: #d98459; }
+.bs-roof-1 { stop-color: #c76b48; }
+.bs-roof-2 { stop-color: #a34c39; }
+.bs-roof-3 { stop-color: #7d3e35; }
+.bs-roof-joint { fill: none; stroke: rgba(62, 40, 35, 0.24); stroke-width: 0.7; }
+.bs-roof-tile { fill: none; stroke: rgba(60, 20, 8, 0.4); stroke-width: 1.2; }
+.bs-roof-ridge { fill: none; stroke: rgba(255, 210, 170, 0.25); stroke-width: 1.2; }
+.bs-eave { fill: #e4d2ac; stroke: rgba(40, 26, 8, 0.45); stroke-width: 0.8; }
+.bs-eave-shadow { fill: rgba(20, 10, 4, 0.32); }
+.bs-finial-post { fill: var(--bs-brass-dark); }
+.bs-finial { fill: var(--bs-brass-light); stroke: var(--bs-brass-dark); stroke-width: 1; }
+
+.bs-belfry-back { fill: #2a2118; }
+.bs-column { fill: color-mix(in srgb, #9ca6b5, #ece6d6 var(--bs-ambient, 0%)); stroke: rgba(40, 26, 8, 0.4); stroke-width: 0.6; }
+.bs-step { fill: #cbbb98; }
+
+/* Recessed glass reflects the sky; a few occupied rooms glow warmly before
+   dawn. Frames receive ambient daylight rather than emitting their own light. */
+.bs-win-cast { fill: rgba(20, 12, 4, 0.3); }
+.bs-win-frame { fill: color-mix(in srgb, #9aa5b5, #e7dec9 var(--bs-ambient, 0%)); stroke: rgba(30, 20, 8, 0.55); stroke-width: 1; }
+.bs-win-inner { fill: none; stroke: rgba(12, 10, 24, 0.42); stroke-width: 2.4; }
+.bs-win-sill-shadow { fill: rgba(20, 12, 4, 0.28); }
+.bs-win-dark { fill: url(#bs-glass-dark); }
+.bs-glass-dark-0 { stop-color: color-mix(in srgb, #172641, #6b9cbb var(--bs-ambient, 0%)); }
+.bs-glass-dark-1 { stop-color: color-mix(in srgb, #223852, #36566e var(--bs-ambient, 0%)); }
+.bs-glass-dark-2 { stop-color: color-mix(in srgb, #101b2c, #1d3442 var(--bs-ambient, 0%)); }
+.bs-win-lit { opacity: 0; }
+.bs-room-light { fill: url(#bs-glass-lit); }
+.bs-glass-lit-0 { stop-color: #fffde8; }
+.bs-glass-lit-1 { stop-color: #ffe7a0; }
+.bs-glass-lit-2 { stop-color: #f6bf59; }
+.bs-glass-lit-3 { stop-color: #bb792e; }
+.bs-room-floor { fill: #2a2022; opacity: 0.12; }
+.bs-room-reveal { fill: none; stroke: #312b28; stroke-width: 1.6; opacity: 0.36; }
+.bs-win-reflect { fill: #b4cce3; opacity: var(--bs-glazing-reflection, 0.08); }
+.bs-win-glint { fill: none; stroke: #cee5f3; stroke-width: 0.7; opacity: var(--bs-glazing-reflection, 0.08); }
+.bs-win-bar { fill: none; stroke: color-mix(in srgb, #a1aabb, #eee5cf var(--bs-ambient, 0%)); stroke-width: 1.8; }
+.bs-win-sill { fill: color-mix(in srgb, #9f9c98, #e4d2ac var(--bs-ambient, 0%)); stroke: rgba(40, 26, 8, 0.45); stroke-width: 0.6; }
+
+.bs-scaffold { fill: none; stroke: rgba(205, 210, 220, 0.5); stroke-width: 2.4; stroke-linecap: round; }
+.bs-scaffold-clamp { fill: #a6aaa8; stroke: #636f74; stroke-width: 0.7; }
+.bs-scaffold-foot { fill: #687478; }
+.bs-plank { fill: #8a6a42; stroke: rgba(30, 20, 8, 0.5); stroke-width: 0.6; }
+
+.bs-lamp-post,
+.bs-lamp-ring,
+.bs-lamp-base,
+.bs-lamp-cap { fill: #3d4350; stroke: rgba(0, 0, 0, 0.4); stroke-width: 0.6; }
+.bs-lamp-bulb { fill: #ffd98a; }
+.bs-lamp-halo { fill: url(#bs-lamp-glow); opacity: 0; }
+.bs-lamp-0 { stop-color: rgba(255, 214, 140, 0.55); }
+.bs-lamp-1 { stop-color: rgba(255, 214, 140, 0); }
+
+/* The brick being laid during the intro's build. */
+.bs-drop-brick { stroke: rgba(20, 14, 6, 0.55); stroke-width: 1; }
+.bs-drop-brick--tan { fill: #dbba86; }
+.bs-drop-brick--blue { fill: var(--bs-blue); }
+.bs-drop-brick--gold { fill: var(--bs-brass); }
+.bs-drop-stud { fill: #e6d6ad; stroke: rgba(20, 14, 6, 0.45); stroke-width: 0.8; }
+
+/* ------------------------------------------------------------------ */
+/* The crane                                                            */
+/* ------------------------------------------------------------------ */
+
+.bs-crane-lattice { fill: none; stroke: var(--bs-brass); stroke-width: 1.8; stroke-linejoin: round; }
+.bs-crane-lattice--back { stroke: var(--bs-brass-dark); stroke-width: 1.4; }
+.bs-crane-tie { fill: none; stroke: rgba(235, 205, 130, 0.55); stroke-width: 1; }
+.bs-crane-weight { fill: #7b818c; stroke: #4c515b; stroke-width: 1; }
+.bs-crane-weight-line { fill: none; stroke: rgba(30, 32, 38, 0.6); stroke-width: 1; }
+.bs-crane-cab { fill: var(--bs-brass); stroke: var(--bs-brass-dark); stroke-width: 1; }
+.bs-crane-glass { fill: #a9d2ee; }
+.bs-crane-trolley { fill: var(--bs-brass-dark); }
+.bs-crane-cable { fill: none; stroke: #d9c99a; stroke-width: 1.2; }
+.bs-crane-hook { fill: #9aa0aa; stroke: #4c515b; stroke-width: 0.8; }
+.bs-pennant-pole { fill: none; stroke: var(--bs-brass-dark); stroke-width: 1.4; }
+.bs-pennant { fill: var(--bs-blue-light); stroke: var(--bs-blue-dark); stroke-width: 0.8; stroke-linejoin: round; }
+
+.bs-mod { stroke: rgba(20, 16, 10, 0.55); stroke-width: 1; }
+.bs-mod--blue { fill: var(--bs-blue); }
+.bs-mod--gold { fill: var(--bs-brass); }
+.bs-mod--tan { fill: #d8c59a; }
+.bs-mod-shine { fill: rgba(255, 255, 255, 0.32); }
+
+/* The forklift, dim in the ground shadow: it moves, so it stays low in
+   contrast against the ground (about 2:1), never a bright accent. */
+.bs-fork-shadow { fill: url(#bs-soft-shadow); }
+.bs-fork-weight { fill: #353943; stroke: #22252c; stroke-width: 1; }
+.bs-fork-body { fill: #5d7290; stroke: #34445c; stroke-width: 1; }
+.bs-fork-shine { fill: rgba(255, 255, 255, 0.12); }
+.bs-fork-cage { fill: none; stroke: #22252c; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.bs-fork-seat { fill: #22252c; }
+.bs-fork-mast { fill: #2c3038; }
+.bs-fork-tine { fill: none; stroke: #2c3038; stroke-width: 3; stroke-linecap: round; }
+.bs-fork-tyre { fill: #15171b; }
+.bs-fork-hub { fill: #4f5560; }
+.bs-fork-spoke { fill: none; stroke: #2c3038; stroke-width: 1.2; }
+.bs-forklift .bs-mod--blue { fill: #3a5272; }
+.bs-forklift .bs-stud--blue { fill: #4a6385; }
+
+/* ------------------------------------------------------------------ */
+/* The ground                                                           */
+/* ------------------------------------------------------------------ */
+
+.bs-plate { fill: url(#bs-plate); }
+.bs-plate-0 { stop-color: #579a68; }
+.bs-plate-1 { stop-color: #397e51; }
+.bs-plate-2 { stop-color: #235b3d; }
+.bs-base-shadow { fill: url(#bs-base-shadow); }
+.bs-base-shadow-0 { stop-color: rgba(0, 0, 0, 0.35); }
+.bs-base-shadow-1 { stop-color: rgba(0, 0, 0, 0); }
+.bs-gstud-shadow { fill: url(#bs-soft-shadow); }
+.bs-soft-shadow-0 { stop-color: #06100a; stop-opacity: 0.26; }
+.bs-soft-shadow-1 { stop-color: #06100a; stop-opacity: 0.12; }
+.bs-soft-shadow-2 { stop-color: #06100a; stop-opacity: 0; }
+.bs-gstud { fill: url(#bs-stud-side); }
+.bs-stud-side-0 { stop-color: #69ac77; }
+.bs-stud-side-1 { stop-color: #458d5d; }
+.bs-stud-side-2 { stop-color: #2a6948; }
+.bs-gstud-top { fill: #96cf89; }
+.bs-gstud-shine { fill: rgba(220, 230, 255, 0.22); }
+
+/* Soft contact shadows on the baseplate at the buildings' and lamps' feet. */
+.bs-cast { fill: url(#bs-cast); }
+.bs-cast-0 { stop-color: rgba(4, 6, 14, 0.5); }
+.bs-cast-1 { stop-color: rgba(4, 6, 14, 0); }
+.bs-lamp-shadow { fill: url(#bs-soft-shadow); }
+
+/* Large loose bricks in front: shadow, faces, studs. */
+.bs-big-shadow { fill: url(#bs-soft-shadow); }
+.bs-big-edge { fill: none; stroke: rgba(255, 255, 255, 0.35); stroke-width: 1.5; }
+.bs-big-bevel { fill: none; stroke: rgba(255, 247, 225, 0.2); stroke-width: 1; }
+.bs-big-mold { fill: none; stroke: rgba(29, 42, 44, 0.22); stroke-width: 1; }
+.bs-big-stud-rim { fill: none; stroke: rgba(73, 61, 48, 0.16); stroke-width: 0.7; }
+.bs-big-front-shine { fill: rgba(255, 255, 255, 0.16); }
+.bs-big-stud-shine { fill: rgba(255, 255, 255, 0.4); }
+.bs-big--tan .bs-big-front { fill: #d5b57c; }
+.bs-big--tan .bs-big-top { fill: #f1d9a6; }
+.bs-big--tan .bs-big-side { fill: #ad8c55; }
+.bs-big--tan .bs-big-stud { fill: #c8a66b; }
+.bs-big--tan .bs-big-stud-top { fill: #ffebb9; }
+.bs-big--blue .bs-big-front { fill: var(--bs-blue); }
+.bs-big--blue .bs-big-top { fill: var(--bs-blue-light); }
+.bs-big--blue .bs-big-side { fill: var(--bs-blue-dark); }
+.bs-big--blue .bs-big-stud { fill: #2c8bc5; }
+.bs-big--blue .bs-big-stud-top { fill: #83c9ed; }
+.bs-big--gold .bs-big-front { fill: var(--bs-brass); }
+.bs-big--gold .bs-big-top { fill: var(--bs-brass-light); }
+.bs-big--gold .bs-big-side { fill: var(--bs-brass-dark); }
+.bs-big--gold .bs-big-stud { fill: #d6a22f; }
+.bs-big--gold .bs-big-stud-top { fill: #ffe798; }
+.bs-big--red .bs-big-front { fill: #cf5745; }
+.bs-big--red .bs-big-top { fill: #ef8061; }
+.bs-big--red .bs-big-stud { fill: #cf5745; }
+.bs-big--red .bs-big-stud-top { fill: #ffa485; }
+
+/* A cool pre-dawn veil fades as the sun comes up. No theme transition or
+   printing override is needed: the stage is isolated and hidden in print. */
+.bs-dawn-shade { fill: #283463; opacity: 0; }
+.bs-golden-light { fill: #ffbe58; opacity: 0; }
+
+.bs-vignette {
+  background: radial-gradient(ellipse 80% 75% at 50% 45%, transparent 65%, rgba(30, 43, 57, 0.14));
+}
+
+/* A falling brick's edge: the cut piece of wall reads as one brick. */
+.bs-drop-edge { fill: none; stroke: rgba(30, 18, 6, 0.55); stroke-width: 1; }
+
+/* The finale's flag on tower B: UCLA blue with a gold brick. */
+.bs-flag-pole { fill: none; stroke: #5b5346; stroke-width: 1.6; stroke-linecap: round; }
+.bs-flag-cloth { fill: #2774ae; stroke: #0e3a5e; stroke-width: 0.8; stroke-linejoin: round; }
+.bs-flag-brick rect { fill: #ffd100; stroke: #8a6d00; stroke-width: 0.6; }
+
+/* Pieces the sun lights from the right (the hall, left of the sun's path):
+   the mirrored face, shade, and roof, and a sunlit side face. */
+.bs-face--r { fill: url(#bs-lit-r); }
+.bs-shade--r { fill: url(#bs-shadow-r); }
+.bs-roof--r { fill: url(#bs-roof-r); }
+.bs-side--lit { fill: url(#bs-side-lit); }
+.bs-side-lit-0 { stop-color: #e9cb98; }
+.bs-side-lit-1 { stop-color: #d0ad7a; }

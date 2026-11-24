@@ -60,6 +60,17 @@ async function clickStep(page, stepIndex) {
   await expectActiveStep(page, stepIndex);
 }
 
+/**
+ * Detach the step instructions into their popout window and return its page.
+ * While detached, the main window hides its step view.
+ * @param {import('@playwright/test').Page} page
+ */
+async function openInstructionsPopout(page) {
+  const popoutOpened = page.waitForEvent('popup');
+  await page.getByRole('button', { name: 'Open instructions in separate window' }).click();
+  return popoutOpened;
+}
+
 async function currentStepIndex(page) {
   const label = await page.locator('.tvm-step-btn[aria-current="step"]').getAttribute('aria-label');
   const match = /^Step\s+(\d+):/.exec(label || '');
@@ -243,6 +254,7 @@ module.exports = {
   stepButton,
   expectActiveStep,
   clickStep,
+  openInstructionsPopout,
   currentStepIndex,
   expectStepCount,
   runCurrentStepTests,

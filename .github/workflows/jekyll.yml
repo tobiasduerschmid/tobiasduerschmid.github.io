@@ -46,10 +46,36 @@ jobs:
       - name: Install Chromium for preview rendering
         run: npx playwright install --with-deps chromium
 
+      # The previews depend only on these inputs. Two runs on the same inputs
+      # differ only in attribute order and a few units of crop on a handful
+      # of thumbnails, so a cached run is as good as a fresh one, and its
+      # content-hashed file names stay the same from one deploy to the next.
+      - name: Restore hero choice previews
+        id: hero-previews
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: assets/se-gym-hero-choice-previews
+          key: hero-previews-${{ hashFiles('package-lock.json', '_includes/se-gym-hero.svg', 'js/se-gym-hero-avatar.js', 'scripts/build_se_gym_hero_choice_previews.js') }}
+
       - name: Pre-render hero choice previews
+        if: steps.hero-previews.outputs.cache-hit != 'true'
         run: make hero-choice-previews
         env:
           JEKYLL_ENV: production
+
+      # .uml_cache holds the pre-rendered diagram SVGs. Each file name hashes
+      # the renderer sources and the diagram text (_plugins/uml_static.rb), so
+      # a restored file is exactly what a fresh render would draw. Without it,
+      # every page with a diagram launches its own headless Chromium. The key
+      # starts over when ArchUML or Chromium (package-lock.json) changes, so
+      # SVGs from an older renderer are not carried along.
+      - name: Restore rendered diagrams
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .uml_cache
+          key: uml-svg-${{ hashFiles('package-lock.json', 'js/ArchUML/**', 'js/git-graph.js') }}-${{ github.run_id }}
+          restore-keys: |
+            uml-svg-${{ hashFiles('package-lock.json', 'js/ArchUML/**', 'js/git-graph.js') }}-
 
       - name: Build with Jekyll
         run: bundle exec jekyll build --strict_front_matter

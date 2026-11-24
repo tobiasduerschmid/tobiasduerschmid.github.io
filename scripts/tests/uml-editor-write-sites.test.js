@@ -47,7 +47,9 @@ const UNDO_SNAPSHOT = 'snapshotForUndo';
 // The function chains that may take an undo step: the host's write, the typing handler, Reset to the
 // starter, and the classic host's service startUndoStep, which the commit of an in-place rename calls
 // from the session (plan Task 18: the session has no undo stack of its own).
-const UNDO_SNAPSHOT_TAKERS = [HOST_WRITE, 'textarea:input', 'resetCurrentDiagramToStarter', 'startUndoStep'];
+// Since the merge of origin/master (71fbaeca: "a refused rename leaves undo and redo alone") the service
+// takes no step: the rename's own write does.
+const UNDO_SNAPSHOT_TAKERS = [HOST_WRITE, 'textarea:input', 'resetCurrentDiagramToStarter'];
 const UNDO_STEP_SERVICE = 'startUndoStep';
 // Since plan Task 23 the in-place editors are the module's (js/ArchUML/diagram-editor/de-inline.js): the chain is
 // the file's, and the scan below reads the module's files beside the include.
@@ -247,13 +249,12 @@ test('the include assigns the textarea exactly once, in setDocument', () => {
 });
 
 // Spec §3.10, R1: commands take no undo step for themselves. The host's write takes one for each
-// operation, and the typing handler for typed text. Two keep their own step, as at stage R0: Reset to
-// the starter, a document load of the host (spec §3.5, first row) that stays undoable; and the commit
-// of an in-place rename, which takes its step before the rename, so that a rename that is refused or
-// changes nothing still leaves one Undo (the sealed gestures class-rename-to-a-taken-name-is-refused,
-// sequence-lifeline-rename-to-a-keyword-id-is-refused, and component-port-renamed-in-place-keeps-its-source
-// pin it); the write of a rename it makes joins that step.
-test('only the host\'s write, the typing handler, Reset to the starter, and an in-place rename\'s commit take an undo snapshot', () => {
+// operation that changes the document, and the typing handler for typed text. Reset to the starter, a
+// document load of the host (spec §3.5, first row) that stays undoable, keeps its own step. The commit of
+// an in-place rename still asks for one (host.startUndoStep), but since the merge of origin/master
+// (71fbaeca) the service takes none: a rename that is refused or changes nothing leaves undo and redo
+// as they were (tests/uml-editor-robustness.spec.js), where at stage R0 it left one Undo.
+test('only the host\'s write, the typing handler, and Reset to the starter take an undo snapshot', () => {
   const sites = [];
   walk(loadIncludeScript().ast, (nodePath) => {
     const { node } = nodePath;

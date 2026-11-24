@@ -1,0 +1,168 @@
+{%- comment -%}
+  Print view of a step's diagram challenge (`diagram_challenge`), placed
+  between the step's files and its solution by tutorial-print-content.html.
+  Params: tutorial, tutorial_key (its key in site.data.tutorials), step,
+  index (zero-based), instructor_mode.
+
+  Students get the attempt prompts and questions, then the reply card
+  "Shown after you lock in": each diagram as an ArchUML code block (drawn by
+  UMLShared.renderAll, or at build time in production) and the evidence
+  list. Keys and debriefs sit in an instructor-only .step-solution block,
+  shown with ?instructor-mode=true and on instructor pages. A plan-first
+  step ends with the results card, filled from this browser's saved progress
+  by DiagramChallenge.renderResults; the card names its tutorial, so a page
+  that embeds several tutorials reads each one's own progress record.
+{%- endcomment -%}
+{%- assign tdcp = include.step.diagram_challenge -%}
+{%- assign tdcp_reply = tdcp.reply -%}
+{%- assign tdcp_id = 'diagram-challenge-print-' | append: include.index -%}
+{%- assign tdcp_plan_first = false -%}{%- if tdcp.mode == 'plan-first' -%}{%- assign tdcp_plan_first = true -%}{%- endif -%}
+<section class="tutorial-diagram-challenge-print" aria-labelledby="{{ tdcp_id }}-title">
+  <h3 class="tutorial-diagram-challenge-print__title" id="{{ tdcp_id }}-title">Diagram challenge</h3>
+  {%- if tdcp_plan_first %}
+  <p>For each question, plan which view you would ask an AI coding agent for. After you lock in your plan, the expert's views arrive and you answer with them.</p>
+  {%- else %}
+  <p>Answer from the code first. After you lock in, an AI coding agent's diagram arrives and you answer again with it.</p>
+  {%- endif %}
+
+  {%- if tdcp.attempt.hypothesis or tdcp.attempt.evidence_pins or tdcp.attempt.view_wish %}
+  <h4 class="tutorial-diagram-challenge-print__heading">Before the answer choices</h4>
+  {%- if tdcp.attempt.hypothesis %}
+  <p><strong>Your hypothesis, in one sentence:</strong></p>
+  <div class="tutorial-diagram-challenge-print__writing"></div>
+  {%- endif %}
+  {%- if tdcp.attempt.evidence_pins %}
+  <p><strong>Evidence:</strong> write down at least {{ tdcp.attempt.evidence_pins }} file and line (<code>path:line</code>) that support your hypothesis.</p>
+  <div class="tutorial-diagram-challenge-print__writing"></div>
+  {%- endif %}
+  {%- if tdcp.attempt.view_wish %}
+  <p><strong>What would you want a diagram of this code to show?</strong></p>
+  <div class="tutorial-diagram-challenge-print__writing"></div>
+  {%- endif %}
+  {%- endif %}
+
+  <h4 class="tutorial-diagram-challenge-print__heading">{% if tdcp_plan_first %}Plan your requests{% else %}Answer from the code{% endif %}</h4>
+  {%- if tdcp_plan_first %}
+    {%- for tdcp_entry in tdcp.plan %}
+      {%- assign tdcp_planned_id = tdcp_entry['for'] | default: tdcp.questions[forloop.index0].id -%}
+      {%- assign tdcp_planned = tdcp.questions | where: 'id', tdcp_planned_id | first -%}
+      {%- assign tdcp_label = 'Question ' | append: forloop.index -%}
+      {% include tutorial-diagram-challenge-print-question.html question=tdcp_entry label=tdcp_label stem=tdcp_planned.question hint='Which view would you ask the agent for to answer it?' %}
+    {%- endfor %}
+  {%- else %}
+    {%- for tdcp_question in tdcp.questions %}
+      {%- assign tdcp_label = 'Question ' | append: forloop.index -%}
+      {% include tutorial-diagram-challenge-print-question.html question=tdcp_question label=tdcp_label %}
+    {%- endfor %}
+  <p><strong>How sure are you of these answers?</strong> Guessing · Fairly sure · Sure</p>
+  {%- if tdcp.predict_view %}
+  <p><strong>Which view would you ask the agent for?</strong> Class diagram · Component diagram · Sequence diagram</p>
+  {%- endif %}
+  {%- endif %}
+
+  <div class="tutorial-diagram-challenge-print__reply">
+    <h4 class="tutorial-diagram-challenge-print__heading">Shown after you lock in</h4>
+    {%- if tdcp_reply.contrast %}
+    <h5>First reply</h5>
+    {%- if tdcp_reply.contrast.request %}<p><strong>You asked:</strong> {{ tdcp_reply.contrast.request | markdownify | remove: '<p>' | remove: '</p>' | strip }}</p>{% endif %}
+    {%- if tdcp_reply.contrast.diagram %}
+    {%- if tdcp_reply.contrast.diagram.label %}<p><strong>{{ tdcp_reply.contrast.diagram.label | escape }}</strong></p>{% endif %}
+    <pre><code class="language-uml-{{ tdcp_reply.contrast.diagram.type | default: 'class' | downcase }}">{{ tdcp_reply.contrast.diagram.source | xml_escape }}</code></pre>
+    {%- endif %}
+    {%- if tdcp_reply.contrast.question %}{% include tutorial-diagram-challenge-print-question.html question=tdcp_reply.contrast.question %}{% endif %}
+    <h5>Second reply</h5>
+    {%- endif %}
+    {%- if tdcp_reply.request %}<p><strong>You asked:</strong> {{ tdcp_reply.request | markdownify | remove: '<p>' | remove: '</p>' | strip }}</p>{% endif %}
+    {%- if tdcp_reply.summary %}<p><strong>Summary:</strong> {{ tdcp_reply.summary | markdownify | remove: '<p>' | remove: '</p>' | strip }}</p>{% endif %}
+    {%- for tdcp_diagram in tdcp_reply.diagrams %}
+    {%- comment -%}A visible label, not a `caption:` line: the figure's accessible name stays the auto-generated description.{%- endcomment -%}
+    {%- if tdcp_diagram.label %}<p><strong>{{ tdcp_diagram.label | escape }}</strong></p>{% endif %}
+    <pre><code class="language-uml-{{ tdcp_diagram.type | default: 'class' | downcase }}">{{ tdcp_diagram.source | xml_escape }}</code></pre>
+    {%- endfor %}
+    {%- if tdcp_reply.evidence %}
+    <h5>Evidence</h5>
+    <ul class="tutorial-diagram-challenge-print__evidence">
+      {%- for tdcp_item in tdcp_reply.evidence %}
+      <li>{{ tdcp_item.text | markdownify | remove: '<p>' | remove: '</p>' | strip }}: <code>{{ tdcp_item.ref | escape }}</code></li>
+      {%- endfor %}
+    </ul>
+    {%- endif %}
+    {%- if tdcp_reply.files_read %}
+    <h5>Files read</h5>
+    <ul class="tutorial-diagram-challenge-print__files">
+      {%- for tdcp_path in tdcp_reply.files_read %}<li><code>{{ tdcp_path | escape }}</code></li>{%- endfor %}
+    </ul>
+    {%- endif %}
+    {%- if tdcp_reply.left_out %}<p><strong>Left out:</strong> {{ tdcp_reply.left_out | markdownify | remove: '<p>' | remove: '</p>' | strip }}</p>{% endif %}
+    {%- if tdcp_reply.label %}<p><em>{{ tdcp_reply.label | markdownify | remove: '<p>' | remove: '</p>' | strip }}</em></p>{% endif %}
+  </div>
+
+  <h4 class="tutorial-diagram-challenge-print__heading">Answer with the diagram</h4>
+  <p>Answer the questions above again, using the reply.</p>
+
+  {%- if tdcp.follow_up %}
+  <h4 class="tutorial-diagram-challenge-print__heading">A new question</h4>
+  {%- for tdcp_question in tdcp.follow_up %}
+    {%- assign tdcp_label = 'New question ' | append: forloop.index -%}
+    {% include tutorial-diagram-challenge-print-question.html question=tdcp_question label=tdcp_label %}
+  {%- endfor %}
+  {%- endif %}
+
+  {%- if tdcp.evidence_check %}
+  <h4 class="tutorial-diagram-challenge-print__heading">Check the diagram against the code</h4>
+  {%- if tdcp.evidence_check.prompt %}{{ tdcp.evidence_check.prompt | markdownify }}{% endif %}
+  {%- if tdcp.evidence_check.claim_question %}{% include tutorial-diagram-challenge-print-question.html question=tdcp.evidence_check.claim_question %}{% endif %}
+  {%- if tdcp.evidence_check.question %}{% include tutorial-diagram-challenge-print-question.html question=tdcp.evidence_check.question %}{% endif %}
+  {%- endif %}
+
+  {%- if tdcp.debrief.consolidation_prompt or tdcp.debrief.mechanism_question %}
+  <h4 class="tutorial-diagram-challenge-print__heading">Compare and reflect</h4>
+  {%- if tdcp.debrief.consolidation_prompt %}
+  <p><strong>{{ tdcp.debrief.consolidation_prompt | markdownify | remove: '<p>' | remove: '</p>' | strip }}</strong></p>
+  <div class="tutorial-diagram-challenge-print__writing"></div>
+  {%- endif %}
+  {%- if tdcp.debrief.mechanism_question %}{% include tutorial-diagram-challenge-print-question.html question=tdcp.debrief.mechanism_question %}{% endif %}
+  {%- endif %}
+
+  <div class="step-solution tutorial-diagram-challenge-print__key{% unless include.instructor_mode %} is-hidden{% endunless %}">
+    <div class="step-solution-header">
+      <span class="step-solution-icon"><i class="fa fa-key" aria-hidden="true"></i></span>
+      <h4 class="step-solution-title">Diagram challenge key</h4>
+    </div>
+    <div class="tutorial-diagram-challenge-print__key-body">
+      <p><strong>Completion:</strong> Part A earns credit by being locked in; the step completes at {{ tdcp.min_score | default: 0.8 | times: 100 | round }}% across the answers with the diagram{% if tdcp.follow_up %}, the new question{% endif %}{% if tdcp.evidence_check %}, the evidence check{% endif %}{% if tdcp.debrief.mechanism_question %}, and the mechanism question{% endif %}.</p>
+      {%- if tdcp_plan_first %}
+        {%- for tdcp_entry in tdcp.plan %}
+          {%- assign tdcp_label = 'View for question ' | append: forloop.index -%}
+          {% include tutorial-diagram-challenge-print-key.html question=tdcp_entry label=tdcp_label %}
+        {%- endfor %}
+      {%- elsif tdcp.predict_view and tdcp_reply.diagrams.first %}
+      <p><strong>Expert's view:</strong> {{ tdcp_reply.diagrams.first.type | capitalize }} diagram</p>
+      {%- endif %}
+      {%- for tdcp_question in tdcp.questions %}
+        {%- assign tdcp_label = 'Question ' | append: forloop.index -%}
+        {% include tutorial-diagram-challenge-print-key.html question=tdcp_question label=tdcp_label %}
+      {%- endfor %}
+      {%- if tdcp_reply.contrast.question %}{% include tutorial-diagram-challenge-print-key.html question=tdcp_reply.contrast.question label='First reply' %}{% endif %}
+      {%- for tdcp_question in tdcp.follow_up %}
+        {%- assign tdcp_label = 'New question ' | append: forloop.index -%}
+        {% include tutorial-diagram-challenge-print-key.html question=tdcp_question label=tdcp_label %}
+      {%- endfor %}
+      {%- if tdcp.evidence_check.claim_question %}{% include tutorial-diagram-challenge-print-key.html question=tdcp.evidence_check.claim_question label='Claim to check' %}{% endif %}
+      {%- if tdcp.evidence_check.question %}{% include tutorial-diagram-challenge-print-key.html question=tdcp.evidence_check.question label='Evidence check' %}{% endif %}
+      {%- if tdcp.debrief.mechanism_question %}{% include tutorial-diagram-challenge-print-key.html question=tdcp.debrief.mechanism_question label='Mechanism' %}{% endif %}
+      {%- if tdcp.debrief.hidden_by %}<p><strong>What hid the answer in the code:</strong></p>{{ tdcp.debrief.hidden_by | markdownify }}{% endif %}
+      {%- if tdcp.debrief.find_in_code %}<p><strong>Find it in the code next time:</strong></p>{{ tdcp.debrief.find_in_code | markdownify }}{% endif %}
+      {%- if tdcp.debrief.view_shows %}<p><strong>What the view shows:</strong></p>{{ tdcp.debrief.view_shows | markdownify }}{% endif %}
+    </div>
+  </div>
+
+  {%- if tdcp_plan_first %}
+  <section class="tutorial-diagram-challenge-print__results" data-diagram-challenge-results-host{% if include.tutorial_key %} data-diagram-challenge-tutorial="{{ include.tutorial_key | escape }}"{% endif %} aria-labelledby="{{ tdcp_id }}-results">
+    <h4 class="tutorial-diagram-challenge-print__heading" id="{{ tdcp_id }}-results">Your results across the challenges</h4>
+    <p>Times are your experience, not an experiment: each answer with a diagram also benefited from your earlier search of the code.</p>
+    {% include tutorial-diagram-challenge-results-data.html tutorial=include.tutorial %}
+    <div data-diagram-challenge-results-body><p>No saved challenge results in this browser yet.</p></div>
+  </section>
+  {%- endif %}
+</section>

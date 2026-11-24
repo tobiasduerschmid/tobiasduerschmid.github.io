@@ -1,0 +1,1248 @@
+{
+  "event_consumers": {
+    "trip.confirmed": [
+      "AffiliateRelay",
+      "Loyalty",
+      "Notifications",
+      "WarehouseETL"
+    ],
+    "trip.cancelled": [
+      "AffiliateRelay",
+      "Notifications",
+      "SupportConsole",
+      "WarehouseETL"
+    ],
+    "external_forwarders": [
+      "AffiliateRelay"
+    ],
+    "rename_breaks": [
+      "AffiliateRelay",
+      "Notifications",
+      "SupportConsole"
+    ],
+    "additive_breaks": [],
+    "trip.confirmed.v2": [
+      "WarehouseETL"
+    ]
+  },
+  "gateway_contracts": {
+    "fails_cancel_when_online": [
+      "GlampingCoGateway",
+      "MeetAndGreetGateway"
+    ],
+    "overrides": {
+      "BoxOfficeGateway": [
+        "cancel",
+        "parse_invoice",
+        "place"
+      ],
+      "ExperienceGateway": [
+        "cancel",
+        "parse_invoice",
+        "place"
+      ],
+      "GlampingCoGateway": [
+        "cancel"
+      ],
+      "LodgingGateway": [
+        "cancel",
+        "parse_invoice",
+        "place"
+      ],
+      "MeetAndGreetGateway": [
+        "cancel"
+      ],
+      "ShuttleGateway": [
+        "cancel",
+        "parse_invoice",
+        "place"
+      ],
+      "VipShuttleGateway": [
+        "place"
+      ]
+    },
+    "experience_place_inheritors": [
+      "ExperienceGateway",
+      "MeetAndGreetGateway"
+    ]
+  },
+  "failed_trips": {
+    "capture_before_first_answer": true,
+    "reject_branch_calls": [
+      "mark_failed()",
+      "publish trip.failed"
+    ],
+    "missing": [
+      "refund",
+      "cancel confirmed suppliers"
+    ],
+    "refunds": 0,
+    "fan_can_cancel": false,
+    "confirmed_after_failure": [
+      "supplier.lodging.confirmed",
+      "supplier.shuttle.confirmed"
+    ],
+    "card_check_amount": 0
+  },
+  "data_model": {
+    "allowed": [
+      1,
+      3
+    ],
+    "split_payment_multiplicity": "TripOrder-Payment"
+  },
+  "outages": {
+    "bank": "cannot_submit",
+    "lodging": "finish_afterwards",
+    "broker": "cannot_submit",
+    "mail_relay": "emails_wait"
+  },
+  "presale_path": {
+    "box_office": "cannot_submit",
+    "shuttle": "finish_afterwards",
+    "experiences": "unaffected",
+    "lodging_charged_while_waiting": true
+  },
+  "checkout_latency": {
+    "external_calls": 9,
+    "elapsed_seconds": 8.37,
+    "keyed_fix_seconds": 1.92,
+    "call_ms": [
+      [
+        "bank.validate",
+        300
+      ],
+      [
+        "box_office.quote",
+        1100
+      ],
+      [
+        "box_office.quote",
+        1100
+      ],
+      [
+        "box_office.quote",
+        1100
+      ],
+      [
+        "box_office.quote",
+        1100
+      ],
+      [
+        "box_office.quote",
+        1100
+      ],
+      [
+        "experiences.capacity",
+        600
+      ],
+      [
+        "experiences.capacity",
+        750
+      ],
+      [
+        "experiences.capacity",
+        900
+      ],
+      [
+        "opc.PurchaseOrderService.submit",
+        200
+      ]
+    ],
+    "quote_seconds": 5.5,
+    "check_seconds": 2.25,
+    "variants": {
+      "bulk_cached_card": 2.97,
+      "bulk_parallel": 1.92,
+      "parallel_only": 7.02,
+      "bulk_no_checks": 1.02
+    },
+    "rejected_experience_is_charged_and_failed": true
+  },
+  "capstone": {
+    "website_reads_order_db": true,
+    "rideshare_must_implement": [
+      "price",
+      "supplier_kind"
+    ],
+    "unlisted_item_type_is_refused": true,
+    "refund_before_cancel": true,
+    "glampingco_48h_stays_booked": true,
+    "service_fee": 0.12,
+    "my_trips_reads_stored_payment": true,
+    "stuck_cancellation": {
+      "refunds": 1,
+      "tent": "confirmed",
+      "trip_cancelled_published": false,
+      "support_follow_ups": 0
+    }
+  },
+  "shared_code": {
+    "loads": {
+      "AffiliateRelay": [
+        "broker",
+        "clock",
+        "http"
+      ],
+      "Loyalty": [
+        "broker",
+        "clock",
+        "http"
+      ],
+      "Notifications": [
+        "broker",
+        "clock",
+        "http",
+        "subscriptions"
+      ],
+      "OPC": [
+        "broker",
+        "clock",
+        "db",
+        "http",
+        "scheduler"
+      ],
+      "WarehouseETL": [
+        "broker",
+        "clock",
+        "http"
+      ],
+      "ShuttlePlanner": [
+        "broker",
+        "clock",
+        "http"
+      ],
+      "SupportConsole": [
+        "broker",
+        "clock",
+        "http"
+      ],
+      "TripWebsite": [
+        "clock",
+        "db",
+        "http"
+      ]
+    },
+    "imports": {
+      "broker": [
+        "AffiliateRelay",
+        "Loyalty",
+        "Notifications",
+        "OPC",
+        "ShuttlePlanner",
+        "SupportConsole",
+        "WarehouseETL"
+      ],
+      "http": [
+        "AffiliateRelay",
+        "Notifications",
+        "OPC",
+        "SupportConsole",
+        "TripWebsite"
+      ]
+    },
+    "service_to_service_imports": [],
+    "takes_only_message": [
+      "Loyalty",
+      "ShuttlePlanner",
+      "WarehouseETL"
+    ],
+    "message_stands_alone": true
+  },
+  "diagrams": {
+    "event_consumers": {
+      "components": [
+        "AffiliatePartners",
+        "AffiliateRelay",
+        "Loyalty",
+        "MailRelay",
+        "Notifications",
+        "OPC",
+        "ShuttlePlanner",
+        "SupportConsole",
+        "WarehouseETL",
+        "trips"
+      ],
+      "publishers": [
+        "OPC"
+      ],
+      "queues": {
+        "AffiliateRelay": "affiliates.trips",
+        "Loyalty": "loyalty.trips",
+        "Notifications": "notifications.trips",
+        "ShuttlePlanner": "shuttle.planning",
+        "SupportConsole": "support.cancellations",
+        "WarehouseETL": "warehouse.all"
+      },
+      "bindings": {
+        "AffiliateRelay": [
+          "trip.*"
+        ],
+        "Loyalty": [
+          "trip.confirmed"
+        ],
+        "Notifications": [
+          "trip.confirmed",
+          "trip.cancelled",
+          "trip.failed"
+        ],
+        "ShuttlePlanner": [
+          "supplier.shuttle.*"
+        ],
+        "SupportConsole": [
+          "trip.cancelled"
+        ],
+        "WarehouseETL": [
+          "#"
+        ]
+      },
+      "calls": [
+        {
+          "caller": "AffiliateRelay",
+          "provider": "AffiliatePartners",
+          "interface": "Webhook"
+        },
+        {
+          "caller": "Notifications",
+          "provider": "MailRelay",
+          "interface": "SMTP"
+        },
+        {
+          "caller": "OPC",
+          "provider": "trips",
+          "interface": "Publish"
+        }
+      ]
+    },
+    "outages": {
+      "components": [
+        "Bank",
+        "BoxOffice",
+        "CatalogDB",
+        "ExperienceProvider",
+        "LodgingProvider",
+        "MailRelay",
+        "MessageBroker",
+        "Notifications",
+        "OPC",
+        "OrderDB",
+        "ShuttleProvider",
+        "TripWebsite"
+      ],
+      "left_out": [
+        "AffiliatePartners",
+        "AffiliateRelay",
+        "Loyalty",
+        "ShuttlePlanner",
+        "WarehouseETL"
+      ],
+      "calls": [
+        {
+          "caller": "BoxOffice",
+          "provider": "OPC",
+          "interface": "SupplierCallbackService",
+          "fan_waits": false
+        },
+        {
+          "caller": "ExperienceProvider",
+          "provider": "OPC",
+          "interface": "SupplierCallbackService",
+          "fan_waits": false
+        },
+        {
+          "caller": "LodgingProvider",
+          "provider": "OPC",
+          "interface": "SupplierCallbackService",
+          "fan_waits": false
+        },
+        {
+          "caller": "Notifications",
+          "provider": "MailRelay",
+          "interface": "SMTP",
+          "fan_waits": false
+        },
+        {
+          "caller": "OPC",
+          "provider": "Bank",
+          "interface": "CardService",
+          "fan_waits": false
+        },
+        {
+          "caller": "OPC",
+          "provider": "BoxOffice",
+          "interface": "Booking",
+          "fan_waits": false
+        },
+        {
+          "caller": "OPC",
+          "provider": "ExperienceProvider",
+          "interface": "Booking",
+          "fan_waits": false
+        },
+        {
+          "caller": "OPC",
+          "provider": "LodgingProvider",
+          "interface": "Booking",
+          "fan_waits": false
+        },
+        {
+          "caller": "OPC",
+          "provider": "MessageBroker",
+          "interface": "Publish",
+          "fan_waits": true
+        },
+        {
+          "caller": "OPC",
+          "provider": "OrderDB",
+          "interface": "SQL",
+          "fan_waits": true
+        },
+        {
+          "caller": "OPC",
+          "provider": "ShuttleProvider",
+          "interface": "Booking",
+          "fan_waits": false
+        },
+        {
+          "caller": "ShuttleProvider",
+          "provider": "OPC",
+          "interface": "SupplierCallbackService",
+          "fan_waits": false
+        },
+        {
+          "caller": "TripWebsite",
+          "provider": "Bank",
+          "interface": "CardService",
+          "fan_waits": true
+        },
+        {
+          "caller": "TripWebsite",
+          "provider": "BoxOffice",
+          "interface": "Quotes",
+          "fan_waits": true
+        },
+        {
+          "caller": "TripWebsite",
+          "provider": "CatalogDB",
+          "interface": "SQL",
+          "fan_waits": true
+        },
+        {
+          "caller": "TripWebsite",
+          "provider": "ExperienceProvider",
+          "interface": "Capacity",
+          "fan_waits": true
+        },
+        {
+          "caller": "TripWebsite",
+          "provider": "OPC",
+          "interface": "PurchaseOrderService",
+          "fan_waits": true
+        }
+      ],
+      "queued": [
+        {
+          "provider": "MessageBroker",
+          "consumer": "Notifications",
+          "queues": [
+            "notifications.trips"
+          ]
+        },
+        {
+          "provider": "MessageBroker",
+          "consumer": "OPC",
+          "queues": [
+            "orders.received",
+            "supplier.answered"
+          ]
+        }
+      ]
+    },
+    "website_connections": {
+      "components": [
+        "Bank",
+        "BoxOffice",
+        "CatalogDB",
+        "ExperienceProvider",
+        "OPC",
+        "OrderDB",
+        "TripWebsite"
+      ],
+      "calls": [
+        {
+          "caller": "TripWebsite",
+          "provider": "Bank",
+          "interface": "CardService"
+        },
+        {
+          "caller": "TripWebsite",
+          "provider": "BoxOffice",
+          "interface": "Quotes"
+        },
+        {
+          "caller": "TripWebsite",
+          "provider": "CatalogDB",
+          "interface": "SQL"
+        },
+        {
+          "caller": "TripWebsite",
+          "provider": "ExperienceProvider",
+          "interface": "Capacity"
+        },
+        {
+          "caller": "TripWebsite",
+          "provider": "OPC",
+          "interface": "OrderTrackingService"
+        },
+        {
+          "caller": "TripWebsite",
+          "provider": "OPC",
+          "interface": "PurchaseOrderService"
+        },
+        {
+          "caller": "TripWebsite",
+          "provider": "OrderDB",
+          "interface": "SQL"
+        }
+      ]
+    },
+    "failed_trips": {
+      "timeline": [
+        "opc.PurchaseOrderService.submit",
+        "website.responds",
+        "bank.capture",
+        "supplier.place",
+        "opc.SupplierCallbackService.answer"
+      ]
+    },
+    "cancellation": {
+      "timeline": [
+        "opc.PurchaseOrderService.cancel",
+        "bank.refund",
+        "website.responds",
+        "supplier.cancel"
+      ]
+    },
+    "checkout": {
+      "bulk_quote_ms": 400,
+      "catalog_query_ms": 20
+    },
+    "data_model": {
+      "classes": [
+        "Attendee",
+        "Experience",
+        "Fan",
+        "FestivalPass",
+        "LodgingStay",
+        "Payment",
+        "ShuttleRide",
+        "SupplierOrder",
+        "TransportItem",
+        "TripItem",
+        "TripOrder"
+      ],
+      "left_out": [
+        "Invoice"
+      ],
+      "abstract": [
+        "TransportItem",
+        "TripItem"
+      ],
+      "generalizations": [
+        [
+          "Experience",
+          "TripItem"
+        ],
+        [
+          "FestivalPass",
+          "TripItem"
+        ],
+        [
+          "LodgingStay",
+          "TripItem"
+        ],
+        [
+          "ShuttleRide",
+          "TransportItem"
+        ],
+        [
+          "TransportItem",
+          "TripItem"
+        ]
+      ],
+      "associations": [
+        {
+          "from": "TripOrder",
+          "role": "buyer",
+          "to": "Fan",
+          "multiplicity": "1",
+          "opposite": "0..*",
+          "composition": false
+        },
+        {
+          "from": "TripOrder",
+          "role": "attendees",
+          "to": "Attendee",
+          "multiplicity": "1..8",
+          "opposite": "1",
+          "composition": true
+        },
+        {
+          "from": "TripOrder",
+          "role": "items",
+          "to": "TripItem",
+          "multiplicity": "1..*",
+          "opposite": "1",
+          "composition": true
+        },
+        {
+          "from": "TripOrder",
+          "role": "payment",
+          "to": "Payment",
+          "multiplicity": "1",
+          "opposite": "1",
+          "composition": true
+        },
+        {
+          "from": "TripOrder",
+          "role": "supplier_orders",
+          "to": "SupplierOrder",
+          "multiplicity": "0..*",
+          "opposite": "1",
+          "composition": true
+        },
+        {
+          "from": "TripItem",
+          "role": "attendees",
+          "to": "Attendee",
+          "multiplicity": "1..*",
+          "opposite": "1..*",
+          "composition": false
+        },
+        {
+          "from": "SupplierOrder",
+          "role": "items",
+          "to": "TripItem",
+          "multiplicity": "0..*",
+          "opposite": "0..1",
+          "composition": false
+        }
+      ]
+    },
+    "trip_items": {
+      "classes": [
+        "Experience",
+        "FestivalPass",
+        "LodgingStay",
+        "ShuttleRide",
+        "TransportItem",
+        "TripItem"
+      ],
+      "abstract": [
+        "TransportItem",
+        "TripItem"
+      ],
+      "generalizations": [
+        [
+          "Experience",
+          "TripItem"
+        ],
+        [
+          "FestivalPass",
+          "TripItem"
+        ],
+        [
+          "LodgingStay",
+          "TripItem"
+        ],
+        [
+          "ShuttleRide",
+          "TransportItem"
+        ],
+        [
+          "TransportItem",
+          "TripItem"
+        ]
+      ],
+      "operations": {
+        "TripItem": {
+          "cancellation_deadline": "abstract",
+          "price": "abstract",
+          "supplier_kind": "abstract"
+        },
+        "FestivalPass": {
+          "cancellation_deadline": "defined",
+          "price": "defined",
+          "supplier_kind": "defined"
+        },
+        "LodgingStay": {
+          "cancellation_deadline": "defined",
+          "price": "defined",
+          "supplier_kind": "defined"
+        },
+        "Experience": {
+          "cancellation_deadline": "defined",
+          "price": "defined",
+          "supplier_kind": "defined"
+        },
+        "TransportItem": {
+          "cancellation_deadline": "defined"
+        },
+        "ShuttleRide": {
+          "price": "defined",
+          "supplier_kind": "defined"
+        }
+      },
+      "listed_by": {
+        "services::opc::payloads": [
+          "Experience",
+          "FestivalPass",
+          "LodgingStay",
+          "ShuttleRide"
+        ],
+        "services::website::checkout": [
+          "Experience",
+          "FestivalPass",
+          "LodgingStay",
+          "ShuttleRide"
+        ]
+      }
+    },
+    "gateways": {
+      "classes": [
+        "BoxOfficeGateway",
+        "ExperienceGateway",
+        "GlampingCoGateway",
+        "LodgingGateway",
+        "ManualCancellationRequired",
+        "MeetAndGreetGateway",
+        "ShuttleGateway",
+        "SupplierGateway",
+        "SupplierUnavailable",
+        "VipShuttleGateway"
+      ],
+      "packages": {
+        "SupplierGateway": "services::opc::gateways",
+        "BoxOfficeGateway": "services::opc::gateways",
+        "ExperienceGateway": "services::opc::gateways",
+        "GlampingCoGateway": "services::opc::partners",
+        "LodgingGateway": "services::opc::gateways",
+        "MeetAndGreetGateway": "services::opc::partners",
+        "ShuttleGateway": "services::opc::gateways",
+        "VipShuttleGateway": "services::opc::partners",
+        "ManualCancellationRequired": "services::opc::partners",
+        "SupplierUnavailable": "services::opc::gateways"
+      },
+      "abstract": [
+        "SupplierGateway"
+      ],
+      "generalizations": [
+        [
+          "BoxOfficeGateway",
+          "SupplierGateway"
+        ],
+        [
+          "ExperienceGateway",
+          "SupplierGateway"
+        ],
+        [
+          "GlampingCoGateway",
+          "LodgingGateway"
+        ],
+        [
+          "LodgingGateway",
+          "SupplierGateway"
+        ],
+        [
+          "MeetAndGreetGateway",
+          "ExperienceGateway"
+        ],
+        [
+          "ShuttleGateway",
+          "SupplierGateway"
+        ],
+        [
+          "VipShuttleGateway",
+          "ShuttleGateway"
+        ]
+      ],
+      "operations": {
+        "SupplierGateway": {
+          "cancel": "abstract",
+          "parse_invoice": "abstract",
+          "place": "abstract"
+        },
+        "BoxOfficeGateway": {
+          "cancel": "defined",
+          "parse_invoice": "defined",
+          "place": "defined"
+        },
+        "ExperienceGateway": {
+          "cancel": "defined",
+          "parse_invoice": "defined",
+          "place": "defined"
+        },
+        "GlampingCoGateway": {
+          "cancel": "defined"
+        },
+        "LodgingGateway": {
+          "cancel": "defined",
+          "parse_invoice": "defined",
+          "place": "defined"
+        },
+        "MeetAndGreetGateway": {
+          "cancel": "defined"
+        },
+        "ShuttleGateway": {
+          "cancel": "defined",
+          "parse_invoice": "defined",
+          "place": "defined"
+        },
+        "VipShuttleGateway": {
+          "place": "defined"
+        }
+      },
+      "raises": [
+        [
+          "GlampingCoGateway",
+          "ManualCancellationRequired"
+        ],
+        [
+          "MeetAndGreetGateway",
+          "ManualCancellationRequired"
+        ],
+        [
+          "SupplierGateway",
+          "SupplierUnavailable"
+        ]
+      ]
+    },
+    "imports": {
+      "packages": {
+        "AffiliateRelay": "services::affiliates",
+        "Attendee": "services::opc",
+        "AvailabilityGuard": "services::website",
+        "BankClient": "services::website",
+        "Binding": "infra",
+        "BoxOfficeClient": "services::website",
+        "BoxOfficeGateway": "services::opc",
+        "Broker": "infra",
+        "BrokerUnavailable": "infra",
+        "Call": "infra",
+        "CancellationTask": "services::opc",
+        "CardDeclined": "services::website",
+        "Cart": "services::website",
+        "CartLine": "services::website",
+        "CatalogClient": "services::website",
+        "CheckoutController": "services::website",
+        "CheckoutRefused": "services::website",
+        "Clock": "infra",
+        "Database": "infra",
+        "Experience": "services::opc",
+        "ExperienceClient": "services::website",
+        "ExperienceGateway": "services::opc",
+        "FakeClock": "infra",
+        "Fan": "services::opc",
+        "FanAccount": "services::website",
+        "FestivalPass": "services::opc",
+        "GlampingCoGateway": "services::opc",
+        "Guest": "services::website",
+        "Intake": "services::opc",
+        "Invoice": "services::opc",
+        "InvoiceTask": "services::opc",
+        "LodgingGateway": "services::opc",
+        "LodgingStay": "services::opc",
+        "LoyaltyProgram": "services::loyalty",
+        "Mailer": "services::notifications",
+        "ManualCancellationRequired": "services::opc",
+        "MeetAndGreetGateway": "services::opc",
+        "Message": "infra",
+        "Network": "infra",
+        "NotOnSale": "services::website",
+        "Opc": "services::opc",
+        "OpcClient": "services::website",
+        "OrderHistoryPage": "services::website",
+        "OrderRepository": "services::opc",
+        "OrderTrackingService": "services::opc",
+        "Payment": "services::opc",
+        "PaymentTask": "services::opc",
+        "PricedLine": "services::website",
+        "PurchaseOrderService": "services::opc",
+        "Quote": "services::website",
+        "Scheduler": "infra",
+        "ServiceClient": "infra",
+        "ServiceDirectory": "infra",
+        "ServiceUnavailable": "infra",
+        "ShuttleGateway": "services::opc",
+        "ShuttlePlanner": "services::shuttle_planner",
+        "ShuttleRide": "services::opc",
+        "SoldOut": "services::website",
+        "Subscription": "infra",
+        "SupplierCallbackService": "services::opc",
+        "SupplierGateway": "services::opc",
+        "SupplierOrder": "services::opc",
+        "SupplierOrderTask": "services::opc",
+        "SupplierUnavailable": "services::opc",
+        "SupportConsole": "services::support_console",
+        "TransportItem": "services::opc",
+        "TripEvents": "services::opc",
+        "TripItem": "services::opc",
+        "TripNotifications": "services::notifications",
+        "TripOrder": "services::opc",
+        "TripPricer": "services::website",
+        "VipShuttleGateway": "services::opc",
+        "WarehouseETL": "services::reporting",
+        "WebsiteApp": "services::website",
+        "WorkflowManager": "services::opc",
+        "_Consumer": "infra",
+        "_Endpoint": "infra",
+        "_Job": "infra"
+      },
+      "uses": {
+        "AffiliateRelay": [
+          "Message",
+          "ServiceClient"
+        ],
+        "BankClient": [
+          "ServiceClient"
+        ],
+        "BoxOfficeClient": [
+          "ServiceClient"
+        ],
+        "CancellationTask": [
+          "Clock"
+        ],
+        "CatalogClient": [
+          "Database"
+        ],
+        "CheckoutController": [
+          "Clock"
+        ],
+        "ExperienceClient": [
+          "ServiceClient"
+        ],
+        "Intake": [
+          "Broker"
+        ],
+        "LoyaltyProgram": [
+          "Message"
+        ],
+        "Mailer": [
+          "ServiceClient"
+        ],
+        "OpcClient": [
+          "ServiceClient"
+        ],
+        "OrderHistoryPage": [
+          "connect"
+        ],
+        "OrderRepository": [
+          "Database"
+        ],
+        "PaymentTask": [
+          "ServiceClient"
+        ],
+        "ShuttlePlanner": [
+          "Message"
+        ],
+        "SupplierCallbackService": [
+          "Broker"
+        ],
+        "SupplierGateway": [
+          "Clock",
+          "ServiceClient",
+          "ServiceUnavailable"
+        ],
+        "SupportConsole": [
+          "Message",
+          "ServiceClient"
+        ],
+        "TripEvents": [
+          "Broker"
+        ],
+        "TripNotifications": [
+          "Message",
+          "consumes"
+        ],
+        "WarehouseETL": [
+          "Message"
+        ],
+        "WebsiteApp": [
+          "ServiceUnavailable"
+        ],
+        "WorkflowManager": [
+          "Message"
+        ]
+      },
+      "broker_client_importers": [
+        "services::opc"
+      ],
+      "website_imports_from_opc": false
+    },
+    "shared_code": {
+      "packages": [
+        "infra::broker",
+        "infra::clock",
+        "infra::db",
+        "infra::http",
+        "infra::scheduler",
+        "infra::subscriptions",
+        "services::affiliates",
+        "services::loyalty",
+        "services::notifications",
+        "services::opc",
+        "services::reporting",
+        "services::shuttle_planner",
+        "services::support_console",
+        "services::website"
+      ],
+      "imports": [
+        [
+          "infra::broker",
+          "infra::http"
+        ],
+        [
+          "infra::db",
+          "infra::clock"
+        ],
+        [
+          "infra::http",
+          "infra::clock"
+        ],
+        [
+          "infra::scheduler",
+          "infra::clock"
+        ],
+        [
+          "infra::subscriptions",
+          "infra::broker"
+        ],
+        [
+          "services::affiliates",
+          "infra::broker"
+        ],
+        [
+          "services::affiliates",
+          "infra::http"
+        ],
+        [
+          "services::loyalty",
+          "infra::broker"
+        ],
+        [
+          "services::notifications",
+          "infra::broker"
+        ],
+        [
+          "services::notifications",
+          "infra::http"
+        ],
+        [
+          "services::notifications",
+          "infra::subscriptions"
+        ],
+        [
+          "services::opc",
+          "infra::broker"
+        ],
+        [
+          "services::opc",
+          "infra::clock"
+        ],
+        [
+          "services::opc",
+          "infra::db"
+        ],
+        [
+          "services::opc",
+          "infra::http"
+        ],
+        [
+          "services::opc",
+          "infra::scheduler"
+        ],
+        [
+          "services::reporting",
+          "infra::broker"
+        ],
+        [
+          "services::shuttle_planner",
+          "infra::broker"
+        ],
+        [
+          "services::support_console",
+          "infra::broker"
+        ],
+        [
+          "services::support_console",
+          "infra::http"
+        ],
+        [
+          "services::website",
+          "infra::clock"
+        ],
+        [
+          "services::website",
+          "infra::db"
+        ],
+        [
+          "services::website",
+          "infra::http"
+        ]
+      ],
+      "names": {
+        "infra::broker -> infra::http": [
+          "Network",
+          "ServiceClient",
+          "ServiceUnavailable"
+        ],
+        "infra::db -> infra::clock": [
+          "FakeClock"
+        ],
+        "infra::http -> infra::clock": [
+          "FakeClock"
+        ],
+        "infra::scheduler -> infra::clock": [
+          "Clock"
+        ],
+        "infra::subscriptions -> infra::broker": [
+          "Broker",
+          "MessageHandler"
+        ],
+        "services::affiliates -> infra::broker": [
+          "Message"
+        ],
+        "services::affiliates -> infra::http": [
+          "ServiceClient"
+        ],
+        "services::loyalty -> infra::broker": [
+          "Message"
+        ],
+        "services::notifications -> infra::broker": [
+          "Message"
+        ],
+        "services::notifications -> infra::http": [
+          "ServiceClient"
+        ],
+        "services::notifications -> infra::subscriptions": [
+          "consumes"
+        ],
+        "services::opc -> infra::broker": [
+          "Broker",
+          "Message"
+        ],
+        "services::opc -> infra::clock": [
+          "Clock"
+        ],
+        "services::opc -> infra::db": [
+          "Database"
+        ],
+        "services::opc -> infra::http": [
+          "Network",
+          "RequestHandler",
+          "ServiceClient",
+          "ServiceUnavailable"
+        ],
+        "services::opc -> infra::scheduler": [
+          "Scheduler"
+        ],
+        "services::reporting -> infra::broker": [
+          "Message"
+        ],
+        "services::shuttle_planner -> infra::broker": [
+          "Message"
+        ],
+        "services::support_console -> infra::broker": [
+          "Message"
+        ],
+        "services::support_console -> infra::http": [
+          "ServiceClient"
+        ],
+        "services::website -> infra::clock": [
+          "Clock"
+        ],
+        "services::website -> infra::db": [
+          "Database",
+          "connect"
+        ],
+        "services::website -> infra::http": [
+          "Network",
+          "ServiceClient",
+          "ServiceUnavailable"
+        ]
+      }
+    }
+  },
+  "evidence": {
+    "name = \"trips\"": "deploy/broker.toml:4",
+    "pattern = \"trip.confirmed\"": "deploy/broker.toml:16",
+    "pattern = \"#\"": "deploy/broker.toml:21",
+    "pattern = \"trip.*\"": "deploy/broker.toml:26",
+    "pattern = \"trip.cancelled\"": "deploy/broker.toml:31",
+    "pattern = \"supplier.shuttle.*\"": "deploy/broker.toml:36",
+    "broker = \"amqp://": "deploy/services.toml:16",
+    "@consumes(\"trips\"": "services/notifications/consumers.py:25",
+    "``*`` matches exactly one word": "infra/broker.py:48",
+    "Publishes trip.<status> and supplier.<kind>.<status>": "services/opc/events.py:12",
+    "name = \"orders.received\"": "deploy/broker.toml:8",
+    "name = \"supplier.answered\"": "deploy/broker.toml:11",
+    "self._payments.capture(order)": "services/opc/workflow.py:25",
+    "self._invoices.on_answer(message.body)": "services/opc/workflow.py:29",
+    "RETRY_INTERVAL_S = 60": "services/opc/supplier_task.py:10",
+    "if order.status != \"processing\":": "services/opc/invoice_task.py:33",
+    "self._orders.save_supplier_order(supplier_order)": "services/opc/invoice_task.py:27",
+    "payment: Payment": "services/opc/model/orders.py:50",
+    "1 <= len(self.attendees) <= MAX_ATTENDEES": "services/opc/model/orders.py:57",
+    "if not self.items:": "services/opc/model/orders.py:59",
+    "if not self.attendees:": "services/opc/model/items.py:24",
+    "trip_order_id: str": "services/opc/model/suppliers.py:21",
+    "Every item is for attendees of the order": "services/opc/model/rules.py:14",
+    "def check_experience_attendees": "services/opc/model/rules.py:22",
+    "bank: ServiceClient": "services/website/clients.py:23",
+    "opc: ServiceClient": "services/website/clients.py:58",
+    "client: ServiceClient, clock: Clock": "services/opc/gateways/base.py:21",
+    "orders: OrderRepository, broker: Broker": "services/opc/intake.py:13",
+    "def __init__(self, broker: Broker)": "services/opc/events.py:14",
+    "relay: ServiceClient": "services/notifications/mailer.py:9",
+    "def on_trip_event(self, message: Message)": "services/notifications/consumers.py:26",
+    "self._broker.send(RECEIVED_QUEUE": "services/opc/intake.py:21",
+    "A consumer that raises ServiceUnavailable leaves its message": "infra/broker.py:139",
+    "order-db = \"postgres://": "deploy/services.toml:13",
+    "bank = \"https://": "deploy/services.toml:19",
+    "mail_relay = \"smtp://": "deploy/services.toml:24",
+    "LATENCY_MS = {\"validate\": 300": "stubs/bank.py:5",
+    "def requires_valid_card": "services/website/payments.py:9",
+    "@requires_valid_card": "services/website/checkout.py:44",
+    "QUOTE_LATENCY_MS = 1100": "stubs/box_office.py:9",
+    "BULK_QUOTE_LATENCY_MS = 400": "stubs/box_office.py:10",
+    "def quote_passes(": "services/website/clients.py:40",
+    "lookup_ms=600": "stubs/experiences.py:18",
+    "lookup_ms=750": "stubs/experiences.py:19",
+    "lookup_ms=900": "stubs/experiences.py:20",
+    "LATENCY_MS = {\"PurchaseOrderService.submit\": 200}": "services/opc/service.py:27",
+    "CATALOG_LATENCY_MS = 20": "devstack.py:36",
+    "class CatalogClient:": "services/website/clients.py:9",
+    "class BankClient:": "services/website/clients.py:22",
+    "class BoxOfficeClient:": "services/website/clients.py:32",
+    "class ExperienceClient:": "services/website/clients.py:46",
+    "class OpcClient:": "services/website/clients.py:55",
+    "class TripItem(ABC):": "services/opc/model/items.py:17",
+    "class TransportItem(TripItem):": "services/opc/model/items.py:92",
+    "ITEM_TYPES: dict[str, type[TripItem]] = {": "services/opc/payloads.py:15",
+    "item[\"type\"] = \"ShuttleRide\"": "services/website/checkout.py:89",
+    "self._payments.refund(order)": "services/opc/cancellation_task.py:39",
+    "supplier_order.mark_cancelling()": "services/opc/cancellation_task.py:44",
+    "CANCEL_INTERVAL_S = 60": "services/opc/cancellation_task.py:12",
+    "cancellations.cancel_supplier_orders": "services/opc/service.py:60",
+    "except SupplierUnavailable:": "services/opc/cancellation_task.py:52",
+    "except Exception:": "services/opc/cancellation_task.py:54",
+    "supplier_order.mark_cancelled()": "services/opc/cancellation_task.py:57",
+    "MANUAL_CANCELLATION_WINDOW = timedelta(hours=72)": "services/opc/partners/glamping_co.py:9",
+    "<= MANUAL_CANCELLATION_WINDOW:": "services/opc/partners/glamping_co.py:17",
+    "from infra.broker import Message": "services/loyalty/points.py:3",
+    "from infra.http import": "infra/broker.py:11",
+    "Raises no other exception.": "services/opc/gateways/base.py:37",
+    "class SupplierUnavailable(Exception):": "services/opc/gateways/base.py:10",
+    "class ManualCancellationRequired(Exception):": "services/opc/partners/errors.py:4"
+  }
+}

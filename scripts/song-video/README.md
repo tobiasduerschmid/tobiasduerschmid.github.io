@@ -42,7 +42,9 @@ is not enough: WebKit keeps allocating style data for paused animations posed
 inside a once-rendered `display: none` subtree, which grew Safari's memory by
 megabytes per frame until an iPhone reloaded the page. Native animation
 timing restores pictures before frame callbacks measure them, including
-backward seeks; nested words and cards retain their layout space.
+backward seeks; nested words and cards retain their layout space. A
+choreography that adds stage layers of its own returns them, `return { layers:
+[…] }`, and their pictures are culled the same way.
 `SongScene.culledPictures(stage)` lists the pictures currently out of the
 document, for tests that inspect a song's whole artwork.
 Lyrics-only mode avoids building the scene and disposes existing artwork.
@@ -107,6 +109,17 @@ directs its glance and wink, which masks split per eye, and lifts one brow
 (the brows are split per side the same way). Agent 00's fists take
 the hero's skin tokens, and a hairline bright halo outlines very dark skin or
 hair against the noir stage.
+
+`student.castHead(style)` renders a fixed supporting character through the
+same wardrobe, keeping that look across its cameos. Draw It Out uses four
+fixed looks for its hoodie, curls, beard, and hijab teammates. A worn head's
+pose can set `expression` to `thoughtful`, `puzzled`, or `worried` for a closed
+mouth fitted to that hero's face; `neutral` restores its chosen mouth and
+allows the existing `hush` and `sing` controls. Expressions, gaze, and blinks
+follow song time, including backward seeks and reduced motion. Set
+`expressionFrom` and `expressionMix` (0–1) to morph between closed-mouth
+reactions and fade to or from the hero's chosen smile. The sketch-kit cast
+eases its mouth, brows, gaze, and head tilt together over each reaction.
 
 The playlist's Random avatar switch (`song-player-random-avatar`, see
 `docs/song-playlists.md`) makes every appearance a new random human hero
@@ -223,8 +236,9 @@ operations room, `object-city` the city-builder game at dusk of "Let
 the Object Decide", `drafting-room` the architectural blueprint of
 "Draw It Out While It's Cheap to Change" (cyanotype paper in UCLA Blue
 with fold creases and a white grid, a bordered sheet with a title block, a plan fragment with dimension
-lines, and drafting tools at the edges), and `opera-house` the opera house of
-"It Works on My Machine". A theme script registers itself
+lines, and drafting tools at the edges), `opera-house` the opera house of
+"It Works on My Machine", and `team-room` the office of "Inspect and Adapt".
+A theme script registers itself
 in `SongKit.themes`, draws its room once, and poses it only from song time;
 its stylesheet keeps the scenery faint enough that text over it keeps 4.5:1.
 `extras` lists the song's own stylesheets and scripts (`styles`, `scripts`),
@@ -267,8 +281,10 @@ repeat signs for regression tests, flaky-noise waves, a fence of tests).
 returning to: a top-down game window with two crossing roads, a traffic
 light, a bus stop, and a bike lane. Its vehicles (car, hybrid, bus, bike,
 ambulance, grey type-code tokens, and dashed outlines of kinds nobody has
-written yet) drive keyframed routes, brake, and dance on the beat, all as
-pure functions of song time; `sprite()` draws one vehicle large with a hood
+written yet) drive routes nose first, with rounded corners, pulling away and
+braking smoothly and slowing into turns, all as pure functions of song time
+(`distanceFor()` sizes a drive so that the next one starts at the same speed);
+`sprite()` draws one vehicle large with a hood
 that opens. `js/song-video/oop-kit.js` draws the notation in one consistent
 language: UML-style object cards (state behind a padlock, methods as buttons
 on a door), message envelopes flying on dashed arcs, C++ code cards that
@@ -280,8 +296,11 @@ operations.
 "Draw It Out While It's Cheap to Change", the UML song on `SEBook/uml.md`,
 uses the `drafting-room` theme (`js/song-video/drafting-room.js`) and draws its notation with the SE
 Book's own ArchUML renderer: the storyboard's `extras` load
-`js/ArchUML/uml-bundle.js` and `js/song-video/model-kit.js` (styles in
-`css/song-video-model-kit.css`). `ModelKit.diagram()` renders a class,
+`js/ArchUML/uml-bundle.js`, `js/archuml-compact-pane.js` and
+`js/song-video/model-kit.js` (styles in `css/song-video-model-kit.css`).
+A sheet given a `fit` box lays out a bare `layout compact` spec for that
+box (`layout compact WxH`); the build only prebuilds a storyboard view whose
+spec already names its size. `ModelKit.diagram()` renders a class,
 sequence, state, or component spec in an off-screen host, so ArchUML can lay
 it out while the player keeps the stage hidden, records the bounds of every
 drawn element (boxes, message and transition routes, characters of labels),
@@ -346,7 +365,10 @@ sung words, towards stage points: `point`, `tap`, `trace`, and `sketch` aim
 the pencil (two-bone inverse kinematics, touching the point when in reach;
 further off the elbow stays low and the wrist lays the pencil on the line
 to the point); `check`, `cross`, and `circle` draw a tick, a cross, or a ring
-in the air on the way to it, along smooth paths; `draw`
+in the air on the way to it, along smooth paths. `erase` draws the hand in,
+slides the pencil to its midpoint, rolls it between the moving thumb and
+fingers, and closes the grip near the rubber before pointing and rubbing.
+The barrel stays in the pinch through the turn. `draw`
 draws a route of stage points small in the air, at the pace the drafting
 pencil draws it on the sheet. Out at the side the elbow always goes below
 the line to the point, so it never flips over, and the shoulder turns the
@@ -366,7 +388,9 @@ every reach, the upper arm leading while the forearm, the hand, and the
 head trail it (`LAG`), the hand catching up as the arm slows
 (`followThrough()`), a lean after a sideways reach that the free arm
 balances (`balance()`), and two steps with a give at the knees when it walks
-in. A move cued while another is under way takes over the joints it uses,
+in. Long joint sweeps get more time, including the approach to a moving
+stroke; elbow and wrist limits are applied before interpolation. A move
+cued while another is under way takes over the joints it uses,
 and a return to rest just before it is skipped, so the arm goes straight on
 to its next pose. The architect carries the story, standing wherever a scene
 leaves room beside its content: it steps in after "fix it later" has cracked
@@ -420,6 +444,83 @@ kinematics, with the finger and hand geometry the architect shares through
 mouth on its own sung words (`wordsFor()`). A move's return to rest puts back
 only what that move posed, and gives way to a later move that has already
 posed the same arm or face, so overlapping holds never snap a pose away.
+Arm reaches retain a soft elbow and cap flexion at 150 degrees. Wrist targets
+are bounded before interpolation so the hands ease into their poses instead
+of hitting a hard limit early. Immutable pose keys compile into per-field
+tracks that begin at the actual interrupted pose, with zero velocity and
+acceleration at the ends of an uninterrupted transition. Temple taps use the
+same angle convention as their opening pose; taps and wags fit complete
+repetitions inside their hold. The audience's raised arms pivot at their
+shoulders, and reduced motion holds each commanded pose. The lead's
+`gestureSpeed: 1.55` gives him brisker transitions while retaining the same
+anticipated cue landings; eighteen extra word accents keep his delivery busy.
+Across the cast, upper sleeves attach at the collarbone and underarm instead
+of rotating an outlined shoulder cap. Torso outlines sit beneath the joined
+cloth, upper sleeves sit beneath costume details until crossing the chest,
+and a shared lighting field runs through the elbow without a shaded joint
+cap. A rounded shoulder leads into a narrow upper arm and a concave axilla.
+Bare arms use one continuous surface through the elbow; forearm endpoints
+follow the rotating hand's wrist edge. This follows the layered arms in
+“Design It In”; vest armholes and costume trim remain distinct garment details.
+Every hand view has a continuous authored silhouette, with the index beside
+the thumb; overlapping finger tubes are not used. Palm-facing extended fingers
+have creases rather than nails. Dorsal views have their own surface details.
+Wrist outline widths match, and forearm shading fades into the hand. Curled poses use a palm-side
+view: a sideways point puts the index above the three folded fingers, whose
+distal joints disappear behind the palm; the thumb wraps across them. Power
+grips use that same thumb/index relationship on both mirrored arms. Rolled
+sleeves end above the exposed elbow, with their fold drawn inside the sleeve
+surface rather than as a separate outlined cap. The bare elbow's outside
+rounds the joint; its inside runs smoothly from the cloth opening to the wrist,
+without a hidden return arc forming a hook at deep flexion. Long sleeves have
+one continuous shoulder-to-wrist surface. A matching foreground forearm pass
+handles torso occlusion, overlapping the base fill and suppressing internal
+ink and stroke-cap nubs. Short sleeves cover the bare arm's proximal contour.
+Sleeve folds are clipped to the moving cloth surface,
+so bends cannot leave protruding corners or detached ink. The lead's drawn face adds
+iris fibers and catchlights, moving eyelid contours, brow and moustache hairs,
+ear folds, clipped hair strands, and a shaded lower lip. Joy raises the cheeks
+while leaving the eyes open. One eye aperture controls its white, iris clip,
+and lid edge through the entire blink. Closed mouths retain filled upper and
+lower lips. Mouth opening separates those same curves, with teeth and tongue
+clipped inside and the lower lip kept above the chin. The `turn` channel (−1…1) gives the lead a shallow head turn of up
+to about 13 degrees, with gaze contributing a small amount. Its chin stays
+anchored; the shared facial plane, projecting nose, hair mass, sideburns,
+clipped cheeks, brows, and eyes move coherently. Ear parallax opposes the
+front facial features, with subtle near/far foreshortening. The pose tracks
+ease turns and restore them on backward seeks.
+
+`figure({ reactions: [[from, to, facialFields]] })` holds an emotional beat
+across gestures, with eased entrance and exit. My Teammate also sets
+`expressWhileSinging: true` for its supporting cast: expressive complaints,
+weary final lines, and ensemble singing ease back to relaxed listening faces.
+Closely spaced words form phrases so the brows do not pulse with every
+syllable. A facepalm or an earlier complaint cannot pin a silent listener's
+mouth into a frown.
+The worn hero renderer receives `smile`, `frown`, `misery`, `wide`, `happy`,
+and `round` as well as the sung opening. Brows pivot around their measured
+centres: inner ends lower for anger and lift for misery. The emotional
+mouth remains active between words, and never hides the singing layer.
+Optional numeric expressions preserve the separate named-reaction API used
+by other songs. Inspect both the drawn export faces and actual worn heads;
+the export stage alone does not exercise the live cast's SVG fits.
+Cloth uses broad radial light and shade instead of hard polygonal facets;
+clipped, softened highlights follow the arm contours through bends. Facial
+shading stays subtle, with warm blush, tapered brows, and hair detail clipped
+to its silhouette.
+`HOLDING` specifies each prop's hand contact, object contact, grip, orientation,
+and optional carrying pose. Persistent objects reserve their arm and the free
+hand gestures; a resting hand never releases its fingers while retaining a
+tool. Clipboards and palettes sit between supporting fingers and the thumb.
+The mug stays upright, the cane's fixed shaft reaches the floor through an
+adjusted supporting wrist, and the broom and stamp have coordinated working
+strokes. During the refrain the lead walks to the desk, and the laptop base
+follows the side-view supporting hand's contact through `figure.handPoint()`
+throughout pickup, lifting and lowering. Compact fingers sit beneath the base
+and the thumb overlaps its rim. Regression checks inspect the painted support
+area and rim overlap rather than comparing two copies of a contact constant.
+The required review is documented in
+`.agents/skills/asset-creator/references/character/hand-arm-contact.md`.
 `js/song-video/machine-kit.js` (styles in `css/song-video-machine-kit.css`)
 draws the pictures: the coffee app on a giant phone, a shelf of package
 versions and the new ones marching in, a clean-build machine, code cards
@@ -431,6 +532,285 @@ its props in the room its singers leave: no prop drawn in front of a singer
 may cover their face, and none covers the clock, the board, or another
 prop's text (`tests/song-it-works-on-my-machine.spec.js` checks the faces,
 every teammate's worn face, and the laptop raised on the Teammate's palm).
+
+"Inspect and Adapt", a Scrum musical, is embedded in `SEBook/process/scrum.md`
+after the Scrum Events section, as a consolidation of the chapter. It plays
+in the `team-room` theme (`js/song-video/team-room.js`, styles in
+`css/song-video-team-room.css`), the Found It team's office: a large display
+fills a warm white wall under a team sign that names each section
+(`TeamRoom.sign()`), with a floor-to-ceiling window over the city on the left
+and, on the right, the team's task board (sticky notes held by magnets) and a
+clock; downlights wash the wall, and a rug lies on the oak planks beside a
+plant. The room moves gently all song, each motion slow, small, and posed from
+song time (`animate()` in the theme): clouds drift past the window, the city's
+lit windows glow up and down, the daylight shaft dims as clouds pass and creeps
+across the floor with dust floating in it, the plant sways, a few notes stir,
+and the clock keeps the song's time. Under reduced motion it holds still. Slides are laid out on the
+display's logical 588 × 300 screen (`TeamRoom.SCREEN`) in a layer of their own,
+`TeamRoom.slides(layers)`, behind the cast, which the display shows 1.2 times
+larger (`TeamRoom.ZOOM`) round the screen's centre; `TeamRoom.toDisplay([x,
+y])` turns a screen point into the stage point a singer points or presents at.
+The choreography returns that layer so `scene.js` culls its pictures. The
+opera cast performs there, and each role is drawn in the metaphor of the
+CS 130 Scrum lecture. `opera-cast.js` dresses the
+Scrum Master as `coach`, the team coach (a teal track jacket with white and
+gold stripes down its sides and sleeves, a stand collar, and a whistle on a
+lanyard, holding a clipboard), and the Product Owner as `navigator`, the value
+navigator (a navy double-breasted sea coat with brass buttons and gold cuff
+braid over a Breton shirt, a compass pin, and a spyglass prop); a costume's
+`sleeveTrim(upper, fore)` adds the stripes and the braid. Three Developers wear
+the UI Developer's apron, `coder`'s hoodie, and the Test Engineer's lab coat.
+The New Developer, the main character, is the viewer's own SE Gym hero
+(`heroHead`). Every other character is the gender of the voice that sings it,
+measured on the take: a woman sings the Product Owner, a man the Scrum Master,
+and a mixed choir the Developers, drawn as two men and a woman (the Test
+Engineer). In the player each wears a random human hero's head restyled within
+the gender (`castLook` in the choreography, through `castHead`): drawn once per
+viewing and kept all song. On export stages each wears the drawn face for its
+gender, where a figure's `gender: 'woman'` gives it a woman's face with long
+hair.
+`js/song-video/scrum-scenes.js` (styles in `css/song-video-scrum-scenes.css`)
+draws the metaphors as slides: a header band with the role's emblem (a
+whistle, a compass, a hard hat), its name, and its metaphor; a scene; and a
+list of what the role is accountable for (✓) above a "Not" row. The coach's
+scene is a basketball court seen from above, the Developers on it and the
+coach on the sideline: they draw their own plays and huddle, a game clock runs
+a timebox down, a project manager's pyramid gives way to a servant-leader's
+inverted one, and the coach clears a wall from a player's path. The
+navigator's is a sea chart whose compass reads Value: the user stories are
+waypoints on a course ordered by value to the product vision, and an idea off
+the course is not sailed to. The builders stack the Increment block by block.
+The same module draws the chorus's temple (Empiricism on its three pillars)
+and the role cards. In act one each role stands beside the display; from the
+chorus on, the whole cast stands in a line downstage, in front of its lower
+edge, each singer stepping forward toward the viewer, so the slides keep the
+display's height above their heads.
+`js/song-video/scrum-kit.js` (styles in `css/song-video-scrum-kit.css`)
+draws the rest: the Sprint strip (a frame named Sprint holding its four
+events, each with its icon and lit while it is sung, with the arrow back to
+the start), the Scrum board (Product Backlog, Sprint Backlog, and Increment,
+its empty slots drawn dashed, whose one-line story cards, each edged in its
+kind's colour, move, swell, split, lock, and stack as the lyrics
+move them, over an explanation bar that carries the coach's or the
+navigator's emblem when they act), checklists ticked on cue, the quiz card
+with its answer bar and emblem, and the intro's pictures. The Sprint loop is a
+strip rather than an ArchUML state diagram because the diagram, even laid
+out horizontally, only fits the space above the cast at about half size, too
+small to read.
+
+"Not a One-Time Investment", the design-with-reuse song, is embedded in
+`SEBook/designprinciples/reuse.md` after the libraries-versus-frameworks
+section, as a review of the chapter's cases. It keeps the lecture's own
+metaphor for reuse, composing existing building blocks, all the way through,
+in toy bricks. The `brick-site` theme (`js/song-video/brick-site.js`, colours
+in `css/song-video-brick-site.css`) is a construction site at sunrise,
+after the lecture's title picture: a twin-towered hall and a building going
+up, brick courses in tan with blue and gold cornices, tiled roofs, toy window
+pieces whose room lights fade as morning arrives, lamp posts, a tower
+crane carrying a prebuilt module of bricks, and a studded baseplate as the
+ground. The ground, studs, loose bricks, and lamps are present from the first
+frame. The intro (`BUILD` in the theme) lays the ground-floor bases and
+assembles the crane, which lifts its module during the instrumental.
+The three refrains add lower floors, upper floors and tower shafts, then
+belfries, roofs, and the site's final wall courses. Each brick course rises
+under a clip path while the next brick drops into its slot. The hall's
+staggered towers have separate milestones so pauses leave complete windows.
+Finished floors hold between choruses; seeking backward restores the earlier
+build. `SongScene` passes the authored `song` timing API to the theme alongside
+`duration`, so construction follows the section boundaries. The crane places
+its module in the outro. During explanations the forklift
+holds still; the clouds drift gently as the sunrise continues. The buildings stay sharp
+on either side of the central teaching area.
+Selected illustration contours stay crisp; the hero has no surrounding halo.
+The sky stays unobscured, with no broad dark scrim. Every pose is a function of song
+time, so a seek shows the right stage of the build.
+Gold section banners stay at the top left, clear of the central illustrations.
+They provide the section heading without a second floating title brick.
+`js/song-video/reuse-kit.js` (styles in `css/song-video-reuse-kit.css`)
+draws open compositions: compact opaque plaques for text, self-contained
+code/terminal screens, and coloured bricks directly over the site. Case
+illustrations take turns in the 440px-wide space between the towers,
+without scaling down their type. `focusPanel()` gives each illustration its
+own lyric-timed windows and returns to causal diagrams when the song needs
+them. The two benefit cards appear separately. Each checklist question
+replaces the previous one beside its growing brick tower. Quiz questions
+remain through the listening pause, then give way to their answer pictures
+and green answer bricks.
+Answer illustrations start their changes on the sung answer, so a version
+update, module split, or framework call is visible rather than already
+finished at the reveal. The Heartbleed fix date and passing tests hold before
+their next picture. The left-pad column lands on its base after losing its
+support; the application pivots on the surviving column. Text and brick
+separation uses crisp outlines and hard offsets, without blurred shadows.
+The outro switches from a shell command to a JavaScript example, then holds
+its completed casebook through the final note.
+Both Ariane launch platforms rest on the ground, with their names underneath.
+The rockets stay full size: Ariane 4 rises out through the top of the frame;
+Ariane 5 climbs roughly twice as fast into the low cloud bank, holds at the
+overflow moment for the 37-second explanation, then veers and breaks apart
+there. The breakup separates clipped sections of the actual rocket artwork
+through an amber fireball, with rising smoke and fading embers. It resolves
+before the comparison appears; reduced motion shows one settled breakup
+illustration. Compact 16-bit and overflow labels accompany the continuous flight, without gauge
+cutaways. `rocket()` takes a ground height and an authored centre destination
+and arrival time, keeping the launch and explosion positions consistent.
+A package is a brick whose studs are its interface; a brick
+stacked on another depends on it, so the urllib3 tower tilts when version
+2.0.0 brings different studs. The taller left-pad build uses individual blocks
+in staggered courses; its right column drops when the tiny support goes.
+Three compact build-error readouts sit below the platform while the tower
+remains visible. A framework is a baseplate with a socket for your brick; the
+refrain's questions each add a brick to a tower; principles and quiz answers
+are bricks that snap on; and left-pad's own job is shown with bricks too
+(`padColumn()`: padding bricks drop in on the left until a column of numbers
+lines up on the right). One colour means one thing across the song: blue for
+reused packages (and the case tabs and headings that file them), gold for
+your own code and what is worth keeping, red for what breaks, green for what
+is fixed or right, grey for a framework's structure. Code cards (JavaScript through the shared
+`SongKit.highlightJavaScript`) turn off Fira Code's ligatures, so `===` and
+`!==` read as typed. One continuous hero performs as the site foreman
+(opera-cast.js's `foreman` costume: hi-vis vest, gold hard hat, tool pouch).
+The hero stands on the right-hand construction tower, beside the crane.
+The building and performer share the same course schedule: small steps land
+as bricks reach the hero, and completed levels hold between choruses. The
+hero remains on the finished tower for the outro. Reduced motion shows a
+still performer on the completed tower. The shared word-timed singing rig follows the storyboard's marks,
+resting during instrumental gaps and quiz pauses. Reduced motion keeps the
+mouth neutral. The intro clipboard gives way to a gold brick for the finale.
+
+The sky begins in cool blue hour with rose beneath the clouds. `sunriseAt()`
+projects a uniformly advancing solar hour angle into an east-facing view at
+34° north, for an illustrative morning with fixed declination. The sun rises
+up and right; its elevation drives every lighting change. Rose and coral
+intensify before the horizon crossing, then the upper sky clears to azure
+while cloud undersides become peach and cream. Window reflections and brick
+faces brighten, and stars, room lights, and lamps fade at elevation thresholds.
+Only some rooms are lit in blue hour, with stable differences in brightness.
+Their warm interiors have shaded recesses and darker floors; unlit panes
+reflect the cool sky. Broad, subtle reflections replace diagonal shine marks.
+Room lights fade smoothly at staggered dawn thresholds while the frames and
+glass pick up daylight. Seeking restores the same room lighting.
+The cloud treatment retains the security song's cool upper masses and warm
+lower surfaces. A separate directional highlight turns toward the sun from
+each bank's current position. Banks drift at slightly different speeds,
+travelling less than five percent of the stage width over the song without
+wrapping or jumping. Both their positions and light directions follow song
+time. As in the Security song, thin wisps shear a little faster than the
+clipped inner folds, while sunlit filaments remain anchored to the bank's
+sun-facing light field. Small travelling ripples flex the cloud silhouettes,
+with staggered phases and fixed tapered tips. Body, clipping edge, and lit
+rim share the same contour so the shading stays attached. All cloud motion
+remains fixed under reduced motion.
+The changing palette follows
+[NOAA's cloud-colour explanation](https://www.noaa.gov/jetstream/clouds/color-of-clouds).
+UCLA blue and gold accent the construction and teaching bricks.
+Reduced motion holds a settled morning pose. The transcript, audio description, and
+playlist thumbnail must be regenerated when that visual story changes.
+
+"Design It In Before They Break In", the security song, is embedded at the top of the Summary of
+`SEBook/systems/security.md`, as a review of the whole chapter. It walks the
+lecture's four-question security plan (security model, threat model, attack
+surface, protection mechanisms), naming SQL injection and cross-site
+scripting as separate attacks with one shared mistake, and its bridge retells
+the 2026 Hugging Face case and its lessons. The `frontier` theme
+(`js/song-video/frontier.js`, colours in `css/song-video-frontier.css`) is a
+desert town at dusk built of computing. Its street opens with the four
+services of verse 4, the lecture's example system: a general store, the post
+office under a radio mast, a storehouse, and a barn, each with its icon on a
+sign. All song long they are the town's evening silhouettes; verse 4 lights
+them (`town.light`), and once each part has its own key the cable between them
+thins and picket fences rise between them, to stay up for the rest of the song
+(`town.compartments`), so the same buildings, wires, and fences serve both the
+backdrop and the lesson. Past them stand a water tower whose tank is a database
+cylinder, a false-front saloon that is a server rack, a store stacked from
+software modules, and a router shack, all joined by one network cable that
+runs behind the buildings (jacks on each) with data packets travelling it both
+ways. Their status lights come on one by one as late golden hour turns
+linearly into blue hour, then onward toward night. The shared sunset clock
+runs at 88% speed from the same golden-hour starting point, placing blue
+hour at about 49% of the song and retaining more afterglow at the end.
+The sun follows a west-facing equinox path at 34° north, using a constant
+solar hour-angle clock (88.8° to 99° before the shared 12% slowdown)
+compressed into the song. The slower clock keeps the red disc visible longer
+and the high clouds colourful through most of the song, ending in later blue hour.
+Its disc warms from gold to orange-red and flattens near the horizon through
+NOAA's standard-atmosphere refraction approximation. The disc is enlarged
+1.5× for readability; it sets during the second minute. A local halo
+follows the disc while a wider horizon afterglow fades with solar elevation.
+Broad cloud banks have sun-facing amber and red-orange relief over cool
+ambient shading. Their illustrative heights (1.6–11 km) determine when they
+enter Earth's shadow: low clouds darken first, high banks retain the last
+warm light, followed by a restrained scattered afterglow fading into blue-grey.
+One steady wind carries the banks, with subtle shear in their wisps and
+clipped internal folds. Lighting follows their current positions; seeking
+recreates the same sky exactly. Reduced motion holds a
+settled blue-hour sky. Geometry follows [NOAA's solar equations](https://gml.noaa.gov/grad/solcalc/solareqns.PDF);
+the illustrated lighting follows the [WMO Cloud Atlas](https://cloudatlas.wmo.int/en/appearance-of-clouds-colour.html),
+with art-directed colours rather than a full atmospheric scattering model.
+The desert ground retains its dusty ochre and brown material
+colours, with cooler, darker foreground shading instead of a blue overlay.
+`js/song-video/western-kit.js` (styles in `css/song-video-western-kit.css`)
+draws the pieces: the plan board with a pictogram per question and a stamp
+per principle, its sung poster and principle lit in turn; wooden planks for
+headings; slates for code (SQL and HTML through the shared
+`SongKit.highlightSql` and `highlightHtml`); the lecture's post (slides
+12–14) as a social-media post whose timestamp is the viewer's current date
+and time; the login form; the app as a building whose ways in are its attack
+surface (`appFront`); crimson attack vectors (`vector`) for attacks coming
+in and amber trails for stolen data going out; a wanted poster for the threat
+model; padlocks (hung on a wooden `lockBoard`, or drawn first as a blueprint
+sketch), keys, the labels, keys, and permissions over the town's lit services
+(`services`) and their database, the blast-radius
+ring, and the app's porch, whose flowerpot can hide a key or a honeypot.
+Code slates use paragraph-size type with deliberate line breaks. Travelling
+arrowheads and cookies follow the same eased progress as their path strokes;
+an opening padlock moves its steel shackle, outline, and reflection together.
+The porch's clipped shingle roof, wood grain, recessed window, hinges, and
+barrel hardware share the ambient night light; its lantern and window stay warm.
+Its flowerpot has a rounded terracotta lip, soil and gravel, fine leaf veins,
+and UCLA Blue petals with UCLA Gold centers. The whole plant remains inside
+the pot's tipping group, preserving the outlaw's contact points.
+The bridge's robot bubbles quote 38148c on finding working credentials:
+two excerpts from page 35 of the August 2026 METR / Redwood report, labelled
+as recorded thoughts, with the source also in the visual transcript.
+`js/song-video/principle-scenes.js` (styles in
+`css/song-video-principle-scenes.css`) shows each principle at work under its
+stamp: a see-through padlock beside its published blueprint (Open Design), a
+checkpoint that inspects every input (Zero Trust), and a key rack with one
+narrow key per job and the admin master key retired (Least Privilege).
+The checkpoint crates have brass straps and fasteners; the rack's keys have
+distinct cuts, with separated, readable permission tags.
+`js/song-video/sheriff.js` is the hero: a rigged sheriff (felt hat, leather
+vest, star, bandana, boots, a gun belt with a holstered revolver it reaches
+for but never draws) wearing the viewer's head, with two-bone arms and moves
+(point, present, tip, hips, draw, nod, look, hold); the mouth opens on sung
+words, from the storyboard's word marks. Its sleeve, forearm, hand, and
+head silhouettes share warm brown ink, with finer lines inside the fingers.
+Pointing rolls the hand to place the straight index along its upper edge,
+with the other fingers curled below and the thumb across them.
+The arms retain a slight elbow bend at full reach; tapered forearms follow
+the wrist tangents. Gesture easing settles velocity and acceleration at
+each endpoint, with a small shoulder-to-elbow-to-finger delay and a slower
+release. Every contact pose still settles at its authored cue.
+`js/song-video/outlaw.js` (styles in
+`css/song-video-outlaw.css`) is the singer, the hired tester: a masked outlaw
+in profile who sneaks along routes of stage points with a step cycle locked
+to the distance travelled, adult limb proportions, grounded boots, relaxed
+wrists, and continuous foot swings and turns. It freezes, reaches, lifts, types, shrugs, and
+carries props (a laptop, a cookie jar for stolen cookies, a magnifier, a
+loot sack, a honeypot jar), with a line of little robot AI agents (`bot`).
+It appears wherever the song talks about an attacker, and in the closing
+bars it falls for a honeypot under the flowerpot. Both figures share their
+hands, built joint by joint, from `js/song-video/frontier-hand.js`. The outlaw's
+blinks, breathing, cloth motion, and gesture oscillations hold still under
+reduced motion; its keyed actions remain synchronized with the lyrics.
+The sheriff's forearms follow the wrist edges without a seam across the palm;
+held props sit between the palm and near fingers. The outro key flies in the
+HUD layer, targeting the posed grip in the same frame, then transfers into
+the hand without passing behind the torso.
+Interrupted sheriff gestures start from the pose at the interruption. The
+robot bandits ease into and out of their surprised poses; reduced motion
+keeps those reactions still.
 
 A section's `delivery` sets its captions: `sung` and `spoken` lines are one
 cue each, while `call` lines are quiz questions with an `answer` and
@@ -463,7 +843,7 @@ storyboard's `narrator.pronounce` (for example `SYN-ACK: sin ack`).
 | `../../js/song-video/scene.js` | Shared scene assembly, authored timing lookup, typography loading and disposal |
 | `../../js/song-video/rounded-surfaces.js` | One-time Firefox rounded-border paint preparation for every song |
 | `../../js/song-video/timeline.js` | Paused Web Animations posed by `seek(t)`, per-frame updaters, the beat grid, camera punches and shakes |
-| `../../js/song-video/kit.js` | Builders for stickers, kinetic type, terminals, stations, paths and graphs; the Python highlighter (`highlightPython()`) and `writeCode()`, which every code card uses for the shared `.code-tok--*` syntax colours in `css/song-video-stage.css` |
+| `../../js/song-video/kit.js` | Builders for stickers, kinetic type, terminals, stations, paths and graphs; the Python, JavaScript, SQL, and HTML highlighters (`highlightPython()`, `highlightJavaScript()`, `highlightSql()`, `highlightHtml()`) and `writeCode()`, which every code card uses for the shared `.code-tok--*` syntax colours in `css/song-video-stage.css` |
 | `../../js/song-video/virtual-clock.js` | Independent graph clocks; never replaces browser timers |
 | `../../js/song-video/graph-track.js` | Retained graph transitions with deterministic seeking and disposal |
 | `../../js/song-video/songs/<song>.js` | The choreography: what appears on which sung word |

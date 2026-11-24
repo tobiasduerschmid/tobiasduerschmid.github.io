@@ -52,7 +52,8 @@
 
     prototype._showAADLSource = function (location) {
       if (!location || !this.editorModels[location.file] || !Number.isInteger(location.line)) return;
-      this._activateFile(location.file);
+      this._setActiveFile(location.file);
+      this._renderTabs();
       if (!this.editor) return;
       const model = this.editor.getModel();
       const line = Math.max(1, Math.min(location.line, model.getLineCount()));

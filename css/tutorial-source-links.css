@@ -1,0 +1,45 @@
+/* ============================================================
+   Source references (js/tutorial-source-links.js): a code span
+   that is exactly `path:line` of a project file becomes a button
+   that opens the file at that line. It keeps the code styling and
+   adds an underline, so the cue is not color alone. Text inherits
+   the surrounding size.
+   ============================================================ */
+
+.tutorial-source-link {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.tutorial-source-link > code {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.tutorial-source-link:hover > code {
+  text-decoration-thickness: 2px;
+}
+
+.tutorial-source-link:focus-visible {
+  outline: 3px solid #005587;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+html.dark-mode .tutorial-source-link:focus-visible {
+  outline-color: #ffd100;
+}
+
+@media print {
+  .tutorial-source-link > code {
+    text-decoration: none;
+  }
+}

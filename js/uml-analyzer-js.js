@@ -28,6 +28,9 @@
     ? require('./uml-constant-values.js') : global.UMLConstantValues;
   const ReturnSummaries = typeof module !== 'undefined' && module.exports
     ? require('./uml-return-summaries.js') : global.UMLReturnSummaries;
+  // Hosts that predate source links still get diagrams, without provenance.
+  const SourceMap = (typeof module !== 'undefined' && module.exports ? require('./uml-source-map.js') : global.UMLSourceMap)
+    || { createSourceMap: () => ({ tag: line => line, resolve: text => ({ text, sources: [] }) }), lineLocator: () => () => 0, range: () => null };
   const TypeScriptLibraries = typeof module !== 'undefined' && module.exports
     ? require('./vendor/typescript/5.9.3/lib-map.js') : null;
 
@@ -92,9 +95,10 @@
 
     return {
       classDiagram: classDiagram,
+      classDiagramSources: extractor.diagramSources,
       constructionMethods: extractor.constructionMethods,
       sequenceLoopConstants: seqGen.loopConstants.toJSON(),
-      ...seqGen.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }),
+      ...seqGen.diagnostics.result(sequenceDiagram, { failed: sequenceFailed, sources: seqGen.diagramSources }),
       errors: errors
     };
   }
@@ -244,6 +248,7 @@
         text = text.slice(0, edit.start) + edit.text + text.slice(edit.end);
       }
       resolved[filename] = ts.createSourceFile(filename, text, ts.ScriptTarget.Latest, true, _getScriptKind(ts, filename));
+      resolved[filename].umlOriginalLine = _originalLineLocator(source.text, edits);
     }
     const inferredTypes = _inferMemberTypes(ts, program, declarations, ids, host);
     return { parsedFiles: resolved, inferredTypes };
@@ -431,12 +436,47 @@
     return targets.size === 1 ? Array.from(targets)[0] : null;
   }
 
-  function _recordRelationship(info, role, target) {
+  /** source is the range of the code that first retains the reference. */
+  function _recordRelationship(info, role, target, source) {
     // Neither construction nor injection proves UML ownership or shared aggregation.
     if (!info.relationships.some(edge => edge.role === role && edge.target === target)) {
-      info.relationships.push({ role: role, target: target, multiplicity: null, alternative: false });
+      info.relationships.push({ role: role, target: target, multiplicity: null, alternative: false, source: source || null });
     }
     info._relAttrs.add(role);
+  }
+
+  /**
+   * Symbol resolution rewrites each file before analysis. Map an offset in the
+   * rewritten text back to its line in the learner's file. Edits never overlap.
+   */
+  function _originalLineLocator(original, edits) {
+    const lineOf = SourceMap.lineLocator(original);
+    let shift = 0;
+    const spans = edits.slice().sort((a, b) => a.start - b.start).map(edit => {
+      const span = { start: edit.start, end: edit.end, newStart: edit.start + shift, newEnd: edit.start + shift + edit.text.length };
+      shift += edit.text.length - (edit.end - edit.start);
+      return span;
+    });
+    return offset => {
+      let before = null;
+      for (const span of spans) { if (span.newStart > offset) break; before = span; }
+      if (!before) return lineOf(offset);
+      return lineOf(offset < before.newEnd ? before.start : before.end + offset - before.newEnd);
+    };
+  }
+
+  /** 1-based source range of node in the learner's file. */
+  function _nodeSource(node, sourceFile) {
+    if (!node || !sourceFile) return null;
+    const lineOf = sourceFile.umlOriginalLine || (offset => sourceFile.getLineAndCharacterOfPosition(offset).line + 1);
+    const start = node.getStart(sourceFile);
+    return SourceMap.range(sourceFile.fileName.replace(/^\/+/, ''), lineOf(start), lineOf(Math.max(start, node.end - 1)));
+  }
+
+  /** The line that names a declaration, below any decorators. */
+  function _headerSource(node, sourceFile) {
+    const named = _nodeSource(node && (node.name || node), sourceFile);
+    return named && SourceMap.range(named.file, named.startLine, named.startLine);
   }
 
   function _getNodeText(node, sourceFile) {
@@ -483,6 +523,9 @@
     this.dependencies = [];  // [className] — transient usage (params/returns)
     this.relationships = []; // Field-level edges; each role retains its own cardinality.
     this._relAttrs    = new Set(); // attrs promoted to relationship arrows
+    this.source       = opts.source || null; // range of the declaration, decorators included
+    this.header       = opts.header || null; // the line that names it
+    this.dependencySources = new Map();      // dependency target → declaring member's name line
   }
 
   /* ===================================================================
@@ -568,7 +611,8 @@
       }
     }
 
-    var info = new ClassInfo(name, { isAbstract: isAbstract, bases: bases, implements: impls });
+    var info = new ClassInfo(name, { isAbstract: isAbstract, bases: bases, implements: impls,
+      source: _nodeSource(node, sourceFile), header: _headerSource(node, sourceFile) });
     var methods = Object.create(null), aTypes = Object.create(null), pTypes = Object.create(null), initParamTypes = Object.create(null);
 
     for (var m = 0; m < node.members.length; m++) {
@@ -611,7 +655,7 @@
       });
 
       if (isProperty) {
-        info.attributes.push({ name: pName, type: pType, visibility: _getVisibility(ts, param), optional: !!param.questionToken });
+        info.attributes.push({ name: pName, type: pType, visibility: _getVisibility(ts, param), optional: !!param.questionToken, source: _nodeSource(param, sourceFile) });
       }
 
       var resolved = _extractBaseTypeName(ts, param.type, this.allTypeNames);
@@ -620,7 +664,7 @@
         mParams[pName] = resolved;
         // TS parameter property with known class type → stored reference
         if (isProperty) {
-          _recordRelationship(info, pName, resolved);
+          _recordRelationship(info, pName, resolved, _nodeSource(param, sourceFile));
           aTypes[pName] = resolved;
         }
       }
@@ -629,6 +673,7 @@
 
     if (Object.keys(mParams).length > 0) pTypes['constructor'] = mParams;
     info.methods.push({ name: 'constructor', params: params, returnType: '', visibility: '+', isConstructor: true,
+      source: _nodeSource(member, sourceFile), header: _headerSource(member, sourceFile),
       isDefault: params.length === 0 && !!member.body && member.body.statements.length === 0 });
     methods['constructor'] = member;
 
@@ -662,7 +707,7 @@
       if (ts.isNewExpression(right)) {
         var typeName = _getNodeText(right.expression, sourceFile);
         if (self.allTypeNames.has(typeName)) {
-          _recordRelationship(info, attrName, typeName);
+          _recordRelationship(info, attrName, typeName, _nodeSource(node, sourceFile));
           aTypes[attrName] = typeName;
           return;
         }
@@ -672,7 +717,7 @@
       if (ts.isIdentifier(right)) {
         var paramCls = initParamTypes[right.text];
         if (paramCls) {
-          _recordRelationship(info, attrName, paramCls);
+          _recordRelationship(info, attrName, paramCls, _nodeSource(node, sourceFile));
           aTypes[attrName] = paramCls;
         }
       }
@@ -692,14 +737,15 @@
     var isAbstract = _hasMod(ts, member, ts.SyntaxKind.AbstractKeyword);
 
     info.attributes.push({
-      name: name, type: type, visibility: vis, isStatic: isStatic, isAbstract: isAbstract, optional: !!member.questionToken
+      name: name, type: type, visibility: vis, isStatic: isStatic, isAbstract: isAbstract, optional: !!member.questionToken,
+      source: _nodeSource(member, sourceFile)
     });
 
     // Property initializer: x = new ClassName() → stored reference
     if (member.initializer && ts.isNewExpression(member.initializer)) {
       var initType = _getNodeText(member.initializer.expression, sourceFile);
       if (this.allTypeNames.has(initType)) {
-        _recordRelationship(info, name, initType);
+        _recordRelationship(info, name, initType, _nodeSource(member, sourceFile));
         aTypes[name] = initType;
         return;
       }
@@ -741,7 +787,8 @@
     if (Object.keys(mParams).length > 0) pTypes[fullName] = mParams;
     info.methods.push({
       name: fullName, params: params, returnType: returnType,
-      visibility: vis, isStatic: isStatic, isAbstract: isAbstract, isAsync: isAsync
+      visibility: vis, isStatic: isStatic, isAbstract: isAbstract, isAsync: isAsync,
+      source: _nodeSource(member, sourceFile), header: _headerSource(member, sourceFile)
     });
 
     methods[fullName] = member;
@@ -764,14 +811,15 @@
       }
     }
 
-    var info = new ClassInfo(name, { isInterface: true, implements: impls });
+    var info = new ClassInfo(name, { isInterface: true, implements: impls,
+      source: _nodeSource(node, sourceFile), header: _headerSource(node, sourceFile) });
 
     for (var m = 0; m < node.members.length; m++) {
       var member = node.members[m];
       if (member.kind === ts.SyntaxKind.PropertySignature) {
         var propName = _getNodeText(member.name, sourceFile);
         var propType = member.type ? _getNodeText(member.type, sourceFile) : 'any';
-        info.attributes.push({ name: propName, type: propType, visibility: '+', optional: !!member.questionToken });
+        info.attributes.push({ name: propName, type: propType, visibility: '+', optional: !!member.questionToken, source: _nodeSource(member, sourceFile) });
       } else if (member.kind === ts.SyntaxKind.MethodSignature) {
         var methName = _getNodeText(member.name, sourceFile);
         var params = [];
@@ -787,7 +835,7 @@
         var retType = member.type ? _getNodeText(member.type, sourceFile) : 'void';
         info.methods.push({
           name: methName, params: params, returnType: retType,
-          visibility: '+', isAbstract: true
+          visibility: '+', isAbstract: true, source: _nodeSource(member, sourceFile), header: _headerSource(member, sourceFile)
         });
       }
     }
@@ -802,11 +850,11 @@
 
   ClassExtractor.prototype._visitEnum = function (node, sourceFile) {
     var name = node.name.text;
-    var info = new ClassInfo(name, { isEnum: true });
+    var info = new ClassInfo(name, { isEnum: true, source: _nodeSource(node, sourceFile) });
 
     for (var m = 0; m < node.members.length; m++) {
       info.attributes.push({
-        name: _getNodeText(node.members[m].name, sourceFile), type: '', visibility: '+'
+        name: _getNodeText(node.members[m].name, sourceFile), type: '', visibility: '+', source: _nodeSource(node.members[m], sourceFile)
       });
     }
 
@@ -828,7 +876,7 @@
       const references = this._resolveTypeReferences(attr.type);
       for (const reference of references) {
         if (!info.relationships.some(edge => edge.role === attr.name && edge.target === reference.target)) {
-          _recordRelationship(info, attr.name, reference.target);
+          _recordRelationship(info, attr.name, reference.target, attr.source);
         }
       }
       for (const edge of info.relationships.filter(edge => edge.role === attr.name)) {
@@ -845,6 +893,7 @@
         for (const reference of this._resolveTypeReferences(type)) {
           if (reference.target !== info.name && !structural.has(reference.target)) {
             _addUnique(info.dependencies, reference.target);
+            if (!info.dependencySources.has(reference.target)) info.dependencySources.set(reference.target, method.header || null);
             structural.add(reference.target);
           }
         }
@@ -865,7 +914,9 @@
 
   ClassExtractor.prototype.generatePlantUML = function () {
     this.constructionMethods = [];
+    this.diagramSources = [];
     if (this.classMap.size === 0) return '';
+    const sourceMap = SourceMap.createSourceMap();
 
     var lines = ['@startuml', 'layout landscape', 'layout compact'];
     var sorted = this._topologicalSort();
@@ -879,7 +930,7 @@
       else if (info.isInterface) keyword = 'interface';
       else if (info.isAbstract)  keyword = 'abstract class';
 
-      lines.push(keyword + ' ' + info.name + ' {');
+      lines.push(sourceMap.tag(keyword + ' ' + info.name + ' {', info.source));
 
       // Attributes (filter out those promoted to relationship arrows)
       for (var a = 0; a < info.attributes.length; a++) {
@@ -890,7 +941,7 @@
         if (attr.isAbstract) aPrefix += '{abstract} ';
         aPrefix += attr.visibility || '+';
         var typeStr = attr.type ? ': ' + attr.type : '';
-        lines.push('  ' + aPrefix + attr.name + typeStr);
+        lines.push(sourceMap.tag('  ' + aPrefix + attr.name + typeStr, attr.source));
       }
 
       // Methods
@@ -908,7 +959,7 @@
         if (method.isConstructor) {
           this.constructionMethods.push({ owner: info.name, name: method.name, lineIndex: lines.length, isDefault: method.isDefault });
         }
-        lines.push('  ' + mPrefix + method.name + '(' + paramStr + ')' + retStr);
+        lines.push(sourceMap.tag('  ' + mPrefix + method.name + '(' + paramStr + ')' + retStr, method.source));
       }
 
       lines.push('}');
@@ -920,30 +971,32 @@
       // Inheritance (--|>)
       for (var b = 0; b < cls.bases.length; b++) {
         if (this.allTypeNames.has(cls.bases[b])) {
-          lines.push(cls.name + ' --|> ' + cls.bases[b]);
+          lines.push(sourceMap.tag(cls.name + ' --|> ' + cls.bases[b], cls.header));
         }
       }
       // Realization (..|>) for implements; inheritance (--|>) for interface-extends-interface
       for (var ii = 0; ii < cls.implements.length; ii++) {
         if (this.allTypeNames.has(cls.implements[ii])) {
           var arrow = cls.isInterface ? '--|>' : '..|>';
-          lines.push(cls.name + ' ' + arrow + ' ' + cls.implements[ii]);
+          lines.push(sourceMap.tag(cls.name + ' ' + arrow + ' ' + cls.implements[ii], cls.header));
         }
       }
       for (const edge of cls.relationships) {
         const repeated = cls.relationships.filter(other => other.target === edge.target).length > 1;
         const labeled = repeated || edge.alternative;
         const arrow = edge.multiplicity ? ' --> "' + edge.multiplicity + '" ' : ' --> ';
-        lines.push(cls.name + arrow + edge.target + (labeled ? ' : ' + edge.role + (edge.alternative ? ' (alternative)' : '') : ''));
+        lines.push(sourceMap.tag(cls.name + arrow + edge.target + (labeled ? ' : ' + edge.role + (edge.alternative ? ' (alternative)' : '') : ''), edge.source));
       }
       // Dependency (..>)
       for (var d = 0; d < cls.dependencies.length; d++) {
-        lines.push(cls.name + ' ..> ' + cls.dependencies[d]);
+        lines.push(sourceMap.tag(cls.name + ' ..> ' + cls.dependencies[d], cls.dependencySources.get(cls.dependencies[d])));
       }
     }
 
     lines.push('@enduml');
-    return lines.join('\n');
+    const resolved = sourceMap.resolve(lines.join('\n'));
+    this.diagramSources = resolved.sources;
+    return resolved.text;
   };
 
   ClassExtractor.prototype._topologicalSort = function () {
@@ -1017,6 +1070,10 @@
     };
     Object.values(parsedFiles).forEach(reserveName);
     this.lines           = [];
+    // Message lines are tagged with the call or `new` expression that sends them.
+    this.sourceMap       = SourceMap.createSourceMap();
+    this.diagramSources  = [];
+    this._entrySource    = null;
     this._statementVisits = 0;
 
     // Scope
@@ -1055,6 +1112,9 @@
     var entry = this._collectEntryStmts();
     if (!entry || entry.length === 0) return;
 
+    const first = _nodeSource(entry[0].stmt, entry[0].sourceFile);
+    const last = _nodeSource(entry[entry.length - 1].stmt, entry[entry.length - 1].sourceFile);
+    this._entrySource = first && SourceMap.range(first.file, first.startLine, last && last.file === first.file ? last.endLine : first.endLine);
     this._ensureParticipant('Main', 'Main');
 
     var lineStart = this.lines.length;
@@ -1069,19 +1129,22 @@
 
   SequenceDiagramGenerator.prototype.generatePlantUML = function () {
     if (this.lines.length === 0) return '';
-    var out = ['@startuml', 'layout landscape'];
+    var out = ['@startuml', 'layout landscape', 'layout compact'];
     for (var i = 0; i < this.participants.length; i++) {
       var p = this.participants[i];
       if (p.id === 'Main' && p.label === 'Main') {
-        out.push('participant Main as : Main');
+        out.push(this.sourceMap.tag('participant Main as : Main', this._entrySource));
       } else {
-        out.push('participant ' + p.id + ': ' + p.label);
+        const type = this.classMap.get(p.label);
+        out.push(this.sourceMap.tag('participant ' + p.id + ': ' + p.label, type && type.source));
       }
     }
     out.push('');
     out.push.apply(out, this.lines);
     out.push('@enduml');
-    return out.join('\n');
+    const resolved = this.sourceMap.resolve(out.join('\n'));
+    this.diagramSources = resolved.sources;
+    return resolved.text;
   };
 
   /* ── Entry-point collection ────────────────────────────────── */
@@ -1209,7 +1272,7 @@
           if (this._dataClasses.has(clsName)) continue;
           this._ensureParticipant(instance, clsName);
           this.lines.push('create ' + instance);
-          this.lines.push(caller + ' --> ' + instance + ': <<create>>');
+          this.lines.push(this.sourceMap.tag(caller + ' --> ' + instance + ': <<create>>', _nodeSource(decl.initializer, sf)));
           this.lines.push('activate ' + instance);
           this._maybeFollow(clsName, 'constructor', instance, depth, bindings);
           this.lines.push('deactivate ' + instance);
@@ -1659,6 +1722,8 @@
 
     var calleeId = resolved.participantId || this._calleeIdFor(clsName, caller, resolved.attrHint);
     var label    = this._buildCallLabel(call, sf, method);
+    const source = _nodeSource(call, sf);
+    const message = line => this.sourceMap.tag(line, source);
     var isSuper = resolved.isSuper;
     const returned = this._returnIdentity(clsName, method, bindings, call,
       receiver || (isSuper ? { className: this._classOf(caller), participantId: caller } : null));
@@ -1667,31 +1732,31 @@
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push('create ' + calleeId);
-      this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
+      this.lines.push(message(caller + ' --> ' + calleeId + ': <<create>>'));
       this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, 'constructor', calleeId, depth, bindings);
       this.lines.push('deactivate ' + calleeId);
     } else if (method === 'constructor' && isSuper) {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
-      this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
+      this.lines.push(message(caller + ' -> ' + calleeId + ': ' + label));
       this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, method, calleeId, depth, bindings);
       this.lines.push('deactivate ' + calleeId);
     } else if (calleeId === caller) {
-      this.lines.push(caller + ' -> ' + caller + ': ' + label);
+      this.lines.push(message(caller + ' -> ' + caller + ': ' + label));
       this.lines.push('activate ' + caller);
       this._maybeFollow(clsName, method, calleeId, depth, bindings);
       this.lines.push('deactivate ' + caller);
     } else {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
-      this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
+      this.lines.push(message(caller + ' -> ' + calleeId + ': ' + label));
       this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, method, calleeId, depth, bindings);
       // Return/reply message (Ambler G172: only when return type is not obvious)
       var retType = this._getReturnType(clsName, method);
-      if (retType) this.lines.push(calleeId + ' --> ' + caller + ': ' + retType);
+      if (retType) this.lines.push(message(calleeId + ' --> ' + caller + ': ' + retType));
       this.lines.push('deactivate ' + calleeId);
     }
     if (returned) this._returnedObjects.set(call, returned);
@@ -1970,7 +2035,7 @@
         this._callerClass[calleeId] = clsName;
         this._constructedObjects.set(node, { className: clsName, participantId: calleeId });
         this.lines.push('create ' + calleeId);
-        this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
+        this.lines.push(this.sourceMap.tag(caller + ' --> ' + calleeId + ': <<create>>', _nodeSource(node, sf)));
         this.lines.push('activate ' + calleeId);
         this._maybeFollow(clsName, 'constructor', calleeId, depth, bindings);
         this.lines.push('deactivate ' + calleeId);

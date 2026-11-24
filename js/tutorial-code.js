@@ -536,6 +536,20 @@
     return LANG_MAP[ext] || 'plaintext';
   }
 
+  var READ_ONLY_FILE_MESSAGE = 'This file is read-only in this tutorial.';
+
+  /**
+   * Give every step that declares no `files` key the tutorial's top-level
+   * `shared_files` list. Steps share the one array, so the page data holds
+   * the codebase once. An explicit `files: []` still means "no files".
+   */
+  function applySharedFiles(steps, sharedFiles) {
+    if (!Array.isArray(sharedFiles)) return;
+    steps.forEach(function (step) {
+      if (step && step.files == null) step.files = sharedFiles;
+    });
+  }
+
   var MIXED_BACKEND_SUPPORTED = {
     pyodide: true,
     cpp: true,
@@ -549,7 +563,7 @@
     v86: true,
   };
 
-  var WORKER_BACKENDS = { pyodide: true, cpp: true, java: true, prolog: true, sql: true, haskell: true };
+  var WORKER_BACKENDS = { pyodide: true, cpp: true, prolog: true, sql: true, haskell: true };
 
   function normalizeBackendName(name) {
     return String(name || 'v86').trim().toLowerCase();
@@ -583,6 +597,7 @@
 
     var backend = normalizeBackendName(options.backend || 'v86');
     var steps = options.steps || [];
+    applySharedFiles(steps, options.sharedFiles);
     var declaredBackendMap = {};
     var declaredBackends = [];
     var hasStepBackend = false;
@@ -634,7 +649,6 @@
       workerPath: options.workerPath || '/js/pyodide-worker.js',
       sqlWorkerPath: options.sqlWorkerPath || '/js/sql-worker.js',
       prologWorkerPath: options.prologWorkerPath || '/js/prolog-worker.js',
-      javaWorkerPath: options.javaWorkerPath || '/js/java-worker.js',
       cppWorkerPath: options.cppWorkerPath || '/js/cpp-worker.js',
       haskellFramePath: options.haskellFramePath || '/haskell-runtime-frame.html',
       // Derived flags
@@ -653,6 +667,15 @@
     this.steps = backend === 'prolog'
       ? steps.map(this._normalizePrologStep.bind(this))
       : steps;
+    // Opt-in navigation for multi-folder steps (top-level `file_tree` and
+    // `project_search`). With the tree on, the tab strip lists only the
+    // files the learner opened; every step file still has a Monaco model.
+    this.fileTreeEnabled = options.fileTree === true;
+    this.projectSearchEnabled = options.projectSearch === true;
+    this._openTabs = this.fileTreeEnabled ? new Set() : null;
+    // Aborted by destroy(); owns listeners added by optional workspace
+    // components (file tree, project search, authored-diagram pane).
+    this._lifecycleEvents = new AbortController();
     this.progressVersion = options.progressVersion || null;
     this.legacyStepKeys = options.legacyStepKeys || [];
     this._progressMigrationNotice = '';
@@ -698,6 +721,8 @@
     this.resetType = options.resetType || 'files';
     this.autoSaveEnabled = this.allowAutosave;             // toggled from navbar
     this._sessionDrafts = { files: {}, stepFiles: {} };
+    // Diagram challenge records by _draftStepKey, saved as `diagramChallenges`.
+    this._diagramChallengeRecords = {};
     this._originalContent = {};           // tracks original file content for dirty detection
     this.booted = false;
     this._httpEnabled = this.steps.some(function (s) { return s.http_client; });
@@ -805,6 +830,8 @@
     this._timedPracticeStorageKey = 'tutorial-time-practice-' + this.tutorialId;
     this._timedPracticeTimer = null;
     this._timedPracticeCurrentStep = null;
+    // The practice break the instructions view shows while a step is locked.
+    this._timedPracticeLockoutView = null;
 
     // Worker/executor state for browser-native backends. The Haskell backend
     // uses a sandboxed iframe behind the same postMessage-shaped interface
@@ -912,6 +939,13 @@
     this._outputPositionBottomLeft = options.output_position === 'bottom-left';
     // Optional override of the Run button label (e.g. "Test" for pytest-driven tutorials).
     this._runLabel = options.run_label || 'Run';
+    // `run: false` (tutorials whose files are read, never run): no Run button,
+    // no OUTPUT panel, and no Ctrl/Cmd+Enter. Only the standard Output panel
+    // is removed; terminal, preview, and tabbed bottom panels ignore it.
+    this.runEnabled = options.run !== false;
+    // `instructions_width: narrow` starts the instructions column narrower
+    // (css/tutorial.css); a width the learner drags to still wins.
+    this._instructionsWidth = options.instructions_width === 'narrow' ? 'narrow' : null;
     // Auto-pytest mode: when true and backend is pyodide, clicking Run on
     // pytest-named file(s) invokes `pytest.main([path, ...paths, "-v"])`
     // instead of exec'ing a file as a script. A step can set `run_files` to
@@ -929,8 +963,9 @@
     this._umlRefreshTimer = null;
     this._umlActiveType = options.uml_default_type === 'sequence' ? 'sequence' : 'class'; // 'class' or 'sequence'
     this._umlWatchedFiles = [];         // Set per-step from YAML uml_files
+    this._umlRefreshPending = false;    // A refresh was requested while files were loading
     this._umlLanguage = 'python';      // Auto-detected from watched source-file extensions.
-    this._umlClassLayoutPreference = options.uml_class_layout || 'portrait';
+    this._umlClassLayoutPreference = options.uml_class_layout || 'compact';
     this._umlClassLayoutDefault = this._umlClassLayoutPreference; // global fallback for per-step overrides
     this._umlHideFlags = [];             // Per-step hide flags: ['visibility'], ['multiplicity'], etc.
     this._umlLastDiagrams = null;       // {classDiagram, sequenceDiagram}
@@ -981,7 +1016,7 @@
     // constructed.
     this.debuggerEnabled = !!options.debugger && (
       backend === 'pyodide' || backend === 'webcontainer' || backend === 'browser' ||
-      backend === 'prolog' || backend === 'haskell'
+      backend === 'prolog' || backend === 'haskell' || backend === 'java'
     );
     this.debuggerOptions = options.debuggerOptions || {};
   }
@@ -1256,6 +1291,9 @@
             }
             if (saved.stepsPassed) self._stepsPassed = new Set(saved.stepsPassed);
             if (saved.quizPassed) self._quizPassed = new Set(saved.quizPassed);
+            if (saved.diagramChallenges && typeof saved.diagramChallenges === 'object') {
+              self._diagramChallengeRecords = Object.assign({}, saved.diagramChallenges);
+            }
             // Suppress autosave for the entire restore sequence so loadStep's
             // end-of-step _autoSaveProgress cannot clobber localStorage with
             // starter-file content before the saved files have been applied.
@@ -1525,10 +1563,13 @@
     if (this.llmAddon) this.llmAddon.destroy();
     this._umlViewControls.forEach(function (controls) { controls.destroy(); });
     this._umlViewEvents.abort();
+    this._lifecycleEvents.abort();
+    clearTimeout(this._sourceRevealTimer);
     this._destroyed = true;
     this._cancelPlaywrightRun();
     clearTimeout(this._umlRefreshTimer);
     if (this._umlClient) this._umlClient.dispose();
+    if (this._javaSession) this._javaSession.destroy();
     if (this._compilerAdapter) this._compilerAdapter.destroy();
     if (this._tlaController) this._tlaController.destroy();
     if (this._aadlController) this._aadlController.destroy();
@@ -1537,6 +1578,7 @@
     if (this._compilerRulesEditor) this._compilerRulesEditor.destroy();
     if (this._compilerSourceEditor) this._compilerSourceEditor.destroy();
     if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(this.root);
+    if (window.DiagramChallenge) window.DiagramChallenge.destroyWithin(this.root);
     (this._splitterObservers || []).forEach(function (observer) { observer.disconnect(); });
     this._splitterObservers = [];
     if (this._smalltalkInitController) this._smalltalkInitController.abort();
@@ -1826,8 +1868,11 @@
           '<div class="tvm-git-terminal-container"></div>' +
           '</div>' +
           '</div>';
-      } else {
+      } else if (this.runEnabled) {
         terminalHtml = '<div class="tvm-output-panel">' + outputBody + '</div>';
+      } else {
+        // Editor-only workspace: _initSplitters hides the unused vsplitter.
+        terminalHtml = '';
       }
     }
 
@@ -1845,7 +1890,7 @@
       '<div class="tvm-loading-text">Loading\u2026</div>' +
       '</div>' +
       '<div class="tvm-container" style="visibility:hidden">' +
-      '<div class="tvm-instructions-panel">' +
+      '<div class="tvm-instructions-panel' + (this._instructionsWidth ? ' tvm-instructions-panel--' + this._instructionsWidth : '') + '">' +
       (useLeftUml
         ? '<div class="tvm-left-tab-bar">' +
           '<button class="tvm-left-tab active" data-panel="steps"><i class="fa fa-book-open"></i> Steps</button>' +
@@ -1855,6 +1900,7 @@
       '<div class="tvm-steps-view">' +
       '<div class="tvm-step-nav-bar">' +
       '<div class="tvm-step-nav"></div>' +
+      '<p class="tvm-step-nav-current"></p>' +
       '<div class="tvm-step-timer" role="timer" aria-label="Step timer" hidden></div>' +
       '<div class="tvm-step-timer-controls" hidden>' +
       '<button class="tvm-step-timer-control-btn tvm-step-timer-extend-btn" type="button" data-original-title="Add 5 minutes to this timed step">+5 min</button>' +
@@ -1954,40 +2000,7 @@
       '</div>' +
       '<div class="tvm-hsplitter" data-original-title="Drag to resize"></div>' +
       '<div class="tvm-workspace' + (this._umlPositionRight ? ' tvm-uml-right' : '') + '">' +
-      (this.makeDagPath
-        ? '<div class="tvm-view-toggle">' +
-          '<button class="tvm-view-btn tvm-view-btn-editor active" data-view="editor">' +
-          '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1 2.5A1.5 1.5 0 012.5 1h11A1.5 1.5 0 0115 2.5v11a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 011 13.5v-11zM2.5 2a.5.5 0 00-.5.5v11a.5.5 0 00.5.5h11a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-11z"/><path d="M4 5.5a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7a.5.5 0 01-.5-.5zm0 3a.5.5 0 01.5-.5h4a.5.5 0 010 1h-4a.5.5 0 01-.5-.5z"/></svg>' +
-          ' Editor</button>' +
-          '<button class="tvm-view-btn tvm-view-btn-make-dag" data-view="make_dag" data-original-title="Show the dependency graph (what `make -n` would walk)">' +
-          '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-          '<rect x="6" y="1" width="6" height="3" rx="0.7" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
-          '<rect x="2" y="7" width="5" height="3" rx="0.7" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
-          '<rect x="10" y="7" width="5" height="3" rx="0.7" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
-          '<rect x="2" y="12" width="5" height="3" rx="0.7" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
-          '<path d="M9 4 V5.5 L4.5 7" stroke="currentColor" stroke-width="1.2" fill="none"/>' +
-          '<path d="M9 4 V5.5 L12.5 7" stroke="currentColor" stroke-width="1.2" fill="none"/>' +
-          '<path d="M4.5 10 V12" stroke="currentColor" stroke-width="1.2" fill="none"/>' +
-          '</svg>' +
-          ' Make DAG</button>' +
-          '</div>'
-        : (this.gitGraphPath
-        ? '<div class="tvm-view-toggle">' +
-          '<button class="tvm-view-btn tvm-view-btn-editor active" data-view="editor">' +
-          '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.5A1.5 1.5 0 012.5 1h11A1.5 1.5 0 0115 2.5v11a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 011 13.5v-11zM2.5 2a.5.5 0 00-.5.5v11a.5.5 0 00.5.5h11a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-11z"/><path d="M4 5.5a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7a.5.5 0 01-.5-.5zm0 3a.5.5 0 01.5-.5h4a.5.5 0 010 1h-4a.5.5 0 01-.5-.5z"/></svg>' +
-          ' Editor</button>' +
-          '<button class="tvm-view-btn tvm-view-btn-graph" data-view="git_graph">' +
-          '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-          '<line x1="4" y1="3" x2="4" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' +
-          '<path d="M4 6 Q4 9.5 11 9.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>' +
-          '<circle cx="4" cy="3" r="2" fill="currentColor"/>' +
-          '<circle cx="4" cy="10" r="2" fill="currentColor"/>' +
-          '<circle cx="4" cy="13" r="2" fill="currentColor" opacity="0.5"/>' +
-          '<circle cx="11" cy="9.5" r="2" fill="currentColor"/>' +
-          '</svg>' +
-          ' Git Graph</button>' +
-          '</div>'
-        : '')) +
+      this._viewToggleHtml() +
       '<div class="tvm-editor-panel' +
         (this.editorSplitSupported ? ' tvm-editor-split-supported' : '') +
         (this.editorSplitSupported && this._splitActive ? ' tvm-editor-split-active' : '') + '">' +
@@ -1995,6 +2008,7 @@
         ? '<section class="compiler-tutorial-source compiler-lab" aria-label="Source and parsing controls"><label>Source program<textarea rows="2" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea></label><div class="compiler-tutorial-actions"></div></section>'
         : '') +
       '<div class="tvm-editor-body">' +
+      this._fileSidebarHtml() +
       '<div class="tvm-editor-pane tvm-editor-pane-left">' +
       (this.editorSplitSupported
         ? '<div class="tvm-editor-pane-tab-row">' +
@@ -2120,6 +2134,7 @@
     this.loadingEl = this.root.querySelector('.tvm-loading');
     this.containerEl = this.root.querySelector('.tvm-container');
     this.stepNavEl = this.root.querySelector('.tvm-step-nav');
+    this.stepNavCurrentEl = this.root.querySelector('.tvm-step-nav-current');
     this.stepTimerEl = this.root.querySelector('.tvm-step-timer');
     this.stepTimerControlsEl = this.root.querySelector('.tvm-step-timer-controls');
     this.stepTimerExtendBtn = this.root.querySelector('.tvm-step-timer-extend-btn');
@@ -2154,6 +2169,7 @@
     this._umlFullscreenEl = this.root.querySelector('.tvm-diagram-fullscreen-overlay');
     this._umlFsContentEl = this.root.querySelector('.tvm-diagram-fs-content');
     this._mountUMLViewControls();
+    this._mountFileNavigator();
     this._stepsViewEl = this.root.querySelector('.tvm-steps-view');
     this._leftTabBarEl = this.root.querySelector('.tvm-left-tab-bar');
     this._rightTabBarEl = this.root.querySelector('.tvm-right-tab-bar');
@@ -2167,10 +2183,11 @@
       });
     }
 
-    // Lecture mode: hide step number nav bar and step controls bar entirely
+    // Lecture mode: hide the step numbers (the nav bar keeps only "Hide
+    // instructions", css/tutorial.css) and the step controls bar entirely
     if (this.lectureMode) {
       var stepNavBar = this.root.querySelector('.tvm-step-nav-bar');
-      if (stepNavBar) stepNavBar.style.display = 'none';
+      if (stepNavBar) stepNavBar.classList.add('tvm-step-nav-bar--lecture');
       var stepControlsBar = this.root.querySelector('.tvm-step-controls-bar');
       if (stepControlsBar) stepControlsBar.style.display = 'none';
     }
@@ -2460,15 +2477,10 @@
       }
     }
 
-    // Git graph toggle buttons
-    var viewBtns = this.root.querySelectorAll('.tvm-view-btn');
-    for (var vi = 0; vi < viewBtns.length; vi++) {
-      (function (btn) {
-        btn.addEventListener('click', function () {
-          self._setView(btn.getAttribute('data-view'));
-        });
-      })(viewBtns[vi]);
-    }
+    // Workspace view toggle (Editor / Git Graph / Make DAG / Diagram). One
+    // delegated listener also covers views added after the UI is built.
+    var viewToggle = this.root.querySelector('.tvm-view-toggle');
+    if (viewToggle) this._wireViewToggle(viewToggle);
 
     // Git graph refresh button
     var gitRefreshBtn = this.root.querySelector('.tvm-git-graph-refresh');
@@ -2745,11 +2757,12 @@
     }
     if (vsplitter && editorPanel && workspaceBottom) {
       this._makeDraggable(vsplitter, this.config.backend === 'compiler' ? 'vertical' : 'horizontal', editorPanel, workspaceBottom);
-    } else if (vsplitter) {
+    } else if (workspaceEl) {
       // No bottom panel exists (workspace is editor-only because Output was
-      // hoisted away and no UML pane took its place) — hide the vsplitter so
-      // it can't be dragged into a broken state.
-      vsplitter.style.display = 'none';
+      // hoisted away or `run: false` removed it, and no UML pane took its
+      // place): the editor fills the height, and the vsplitter is hidden so
+      // it can't be dragged into a broken state (css/tutorial.css).
+      workspaceEl.classList.add('tvm-workspace--editor-only');
     }
 
     // Bottom-left splitter — sits in the left column between the steps view
@@ -2789,6 +2802,7 @@
 
     this._initUMLBroadcastChannel();
     this._initPopoutManager();
+    this._mountInstructionsRail();
     this._wireInstructionsPopoutButton();
     this._wirePanePopoutButtons();
     this._wireOutputPopoutButton();
@@ -5091,7 +5105,7 @@
     });
   };
 
-  // SQL, Prolog, and Java share the ready/setup/message worker protocol.
+  // SQL and Prolog share the ready/setup/message worker protocol.
   // Keep ownership and deadline handling together so obsolete events cannot
   // settle a newer boot transaction or send its setup to the wrong worker.
   TutorialCode.prototype._initRuntimeWorker = function (options) {
@@ -5181,11 +5195,14 @@
     });
   };
 
-  // ---- Java backend (Java-to-JS transpiler via Web Worker) ------------------
-  TutorialCode.prototype._initJava = function () {
-    return this._initRuntimeWorker({
-      backend: 'java', label: 'Java', workerPath: this.config.javaWorkerPath,
-    });
+  // The editor is ready before the browser JVM starts. The first settled
+  // lesson snapshot warms compiler analysis in the background.
+  TutorialCode.prototype._initJava = async function () {
+    const { JavaTutorialSession } = await import('./java/tutorial.mjs');
+    if (this._destroyed) return;
+    this._javaSession = new JavaTutorialSession(this);
+    this._javaWorkspace = this._javaSession.workspace;
+    this.booted = true;
   };
 
   // ---- C++ backend (Clang/WASI in a disposable module worker) ---------------
@@ -5369,7 +5386,7 @@
 
   TutorialCode.prototype._isRestartableWorkerBackend = function (backend) {
     return backend === 'pyodide' || backend === 'cpp' || backend === 'sql' ||
-      backend === 'prolog' || backend === 'java';
+      backend === 'prolog';
   };
 
   TutorialCode.prototype._setWorkerExecutionControls = function (state) {
@@ -5848,7 +5865,12 @@
     if (!commands || commands.length === 0) return Promise.resolve();
 
     var message;
-    if (this.config.backend === 'pyodide' || this.config.backend === 'java') {
+    if (this.config.backend === 'java') {
+      return this._javaWorkspace.test({ files: this._javaSession.files(), code: commands.join('\n') }).then(function (result) {
+        if (result.exitCode !== 0) throw new Error(result.stderr || 'Java step setup failed.');
+      });
+    }
+    if (this.config.backend === 'pyodide') {
       message = { type: 'runCode', code: commands.join('\n'), silent: true };
     } else if (this.config.backend === 'prolog') {
       message = { type: 'runProlog', code: commands.join('\n'), silent: true };
@@ -6070,6 +6092,10 @@
       testRunBtn.textContent = '\u2713 Test';
     }
     if (stopBtn) stopBtn.style.display = 'none';
+    if (this._javaRestoreRunFocus && runBtn && !runBtn.disabled) {
+      this._javaRestoreRunFocus = false;
+      runBtn.focus();
+    }
     if (this._compilerRestoreRunFocus && runBtn && !runBtn.disabled) {
       this._compilerRestoreRunFocus = false;
       runBtn.focus();
@@ -6090,7 +6116,7 @@
 
   TutorialCode.prototype._handleRunTransactionFailure = function (run, error) {
     var reason = error && error.reason;
-    if (reason !== 'terminated' && !(error && error.runMessageShown)) {
+    if (reason !== 'terminated' && error?.name !== 'AbortError' && !(error && error.runMessageShown)) {
       var fallback = {
         sql: 'SQL execution failed',
         prolog: 'Prolog execution failed',
@@ -6110,7 +6136,7 @@
     if (this._activeRunTransaction !== run) return;
     this._activeRunTransaction = null;
     var workerBacked = run.backend === 'pyodide' || run.backend === 'sql' ||
-      run.backend === 'prolog' || run.backend === 'java' || run.backend === 'cpp' || run.backend === 'haskell';
+      run.backend === 'prolog' || run.backend === 'cpp' || run.backend === 'haskell';
     this._setRunTransactionControls(workerBacked && !this.booted ? 'unavailable' : 'idle');
   };
 
@@ -6143,9 +6169,13 @@
   };
 
   TutorialCode.prototype._runCurrentFile = function (options) {
+    if (!this.runEnabled) return Promise.resolve(false);
+    // The output (and the code it comes from) must be in view.
+    this._notifyCodeRequested('run');
     if (this._activeRunTransaction) return this._activeRunTransaction.promise;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'c4' || this.config.backend === 'shell-pipeline') && this._testRunInFlight) return Promise.resolve(false);
-    if ((this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'c4' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return Promise.resolve(false);
+    if ((this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'c4' || this.config.backend === 'shell-pipeline') && this._testRunInFlight) return Promise.resolve(false);
+    if ((this.config.backend === 'java' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'c4' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return Promise.resolve(false);
+    if (this._javaSession && this._debuggerCtl?.session) return Promise.resolve(false);
     if (this._haskellInterpreter) this._haskellInterpreter.showOutput();
     if (this._prologInterpreter) {
       if (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session)) return Promise.resolve(false);
@@ -6193,6 +6223,7 @@
     var runFiles = run.runFiles;
     var filename = run.filename;
 
+    if (backend === 'java') return this._javaSession.run(run);
     if (backend === 'smalltalk') return this._runSmalltalk(run);
     if (backend === 'compiler') return this._runCompiler(run);
     if (backend === 'tla') return this._runTLA(run);
@@ -6271,9 +6302,9 @@
       });
     }
 
-    if (backend === 'java' || backend === 'cpp') {
+    if (backend === 'cpp') {
       var compiledPath = '/tutorial/' + filename;
-      // Both compilers may read other source files from the workspace.
+      // Include headers and other translation units from the workspace.
       var allFiles = Object.keys(self.editorModels);
       var syncChain = Promise.resolve();
       allFiles.forEach(function (f) {
@@ -6402,16 +6433,15 @@
   };
 
   // Inline Test button — runs `step.test_file` and streams output to the
-  // same output panel as the Run button. Only the webcontainer backend wires
-  // this up today, because that's the only backend that has a real Node
-  // process and a sensible spawn-a-different-file mental model.
+  // same output panel as Run. Learner-authored test files do not award lesson credit.
   TutorialCode.prototype._runTestFile = function () {
     if (this._activeRunTransaction) return this._activeRunTransaction.promise;
     var stepIndex = this.currentStep >= 0 ? this.currentStep : 0;
     var step = this.steps[stepIndex];
     var testFile = step && step.test_file;
     var backend = this.config.backend;
-    if (!testFile || (backend !== 'webcontainer' && backend !== 'browser')) {
+    if (!testFile || !['webcontainer', 'browser', 'java'].includes(backend) ||
+        (backend === 'java' && (this._testRunInFlight || this._activeStepLoadRequest || this._debuggerCtl?.session))) {
       return Promise.resolve(false);
     }
 
@@ -6431,6 +6461,7 @@
   };
 
   TutorialCode.prototype._executeTestFileRun = function (transaction) {
+    if (transaction.backend === 'java') return this._javaSession.run(transaction);
     var self = this;
     var testFile = transaction.filename;
     self._clearOutput();
@@ -7231,6 +7262,12 @@
    * host-owned deadline can terminate even a Worker blocked in a tight loop.
    */
   TutorialCode.prototype._stopExecution = function () {
+    if (this._javaSession) {
+      this._javaRestoreRunFocus = document.activeElement === this.root.querySelector('.tvm-stop-btn');
+      this._javaSession.stop();
+      if (!this._activeTestRun) this._appendOutput('Execution stopped.\n', 'info');
+      return;
+    }
     if (this._aadlController) {
       this._aadlRestoreRunFocus = document.activeElement === this.root.querySelector('.tvm-stop-btn');
       this._aadlController.stop();
@@ -7846,7 +7883,7 @@
     var self = this;
     var needsNodeChannel = false;
     var needsBrowserChannel = self.config.backend === 'browser' || self.config.backend === 'webcontainer';
-    var needsLanguageChannel = self.config.backend === 'prolog' || self.config.backend === 'haskell';
+    var needsLanguageChannel = self.config.backend === 'prolog' || self.config.backend === 'haskell' || self.config.backend === 'java';
     return new Promise(function (resolve, reject) {
       var dbgAssetVersion = String(Date.now());
       function ensureCss() {
@@ -7966,7 +8003,7 @@
       monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
       function () { self._saveCurrentFile(); }
     );
-    if (this._mixedBackendMode || this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') {
+    if (this.runEnabled && (this._mixedBackendMode || this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline')) {
       editor.addCommand(
         monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
         function () { self._runCurrentFile(); }
@@ -8050,6 +8087,14 @@
         this._refreshOutputDetachedState();
       }
       model.onDidChangeContent(function () {
+        if (self._javaSession) {
+          self._javaSession.changed();
+          if (!self._suppressAutoSave && self._umlWatchedFiles.includes(filename)) {
+            ++self._umlAnalysisRequestId;
+            ++self._umlRenderRequestId;
+            self._scheduleUMLRefresh();
+          }
+        }
         if (self._haskellCycles) self._haskellCycles.schedule();
         // Lint + gutter reflect CURRENT content, regardless of who changed
         // it — so they run even during programmatic edits (step transitions,
@@ -8109,10 +8154,11 @@
             );
           });
         }, 800);
-        // UML refresh is deferred to explicit save (_saveCurrentFile) — not on every keystroke.
+        // Other tutorial UML backends refresh on explicit Save.
         // React preview is also save-only — popups send a request-save via Ctrl+S.
       });
-      // Initial lint pass when the file first opens.
+      // Initial diagnostics include newly added Java files.
+      if (this._javaSession && !this._suppressAutoSave) this._javaSession.changed();
       if (this._haskellCycles) this._haskellCycles.schedule();
       if (this.config.enableLinter && this._isPythonFile(filename)) {
         var initSelf = self;
@@ -8156,6 +8202,7 @@
       if (this._isCompilerRulesFile(filename)) this._compilerRulesEditor.activate(entry.model);
       else this._compilerRulesEditor.hide();
     }
+    var hostEditor = this.editor;
     if (this._splitActive && this.editor2) {
       var pane = this._paneForFile(filename);
       if (pane === 'left') {
@@ -8164,18 +8211,62 @@
       } else {
         this._rightActiveFile = filename;
         this.editor2.setModel(entry.model);
+        hostEditor = this.editor2;
       }
     } else {
       // Tabs mode: single editor hosts every file
       this._leftActiveFile = filename;
       this.editor.setModel(entry.model);
     }
+    this._applyFileReadOnly(hostEditor, filename);
     if (this.debuggerEnabled && window.SEBookDebugger &&
         typeof window.SEBookDebugger.refreshBreakpoints === 'function') {
       window.SEBookDebugger.refreshBreakpoints(this);
     }
     if (this.config.backend === 'c4' && this._c4Session && filename !== this._c4Session.file) this._showC4Surface('yaml');
     this._refreshRunButtonLabel();
+    this._scheduleFileTreeSync();
+  };
+
+  /**
+   * True when the current step declares `path` read-only, through the
+   * file's own `readonly: true` or the step's `readonly: true`. Derived from
+   * the step specs, so spec-less reopen paths (saved drafts, solutions,
+   * watched files) can never clear the flag. Run and tests still use the file.
+   */
+  TutorialCode.prototype._isReadOnlyFile = function (path) {
+    var step = this.steps[this.currentStep];
+    if (!step || !Array.isArray(step.files)) return false;
+    return step.files.some(function (file) {
+      return !!file && file.path === path && (step.readonly === true || file.readonly === true);
+    });
+  };
+
+  TutorialCode.prototype._hasReadOnlyFiles = function () {
+    if (this._declaresReadOnlyFiles == null) {
+      this._declaresReadOnlyFiles = this.steps.some(function (step) {
+        return !!step && (step.readonly === true || (step.files || []).some(function (file) {
+          return !!file && file.readonly === true;
+        }));
+      });
+    }
+    return this._declaresReadOnlyFiles;
+  };
+
+  /**
+   * Lock the editor showing `filename` when the step marks it read-only. A
+   * running debug session keeps every file locked; the debugger restores
+   * this per-file state when it ends. Tutorials without read-only files keep
+   * the editor options untouched.
+   */
+  TutorialCode.prototype._applyFileReadOnly = function (editor, filename) {
+    if (!editor || typeof editor.updateOptions !== 'function' || !this._hasReadOnlyFiles()) return;
+    var readOnly = this._isReadOnlyFile(filename);
+    var debugging = !!(this._debuggerCtl && this._debuggerCtl.session);
+    editor.updateOptions({
+      readOnly: readOnly || debugging,
+      readOnlyMessage: { value: readOnly ? READ_ONLY_FILE_MESSAGE : 'Stop the debugger to edit this file.' },
+    });
   };
 
   TutorialCode.prototype._isCompilerRulesFile = function (filename) {
@@ -8202,6 +8293,9 @@
     }
 
     var splitMode = !!(this._splitActive && this.editor2);
+    var tabPaths = this._tabPaths();
+    // With the Files tree, tabs can close; the last open tab stays.
+    var closableTabs = !!this._openTabs && tabPaths.length > 1;
 
     function makeTab(filename, isActive) {
       var detached = self._popoutManager && self._popoutManager.isDetached('tab:' + filename);
@@ -8231,6 +8325,7 @@
           return;
         }
         const tabGroup = tab.parentElement;
+        self._pinTabsForSwitch(filename);
         self._setActiveFile(filename);
         self._renderTabs();
         // Rendering replaces the label that received activation. Keep focus
@@ -8342,10 +8437,26 @@
           if (outside) self._popoutFile(ds.filename);
         });
       }
+      if (closableTabs && !detached) {
+        var close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'tvm-tab-close';
+        var closeIcon = document.createElement('span');
+        closeIcon.setAttribute('aria-hidden', 'true');
+        closeIcon.textContent = '×';
+        close.appendChild(closeIcon);
+        close.setAttribute('data-original-title', 'Close tab');
+        close.setAttribute('aria-label', 'Close ' + fileLabel);
+        close.addEventListener('click', function (e) {
+          e.stopPropagation();
+          self._closeTab(filename);
+        });
+        tab.appendChild(close);
+      }
       return tab;
     }
 
-    Object.keys(this.editorModels).forEach(function (filename) {
+    tabPaths.forEach(function (filename) {
       if (self._splitActive && self.editor2) {
         var pane = self._paneForFile(filename);
         // Skip files whose pane is currently detached into a popup window
@@ -8464,6 +8575,7 @@
     }
     revealActiveTab(this.editorTabsEl);
     revealActiveTab(this.editorTabsElRight);
+    this._scheduleFileTreeSync();
   };
 
   /**
@@ -8547,6 +8659,8 @@
     if (!entry) return;
     entry.model.dispose();
     delete this.editorModels[filename];
+    if (this._openTabs) this._openTabs.delete(filename);
+    if (this._javaSession && !this._suppressAutoSave) this._javaSession.changed();
     if (this._haskellCycles) this._haskellCycles.schedule();
     if (this._leftActiveFile === filename) this._leftActiveFile = null;
     if (this._rightActiveFile === filename) this._rightActiveFile = null;
@@ -8572,6 +8686,349 @@
     Object.keys(this.editorModels).forEach(function (path) {
       if (!stepPaths[path]) self._closeFile(path);
     });
+  };
+
+  // ---------------------------------------------------------------------------
+  // Files tree and open tabs (`file_tree: true`)
+  //
+  // Every step file keeps a Monaco model (drafts, test sync, and popouts rely
+  // on that). The tree is how the learner finds files; the tab strip lists
+  // the files they opened plus the step's open_file. A file shown only by a
+  // programmatic switch (debugger, restored session) is a transient tab until
+  // the learner switches away from it, which keeps it open.
+  // ---------------------------------------------------------------------------
+
+  var NARROW_LAYOUT_QUERY = '(max-width: 900px)';
+
+  TutorialCode.prototype._fileSidebarHtml = function () {
+    if (!this.fileTreeEnabled && !this.projectSearchEnabled) return '';
+    return '<details class="tvm-file-sidebar" open>' +
+      '<summary class="tvm-file-sidebar-summary">' + (this.fileTreeEnabled ? 'Files' : 'Search files') + '</summary>' +
+      (this.projectSearchEnabled ? '<div class="tvm-project-search-host"></div>' : '') +
+      (this.fileTreeEnabled ? '<div class="tvm-file-tree-host"></div>' : '') +
+      '</details>';
+  };
+
+  function isNarrowLayout() {
+    return !!(window.matchMedia && window.matchMedia(NARROW_LAYOUT_QUERY).matches);
+  }
+
+  TutorialCode.prototype._mountFileNavigator = function () {
+    var sidebar = this.root.querySelector('.tvm-file-sidebar');
+    if (!sidebar) return;
+    var self = this;
+    var signal = this._lifecycleEvents.signal;
+    this._fileSidebarEl = sidebar;
+    // Desktop shows the sidebar beside the editor, open, unless it is a
+    // drawer; narrow screens fold it into a disclosure above the editor
+    // that starts closed.
+    var narrow = window.matchMedia ? window.matchMedia(NARROW_LAYOUT_QUERY) : null;
+    var syncDisclosure = function () {
+      sidebar.open = !(narrow && narrow.matches) && !sidebar.classList.contains('tvm-file-sidebar--drawer');
+    };
+    syncDisclosure();
+    if (narrow && narrow.addEventListener) narrow.addEventListener('change', syncDisclosure, { signal: signal });
+    var treeHost = sidebar.querySelector('.tvm-file-tree-host');
+    if (treeHost && window.TutorialFileTree) {
+      var tree = window.TutorialFileTree.mount(treeHost, {
+        label: 'Files',
+        onOpen: function (path) { self._openFileTab(path); },
+      });
+      this._fileTree = tree;
+      signal.addEventListener('abort', function () { tree.destroy(); });
+    }
+    this._mountProjectSearch(sidebar.querySelector('.tvm-project-search-host'));
+  };
+
+  /**
+   * Show the Files sidebar as a drawer (true) or as its usual column. A
+   * drawer leaves the width to the editor and the diagram beside it: on
+   * wide screens it starts closed, a narrow handle the learner opens when
+   * needed, and the column opens again when the drawer ends. Narrow screens
+   * keep the disclosure as the learner left it.
+   * @param {boolean} asDrawer
+   */
+  TutorialCode.prototype._setFileNavigatorDrawer = function (asDrawer) {
+    var sidebar = this._fileSidebarEl;
+    if (!sidebar || sidebar.classList.contains('tvm-file-sidebar--drawer') === asDrawer) return;
+    sidebar.classList.toggle('tvm-file-sidebar--drawer', asDrawer);
+    if (!isNarrowLayout()) sidebar.open = !asDrawer;
+  };
+
+  /**
+   * Tell optional workspace components that the learner wants to work with
+   * code: a file opened (tree, search result, evidence link), Run, or
+   * project search. The diagram pane leaves its maximized layout.
+   * @param {'open-file'|'run'|'search'} reason
+   */
+  TutorialCode.prototype._notifyCodeRequested = function (reason) {
+    if (typeof this._onCodeRequested === 'function') this._onCodeRequested(reason);
+  };
+
+  /** Paths the tab strip shows: every model, or with the Files tree the
+   * tabs the learner opened plus the active file. */
+  TutorialCode.prototype._tabPaths = function () {
+    var models = this.editorModels;
+    if (!this._openTabs) return Object.keys(models);
+    var paths = Array.from(this._openTabs).filter(function (path) { return !!models[path]; });
+    if (this.activeFileName && models[this.activeFileName] && paths.indexOf(this.activeFileName) === -1) {
+      paths.push(this.activeFileName);
+    }
+    return paths;
+  };
+
+  /** Keep the file being left and the file being opened as tabs. */
+  TutorialCode.prototype._pinTabsForSwitch = function (path) {
+    if (!this._openTabs) return;
+    if (this.activeFileName && this.editorModels[this.activeFileName]) this._openTabs.add(this.activeFileName);
+    if (this.editorModels[path]) this._openTabs.add(path);
+  };
+
+  /** Open a file the learner chose (tree, search result, evidence link). */
+  TutorialCode.prototype._openFileTab = function (path) {
+    if (!this.editorModels[path]) return false;
+    this._pinTabsForSwitch(path);
+    this._setActiveFile(path);
+    this._renderTabs();
+    this._notifyCodeRequested('open-file');
+    return true;
+  };
+
+  /**
+   * The shown file and the cursor's line, for a diagram challenge's
+   * "Pin this line"; null when no tutorial file is shown.
+   * @returns {{path: string, line: number} | null}
+   */
+  /** The tutorial file shown in `editor` and its cursor's line, or null. */
+  TutorialCode.prototype._editorLocation = function (editor) {
+    var model = editor && editor.getModel();
+    var position = editor && editor.getPosition();
+    if (!model || !position) return null;
+    var models = this.editorModels;
+    var path = Object.keys(models).filter(function (candidate) { return models[candidate].model === model; })[0];
+    return path ? { path: path, line: position.lineNumber } : null;
+  };
+
+  /**
+   * Add an action for the cursor's line to the code editors: an item in
+   * their context menu and, with `keys`, a key binding while an editor has
+   * focus. run() gets the editor's {path, line}, or null outside a tutorial
+   * file. Diagram challenges use it for "Pin line as evidence".
+   * @param {{id: string, label: string, run: function(?{path: string, line: number}): void,
+   *          keys?: {ctrlCmd?: boolean, alt?: boolean, shift?: boolean, key: string}}} action
+   * @returns {function(): void} removes the action
+   */
+  TutorialCode.prototype.addEditorLineAction = function (action) {
+    var self = this;
+    var editors = [this.editor, this.editor2].filter(function (editor) {
+      return editor && typeof editor.addAction === 'function';
+    });
+    var keybindings = [];
+    var keys = action.keys;
+    var keyCode = keys && window.monaco ? monaco.KeyCode['Key' + String(keys.key).toUpperCase()] : undefined;
+    if (keyCode !== undefined) {
+      keybindings.push((keys.ctrlCmd ? monaco.KeyMod.CtrlCmd : 0) | (keys.alt ? monaco.KeyMod.Alt : 0) |
+        (keys.shift ? monaco.KeyMod.Shift : 0) | keyCode);
+    }
+    var handles = editors.map(function (editor) {
+      return editor.addAction({
+        id: action.id,
+        label: action.label,
+        keybindings: keybindings,
+        contextMenuGroupId: 'navigation',
+        contextMenuOrder: 0,
+        run: function (target) { action.run(self._editorLocation(target)); },
+      });
+    });
+    return function () { handles.forEach(function (handle) { handle.dispose(); }); };
+  };
+
+  /**
+   * Mark lines in the code editors' margin: one mark per {path, line} of
+   * `marks`, kept under `owner` (an empty list removes that owner's marks).
+   * The marks live on each file's model, so they stay while the learner
+   * switches files. Files without a model yet are skipped; call again once
+   * the step's files are open.
+   */
+  TutorialCode.prototype.setEditorLineMarks = function (owner, marks) {
+    if (!window.monaco) return;
+    var all = this._editorLineMarks || (this._editorLineMarks = {});
+    var previous = all[owner] || {};
+    var lines = {};
+    (marks || []).forEach(function (mark) { (lines[mark.path] = lines[mark.path] || []).push(mark.line); });
+    var next = {};
+    var models = this.editorModels;
+    Object.keys(previous).concat(Object.keys(lines)).forEach(function (path) {
+      var entry = models[path];
+      if (!entry || next[path]) return;
+      next[path] = entry.model.deltaDecorations(previous[path] || [], (lines[path] || []).map(function (line) {
+        return {
+          range: new monaco.Range(line, 1, line, 1),
+          options: { isWholeLine: true, linesDecorationsClassName: 'tvm-editor-line-mark' },
+        };
+      }));
+    });
+    all[owner] = next;
+  };
+
+  /** The trimmed text of a project file's line, or null when there is none. */
+  TutorialCode.prototype.projectLineText = function (path, line) {
+    var entry = this.editorModels[path];
+    if (!entry || !(line >= 1 && line <= entry.model.getLineCount())) return null;
+    return entry.model.getLineContent(line).trim();
+  };
+
+  TutorialCode.prototype.currentEditorLocation = function () {
+    var path = this.activeFileName;
+    var entry = path && this.editorModels[path];
+    if (!entry) return null;
+    var editor = [this.editor, this.editor2].filter(function (candidate) {
+      return candidate && candidate.getModel() === entry.model;
+    })[0];
+    var position = editor && editor.getPosition();
+    return position ? { path: path, line: position.lineNumber } : null;
+  };
+
+  /** Close a tab with the Files tree on. The model and its draft remain. */
+  TutorialCode.prototype._closeTab = function (path) {
+    if (!this._openTabs) return;
+    var paths = this._tabPaths();
+    var index = paths.indexOf(path);
+    if (index === -1 || paths.length < 2) return;
+    this._openTabs.delete(path);
+    if (this.activeFileName === path) this._setActiveFile(paths[index + 1] || paths[index - 1]);
+    this._renderTabs();
+    var activeLabel = this.editorTabsEl && this.editorTabsEl.querySelector('.tvm-tab-label[aria-current="true"]');
+    if (activeLabel) activeLabel.focus({ preventScroll: true });
+  };
+
+  // Bulk loads switch the active file once per opened model; the tree
+  // follows only the final state, once per task.
+  TutorialCode.prototype._scheduleFileTreeSync = function () {
+    if (!this._fileTree || this._fileTreeSyncPending) return;
+    this._fileTreeSyncPending = true;
+    var self = this;
+    Promise.resolve().then(function () {
+      self._fileTreeSyncPending = false;
+      if (!self._fileTree || self._destroyed) return;
+      var paths = Object.keys(self.editorModels).sort();
+      var signature = paths.join('\n');
+      if (signature !== self._fileTreeSignature) {
+        self._fileTreeSignature = signature;
+        self._fileTree.setPaths(paths);
+      }
+      self._fileTree.setActive(self.activeFileName);
+    });
+  };
+
+  // ---------------------------------------------------------------------------
+  // Project search (`project_search: true`) and source reveal
+  // ---------------------------------------------------------------------------
+
+  var SOURCE_REVEAL_MS = 2000;
+
+  function isProjectSearchShortcut(event) {
+    return (event.ctrlKey || event.metaKey) && event.shiftKey && !event.altKey &&
+      (event.code === 'KeyF' || String(event.key).toLowerCase() === 'f');
+  }
+
+  TutorialCode.prototype._mountProjectSearch = function (host) {
+    if (!host || !window.TutorialProjectSearch) return;
+    var self = this;
+    var signal = this._lifecycleEvents.signal;
+    var search = window.TutorialProjectSearch.mount(host, {
+      getFiles: function () { return self._projectSearchFiles(); },
+      onOpen: function (path, line, column) { self.revealSource(path, line, column); },
+      // The Diagram pane (js/tutorial-diagram-pane.js) owns diagram hits.
+      onOpenDiagram: function (diagramId, query, options) {
+        if (typeof self.revealDiagramText === 'function') self.revealDiagramText(diagramId, query, options);
+      },
+      onReset: function () {
+        if (typeof self.clearDiagramTextHighlights === 'function') self.clearDiagramTextHighlights();
+      },
+    });
+    this._projectSearch = search;
+    signal.addEventListener('abort', function () { search.destroy(); });
+    // Ctrl/Cmd+Shift+F works anywhere inside the tutorial, including the code
+    // editor (capture runs before Monaco's own key handling).
+    this.root.addEventListener('keydown', function (event) {
+      if (!isProjectSearchShortcut(event)) return;
+      if (event.target && event.target.closest && event.target.closest('dialog[open]')) return;
+      event.preventDefault();
+      event.stopPropagation();
+      self._openProjectSearch();
+    }, { capture: true, signal: signal });
+  };
+
+  TutorialCode.prototype._openProjectSearch = function () {
+    if (!this._projectSearch) return false;
+    this._notifyCodeRequested('search');
+    if (this._fileSidebarEl && !this._fileSidebarEl.open) this._fileSidebarEl.open = true;
+    this._projectSearch.open();
+    return true;
+  };
+
+  /**
+   * Current editor contents of every step file, drafts included, then the
+   * diagrams loaded in the Diagram pane (none before a challenge's lock-in).
+   */
+  TutorialCode.prototype._projectSearchFiles = function () {
+    var files = this._buildRefactoringWorkspace({}).files.map(function (file) {
+      return { path: file.filename, content: file.content };
+    });
+    var diagrams = typeof this.authoredDiagramSearchEntries === 'function' ? this.authoredDiagramSearchEntries() : [];
+    return files.concat(diagrams);
+  };
+
+  /**
+   * Whether `path` is a file of the current step's project: an open model
+   * (what project search and revealSource read) or a file the step declares
+   * and is still loading. `path:line` references link only to these.
+   * @param {string} path
+   */
+  TutorialCode.prototype.hasProjectFile = function (path) {
+    if (this.editorModels[path]) return true;
+    var step = this.steps && this.steps[this.currentStep];
+    return !!(step && Array.isArray(step.files) && step.files.some(function (file) {
+      return file && file.path === path;
+    }));
+  };
+
+  /**
+   * Open `path` as a tab, put the cursor at line/column, highlight the line
+   * for two seconds, and focus the editor. Search results and evidence links
+   * use this. Returns false when the current step has no such file.
+   */
+  TutorialCode.prototype.revealSource = function (path, line, column) {
+    var entry = this.editorModels[path];
+    if (!entry || !this.editor) return false;
+    this._openFileTab(path);
+    // While search is open the sidebar stays put, so its results stay in view.
+    var searching = !!(this._projectSearch && this._projectSearch.isOpen());
+    if (this._fileTree) this._fileTree.revealPath(path, { scroll: !searching });
+    var editor = this._splitActive && this.editor2 && this._paneForFile(path) === 'right' ? this.editor2 : this.editor;
+    var lineNumber = Math.min(Math.max(1, Math.floor(Number(line)) || 1), entry.model.getLineCount());
+    var columnNumber = Math.max(1, Math.floor(Number(column === undefined ? 1 : column)) || 1);
+    editor.setPosition({ lineNumber: lineNumber, column: columnNumber });
+    editor.revealLineInCenter(lineNumber);
+    this._highlightSourceLine(editor, lineNumber);
+    editor.focus();
+    return true;
+  };
+
+  TutorialCode.prototype._highlightSourceLine = function (editor, lineNumber) {
+    clearTimeout(this._sourceRevealTimer);
+    if (this._sourceRevealDecorations) this._sourceRevealDecorations.clear();
+    var decorations = editor.createDecorationsCollection([{
+      range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+      options: { isWholeLine: true, className: 'tvm-source-reveal-line', linesDecorationsClassName: 'tvm-source-reveal-gutter' },
+    }]);
+    this._sourceRevealDecorations = decorations;
+    var self = this;
+    this._sourceRevealTimer = setTimeout(function () {
+      decorations.clear();
+      if (self._sourceRevealDecorations === decorations) self._sourceRevealDecorations = null;
+    }, SOURCE_REVEAL_MS);
   };
 
   /**
@@ -8624,6 +9081,7 @@
     this._umlChannel = new BroadcastChannel('uml-sync-' + window.location.pathname);
     this._umlChannel.addEventListener('message', function (e) {
       if (e.data.type === 'uml-ready') self._broadcastUMLState();
+      if (e.data.type === 'uml-source-reveal') self._revealUMLSource(e.data.source);
       if (e.data.type === 'uml-view-change' && ['design', 'implementation'].indexOf(e.data.view) !== -1) {
         self._setUMLDiagramView(e.data.view);
       }
@@ -8642,6 +9100,7 @@
       language: this._umlAnalysisLanguage,
       diagramView: this._umlDiagramView,
       classLayout: this._umlClassLayoutPreference,
+      revealableFiles: Object.keys(this.editorModels),
       activeType: this._umlActiveType,
       color: this._umlCustomColor,
       darkMode: document.documentElement.classList.contains('dark-mode')
@@ -8981,6 +9440,7 @@
           language: entry.model.getLanguageId
             ? entry.model.getLanguageId()
             : (entry.model._languageId || ''),
+          readOnly: self._isReadOnlyFile(f),
         };
       });
     if (!files.length) return null;
@@ -9004,6 +9464,7 @@
       language: entry.model.getLanguageId ? entry.model.getLanguageId()
               : (entry.model._languageId || ''),
       darkMode: document.documentElement.classList.contains('dark-mode'),
+      readOnly: this._isReadOnlyFile(filename),
     };
   };
 
@@ -9048,6 +9509,14 @@
 
   TutorialCode.prototype._applyRefactoringEdits = function (edits, plan, request) {
     request = request || {};
+    // Refuse the whole plan: a rename applied to only the writable files
+    // would leave the read-only files referring to the old name.
+    var self = this;
+    var lockedFile = (edits || []).map(function (edit) { return edit && edit.filename; })
+      .find(function (filename) { return filename && self._isReadOnlyFile(filename); });
+    if (lockedFile) {
+      return Promise.reject(new Error('This refactoring would change ' + lockedFile + ', which is read-only in this tutorial.'));
+    }
     if (request.activeFile && typeof request.activeContent === 'string' && this.editorModels[request.activeFile]) {
       this._applyFileEditFromPopup(request.activeFile, request.activeContent);
     }
@@ -9193,63 +9662,194 @@
     panel.innerHTML = '';
   };
 
+  // What the instructions view shows for a step: its instructions, or the
+  // practice break while the current timed step is locked.
+  TutorialCode.prototype._instructionsStepView = function (index) {
+    if (index === this.currentStep && this._timedPracticeLockoutView) return this._timedPracticeLockoutView;
+    var step = this.steps[index];
+    return {
+      title: step.title || '',
+      titleHTML: this._renderInlineMarkdown(step.title || ''),
+      instructionsHTML: this._stepInstructionsHTML(step),
+    };
+  };
+
   TutorialCode.prototype._buildInstructionsSnapshot = function () {
     var self = this;
+    // A locked timed step offers no tests, knowledge check, or Next.
+    var lockedOut = !!this._timedPracticeLockoutView;
     return {
       currentStep: this.currentStep,
       // The popout loads the C4 toolkit only for a C4 tutorial (spec §3.2, §11).
       backend: this.config.backend,
       darkMode: document.documentElement.classList.contains('dark-mode'),
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
-      hasTests: this._stepHasTests(this.steps[this.currentStep]),
-      hasQuiz: this._stepHasQuiz(this.steps[this.currentStep]),
+      hasTests: !lockedOut && this._stepHasTests(this.steps[this.currentStep]),
+      hasQuiz: !lockedOut && this._stepHasQuiz(this.steps[this.currentStep]),
+      lockedOut: lockedOut,
       nextLocked: this._isNextStepLocked(),
+      nextLockedLabel: this._nextLockedLabel(this.currentStep),
+      challengeRecords: this._diagramChallengeRecords,
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
       testGate: this._testGate(),
-      steps: this.steps.map(function (step) {
-        return {
-          title: step.title || '',
-          titleHTML: self._renderInlineMarkdown(step.title || ''),
-          instructionsHTML: self._stepInstructionsHTML(step),
-        };
-      }),
+      steps: this.steps.map(function (_, index) { return self._instructionsStepView(index); }),
     };
   };
 
+  /** Next opens the knowledge check, so only the step's own work locks it. */
   TutorialCode.prototype._isNextStepLocked = function (idx) {
     if (idx == null) idx = this.currentStep;
-    // Steps with no tests can't be gated by tests — there's nothing to pass.
-    // (A quiz, if present, opens via clicking Next, not by gating it.)
-    if (!this._stepHasTests(this.steps[idx])) return false;
-    // Numeric legacy saves used the next unlock as completion evidence.
-    // Versioned lessons have explicit identities: a later lesson's access
-    // must not credit a replacement lesson's required tests.
-    var canContinue = !this.requireTests || this.instructorMode ||
-      this._stepsPassed.has(idx) || (!this.progressVersion && this._stepsUnlocked.has(idx + 1));
-    return !canContinue;
+    return !this._stepGateSatisfied(idx, { quiz: false });
   };
 
   TutorialCode.prototype._hasUnpassedQuiz = function (index) {
     return this._stepHasQuiz(this.steps[index]) && !this._quizPassed.has(index);
   };
 
+  /**
+   * The one completion gate of step `index`, used by Next (here and in the
+   * instructions popout) and by every path that unlocks the following step.
+   * Under require_tests the step's tests must pass and its diagram challenge
+   * must be passed; under require_quiz its knowledge check must be passed,
+   * unless options.quiz is false (Next itself opens that check). Steps
+   * without tests or a challenge have nothing to pass, and instructor mode
+   * never locks. Timed practice asks _timedPracticeStepSolved instead, which
+   * reports what was passed whatever require_tests says.
+   */
+  TutorialCode.prototype._stepGateSatisfied = function (index, options) {
+    var step = this.steps[index];
+    if (!step) return false;
+    var waived = !this.requireTests || this.instructorMode;
+    // Numeric legacy saves used the next unlock as completion evidence.
+    // Versioned lessons have explicit identities: a later lesson's access
+    // must not credit a replacement lesson's required tests.
+    var testsOk = !this._stepHasTests(step) || waived || this._stepsPassed.has(index) ||
+      (!this.progressVersion && this._stepsUnlocked.has(index + 1));
+    var challengeOk = !this._stepHasDiagramChallenge(step) || waived || this._diagramChallengePassed(index);
+    var quizOk = (options && options.quiz === false) || !this.requireQuiz || !this._hasUnpassedQuiz(index);
+    return testsOk && challengeOk && quizOk;
+  };
+
+  /** Next: open the knowledge check, or unlock and load the following step. */
+  TutorialCode.prototype._requestNextStep = function (index) {
+    if (this._isNextStepLocked(index)) {
+      // A stale popout control may ask; tell it the current lock state.
+      this._broadcastNavState();
+      return;
+    }
+    var step = this.steps[index];
+    if (this._stepHasQuiz(step)) {
+      // _showStepQuiz broadcasts 'quiz-show', so the popout mounts it too.
+      this._showStepQuiz(index);
+      return;
+    }
+    // A step with nothing to pass completes timed practice by continuing.
+    var nothingToPass = !this._stepHasTests(step) && !this._stepHasDiagramChallenge(step);
+    this._markTimedPracticeCompleteIfSolved(index, { force: nothingToPass });
+    this._stepsUnlocked.add(index + 1);
+    if (this.autoSaveEnabled) this._autoSaveProgress();
+    this.loadStep(index + 1);
+  };
+
+  // ---------------------------------------------------------------------------
+  // Diagram challenges (js/tutorial-diagram-challenge.js). The widget owns the
+  // challenge UI and its rules (DiagramChallengeCore); the runtime owns the
+  // records (`diagramChallenges` in the progress record, keyed by
+  // _draftStepKey) and gating.
+  // ---------------------------------------------------------------------------
+  TutorialCode.prototype._stepHasDiagramChallenge = function (step) {
+    return !!(step && step.diagram_challenge && typeof step.diagram_challenge === 'object');
+  };
+
+  TutorialCode.prototype.currentStepHasDiagramChallenge = function () {
+    return this._stepHasDiagramChallenge(this.steps[this.currentStep]);
+  };
+
+  TutorialCode.prototype._diagramChallengePassed = function (index) {
+    var core = window.DiagramChallengeCore;
+    return !!(core && core.isPassed(this._diagramChallengeRecords[this._draftStepKey(index)]));
+  };
+
+  TutorialCode.prototype._stepIndexForDraftKey = function (key) {
+    for (var i = 0; i < this.steps.length; i++) {
+      if (this._draftStepKey(i) === key) return i;
+    }
+    return -1;
+  };
+
+  /** Mount the current step's challenge; joins the step readiness barrier. */
+  TutorialCode.prototype._mountDiagramChallenges = function () {
+    if (!window.DiagramChallenge || !this.stepContentEl) return Promise.resolve();
+    var self = this;
+    return window.DiagramChallenge.initFrom(this.stepContentEl, {
+      runtime: this,
+      instructorMode: this.instructorMode,
+      records: this._diagramChallengeRecords,
+      onRecord: function (key, record) { self._storeDiagramChallengeRecord(key, record); },
+    });
+  };
+
+  TutorialCode.prototype._storeDiagramChallengeRecord = function (key, record) {
+    var index = this._stepIndexForDraftKey(key);
+    if (index < 0 || !record) return;
+    var wasPassed = this._diagramChallengePassed(index);
+    this._diagramChallengeRecords[key] = record;
+    if (!wasPassed && this._diagramChallengePassed(index)) this._recordDiagramChallengePass(index);
+    else if (this.autoSaveEnabled) this._autoSaveProgress();
+    this._broadcastNavState();
+  };
+
+  /** A passed challenge completes a step without tests and may unlock the next. */
+  TutorialCode.prototype._recordDiagramChallengePass = function (index) {
+    if (!this._stepHasTests(this.steps[index])) this._stepsPassed.add(index);
+    if (this._stepGateSatisfied(index)) this._stepsUnlocked.add(index + 1);
+    this._markTimedPracticeCompleteIfSolved(index);
+    if (index === this.currentStep) this._refreshStepControls();
+    this._renderStepNav();
+    if (this.autoSaveEnabled) this._autoSaveProgress();
+  };
+
+  /** Reset Step, after its confirmation: the challenge restarts at Part A. */
+  TutorialCode.prototype._resetDiagramChallenge = function (index) {
+    if (!this._stepHasDiagramChallenge(this.steps[index])) return;
+    // The widget's final record arrives as it closes; discard it afterwards.
+    if (window.DiagramChallenge) window.DiagramChallenge.destroyWithin(this.stepContentEl);
+    delete this._diagramChallengeRecords[this._draftStepKey(index)];
+    this._mountDiagramChallenges();
+    if (index === this.currentStep) this._refreshStepControls();
+    this._broadcastNavState();
+    if (this.autoSaveEnabled) this._autoSaveProgress();
+  };
+
+  /** Re-render Prev / Test / Next unless the knowledge check owns the bar. */
+  TutorialCode.prototype._refreshStepControls = function () {
+    if (this.quizPanelEl && this.quizPanelEl.style.display !== 'none') return;
+    this._renderStepControls(this.currentStep);
+  };
+
+  TutorialCode.prototype._nextLockedLabel = function (index) {
+    var step = this.steps[index];
+    return this._stepHasDiagramChallenge(step) && !this._stepHasTests(step)
+      ? 'Finish the diagram challenge to continue' : 'Pass all tests to continue';
+  };
+
   TutorialCode.prototype._broadcastStepState = function () {
     if (!this._popoutManager) return;
     var step = this.steps[this.currentStep];
     if (!step) return;
+    var lockedOut = !!this._timedPracticeLockoutView;
     var fileList = (step.files || []).map(function (f) { return f.path; });
     this._popoutManager.broadcastStepChange({
       stepIndex: this.currentStep,
-      stepData: {
-        title: step.title || '',
-        titleHTML: this._renderInlineMarkdown(step.title || ''),
-        instructionsHTML: this._stepInstructionsHTML(step),
-      },
+      stepData: this._instructionsStepView(this.currentStep),
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
-      hasTests: this._stepHasTests(step),
-      hasQuiz: this._stepHasQuiz(this.steps[this.currentStep]),
+      hasTests: !lockedOut && this._stepHasTests(step),
+      hasQuiz: !lockedOut && this._stepHasQuiz(step),
+      lockedOut: lockedOut,
       nextLocked: this._isNextStepLocked(),
+      nextLockedLabel: this._nextLockedLabel(this.currentStep),
+      challengeRecords: this._diagramChallengeRecords,
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
       testGate: this._testGate(),
@@ -9275,6 +9875,8 @@
     this._popoutManager.broadcastNavState({
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
       nextLocked: this._isNextStepLocked(),
+      nextLockedLabel: this._nextLockedLabel(this.currentStep),
+      challengeRecords: this._diagramChallengeRecords,
       hasQuiz: this._stepHasQuiz(this.steps[this.currentStep]),
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
@@ -9293,60 +9895,37 @@
     if (this.config.backend === 'c4') this._submitC4ForReview({ keepFocus: true });
   };
 
-  TutorialCode.prototype._refreshInstructionsDetachedState = function () {
-    var detached = this._popoutManager && this._popoutManager.isDetached('instructions');
+  /**
+   * The instructions rail (js/tutorial-instructions-rail.js): "Hide
+   * instructions" in the step nav bar, and the rail that replaces the panel
+   * while the instructions are hidden or popped out.
+   */
+  TutorialCode.prototype._mountInstructionsRail = function () {
     var panel = this.root && this.root.querySelector('.tvm-instructions-panel');
-    if (!panel) return;
-    // When a UML view is stacked below instructions, the panel's outer dimension
-    // is still width but the steps-view shares that column with UML. Shrink the
-    // steps-view height instead, so UML below expands. Otherwise shrink the
-    // whole panel's width to a thin strip.
-    var verticalShrink = !!(this._umlPositionBelow || this._umlPositionBottomLeft);
-    // Debugger-mode: when the time-travel debugger is enabled, popping out the
-    // instructions should NOT collapse the left panel — there's still useful
-    // content to show there (Watch / Call Stack / Variables / History). Keep
-    // the panel full-width and just hide the Steps view + auto-switch to the
-    // Debug tab. A compact "instructions popped out" pill replaces the Steps
-    // tab so the user can re-attach with one click.
-    var debuggerMode = !!this.debuggerEnabled;
-    if (detached) {
-      if (!panel.querySelector('.tvm-instructions-detached-placeholder')) {
-        var placeholder = document.createElement('div');
-        placeholder.className = 'tvm-instructions-detached-placeholder';
-        placeholder.innerHTML = '<button class="tvm-btn tvm-btn-reattach" data-original-title="Bring instructions back to this window">↩</button>'
-          + '<div class="tvm-detached-msg">Instructions popped out</div>';
-        // Insert before the steps-view so the placeholder stays visible while
-        // steps-view is hidden by CSS in the detached state.
-        var stepsView = panel.querySelector('.tvm-steps-view');
-        if (stepsView) panel.insertBefore(placeholder, stepsView);
-        else panel.appendChild(placeholder);
-        var self = this;
-        placeholder.querySelector('.tvm-btn-reattach').addEventListener('click', function () {
-          self._popoutManager.requestPopupClose('instructions');
-        });
+    if (!panel || !window.TutorialInstructionsRail || this._instructionsRail) return;
+    var self = this;
+    this._instructionsRail = window.TutorialInstructionsRail.attach(panel, {
+      // A UML view or the Output panel below the instructions keeps the column, so the
+      // instructions shrink in height. While the instructions are popped out
+      // of a debugger tutorial, the column keeps its width for Watch / Call
+      // Stack / Variables / History. Otherwise (including Hide, which asks
+      // for the width) the whole panel becomes a rail beside the workspace.
+      variant: function (state) {
+        if (self.debuggerEnabled && state === 'detached') return 'debugger';
+        return self._umlPositionBelow || self._umlPositionBottomLeft || self._outputPositionBottomLeft ? 'vertical' : 'horizontal';
+      },
+      onReattach: function () { self._popoutManager.requestPopupClose('instructions'); },
+      onChange: function (state) { self._onInstructionsRailChange(state); },
+    });
+  };
+
+  TutorialCode.prototype._onInstructionsRailChange = function (state) {
+    // With the Steps view popped out, the debugger shows its own tab.
+    if (state === 'detached' && this.debuggerEnabled && this._debuggerCtl) {
+      var activeTab = this.root.querySelector('.tvm-left-tab.active');
+      if (activeTab && activeTab.getAttribute('data-panel') === 'steps') {
+        this._debuggerCtl.activateTab('dbg-combined');
       }
-      panel.classList.add('tvm-instructions-detached');
-      // In debugger mode, override the layout-shrink classes — keep full size
-      // and just toggle which inner views are visible (handled by CSS keyed
-      // on tvm-instructions-detached-debugger).
-      panel.classList.toggle('tvm-instructions-detached-debugger', debuggerMode);
-      panel.classList.toggle('tvm-instructions-detached-vertical', !debuggerMode && verticalShrink);
-      panel.classList.toggle('tvm-instructions-detached-horizontal', !debuggerMode && !verticalShrink);
-      // If the user was viewing Steps when they popped out, send them to the
-      // Debug tab so they have something to look at.
-      if (debuggerMode && this._debuggerCtl) {
-        var activeTab = panel.querySelector('.tvm-left-tab.active');
-        if (activeTab && activeTab.getAttribute('data-panel') === 'steps') {
-          this._debuggerCtl.activateTab('dbg-combined');
-        }
-      }
-    } else {
-      panel.classList.remove('tvm-instructions-detached');
-      panel.classList.remove('tvm-instructions-detached-debugger');
-      panel.classList.remove('tvm-instructions-detached-vertical');
-      panel.classList.remove('tvm-instructions-detached-horizontal');
-      var ph = panel.querySelector('.tvm-instructions-detached-placeholder');
-      if (ph) ph.parentNode.removeChild(ph);
     }
     // Re-fit Monaco / xterm after a size change
     if (this.editor && this.editor.layout) try { this.editor.layout(); } catch (e) { /* ignore */ }
@@ -9354,15 +9933,35 @@
     if (this.fitAddon && this.fitAddon.fit) try { this.fitAddon.fit(); } catch (e) { /* ignore */ }
   };
 
+  TutorialCode.prototype._refreshInstructionsDetachedState = function () {
+    if (!this._instructionsRail) return;
+    this._instructionsRail.setDetached(!!(this._popoutManager && this._popoutManager.isDetached('instructions')));
+  };
+
   TutorialCode.prototype._applyFileEditFromPopup = function (filename, content, version) {
     var entry = this.editorModels[filename];
     if (!entry) return;
     if (entry.model.getValue() === content) return;
+    if (this._isReadOnlyFile(filename)) {
+      // Popout editors are read-only for these files too; a stale or older
+      // popup gets the authoritative content back instead of diverging.
+      this._resendFileToPopouts(filename);
+      return;
+    }
     // Apply normally so the model's onDidChangeContent fires — drives the
     // standard syncFileToBackend / autosave / React-patch chain (which then
     // re-broadcasts the rebuilt preview srcdoc to any preview popouts).
     entry.model.setValue(content);
     if (this.autoSaveEnabled) this._autoSaveProgress();
+  };
+
+  TutorialCode.prototype._resendFileToPopouts = function (filename) {
+    if (!this._popoutManager) return;
+    if (this._popoutManager.isDetached('tab:' + filename)) {
+      var meta = this._fileMeta(filename);
+      if (meta) this._popoutManager._sendFileSnapshot(filename, meta);
+    }
+    this._rebroadcastDetachedPanes();
   };
 
   TutorialCode.prototype._handlePopupClosed = function (role, finalContent) {
@@ -9475,27 +10074,8 @@
         onPrevStepRequest: function () {
           if (self.currentStep > 0) self.loadStep(self.currentStep - 1);
         },
-        onNextStepRequest: function () {
-          // Mirror Next button behavior — only advance if not locked
-          if (self._isNextStepLocked()) {
-            // Tell popups Next was a no-op so they can re-sync (in case
-            // their lock state was stale). The popup will pull the latest
-            // nav-state and disable the button accordingly.
-            self._broadcastNavState();
-            return;
-          }
-          var step = self.steps[self.currentStep];
-          if (self._stepHasQuiz(step)) {
-            // _showStepQuiz now broadcasts 'quiz-show' itself so any open
-            // instructions popup mounts the same quiz and the user can
-            // take it in either window.
-            self._showStepQuiz(self.currentStep);
-            return;
-          }
-          self._stepsUnlocked.add(self.currentStep + 1);
-          if (self.autoSaveEnabled) self._autoSaveProgress();
-          self.loadStep(self.currentStep + 1);
-        },
+        // Same Next as the main window's button, including its lock.
+        onNextStepRequest: function () { self._requestNextStep(self.currentStep); },
         onRunTestsRequest: function (opts) { self._runTests(opts || {}); },
         onTestGateActionRequest: function () { self._openTestGate(); },
         onQuizPassedFromPopup: function (stepIndex) {
@@ -9503,6 +10083,10 @@
         },
         onQuizSkippedFromPopup: function (stepIndex) {
           if (typeof stepIndex === 'number') self._skipQuiz(stepIndex);
+        },
+        // The popout's "Back to Step" leaves the knowledge check here too.
+        onBackToStepRequest: function () {
+          if (self.quizPanelEl && self.quizPanelEl.style.display !== 'none') self._hideStepQuiz();
         },
         onSaveFileRequest: function (filename) {
           // Save the file the popup tells us about — temporarily make it the
@@ -9730,9 +10314,14 @@
    */
   TutorialCode.prototype._refreshUMLDiagram = function () {
     if (!this._umlDiagramEnabled) return;
-    // Skip while files are being loaded/restored — _applySavedFiles resets this flag
-    // and calls _scheduleUMLRefresh(true) itself once all files are in place.
-    if (this._suppressAutoSave) return;
+    // Defer while files are being loaded/restored. A step load replays the
+    // deferred refresh once the step is ready (_flushPendingUMLRefresh), and
+    // _applySavedFiles refreshes after restoring saved files.
+    if (this._suppressAutoSave) {
+      this._umlRefreshPending = true;
+      return;
+    }
+    this._umlRefreshPending = false;
     var self = this;
     var lang = this._detectUMLLanguage();
 
@@ -9755,7 +10344,7 @@
         sources[filename] = entry.model.getValue();
         pending--;
         if (pending === 0) onSourcesReady();
-      } else if ((lang === 'python' || lang === 'java' || lang === 'cpp') && self._worker) {
+      } else if ((lang === 'python' || lang === 'cpp') && self._worker) {
         // Compiled/Python source files: fallback to the backend worker FS.
         self._postWorker({ type: 'read', path: '/tutorial/' + filename }, function (msg) {
           if (msg.type === 'read_ok') {
@@ -9783,6 +10372,7 @@
     function isCurrent() {
       return !self._destroyed && requestId === self._umlAnalysisRequestId;
     }
+    if (lang === 'java' && this._javaSession?.bindings) options.javaBindings = this._javaSession.bindings;
     this._getUMLClient().analyze({ language: lang, sources: sources, options: options })
       .then(function (result) {
         if (!isCurrent()) return;
@@ -9865,9 +10455,44 @@
         if (!rendered || !isCurrent()) return;
         var zoomLabel = self._umlContainer ? self._umlContainer.querySelector('.tvm-diagram-zoom-label') : null;
         self._applyUMLZoom(el, self._umlZoom, zoomLabel);
+        self._linkUMLSources(el, diagramType, syntax, self._umlContainer, false);
       }).catch(function (error) {
         if (isCurrent()) self._showUMLError('Render failed: ' + error.message);
       });
+  };
+
+  /**
+   * Inferred diagram elements reveal the code they came from (see
+   * js/uml-source-links.js). Only files open in this step's editor link.
+   * The fullscreen viewer closes first, so the highlighted code is visible.
+   */
+  TutorialCode.prototype._linkUMLSources = function (target, diagramType, syntax, listHost, closesFullscreen) {
+    if (!window.UMLSourceLinks || !this._umlLastDiagrams) return;
+    var self = this;
+    var diagrams = this._getUMLDisplayDiagrams();
+    window.UMLSourceLinks.link(target, {
+      type: diagramType,
+      syntax: syntax,
+      sourceSyntax: diagrams[diagramType + 'Diagram'],
+      sources: diagrams[diagramType + 'DiagramSources'],
+      listHost: listHost,
+      canReveal: function (source) { return !!self.editorModels[source.file]; },
+      onReveal: function (source) {
+        if (closesFullscreen) self._closeUMLFullscreen();
+        return self._revealUMLSource(source);
+      }
+    });
+  };
+
+  /** Open source's file as a tab and mark its lines, without moving focus. */
+  TutorialCode.prototype._revealUMLSource = function (source) {
+    var entry = source && this.editorModels[source.file];
+    if (!entry || !this.editor || !window.UMLSourceLinks) return false;
+    this._openFileTab(source.file);
+    if (this._fileTree) this._fileTree.revealPath(source.file);
+    var editor = this._splitActive && this.editor2 && this._paneForFile(source.file) === 'right' ? this.editor2 : this.editor;
+    window.UMLSourceLinks.highlightEditor(editor, monaco, source);
+    return true;
   };
 
   /** Render Mermaid syntax into SVG in the diagram content area */
@@ -9908,6 +10533,10 @@
   /** Render learner-influenced diagram status without interpreting it as HTML. */
   TutorialCode.prototype._renderUMLMessage = function (container, msg, isError) {
     if (!container) return;
+    if (window.UMLSourceLinks) {
+      window.UMLSourceLinks.unlink(container);
+      window.UMLSourceLinks.clearList(container.parentElement);
+    }
     var message = document.createElement('div');
     message.className = 'tvm-diagram-empty';
     message.textContent = String(msg == null ? '' : msg);
@@ -10019,6 +10648,7 @@
           if (window.UMLShared && typeof UMLShared.applySvgAccessibility === 'function') {
             UMLShared.applySvgAccessibility(this._umlFsContentEl, 'sequence', seqSyntax);
           }
+          this._linkUMLSources(this._umlFsContentEl, 'sequence', seqSyntax, this._umlFullscreenEl, true);
         } else {
           this._renderUMLMessage(this._umlFsContentEl, 'No sequence diagram available.', false);
         }
@@ -10030,6 +10660,7 @@
           if (window.UMLShared && typeof UMLShared.applySvgAccessibility === 'function') {
             UMLShared.applySvgAccessibility(this._umlFsContentEl, 'class', laidOutClassSyntax);
           }
+          this._linkUMLSources(this._umlFsContentEl, 'class', laidOutClassSyntax, this._umlFullscreenEl, true);
         } else {
           this._renderUMLMessage(this._umlFsContentEl, 'No class diagram available.', false);
         }
@@ -10082,6 +10713,17 @@
     this._umlFullscreenPrevFocus = null;
   };
 
+  /** Run a UML refresh that was requested while files were still loading. */
+  TutorialCode.prototype._flushPendingUMLRefresh = function () {
+    if (!this._umlRefreshPending || this._suppressAutoSave) return;
+    if (this._umlViewActive) {
+      this._refreshUMLDiagram();
+    } else {
+      // Opening the diagram view refreshes it, so nothing is lost.
+      this._umlRefreshPending = false;
+    }
+  };
+
   /**
    * Schedule a debounced UML refresh when a watched file changes.
    * Called from the editor onDidChangeContent handler.
@@ -10096,7 +10738,7 @@
     } else {
       this._umlRefreshTimer = setTimeout(function () {
         self._refreshUMLDiagram();
-      }, 1500);
+      }, this.config.backend === 'java' ? 150 : 1500);
     }
   };
 
@@ -10598,7 +11240,7 @@
     if (backend === 'v86') {
       writePromise = this._syncFileToV86(filename, content);
     } else if (backend === 'pyodide' || backend === 'sql' ||
-               backend === 'prolog' || backend === 'java' || backend === 'cpp' ||
+               backend === 'prolog' || backend === 'cpp' ||
                backend === 'haskell') {
       writePromise = this._writeFileToWorker(filename, content, backend);
     } else if (backend === 'webcontainer' && this._webcontainer) {
@@ -10709,6 +11351,8 @@
    */
   TutorialCode.prototype.applySolution = function () {
     var step = this.steps[this.currentStep];
+    // Diagram challenges show their answer keys only from here in instructor mode.
+    if (window.DiagramChallenge && this.stepContentEl) window.DiagramChallenge.showAnswerKeysWithin(this.stepContentEl);
     if (!step || !step.solution) return;
     if (this.config.backend === 'tla') this._invalidateTLA();
     if (this.config.backend === 'c4') this._invalidateC4();
@@ -10806,7 +11450,13 @@
             }, resolve);
           });
         });
-      } else if (this.config.backend === 'prolog' || this.config.backend === 'sql' || this.config.backend === 'java') {
+      } else if (this.config.backend === 'java') {
+        p = p.then(function () {
+          return self._javaWorkspace.test({ files: self._javaSession.files(), code: solution.commands.join('\n') });
+        }).then(function (result) {
+          if (result.exitCode !== 0) throw new Error(result.stderr || 'Java solution commands failed.');
+        });
+      } else if (this.config.backend === 'prolog' || this.config.backend === 'sql') {
         p = p.then(function () {
           return new Promise(function (resolve) {
             self._postWorker({
@@ -11063,6 +11713,7 @@
       stepsPassed: Array.from(this._stepsPassed),
       quizPassed: Array.from(this._quizPassed)
     };
+    if (Object.keys(this._diagramChallengeRecords).length) data.diagramChallenges = this._diagramChallengeRecords;
     if (this.shellCommandEl) data.shellCommands = prev.shellCommands;
     if (prev.draftScopeVersion !== undefined) data.draftScopeVersion = prev.draftScopeVersion;
     try {
@@ -11240,6 +11891,7 @@
     localStorage.removeItem(this._storageKey());
     this._shellCommandDrafts = {};
     this._sessionDrafts = { files: {}, stepFiles: {} };
+    this._diagramChallengeRecords = {};
     if (this._smalltalkAdapter) this._smalltalkAdapter.clearSavedProgress();
     return this.resetStep();
   };
@@ -11247,6 +11899,7 @@
   TutorialCode.prototype.resetStep = function () {
     var step = this.steps[this.currentStep];
     if (!step) return;
+    this._resetDiagramChallenge(this.currentStep);
     if (this.config.backend === 'tla') this._invalidateTLA();
     if (this.config.backend === 'aadl') {
       this._aadlRootOverride = null;
@@ -11570,10 +12223,13 @@
     if (!step) return false;
     var hasTests = this._stepHasTests(step);
     var hasQuiz = !this.disableQuiz && step.quiz && step.quiz.questions && step.quiz.questions.length > 0;
-    if (!hasTests && !hasQuiz) return false;
+    var hasChallenge = this._stepHasDiagramChallenge(step);
+    if (!hasTests && !hasQuiz && !hasChallenge) return false;
+    // Evidence of completion, whatever require_tests says (see _stepGateSatisfied).
     var testsOk = !hasTests || this._stepsPassed.has(index);
+    var challengeOk = !hasChallenge || this._diagramChallengePassed(index);
     var quizOk = !hasQuiz || this._quizPassed.has(index);
-    return testsOk && quizOk;
+    return testsOk && challengeOk && quizOk;
   };
 
   TutorialCode.prototype._markTimedPracticeCompleteIfSolved = function (index, opts) {
@@ -11611,11 +12267,14 @@
     this._updateStepHash(index);
 
     if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(this.stepContentEl);
+    if (window.DiagramChallenge) window.DiagramChallenge.destroyWithin(this.stepContentEl);
+    var titleHTML = this._renderInlineMarkdown(step.title || '');
+    var breakHTML = '<h3>Practice break</h3>' +
+      '<p>This timed practice attempt has ended. You can return to earlier steps while this one cools down.</p>';
     this.stepContentEl.innerHTML =
-      '<h2>' + this._renderInlineMarkdown(step.title || '') + '</h2>' +
+      '<h2>' + titleHTML + '</h2>' +
       '<div class="tvm-timed-practice-lockout" role="status" aria-live="polite" aria-atomic="true">' +
-      '<h3>Practice break</h3>' +
-      '<p>This timed practice attempt has ended. You can return to earlier steps while this one cools down.</p>' +
+      breakHTML +
       '<p class="tvm-timed-practice-lockout-remaining"></p>' +
       '</div>';
     if (this.stepContentWrapEl) this.stepContentWrapEl.scrollTop = 0;
@@ -11624,6 +12283,16 @@
       : '<span></span><span></span><span></span>';
     var prev = this.stepControlsEl.querySelector('.tvm-btn-prev');
     if (prev) prev.addEventListener('click', function () { self.loadStep(index - 1); });
+
+    // A detached instructions window shows the same break, without the
+    // countdown that only this window updates, until a step load ends it.
+    this._timedPracticeLockoutView = {
+      title: step.title || '',
+      titleHTML: titleHTML,
+      instructionsHTML: '<div class="tvm-timed-practice-lockout">' + breakHTML + '</div>',
+    };
+    if (this._popoutManager) this._popoutManager._post('quiz-hide');
+    this._broadcastStepState();
 
     function tick() {
       var status = self._timedPracticeStatus(index);
@@ -12127,6 +12796,12 @@
     if (!this.instructorMode && !this._stepsUnlocked.has(index)) return Promise.resolve();
 
     if (window.TutorChat) { window.TutorChat.onStepChange(); }
+    if (this._javaSession) {
+      clearTimeout(this._testAnnouncementTimer);
+      if (this._testAnnouncer) this._testAnnouncer.textContent = '';
+      if (this._javaSession.busy) this._javaSession.stop();
+      this._javaSession.changed();
+    }
     // Time-travel debugger: clear history + close any active debug session.
     // Breakpoints persist across steps (matches VS Code), but per-run state
     // does not. No-op when debugger is not loaded.
@@ -12150,7 +12825,11 @@
     this.currentStep = index;
     var step = this.steps[index];
 
+    this._timedPracticeLockoutView = null;
     if (this.quizPanelEl) this.quizPanelEl.style.display = 'none';
+    // A detached instructions window closes its mirrored knowledge check only
+    // on quiz-hide; the step-change broadcast below leaves it open.
+    if (this._popoutManager) this._popoutManager._post('quiz-hide');
     if (this.stepContentWrapEl) this.stepContentWrapEl.style.display = '';
 
     this._renderStepNav();
@@ -12159,6 +12838,7 @@
     html += '<div class="tvm-step-instructions">' +
       this._stepInstructionsHTML(step) + '</div>';
     if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(this.stepContentEl);
+    if (window.DiagramChallenge) window.DiagramChallenge.destroyWithin(this.stepContentEl);
     this.stepContentEl.innerHTML = html;
     this._prepareInstructionScrollables(this.stepContentEl);
     this._initTooltips(this.stepContentEl);
@@ -12170,6 +12850,7 @@
     const instructionLabsReady = window.ObjectReferenceLab
       ? window.ObjectReferenceLab.initFrom(this.stepContentEl)
       : Promise.resolve();
+    const diagramChallengesReady = this._mountDiagramChallenges();
     // Initialize any inline GitCommandLab widgets embedded in the instructions
     if (window.GitCommandLab) {
       if (GitCommandLab.initFrom) GitCommandLab.initFrom(this.stepContentEl);
@@ -12224,6 +12905,15 @@
     }
     if (step.open_file && this.config.backend !== 'smalltalk') { self._setActiveFile(step.open_file); self._renderTabs(); }
     if (this.config.backend === 'c4') this._loadC4Step(index);
+    // With the Files tree, the step's open file starts as an open tab; tabs
+    // the learner opened in earlier steps stay open if the file remains.
+    if (this._openTabs && this.activeFileName) {
+      this._openTabs.add(this.activeFileName);
+      this._renderTabs();
+    }
+    // A file kept open from the previous step takes this step's read-only flag.
+    this._applyFileReadOnly(this.editor, this._leftActiveFile || this.activeFileName);
+    if (this.editor2) this._applyFileReadOnly(this.editor2, this._rightActiveFile);
     if (self._compilerSourceEditor) {
       const sourcePath = (step.compiler_files && step.compiler_files.source) || 'source.txt';
       const source = self.editorModels[sourcePath];
@@ -12239,7 +12929,7 @@
     // File writes define the first phase of step readiness. Setup commands may
     // read those files, so every later preparation phase is chained after this
     // barrier rather than being launched independently.
-    var stepReadyPromise = Promise.all(stepFileSyncs.concat([instructionLabsReady]));
+    var stepReadyPromise = Promise.all(stepFileSyncs.concat([instructionLabsReady, diagramChallengesReady]));
     if (self._smalltalkAdapter) {
       self._invalidateSmalltalkCredit();
       stepReadyPromise = stepReadyPromise.then(function () {
@@ -12475,9 +13165,14 @@
       self._stepsVisited.add(index);
       self._updateStepHash(index);
       self._suppressAutoSave = autoSaveSuppressedBeforeStepLoad;
+      if (self._javaSession) self._javaSession.changed();
+      self._flushPendingUMLRefresh();
       if (self.autoSaveEnabled && !self._suppressAutoSave) self._autoSaveProgress();
       self._startTimedPractice(index);
       if (self.llmAddon) self.llmAddon.setStep();
+      // Page scripts such as Read Aloud observe navigation through the event
+      // the UML tutorial editor also dispatches.
+      document.dispatchEvent(new CustomEvent('tvm:stepchange', { detail: { stepIndex: index } }));
       return true;
     }, function (error) {
       self._suppressAutoSave = autoSaveSuppressedBeforeStepLoad;
@@ -12534,10 +13229,12 @@
     this.steps.forEach(function (step, i) {
       var btn = document.createElement('button');
       var unlocked = self.instructorMode || self._stepsUnlocked.has(i);
-      btn.className = 'tvm-step-btn' + (i === self.currentStep ? ' active' : '') + (unlocked ? '' : ' locked');
+      var completed = self._timedPracticeStepSolved(i);
+      btn.className = 'tvm-step-btn' + (i === self.currentStep ? ' active' : '') + (unlocked ? '' : ' locked') +
+        (completed ? ' done' : '');
       btn.textContent = i + 1;
       var srLabel = unlocked
-        ? 'Step ' + (i + 1) + ': ' + step.title
+        ? 'Step ' + (i + 1) + ': ' + step.title + (completed ? ' (completed)' : '')
         : 'Step ' + (i + 1) + ': ' + step.title + ' (locked, complete the previous step to unlock)';
       btn.setAttribute('data-original-title', unlocked ? step.title : step.title + ' (locked)');
       btn.removeAttribute('title');
@@ -12550,6 +13247,21 @@
       }
       self.stepNavEl.appendChild(btn);
     });
+    this._renderCurrentStepTitle();
+  };
+
+  /** "Event Consumers · about 12 minutes" beside the step buttons. */
+  TutorialCode.prototype._renderCurrentStepTitle = function () {
+    var el = this.stepNavCurrentEl;
+    var step = this.steps[this.currentStep];
+    if (!el) return;
+    el.hidden = !step;
+    if (!step) return;
+    el.innerHTML = this._renderInlineMarkdown(step.title || '');
+    var minutes = Math.round(Number(step.estimated_minutes));
+    if (minutes > 0) {
+      el.appendChild(document.createTextNode(' \u00b7 about ' + minutes + (minutes === 1 ? ' minute' : ' minutes')));
+    }
   };
 
   // ---------------------------------------------------------------------------
@@ -12570,8 +13282,11 @@
     var hasQuiz = this._stepHasQuiz(step);
     var hasNextStep = index < this.steps.length - 1;
     var showNext = hasNextStep || hasQuiz;
+    // The reason shows only while Next is disabled (CSS), so callers that
+    // toggle next.disabled later keep it in sync.
     html += showNext
-      ? '<button class="tvm-btn tvm-btn-next"' + (nextLocked ? ' disabled data-original-title="Pass all tests to continue"' : ' data-original-title="Next step"') + '>Next \u2192</button>'
+      ? '<span class="tvm-next-group"><span class="tvm-next-lock-reason">' + this._nextLockedLabel(index) + '</span>' +
+        '<button class="tvm-btn tvm-btn-next"' + (nextLocked ? ' disabled data-original-title="' + this._nextLockedLabel(index) + '"' : ' data-original-title="Next step"') + '>Next \u2192</button></span>'
       : '<span></span>';
 
     this.stepControlsEl.innerHTML = html;
@@ -12580,21 +13295,7 @@
     var next = this.stepControlsEl.querySelector('.tvm-btn-next');
     if (prev) prev.addEventListener('click', function () { self.loadStep(index - 1); });
     if (next) next.addEventListener('click', function () {
-      if (next.disabled) return;
-      if (hasQuiz) {
-        self._showStepQuiz(index);
-      } else {
-        if (!self._stepHasTests(step)) {
-          self._markTimedPracticeCompleteIfSolved(index, { force: true });
-        } else {
-          self._markTimedPracticeCompleteIfSolved(index);
-        }
-        // Unlock the next step now (for non-test-gated steps; test-gated steps
-        // unlock on passing, quiz-gated steps unlock in the quiz continue handler).
-        self._stepsUnlocked.add(index + 1);
-        if (self.autoSaveEnabled) self._autoSaveProgress();
-        self.loadStep(index + 1);
-      }
+      if (!next.disabled) self._requestNextStep(index);
     });
     this._wireTestButtons(this.stepControlsEl);
     this._ensureCooldownTicker(index);
@@ -13195,10 +13896,11 @@
     // results return. Without this guard, the second run can replace the
     // pending test buffer/state and produce ghost results in the panel.
     if (this._testRunInFlight || this._llmChecksInFlight || this._studentPlaywrightRun || this._destroyed) return;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'c4' || this.config.backend === 'shell-pipeline') && this._activeRunTransaction) return;
-    if ((this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'c4' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return;
+    if ((this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'c4' || this.config.backend === 'shell-pipeline') && this._activeRunTransaction) return;
+    if ((this.config.backend === 'java' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'c4' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return;
     if (this.config.backend === 'prolog' && (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session))) return;
     if (this.config.backend === 'c4' && this._c4RefuseGatedRun()) return;
+    if (this._javaSession && this._debuggerCtl?.session) return;
     var stepIndex = this.currentStep;
     var step = this.steps[stepIndex];
     if (!step || !this._stepHasTests(step)) return;
@@ -13236,7 +13938,7 @@
     else if (backend === 'browser') this._runTestsBrowser(run);
     else if (backend === 'sql') this._runTestsSQL(run);
     else if (backend === 'prolog') this._runTestsProlog(run);
-    else if (backend === 'java') this._runTestsJava(run);
+    else if (backend === 'java') return this._javaSession.grade(run);
     else if (backend === 'cpp') this._runTestsCPP(run);
     else if (backend === 'haskell') this._runTestsHaskell(run);
     else if (backend === 'smalltalk') this._runTestsSmalltalk(run);
@@ -13351,75 +14053,6 @@
         runNext(i + 1);
       }).catch(function (error) {
         console.warn('SQL test execution stopped:', error && error.message || error);
-        self._renderTestResults(tests, new Array(tests.length).fill(null), run);
-      });
-    }
-    runNext(0);
-  };
-
-  // Java — each test.command is run as Java code; exit 0 if no exception
-  TutorialCode.prototype._runTestsJava = function (run) {
-    var self = this;
-    var step = this.steps[run.stepIndex];
-    var tests = step && step.tests;
-    if (!tests || !tests.length) return;
-    this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
-    var results = [];
-
-    // Gather all editor source code for source_must_contain / source_must_not_contain checks
-    var editorCode = '';
-    var models = self.editorModels;
-    for (var fname in models) {
-      if (models.hasOwnProperty(fname)) {
-        editorCode += models[fname].model.getValue() + '\n';
-      }
-    }
-
-    function checkSource(test) {
-      var mc = test.source_must_contain;
-      if (mc) {
-        var patterns = Array.isArray(mc) ? mc : [mc];
-        for (var p = 0; p < patterns.length; p++) {
-          if (editorCode.indexOf(patterns[p]) === -1) return false;
-        }
-      }
-      var mnc = test.source_must_not_contain;
-      if (mnc) {
-        var patterns = Array.isArray(mnc) ? mnc : [mnc];
-        for (var p = 0; p < patterns.length; p++) {
-          if (editorCode.indexOf(patterns[p]) !== -1) return false;
-        }
-      }
-      return true;
-    }
-
-    function runNext(i) {
-      if (i >= tests.length) { self._renderTestResults(tests, results, run); return; }
-
-      var test = tests[i];
-
-      // Source-code assertions: fail immediately if patterns don't match
-      if ((test.source_must_contain || test.source_must_not_contain) && !checkSource(test)) {
-        results[i] = false;
-        runNext(i + 1);
-        return;
-      }
-
-      // No runtime command — pass on source check alone
-      if (!test.command) {
-        results[i] = true;
-        runNext(i + 1);
-        return;
-      }
-
-      self._requestWorker(
-        { type: 'runCode', code: test.command, silent: true },
-        { timeoutMs: WORKER_EXECUTION_TIMEOUT_MS, restartOnTimeout: true }
-      ).then(function (msg) {
-        results[i] = (msg.exitCode === 0);
-        runNext(i + 1);
-      }).catch(function (error) {
-        console.warn('Java test execution stopped:', error && error.message || error);
         self._renderTestResults(tests, new Array(tests.length).fill(null), run);
       });
     }
@@ -14264,7 +14897,8 @@
     // announced (some screen readers suppress unchanged live-region text).
     announcer.textContent = '';
     var self = this;
-    setTimeout(function () { if (self._testAnnouncer) self._testAnnouncer.textContent = msg; }, 50);
+    clearTimeout(this._testAnnouncementTimer);
+    this._testAnnouncementTimer = setTimeout(function () { if (!self._destroyed && self._testAnnouncer) self._testAnnouncer.textContent = msg; }, 50);
   };
 
   TutorialCode.prototype._buildTestResultsHTML = function (tests, results, details) {
@@ -14326,6 +14960,18 @@
     if (!isActiveRun || this.currentStep !== run.stepIndex || this._destroyed) {
       return;
     }
+    if (run.javaLoad !== undefined) {
+      if (this._stepLoadSequence !== run.javaLoad) return;
+      if (run.javaFailure) {
+        if (!run.silent) {
+          var interrupted = '<p>' + this._escapeHtml(run.javaFailure) + '</p>';
+          this._showTestPanel(interrupted);
+          this._ensureTestAnnouncer().textContent = run.javaFailure;
+          if (this._popoutManager) this._popoutManager.broadcastTestResult({ resultsHTML: interrupted, results: [], allPassed: false, stepIndex: run.stepIndex });
+        }
+        return;
+      }
+    }
     if (run.cancelled) {
       if (!run.silent && run.reactLoadSequence === this._stepLoadSequence) {
         this._showTestPanel('<p>Checks cancelled. Run Test My Work again when the preview is ready.</p>');
@@ -14372,7 +15018,7 @@
     var stepIndex = run.stepIndex;
 
     var details = run.reactFailure ? tests.map(function () { return run.reactFailure; })
-      : run.smalltalkResults ? this._smalltalkCheckDetails(run.smalltalkResults) : run.aadlDetails || run.tlaDetails || run.c4Details;
+      : run.smalltalkResults ? this._smalltalkCheckDetails(run.smalltalkResults) : run.aadlDetails || run.tlaDetails || run.c4Details || run.javaDetails;
     var html = this._buildTestResultsHTML(tests, results, details);
     if (run.smalltalkProgram) html = this._smalltalkCheckPanel(run, html);
     if (!silent) {
@@ -14386,14 +15032,12 @@
     }
     if (allPass) {
       this._stepsPassed.add(stepIndex);
-      // Next opens the knowledge check; the numbered navigation must wait
-      // until that required check is passed before exposing the next step.
-      if (!this.requireQuiz || !this._hasUnpassedQuiz(stepIndex)) {
-        this._stepsUnlocked.add(stepIndex + 1);
-      }
+      // Next opens the knowledge check; the numbered navigation waits until
+      // the whole gate (a required check, a diagram challenge) is satisfied.
+      if (this._stepGateSatisfied(stepIndex)) this._stepsUnlocked.add(stepIndex + 1);
       this._renderStepNav();
       var nextBtn = this.stepControlsEl.querySelector('.tvm-btn-next');
-      if (nextBtn) { nextBtn.disabled = false; nextBtn.removeAttribute('title'); }
+      if (nextBtn && !this._isNextStepLocked(stepIndex)) { nextBtn.disabled = false; nextBtn.removeAttribute('title'); }
       if (this.autoSaveEnabled) this._autoSaveProgress();
     }
     if (allPass && this._timedPracticeConfig(this.steps[stepIndex])) {
@@ -14525,18 +15169,116 @@
   };
 
   // ---------------------------------------------------------------------------
-  // Git Graph Integration
+  // Workspace views (Editor / Git Graph / Make DAG / Diagram)
   // ---------------------------------------------------------------------------
 
+  var WORKSPACE_VIEW_ICONS = {
+    editor: '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1 2.5A1.5 1.5 0 012.5 1h11A1.5 1.5 0 0115 2.5v11a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 011 13.5v-11zM2.5 2a.5.5 0 00-.5.5v11a.5.5 0 00.5.5h11a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-11z"/><path d="M4 5.5a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7a.5.5 0 01-.5-.5zm0 3a.5.5 0 01.5-.5h4a.5.5 0 010 1h-4a.5.5 0 01-.5-.5z"/></svg>',
+    make_dag: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<rect x="6" y="1" width="6" height="3" rx="0.7" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
+      '<rect x="2" y="7" width="5" height="3" rx="0.7" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
+      '<rect x="10" y="7" width="5" height="3" rx="0.7" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
+      '<rect x="2" y="12" width="5" height="3" rx="0.7" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
+      '<path d="M9 4 V5.5 L4.5 7" stroke="currentColor" stroke-width="1.2" fill="none"/>' +
+      '<path d="M9 4 V5.5 L12.5 7" stroke="currentColor" stroke-width="1.2" fill="none"/>' +
+      '<path d="M4.5 10 V12" stroke="currentColor" stroke-width="1.2" fill="none"/>' +
+      '</svg>',
+    git_graph: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<line x1="4" y1="3" x2="4" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' +
+      '<path d="M4 6 Q4 9.5 11 9.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>' +
+      '<circle cx="4" cy="3" r="2" fill="currentColor"/>' +
+      '<circle cx="4" cy="10" r="2" fill="currentColor"/>' +
+      '<circle cx="4" cy="13" r="2" fill="currentColor" opacity="0.5"/>' +
+      '<circle cx="11" cy="9.5" r="2" fill="currentColor"/>' +
+      '</svg>',
+  };
+
+  /** Built-in views; optional components add more with _ensureWorkspaceViewButton. */
+  TutorialCode.prototype._workspaceViews = function () {
+    var views = [{ id: 'editor', label: 'Editor', className: 'tvm-view-btn-editor', icon: WORKSPACE_VIEW_ICONS.editor }];
+    if (this.makeDagPath) {
+      views.push({
+        id: 'make_dag', label: 'Make DAG', className: 'tvm-view-btn-make-dag', icon: WORKSPACE_VIEW_ICONS.make_dag,
+        title: 'Show the dependency graph (what `make -n` would walk)',
+      });
+    } else if (this.gitGraphPath) {
+      views.push({ id: 'git_graph', label: 'Git Graph', className: 'tvm-view-btn-graph', icon: WORKSPACE_VIEW_ICONS.git_graph });
+    }
+    return views;
+  };
+
+  function workspaceViewButtonHtml(view, active) {
+    return '<button type="button" class="tvm-view-btn ' + view.className + (active ? ' active' : '') +
+      '" data-view="' + view.id + '" aria-pressed="' + (active ? 'true' : 'false') + '"' +
+      (view.title ? ' data-original-title="' + view.title + '"' : '') + '>' +
+      (view.icon || '') + ' ' + view.label + '</button>';
+  }
+
+  /** The toggle renders only when there is more than one view to choose. */
+  TutorialCode.prototype._viewToggleHtml = function () {
+    var views = this._workspaceViews();
+    if (views.length < 2) return '';
+    return '<div class="tvm-view-toggle" role="group" aria-label="Workspace view">' +
+      views.map(function (view, index) { return workspaceViewButtonHtml(view, index === 0); }).join('') +
+      '</div>';
+  };
+
+  TutorialCode.prototype._wireViewToggle = function (toggle) {
+    var self = this;
+    toggle.addEventListener('click', function (event) {
+      var button = event.target.closest('.tvm-view-btn');
+      if (!button || !toggle.contains(button) || button.getAttribute('aria-disabled') === 'true') return;
+      self._setView(button.getAttribute('data-view'));
+    });
+  };
+
   /**
-   * Switch the top-right panel between editor and git graph.
-   * @param {string} view - 'editor' or 'git_graph'
+   * Return the toggle button for `view` ({id, label, className, icon}),
+   * creating the toggle bar on first use. Hidden buttons do not count toward
+   * the two views the bar needs before it shows.
+   */
+  TutorialCode.prototype._ensureWorkspaceViewButton = function (view) {
+    var workspace = this.root.querySelector('.tvm-workspace');
+    var toggle = this.root.querySelector('.tvm-view-toggle');
+    if (!toggle && workspace) {
+      var holder = document.createElement('div');
+      holder.innerHTML = '<div class="tvm-view-toggle" role="group" aria-label="Workspace view">' +
+        workspaceViewButtonHtml(this._workspaceViews()[0], this._currentView === 'editor') + '</div>';
+      toggle = holder.firstChild;
+      workspace.insertBefore(toggle, workspace.firstChild);
+      this._wireViewToggle(toggle);
+    }
+    if (!toggle) return null;
+    var button = toggle.querySelector('[data-view="' + view.id + '"]');
+    if (!button) {
+      var buttonHolder = document.createElement('div');
+      buttonHolder.innerHTML = workspaceViewButtonHtml(view, this._currentView === view.id);
+      button = buttonHolder.firstChild;
+      toggle.appendChild(button);
+    }
+    this._refreshViewToggle();
+    return button;
+  };
+
+  TutorialCode.prototype._refreshViewToggle = function () {
+    var toggle = this.root.querySelector('.tvm-view-toggle');
+    if (!toggle) return;
+    var shown = toggle.querySelectorAll('.tvm-view-btn:not([hidden])').length;
+    toggle.hidden = shown < 2;
+  };
+
+  /**
+   * Switch the workspace view. 'git_graph' and 'make_dag' replace the editor;
+   * 'diagram' keeps the editor and shows the authored-diagram pane beside it.
+   * @param {string} view - 'editor', 'git_graph', 'make_dag', or 'diagram'
    */
   TutorialCode.prototype._setView = function (view) {
     var editorPanel = this.root.querySelector('.tvm-editor-panel');
     var graphPanel = this.gitGraphPanelEl;
     var dagPanel = this.makeDagPanelEl;
     if (!editorPanel) return;
+    var viewButton = this.root.querySelector('.tvm-view-toggle [data-view="' + view + '"]');
+    if (viewButton && viewButton.getAttribute('aria-disabled') === 'true') return;
 
     if (view === 'git_graph' && graphPanel) {
       editorPanel.style.display = 'none';
@@ -14579,13 +15321,20 @@
       }
     }
     this._currentView = view;
+    if (typeof this._onWorkspaceViewChanged === 'function') this._onWorkspaceViewChanged(view);
 
-    // Sync toggle button active state
+    // Sync toggle button active and pressed state
     var btns = this.root.querySelectorAll('.tvm-view-btn');
     for (var i = 0; i < btns.length; i++) {
-      btns[i].classList.toggle('active', btns[i].getAttribute('data-view') === view);
+      var selected = btns[i].getAttribute('data-view') === view;
+      btns[i].classList.toggle('active', selected);
+      btns[i].setAttribute('aria-pressed', selected ? 'true' : 'false');
     }
   };
+
+  // ---------------------------------------------------------------------------
+  // Git Graph Integration
+  // ---------------------------------------------------------------------------
 
   /**
    * Install a PROMPT_COMMAND hook in the VM's bash shell that

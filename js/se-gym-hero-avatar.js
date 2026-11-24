@@ -2081,6 +2081,11 @@
     // Anatomical edges stay warm and dark; the accessibility-oriented faceLine
     // token may become light on deep skin and would create bright feature rings.
     var faceEdgeInk = mix(skin, '#231411', 0.68);
+    // Short anatomical accents remain readable at thumbnail size. Keep the
+    // darker form ink for shading; only selected creases use this contrast.
+    const faceAccent = firstContrastColorAgainstAll(
+      [faceEdgeInk, mix(skin, '#231411', 0.9), warmHighlight, '#f4d7b5'], skinRamp, 3
+    );
     var lipSeam = mix(mouthFill, '#170d0c', 0.4);
     var mouthLine = darkSkin
       ? firstContrastColorAgainstAll(['#f1c27d', '#e0a080', '#fff2b8', '#ffffff', '#3a1408', '#000000'], skinRamp, compactTarget)
@@ -2142,6 +2147,7 @@
       skinHighlightSoft: skinHighlightSoft,
       faceFormLight: faceFormLight,
       faceEdgeInk: faceEdgeInk,
+      faceAccent: faceAccent,
       lipSeam: lipSeam,
       faceLine: faceLine,
       faceShadow: darkSkin ? mix(skinShadow, faceLine, 0.38) : darken(skin, 0.35),
@@ -2190,7 +2196,9 @@
       glassesFrame: glassesFrame,
       glassesFrameDark: glassesFrameDark,
       glassesMetal: metalFrame,
-      lensFill: darkSkin ? 'rgba(255,255,255,.2)' : 'rgba(255,255,255,.12)'
+      // Clear glass transmits the same eye contrast on every complexion.
+      // Peripheral reflections, rather than a white veil, describe its surface.
+      lensFill: 'rgba(255,255,255,.025)'
     };
   }
 
@@ -3865,6 +3873,7 @@
     svg.style.setProperty('--hero-skin-highlight-soft', contrastTokens.skinHighlightSoft);
     svg.style.setProperty('--hero-face-form-light', contrastTokens.faceFormLight);
     svg.style.setProperty('--hero-face-edge-ink', contrastTokens.faceEdgeInk);
+    svg.style.setProperty('--hero-face-accent', contrastTokens.faceAccent);
     svg.style.setProperty('--hero-lip-seam', contrastTokens.lipSeam);
     svg.style.setProperty('--hero-face-line', contrastTokens.faceLine);
     svg.style.setProperty('--hero-face-shadow', contrastTokens.faceShadow);
@@ -4000,7 +4009,86 @@
     }
   }
 
+  // Pose wrappers own only yaw. Fit, fine tuning, blinking, expression and
+  // paint order remain on their original elements, including their clips.
+  const headTurns = new WeakMap();
+
+  function clearHeadTurn(svg) {
+    svg.querySelectorAll('[data-hero-turn-plane]').forEach(wrapper => wrapper.replaceWith(...wrapper.childNodes));
+    headTurns.delete(svg);
+  }
+
+  function headPlaneDepth(node) {
+    const slot = node.getAttribute('data-hero-slot');
+    const option = node.getAttribute('data-hero-option');
+    if (slot === 'accessory') {
+      if (BODY_BOUND_ACCESSORIES.includes(option)) return null;
+      if (SIDE_FIT_ACCESSORIES[option]) return -1.1;
+      return FACE_FIT_ACCESSORIES[option] ? 3 : 1.1;
+    }
+    if (slot === 'ear-shape') return -1.1;
+    if (['hair', 'hairline', 'hair-root', 'hair-cap'].includes(slot)) return 1.1;
+    if (slot === 'eyebrow' || node.matches('[data-hero-motion="eye-blink"], [data-hero-motion="closed-eyelids"], [data-hero-motion="eyelash-blink"], [data-hero-motion="lower-face-breath-position"]')) return 3;
+    return Number(node.getAttribute('data-hero-turn-depth') || 0);
+  }
+
+  function wrapHeadPlane(node, depth, local = false) {
+    const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    wrapper.setAttribute('data-hero-turn-plane', String(depth));
+    if (local) wrapper.setAttribute('data-hero-turn-local', 'true');
+    node.before(wrapper);
+    wrapper.appendChild(node);
+    return wrapper;
+  }
+
+  function headTurnPlanes(svg) {
+    const existing = svg.querySelectorAll('[data-hero-turn-plane]');
+    if (existing.length) return Array.from(existing);
+    const kind = svg.getAttribute('data-hero-kind') || 'human';
+    const head = svg.querySelector(kind === 'bruin' ? '[data-hero-bruin-anatomy="head"]'
+      : kind === 'tobias' ? '[data-hero-tobias="portrait"]' : '[data-hero-head-proportions]');
+    if (!head) return [];
+    const planes = [];
+    for (const node of Array.from(head.children)) {
+      if (!['g', 'path', 'ellipse', 'use'].includes(node.localName) || node.getAttribute('display') === 'none') continue;
+      const depth = kind === 'human' ? headPlaneDepth(node) : Number(node.getAttribute('data-hero-turn-depth') || 0);
+      if (depth !== null && !node.hasAttribute('data-hero-turn-fixed')) planes.push(wrapHeadPlane(node, depth));
+    }
+    // The nose projects farther than the lips, keeping the facial midline
+    // dimensional without moving the neck or flattening the chosen head.
+    const nose = head.querySelector('[data-hero-motion="nose-breath-scale"]');
+    if (nose) planes.push(wrapHeadPlane(nose, 1.7, true));
+    return planes;
+  }
+
+  /**
+   * Pose any rendered/cloned hero with a subtle screen-left (-1) to right (1)
+   * turn. Call from the consumer's animation clock with an eased amount; this
+   * setter starts no clock. Zero restores the fitted frontal geometry exactly.
+   * Reduced motion forces frontal; pause freezes the consumer's clock.
+   */
+  function setHeadTurn(svg, amount) {
+    const turn = prefersReducedMotion() || !Number.isFinite(amount) ? 0 : Math.max(-1, Math.min(1, amount));
+    let rig = headTurns.get(svg);
+    if (!rig) {
+      rig = { planes: headTurnPlanes(svg), turn: null };
+      headTurns.set(svg, rig);
+    }
+    if (rig.turn === turn) return;
+    rig.turn = turn;
+    svg.setAttribute('data-hero-head-turn', String(turn));
+    const angle = turn * Math.PI / 15;
+    const depth = Math.sin(angle) / Math.sin(Math.PI / 15);
+    for (const plane of rig.planes) {
+      const width = plane.hasAttribute('data-hero-turn-local') ? 1 : Math.cos(angle);
+      const offset = Number(plane.getAttribute('data-hero-turn-plane')) * depth;
+      plane.setAttribute('transform', `matrix(${width} 0 0 1 ${400 * (1 - width) + offset} 0)`);
+    }
+  }
+
   function renderAvatarToSvg(svg, state) {
+    const previousTurn = Number(svg.getAttribute('data-hero-head-turn') || 0);
+    clearHeadTurn(svg);
     if (state.kind === 'tobias') state = tobiasAvatar();
     var heroKind = normalizeHeroKind(state.kind);
     var bodyType = canonicalChoiceValue('bodyType', state.body.type);
@@ -4062,6 +4150,7 @@
     );
     applyReducedMotionToSvg(svg);
     scheduleStandaloneMotionStop(svg);
+    if (previousTurn) setHeadTurn(svg, previousTurn);
     svg.setAttribute('data-hero-avatar-ready', 'true');
   }
 
@@ -4101,6 +4190,7 @@
 
   function applyReducedMotionToSvg(svg) {
     if (!svg || typeof svg.pauseAnimations !== 'function') return;
+    if (prefersReducedMotion() && headTurns.has(svg)) setHeadTurn(svg, 0);
     if (reducedMotionTrackedSvgs.indexOf(svg) === -1) reducedMotionTrackedSvgs.push(svg);
     if (heroMotionShouldPause(svg)) {
       try {
@@ -4520,6 +4610,7 @@
     createSvg: buildAvatarSvg,
     cloneSvg: cloneAvatarSvg,
     syncMotion: applyReducedMotionToSvg,
+    setHeadTurn: setHeadTurn,
     mountSavedAvatar: mountSavedAvatar,
     consolidatePracticeHeroGroups: consolidatePracticeHeroGroups,
     isValidEmblem: isValidEmblem

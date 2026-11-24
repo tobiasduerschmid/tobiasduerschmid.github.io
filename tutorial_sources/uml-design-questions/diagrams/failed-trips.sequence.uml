@@ -1,0 +1,77 @@
+@startuml
+layout compact
+participant web: TripWebsite
+box "Order Processing Center"
+participant po: PurchaseOrderService
+participant wf: WorkflowManager
+participant cb: SupplierCallbackService
+participant order: TripOrder
+end box
+participant notifications: Notifications
+box "Other organizations" <<external>>
+participant bank: Bank
+participant supplier[i]: SupplierProvider
+end box
+web -> po: submit(tripOrder)
+activate po
+create order
+po --> order: «create»
+po ->> wf: orders.received
+po --> web: orderId
+deactivate po
+activate wf
+wf -> bank: capture(cardToken, amount)
+activate bank
+bank --> wf: captureId
+deactivate bank
+loop [for each supplier order]
+wf -> supplier[i]: place(supplierOrder)
+activate supplier[i]
+supplier[i] --> wf: accepted
+deactivate supplier[i]
+end
+wf -> order: mark_processing()
+deactivate wf
+loop [for each supplier answer]
+supplier[i] -> cb: answer(supplierOrderId, decision)
+activate cb
+cb ->> wf: supplier.answered
+cb --> supplier[i]: received
+deactivate cb
+activate wf
+alt [decision is reject]
+wf -> order: mark_failed()
+wf ->> notifications: trip.failed
+else [every supplier order confirmed]
+wf -> order: mark_confirmed()
+wf ->> notifications: trip.confirmed
+end
+deactivate wf
+end
+note right of web
+Key: UML 2.5.1 sequence diagram.
+Filled arrowhead: synchronous call.
+Open arrowhead: asynchronous message.
+Dashed arrow: reply or creation.
+end note
+note right of wf
+wf hands orders.received to the payment
+and supplier-order tasks
+(services/opc/workflow.py:25) and
+supplier.answered to the invoice task
+(services/opc/workflow.py:29).
+orders.received and supplier.answered
+are work queues in the message broker
+(deploy/broker.toml:8,
+deploy/broker.toml:11).
+A place() that cannot reach the supplier
+is sent again every 60 s
+(services/opc/supplier_task.py:10).
+An answer changes the trip order only
+while it is processing
+(services/opc/invoice_task.py:33).
+Each answer is recorded on its
+supplier order
+(services/opc/invoice_task.py:27).
+end note
+@enduml

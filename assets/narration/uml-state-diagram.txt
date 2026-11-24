@@ -68,7 +68,7 @@ A composite state contains other states, its substates, in a nested diagram with
 
 Now one transition leaves the border of Delivering: when the battery is below 15 percent. It applies to every substate. Whichever one is active, the robot leaves it, leaves Delivering, and heads to Returning. One arrow replaces three.
 
-Predict: the battery drops below 15 percent while the lid is open. The arrow starts at the border, not at Unlocked. Does the lid lock before the robot drives away? Pause if you want more time.
+Now predict: the battery drops below 15 percent while the lid is open. The arrow starts at the border, not at Unlocked. Does the lid lock before the robot drives away? Pause if you want more time.
 
 Yes. Leaving a composite state exits from the inside out: first Unlocked's exit behavior locks the lid, then Delivering is exited, and only then does Returning begin. Exit behaviors keep their promise on every path, even on arrows from a border.
 

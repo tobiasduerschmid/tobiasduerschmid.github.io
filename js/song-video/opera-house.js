@@ -30,6 +30,52 @@
   const SKIES = ['day', 'dusk', 'night', 'dawn'];
   const BOARD_LAMPS = 6;
 
+  // Thin, uneven banks suit the small city window. Their tapered ends and
+  // overlapping folds carry the volume without noisy texture or hard outlines.
+  const CLOUD_BANKS = [
+    { x: -22, y: 30, scale: 0.74, speed: 0.022, shade: 1.6,
+      shape: 'M0 12 C12 11 15 8 27 9 C35 10 38 4 49 5 C59 6 64 0 75 3 C84 5 85 8 96 8 C106 8 113 12 125 13 C110 15 103 14 94 17 C84 19 79 16 69 18 C59 20 52 17 42 18 C28 18 20 13 0 12 Z' },
+    { x: 77, y: 14, scale: 0.54, speed: 0.012, shade: 0.65,
+      shape: 'M0 13 C15 12 21 8 33 9 C43 10 45 5 56 6 C67 7 72 1 83 4 C94 7 99 5 109 10 C116 13 124 12 134 14 C116 15 108 18 96 17 C85 16 79 21 67 18 C53 16 46 19 35 16 C20 13 13 15 0 13 Z' },
+    { x: 12, y: 62, scale: 0.94, speed: 0.017, shade: 2.3,
+      shape: 'M0 15 C12 14 20 10 30 11 C40 12 44 6 55 7 C66 8 70 3 81 6 C92 9 98 8 108 12 C116 15 124 14 137 16 C122 17 115 20 104 19 C93 18 87 22 76 20 C64 18 58 22 46 19 C33 16 20 18 0 15 Z' },
+  ];
+
+  /** Layers in front of the celestial bodies, behind the city and mullions. */
+  function windowClouds(parent, defs, gradient) {
+    const ambient = gradient('oh-cloud-ambient', { x1: 0, y1: 0, x2: 0, y2: 1 }, ['0', '0.52', '1']);
+    const direct = gradient('oh-cloud-direct', { x1: 0, y1: 0, x2: 0, y2: 1 }, ['0', '0.55', '1']);
+    return CLOUD_BANKS.map((bank, i) => {
+      const node = svg('g', { class: 'oh-cloud', 'data-testid': 'oh-window-cloud' }, parent);
+      const form = svg('g', { transform: `scale(${bank.scale})` }, node);
+      const clipId = `oh-cloud-clip-${i}`;
+      svg('path', { d: bank.shape }, svg('clipPath', { id: clipId }, defs));
+      svg('path', { d: bank.shape, fill: ambient }, form);
+      const rim = svg('path', { class: 'oh-cloud-light', d: bank.shape, fill: direct }, form);
+      const folds = svg('g', { 'clip-path': `url(#${clipId})`, class: 'oh-cloud-folds' }, form);
+      svg('path', { d: bank.shape, transform: 'translate(20 5) scale(0.62 0.7)' }, folds);
+      svg('path', { class: 'oh-cloud-wisp', d: 'M7 21 C22 18 30 21 42 20 C34 24 24 23 7 21 Z M80 25 C92 21 100 24 115 20 C106 26 94 25 80 25 Z', fill: ambient }, form);
+      return { ...bank, node, rim };
+    });
+  }
+
+  /** Atmospheric detail uses the existing sky cue's blend, not a new clock.
+   * Low cloud banks lose their warm underside before the higher thin bank.
+   * Drift is slow, one-way, and deterministic; reduced motion holds it still. */
+  function lightWindow(back, t, sunNow, nightness) {
+    const warmth = Math.min(1, (1 - sunNow) / 0.7);
+    // Both the gradient stops in <defs> and their painted shapes inherit here.
+    back.art.style.setProperty('--oh-sky-warmth', `${(100 * warmth).toFixed(2)}%`);
+    back.art.style.setProperty('--oh-sky-night', `${(100 * nightness).toFixed(2)}%`);
+    back.haze.setAttribute('opacity', ((0.12 + 0.68 * warmth) * (1 - nightness)).toFixed(3));
+    back.sunGlow.setAttribute('opacity', (0.45 * sunNow).toFixed(3));
+    for (const cloud of back.clouds) {
+      const x = cloud.x + (reducedMotion.matches ? 0 : t * cloud.speed);
+      cloud.node.setAttribute('transform', `translate(${x.toFixed(2)} ${cloud.y})`);
+      cloud.rim.setAttribute('opacity', ((0.35 + 0.5 * warmth) * (1 - nightness) ** cloud.shade).toFixed(3));
+    }
+  }
+
   /** The value of cues [time, value, duration] at t, easing between them; numbers only. */
   function cued(cues, t, initial) {
     let value = initial;
@@ -61,21 +107,28 @@
 
     // The arched window: its skies stacked, faded in turn; a skyline; the
     // sun and the moon; then the frame and mullions over them.
-    const win = svg('g', { class: 'oh-window', transform: 'translate(60 76)' }, art);
+    const win = svg('g', { class: 'oh-window', transform: 'translate(756 76)' }, art);
     const pane = 'M0 150 V58 A70 58 0 0 1 140 58 V150 Z';
     const clip = svg('clipPath', { id: 'oh-window-clip' }, defs);
     svg('path', { d: pane }, clip);
-    const sky = svg('g', { 'clip-path': 'url(#oh-window-clip)' }, win);
+    const sky = svg('g', { class: 'oh-window-sky', 'data-testid': 'oh-window-sky', 'clip-path': 'url(#oh-window-clip)' }, win);
     const skies = SKIES.map((name) => {
-      const fill = gradient(`oh-sky-${name}`, { x1: 0, y1: 0, x2: 0, y2: 1 }, ['0', '1']);
+      const fill = gradient(`oh-sky-${name}`, { gradientUnits: 'userSpaceOnUse', x1: 0, y1: 0, x2: 0, y2: 150 }, ['0', '0.38', '0.7', '1']);
       return svg('rect', { class: `oh-sky oh-sky--${name}`, x: 0, y: 0, width: 140, height: 150, fill, opacity: name === 'day' ? 1 : 0 }, sky);
     });
     const stars = svg('g', { class: 'oh-stars', opacity: 0 }, sky);
     for (let i = 0; i < 16; i++) svg('circle', { cx: (10 + hash01(i * 7) * 120).toFixed(1), cy: (12 + hash01(i * 13) * 60).toFixed(1), r: (0.7 + hash01(i * 3) * 0.8).toFixed(2) }, stars);
+    const hazeFill = gradient('oh-horizon-haze', { cx: 0.5, cy: 0.5, r: 0.5 }, ['0', '0.45', '1'], 'radialGradient');
+    const haze = svg('ellipse', { class: 'oh-horizon-haze', cx: 40, cy: 98, rx: 104, ry: 64, fill: hazeFill }, sky);
+    const glowFill = gradient('oh-sun-glow', { cx: 0.5, cy: 0.5, r: 0.5 }, ['0', '0.4', '1'], 'radialGradient');
+    const sunGlow = svg('ellipse', { cx: 40, cy: 112, rx: 37, ry: 32, fill: glowFill }, sky);
     const moon = svg('g', { class: 'oh-moon', opacity: 0 }, sky);
+    svg('circle', { cx: 100, cy: 34, r: 11 }, svg('clipPath', { id: 'oh-moon-disc' }, defs));
     svg('circle', { cx: 100, cy: 34, r: 11 }, moon);
-    svg('circle', { class: 'oh-moon-shadow', cx: 105, cy: 30, r: 9.4 }, moon);
-    const sun = svg('circle', { class: 'oh-sun', cx: 40, cy: 112, r: 13 }, sky);
+    svg('circle', { class: 'oh-moon-shadow', cx: 105, cy: 30, r: 9.4, 'clip-path': 'url(#oh-moon-disc)' }, moon);
+    const sunFill = gradient('oh-sun-disc', { x1: 0, y1: 0, x2: 0, y2: 1 }, ['0', '0.55', '1']);
+    const sun = svg('circle', { class: 'oh-sun', cx: 40, cy: 112, r: 13, fill: sunFill }, sky);
+    const clouds = windowClouds(sky, defs, gradient);
     svg('path', { class: 'oh-skyline', d: 'M0 150 V112 H12 V96 H24 V104 H34 V84 H48 V100 H58 V90 H70 V108 H82 V78 H96 V98 H106 V92 H118 V104 H130 V96 H140 V150 Z' }, sky);
     const lit = svg('g', { class: 'oh-city-lights', opacity: 0 }, sky);
     for (const [x, y] of [[16, 116], [28, 108], [38, 92], [52, 104], [62, 96], [86, 86], [100, 104], [110, 98], [122, 110], [132, 102], [42, 120], [90, 118]]) {
@@ -84,9 +137,8 @@
     svg('path', { class: 'oh-window-frame', d: `${pane} M70 0 V150 M0 92 H140 M20 18 L120 18` }, win);
     svg('path', { class: 'oh-window-sill', d: 'M-8 150 H148 V158 H-8 Z' }, win);
 
-    // The wall clock, beside the window, where the props of every act stay
-    // clear of it.
-    const clock = svg('g', { class: 'oh-clock', transform: 'translate(252 112)' }, art);
+    // The clock sits just left of the window, clear of the floating panels.
+    const clock = svg('g', { class: 'oh-clock', transform: 'translate(708 112)' }, art);
     svg('circle', { class: 'oh-clock-rim', r: 34 }, clock);
     svg('circle', { class: 'oh-clock-face', r: 29 }, clock);
     for (let i = 0; i < 12; i++) {
@@ -100,8 +152,9 @@
 
     // The build-status board: a title plate and a row of lamps, each grey,
     // green, or red, with a tick or a cross on its lens (never colour alone).
-    // It hangs high at the right, by the drapes.
-    const board = svg('g', { class: 'oh-board', transform: 'translate(696 70)' }, art);
+    // Pending checks have an unlit lens and an ellipsis.
+    // It hangs high at the left, above the Teammate's desk.
+    const board = svg('g', { class: 'oh-board', 'data-testid': 'oh-build-board', transform: 'translate(52 70)' }, art);
     svg('rect', { class: 'oh-board-frame', x: 0, y: 0, width: 200, height: 86, rx: 6 }, board);
     svg('rect', { class: 'oh-board-plate', x: 10, y: 8, width: 180, height: 22, rx: 3 }, board);
     const title = svg('text', { class: 'oh-board-title', x: 100, y: 24, 'text-anchor': 'middle' }, board);
@@ -109,11 +162,13 @@
     const lamps = Array.from({ length: BOARD_LAMPS }, (_, i) => {
       const g = svg('g', { transform: `translate(${25 + i * 30} 58)` }, board);
       svg('circle', { class: 'oh-lamp-socket', r: 12 }, g);
-      const glow = svg('circle', { class: 'oh-lamp-glow', r: 16, opacity: 0 }, g);
-      const lens = svg('circle', { class: 'oh-lamp oh-lamp--off', r: 9.5 }, g);
-      const tick = svg('path', { class: 'oh-lamp-mark', d: 'M-4.4 0.2 L-1.2 3.6 L4.6 -3.4', opacity: 0 }, g);
-      const cross = svg('path', { class: 'oh-lamp-mark', d: 'M-3.6 -3.6 L3.6 3.6 M3.6 -3.6 L-3.6 3.6', opacity: 0 }, g);
-      return { glow, lens, tick, cross, state: 'off' };
+      const glow = svg('circle', { class: 'oh-lamp-glow', 'data-testid': 'oh-build-glow', r: 16, opacity: 0 }, g);
+      const lens = svg('circle', { class: 'oh-lamp oh-lamp--off', 'data-testid': 'oh-build-lens', r: 9.5 }, g);
+      const tick = svg('path', { class: 'oh-lamp-mark', 'data-testid': 'oh-build-pass', d: 'M-4.4 0.2 L-1.2 3.6 L4.6 -3.4', opacity: 0 }, g);
+      const cross = svg('path', { class: 'oh-lamp-mark', 'data-testid': 'oh-build-fail', d: 'M-3.6 -3.6 L3.6 3.6 M3.6 -3.6 L-3.6 3.6', opacity: 0 }, g);
+      const pending = svg('g', { class: 'oh-lamp-pending', 'data-testid': 'oh-build-pending', opacity: 0 }, g);
+      for (const cx of [-3.2, 0, 3.2]) svg('circle', { cx, r: 0.95 }, pending);
+      return { glow, lens, tick, cross, pending, state: 'off' };
     });
 
     // The stage floor: boards running to the back wall.
@@ -124,7 +179,7 @@
     svg('path', { class: 'oh-floor-seam', d: `M0 ${OPENING.floor + 20} H${W} M0 ${OPENING.floor + 44} H${W}` }, art);
     svg('rect', { class: 'oh-floor-glow', x: 0, y: OPENING.floor + 18, width: W, height: OPENING.edge - OPENING.floor - 18, fill: gradient('oh-footglow', { x1: 0, y1: 0, x2: 0, y2: 1 }, ['0', '1']) }, art);
 
-    return { clock: { hourHand, minuteHand }, skies, stars, moon, sun, lit, lamps };
+    return { art, clock: { hourHand, minuteHand }, skies, stars, moon, sun, lit, lamps, haze, sunGlow, clouds };
   }
 
   /** A velvet drape with folds: its lit ridges and shadowed troughs. */
@@ -219,8 +274,9 @@
       clock(at, hours, duration = 0.8) { clockCues.push([at, hours, duration]); clockCues.sort((a, b) => a[0] - b[0]); },
       /** The window shows `sky` ('day', 'dusk', 'night', 'dawn') from `at`, fading over `duration`. */
       sky(at, sky, duration = 1.2) { skyCues.push([at, SKIES.indexOf(sky), duration]); skyCues.sort((a, b) => a[0] - b[0]); },
-      /** The board's lamps from `at`: an array of 'off', 'green', or 'red', one by one `every` seconds. */
-      board(at, states, every = 0) { boardCues.push([at, states, every]); boardCues.sort((a, b) => a[0] - b[0]); },
+      /** Lamps from `at`: 'off', 'pending', 'green', or 'red', staggered by `every` seconds.
+       * Optional pulse gently modulates failed lamps; reduced motion keeps them steady. */
+      board(at, states, every = 0, { pulse = false } = {}) { boardCues.push([at, states, every, pulse]); boardCues.sort((a, b) => a[0] - b[0]); },
       /** The footlights' colour from `at`: 'warm', 'green', or 'out'. */
       footlights(at, colour, duration = 0.6) { footCues.push([at, colour, duration]); footCues.sort((a, b) => a[0] - b[0]); },
       OPENING,
@@ -240,12 +296,19 @@
         half.setAttribute('opacity', open > 0.995 ? '0' : '1');
       });
       // The clock: each cue turns the hands forwards to its time.
-      let hours = 9;
+      let hours = 9, solarHours = 9;
       for (const [at, target, duration] of clockCues) {
         if (t < at) break;
         let to = target;
-        while (to < hours) to += 12;
-        hours += (to - hours) * easeInOutCubic(progress(t, at, duration));
+        while (to < hours) to += 24;
+        const blend = easeInOutCubic(progress(t, at, duration));
+        hours += (to - hours) * blend;
+        // Whole days on the accelerated clock need not spin the sun around
+        // repeatedly. Advance to the next matching time of day, always east
+        // to west, including the hidden night portion of the orbit.
+        let solarTarget = ((target % 24) + 24) % 24;
+        while (solarTarget < solarHours - .00001) solarTarget += 24;
+        solarHours += (solarTarget - solarHours) * blend;
       }
       hands(hours);
       // The sky: each cue fades its sky in over the one before.
@@ -268,10 +331,18 @@
       back.stars.setAttribute('opacity', nightness.toFixed(3));
       back.moon.setAttribute('opacity', nightness.toFixed(3));
       back.lit.setAttribute('opacity', Math.min(1, nightness + (shown === 1 ? mix * 0.6 : 0)).toFixed(3));
-      const sunUp = (index) => (index === 0 ? 1 : index === 3 ? 0.6 : index === 1 ? 0.3 : 0);
-      const sunNow = sunUp(previous) + (sunUp(shown) - sunUp(previous)) * mix;
-      back.sun.setAttribute('opacity', sunNow.toFixed(3));
-      back.sun.setAttribute('cy', (150 - 70 * sunNow).toFixed(1));
+      // One projected solar arc: rise at the left horizon, crest at noon,
+      // set at the right. Brightness never controls position or reverses it.
+      const phase = (solarHours - 6) * Math.PI / 12;
+      const altitude = Math.sin(phase);
+      const sunX = 70 - 64 * Math.cos(phase), sunY = 114 - 96 * altitude;
+      const sunNow = Math.max(0, altitude) * (1 - nightness);
+      back.sun.setAttribute('opacity', (Math.max(0, Math.min(1, altitude * 8 + .15)) * (1 - nightness)).toFixed(3));
+      for (const node of [back.sun, back.sunGlow]) {
+        node.setAttribute('cx', sunX.toFixed(2));
+        node.setAttribute('cy', sunY.toFixed(2));
+      }
+      lightWindow(back, t, sunNow, nightness);
       // The board: the latest cue's lamps, each lit after its delay.
       let cue = null;
       for (const c of boardCues) if (c[0] <= t) cue = c;
@@ -286,13 +357,20 @@
             state = before ? before[1][i] || 'off' : 'off';
           }
         }
-        if (state === lamp.state) return;
-        lamp.state = state;
-        lamp.lens.setAttribute('class', `oh-lamp oh-lamp--${state}`);
-        lamp.glow.setAttribute('class', `oh-lamp-glow oh-lamp-glow--${state}`);
-        lamp.glow.setAttribute('opacity', state === 'off' ? '0' : '0.55');
-        lamp.tick.setAttribute('opacity', state === 'green' ? '1' : '0');
-        lamp.cross.setAttribute('opacity', state === 'red' ? '1' : '0');
+        if (state !== lamp.state) {
+          lamp.state = state;
+          lamp.lens.setAttribute('class', `oh-lamp oh-lamp--${state === 'pending' ? 'off' : state}`);
+          lamp.glow.setAttribute('class', `oh-lamp-glow oh-lamp-glow--${state}`);
+          lamp.tick.setAttribute('opacity', state === 'green' ? '1' : '0');
+          lamp.cross.setAttribute('opacity', state === 'red' ? '1' : '0');
+          lamp.pending.setAttribute('opacity', state === 'pending' ? '1' : '0');
+        }
+        // A small, smooth 0.625 Hz pulse, reconstructed from song time.
+        // The crosses remain solid even at the dimmest point and on pause.
+        const pulsing = state === 'red' && cue?.[3] && !reducedMotion.matches;
+        const level = pulsing ? (1 + Math.cos((t - cue[0]) * Math.PI * 2 / 1.6)) / 2 : 1;
+        lamp.lens.setAttribute('opacity', (0.76 + 0.24 * level).toFixed(3));
+        lamp.glow.setAttribute('opacity', state === 'off' || state === 'pending' ? '0' : (0.18 + 0.37 * level).toFixed(3));
       });
       // Footlights: warm, green, or out.
       let colour = 'warm', fade = 1, before = 'warm';

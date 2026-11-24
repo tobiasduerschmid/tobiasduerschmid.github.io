@@ -1,0 +1,32 @@
+# Code links for capstone-gateways.class.uml: double-clicking a label in the
+# drawing opens its line. text is the label exactly as the drawing shows it.
+- text: SupplierGateway
+  path: services/opc/gateways/base.py
+  line: 14
+- text: SupplierUnavailable
+  path: services/opc/gateways/base.py
+  line: 10
+- text: BoxOfficeGateway
+  path: services/opc/gateways/box_office.py
+  line: 7
+- text: LodgingGateway
+  path: services/opc/gateways/lodging.py
+  line: 9
+- text: ShuttleGateway
+  path: services/opc/gateways/shuttle.py
+  line: 7
+- text: ExperienceGateway
+  path: services/opc/gateways/experiences.py
+  line: 7
+- text: GlampingCoGateway
+  path: services/opc/partners/glamping_co.py
+  line: 12
+- text: VipShuttleGateway
+  path: services/opc/partners/vip_shuttle.py
+  line: 7
+- text: MeetAndGreetGateway
+  path: services/opc/partners/meet_and_greet.py
+  line: 8
+- text: ManualCancellationRequired
+  path: services/opc/partners/errors.py
+  line: 4

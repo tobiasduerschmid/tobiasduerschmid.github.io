@@ -32,6 +32,32 @@ async function enterSolution(page, step) {
   }
 }
 
+test('editor accepts a draft during JVM startup and Run reports its compiler diagnostic', async ({ page }) => {
+  test.setTimeout(120_000);
+  let release;
+  const runtimeAllowed = new Promise(resolve => { release = resolve; });
+  await page.route('https://cjrtnc.leaningtech.com/**/loader.js', async route => {
+    await runtimeAllowed;
+    await route.continue();
+  });
+  try {
+    await page.goto(TUTORIAL_URL);
+    await waitForTutorialReady(page);
+    const source = 'public class StaticTypes { public static void main(String[] args) { int seats = "six"; } }';
+    expect(await setTutorialFileContent(page, 'StaticTypes.java', source)).toBe(true);
+    await page.getByRole('button', { name: /run$/i }).click();
+    release();
+    const output = page.getByRole('region', { name: 'Program output' });
+    await expect(output).toContainText('StaticTypes.java', { timeout: 90_000 });
+    await expect(output).toContainText(/cannot convert from String to int/i, { timeout: 90_000 });
+    await setTutorialFileContent(page, 'StaticTypes.java', source.replace('int seats = "six";', 'System.out.println(6);'));
+    await page.getByRole('button', { name: /run$/i }).click();
+    await expect(output).toContainText('✓ Done');
+    await expect(output).toContainText('6');
+    await expect(output).not.toContainText('cannot convert');
+  } finally { release(); }
+});
+
 test('optional review preserves drafts without crediting failed or skipped checks', async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto(`${TUTORIAL_URL}?autosave=true`);
@@ -75,7 +101,7 @@ test('optional review preserves drafts without crediting failed or skipped check
   expect(restored.quizPassed).toEqual([]);
 });
 
-// One fresh-context journey verifies the authored content, real Java worker,
+// One fresh-context journey verifies the authored content, real Java workspace,
 // browser controls, and saved progress agree across every lesson.
 test('all twelve solutions and knowledge checks complete through the student interface', async ({ page }) => {
   test.setTimeout(5 * 60_000);

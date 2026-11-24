@@ -28,9 +28,12 @@ const SONGS = [
   { id: 'red_green_refactor', page: '/SEBook/testing/tdd.html' },
   { id: 'let_the_object_decide', page: '/SEBook/oop-song.html' },
   { id: 'draw_it_out', page: '/SEBook/uml.html' },
+  { id: 'not_a_one_time_investment', page: '/SEBook/designprinciples/reuse.html' },
+  { id: 'design_it_in', page: '/SEBook/systems/security.html' },
   { id: 'always_code', page: '/SEBook/always-code.html' },
   { id: 'it_works_on_my_machine', page: '/assets/song-player/it-works-on-my-machine.html', standalone: true },
   { id: 'same_shape_not_the_same', page: '/SEBook/designpatterns.html' },
+  { id: 'inspect_and_adapt', page: '/SEBook/process/scrum.html' },
 ];
 const EXTRAS_TOGGLE = 'Full transcript';
 const NARRATOR = '(narrator) ';

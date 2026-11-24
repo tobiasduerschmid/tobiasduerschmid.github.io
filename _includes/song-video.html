@@ -29,11 +29,13 @@
 {%- assign described_video = song.described_video | relative_url -%}
 <figure class="song-video mathjax_ignore"{% if include.id %} id="{{ include.id }}"{% endif %}>
   {% if song.player %}
+  {% comment %}Load the controls before keyboard focus reaches this frame.
+  An unloaded lazy iframe can receive focus without scrolling into view.
+  The player itself keeps audio preload="none" and never autoplays.{% endcomment %}
   <iframe
     class="song-video-frame"
     src="{{ song.player | relative_url }}"
     title="{{ song.title | escape }}: interactive music player"
-    loading="lazy"
     allowfullscreen
     width="960"
     height="900"></iframe>

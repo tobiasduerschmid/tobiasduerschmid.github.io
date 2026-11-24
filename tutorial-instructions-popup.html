@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="{{ '/css/object-reference-lab.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/tutorial-c4.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/tutorial-diagram-challenge.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 </head>
 <body>
@@ -65,6 +66,8 @@
   <script src="{{ '/js/object-reference-code.js' | relative_url }}"></script>
   <script src="{{ '/js/object-reference-print.js' | relative_url }}"></script>
   <script src="{{ '/js/object-reference-lab.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-diagram-challenge-core.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-diagram-challenge.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
   <script src="{{ '/js/parsons-grading.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-quiz.js' | relative_url }}"></script>
@@ -89,6 +92,7 @@
     var snapshot = null;
     var renderedStepIndex = null;
     var renderedStepHTML = null;
+    var renderedChallengeRecords = null;
 
     var client = SebookPopoutClient.connect({
       role: 'instructions',
@@ -223,12 +227,13 @@
 
     function renderControls(snap) {
       var hasPrev = snap.currentStep > 0;
-      var hasNext = snap.currentStep < (snap.steps || []).length - 1 || snap.hasQuiz;
+      // A locked timed step offers only a way back, as in the main window.
+      var hasNext = !snap.lockedOut && (snap.currentStep < (snap.steps || []).length - 1 || snap.hasQuiz);
       var html = '';
       html += hasPrev ? '<button class="tvm-btn tvm-btn-prev">← Previous</button>' : '<span></span>';
       html += snap.hasTests ? buildTestButtonHTML(snap) : '<span></span>';
       html += hasNext
-        ? '<button class="tvm-btn tvm-btn-next"' + (snap.nextLocked ? ' disabled aria-label="Next — locked: pass all tests to continue"' : '') + '>Next →</button>'
+        ? '<button class="tvm-btn tvm-btn-next"' + (snap.nextLocked ? ' disabled aria-label="Next — locked: ' + escapeHtml((snap.nextLockedLabel || 'Pass all tests to continue').toLowerCase()) + '"' : '') + '>Next →</button>'
         : '<span></span>';
       els.stepControls.innerHTML = html;
 
@@ -277,17 +282,37 @@
       // in an embedded lab. A different step or revised content mounts afresh.
       if (stepIndex !== renderedStepIndex || html !== renderedStepHTML) {
         if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(els.stepContent);
+        if (window.DiagramChallenge) window.DiagramChallenge.destroyWithin(els.stepContent);
         els.stepContent.innerHTML = html;
         renderedStepIndex = stepIndex;
         renderedStepHTML = html;
+        renderedChallengeRecords = null;
         els.stepContent.scrollTop = 0;
         // Use the same diagram renderers as the main instructions panel.
         renderArchUml(els.stepContent);
         if (window.SebookMermaid) window.SebookMermaid.render(els.stepContent);
         if (window.ObjectReferenceLab) void window.ObjectReferenceLab.initFrom(els.stepContent);
       }
+      renderChallenges();
       // Re-attach last test result panel if one was broadcast on this step.
       if (stepData && snapshot && snapshot.lastTestResultHTML) showTestPanel(snapshot.lastTestResultHTML);
+    }
+
+    // Version 1 of the diagram challenge is answered in the main window: the
+    // popout shows it read-only and re-renders when the main window's
+    // records change.
+    function renderChallenges() {
+      if (!window.DiagramChallenge) return;
+      var records = (snapshot && snapshot.challengeRecords) || {};
+      var serialized = JSON.stringify(records);
+      if (serialized === renderedChallengeRecords) return;
+      renderedChallengeRecords = serialized;
+      window.DiagramChallenge.destroyWithin(els.stepContent);
+      void window.DiagramChallenge.initFrom(els.stepContent, {
+        readOnly: true,
+        records: records,
+        onReturn: function () { window.close(); },
+      });
     }
 
     function showTestPanel(innerHtml) {
@@ -325,7 +350,10 @@
       // now-stale Next button that main then silently no-ops.
       if (typeof msg.hasTests === 'boolean') snapshot.hasTests = msg.hasTests;
       if (typeof msg.hasQuiz === 'boolean') snapshot.hasQuiz = msg.hasQuiz;
+      if (typeof msg.lockedOut === 'boolean') snapshot.lockedOut = msg.lockedOut;
       if (typeof msg.nextLocked === 'boolean') snapshot.nextLocked = msg.nextLocked;
+      if (typeof msg.nextLockedLabel === 'string') snapshot.nextLockedLabel = msg.nextLockedLabel;
+      if (msg.challengeRecords && typeof msg.challengeRecords === 'object') snapshot.challengeRecords = msg.challengeRecords;
       if (typeof msg.cooldownSeconds === 'number') snapshot.cooldownSeconds = msg.cooldownSeconds;
       if (typeof msg.cooldownRemaining === 'number') snapshot.cooldownRemaining = msg.cooldownRemaining;
       if ('testGate' in msg) snapshot.testGate = msg.testGate || null;
@@ -351,6 +379,8 @@
           if (snapshot) {
             if (Array.isArray(msg.stepsUnlocked)) snapshot.stepsUnlocked = msg.stepsUnlocked;
             if (typeof msg.nextLocked === 'boolean') snapshot.nextLocked = msg.nextLocked;
+            if (typeof msg.nextLockedLabel === 'string') snapshot.nextLockedLabel = msg.nextLockedLabel;
+            if (msg.challengeRecords && typeof msg.challengeRecords === 'object') snapshot.challengeRecords = msg.challengeRecords;
             if (typeof msg.hasQuiz === 'boolean') snapshot.hasQuiz = msg.hasQuiz;
             if (typeof msg.cooldownSeconds === 'number') snapshot.cooldownSeconds = msg.cooldownSeconds;
             if (typeof msg.cooldownRemaining === 'number') snapshot.cooldownRemaining = msg.cooldownRemaining;
@@ -404,7 +434,11 @@
         + '<span class="tvm-quiz-status" role="status" aria-live="polite" aria-atomic="true">Loading…</span>'
         + '<span></span>';
       var back = els.stepControls.querySelector('.tvm-quiz-back');
-      if (back) back.addEventListener('click', hideQuiz);
+      if (back) back.addEventListener('click', function () {
+        hideQuiz();
+        // Leave it in the main window too, which shows it again on reattach.
+        client.post('request-back-to-step');
+      });
       window.SebookQuiz.mount({
         hostEl: els.quizPanel,
         controlsEl: els.stepControls,

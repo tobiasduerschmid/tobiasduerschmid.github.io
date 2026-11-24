@@ -65,7 +65,7 @@ for (const dark of [false, true]) {
       [lines.get('bridge-14').marks.delegate + 0.5, 'keep the promise'],
       [lines.get('verse-2-8').start + 0.6, 'HybridCar::brake'],
       [lines.get('quiz-2').answer_at + 0.7, 'top()'],
-      [lines.get('final-chorus-2-8').marks.let + 0.6, 'use where it fits'],
+      [lines.get('final-chorus-8').marks.let + 0.6, 'use where it fits'],
     ];
     for (const [time, label] of samples) {
       await pose(page, time);

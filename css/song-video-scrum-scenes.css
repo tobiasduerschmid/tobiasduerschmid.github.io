@@ -1,0 +1,565 @@
+/*
+ * Scrum scenes (js/song-video/scrum-scenes.js): the role metaphors and the
+ * slide furniture of "Inspect and Adapt" on the review stage's screen. Each
+ * role has a colour (the coach teal, the navigator burgundy, the builders'
+ * hard-hat gold) that only repeats its emblem and its name. Text is dark on
+ * cream, white, sand, or gold (≥ 7:1) and white or gold on the deep panels
+ * (≥ 7:1). Like stage.css this styles the fixed 960×540 stage, which looks
+ * the same in both site themes and which the player's print styles hide;
+ * sizes are stage pixels, scaled with the player.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Slides: header band, scene panel, side panel                         */
+/* ------------------------------------------------------------------ */
+
+.ss-slide {
+  position: absolute;
+  font-family: var(--font-display);
+  --ss-role: #13808a;
+  --ss-role-soft: #d7f3f2;
+}
+
+.ss-slide--navigator { --ss-role: #7a2348; --ss-role-soft: #f6dce7; }
+.ss-slide--builders { --ss-role: #b07a00; --ss-role-soft: #fff1c9; }
+
+.ss-slide-head {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px 0 6px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #0e1838, #19275a);
+  box-shadow: inset 4px 0 0 var(--ss-role), 0 8px 18px rgba(0, 0, 0, 0.45);
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.ss-emblem {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--ss-role, #13808a);
+  box-shadow: 0 0 0 2px #fff3d0;
+  color: #ffffff;
+}
+
+.ss-emblem svg { width: 20px; height: 20px; stroke-width: 2.2; }
+.ss-slide--builders .ss-emblem,
+.ss-card--builders .ss-emblem { background: #f2b51f; color: #24160a; }
+
+.ss-slide-title { font-size: 20px; font-weight: 900; letter-spacing: 0.01em; }
+
+.ss-slide-metaphor {
+  color: #ffd66e;
+  font-size: 17px;
+  font-weight: 800;
+  font-style: italic;
+}
+
+/* The header's right end names the side panel under it. */
+.ss-slide-tag {
+  margin-left: auto;
+  color: #dfe7ff;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ss-slide-metaphor::before {
+  content: "· ";
+  color: #9fb0d8;
+  font-style: normal;
+}
+
+.ss-panel {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 10px;
+}
+
+.ss-panel--scene { overflow: hidden; box-shadow: 0 0 0 2px rgba(255, 243, 208, 0.18); }
+
+/* The list fills the side panel, so the "not" row stays at its foot. */
+.ss-panel--side {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  background: #fff7e2;
+  box-shadow: 0 0 0 2px #d8a948, 0 12px 26px rgba(0, 0, 0, 0.45);
+  color: #24160a;
+}
+
+.ss-acc-list { display: flex; flex: 1 1 auto; flex-direction: column; gap: 2px; }
+
+.ss-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 6px 2px 3px;
+  border-radius: 7px;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px #ead7a8;
+  font-size: 14.5px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.ss-chip-mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #136b34;
+  color: #ffffff;
+}
+
+.ss-chip-mark svg { width: 13px; height: 13px; stroke-width: 3.2; }
+
+.ss-acc-not {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 6px;
+  padding: 5px 7px;
+  border-radius: 7px;
+  background: #fde7e7;
+  box-shadow: 0 0 0 1px #f2b8b8;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.ss-acc-not-label {
+  padding: 1px 7px;
+  border-radius: 5px;
+  background: #a3132a;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ss-not-item {
+  position: relative;
+  color: #6e0f1f;
+  white-space: nowrap;
+}
+
+.ss-not-strike {
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: calc(50% - 1px);
+  height: 2.5px;
+  border-radius: 2px;
+  background: #a3132a;
+  transform-origin: 0 50%;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scene labels, crosses, highlights                                    */
+/* ------------------------------------------------------------------ */
+
+.ss-label {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 7px;
+  background: #fff7e2;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  color: #24160a;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.ss-label svg { width: 16px; height: 16px; flex: none; }
+.ss-label--center { transform: translateX(-50%); }
+.ss-label--right { transform: translateX(-100%); }
+.ss-label--warm { background: #ffe1cc; color: #5c2412; }
+.ss-label--teal { background: #d7f3f2; color: #0b4e55; }
+.ss-label--navy { background: #13204a; color: #ffd66e; }
+.ss-label--red { background: #a3132a; color: #ffffff; }
+.ss-label--gold { background: #ffd66e; color: #24160a; }
+.ss-label--blue { background: #dbeafe; color: #123a63; }
+
+.ss-cross {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #a3132a;
+  box-shadow: 0 0 0 2px #ffffff, 0 4px 10px rgba(0, 0, 0, 0.4);
+  color: #ffffff;
+}
+
+.ss-cross svg { width: 18px; height: 18px; stroke-width: 3.4; }
+
+.ss-lit {
+  position: absolute;
+  inset: -4px;
+  border: 3px solid #ffd66e;
+  border-radius: 12px;
+  box-shadow: 0 0 18px rgba(255, 214, 110, 0.7);
+  pointer-events: none;
+}
+
+.ss-art { position: absolute; left: 0; top: 0; overflow: visible; }
+
+/* ------------------------------------------------------------------ */
+/* The team coach: the court                                            */
+/* ------------------------------------------------------------------ */
+
+.ss-court, .ss-leadership, .ss-chart, .ss-site { position: absolute; }
+.ss-leadership { border-radius: 10px; background: #13204a; }
+.ss-sideline { fill: #2a2f3b; }
+.ss-maple-0 { stop-color: #e9c088; }
+.ss-maple-1 { stop-color: #d39a56; }
+.ss-planks { fill: none; stroke: #8a5520; stroke-width: 1; opacity: 0.16; }
+.ss-key { fill: #2774ae; opacity: 0.62; }
+.ss-court-line { fill: none; stroke: #ffffff; stroke-width: 2; opacity: 0.92; }
+.ss-backboard { fill: none; stroke: #ffffff; stroke-width: 3.4; stroke-linecap: round; }
+.ss-rim { fill: none; stroke: #ff6a2b; stroke-width: 2.2; }
+.ss-bench { fill: #6b4a33; }
+
+.ss-token-disc { stroke: #ffffff; stroke-width: 2.2; }
+.ss-token svg { color: #ffffff; }
+.ss-token--newdev .ss-token-disc, .ss-assignee.ss-token--newdev { fill: #2774ae; background: #2774ae; }
+.ss-token--ui .ss-token-disc, .ss-assignee.ss-token--ui { fill: #b8790f; background: #b8790f; }
+.ss-token--coder .ss-token-disc, .ss-assignee.ss-token--coder { fill: #2f8a5c; background: #2f8a5c; }
+.ss-token--test .ss-token-disc, .ss-assignee.ss-token--test { fill: #5d6b7e; background: #5d6b7e; }
+.ss-token--coach .ss-token-disc { fill: #13808a; stroke: #ffd66e; }
+
+.ss-play line { stroke: #fffaf0; stroke-width: 2.6; stroke-dasharray: 6 4; stroke-linecap: round; }
+.ss-play-head { fill: #fffaf0; }
+
+.ss-clock {
+  position: absolute;
+  padding: 4px 12px 5px;
+  border-radius: 9px;
+  background: #10141d;
+  box-shadow: 0 0 0 3px #3b4250, 0 8px 18px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-display);
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.ss-clock-event {
+  color: #ffd66e;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ss-clock-digits {
+  color: #ff8a5c;
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+}
+
+.ss-brick { fill: #b5532f; stroke: #5c2412; stroke-width: 1.2; }
+.ss-brick-edge { fill: none; stroke: #5c2412; stroke-width: 1.6; }
+
+.ss-pyramid-shape { stroke-width: 2.5; stroke-linejoin: round; }
+.ss-pyramid--command .ss-pyramid-shape { fill: #f6dccb; stroke: #b5532f; }
+.ss-pyramid--serve .ss-pyramid-shape { fill: #d7f3f2; stroke: #13808a; }
+.ss-pyramid-arrow { fill: none; stroke: #24160a; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ------------------------------------------------------------------ */
+/* The value navigator: the chart                                       */
+/* ------------------------------------------------------------------ */
+
+.ss-paper-0 { stop-color: #f7e9c8; }
+.ss-paper-1 { stop-color: #e8d09b; }
+.ss-sea { fill: #cfe4e7; }
+.ss-grid { fill: none; stroke: #8fb1b8; stroke-width: 0.8; opacity: 0.6; }
+.ss-chart-frame { fill: none; stroke: #8a6a3c; stroke-width: 1.6; }
+.ss-land { fill: #e3cd94; stroke: #a88a52; stroke-width: 1.4; }
+.ss-land-green { fill: #a9c78b; }
+.ss-island-sand { fill: #ead6a0; stroke: #a88a52; stroke-width: 1.3; }
+.ss-island-grass { fill: #9fc183; }
+.ss-fog { fill: #ffffff; fill-opacity: 0.4; stroke: #8a7a6a; stroke-width: 1.4; stroke-dasharray: 4 4; }
+.ss-flag-pole { fill: none; stroke: #4a3426; stroke-width: 1.6; stroke-linecap: round; }
+.ss-flag-cloth { fill: #7a2348; }
+.ss-leg line { stroke-width: 2.6; stroke-dasharray: 7 5; stroke-linecap: round; }
+.ss-leg--course line { stroke: #7a2348; }
+.ss-leg--idea line { stroke: #a3132a; stroke-dasharray: 3 4; }
+.ss-link line { stroke: #2774ae; stroke-width: 2.6; stroke-linecap: round; }
+.ss-rose-ring { fill: #fbf3df; stroke: #8a6a3c; stroke-width: 1.5; }
+.ss-rose-star { fill: #e9d7a8; stroke: #8a6a3c; stroke-width: 1; stroke-linejoin: round; }
+.ss-needle-north { fill: #c8102e; }
+.ss-needle-south { fill: #f3f5f8; stroke: #5b5b5b; stroke-width: 0.8; }
+.ss-needle-pin { fill: #4a3426; }
+.ss-ship-hull { fill: #7a2348; stroke: #3a0f22; stroke-width: 1; stroke-linejoin: round; }
+.ss-ship-mast { fill: none; stroke: #4a3426; stroke-width: 1.6; }
+.ss-ship-sail { fill: #fffaf0; stroke: #8a6a3c; stroke-width: 1; stroke-linejoin: round; }
+.ss-user-disc { fill: #44546b; stroke: #ffffff; stroke-width: 1.8; }
+.ss-user svg { color: #ffffff; }
+
+.ss-waypoint {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #7a2348;
+  box-shadow: 0 0 0 2px #fff7e2;
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+/* ------------------------------------------------------------------ */
+/* The builders: the site                                               */
+/* ------------------------------------------------------------------ */
+
+.ss-site {
+  border-radius: 10px;
+  background-color: #e9f1f8;
+  background-image:
+    linear-gradient(#cddcea 1px, transparent 1px),
+    linear-gradient(90deg, #cddcea 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.ss-ground { fill: #c8b08a; }
+.ss-foundation { fill: #7d7f86; }
+
+.ss-block {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 4px;
+  background: #2f6f9e;
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.22), 0 3px 6px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.ss-block svg { width: 16px; height: 16px; flex: none; }
+.ss-block--design { background: #2f6f9e; }
+.ss-block--code { background: #2f8a5c; }
+.ss-block--test { background: #6b4fb5; }
+
+.ss-toolbox { position: absolute; font-family: var(--font-display); }
+.ss-toolbox-tools { display: flex; gap: 5px; margin-bottom: -2px; }
+
+.ss-tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 3px 5px;
+  border-radius: 6px;
+  background: #fff7e2;
+  box-shadow: 0 0 0 1px #d8a948;
+  color: #24160a;
+}
+
+.ss-tool svg { width: 18px; height: 18px; }
+.ss-tool-name { font-size: 14px; font-weight: 800; }
+
+.ss-toolbox-body {
+  height: 22px;
+  border-radius: 0 0 6px 6px;
+  background: linear-gradient(#d84a32, #a8301e);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.25), 0 4px 8px rgba(0, 0, 0, 0.35);
+}
+
+.ss-taskboard {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 9px;
+  background: #fff7e2;
+  box-shadow: 0 0 0 2px #d8a948, 0 8px 18px rgba(0, 0, 0, 0.35);
+  font-family: var(--font-display);
+}
+
+.ss-taskboard-title {
+  position: absolute;
+  left: 9px;
+  top: 5px;
+  color: #6b4718;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ss-task {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 0 8px;
+  border-radius: 5px;
+  background: #fff1a8;
+  box-shadow: 0 0 0 1px #d1b04a;
+  color: #24160a;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.ss-assignee {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: #ffffff;
+  box-shadow: 0 0 0 1.5px #ffffff;
+}
+
+.ss-assignee svg { width: 12px; height: 12px; }
+
+.ss-seal {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #1f7a45;
+  box-shadow: 0 0 0 2px #ffffff, 0 6px 14px rgba(0, 0, 0, 0.4);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.ss-seal svg { width: 16px; height: 16px; stroke-width: 3; }
+
+/* ------------------------------------------------------------------ */
+/* Empiricism's temple                                                  */
+/* ------------------------------------------------------------------ */
+
+.ss-temple { position: absolute; font-family: var(--font-display); }
+.ss-pediment { fill: #efe8d8; stroke: #a8977a; stroke-width: 2; stroke-linejoin: round; }
+.ss-pediment-inner { fill: #e6dcc6; }
+.ss-architrave { fill: #e9e1cf; stroke: #a8977a; stroke-width: 1.5; }
+.ss-capital, .ss-plinth { fill: #ddd2bb; stroke: #a8977a; stroke-width: 1.4; }
+.ss-shaft { fill: #f2ece0; stroke: #b8a988; stroke-width: 1.2; }
+.ss-flutes { fill: none; stroke: #cfc2a5; stroke-width: 1.4; }
+.ss-stylobate { fill: #d6cbb3; stroke: #a8977a; stroke-width: 1.2; }
+.ss-stylobate--low { fill: #c9bda2; }
+
+.ss-temple-title, .ss-temple-meaning {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ss-temple-title { color: #4a3414; font-size: 21px; font-weight: 900; letter-spacing: 0.06em; }
+.ss-temple-meaning { color: #4a3414; font-size: 15px; font-weight: 800; line-height: 20px; }
+
+.ss-plate {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 5px 8px 6px;
+  border-radius: 9px;
+  background: #fff7e2;
+  box-shadow: 0 0 0 2px #d8a948, 0 8px 16px rgba(0, 0, 0, 0.4);
+  color: #24160a;
+  text-align: center;
+}
+
+.ss-plate-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.ss-plate-name svg { width: 18px; height: 18px; flex: none; }
+.ss-plate-text { margin-top: 2px; font-size: 14px; font-weight: 700; line-height: 1.25; text-wrap: balance; }
+
+.ss-ribbon {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: #ffd66e;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+  color: #24160a;
+  font-size: 16px;
+  font-weight: 900;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* Role cards                                                           */
+/* ------------------------------------------------------------------ */
+
+.ss-cards {
+  position: absolute;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  font-family: var(--font-display);
+}
+
+.ss-card {
+  --ss-role: #13808a;
+  padding: 8px 10px 9px;
+  border-radius: 10px;
+  background: #fff7e2;
+  box-shadow: inset 0 4px 0 var(--ss-role), 0 0 0 2px #d8a948, 0 12px 24px rgba(0, 0, 0, 0.45);
+  color: #24160a;
+}
+
+.ss-card--navigator { --ss-role: #7a2348; }
+.ss-card--builders { --ss-role: #f2b51f; }
+
+.ss-card-head { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.ss-card-title { font-size: 17px; font-weight: 900; line-height: 1.15; white-space: nowrap; }
+.ss-card-metaphor { color: #6b4718; font-size: 14px; font-weight: 800; font-style: italic; white-space: nowrap; }
+
+.ss-card-list {
+  margin: 6px 0 0;
+  padding: 0 0 0 18px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.ss-card-list li { text-wrap: balance; }
+.ss-card-list li::marker { color: var(--ss-role); }

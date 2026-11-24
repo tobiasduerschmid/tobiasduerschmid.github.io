@@ -1,0 +1,84 @@
+@startuml
+layout compact
+package services::opc::model {
+  abstract class TripItem {
+    + {abstract} price()
+    + {abstract} supplier_kind()
+    + {abstract} cancellation_deadline(festival_start)
+  }
+  class FestivalPass {
+    + price()
+    + supplier_kind()
+    + cancellation_deadline(festival_start)
+  }
+  class LodgingStay {
+    + price()
+    + supplier_kind()
+    + cancellation_deadline(festival_start)
+  }
+  class Experience {
+    + price()
+    + supplier_kind()
+    + cancellation_deadline(festival_start)
+  }
+  abstract class TransportItem {
+    + cancellation_deadline(festival_start)
+  }
+  class ShuttleRide {
+    + price()
+    + supplier_kind()
+  }
+}
+FestivalPass --|> TripItem
+LodgingStay --|> TripItem
+Experience --|> TripItem
+TransportItem --|> TripItem
+ShuttleRide --|> TransportItem
+package services::opc::payloads
+package services::website::checkout
+services::opc::payloads ..> services::opc::model : «import»
+services::website::checkout ..> services::opc::payloads : «use»
+note right of TripItem
+TripItem declares its three operations
+abstract (services/opc/model/items.py:17).
+TransportItem defines only
+cancellation_deadline
+(services/opc/model/items.py:92).
+end note
+note left of TripItem
+Key: UML 2.5.1 class diagram.
+Hollow triangle: generalization.
+Italic: abstract class or operation.
+Each class lists the operations it
+defines itself.
+end note
+note left of services::opc::payloads
+Folder with its name inside: a Python
+module, shown without its contents.
+Dashed arrow «import»: the module
+imports from the package at its head.
+ITEM_TYPES lists the item classes
+that an order may name: FestivalPass,
+LodgingStay, ShuttleRide, Experience
+(services/opc/payloads.py:15).
+end note
+note right of services::website::checkout
+Dashed arrow «use»: the module depends
+on the other without importing it.
+_item writes each item's type as text,
+such as "ShuttleRide"
+(services/website/checkout.py:89),
+for payloads to read. The website
+imports nothing from the OPC.
+end note
+@layout
+TripItem @pos(519, 0)
+FestivalPass @pos(0, 177)
+LodgingStay @pos(346, 177)
+Experience @pos(692, 177)
+TransportItem @pos(1038, 177)
+ShuttleRide @pos(1115, 329)
+services::opc::payloads @pos(430, 516)
+services::website::checkout @pos(770, 516)
+@endlayout
+@enduml

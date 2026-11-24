@@ -42,7 +42,7 @@ The backlog is emergent: it keeps changing as the team learns. Refinement splits
 
 Artifact two: the Sprint Backlog, the Developers' plan for one sprint. It answers three questions. Why does this sprint matter? That's the Sprint Goal. What will we build? The Product Backlog items chosen for the sprint. How will we build them? A plan of tasks.
 
-Hall Hopper's Sprint Goal: students can check how crowded a hall is before walking over. The plan livs on the wall in real time, updated by the Developers, for the Developers. Anyone can glance at it and see exactly where the sprint stands.
+Hall Hopper's Sprint Goal: students can check how crowded a hall is before walking over. The plan lives on the wall in real time, updated by the Developers, for the Developers. Anyone can glance at it and see exactly where the sprint stands.
 
 Plot twist: one item turns out way bigger than expected. The Developers renegotiate the scope with the Product Owner, maybe saving the hall photos for later, but the Sprint Goal stays locked. One shared goal keeps the team pulling together instead of drifting into side quests.
 
@@ -56,7 +56,7 @@ It doesn't count: ninety percent done is not done. Work that misses the Definiti
 
 Now the events, the rhythm of Scrum. First, the Sprint itself: a fixed time box, usually two to three weeks and never more than a month, of focused work toward the Sprint Goal. When one sprint ends, the next one begins immediately. No gaps, no off-season.
 
-The Sprint is a container for the other four events. Sprint Planning opens it, a Daily Scrum happens every working day, and the Sprint Review and Sprint Retrospective cloze it. Inside the sprint, nobody makes changes that would endanger the Sprint Goal.
+The Sprint is a container for the other four events. Sprint Planning opens it, a Daily Scrum happens every working day, and the Sprint Review and Sprint Retrospective close it. Inside the sprint, nobody makes changes that would endanger the Sprint Goal.
 
 Sprint Planning kicks off the sprint, with the whole Scrum Team in the room. Topic one: why is this sprint valuable? The Product Owner pitches how the product could gain value, and together the team writes the Sprint Goal.
 
@@ -72,7 +72,7 @@ One thing it's not: a status report for managers. The Daily Scrum is the Develop
 
 End of the sprint: demo time. The Sprint Review inspects the outcome. The team shows the Increment to key stakeholders and talks about progress toward the Product Goal. It's a working session with live demos, ideally with real customers. Not a slideshow.
 
-Students try the crowd meter live, and they love it. Then the feedback lands. Several want to filter menus by allergens, and one student who uses a screen reader can't tell how busy a hall is, because the meter only yoozes color. The Product Owner adds both to the Product Backlog, near the top.
+Students try the crowd meter live, and they love it. Then the feedback lands. Several want to filter menus by allergens, and one student who uses a screen reader can't tell how busy a hall is, because the meter only uses color. The Product Owner adds both to the Product Backlog, near the top.
 
 The Product Owner also judges whether the Increment delivers the value its stories promised. The review's real output is an updated Product Backlog, ready for the next Sprint Planning.
 

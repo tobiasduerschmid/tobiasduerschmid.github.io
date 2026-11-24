@@ -177,6 +177,40 @@
     };
   }
 
+  // Smallest side ArchUML accepts as a measured pane (UMLLayoutCore).
+  const MIN_PANE_SIDE = 40;
+
+  /**
+   * The content box of the element a diagram will be shown in, or null when
+   * it is too small to measure (collapsed or hidden). A box that grows with
+   * its drawing up to a max-height (the chapter lab preview) is measured at
+   * that maximum, so the pane does not follow the previous drawing's height.
+   */
+  function paneOf(target) {
+    const style = getComputedStyle(target);
+    const px = name => parseFloat(style[name]) || 0;
+    const verticalPadding = px('paddingTop') + px('paddingBottom');
+    const width = target.clientWidth - px('paddingLeft') - px('paddingRight');
+    const maxHeight = parseFloat(style.maxHeight);
+    const height = Number.isFinite(maxHeight)
+      ? maxHeight - (style.boxSizing === 'border-box' ? verticalPadding : 0)
+      : target.clientHeight - verticalPadding;
+    return width >= MIN_PANE_SIDE && height >= MIN_PANE_SIDE ? { width, height } : null;
+  }
+
+  /**
+   * Rendering happens in an off-screen staging element, whose height is not
+   * the pane's, so a bare `layout compact` is sized for the target here.
+   * Other specs and the staging geometry are unchanged: every layout reads
+   * that geometry's aspect ratio, and only compact uses a pane.
+   */
+  async function withTargetPane(syntax, target) {
+    const pane = paneOf(target);
+    if (!pane) return syntax;
+    if (!global.ArchUMLCompactPane) await loadScript(assetURL('archuml-compact-pane.js'));
+    return global.ArchUMLCompactPane.withCompactPane(syntax, pane);
+  }
+
   function withClassLayout(syntax, preference) {
     if (!syntax || !preference) return syntax;
     const lines = syntax.replace(/\r\n?/g, '\n').split('\n')
@@ -212,6 +246,7 @@
   function createClient(settings = {}) {
     const queue = createWorkerQueue();
     const measurer = createTextMeasurer();
+    let javaSyntax = null;
     let disposed = false;
 
     async function analyzeOnMainThread({ language, sources, options }) {
@@ -224,10 +259,20 @@
         language !== 'js' || global.UMLTypeScriptLibs || loadScript(assetURL('vendor/typescript/5.9.3/lib-map.js')),
         global.UMLSequenceDiagnostics || loadScript(assetURL('uml-sequence-diagnostics.js')),
         global.UMLConstantValues || loadScript(assetURL('uml-constant-values.js')),
-        global.UMLReturnSummaries || loadScript(assetURL('uml-return-summaries.js'))
+        global.UMLReturnSummaries || loadScript(assetURL('uml-return-summaries.js')),
+        global.UMLSourceMap || loadScript(assetURL('uml-source-map.js'))
       ]);
       if (!global[analyzer.name]) await loadScript(settings[language + 'AnalyzerPath'] || assetURL(analyzer.file));
       if (disposed) throw supersededError();
+      if (language === 'java') {
+        if (!javaSyntax) javaSyntax = import(assetURL('uml-java-syntax.mjs')).then(module => module.createJavaSyntaxWorkspace())
+          .catch(error => { javaSyntax = null; throw error; });
+        let workspace;
+        try { workspace = await javaSyntax; }
+        catch { /* A browser without WebAssembly can still diagram the basic Java subset. */ }
+        if (disposed) throw supersededError();
+        return global[analyzer.name](sources, options || {}, workspace?.parse(sources));
+      }
       return global[analyzer.name](sources, language === 'js' ? global.ts : options || {});
     }
 
@@ -269,16 +314,18 @@
       if (!renderer) throw new Error('UML renderer is unavailable. Reload the page to try again.');
       // Stage both worker and fallback output. The visible SVG stays intact
       // throughout analysis/rendering, including when a newer edit supersedes it.
+      const laidOut = await withTargetPane(syntax, target);
+      if (!current()) return false;
       const surface = createRenderSurface(target, type);
       try {
         let svg;
         try {
           svg = await queue.submit('render', { type: 'renderDiagram', diagramType: type,
-            syntax, ...snapshotContainer(surface), measurements: measurer.measure(type, syntax) });
+            syntax: laidOut, ...snapshotContainer(surface), measurements: measurer.measure(type, laidOut) });
         } catch (error) {
           if (error.umlSuperseded || !current()) return false;
           if (error.umlTimeout) throw error;
-          renderer.render(surface, syntax);
+          renderer.render(surface, laidOut);
           svg = surface.innerHTML;
         }
         if (!current()) return false;
@@ -297,7 +344,13 @@
 
     return {
       analyze, project, render,
-      dispose() { disposed = true; queue.dispose(); measurer.dispose(); }
+      dispose() {
+        if (disposed) return;
+        disposed = true;
+        queue.dispose();
+        measurer.dispose();
+        javaSyntax?.then(workspace => workspace.dispose(), () => {});
+      }
     };
   }
 

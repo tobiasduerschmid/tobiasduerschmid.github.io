@@ -1,0 +1,78 @@
+@startuml
+layout compact
+package Headliner {
+  component TripWebsite <<WebApplication>> {
+    require "SQL" as web_catalog
+    require "Capacity" as web_capacity
+    require "Quotes" as web_quotes
+    require "CardService" as web_card
+    require "PurchaseOrderService" as web_orders
+    require "OrderTrackingService" as web_tracking
+  }
+  component CatalogDB <<Database>> {
+    provide "SQL" as catalog_sql
+  }
+  component OPC <<BackendService>> {
+    provide "PurchaseOrderService" as opc_orders
+    provide "OrderTrackingService" as opc_tracking
+  }
+}
+component Bank <<ExternalSystem>> {
+  provide "CardService" as bank_card
+}
+component BoxOffice <<ExternalSystem>> {
+  provide "Quotes" as box_quotes
+}
+component ExperienceProvider <<ExternalSystem>> {
+  provide "Capacity" as exp_capacity
+}
+catalog_sql --> web_catalog
+exp_capacity --> web_capacity
+box_quotes --> web_quotes
+bank_card --> web_card
+opc_orders --> web_orders
+opc_tracking --> web_tracking
+note left of OPC
+Key: UML 2.5.1 component diagram.
+Stereotypes from the Headliner
+architecture profile.
+Ball and socket: a synchronous call;
+the socket side calls and waits
+for the answer.
+end note
+note left of TripWebsite
+The website reaches other
+systems through its clients:
+CatalogClient
+(services/website/clients.py:9),
+BankClient
+(services/website/clients.py:22),
+BoxOfficeClient
+(services/website/clients.py:32),
+ExperienceClient
+(services/website/clients.py:46),
+OpcClient
+(services/website/clients.py:55).
+end note
+@layout
+CatalogDB @pos(0, 268)
+TripWebsite @pos(330, 0)
+Bank @pos(664, 170)
+BoxOffice @pos(893, 90)
+ExperienceProvider @pos(1122, 10)
+OPC @pos(330, 420)
+TripWebsite.web_catalog @pos(330, 285)
+CatalogDB.catalog_sql @pos(146, 285)
+TripWebsite.web_capacity @pos(537, 60)
+TripWebsite.web_quotes @pos(537, 140)
+TripWebsite.web_card @pos(537, 220)
+ExperienceProvider.exp_capacity @pos(1122, 60)
+BoxOffice.box_quotes @pos(893, 140)
+Bank.bank_card @pos(664, 220)
+TripWebsite.web_orders @pos(350, 312)
+TripWebsite.web_tracking @pos(520, 312)
+OPC.opc_orders @pos(350, 420)
+OPC.opc_tracking @pos(520, 420)
+note:42 @pos(0, 0)
+@endlayout
+@enduml

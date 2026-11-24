@@ -25,6 +25,35 @@
   overflow: visible;
 }
 
+/* Fixed theatrical artwork palette in both page themes; the player hides
+ * the stage in print. Full role names remain paragraph-sized at stage scale. */
+.oc-role-label {
+  position: absolute;
+  box-sizing: border-box;
+  width: 108px;
+  padding: 7px 9px;
+  border: 1.5px solid #657b88;
+  border-radius: 9px;
+  background: #faf1db;
+  color: #193444;
+  box-shadow: 0 3px 0 #0c1d2b;
+  font: 700 16px/1.15 var(--font-display);
+  text-align: center;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  opacity: 0;
+}
+.oc-role-label-line { display: block; }
+.oc-role-label-short { display: none; }
+.oc-role-label--compact { width: 72px; padding: 4px 1px; border-width: 1px; border-radius: 6px; }
+.oc-role-label--compact .oc-role-label-name { display: none; }
+.oc-role-label--compact .oc-role-label-short { display: block; }
+.oc-role-sticker-shadow { fill: #132331; opacity: 0.24; }
+.oc-role-sticker-paper { fill: #f9eed4; stroke: #5a6056; stroke-width: 0.65; }
+.oc-role-sticker-rim { fill: none; stroke: #fffbed; stroke-width: 0.55; stroke-linecap: round; }
+.oc-role-sticker-symbol { color: #244555; }
+.oc-role-sticker-corner { fill: #cabb98; }
+
 .oc-ink {
   fill: none;
   stroke: var(--oc-ink);
@@ -35,6 +64,8 @@
 }
 .oc-ink--cool { stroke: var(--oc-ink-cool); }
 .oc-ink--fine { stroke-width: 1.5; stroke: var(--oc-skin-line); }
+.oc-limb-edge { stroke-linecap: butt; }
+.oc-hand-outline { fill: none; stroke: var(--oc-skin-line); stroke-width: 0.8; stroke-linecap: butt; stroke-linejoin: round; }
 
 /* Skin: the drawn faces' own tone, or a worn hero's tokens. */
 .oc-skin { fill: var(--oc-skin); stroke: none; }
@@ -59,7 +90,7 @@
 .oc-skin-arm { stroke: none; }
 .oc-face-shade { fill: var(--oc-skin-shade); opacity: 0.5; }
 .oc-neck-shade { fill: var(--oc-skin-shade); opacity: 0.75; }
-.oc-limb-shade { fill: var(--oc-skin-shade); opacity: 0.6; }
+.oc-limb-shade { fill: var(--oc-skin-shade); opacity: 0.38; }
 .oc-muscle,
 .oc-wrist-crease { fill: none; stroke: var(--oc-skin-shade); stroke-width: 0.6; stroke-linecap: round; opacity: 0.8; }
 .oc-ear-line { fill: none; stroke: var(--oc-skin-line); stroke-width: 1.6; stroke-linecap: round; opacity: 0.55; }
@@ -81,9 +112,7 @@
 .oc-pupil { fill: #140b06; }
 .oc-catchlight { fill: #ffffff; }
 .oc-catchlight--soft { opacity: 0.55; }
-.oc-lid { fill: var(--oc-skin); }
 .oc-lash-line { fill: none; stroke: #23140c; stroke-width: 2.4; stroke-linecap: round; }
-.oc-eye-shut { fill: none; stroke: #23140c; stroke-width: 2.6; stroke-linecap: round; }
 .oc-brow { fill: var(--oc-hair, #3a2214); stroke: var(--oc-hair-dark, #1e100a); stroke-width: 1; stroke-linejoin: round; }
 
 .oc-mouth-inside { fill: #4a1418; stroke: #2b0c0e; stroke-width: 1.4; stroke-linejoin: round; }
@@ -92,15 +121,75 @@
 .oc-lip-light { fill: none; stroke: #e89a86; stroke-width: 1.8; stroke-linecap: round; opacity: 0.8; }
 .oc-mouth-line { fill: none; stroke: #6b2e22; stroke-width: 2.4; stroke-linecap: round; }
 
+/* The lead keeps the stage's painted palette in light and dark page modes.
+ * These decorative details are inside the screen-only song artwork; print
+ * continues to show the transcript in place of the stage. */
+.oc-rendered-hair,
+.oc-rendered-iris,
+.oc-cheek-color { stroke: none; }
+.oc-hair-stop-0 { stop-color: var(--oc-hair-light); }
+.oc-hair-stop-1 { stop-color: var(--oc-hair); }
+.oc-hair-stop-2,
+.oc-hair-stop-3 { stop-color: var(--oc-hair-dark); }
+.oc-iris-stop-0 { stop-color: color-mix(in srgb, var(--oc-eye) 65%, white); }
+.oc-iris-stop-1 { stop-color: var(--oc-eye); }
+.oc-iris-stop-2 { stop-color: color-mix(in srgb, var(--oc-eye) 55%, var(--oc-ink-cool)); }
+.oc-blush-stop-0 { stop-color: #e99183; stop-opacity: 0.42; }
+.oc-blush-stop-1 { stop-color: #e99183; stop-opacity: 0; }
+.oc-face-plane { fill: var(--oc-skin-shade); opacity: 0.18; }
+.oc-face-contour,
+.oc-nose-contour,
+.oc-eye-fold,
+.oc-smile-crease,
+.oc-lower-lid { fill: none; stroke: var(--oc-skin-line); stroke-width: 1.1; stroke-linecap: round; opacity: 0.32; }
+.oc-ear-highlight { fill: none; stroke: var(--oc-skin-light); stroke-width: 1.3; stroke-linecap: round; opacity: 0.7; }
+.oc-smile-crease { stroke-width: 0.9; }
+.oc-tooth-shade { fill: none; stroke: #c9b9ad; stroke-width: 0.55; stroke-linejoin: round; opacity: 0.6; }
+.oc-lower-lip-volume { fill: #df9a89; opacity: 0.75; }
+.oc-upper-lip-volume { fill: #ba7566; opacity: 0.68; }
+.oc-hair-flyaway { fill: none; stroke: var(--oc-hair-light); stroke-width: 0.55; stroke-linecap: round; opacity: 0.4; }
+.oc-nose-contour { stroke-width: 1.2; opacity: 0.55; }
+.oc-lower-lid { stroke-width: 0.9; opacity: 0.42; }
+.oc-tear-duct { fill: var(--oc-skin-line); opacity: 0.4; }
+.oc-iris-rim { fill: none; stroke: var(--oc-ink-cool); stroke-width: 0.8; opacity: 0.7; }
+.oc-iris-fiber { fill: none; stroke: var(--oc-skin-light); stroke-width: 0.35; opacity: 0.25; }
+.oc-hair-fine { fill: none; stroke: var(--oc-hair-dark); stroke-width: 1.1; stroke-linecap: round; opacity: 0.7; }
+.oc-hair-glint,
+.oc-brow-hair,
+.oc-moustache-hair { fill: none; stroke: var(--oc-hair-light); stroke-width: 0.9; stroke-linecap: round; opacity: 0.65; }
+.oc-hair-glint { stroke-width: 1.4; opacity: 0.5; }
+.oc-moustache-hair { stroke-width: 0.7; opacity: 0.75; }
+.oc-brow-hair { stroke-width: 0.65; opacity: 0.22; }
+.oc-face--detailed .oc-brow { stroke-width: 0.6; }
+.oc-face--detailed .oc-face-shade { opacity: 0.18; }
+.oc-face--detailed .oc-lash-line { stroke: #4c3026; stroke-width: 1.8; }
+.oc-face--detailed .oc-nose { opacity: 0.45; }
+.oc-face--detailed .oc-nostril { stroke-width: 1.1; opacity: 0.7; }
+.oc-face--detailed .oc-nose-light { stroke-width: 1.5; opacity: 0.5; }
+.oc-face--detailed .oc-mouth-line { stroke: #8b4f42; stroke-width: 1.2; }
+.oc-face--detailed .oc-lip-light { stroke-width: 1.2; opacity: 0.65; }
+.oc-face--detailed .oc-moustache + .oc-hair-sheen { stroke-width: 1.4; opacity: 0.5; }
+
 /* Clothes and their light. */
 .oc-top,
 .oc-sleeve,
 .oc-trousers,
 .oc-upper { stroke: none; }
-.oc-top-shade { fill: var(--oc-cloth-shade); opacity: 0.55; }
-.oc-top-light { fill: var(--oc-cloth-light); opacity: 0.35; }
+/* The same soft upper-left lighting wraps every costume in either page
+ * theme. These screen-only surfaces are hidden with the stage in print. */
+.oc-surface-volume { stroke: none; }
+.oc-cloth-depth-stop-0,
+.oc-cloth-depth-stop-1 { stop-color: var(--oc-cloth-shade); stop-opacity: 0; }
+.oc-cloth-depth-stop-2 { stop-color: var(--oc-cloth-shade); stop-opacity: 0.16; }
+.oc-cloth-depth-stop-3 { stop-color: var(--oc-cloth-shade); stop-opacity: 0.36; }
+.oc-cloth-glow-stop-0 { stop-color: var(--oc-cloth-light); stop-opacity: 0.4; }
+.oc-cloth-glow-stop-1 { stop-color: var(--oc-cloth-light); stop-opacity: 0.16; }
+.oc-cloth-glow-stop-2 { stop-color: var(--oc-cloth-light); stop-opacity: 0; }
+.oc-cloth-volume-shade { fill: var(--oc-cloth-shade); opacity: 0.28; }
+.oc-surface-volume-light { fill: #ffffff; opacity: 0.2; }
+.oc-sleeve-volume-light { fill: none; stroke: #ffffff; stroke-width: 5; stroke-linecap: round; opacity: 0.16; }
 .oc-fold,
-.oc-sleeve-fold { fill: none; stroke: var(--oc-cloth-shade); stroke-width: 0.9; stroke-linecap: round; opacity: 0.7; }
+.oc-sleeve-fold { fill: none; stroke: var(--oc-cloth-shade); stroke-width: 0.75; stroke-linecap: round; opacity: 0.48; }
 .oc-seam { fill: none; stroke: var(--oc-seam, var(--oc-cloth-shade)); stroke-width: 0.6; stroke-linecap: round; stroke-dasharray: 1.2 0.8; opacity: 0.85; }
 .oc-hem-shadow { fill: none; stroke: #07080c; stroke-width: 5; stroke-linejoin: round; stroke-opacity: 0.3; }
 .oc-rib-band { fill: var(--oc-cloth); }
@@ -223,6 +312,43 @@
 .oc-figure--build .oc-sleeve-fold { stroke: #0c1220; }
 .oc-reflective { fill: #d9dee6; }
 .oc-reflective-shine { fill: none; stroke: #ffffff; stroke-width: 0.7; opacity: 0.8; }
+
+/* The site foreman of the reuse song. */
+.oc-figure--foreman {
+  --oc-cloth: #ff7a1a;
+  --oc-cloth-light: #ffb067;
+  --oc-cloth-shade: #b84a00;
+  --oc-under: #2774ae;
+  --oc-under-shade: #174a75;
+}
+.oc-figure--foreman .oc-top-stop-0 { stop-color: #ff9a45; }
+.oc-figure--foreman .oc-top-stop-1 { stop-color: #ff7a1a; }
+.oc-figure--foreman .oc-top-stop-2 { stop-color: #d65a00; }
+.oc-figure--foreman .oc-sleeve-stop-0 { stop-color: #3a86c2; }
+.oc-figure--foreman .oc-sleeve-stop-1 { stop-color: #2774ae; }
+.oc-figure--foreman .oc-sleeve-stop-2 { stop-color: #1a5584; }
+.oc-figure--foreman .oc-trouser-stop-0 { stop-color: #3f5f8c; }
+.oc-figure--foreman .oc-trouser-stop-1 { stop-color: #4c6e9e; }
+.oc-figure--foreman .oc-trouser-stop-2 { stop-color: #34507a; }
+.oc-figure--foreman .oc-trouser-stop-3 { stop-color: #263c5e; }
+.oc-figure--foreman .oc-shoe-stop-0 { stop-color: #b0753f; }
+.oc-figure--foreman .oc-shoe-stop-1 { stop-color: #8a5528; }
+.oc-figure--foreman .oc-shoe-stop-2 { stop-color: #5b3415; }
+.oc-figure--foreman .oc-sleeve-fold { stroke: #0e2f4c; }
+.oc-placket { fill: none; stroke: #174a75; stroke-width: 0.8; }
+.oc-shirt-collar { fill: #2f7cb8; stroke: #0e2f4c; stroke-width: 0.7; }
+.oc-vest-pocket { fill: #e8670c; }
+.oc-pencil { fill: #ffd100; stroke: #6b5200; stroke-width: 0.5; }
+.oc-pouch { fill: #8a5528; }
+.oc-pouch-flap { fill: #6e4120; }
+.oc-hammer { fill: none; stroke: #4b5260; stroke-width: 1.6; stroke-linecap: round; }
+.oc-hardhat { fill: #ffd100; }
+.oc-hardhat-ridge { fill: #ffe25c; }
+.oc-hardhat-brim { fill: #e6b800; }
+.oc-hardhat-shine { fill: none; stroke: #fff6c7; stroke-width: 1.6; stroke-linecap: round; }
+.oc-brick { fill: #ffd100; }
+.oc-brick-stud { fill: #ffe25c; }
+.oc-brick-shine { fill: none; stroke: #fff6c7; stroke-width: 1; }
 
 /* The Test Engineer. */
 .oc-figure--test {
@@ -474,6 +600,10 @@
 .oc-brass { fill: #d7a744; }
 .oc-lens { fill: #bfe7f4; opacity: 0.85; }
 .oc-lens-glint { fill: none; stroke: #ffffff; stroke-width: 1.2; stroke-linecap: round; }
+/* The Product Owner's spyglass: dark leather draw tubes between brass. */
+.oc-spyglass { fill: #3d2a1f; }
+.oc-spyglass-ring { fill: none; stroke: #d7a744; stroke-width: 1.2; }
+.oc-spyglass-shine { fill: none; stroke: #b98e62; stroke-width: 0.8; stroke-linecap: round; opacity: 0.8; }
 .oc-palette { fill: #d9a96b; }
 .oc-palette-hole { fill: #24344f; }
 .oc-dab--red { fill: #ef4b5b; }
@@ -508,6 +638,7 @@
 .oc-art--hero .oc-palm-mount { fill: var(--hero-skin-highlight-soft); stroke: none; }
 .oc-art--hero .oc-nail { fill: var(--hero-skin-highlight-soft); stroke: var(--hero-skin-mid); }
 .oc-art--hero .oc-ink--fine,
+.oc-art--hero .oc-hand-outline,
 .oc-art--hero .oc-ink--face,
 .oc-art--hero .oc-palm-crease,
 .oc-art--hero .oc-crease { stroke: var(--hero-face-line, #5a3624); }
@@ -534,3 +665,68 @@
 .oc-bed-quilt-check { fill: none; stroke: #a98cf0; stroke-width: 3; opacity: 0.7; }
 .oc-bed-quilt-fold { fill: #f4f1fb; }
 .oc-z { fill: #eef3fa; font: 900 18px var(--font-display); }
+
+/* The Scrum song's Scrum Master (`coach`), the team coach: a teal track
+   jacket with white and gold stripes, navy track trousers, white sneakers,
+   and a silver whistle on a yellow lanyard. */
+.oc-figure--coach {
+  --oc-cloth: #13808a;
+  --oc-cloth-light: #5cc1c8;
+  --oc-cloth-shade: #0b4e55;
+}
+.oc-figure--coach .oc-top-stop-0 { stop-color: #1b949e; }
+.oc-figure--coach .oc-top-stop-1 { stop-color: #13808a; }
+.oc-figure--coach .oc-top-stop-2 { stop-color: #0e646c; }
+.oc-figure--coach .oc-sleeve-stop-0 { stop-color: #198d97; }
+.oc-figure--coach .oc-sleeve-stop-1 { stop-color: #127a83; }
+.oc-figure--coach .oc-sleeve-stop-2 { stop-color: #0c5a61; }
+.oc-figure--coach .oc-trouser-stop-0 { stop-color: #33415e; }
+.oc-figure--coach .oc-trouser-stop-1 { stop-color: #2a3650; }
+.oc-figure--coach .oc-trouser-stop-2 { stop-color: #222c42; }
+.oc-figure--coach .oc-trouser-stop-3 { stop-color: #182032; }
+.oc-figure--coach .oc-shoe-stop-0 { stop-color: #ffffff; }
+.oc-figure--coach .oc-shoe-stop-1 { stop-color: #e8ebf0; }
+.oc-figure--coach .oc-shoe-stop-2 { stop-color: #b9bfc8; }
+.oc-figure--coach .oc-shoes { --oc-sole: #d9dde4; --oc-laces: #13808a; }
+.oc-figure--coach .oc-collar { fill: #0f6f78; }
+.oc-track-stripe { fill: none; stroke: #f5f7fa; stroke-width: 1.3; stroke-linecap: round; }
+.oc-track-stripe--gold { stroke: #f2c14e; }
+.oc-zip--light { stroke: #e6ebf0; stroke-dasharray: none; stroke-width: 0.8; }
+.oc-whistle-body { fill: #d9dee6; }
+.oc-whistle-ring { fill: none; stroke: #9aa3b0; stroke-width: 0.8; }
+.oc-whistle-hole { fill: #3b4352; }
+.oc-whistle-shine { fill: none; stroke: #ffffff; stroke-width: 0.6; stroke-linecap: round; opacity: 0.9; }
+
+/* The Scrum song's Product Owner (`navigator`), the value navigator: a navy
+   double-breasted sea coat with brass buttons and gold cuff braid over a
+   white Breton shirt with navy stripes, navy trousers, tan deck shoes, and
+   a gold compass pin. */
+.oc-figure--navigator {
+  --oc-cloth: #1f2f5c;
+  --oc-cloth-light: #5a6ea8;
+  --oc-cloth-shade: #111a38;
+  --oc-under: #f6f3ea;
+  --oc-under-shade: #b9b19e;
+  --oc-button: #1f2f5c;
+}
+.oc-figure--navigator .oc-top-stop-0 { stop-color: #2c3f74; }
+.oc-figure--navigator .oc-top-stop-1 { stop-color: #1f2f5c; }
+.oc-figure--navigator .oc-top-stop-2 { stop-color: #152249; }
+.oc-figure--navigator .oc-sleeve-stop-0 { stop-color: #2a3c70; }
+.oc-figure--navigator .oc-sleeve-stop-1 { stop-color: #1d2c57; }
+.oc-figure--navigator .oc-sleeve-stop-2 { stop-color: #131f44; }
+.oc-figure--navigator .oc-trouser-stop-0 { stop-color: #2f3a5a; }
+.oc-figure--navigator .oc-trouser-stop-1 { stop-color: #27314d; }
+.oc-figure--navigator .oc-trouser-stop-2 { stop-color: #1f2841; }
+.oc-figure--navigator .oc-trouser-stop-3 { stop-color: #171e33; }
+.oc-figure--navigator .oc-shoe-stop-0 { stop-color: #b8875a; }
+.oc-figure--navigator .oc-shoe-stop-1 { stop-color: #9a6c42; }
+.oc-figure--navigator .oc-shoe-stop-2 { stop-color: #6e4a2a; }
+.oc-figure--navigator .oc-shoes { --oc-sole: #f1ece2; --oc-laces: #6e4a2a; }
+.oc-breton { fill: none; stroke: #1f2f5c; stroke-width: 1.7; }
+.oc-brass-button { fill: #d7a744; }
+.oc-braid { fill: none; stroke: #e4b84f; stroke-width: 1.3; stroke-linecap: round; }
+.oc-compass-ring { fill: #e4b84f; }
+.oc-compass-face { fill: #1d2c55; }
+.oc-compass-north { fill: #e8553f; }
+.oc-compass-south { fill: #f3f5f8; }

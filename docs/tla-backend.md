@@ -187,8 +187,8 @@ available.
 ## Engine and deployment boundary
 
 The semantic engine is the official `tla2tools.jar`, including SANY, `pcal.trans`,
-and TLC. It runs on Java 11 through CheerpJ, separately from the site's existing
-`java-worker.js` Java-subset-to-JavaScript transpiler. The engine is pinned under
+and TLC. It runs in a dedicated Java 11 CheerpJ session. The Java programming tutorials
+use a separate Java 8 compiler workspace. The engine is pinned under
 `js/vendor/tlaplus/1.8.0-fc6878c603f0/`, with licenses and SHA-256 sums. This pin
 is the official rolling build published on 2026-10-28, source commit
 `56d37a9b7bf529086fd961160e0b8975e224eafc`; it is not labeled the older stable

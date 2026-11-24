@@ -202,6 +202,11 @@
     return {
       sync,
       showProblems,
+      /** Mark a diagram element's source lines; range is { startLine, endLine }. */
+      highlight(range) {
+        if (editor) global.UMLSourceLinks.highlightEditor(editor, global.monaco, range);
+        else global.UMLSourceLinks.highlightTextarea(source, range);
+      },
       destroy() {
         destroyed = true;
         themeObserver.disconnect();

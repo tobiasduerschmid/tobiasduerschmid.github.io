@@ -115,7 +115,7 @@
   // ---- attach() -----------------------------------------------------------
   function usesLanguageChannel(tutorial) {
     var backend = tutorial.config && tutorial.config.backend;
-    return backend === 'prolog' || backend === 'haskell';
+    return backend === 'prolog' || backend === 'haskell' || backend === 'java';
   }
 
   function attach(tutorial) {
@@ -431,6 +431,7 @@
       monaco: window.monaco,
       basename: function (p) { return self.basename(p); },
       normalizePath: function (f) { return self.normalizeBreakpointPath(f); },
+      isReadOnlyFile: function (path) { return self._isTutorialReadOnlyFile(path); },
     };
     if (this.t.editor) {
       this._editorAttach1 = window.SEBookDebuggerEditor.attach(this.t.editor, this.sync, Object.assign({}, helpers, {
@@ -442,9 +443,20 @@
         getActiveFile: function () { return self._activeFileForEditor(self.t.editor2); },
       }));
     }
-    window.SEBookDebuggerEditor.registerHoverProvider(window.monaco, this.sync, { languages: ['python', 'javascript', 'typescript', 'haskell'] });
+    window.SEBookDebuggerEditor.registerHoverProvider(window.monaco, this.sync, { languages: ['python', 'javascript', 'typescript', 'haskell', 'java'] });
     // Repaint when the tutorial's active file changes (Monaco's onDidChangeModel
     // already covers per-editor file swaps; this covers other state changes).
+  };
+
+  // Tutorials may mark files `readonly`; the debugger's session lock must end
+  // on the shown file's own state, not on the state of the file it started in.
+  DebuggerController.prototype._isTutorialReadOnlyFile = function (path) {
+    return typeof this.t._isReadOnlyFile === 'function' && !!this.t._isReadOnlyFile(path);
+  };
+
+  DebuggerController.prototype._restingReadOnly = function (editor, savedReadOnly) {
+    if (typeof this.t._isReadOnlyFile !== 'function') return savedReadOnly;
+    return this._isTutorialReadOnlyFile(this._activeFileForEditor(editor));
   };
 
   // Helper for editor-attach `getActiveFile`: returns the filename whose model
@@ -921,7 +933,7 @@
     for (var i = 0; i < enabled.length; i++) {
       var eb = enabled[i];
       if (eb.type && eb.type !== excType) continue;
-      if (eb.mode === 'uncaught' && caught) continue;
+      if (eb.mode === 'uncaught' && (caught || snap.exception.phase === 'throw')) continue;
       return true;
     }
     return false;
@@ -978,6 +990,10 @@
         if (fn2) self.editBreakpointCondition(fn2, action.line);
         break;
       }
+      case 'inspectJavaValue':
+        if (this.session && this.paused && this.historyIdx === this.liveIdx)
+          this.channel?.java?.debugCommand({type:'inspect',frame:action.frame,path:action.path,sequence:action.sequence});
+        break;
       case 'step': {
         if (action.cmd) self.handleToolbarCmd(action.cmd);
         break;
@@ -1945,7 +1961,7 @@
       if (!snap || snap.event !== 'exception' || !snap.exception) return false;
       if (eb.enabled === false) return false;
       if (eb.type && eb.type !== String(snap.exception.type || '')) return false;
-      if (eb.mode === 'uncaught' && snap.exception.caught) return false;
+      if (eb.mode === 'uncaught' && (snap.exception.caught || snap.exception.phase === 'throw')) return false;
       return true;
     };
   };
@@ -2661,13 +2677,14 @@
       label.className = 'tvm-bp-dialog-label';
       label.setAttribute('for', 'tvm-bp-condition-input');
       var isProlog = self.t.config.backend === 'prolog';
-      label.textContent = isProlog ? 'Prolog comparison' : 'Python expression';
+      var isJava = self.t.config.backend === 'java';
+      label.textContent = isProlog ? 'Prolog comparison' : isJava ? 'Java condition' : 'Python expression';
       var input = document.createElement('input');
       input.id = 'tvm-bp-condition-input';
       input.className = 'tvm-bp-dialog-input';
       input.type = 'text';
       input.value = existing || '';
-      input.placeholder = isProlog ? 'X >= 2' : 'score >= 90 and attempts < 3';
+      input.placeholder = isProlog ? 'X >= 2' : isJava ? 'score >= 90' : 'score >= 90 and attempts < 3';
       input.setAttribute('spellcheck', 'false');
       input.setAttribute('autocomplete', 'off');
       input.setAttribute('autocapitalize', 'off');
@@ -3548,8 +3565,8 @@
     var focusLaunch = this.stepToolbar && this.stepToolbar.contains(document.activeElement);
     // Restore editor + UI state
     if (!this.sync) {
-      if (this.t.editor) this.t.editor.updateOptions({ readOnly: this._editorWasReadOnly });
-      if (this.t.editor2) this.t.editor2.updateOptions({ readOnly: this._editor2WasReadOnly });
+      if (this.t.editor) this.t.editor.updateOptions({ readOnly: this._restingReadOnly(this.t.editor, this._editorWasReadOnly) });
+      if (this.t.editor2) this.t.editor2.updateOptions({ readOnly: this._restingReadOnly(this.t.editor2, this._editor2WasReadOnly) });
     }
     var runBtn = this.t.root.querySelector('.tvm-run-btn');
     if (runBtn) {

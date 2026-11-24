@@ -57,6 +57,14 @@
       : (requested || 'plaintext');
   }
 
+  // Files the tutorial marks `readonly` stay read-only in popouts too; the
+  // main window also ignores edits to them.
+  function readOnlyOptions(readOnly) {
+    return readOnly
+      ? { readOnly: true, readOnlyMessage: { value: 'This file is read-only in this tutorial.' } }
+      : { readOnly: false };
+  }
+
   function pickTheme(dark) {
     if (window.SebookMonacoLangs) return dark ? 'sebook-dark' : 'sebook-light';
     return dark ? 'vs-dark' : 'vs';
@@ -131,6 +139,7 @@
     var editor = null, monacoModel = null;
     var editorBooting = false;
     var pendingBootstrap = null;
+    var appliedReadOnly = false;
     var currentVersion = 0;
     var suppressEditEvents = false;
     var refactoringHost = null;
@@ -184,7 +193,8 @@
         model: monacoModel,
         theme: pickTheme(dark),
         ariaLabel: filename + ', ' + (lang || 'code') + ' editor. Press Control F1 (Command F1 on macOS) for accessibility help. Press Escape to release focus to the surrounding page.',
-      });
+      }, readOnlyOptions(initial.readOnly));
+      appliedReadOnly = !!initial.readOnly;
       editor = monaco.editor.create(els.editor, options);
       window.SebookMonacoFocusExit.attach(editor);
       wireFileEditing();
@@ -243,15 +253,23 @@
       if (!editor) {
         // File and state snapshots can both arrive while Monaco is loading.
         // Keep the newest content but start only one editor bootstrap.
-        pendingBootstrap = { content: snap.content || '', language: snap.language || '' };
+        pendingBootstrap = { content: snap.content || '', language: snap.language || '', readOnly: !!snap.readOnly };
         if (!editorBooting) {
           editorBooting = true;
           bootMonaco();
         }
-      } else if (monacoModel.getValue() !== snap.content) {
-        suppressEditEvents = true;
-        try { monacoModel.setValue(snap.content || ''); }
-        finally { suppressEditEvents = false; }
+      } else {
+        // Only a changed flag touches the option, so a debug session's own
+        // read-only lock is not released by an ordinary content snapshot.
+        if (!!snap.readOnly !== appliedReadOnly) {
+          appliedReadOnly = !!snap.readOnly;
+          editor.updateOptions(readOnlyOptions(appliedReadOnly));
+        }
+        if (monacoModel.getValue() !== snap.content) {
+          suppressEditEvents = true;
+          try { monacoModel.setValue(snap.content || ''); }
+          finally { suppressEditEvents = false; }
+        }
       }
       if (els.orphan) {
         els.orphan.classList.add('is-hidden');
@@ -315,8 +333,9 @@
     var pendingLoadCallbacks = [];
     var paneSnapshotSequence = 0;
     var editor = null;
-    var models = {};      // filename -> { model, version }
+    var models = {};      // filename -> { model, version, readOnly }
     var activeFile = null;
+    var appliedReadOnly = false;
     var suppressEditEvents = false;
     var refactoringHost = null;
     var flushAllEdits = function () {};
@@ -443,11 +462,19 @@
       });
     }
 
+    function applyActiveReadOnly() {
+      var readOnly = !!(activeFile && models[activeFile] && models[activeFile].readOnly);
+      if (readOnly === appliedReadOnly) return;
+      appliedReadOnly = readOnly;
+      editor.updateOptions(readOnlyOptions(readOnly));
+    }
+
     function setActiveFile(fn) {
       if (!models[fn]) return;
       activeFile = fn;
       ensureMonacoLoaded(function () {
         editor.setModel(models[fn].model);
+        applyActiveReadOnly();
         renderTabs();
         // No-op if the debugger isn't attached yet; once it attaches the
         // editor.onDidChangeModel listener will re-paint decorations.
@@ -475,8 +502,9 @@
         var sf = snapFiles[fn];
         var lang = languageForFile(fn, sf.language);
         if (!models[fn]) {
-          models[fn] = { model: monaco.editor.createModel(sf.content || '', lang), version: sf.version || 0 };
+          models[fn] = { model: monaco.editor.createModel(sf.content || '', lang), version: sf.version || 0, readOnly: !!sf.readOnly };
         } else {
+          models[fn].readOnly = !!sf.readOnly;
           if (typeof sf.version === 'number' && sf.version < (models[fn].version || 0)) return;
           if (models[fn].model.getValue() !== (sf.content || '')) {
             suppressEditEvents = true;
@@ -497,6 +525,7 @@
         activeFile = prefer;
         editor.setModel(models[activeFile].model);
       }
+      applyActiveReadOnly();
       renderTabs();
       client.markConnected();
       ensureDebuggerAttached();

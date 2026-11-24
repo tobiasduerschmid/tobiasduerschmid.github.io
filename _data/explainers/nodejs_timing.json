@@ -1,206 +1,233 @@
 {
-  "duration": 545.0564166666667,
-  "voice": "af_heart",
-  "speed": 0.95,
+  "duration": 542.84,
+  "voice": "drama3-female6",
+  "speed": 1,
+  "speech_sha256": "9b73b97e69d2d1b891221d567cefb1c786f59367e6bf98bf5014f4294ff2c85f",
   "scenes": [
     {
       "id": "runtime",
-      "start": 0,
+      "start": 0.0,
       "cues": [
         {
-          "start": 0,
-          "end": 18.297333333333334,
-          "id": "cue-1"
+          "id": "cue-1",
+          "start": 0.0,
+          "end": 16.31,
+          "speech_end": 15.76
         },
         {
-          "start": 18.297333333333334,
-          "end": 40.157333333333334,
-          "id": "cue-2"
+          "id": "cue-2",
+          "start": 16.31,
+          "end": 37.2,
+          "speech_end": 36.65
         }
       ],
-      "end": 40.157333333333334
+      "end": 37.2
     },
     {
       "id": "syntax",
-      "start": 40.157333333333334,
+      "start": 37.2,
       "cues": [
         {
-          "start": 40.157333333333334,
-          "end": 58.948,
-          "id": "cue-1"
+          "id": "cue-1",
+          "start": 37.2,
+          "end": 56.21,
+          "speech_end": 55.66
         },
         {
-          "start": 58.948,
-          "end": 76.62329166666666,
-          "id": "cue-2"
+          "id": "cue-2",
+          "start": 56.21,
+          "end": 73.62,
+          "speech_end": 73.07
         },
         {
-          "start": 76.62329166666666,
-          "end": 91.342625,
-          "id": "cue-3"
+          "id": "cue-3",
+          "start": 73.62,
+          "end": 88.53,
+          "speech_end": 87.98
         },
         {
-          "start": 91.342625,
-          "end": 112.18329166666666,
-          "id": "cue-4"
+          "id": "cue-4",
+          "start": 88.53,
+          "end": 109.9,
+          "speech_end": 109.35
         }
       ],
-      "end": 112.18329166666666
+      "end": 109.9
     },
     {
       "id": "blocking",
-      "start": 112.18329166666666,
+      "start": 109.9,
       "cues": [
         {
-          "start": 112.18329166666666,
-          "end": 131.92995833333333,
-          "id": "cue-1"
+          "id": "cue-1",
+          "start": 109.9,
+          "end": 131.35,
+          "speech_end": 130.8
         },
         {
-          "start": 131.92995833333333,
-          "end": 151.602625,
-          "id": "cue-2"
+          "id": "cue-2",
+          "start": 131.35,
+          "end": 150.58,
+          "speech_end": 150.03
         },
         {
-          "start": 151.602625,
-          "end": 169.514625,
-          "id": "cue-3"
+          "id": "cue-3",
+          "start": 150.58,
+          "end": 168.33,
+          "speech_end": 167.78
         }
       ],
-      "end": 169.514625
+      "end": 168.33
     },
     {
       "id": "nonblocking",
-      "start": 169.514625,
+      "start": 168.33,
       "cues": [
         {
-          "start": 169.514625,
-          "end": 189.150625,
-          "id": "cue-1"
+          "id": "cue-1",
+          "start": 168.33,
+          "end": 188.3,
+          "speech_end": 187.75
         },
         {
-          "start": 189.150625,
-          "end": 208.420625,
-          "id": "cue-2"
+          "id": "cue-2",
+          "start": 188.3,
+          "end": 206.49,
+          "speech_end": 205.94
         },
         {
-          "start": 208.420625,
-          "end": 227.10325,
-          "id": "cue-3"
+          "id": "cue-3",
+          "start": 206.49,
+          "end": 225.08,
+          "speech_end": 224.53
         },
         {
-          "start": 227.10325,
-          "end": 249.113875,
-          "id": "cue-4"
+          "id": "cue-4",
+          "start": 225.08,
+          "end": 246.95,
+          "speech_end": 246.4
         }
       ],
-      "end": 249.113875
+      "end": 246.95
     },
     {
       "id": "callbacks",
-      "start": 249.113875,
+      "start": 246.95,
       "cues": [
         {
-          "start": 249.113875,
-          "end": 272.5532083333333,
-          "id": "cue-1"
+          "id": "cue-1",
+          "start": 246.95,
+          "end": 271.28,
+          "speech_end": 270.73
         },
         {
-          "start": 272.5532083333333,
-          "end": 290.563875,
-          "id": "cue-2"
+          "id": "cue-2",
+          "start": 271.28,
+          "end": 290.41,
+          "speech_end": 289.86
         },
         {
-          "start": 290.563875,
-          "end": 311.065875,
-          "id": "cue-3"
+          "id": "cue-3",
+          "start": 290.41,
+          "end": 309.58,
+          "speech_end": 309.03
         },
         {
-          "start": 311.065875,
-          "end": 332.9485,
-          "id": "cue-4"
+          "id": "cue-4",
+          "start": 309.58,
+          "end": 331.05,
+          "speech_end": 330.5
         }
       ],
-      "end": 332.9485
+      "end": 331.05
     },
     {
       "id": "await",
-      "start": 332.9485,
+      "start": 331.05,
       "cues": [
         {
-          "start": 332.9485,
-          "end": 355.4825,
-          "id": "cue-1"
+          "id": "cue-1",
+          "start": 331.05,
+          "end": 353.02,
+          "speech_end": 352.47
         },
         {
-          "start": 355.4825,
-          "end": 373.3591666666667,
-          "id": "cue-2"
+          "id": "cue-2",
+          "start": 353.02,
+          "end": 370.79,
+          "speech_end": 370.24
         },
         {
-          "start": 373.3591666666667,
-          "end": 395.0485,
-          "id": "cue-3"
+          "id": "cue-3",
+          "start": 370.79,
+          "end": 392.78,
+          "speech_end": 392.23
         }
       ],
-      "end": 395.0485
+      "end": 392.78
     },
     {
       "id": "server",
-      "start": 395.0485,
+      "start": 392.78,
       "cues": [
         {
-          "start": 395.0485,
-          "end": 414.2845,
-          "id": "cue-1"
+          "id": "cue-1",
+          "start": 392.78,
+          "end": 411.85,
+          "speech_end": 411.3
         },
         {
-          "start": 414.2845,
-          "end": 433.32979166666667,
-          "id": "cue-2"
+          "id": "cue-2",
+          "start": 411.85,
+          "end": 429.76,
+          "speech_end": 429.21
         },
         {
-          "start": 433.32979166666667,
-          "end": 450.529125,
-          "id": "cue-3"
+          "id": "cue-3",
+          "start": 429.76,
+          "end": 446.47,
+          "speech_end": 445.92
         }
       ],
-      "end": 450.529125
+      "end": 446.47
     },
     {
       "id": "npm",
-      "start": 450.529125,
+      "start": 446.47,
       "cues": [
         {
-          "start": 450.529125,
-          "end": 475.333125,
-          "id": "cue-1"
+          "id": "cue-1",
+          "start": 446.47,
+          "end": 470.26,
+          "speech_end": 469.71
         },
         {
-          "start": 475.333125,
-          "end": 498.045125,
-          "id": "cue-2"
+          "id": "cue-2",
+          "start": 470.26,
+          "end": 492.99,
+          "speech_end": 492.44
         }
       ],
-      "end": 498.045125
+      "end": 492.99
     },
     {
       "id": "predict",
-      "start": 498.045125,
+      "start": 492.99,
       "cues": [
         {
-          "start": 498.045125,
-          "end": 524.8757916666667,
-          "id": "cue-1"
+          "id": "cue-1",
+          "start": 492.99,
+          "end": 521.69,
+          "speech_end": 516.69
         },
         {
-          "start": 524.8757916666667,
-          "end": 545.0564166666667,
-          "id": "cue-2"
+          "id": "cue-2",
+          "start": 521.69,
+          "end": 542.84,
+          "speech_end": 542.29
         }
       ],
-      "end": 545.0564166666667
+      "end": 542.84
     }
-  ],
-  "speech_sha256": "8c5068b151e791a8947d95d22ccaa902d829a98fb142d4db5f21c4a43af8e3a0"
+  ]
 }

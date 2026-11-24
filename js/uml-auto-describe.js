@@ -53,6 +53,189 @@
     return text;
   }
 
+  // Manual positions (`@layout` blocks, inline `@pos(x, y)`) say where
+  // elements are drawn, not what the model contains.
+  function stripLayoutAnnotations(text) {
+    return String(text || '')
+      .replace(/^\s*@layout\b[^\n]*\n[\s\S]*?^\s*@endlayout[^\n]*$/gim, '')
+      .replace(/\s+@pos\([^)]*\)/g, '');
+  }
+
+  // ---------- stereotypes ----------
+  //
+  // `<<A, B>>` and `<<A>> <<B>>` both apply stereotypes A and B; the
+  // renderers show them as one «A, B» pair, spelled as written.
+
+  // A list with a colon is one keyword whose text has commas, such as a C4
+  // type line (`<<Container: TypeScript, React>>`); the renderer draws it as
+  // written either way.
+  function addStereotypeNames(names, list) {
+    var text = String(list || '');
+    (text.indexOf(':') !== -1 ? [text] : text.split(',')).forEach(function (part) {
+      var name = part.trim();
+      var lower = name.toLowerCase();
+      if (name && !names.some(function (known) { return known.toLowerCase() === lower; })) names.push(name);
+    });
+  }
+
+  // The stereotypes outside quoted text, and the text without them.
+  function extractStereotypes(text) {
+    var names = [];
+    var stripped = String(text || '').replace(/("(?:[^"\\]|\\.)*")|\s*<<([^<>]*)>>/g, function (match, quoted, list) {
+      if (quoted) return quoted;
+      addStereotypeNames(names, list);
+      return '';
+    });
+    return { names: names, stripped: stripped };
+  }
+
+  function indefiniteArticle(word) {
+    var lower = String(word || '').toLowerCase();
+    if (/^u[^aeiou][aeiouy]/.test(lower)) return 'a'; // user, unit, utility
+    return /^[aeiou]/.test(lower) ? 'an' : 'a';
+  }
+
+  // ", a service" or ", with stereotypes Service and External".
+  function stereotypePhrase(names) {
+    if (!names || !names.length) return '';
+    if (names.length === 1) return ', ' + indefiniteArticle(names[0]) + ' ' + names[0];
+    var list = names.length === 2
+      ? names[0] + ' and ' + names[1]
+      : names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
+    return ', with stereotypes ' + list;
+  }
+
+  // Free text such as a connector label shows `<<x>>` as the renderers
+  // draw it: adjacent groups merge into one «…» pair.
+  function formatStereotypeLabels(text) {
+    return String(text || '').replace(/<<[^<>]*>>(?:\s*<<[^<>]*>>)*/g, function (run) {
+      var names = [];
+      run.replace(/<<([^<>]*)>>/g, function (_, list) { addStereotypeNames(names, list); return ''; });
+      return names.length ? '\u00AB' + names.join(', ') + '\u00BB' : '';
+    });
+  }
+
+  // A trailing `#color [texture]` or texture, optionally before a block's
+  // `{`, as the renderers strip it (UMLShared.parseHighlightColor).
+  var STYLE_COLOR_SUFFIX = /\s(#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3}|[A-Za-z][A-Za-z0-9]*))(?:\s+(?:hatched|crosshatch|dotted|grid|striped))?(\s*\{?\s*)$/i;
+  var STYLE_TEXTURE_SUFFIX = /\s(?:hatched|crosshatch|dotted|grid|striped)(\s*\{?\s*)$/i;
+
+  function stripStyleSuffix(text) {
+    var m = text.match(STYLE_COLOR_SUFFIX);
+    var tail = m ? m[2] : null;
+    if (!m) {
+      m = text.match(STYLE_TEXTURE_SUFFIX);
+      tail = m ? m[1] : null;
+    }
+    if (!m) return { text: text, styled: false };
+    var head = text.slice(0, text.length - m[0].length);
+    return { text: (tail.indexOf('{') !== -1 ? head + ' {' : head).trim(), styled: true };
+  }
+
+  // ---------- UML packages ----------
+
+  // Split the text after a block's `{` at top-level `;`, stopping at the
+  // brace that closes the block (as the renderers read one-line blocks).
+  function splitInlineBlockBody(text) {
+    var statements = [], start = 0, depth = 0, quoted = false;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text.charAt(i);
+      if (ch === '"' && text.charAt(i - 1) !== '\\') quoted = !quoted;
+      if (quoted) continue;
+      if (ch === '{') depth++;
+      else if (ch === '}' && depth > 0) depth--;
+      else if (ch === '}' || (ch === ';' && depth === 0)) {
+        statements.push(text.slice(start, i).trim());
+        if (ch === '}') return statements.filter(Boolean).concat(['}'], text.slice(i + 1).trim() ? [text.slice(i + 1).trim()] : []);
+        start = i + 1;
+      }
+    }
+    statements.push(text.slice(start).trim());
+    return statements.filter(Boolean);
+  }
+
+  // `package Name {` or `package "Display Name" as Id <<Stereotype>> {`,
+  // possibly with the block's statements on the same line.
+  function parsePackageLine(line) {
+    var m = line.match(/^package\s+(?:"((?:[^"\\]|\\.)*)"|([^\s{"]+))(?:\s+as\s+([^\s{"]+))?([^{]*)\{(.*)$/i);
+    if (!m) return null;
+    var label = m[1] !== undefined ? m[1].replace(/\\(["\\])/g, '$1') : m[2];
+    return { id: m[3] || label, label: label, stereotypes: extractStereotypes(m[4]).names, inlineLines: splitInlineBlockBody(m[5]) };
+  }
+
+  function braceBalance(line) {
+    var balance = 0, quoted = false;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line.charAt(i);
+      if (ch === '"' && line.charAt(i - 1) !== '\\') quoted = !quoted;
+      else if (!quoted && ch === '{') balance++;
+      else if (!quoted && ch === '}') balance--;
+    }
+    return balance;
+  }
+
+  // Read `package` blocks out of a source. Returns each package (id, label,
+  // stereotypes, parent, and the elements declared directly inside it; the
+  // first package an element is declared in wins) and the source without
+  // its package lines, so other readers see the contents as top-level
+  // statements. `declaredId(line)` names the element a line declares.
+  function readPackages(source, declaredId) {
+    var packages = [], byId = Object.create(null), memberOf = Object.create(null);
+    var stack = [], out = [];
+    var lines = String(source || '').split('\n');
+    function innermostPackage() {
+      for (var s = stack.length - 1; s >= 0; s--) if (stack[s]) return stack[s];
+      return null;
+    }
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      var opener = parsePackageLine(line);
+      if (opener) {
+        var pkg = byId[opener.id];
+        if (!pkg) {
+          var parent = innermostPackage();
+          pkg = { id: opener.id, label: opener.label, stereotypes: opener.stereotypes, parent: parent ? parent.id : null, members: [] };
+          byId[pkg.id] = pkg;
+          packages.push(pkg);
+        }
+        stack.push(pkg);
+        Array.prototype.splice.apply(lines, [i + 1, 0].concat(opener.inlineLines));
+        continue;
+      }
+      if (line === '}' && stack.length && stack.pop()) continue;
+      var top = stack.length ? stack[stack.length - 1] : null;
+      var id = top ? declaredId(line) : null;
+      if (id && !memberOf[id]) {
+        memberOf[id] = top.id;
+        top.members.push(id);
+      }
+      if (line !== '}') {
+        var balance = braceBalance(line);
+        for (; balance > 0; balance--) stack.push(null);
+        // A body may close at the end of its last line (`+x: int }`).
+        for (; balance < 0 && stack.length && !stack[stack.length - 1]; balance++) stack.pop();
+      }
+      out.push(lines[i]);
+    }
+    return { source: out.join('\n'), packages: packages, byId: byId };
+  }
+
+  function packageTitle(pkg, byId) {
+    var parent = pkg.parent && byId[pkg.parent];
+    return pkg.label + stereotypePhrase(pkg.stereotypes) + (parent ? ' (in package ' + parent.label + ')' : '');
+  }
+
+  // Packages with members, as "Name: A, B" (members named by `labelOf`).
+  function packageItems(read, labelOf) {
+    return read.packages.filter(function (pkg) { return pkg.members.length; }).map(function (pkg) {
+      return packageTitle(pkg, read.byId) + ': ' + pkg.members.map(labelOf).join(', ');
+    });
+  }
+
+  function packageSentences(read, labelOf) {
+    return packageItems(read, labelOf).map(function (item) { return 'In package ' + item + '.'; });
+  }
+
   function fallbackCaption(type) {
     var map = {
       'class': 'UML class diagram',
@@ -124,22 +307,83 @@
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
-  function describeClassDiagram(spec) {
-    var bodyStripped = spec.replace(/\{[^{}]*\}/gm, ''); // drop class bodies
+  var CLASS_DECLARATION = /^(?:abstract\s+class|class|interface|enum)\s+(?:"((?:[^"\\]|\\.)*)"|([^\s{"<]+))(?:\s+as\s+([^\s{"<]+))?/;
 
-    var classes = [], abstracts = [], interfaces = [];
+  // `package Name` without braces is a package drawn without its members: a
+  // node of the class diagram, like a class. (With braces it is the frame
+  // around its members, which readPackages reads.)
+  var PACKAGE_NODE = /^package\s+(?:"((?:[^"\\]|\\.)*)"|([^\s{"<]+))(?:\s+as\s+([^\s{"<]+))?\s*$/;
+  // A name in a relationship, which may be qualified: services::loyalty.
+  var CLASS_REL_NAME = '\\w+(?:::\\w+)*';
+
+  function packageNodeOf(line) {
+    if (line.indexOf('{') !== -1) return null;
+    var stereotypes = extractStereotypes(line);
+    var head = stereotypes.stripped.trim();
+    var style = stripStyleSuffix(head);
+    if (style.styled && /^package\s+\S/.test(style.text)) head = style.text;
+    var m = head.match(PACKAGE_NODE);
+    if (!m) return null;
+    var label = m[1] !== undefined ? m[1].replace(/\\(["\\])/g, '$1') : m[2];
+    return { id: m[3] || label, label: label, stereotypes: stereotypes.names };
+  }
+
+  function classDeclarationId(line) {
+    var m = line.match(CLASS_DECLARATION);
+    if (m) return m[3] || m[1] || m[2];
+    var node = packageNodeOf(line);
+    return node ? node.id : null;
+  }
+
+  // "UML package diagram" when packages are all a class diagram draws.
+  function classDiagramTitle(packageCount, classifierCount) {
+    return packageCount && !classifierCount ? 'UML package diagram' : 'UML class diagram';
+  }
+
+  var CLASS_START = /^(?:abstract\s+class|class|interface|enum)\s+\S/;
+
+  // A declaration line without its stereotypes and `#color [texture]`
+  // suffix, which may come before or after them, as the renderer reads it.
+  function cleanClassDeclaration(line) {
+    var brace = line.indexOf('{');
+    var head = brace === -1 ? line : line.slice(0, brace).trim();
+    var body = brace === -1 ? '' : ' ' + line.slice(brace);
+    // `class dotted` names a class; it is not a texture.
+    var style = stripStyleSuffix(head);
+    if (style.styled && CLASS_START.test(style.text)) head = style.text;
+    else style.styled = false;
+    var stereotypes = extractStereotypes(head);
+    head = stereotypes.stripped.trim();
+    if (!style.styled) {
+      var afterStereotypes = stripStyleSuffix(head);
+      if (CLASS_START.test(afterStereotypes.text)) head = afterStereotypes.text;
+    }
+    return { line: head + body, stereotypes: stereotypes.names };
+  }
+
+  function describeClassDiagram(spec) {
+    var read = readPackages(stripLayoutAnnotations(spec), classDeclarationId);
+    var bodyStripped = read.source.replace(/\{[^{}]*\}/gm, ''); // drop class bodies
+
+    var classes = [], abstracts = [], interfaces = [], packageNodes = [];
     var relationships = [];
+    var packageLabels = Object.create(null); // id -> the name a package node shows
+    function shownName(id) { return packageLabels[id] || String(id); }
 
     var arrowAlt = CLASS_ARROWS.map(escapeRegex).join('|');
     var relRe = new RegExp(
-      '^(\\w+)\\s*(?:["\']([^"\']*)["\']\\s+)?(' + arrowAlt + ')\\s+(?:["\']([^"\']*)["\']\\s+)?(\\w+)\\s*(?::\\s*(.+))?$'
+      '^(' + CLASS_REL_NAME + ')\\s*(?:["\']([^"\']*)["\']\\s+)?(' + arrowAlt + ')\\s+(?:["\']([^"\']*)["\']\\s+)?(' + CLASS_REL_NAME + ')\\s*(?::\\s*(.+))?$'
     );
 
     bodyStripped.split('\n').forEach(function (raw) {
       var line = raw.trim();
       if (!line) return;
       var m;
-      if ((m = line.match(/^abstract\s+class\s+(\w+)/))) {
+      var node = packageNodeOf(line);
+      if (node) {
+        if (!packageLabels[node.id]) packageNodes.push(node.label);
+        packageLabels[node.id] = node.label;
+      } else if ((m = line.match(/^abstract\s+class\s+(\w+)/))) {
         if (abstracts.indexOf(m[1]) < 0) abstracts.push(m[1]);
       } else if ((m = line.match(/^class\s+(\w+)/))) {
         if (classes.indexOf(m[1]) < 0) classes.push(m[1]);
@@ -153,7 +397,7 @@
       }
     });
 
-    if (!classes.length && !abstracts.length && !interfaces.length && !relationships.length) {
+    if (!classes.length && !abstracts.length && !interfaces.length && !packageNodes.length && !relationships.length) {
       return 'UML class diagram.';
     }
 
@@ -161,9 +405,16 @@
     if (classes.length) items.push(pluralize(classes.length, 'class', 'classes') + ' (' + classes.join(', ') + ')');
     if (abstracts.length) items.push(pluralize(abstracts.length, 'abstract class', 'abstract classes') + ' (' + abstracts.join(', ') + ')');
     if (interfaces.length) items.push(pluralize(interfaces.length, 'interface', 'interfaces') + ' (' + interfaces.join(', ') + ')');
-    var head = items.length ? 'UML class diagram with ' + items.join(', ') + '.' : 'UML class diagram.';
+    if (packageNodes.length) items.push(pluralize(packageNodes.length, 'package', 'packages') + ' (' + packageNodes.join(', ') + ')');
+    var title = classDiagramTitle(packageNodes.length, classes.length + abstracts.length + interfaces.length);
+    var head = items.length ? title + ' with ' + items.join(', ') + '.' : title + '.';
+    var packageLines = packageSentences(read, shownName);
+    if (packageLines.length) head += ' ' + packageLines.join(' ');
 
-    var rels = relationships.map(describeClassRel).filter(Boolean);
+    var rels = relationships.map(function (rel) {
+      return describeClassRel({ from: shownName(rel.from), fromMult: rel.fromMult, arrow: rel.arrow,
+        toMult: rel.toMult, to: shownName(rel.to), label: rel.label });
+    }).filter(Boolean);
     return rels.length ? head + ' ' + rels.join('. ') + '.' : head;
   }
 
@@ -433,105 +684,155 @@
 
   // ---------- component diagrams ----------
 
-  // The bundle's declaration grammar: `component Name`, `"Display Name"` or
-  // `[Display Name]`, then an optional `as alias` and `<<keyword>>`, then an
-  // optional port block (`{` alone, or `{ … }` on the same line). Ports and
-  // connectors refer to a component by its alias; the box shows the display name.
-  // A keyword needs a space before `<<`: the bundle reads a bare name up to the
-  // next space, so `component Foo<<kw>>` draws a box named `Foo<<kw>>` with no
-  // keyword line, and the description names it the same way.
-  var COMPONENT_DECLARATION = /^component\s+(?:\[([^\]]+)\]|"([^"]+)"|([^\s{]+))(?:\s+as\s+([^\s{]+))?(?:\s+<<([^<>]*)>>)?\s*(\{.*)?$/;
-  // A port of an inline block (`{ provide "A" as a require b }`): several per
-  // line, found anywhere in the block, as the bundle reads them.
-  var COMPONENT_INLINE_PORT = /(portin|portout|provide|require)\s+(?:"([^"]+)"|(\w+))(?:\s+as\s+(\w+))?/g;
-  // A port line of a multi-line block: the whole line is one port, as the
-  // bundle's parsePortLine reads it, so other text that happens to contain
-  // `provide` or `require` is not a port. `port` declares a port with no
-  // direction.
-  var COMPONENT_PORT_LINE = /^(portin|portout|port|provide|require)\s+(?:"([^"]+)"|(\S+?))(?:\s+as\s+(\S+))?$/;
-  // The bundle's stripComponentDashedStyle: a trailing `dashed`, in any case, is
-  // the port's line style, unless it is the port's whole name (`port dashed`).
+  // Component diagrams, read the way the renderer reads them: declarations
+  // with display names, stereotypes, and style suffixes; ports in block or
+  // one-line bodies; connectors between components, ports (`alias`,
+  // `Comp.port`), or bracketed names; and UML packages.
+  var COMPONENT_START = /^(?:component\s+\S|\[[^\]]+\])/i;
+  var PORT_STATEMENT = /^(portin|portout|port|provide|require)\s+(?:"([^"]+)"|([^\s"]+?))(?:\s+as\s+(\S+?))?(?:\s+dashed)?$/;
+  var INLINE_PORT = /(portin|portout|port|provide|require)\s+(?:"([^"]+)"|(\w+))(?:\s+as\s+(\w+))?/g;
+  var COMPONENT_CONNECTION = /^(?:\[([^\]]+)\]|(\S+))\s+(-->|\.\.>|--)\s+(?:\[([^\]]+)\]|(\S+))(?:\s+(dashed))?\s*(?::\s*(.*))?$/;
+  var PORT_GROUPS = { portin: 'in', portout: 'out', port: 'ports', provide: 'provides', require: 'requires' };
+  // The renderer's stripComponentDashedStyle: a trailing `dashed`, in any case,
+  // is the port's line style, unless it is the port's whole name (`port dashed`).
   var TRAILING_DASHED = /\s+dashed\s*$/i;
   var PORT_KEYWORD_ONLY = /^(?:portin|portout|port|provide|require)$/i;
-  var COMPONENT_PORT_KEYS = { portin: 'in', portout: 'out', port: 'ports', provide: 'provides', require: 'requires' };
 
-  function matchPortLine(line) {
+  function matchPortStatement(line) {
     var style = line.match(TRAILING_DASHED);
     var head = style ? line.slice(0, style.index) : line;
-    return (style && !PORT_KEYWORD_ONLY.test(head.trim()) ? head : line).match(COMPONENT_PORT_LINE);
+    return (style && !PORT_KEYWORD_ONLY.test(head.trim()) ? head : line).match(PORT_STATEMENT);
   }
 
-  function parseComponentSpec(spec) {
-    var components = [];
-    var byId = Object.create(null);
-    var portOwner = Object.create(null);
-    var links = [];
-    var openBlockOwner = null;
-
-    // A component exists from its first mention, a declaration or, as in the
-    // bundle, a connector end that names no declared component or port.
-    function component(id) {
-      if (!byId[id]) {
-        byId[id] = { id: id, name: id, keyword: null, in: [], out: [], ports: [], provides: [], requires: [] };
-        components.push(byId[id]);
+  // A component declaration as the renderer reads it: a final `dashed`, a
+  // `#color [texture]` before or after the stereotypes, then the name, its
+  // optional alias, and the `{` of a port block. Returns null otherwise.
+  function parseComponentDeclaration(line) {
+    var text = line;
+    var dashed = text.match(/\s+dashed(\s*\{?\s*)$/i);
+    if (dashed) {
+      var beforeDashed = text.slice(0, text.length - dashed[0].length);
+      // `component dashed` is a component named dashed.
+      if (!/^(?:component|portin|portout|port|provide|require)$/i.test(beforeDashed.trim())) {
+        text = (dashed[1].indexOf('{') !== -1 ? beforeDashed + ' {' : beforeDashed).trim();
       }
-      return byId[id];
+    }
+    var style = stripStyleSuffix(text);
+    if (!COMPONENT_START.test(style.text)) return null;
+    text = style.text;
+    var brace = text.indexOf('{');
+    var stereotypes = extractStereotypes(brace === -1 ? text : text.slice(0, brace));
+    if (stereotypes.names.length) {
+      text = (stereotypes.stripped.trim() + (brace === -1 ? '' : ' ' + text.slice(brace))).trim();
+      var beforeStereotypes = style.styled ? null : stripStyleSuffix(text);
+      if (beforeStereotypes && COMPONENT_START.test(beforeStereotypes.text)) text = beforeStereotypes.text;
+    }
+    var m = text.match(/^component\s+(?:\[([^\]]+)\]|"([^"]+)"|(\S+))(?:\s+as\s+(\S+))?\s*(\{)?\s*$/) ||
+      text.match(/^component\s+(?:\[([^\]]+)\]|"([^"]+)"|(\S+))(?:\s+as\s+(\S+))?\s*(\{)/);
+    if (m) {
+      var label = m[1] || m[2] || m[3];
+      var id = (m[4] || label).replace(/^\[(.*)\]$/, '$1');
+      var open = line.indexOf('{');
+      return { id: id, label: label, stereotypes: stereotypes.names, body: open === -1 ? null : line.slice(open + 1) };
+    }
+    // `[Name]` declares a component only as a whole line: `[A] --> [B]`
+    // connects two.
+    var bracket = text.match(/^\[([^\]]+)\](?:\s+as\s+(\S+))?\s*$/);
+    if (!bracket) return null;
+    return { id: bracket[2] || bracket[1].trim(), label: bracket[1].trim(), stereotypes: stereotypes.names, body: null };
+  }
+
+  function componentDeclarationId(line) {
+    var declaration = parseComponentDeclaration(line);
+    return declaration ? declaration.id : null;
+  }
+
+  function parseComponentDescription(spec) {
+    var read = readPackages(stripLayoutAnnotations(stripDecorations(spec)), componentDeclarationId);
+    var components = [], byId = Object.create(null);
+    var ports = Object.create(null); // component id -> port names by kind, in first-port order
+    var portOwner = Object.create(null), standalonePorts = Object.create(null);
+    var connections = [];
+    var current = null;
+
+    function addPort(owner, keyword, name, alias) {
+      if (!ports[owner]) ports[owner] = { in: [], out: [], ports: [], provides: [], requires: [] };
+      ports[owner][PORT_GROUPS[keyword]].push(name);
+      portOwner[alias || name] = owner;
     }
 
-    function declare(match) {
-      var name = match[1] || match[2] || match[3];
-      var declared = component(match[4] || name);
-      // The last display name given wins; `component id` keeps an earlier one.
-      if (name !== declared.id) declared.name = name;
-      if (match[5] && match[5].trim()) declared.keyword = match[5].trim();
-      return declared;
+    function labelOf(token) {
+      var id = String(token || '');
+      if (portOwner[id]) id = portOwner[id];
+      else if (standalonePorts[id] !== undefined) return standalonePorts[id];
+      else if (!byId[id] && id.indexOf('.') > 0 && byId[id.slice(0, id.indexOf('.'))]) id = id.slice(0, id.indexOf('.'));
+      return byId[id] ? byId[id].label : id;
     }
 
-    function addPort(owner, port) {
-      var name = port[2] || port[3];
-      owner[COMPONENT_PORT_KEYS[port[1]]].push(name);
-      portOwner[port[4] || name] = owner.id;
-    }
-
-    function addInlinePorts(owner, text) {
-      var port;
-      COMPONENT_INLINE_PORT.lastIndex = 0;
-      while ((port = COMPONENT_INLINE_PORT.exec(text))) addPort(owner, port);
-    }
-
-    spec.split('\n').forEach(function (raw) {
+    read.source.split('\n').forEach(function (raw) {
       var line = raw.trim();
       if (!line) return;
       var m;
-      if ((m = line.match(COMPONENT_DECLARATION))) {
-        var declared = declare(m);
-        var block = m[6] || '';
-        var inlineEnd = block.indexOf('}');
-        if (inlineEnd >= 0) addInlinePorts(declared, block.slice(1, inlineEnd));
-        openBlockOwner = block && inlineEnd < 0 ? declared : null;
-      } else if (line === '}') {
-        openBlockOwner = null;
-      } else if (openBlockOwner) {
-        if ((m = matchPortLine(line))) addPort(openBlockOwner, m);
-      } else if ((m = line.match(/^(\w+)\s+(-->|--|\.\.>)\s+(\w+)\s*(?::\s*(.+))?$/))) {
-        links.push({ from: component(portOwner[m[1]] || m[1]).id, arrow: m[2], to: component(portOwner[m[3]] || m[3]).id, label: m[4] && m[4].trim() });
+      if (current) {
+        if (line === '}') current = null;
+        else if ((m = matchPortStatement(line))) addPort(current, m[1], m[2] || m[3], m[4]);
+        return;
+      }
+      var declaration = parseComponentDeclaration(line);
+      if (declaration) {
+        var id = declaration.id;
+        if (!byId[id]) {
+          byId[id] = { id: id, label: declaration.label, stereotypes: declaration.stereotypes };
+          components.push(byId[id]);
+        } else if (declaration.stereotypes.length) {
+          byId[id].stereotypes = declaration.stereotypes;
+        }
+        var body = declaration.body;
+        if (body !== null && body.indexOf('}') !== -1) {
+          while ((m = INLINE_PORT.exec(body.slice(0, body.indexOf('}'))))) addPort(id, m[1], m[2] || m[3], m[4]);
+          INLINE_PORT.lastIndex = 0;
+        } else if (body !== null) {
+          current = id;
+        }
+        return;
+      }
+      if ((m = matchPortStatement(line))) {
+        standalonePorts[m[4] || m[2] || m[3]] = m[2] || m[3];
+        return;
+      }
+      if ((m = line.match(COMPONENT_CONNECTION))) {
+        connections.push({
+          from: m[1] || m[2], arrow: m[3], to: m[4] || m[5], dashed: !!m[6],
+          label: m[7] && formatStereotypeLabels(m[7].trim())
+        });
       }
     });
 
-    function displayName(id) { return byId[id] ? byId[id].name : id; }
-    var connections = links.map(function (link) {
-      return { from: displayName(link.from), arrow: link.arrow, to: displayName(link.to), label: link.label };
+    // As in the renderer, a connector end that names no component or port
+    // draws a component of its own.
+    connections.forEach(function (c) {
+      [c.from, c.to].forEach(function (end) {
+        var owner = end.indexOf('.') > 0 ? end.slice(0, end.indexOf('.')) : null;
+        if (byId[end] || portOwner[end] || standalonePorts[end] !== undefined || (owner && byId[owner])) return;
+        byId[end] = { id: end, label: end, stereotypes: [] };
+        components.push(byId[end]);
+      });
     });
-    return { components: components, connections: connections };
+    connections.forEach(function (c) { c.from = labelOf(c.from); c.to = labelOf(c.to); });
+    return {
+      components: components, ports: ports, connections: connections,
+      packages: read, labelOf: function (id) { return byId[id] ? byId[id].label : id; }
+    };
   }
 
-  function componentPortPhrases(component) {
+  function componentPortPhrases(groups) {
     var parts = [];
-    if (component.provides.length) parts.push('provides ' + component.provides.join(', '));
-    if (component.requires.length) parts.push('requires ' + component.requires.join(', '));
-    if (component.in.length)       parts.push('incoming ports ' + component.in.join(', '));
-    if (component.out.length)      parts.push('outgoing ports ' + component.out.join(', '));
-    if (component.ports.length)    parts.push('ports ' + component.ports.join(', '));
+    if (!groups) return parts;
+    if (groups.provides.length) parts.push('provides ' + groups.provides.join(', '));
+    if (groups.requires.length) parts.push('requires ' + groups.requires.join(', '));
+    if (groups.in.length)       parts.push('incoming ports ' + groups.in.join(', '));
+    if (groups.out.length)      parts.push('outgoing ports ' + groups.out.join(', '));
+    if (groups.ports.length)    parts.push('ports ' + groups.ports.join(', '));
     return parts;
   }
 
@@ -543,30 +844,31 @@
       default:    verb = 'is associated with';
     }
     var label = c.label ? ' labeled "' + c.label + '"' : '';
-    return c.from + ' ' + verb + ' ' + c.to + label;
+    return c.from + ' ' + verb + ' ' + c.to + (c.dashed ? ' (dashed)' : '') + label;
   }
 
   function describeComponentDiagram(spec) {
-    var model = parseComponentSpec(spec);
-    var components = model.components.map(function (component) { return component.name; });
-    var connections = model.connections;
+    var model = parseComponentDescription(spec);
+    var components = model.components;
+    if (!components.length && !model.connections.length) return 'UML component diagram.';
 
-    if (!components.length && !connections.length) return 'UML component diagram.';
-
+    var stereotyped = components.some(function (c) { return c.stereotypes.length; });
+    var names = components.map(function (c) { return c.label + stereotypePhrase(c.stereotypes); });
     var head = components.length
-      ? 'UML component diagram with ' + pluralize(components.length, 'component', 'components') + ' (' + components.join(', ') + ')'
+      ? 'UML component diagram with ' + pluralize(components.length, 'component', 'components') + ' (' + names.join(stereotyped ? '; ' : ', ') + ')'
       : 'UML component diagram';
 
-    var portLines = model.components.filter(function (component) {
-      return componentPortPhrases(component).length;
-    }).map(function (component) {
-      return component.name + ' ' + componentPortPhrases(component).join(', ');
+    var portLines = [];
+    Object.keys(model.ports).forEach(function (id) {
+      var parts = componentPortPhrases(model.ports[id]);
+      if (parts.length) portLines.push(model.labelOf(id) + ' ' + parts.join(', '));
     });
-    var connLines = connections.map(componentConnectionSentence);
 
     var out = head + '.';
+    var packageLines = packageSentences(model.packages, model.labelOf);
+    if (packageLines.length) out += ' ' + packageLines.join(' ');
     if (portLines.length) out += ' ' + portLines.join('. ') + '.';
-    if (connLines.length) out += ' Connections: ' + connLines.join('; ') + '.';
+    if (model.connections.length) out += ' Connections: ' + model.connections.map(componentConnectionSentence).join('; ') + '.';
     return out;
   }
 
@@ -805,9 +1107,13 @@
   // shape: { summary: string, sections: [{ heading, items: [string] }] }.
 
   function describeClassDiagramVerbose(spec) {
-    var classes = [], abstracts = [], interfaces = [];
+    var read = readPackages(stripLayoutAnnotations(spec), classDeclarationId);
+    var classes = [], abstracts = [], interfaces = [], packageNodes = [];
     var members = Object.create(null); // name -> { attributes: [], operations: [] }
+    var stereotypes = Object.create(null); // name -> applied stereotypes
     var relationships = [];
+    var packageLabels = Object.create(null); // id -> the name a package node shows
+    function shownName(id) { return packageLabels[id] || String(id); }
 
     function memberSlot(name) {
       if (!members[name]) members[name] = { attributes: [], operations: [] };
@@ -819,22 +1125,30 @@
     // matcher (a regex that uses `[^{}]*` for the body fails on those).
     var arrowAlt = CLASS_ARROWS.map(escapeRegex).join('|');
     var relRe = new RegExp(
-      '^(\\w+)\\s*(?:["\']([^"\']*)["\']\\s+)?(' + arrowAlt + ')\\s+(?:["\']([^"\']*)["\']\\s+)?(\\w+)\\s*(?::\\s*(.+))?$'
+      '^(' + CLASS_REL_NAME + ')\\s*(?:["\']([^"\']*)["\']\\s+)?(' + arrowAlt + ')\\s+(?:["\']([^"\']*)["\']\\s+)?(' + CLASS_REL_NAME + ')\\s*(?::\\s*(.+))?$'
     );
 
     var depth = 0;
     var currentClass = null;
     var currentBody = [];
-    spec.split('\n').forEach(function (raw) {
+    read.source.split('\n').forEach(function (raw) {
       var line = raw.trim();
       if (!line) return;
 
       if (depth === 0) {
         var m;
-        var declMatch = line.match(/^(abstract\s+class|class|interface)\s+(\w+)\s*(\{?)\s*$/);
+        var node = packageNodeOf(line);
+        if (node) {
+          if (!packageLabels[node.id]) packageNodes.push(node);
+          packageLabels[node.id] = node.label;
+          return;
+        }
+        var declaration = cleanClassDeclaration(line);
+        var declMatch = declaration.line.match(/^(abstract\s+class|class|interface)\s+(\w+)\s*(\{?)\s*$/);
         if (declMatch) {
           var kind = declMatch[1].toLowerCase();
           var name = declMatch[2];
+          if (declaration.stereotypes.length) stereotypes[name] = declaration.stereotypes;
           if (kind === 'abstract class' && abstracts.indexOf(name) < 0) abstracts.push(name);
           else if (kind === 'class' && classes.indexOf(name) < 0) classes.push(name);
           else if (kind === 'interface' && interfaces.indexOf(name) < 0) interfaces.push(name);
@@ -882,7 +1196,7 @@
       if (!names.length) return;
       var items = names.map(function (n) {
         var slot = members[n] || { attributes: [], operations: [] };
-        var lines = [n];
+        var lines = [n + stereotypePhrase(stereotypes[n])];
         if (slot.attributes.length) {
           lines.push('Attributes: ' + slot.attributes.join('; '));
         } else {
@@ -901,9 +1215,19 @@
     sectionForType('Classes', classes);
     sectionForType('Abstract classes', abstracts);
     sectionForType('Interfaces', interfaces);
+    // Packages drawn as nodes, each with the package that holds it, then the
+    // packages that show their members.
+    var packages = packageNodes.map(function (node) {
+      var holder = read.packages.filter(function (pkg) { return pkg.members.indexOf(node.id) !== -1; })[0];
+      return node.label + stereotypePhrase(node.stereotypes) + (holder ? ' (in package ' + holder.label + ')' : '');
+    }).concat(packageItems(read, shownName));
+    if (packages.length) sections.push({ heading: 'Packages', items: packages });
 
     if (relationships.length) {
-      var relItems = relationships.map(describeClassRel).filter(Boolean);
+      var relItems = relationships.map(function (rel) {
+        return describeClassRel({ from: shownName(rel.from), fromMult: rel.fromMult, arrow: rel.arrow,
+          toMult: rel.toMult, to: shownName(rel.to), label: rel.label });
+      }).filter(Boolean);
       if (relItems.length) sections.push({ heading: 'Relationships', items: relItems });
     }
 
@@ -1018,20 +1342,22 @@
   }
 
   function describeComponentDiagramVerbose(spec) {
-    var stripped = stripDecorations(spec);
-    var model = parseComponentSpec(stripped);
+    var model = parseComponentDescription(spec);
+    var summary = describeComponentDiagram(stripDecorations(spec));
     var sections = [];
+
     if (model.components.length) {
-      sections.push({ heading: 'Components', items: model.components.map(function (component) {
-        var name = component.name + (component.keyword ? ' (' + component.keyword + ')' : '');
-        var parts = componentPortPhrases(component);
-        return parts.length ? name + ' — ' + parts.join('; ') : name;
+      sections.push({ heading: 'Components', items: model.components.map(function (c) {
+        var bits = componentPortPhrases(model.ports[c.id]);
+        return c.label + stereotypePhrase(c.stereotypes) + (bits.length ? ' — ' + bits.join('; ') : '');
       }) });
     }
+    var packages = packageItems(model.packages, model.labelOf);
+    if (packages.length) sections.push({ heading: 'Packages', items: packages });
     if (model.connections.length) {
       sections.push({ heading: 'Connections', items: model.connections.map(componentConnectionSentence) });
     }
-    return { summary: describeComponentDiagram(stripped), sections: sections };
+    return { summary: summary, sections: sections };
   }
 
   function describeUsecaseDiagramVerbose(spec) {
@@ -1487,7 +1813,8 @@
     try { attachVerboseDescription(el, type, spec); } catch (_) { /* leave bundle's output */ }
   }
 
-  // The bundle has two render paths and they don't share an aria hook:
+  // Besides its own auto-init (see describeDrawnFigures), the bundle has two
+  // render paths and they don't share an aria hook:
   //   1. UMLShared.renderAll() — used by SEBook pages, popouts, SE Gym. It
   //      walks the DOM, calls a closure-scoped createArchUmlFigure() to wrap
   //      each match in <figure>, sets aria-label from the spec's `caption:`
@@ -1574,27 +1901,52 @@
       var s = snapshots[i];
       var slot = s.parent && s.parent.children && s.parent.children[s.idx];
       if (!slot || !slot.classList || !slot.classList.contains('sebook-figure')) continue;
-      // A C4 figure that is still loading or shows an error or empty state is
-      // labelled by that state; the stub describes it once it is drawn.
-      if (slot.querySelector('[data-c4-state]')) continue;
-      if (slot.querySelector(CARD_SELECTOR)) continue;
+      describeFigure(slot, s.type, s.spec);
+    }
+  }
 
-      var desc = describe(s.type, s.spec);
-      if (!desc) continue;
+  var describedContainers = typeof WeakSet === 'function' ? new WeakSet() : null;
 
-      var container = slot.querySelector('[role="img"]');
-      if (container) container.setAttribute('aria-label', desc);
+  // Name one bundle-drawn <figure> by its description.
+  function describeFigure(figure, type, spec) {
+    // A C4 figure that is still loading or shows an error or empty state is
+    // labelled by that state; the stub describes it once it is drawn. An
+    // interface card is its own text.
+    if (figure.querySelector('[data-c4-state]') || figure.querySelector(CARD_SELECTOR)) return;
+    var desc = describe(type, spec);
+    if (!desc) return;
 
-      // Drop the bundle's bare-type-label "UML class diagram" figcaption.
-      // CSS in css/uml-diagram.css also hides .sebook-figure__caption--auto
-      // as a backstop; removing the node here keeps screen readers /
-      // print-stylesheet pipelines from announcing it either.
-      var autoCap = slot.querySelector('.sebook-figure__caption--auto');
-      if (autoCap && autoCap.parentNode) autoCap.parentNode.removeChild(autoCap);
+    var container = figure.querySelector('[role="img"]');
+    if (container) {
+      container.setAttribute('aria-label', desc);
+      if (describedContainers) describedContainers.add(container);
+    }
 
-      // Screen-reader-only verbose description. Same markup the Ruby plugin
-      // emits for static diagrams, so live + static behave identically.
-      try { attachVerboseDescription(slot, s.type, s.spec); } catch (_) { /* leave bundle output */ }
+    // Drop the bundle's bare-type-label "UML class diagram" figcaption.
+    // CSS in css/uml-diagram.css also hides .sebook-figure__caption--auto
+    // as a backstop; removing the node here keeps screen readers /
+    // print-stylesheet pipelines from announcing it either.
+    var autoCap = figure.querySelector('.sebook-figure__caption--auto');
+    if (autoCap && autoCap.parentNode) autoCap.parentNode.removeChild(autoCap);
+
+    // Screen-reader-only verbose description. Same markup the Ruby plugin
+    // emits for static diagrams, so live + static behave identically.
+    try { attachVerboseDescription(figure, type, spec); } catch (_) { /* leave bundle output */ }
+  }
+
+  // The bundle's own auto-init draws every fenced block already in the page
+  // as soon as the bundle runs — for a deferred bundle, before this script
+  // has loaded — without calling renderAll or applySvgAccessibility. Those
+  // figures are described from the source the bundle recorded for them.
+  function describeDrawnFigures() {
+    if (!window.UMLShared || typeof window.UMLShared.figureSource !== 'function') return;
+    var containers = document.querySelectorAll('figure.sebook-figure--archuml [role="img"][data-uml-rendered]');
+    for (var i = 0; i < containers.length; i++) {
+      var container = containers[i];
+      if (describedContainers && describedContainers.has(container)) continue;
+      var source = window.UMLShared.figureSource(container);
+      var figure = container.closest('figure');
+      if (source && figure) describeFigure(figure, source.type, source.text);
     }
   }
 
@@ -1621,6 +1973,7 @@
       try { snapshots = collectSnapshots(); } catch (_) { snapshots = []; }
       var result = orig.apply(this, arguments);
       try { applySnapshots(snapshots); } catch (_) { /* leave bundle's labels */ }
+      try { describeDrawnFigures(); } catch (_) { /* leave bundle's labels */ }
       return result;
     };
     window.UMLShared.__umlAutoDescribeRenderAllPatched = true;
@@ -1630,6 +1983,15 @@
   function tryPatch() {
     var a = patchRenderAll();
     var b = patchApplySvgAccessibility();
+    if (a && b) {
+      try { describeDrawnFigures(); } catch (_) { /* leave bundle's labels */ }
+      // A bundle loaded while the page is still parsing draws on DOMContentLoaded.
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+          try { describeDrawnFigures(); } catch (_) { /* leave bundle's labels */ }
+        });
+      }
+    }
     return a && b;
   }
 

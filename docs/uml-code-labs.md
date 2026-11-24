@@ -290,6 +290,73 @@ old render from becoming the displayed answer to a newer edit.
 Text measurement reuses matching labels from the previous render; the cache
 retains only that render's entries, so successive edits cannot grow it indefinitely.
 
+## Source links
+
+Every inferred diagram line can name the code it came from. The analyzers tag
+each emitted line through `js/uml-source-map.js` and return two arrays beside
+the syntax: `classDiagramSources` and `sequenceDiagramSources`. Entry `i` is
+the range of line `i`, `{ file, startLine, endLine }` with 1-based inclusive
+lines, or `null`. A tag travels inside its line while a generator splits,
+branches and reorders lines, so provenance cannot drift. What each line names:
+
+| Diagram line | Range |
+| --- | --- |
+| `class X {` | the whole class definition, decorators or annotations included |
+| attribute | the statement or declaration that first names it |
+| operation | the whole method definition |
+| inheritance / realization | the line that names the class, below any decorators |
+| association | the statement that first stores the reference |
+| dependency | the line that names the method, or the statement that creates or raises it |
+| `participant` | the class of the lifeline; `Main` names the entry-point block |
+| message / reply / `<<create>>` | the statement (Python) or call expression (TypeScript, Java: its name token) |
+
+Python, Java, TypeScript and C++ provide ranges. C++ tokens keep their lines
+through slicing; a class range includes its `template` header, a method merged
+with an out-of-class `A::f` body names that body, and a call names its name
+token (`new` for a `<<create>>`). TypeScript ranges
+are mapped back through the symbol-resolution rewrite to the learner's file.
+`UMLDiagramViews.project` keeps `classDiagramSources` aligned when the design
+view drops a line; the warning note of a partial sequence has no source.
+
+`js/uml-source-links.js` connects a rendered SVG to the editor:
+
+```js
+UMLSourceLinks.link(target, {
+  type: 'class', syntax: renderedSyntax,
+  sourceSyntax: projected.classDiagram, sources: projected.classDiagramSources,
+  listHost: panel,                       // gets the "Code locations" list
+  canReveal: range => range.file === filename,
+  onReveal: range => UMLSourceLinks.highlightEditor(editor, monaco, range)
+});
+```
+
+`sourceSyntax` may differ from `syntax` by inserted or removed lines (a
+`layout` directive); sources are re-aligned by matching lines. Classes are
+found by `data-layout-bounds-id`, members by their drawn text inside the box,
+relationships and messages by `rel:N` / `seqmsg:N` route ids, and lifelines
+by `line.uml-sequence-lifeline` order. A linked element gets a pointer cursor,
+a dashed outline under the pointer and a wide invisible hit stroke on thin
+lines. A press that moves more than 5 px is a pan, not a click. The diagram
+SVG stays hidden from assistive technology; the collapsed "Code locations"
+list gives each link as a button (focusing one outlines its drawn element;
+a re-render keeps the focus on the same link), and one visually hidden
+page-level status announces each highlight. Lines the drawing does not expose
+separately (a merged inheritance tree) are reachable from the list only.
+`highlightEditor` adds a gutter bar
+and a frame above and below the lines (`css/uml-source-links.css`; no
+background tint, which would lower token contrast), reveals the lines,
+scrolls a content-sized editor into the page view, and clears the mark on the
+next highlight or edit; focus does not move. Without Monaco,
+`highlightTextarea` selects the lines.
+
+Hosts: the code labs (`js/uml-code-lab.js`), the tutorial UML pane and its
+fullscreen viewer (`js/tutorial-code.js`; fullscreen closes before the code
+is shown), and `uml-popup.html`, which posts `uml-source-reveal` to the
+tutorial window. `scripts/tests/uml-source-ranges.test.js` pins the ranges
+(including the browser's tree-sitter Java parser),
+`scripts/tests/uml-source-links.test.js` the alignment and labels, and
+`tests/uml-source-links.spec.js` clicks, the keyboard list and every host.
+
 ## Inference limits
 
 Review inferred diagrams as teaching sketches. The analyzers preserve the

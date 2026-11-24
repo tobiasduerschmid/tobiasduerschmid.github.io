@@ -99,6 +99,7 @@
 .sk-teammate .sk-ear,
 .sk-teammate .sk-neck,
 .sk-teammate .sk-top,
+.sk-teammate .sk-garment-body,
 .sk-teammate .sk-hair,
 .sk-teammate .sk-beard {
   stroke: var(--sk-ink);
@@ -118,6 +119,30 @@
   stroke: var(--sk-ink);
   stroke-width: 2;
 }
+
+/* Cloth has the same directional light as the shared hero portraits. */
+.sk-fabric--base { stop-color: var(--sk-top); }
+.sk-fabric--shade { stop-color: var(--sk-top-shade); }
+.sk-fabric--light { stop-color: color-mix(in srgb, var(--sk-top), #fff6df 16%); }
+.sk-fabric-highlight { fill: #fff6df; opacity: 0.14; }
+.sk-hood-lining { fill: color-mix(in srgb, var(--sk-top-shade), #152033 30%); }
+.sk-ribbed-collar { fill: var(--sk-top-shade); }
+.sk-garment-seam,
+.sk-garment-fold,
+.sk-garment-light-seam,
+.sk-knit-detail,
+.sk-aglet {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sk-garment-seam { stroke: var(--sk-top-shade); stroke-width: 0.8; }
+.sk-garment-fold { stroke: var(--sk-top-shade); stroke-width: 1.4; opacity: 0.75; }
+.sk-garment-light-seam { stroke: #fff6df; stroke-width: 0.5; opacity: 0.35; }
+.sk-knit-detail { stroke: color-mix(in srgb, var(--sk-top-shade), #fff6df 35%); stroke-width: 0.45; opacity: 0.6; }
+.sk-pocket { fill: var(--sk-top); stroke: var(--sk-top-shade); stroke-width: 0.75; }
+.sk-eyelet { fill: #1c3049; stroke: #a9bacb; stroke-width: 0.6; }
+.sk-aglet { stroke: #b2c3d4; stroke-width: 1.7; }
 
 .sk-cheek {
   fill: rgba(255, 110, 110, 0.28);

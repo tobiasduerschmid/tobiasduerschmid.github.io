@@ -1,0 +1,21 @@
+{%- comment -%}
+  One diagram challenge question in the print view, with drawn boxes (multiple)
+  or circles (single) to tick. No key: keys print only in the instructor block.
+  Params: question, label (e.g. "Question 1"), stem (overrides question.question,
+  for plan-first view choices), hint (overrides the multiple-choice hint).
+{%- endcomment -%}
+{%- assign tdcpq = include.question -%}
+{%- assign tdcpq_stem = include.stem | default: tdcpq.question -%}
+<div class="tutorial-diagram-challenge-print__question">
+  <div class="tutorial-diagram-challenge-print__stem">{% if include.label %}{{ include.label }}: {% endif %}{{ tdcpq_stem | markdownify | remove: '<p>' | remove: '</p>' | strip }}</div>
+  {%- if include.hint %}
+  <p>{{ include.hint }}</p>
+  {%- elsif tdcpq.type == 'multiple' %}
+  <p>Select all that apply.</p>
+  {%- endif %}
+  <ul class="tutorial-diagram-challenge-print__options{% if tdcpq.type == 'multiple' %} tutorial-diagram-challenge-print__options--multiple{% endif %}">
+    {%- for tdcpq_option in tdcpq.options %}
+    <li>{{ tdcpq_option | markdownify | remove: '<p>' | remove: '</p>' | strip }}</li>
+    {%- endfor %}
+  </ul>
+</div>

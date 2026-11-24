@@ -58,11 +58,11 @@ Learners should be able to:
 This sequence is an original instructional design synthesis. The evidence column
 states what a learner should produce; it is not a claim that an automatic test
 can measure every explanation or that completing the tutorial proves transfer.
-Runnable examples stay within the supported browser subset described below.
+Runnable examples use the Java 8 language level.
 
 | Step and concept | Learning objective | Student task and observable evidence | Physical PDF locators |
 | --- | --- | --- | --- |
-| 1. Static Types and Execution Stages | Distinguish static type compatibility and runtime behavior. | Classify an incompatible assignment and runtime failure; justify their different stages. Use a complete supplied `main` scaffold to implement reservation eligibility. Distinguish the browser runner from standard Java compilation. | Data pp. 28, 32; Implementation pp. 8, 38–41; OOP p. 16. |
+| 1. Static Types and Execution Stages | Distinguish static type compatibility and runtime behavior. | Classify an incompatible assignment and runtime failure; justify their different stages. Use a complete supplied `main` scaffold to implement reservation eligibility. Observe a compile-time diagnostic and a runtime exception. | Data pp. 28, 32; Implementation pp. 8, 38–41; OOP p. 16. |
 | 2. Values and Object References | Predict how assignment, mutation, and reassignment affect aliases. | Trace a copied reference, mutate an array, and create an independent snapshot. Distinguish reference reassignment from changing the shared object; preserve empty-input independence. | Data pp. 164–180, especially pp. 177, 180. |
 | 3. Pass-by-Value Parameters | Explain Java's copied parameter values, including copied reference values. | Contrast primitive reassignment, object mutation, and parameter rebinding. Implement an award operation that changes a shared badge and returns its old points; explain the caller's state afterward. | Data pp. 165, 168–177, 180; Functions p. 9. |
 | 4. Identity and Value Equality | Choose identity or logical equality for a stated requirement. | Compare an alias with independently constructed equal strings; implement a content-based count. Explain why the identity and equality observations can differ. | Data p. 183. |
@@ -137,30 +137,12 @@ course focus.
 
 ## Runtime truth and validation boundary
 
-The existing `java` backend in `js/java-worker.js` is a Java-subset-to-JavaScript
-transpiler. Introductory comments that discuss CheerpJ or a JVM do not establish
-that a real Java compiler or virtual machine is executing the learner's source.
-The implementation documents erased generic syntax, skipped annotations, and no
-thread support. The tutorial describes this environment explicitly.
-
-Consequently, the design separates:
-
-- **Executable behavioral practice:** supplied examples checked against the
-  browser subset and a real Java implementation. Passing a browser check
-  establishes the checked behavior for those inputs, not complete Java validity
-  for arbitrary edited programs.
-- **Compiler-only reasoning cards and quizzes:** static type errors, nominal
-  interface compatibility, overload selection, cast validity, generic type
-  restrictions, `@Override` enforcement, and checked-exception obligations.
-  These ask for a prediction and explanation; successful browser execution
-  cannot establish acceptance by a standard Java compiler.
-
-The real-compiler authoring oracle uses Java 8-compatible syntax. The lecture's
-`var` example (Data p. 32) illustrates inference conceptually but is not a
-runnable Java 8 example. Do not claim that the browser emits bytecode or that its
-acceptance/rejection proves a Java language rule. Custom `Iterable` examples use
-explicit iterator calls because the browser subset does not faithfully support
-enhanced-for over those custom implementations.
+Run and Test My Work compile the current lesson files with the Eclipse Java compiler.
+CheerpJ executes the resulting bytecode in the browser. Compiler-reasoning cards
+can be tried directly in the editor, including invalid casts, overload selection,
+generic bounds, annotation checks and checked exceptions. Examples target Java 8.
+The iterator exercise passes an existing cursor so students can observe its position
+before and after a call.
 
 Language rules were cross-checked against the [Java Language Specification,
 types and values](https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html),
@@ -169,7 +151,12 @@ and the [Iterator API contract](https://docs.oracle.com/javase/8/docs/api/java/u
 
 ## Verification record
 
-Confirmed author verification for the implemented tutorial:
+The current browser suite runs all twelve starters and reference solutions with
+the same Eclipse compiler used by learners. It also checks that the exercises
+reject 36 incorrect implementations and accept 24 equivalent solutions. See
+[`tests/java-cs131-content.spec.js`](../tests/java-cs131-content.spec.js).
+
+The original authoring audit compared the previous Java-subset worker with native Java:
 
 - **85 worker content tests passed.** These exercise the actual Java-subset
   worker, not a replacement interpreter.
@@ -219,10 +206,9 @@ claim; a screen-reader walkthrough was not performed.
 ## Optional extensions and exclusions
 
 - **Concurrency and synchronization:** Control pp. 83–98, especially p. 95.
-  This is valuable Java-related course material, but threads are outside the
-  current browser subset. Do not use repeated execution until a race happens as
-  evidence that a program is safe or unsafe. A separate trace exercise can teach
-  conflicting interleavings and a shared-lock requirement.
+  Repeated browser runs sample only some thread schedules. A separate trace
+  exercise can ask learners to construct a conflicting interleaving and explain
+  which operations must share a lock.
 - **Bounded generics and ordering contracts:** Functions pp. 92–97; OOP p. 63.
   These are a natural follow-up after the core generic and interface concepts.
 - **Reachability and garbage collection:** Data pp. 112–148. Explain reachability

@@ -1,0 +1,24 @@
+{%- comment -%}
+  Answer key of one diagram challenge question for the instructor-only print
+  block: the correct options, the feedback for each tempting option, and the
+  explanation. Params: question, label.
+{%- endcomment -%}
+{%- assign tdck = include.question -%}
+<div class="tutorial-diagram-challenge-print__key-item">
+  <p><strong>{{ include.label }}:</strong>
+  {%- if tdck.type == 'multiple' -%}
+    {%- for tdck_index in tdck.correct_indices %} {{ tdck.options[tdck_index] | markdownify | remove: '<p>' | remove: '</p>' | strip }}{% unless forloop.last %};{% endunless %}{%- endfor -%}
+  {%- else %} {{ tdck.options[tdck.correct_index] | markdownify | remove: '<p>' | remove: '</p>' | strip }}{%- endif -%}
+  </p>
+  {%- if tdck.option_feedback %}
+  <ul>
+    {%- for tdck_feedback in tdck.option_feedback %}
+    {%- assign tdck_option_index = tdck_feedback[0] | plus: 0 %}
+    <li><em>{{ tdck.options[tdck_option_index] | markdownify | remove: '<p>' | remove: '</p>' | strip }}</em>: {{ tdck_feedback[1] | markdownify | remove: '<p>' | remove: '</p>' | strip }}</li>
+    {%- endfor %}
+  </ul>
+  {%- endif %}
+  {%- if tdck.explanation %}
+  {{ tdck.explanation | markdownify }}
+  {%- endif %}
+</div>

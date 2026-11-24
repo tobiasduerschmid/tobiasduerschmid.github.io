@@ -1,0 +1,118 @@
+/* ============================================================
+   Inferred-diagram source links (js/uml-source-links.js).
+   A diagram element whose code is known gets a pointer cursor
+   and, under the pointer, a dashed outline. Clicking it marks the
+   code with a gutter bar and a frame above and below the lines:
+   shapes, not color alone, and no background tint, which would
+   lower the contrast of the editor's token colors. The "Code
+   locations" list offers the same links as buttons. Text inherits
+   the surrounding size, never below the readable minimum.
+   ============================================================ */
+
+.uml-source-link { cursor: pointer; }
+
+/* A wide invisible stroke over thin message, relationship and lifeline lines. */
+.uml-source-link-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 12px;
+  pointer-events: stroke;
+}
+
+/* Drawn inside the SVG. Diagram hosts invert the SVG in dark mode, so this
+   dark blue shows as a light blue there (about 7:1 against either background). */
+.uml-source-link-outline {
+  fill: none;
+  stroke: #0b4f9c;
+  stroke-width: 2px;
+  stroke-dasharray: 5 3;
+  pointer-events: none;
+}
+
+.uml-source-links {
+  margin: 0;
+  padding: 0.3em 0.8em 0.5em;
+  /* Inherits the host's text size, but never below the readable minimum. */
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+}
+
+.uml-source-links summary {
+  cursor: pointer;
+  padding: 0.3em 0;
+}
+
+/* In a fixed-height diagram pane the open list scrolls and the diagram keeps
+   most of the height; in a page flow (code labs) the percentage is ignored. */
+.uml-source-links[open] {
+  max-height: 45%;
+  overflow-y: auto;
+}
+
+.uml-source-links ul {
+  margin: 0.2em 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.uml-source-links button {
+  display: block;
+  width: 100%;
+  min-height: 24px;
+  margin: 0;
+  padding: 0.2em 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.uml-source-links button:hover { text-decoration-thickness: 2px; }
+
+.uml-source-links summary:focus-visible,
+.uml-source-links button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* Announces each highlight; visible to assistive technology only. */
+.uml-source-links-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Monaco marks. Monaco puts its theme type (vs, vs-dark, hc-black) on the
+   editor root, which is independent of the page theme in tutorials.
+   #8a4b00 is 6.8:1 on the light editor; #ffc94d is 10.9:1 on the dark one. */
+.monaco-editor {
+  --uml-source-mark: #8a4b00;
+}
+.monaco-editor.vs-dark,
+.monaco-editor.hc-black {
+  --uml-source-mark: #ffc94d;
+}
+.monaco-editor .uml-source-highlight-gutter {
+  background: var(--uml-source-mark);
+  width: 4px !important;
+  margin-left: 2px;
+}
+.monaco-editor .uml-source-highlight-start,
+.monaco-editor .uml-source-highlight-end { box-sizing: border-box; }
+.monaco-editor .uml-source-highlight-start { border-top: 2px solid var(--uml-source-mark); }
+.monaco-editor .uml-source-highlight-end { border-bottom: 2px solid var(--uml-source-mark); }
+
+@media print {
+  .uml-source-links { display: none; }
+  .uml-source-link-outline { display: none; }
+}

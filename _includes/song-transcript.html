@@ -8,6 +8,8 @@
 
   Used in a chapter's song figure (_includes/song-video.html) and in a
   player page that has no chapter (_layouts/song-player.html).
+  Visual descriptions are literal text: encode equality operators so the
+  site's Markdown highlighter cannot interpret them as highlight delimiters.
 {%- endcomment -%}
 {%- assign previous_voice = '' -%}
 {%- for section in include.song.sections %}
@@ -23,7 +25,7 @@
     <span class="song-video-voice">{{ voice }}:</span>
     {%- endif %}
     <span class="song-video-lyric">{{ line.text }}{% if line.answer %} — {{ line.answer }}{% endif %}</span>
-    <span class="song-video-visual">On screen: {{ line.visual | escape }}</span>
+    <span class="song-video-visual">On screen: {{ line.visual | escape | replace: '==', '&#61;&#61;' }}</span>
   </li>
   {%- assign previous_voice = voice -%}
   {%- endfor %}

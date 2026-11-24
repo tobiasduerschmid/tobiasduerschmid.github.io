@@ -1,0 +1,141 @@
+/*
+ * The "team-room" theme (js/song-video/team-room.js): the Found It team's
+ * office for "Inspect and Adapt". A warm white wall, a dark display, light
+ * oak floor. The scenery stays muted so the display's slides and the cast
+ * read clearly against it: the sign's gold lettering on slate is ≈ 9:1, the
+ * badge's white on navy ≈ 14:1, and nothing on the wall is text. The room's
+ * slow motions (clouds, city lights, daylight, dust, leaves, notes, clock)
+ * set transforms and opacities from team-room.js, so the rules here leave
+ * those properties alone. Like stage.css this styles the 960×540 stage,
+ * which keeps its artwork in both page themes; the player's print styles
+ * hide it. This file also restyles the shared badge and stamps in the
+ * room's language: a room tag and a rubber stamp on paper.
+ */
+
+.theme-team-room {
+  background: #e9e5de;
+  overflow-wrap: normal;
+}
+
+.tr-room { overflow: hidden; }
+
+.tr-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+/* The slides, laid out on the logical 588×300 screen, shown 1.2 times
+   larger round its centre (TeamRoom.ZOOM, TeamRoom.SCREEN's centre). */
+.tr-slides {
+  transform: scale(1.2);
+  transform-origin: 480px 220px;
+}
+
+.tr-soffit { fill: #d6cfc3; }
+.tr-soffit-shadow { fill: #000000; opacity: 0.06; }
+.tr-downlight { fill: #fffdf4; }
+.tr-baseboard { fill: #f5f2ec; }
+
+/* The view: clouds, and the city in three depths, paler with distance. */
+.tr-cloud-puff { fill: #ffffff; opacity: 0.92; }
+.tr-cloud-shade { fill: #c7d8e8; opacity: 0.9; }
+.tr-city--far { fill: #b9cad9; }
+.tr-city--mid { fill: #93a9bf; }
+.tr-city--near { fill: #6f859c; }
+.tr-city-panes { opacity: 0.3; }
+.tr-city-panes--mid { opacity: 0.2; }
+.tr-antenna { fill: none; stroke: #9fb2c5; stroke-width: 1.2; stroke-linecap: round; }
+.tr-water-tower { fill: #7e93a9; stroke: #7e93a9; stroke-width: 1.1; stroke-linejoin: round; }
+/* Lit windows: their opacity glows up and down from team-room.js. */
+.tr-city-light { fill: #ffe7a6; }
+.tr-glass-glint { fill: #ffffff; opacity: 0.1; }
+.tr-glass-glint--thin { opacity: 0.07; }
+/* Dust in the daylight shaft: its opacity comes from team-room.js. */
+.tr-dust { fill: #fff8e6; }
+.tr-window-frame { fill: none; stroke: #23272e; stroke-width: 4; }
+.tr-window-mullion { fill: none; stroke: #23272e; stroke-width: 3; }
+.tr-sill { fill: #f3f0ea; stroke: #c7c0b3; stroke-width: 0.8; }
+
+.tr-board-shadow { fill: #000000; opacity: 0.1; }
+.tr-board-frame { fill: #aab2bc; }
+.tr-board-face { fill: #fcfcfa; }
+.tr-board-rule { fill: none; stroke: #cfd4db; stroke-width: 1; }
+.tr-board-heading { fill: none; stroke: #5d6b7e; stroke-width: 2.2; stroke-linecap: round; opacity: 0.65; }
+.tr-note { stroke: rgba(0, 0, 0, 0.08); stroke-width: 0.6; }
+.tr-note-line { fill: none; stroke: #000000; stroke-opacity: 0.16; stroke-width: 1; stroke-linecap: round; }
+.tr-note--yellow { fill: #f6df78; }
+.tr-note--blue { fill: #a9d2f2; }
+.tr-note--green { fill: #b5e3b0; }
+.tr-note--pink { fill: #f4b9c8; }
+.tr-magnet { fill: #3b4352; }
+
+.tr-clock-shadow { fill: #000000; opacity: 0.12; }
+.tr-clock-rim { fill: #2f343c; }
+.tr-clock-face { fill: #fbfaf7; }
+.tr-clock-ticks { fill: none; stroke: #2f343c; stroke-width: 1.1; stroke-linecap: round; }
+.tr-clock-hand { fill: none; stroke: #23272e; stroke-width: 1.6; stroke-linecap: round; }
+.tr-clock-second { fill: none; stroke: #d6402e; stroke-width: 0.8; stroke-linecap: round; }
+.tr-clock-pin { fill: #23272e; }
+
+.tr-display-shadow { fill: #000000; opacity: 0.14; }
+.tr-bezel-edge { fill: none; stroke: #4a4f59; stroke-width: 1; }
+
+.tr-sign-shadow { fill: #000000; opacity: 0.12; }
+.tr-sign-rim { fill: none; stroke: #8a96ad; stroke-width: 0.8; opacity: 0.6; }
+.tr-standoff { fill: #c9ced6; stroke: #7d8696; stroke-width: 0.6; }
+
+.tr-boards path { fill: none; stroke: #7d5634; stroke-width: 1; opacity: 0.14; }
+.tr-plank-dark { fill: #6b4a2a; opacity: 0.06; }
+.tr-plank-joint { fill: none; stroke: #7d5634; stroke-width: 1; opacity: 0.15; }
+.tr-rug { opacity: 0.38; }
+.tr-rug-border { fill: none; stroke: #f3efe7; stroke-width: 1.4; opacity: 0.45; }
+.tr-rug-border--inner { stroke-width: 0.8; opacity: 0.3; }
+
+.tr-plant-shadow { fill: #000000; opacity: 0.16; }
+.tr-stem { fill: none; stroke: #4f6b3a; stroke-width: 2.2; stroke-linecap: round; }
+.tr-leaf { fill: #4c8546; stroke: #2e5a2b; stroke-width: 0.9; }
+.tr-leaf--back { fill: #3c6f37; }
+.tr-leaf-light { fill: #6aa35f; }
+.tr-leaf-vein { fill: none; stroke: #9fd08f; stroke-width: 0.8; opacity: 0.8; }
+.tr-pot { stroke: #9a9286; stroke-width: 0.9; }
+.tr-pot-rim { fill: none; stroke: #9a9286; stroke-width: 2.2; stroke-linecap: round; }
+
+/* The team sign's lettering: each section's name, in gold on slate. */
+.tr-sign-text {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffe7a6;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* The shared kit in the room's language                               */
+/* ------------------------------------------------------------------ */
+
+/* The section badge becomes the room's tag: white on navy, on the wall. */
+.theme-team-room .badge {
+  top: 6px;
+  left: 14px;
+  border: 2px solid #ffffff;
+  border-radius: 8px;
+  background: #1d2c55;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* Stamps land on paper. */
+.theme-team-room .stamp {
+  background: rgba(255, 250, 238, 0.94);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.theme-team-room .stamp--red { color: #b3122b; }
+.theme-team-room .stamp--green { color: #157a3c; }

@@ -459,6 +459,7 @@ steps:
       Here is the design of the small preview below. Compare it with Step 1: `DataSource` plays the Subject role and refers to the common `Observer` contract instead of specific dashboards.
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="DataSource pushes a value through the Observer contract; adding a dashboard leaves DataSource unchanged." data-uml-spec='@startuml
+      layout compact
       skinparam classAttributeIconSize 0
       class DataSource {
         - observers: Sequence<Observer>

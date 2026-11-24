@@ -51,6 +51,7 @@ callout right of text "GetResult(): Product" : The client collects the finished 
 ## UML Example Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout compact 1110x876
 interface VacationBuilder {
     + build_day(date: String)
     + add_hotel(date: String, hotel_name: String)

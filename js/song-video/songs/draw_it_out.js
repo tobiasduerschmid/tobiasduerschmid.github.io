@@ -45,6 +45,23 @@
     // ticks off, circles, traces, leans in, and thinks.
     const A = window.ArchitectKit;
     const ARCHITECT = { hero: student?.heroHead() };
+    // The same four cast members in every scene, rendered through the shared
+    // song wardrobe just like the opera and Scrum casts. Never personalize
+    // them with the viewer's saved hero or randomize them between appearances.
+    const teammateLooks = {
+      hoodie: { skin: '#f1c9a5', hairColor: '#1f1d2b', hairStyle: 'side-parted-short', suit: '#2f6fb0' },
+      curls: { skin: '#8d5a3b', hairColor: '#24160f', hairStyle: 'rounded-afro', suit: '#f2c94c', accessories: ['stud-earrings'] },
+      beard: { skin: '#e0ac86', hairColor: '#6b4630', hairStyle: 'short', facialHair: 'full-beard', suit: '#8b5e3c' },
+      hijab: { skin: '#c68a62', hairColor: '#3b2418', hairStyle: 'short', suit: '#7cc49f', capeOuter: '#2e7d5b', accessories: ['hijab'] },
+    };
+    const teammateHeads = Object.fromEntries(Object.entries(teammateLooks).map(([look, traits]) => [look, student?.castHead((avatar) => {
+      const { suit, capeOuter, accessories = [], ...appearance } = traits;
+      const state = structuredClone(avatar.DEFAULTS);
+      Object.assign(state.appearance, appearance);
+      Object.assign(state.outfit, { suit, capeOuter: capeOuter || suit, accessories, accessory: accessories[0] || 'none' });
+      return state;
+    })]));
+    const teammate = (parent, options) => S.teammate(parent, { ...options, hero: teammateHeads[options.look] });
     const { content, hud } = layers;
     const line = (id) => song.line(id);
     const mark = (id, word) => song.mark(id, word);
@@ -77,7 +94,7 @@
       const calendarAt = mark('intro-2', 'week') - 0.25;
       const a = kit.scene(content, 0.2, calendarAt, { exit: 'fade' });
       student?.appear({ from: 0.3, to: calendarAt, x: 60, y: 150, scale: 0.92 });
-      S.teammate(a, {
+      teammate(a, {
         look: 'beard', x: 318, y: 250, size: 118, flip: true, seed: 3, at: mark('intro-1', 'colleague') - 0.1,
         moods: [[mark('intro-1', 'just'), 'happy']],
       });
@@ -173,7 +190,7 @@
       people.forEach((person, i) => {
         const ownAt = mark(v(1), person.own);
         const guessAt = mark(v(2), person.guessAt);
-        S.teammate(team, {
+        teammate(team, {
           look: person.look, x: person.x, y: 300, size: 130, flip: person.flip, seed: i + 1,
           at: mark(v(1), 'four') + i * 0.1,
           moods: [[ownAt, 'think'], [mark(v(2), 'house'), 'happy'], [guessAt, 'puzzled']],
@@ -238,11 +255,12 @@
         eraseAt: mark(v(5), 'rub'), fixAt: mark(v(5), 'done'),
       });
       kit.sticker(flaw, 'One eraser: done', { x: 90, y: 360, at: mark(v(5), 'done') + 0.2, variant: 'green', iconName: 'check', rotate: 2 });
-      // The architect taps the pencil at the flaw and nods once it is fixed,
+      // The architect taps the flaw, turns the pencil to its rubber, and
+      // nods once it is fixed,
       // gone before the shipped app needs the middle of the stage.
       A.architect(flaw, {
         ...ARCHITECT, x: 392, y: 118, scale: 0.92, flip: true, at: line(v(5)).start, until: line(v(6)).start + 0.05,
-        moves: [[mark(v(5), 'flaw'), 'tap', { to: [205, 250] }], [mark(v(5), 'done'), 'nod']],
+        moves: [[mark(v(5), 'flaw'), 'tap', { to: [205, 250] }], [mark(v(5), 'rub'), 'erase', { to: [234, 232] }], [mark(v(5), 'done'), 'nod']],
       });
       kit.sticker(flaw, 'In shipped code', { x: 560, y: 70, at: mark(v(6), 'shipped'), variant: 'white', iconName: 'box', rotate: 3 });
       S.device(flaw, 'phone', { x: 640, y: 96, size: 180, at: mark(v(6), 'flaw') });
@@ -251,7 +269,7 @@
       kit.stamp(flaw, 'Shipped', { x: 446, y: 184, at: mark(v(6), 'shipped'), rotate: -10, shake: false, from: 1.5, small: true });
       S.bug(flaw, { route: [[708, 170], [770, 196], [716, 232], [784, 250]], at: mark(v(6), 'code'), duration: 2.2, size: 30 });
       people.forEach((person, i) => {
-        S.teammate(flaw, {
+        teammate(flaw, {
           look: person.look, x: 548 + i * 84, y: 300, size: 78, flip: i > 1, seed: i + 5,
           at: mark(v(6), 'code') + i * 0.06, moods: [[mark(v(6), 'change'), 'worried']],
         });
@@ -266,7 +284,7 @@
       const umlSaid = mark(v(7), 'uml');
       people.forEach((person, i) => {
         const sharedAt = umlSaid + 0.2 + i * 0.15;
-        S.teammate(notation, {
+        teammate(notation, {
           look: person.look, x: person.x, y: 300, size: 130, flip: person.flip, seed: i + 1,
           at: umlAt + i * 0.05, moods: [[sharedAt, 'happy']],
         });
@@ -313,21 +331,23 @@ class House {
 @enduml`,
       });
       people.forEach((person, i) => {
-        S.teammate(hand, {
+        teammate(hand, {
           look: person.look, x: 560 + i * 92, y: 70, size: 84, flip: i > 1, seed: i + 9,
           at: mark(v(8), 'team') + i * 0.06, moods: [[mark(v(8), 'team'), 'happy']],
         });
       });
-      kit.flow(hand, { from: [410, 200], to: [600, 120], bend: -40, color: 'gold', at: mark(v(8), 'team') });
+      // Leave breathing room beside the shoulder, robot, and checklist;
+      // arrow tips belong outside their artwork and text.
+      kit.flow(hand, { from: [418, 200], to: [550, 144], bend: -35, color: 'gold', at: mark(v(8), 'team') });
       S.robot(hand, { x: 746, y: 268, size: 132, at: mark(v(8), 'agent'), typeAt: mark(v(8), 'agent') + 0.3, typeUntil: mark(v(9), 'back') });
-      kit.flow(hand, { from: [412, 236], to: [742, 300], bend: -50, color: 'gold', at: mark(v(8), 'agent') });
+      kit.flow(hand, { from: [418, 236], to: [754, 316], bend: -50, color: 'gold', at: mark(v(8), 'agent') });
       // Short rows, in right after the work comes back, so the card can be read before the chorus.
       S.checklist(hand, {
         x: 430, y: 300, w: 250, title: 'Tested against the plan', at: mark(v(8), 'too'),
         rows: ['floors', 'rooms', 'build()'].map((text, i) => ({ text, at: mark(v(9), 'then') + 0.2 + i * 0.12, ok: true })),
       });
       // The robot's work comes back first, then each row checks it.
-      kit.flow(hand, { from: [744, 360], to: [686, 360], bend: 0, color: 'cyan', at: mark(v(9), 'then') });
+      kit.flow(hand, { from: [752, 360], to: [720, 360], bend: 0, color: 'cyan', at: mark(v(9), 'then') });
       const planAt = handPlan.stagePoint(handPlan.box('House'), 'center');
       A.architect(hand, {
         ...ARCHITECT, x: 22, y: 166, scale: 0.84, tag: '', at: handAt + 0.1,
@@ -386,7 +406,7 @@ class Book {
       // the sheet and talks it over with a teammate, who pictures the same
       // class box; the teammate is gone before the box's labels need the room.
       const piecesAt = mark(v(2), 'where');
-      S.teammate(a, {
+      teammate(a, {
         look: 'hijab', x: 704, y: 262, size: 100, flip: false, seed: 14, at: mark(v(1), 'discuss'), until: piecesAt - 0.15,
         moods: [[mark(v(1), 'discuss'), 'think'], [mark(v(2), 'team'), 'happy']],
       });

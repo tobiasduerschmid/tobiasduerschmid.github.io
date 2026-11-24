@@ -42,6 +42,11 @@ const songPlayers = [
     storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/draw_it_out.yml'), 'utf8')),
   },
   {
+    // The hero performs as the foreman throughout, including the outro.
+    name: 'Design with reuse', path: '/assets/song-player/not-a-one-time-investment.html', cameoTime: 276,
+    storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/not_a_one_time_investment.yml'), 'utf8')),
+  },
+  {
     // The hero types at a desk while the Teammate sings "No need to worry".
     name: 'Working on a team', path: '/assets/song-player/it-works-on-my-machine.html', cameoTime: 5,
     storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/it_works_on_my_machine.yml'), 'utf8')),
@@ -366,12 +371,28 @@ test('renderer-only: confetti reproduces an absolute pose across backward seeks'
 
 for (const song of songPlayers) {
   for (const { name, hero, skin, hair, suit } of heroSamples) {
-    test(`${song.name} renderer-only: the ${name} remains a saved character without workout animation`, async ({ page }, testInfo) => {
+    const performer = song.name === 'Design with reuse';
+    const behavior = performer ? 'supplies the foreman face without changing the saved character' : 'remains a saved character without workout animation';
+    test(`${song.name} renderer-only: the ${name} ${behavior}`, async ({ page }, testInfo) => {
       await page.addInitScript(({ key, hero }) => localStorage.setItem(key, JSON.stringify(hero)), { key: STORAGE_KEY, hero });
       await page.goto(song.path);
       const student = page.getByTestId('song-student-avatar');
       await expect(student).toHaveAttribute('data-avatar-state', 'saved');
       await page.evaluate((time) => window.Timeline.seek(time), song.cameoTime);
+      if (performer) {
+        // The shared human costume supports saved human/Prof heads; a mascot
+        // uses its established human fallback, preserving the saved choice.
+        const foreman = page.getByTestId('oc-foreman');
+        const head = foreman.getByTestId('song-hero-head');
+        await expect(head).toBeVisible();
+        await expect(head).toHaveAttribute('data-hero-kind', hero.kind === 'bruin' ? 'human' : hero.kind);
+        await expect(head).toHaveCSS('--hero-skin-light', hero.kind === 'bruin' ? '#cf9e82' : skin);
+        await expect(head).toHaveCSS('--hero-hair', hero.kind === 'bruin' ? '#1f140c' : hair);
+        await expect(head.locator('[data-hero-barbell], animate, animateTransform, animateMotion, set')).toHaveCount(0);
+        expect(await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY)).toBe(JSON.stringify(hero));
+        await foreman.screenshot({ path: `/tmp/reuse-foreman-${hero.kind}-${testInfo.project.name}.png` });
+        return;
+      }
       const portrait = student.locator('[data-gym-hero-svg]');
       await expect(portrait).toBeVisible();
       await expect(portrait).toHaveAttribute('data-hero-kind', hero.kind);
@@ -398,7 +419,8 @@ for (const song of songPlayers) {
   }
 
   for (const storage of ['missing', 'malformed', 'blocked']) {
-    test(`${song.name}: a ${storage} saved avatar uses the default Bruin without saving it`, async ({ page }, testInfo) => {
+    const performer = song.name === 'Design with reuse';
+    test(`${song.name}: a ${storage} saved avatar uses the default ${performer ? 'foreman' : 'Bruin'} without saving it`, async ({ page }, testInfo) => {
       const errors = [];
       page.on('pageerror', (error) => errors.push(error.message));
       await page.addInitScript(({ mode, key }) => {
@@ -411,15 +433,17 @@ for (const song of songPlayers) {
       await expect(page.getByRole('button', { name: 'Play song', exact: true })).toBeEnabled();
       await page.evaluate((time) => window.Timeline.seek(time), song.cameoTime);
       const audio = page.getByLabel(`${song.storyboard.title} audio`, { exact: true });
-      const student = page.getByTestId('song-student-avatar');
+      const student = page.getByTestId(performer ? 'oc-foreman' : 'song-student-avatar');
       await expect(student).toBeVisible();
-      const portrait = student.locator('[data-gym-hero-svg]');
+      const portrait = performer ? student.getByTestId('song-hero-head') : student.locator('[data-gym-hero-svg]');
       await expect(portrait).toBeVisible();
-      await expect(portrait).toHaveAttribute('data-hero-kind', 'bruin');
-      await expect(portrait).toHaveCSS('--hero-skin-light', '#8b5a35');
-      await expect(portrait).toHaveCSS('--hero-hair', '#3d2818');
-      await expect(portrait).toHaveCSS('--hero-suit', '#1F6EBD');
-      await expect(portrait.locator('[data-hero-bruin-anatomy="head"]')).toBeVisible();
+      await expect(portrait).toHaveAttribute('data-hero-kind', performer ? 'human' : 'bruin');
+      await expect(portrait).toHaveCSS('--hero-skin-light', performer ? '#cf9e82' : '#8b5a35');
+      await expect(portrait).toHaveCSS('--hero-hair', performer ? '#1f140c' : '#3d2818');
+      if (!performer) {
+        await expect(portrait).toHaveCSS('--hero-suit', '#1F6EBD');
+        await expect(portrait.locator('[data-hero-bruin-anatomy="head"]')).toBeVisible();
+      }
       if (storage !== 'blocked') {
         expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBe(storage === 'missing' ? null : '{invalid JSON');
       }

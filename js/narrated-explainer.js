@@ -21,12 +21,13 @@
   };
 
   // A toggle names its next action in its accessible name and tooltip (both
-  // the native title and the site's tooltip copy) and shows the matching icon.
-  function labelControl(button, label, icon) {
+  // the native title and the site's tooltip copy); its state class picks the
+  // matching shape of its icon (_includes/player-icon.html).
+  function labelControl(button, label, state, active) {
     button.setAttribute('aria-label', label);
     button.title = label;
     button.setAttribute('data-original-title', label);
-    button.querySelector('i').className = `fa ${icon}`;
+    button.classList.toggle(state, active);
   }
 
   // A player may place its own hidden button; otherwise one follows the mute button.
@@ -39,7 +40,7 @@
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.action = 'fullscreen';
-    button.appendChild(document.createElement('i')).setAttribute('aria-hidden', 'true');
+    button.textContent = 'Full screen';
     root.querySelector('[data-action="mute"]').after(button);
     return button;
   }
@@ -109,7 +110,7 @@
     const isFullscreen = () => viewportFullscreen || nativeFullscreen.element() === target;
 
     function updateButton(active) {
-      labelControl(button, active ? 'Exit full screen' : 'Enter full screen', active ? 'fa-compress' : 'fa-expand');
+      labelControl(button, active ? 'Exit full screen' : 'Enter full screen', 'is-active', active);
     }
 
     // Panels marked data-fullscreen-scroll scroll inside the full-screen frame,
@@ -245,7 +246,7 @@
     }
 
     function updatePlayButton() {
-      labelControl(playButton, audio.paused ? 'Play narration' : 'Pause narration', audio.paused ? 'fa-play' : 'fa-pause');
+      labelControl(playButton, audio.paused ? 'Play narration' : 'Pause narration', 'is-playing', !audio.paused);
     }
 
     function renderPlayback(time) {
@@ -302,20 +303,14 @@
       }
     }
 
+    // Volume and mute belong to the control bar (js/narration-player-controls.js).
     const actions = {
       play() {
         if (audio.paused) play();
         else audio.pause();
       },
-      restart() { audio.pause(); seekTo(0); status.textContent = 'Returned to the beginning.'; },
       previous() { selectScene(Math.max(0, currentScene - 1)); },
       next() { selectScene(Math.min(scenes.length - 1, currentScene + 1)); },
-      mute() {
-        audio.muted = !audio.muted;
-        const button = root.querySelector('[data-action="mute"]');
-        labelControl(button, audio.muted ? 'Unmute narration' : 'Mute narration', audio.muted ? 'fa-volume-off' : 'fa-volume-up');
-        button.setAttribute('aria-pressed', String(audio.muted));
-      },
     };
 
     // The full-screen button already has its own handler.

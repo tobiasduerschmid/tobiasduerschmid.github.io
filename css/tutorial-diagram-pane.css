@@ -1,0 +1,721 @@
+/* ============================================================
+   Authored-diagram pane (js/tutorial-diagram-pane.js)
+   The Diagram view shows authored ArchUML diagrams with the code
+   editor (split) or across the whole workspace (maximized). In a
+   narrow workspace the split puts the code above the diagram
+   (stacked); at 900px and below the pane flows below the editor.
+   The divider shares the editor-pane divider styles in
+   css/tutorial.css. The Files drawer beside the pane lives in
+   css/tutorial-file-tree.css. ArchUML's own CSS themes the SVG in
+   dark mode and print. Text inherits the paragraph size.
+   ============================================================ */
+
+/* The pane is a <section>; the site's section spacing (portfolio.css)
+   must not push it below the view toggle. Its width decides whether the
+   toolbar shows its labels (the container query below). */
+.tutorial-diagram-pane {
+  position: relative;
+  margin: 0;
+  flex: 1 1 50%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  container: tutorial-diagram-pane / inline-size;
+  background: #ffffff;
+  color: #1f2328;
+  border-left: 1px solid #c8ccd2;
+  font: inherit;
+  line-height: 1.4;
+}
+
+.tutorial-diagram-pane[hidden],
+.tutorial-diagram-pane-divider[hidden] {
+  display: none !important;
+}
+
+/* The bar positions the Code links list that opens under it. */
+.tutorial-diagram-pane__bar {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4em 0.75em;
+  padding: 0.4em 0.6em;
+  background: #f6f7f9;
+  border-bottom: 1px solid #c8ccd2;
+}
+
+.tutorial-diagram-pane__title {
+  flex: 1 1 8em;
+  min-width: 0;
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.tutorial-diagram-pane__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  gap: 0.3em;
+  min-width: 0;
+}
+
+.tutorial-diagram-pane__tabs[hidden],
+.tutorial-diagram-pane__title[hidden] {
+  display: none;
+}
+
+/* One row: − 75% + | Fit 100% | Code links, layout, full screen. It wraps
+   only when the pane is too narrow even for the icons (reflow). */
+.tutorial-diagram-pane__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3em;
+  margin-left: auto;
+}
+
+.tutorial-diagram-pane__tool--start {
+  margin-left: 0.5em;
+}
+
+.tutorial-diagram-pane__tab,
+.tutorial-diagram-pane__tool {
+  font: inherit;
+  min-width: 2em;
+  min-height: 2em;
+  padding: 0.1em 0.6em;
+  border: 1px solid #6a737d;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #1f2328;
+  cursor: pointer;
+}
+
+/* An icon with its name beside it; a narrow pane shows the icon alone. */
+.tutorial-diagram-pane__tool--labelled {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35em;
+  white-space: nowrap;
+}
+
+.tutorial-diagram-pane__tool-icon {
+  flex: 0 0 auto;
+  width: 1.1em;
+  height: 1.1em;
+}
+
+/* Labels need about 58em beside the title; below that the icons stand alone. */
+@container tutorial-diagram-pane (max-width: 58em) {
+  .tutorial-diagram-pane__tool-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .tutorial-diagram-pane__tool--labelled {
+    padding-inline: 0.45em;
+  }
+}
+
+.tutorial-diagram-pane__tab:hover,
+.tutorial-diagram-pane__tool:not([aria-disabled="true"]):hover {
+  background: #e6eaef;
+}
+
+/* Selected and pressed states change border weight and font weight too. */
+.tutorial-diagram-pane__tab[aria-selected="true"] {
+  border: 2px solid #0060a8;
+  background: #d8e6f5;
+  font-weight: 700;
+}
+
+.tutorial-diagram-pane__tool[aria-pressed="true"],
+.tutorial-diagram-pane__links[open] > .tutorial-diagram-pane__tool {
+  border-width: 2px;
+  font-weight: 700;
+}
+
+.tutorial-diagram-pane__tab:focus-visible,
+.tutorial-diagram-pane__tool:focus-visible,
+.tutorial-diagram-pane__canvas:focus-visible {
+  outline: 3px solid #005587;
+  outline-offset: 2px;
+}
+
+.tutorial-diagram-pane__canvas:focus-visible {
+  outline-offset: -3px;
+}
+
+.tutorial-diagram-pane__zoom {
+  min-width: 3.2em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Inactive controls are exempt from contrast minimums. Fit and 100% are
+   inactive while they are the current view. */
+.tutorial-diagram-pane__tool[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* While the drawing is fitted, a click shows the clicked part at reading
+   size (js/tutorial-diagram-pane.js). The hint floats over the lower edge
+   of the drawing's stage, so showing it never resizes the drawing's scroll
+   area. */
+.tutorial-diagram-pane .tutorial-diagram-pane__canvas--fitted > svg {
+  cursor: zoom-in;
+}
+
+/* A drawing larger than the pane moves with a drag. */
+.tutorial-diagram-pane .tutorial-diagram-pane__canvas--pannable {
+  cursor: grab;
+}
+
+.tutorial-diagram-pane .tutorial-diagram-pane__canvas--panning,
+.tutorial-diagram-pane .tutorial-diagram-pane__canvas--panning * {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.tutorial-diagram-pane__hint {
+  display: none;
+  position: absolute;
+  left: 0.75em;
+  bottom: 0.75em;
+  z-index: 1;
+  max-width: calc(100% - 1.5em);
+  margin: 0;
+  padding: 0.3em 0.6em;
+  font-size: 0.9em;
+  background: #ffffff;
+  color: #1f2328;
+  border: 1px solid #6a737d;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.tutorial-diagram-pane:has(.tutorial-diagram-pane__canvas--fitted > svg) .tutorial-diagram-pane__hint {
+  display: block;
+}
+
+/* With the code on a wide screen the pane is too small for the hint to
+   float over the drawing without hiding most of it. */
+@media screen and (min-width: 901px) {
+  .tvm-workspace:not(.tutorial-diagram-workspace--maximized) .tutorial-diagram-pane:has(.tutorial-diagram-pane__canvas--fitted > svg) .tutorial-diagram-pane__hint {
+    display: none;
+  }
+}
+
+.tutorial-diagram-pane__status {
+  margin: 0;
+  padding: 0 0.6em;
+}
+
+.tutorial-diagram-pane__panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tutorial-diagram-pane__stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tutorial-diagram-pane .tutorial-diagram-pane__canvas {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.75em;
+}
+
+/* A fitted drawing never scrolls, so the canvas's size stays the space it
+   fills while the pane resizes. */
+.tutorial-diagram-pane .tutorial-diagram-pane__canvas--fitted {
+  overflow: hidden;
+}
+
+/* Zoom multiplies the readable width ArchUML computes for the drawing;
+   the pane sets --tutorial-diagram-zoom, Fit included. */
+.tutorial-diagram-pane .tutorial-diagram-pane__canvas > svg {
+  width: calc(var(--uml-readable-width) * var(--tutorial-diagram-zoom, 1));
+  max-width: none;
+}
+
+.tutorial-diagram-pane__message {
+  margin: 0 0 0.5em;
+}
+
+.tutorial-diagram-pane__source {
+  margin: 0;
+  padding: 0.5em 0.75em;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #f6f8fa;
+  color: #1f2328;
+  border: 1px solid #c8ccd2;
+}
+
+/* Code links (js/tutorial-diagram-pane.js): a label that a link names, and
+   each `path:line` citation of a project file in a note, takes the link
+   color, a thick underline set below the text, and a pointer; a click
+   opens the code. UML underlines instance names in a thin
+   line of the text color (lifelines), so the link underline differs in
+   weight and position as well as color, and an unlinked instance name
+   keeps its plain UML underline. #0b5cad on white is 6.6:1. ArchUML draws
+   its SVG in its own light palette and dark mode inverts the whole drawing,
+   which turns this blue light, so no dark-mode variant is needed here. */
+.tutorial-diagram-pane__canvas .tutorial-diagram-pane__link {
+  cursor: pointer;
+  fill: #0b5cad;
+  text-decoration: underline;
+  text-decoration-color: #0b5cad;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.tutorial-diagram-pane__canvas .tutorial-diagram-pane__link:hover {
+  text-decoration-thickness: 3px;
+}
+
+/* A project-search hit: a 2px outline and a fill behind the label, and the
+   label in bold, so the mark never relies on color alone. */
+.tutorial-diagram-pane__canvas rect.tutorial-diagram-pane__hit-box {
+  fill: #fff1a8;
+  stroke: #7a4d00;
+  stroke-width: 2px;
+  pointer-events: none;
+}
+
+.tutorial-diagram-pane__canvas text.tutorial-diagram-pane__text-hit {
+  font-weight: 700;
+  fill: #1f2328;
+}
+
+/* The current match of the find bar: a heavier outline than the others. */
+.tutorial-diagram-pane__canvas rect.tutorial-diagram-pane__hit-box--current {
+  stroke-width: 4px;
+  fill: #ffd84d;
+}
+
+/* Find in diagram (Ctrl/Cmd+F): a bar under the toolbar. */
+.tutorial-diagram-pane__find {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4em 0.6em;
+  padding: 0.4em 0.6em;
+  background: #f6f7f9;
+  border-bottom: 1px solid #c8ccd2;
+}
+
+.tutorial-diagram-pane__find[hidden] {
+  display: none;
+}
+
+.tutorial-diagram-pane__find-label {
+  font-weight: 600;
+}
+
+.tutorial-diagram-pane__find-input {
+  font: inherit;
+  flex: 1 1 12em;
+  min-width: 8em;
+  min-height: 2em;
+  padding: 0.1em 0.4em;
+  border: 1px solid #6a737d;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #1f2328;
+}
+
+.tutorial-diagram-pane__find-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+.tutorial-diagram-pane__find-option input {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+.tutorial-diagram-pane__find-status {
+  margin: 0;
+  min-width: 6em;
+  font-variant-numeric: tabular-nums;
+}
+
+.tutorial-diagram-pane__find-input:focus-visible,
+.tutorial-diagram-pane__find-option input:focus-visible {
+  outline: 3px solid #005587;
+  outline-offset: 2px;
+}
+
+/* The drawing is hidden from assistive technology; the Code links
+   disclosure in the toolbar offers each link as a button. Its list opens
+   over the drawing, under the bar, so it never takes the drawing's height. */
+/* The site's details and summary spacing, color, and weight do not apply. */
+.tutorial-diagram-pane__links {
+  display: flex;
+  margin: 0;
+}
+
+.tutorial-diagram-pane__links[hidden] {
+  display: none;
+}
+
+.tutorial-diagram-pane__links-summary {
+  list-style: none;
+  font-weight: normal;
+}
+
+.tutorial-diagram-pane__links-summary:hover {
+  text-decoration: none;
+}
+
+.tutorial-diagram-pane__links-summary::-webkit-details-marker {
+  display: none;
+}
+
+.tutorial-diagram-pane__links-panel {
+  position: absolute;
+  top: 100%;
+  right: 0.6em;
+  z-index: 5;
+  box-sizing: border-box;
+  width: min(32em, calc(100% - 1.2em));
+  max-height: min(24em, 60vh);
+  overflow: auto;
+  margin-top: 0.25em;
+  padding: 0.4em 0.75em 0.6em;
+  border: 1px solid #6a737d;
+  border-radius: 4px;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.tutorial-diagram-pane__links-hint {
+  margin: 0 0 0.4em;
+  font-size: 0.9em;
+  color: #4b535d;
+}
+
+.tutorial-diagram-pane__links-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2em;
+}
+
+.tutorial-diagram-pane__link-button {
+  font: inherit;
+  min-height: 24px;
+  padding: 0.1em 0.4em;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: #0b4f8a;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.tutorial-diagram-pane__link-button:hover {
+  border-color: #6a737d;
+  background: #e6eaef;
+}
+
+.tutorial-diagram-pane__link-arrow {
+  margin: 0 0.35em;
+}
+
+.tutorial-diagram-pane__link-target {
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 0.9em;
+}
+
+.tutorial-diagram-pane__link-button:focus-visible {
+  outline: 3px solid #005587;
+  outline-offset: 2px;
+}
+
+/* Maximized layout: the diagram has the workspace to itself until the
+   learner needs code again (a file opens, Run, project search, or the
+   Editor view; js/tutorial-diagram-pane.js). The editor steps aside, and on
+   wide screens the Files sidebar too; narrow screens keep the Files
+   disclosure above the stacked pane. The !important rules beat the inline
+   sizes that divider drags leave, which return when the layout ends. */
+.tvm-workspace.tutorial-diagram-workspace--maximized .tvm-editor-body > .tvm-editor-pane,
+.tvm-workspace.tutorial-diagram-workspace--maximized .tvm-editor-body > .tvm-editor-pane-divider,
+.tvm-workspace.tutorial-diagram-workspace--maximized .tvm-editor-body > .tutorial-diagram-pane-divider {
+  display: none !important;
+}
+
+.tvm-workspace.tutorial-diagram-workspace--maximized .tvm-editor-body > .tutorial-diagram-pane {
+  flex: 1 1 auto !important;
+  border-left: 0;
+}
+
+@media screen and (min-width: 901px) {
+  .tvm-workspace.tutorial-diagram-workspace--maximized .tvm-editor-body > .tvm-file-sidebar {
+    display: none !important;
+  }
+
+  /* Stacked split: Files stays a column on the left; the code takes the
+     top row and the diagram the bottom one, both as wide as the
+     workspace. The divider's drag sets --tutorial-diagram-code-size. */
+  .tvm-workspace.tutorial-diagram-workspace--stacked .tvm-editor-body {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, var(--tutorial-diagram-code-size, 1fr)) auto minmax(0, 1fr);
+  }
+
+  .tvm-workspace.tutorial-diagram-workspace--stacked .tvm-editor-body > .tvm-file-sidebar {
+    grid-column: 1;
+    grid-row: 1 / -1;
+  }
+
+  .tvm-workspace.tutorial-diagram-workspace--stacked .tvm-editor-body > .tvm-editor-pane-left {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .tvm-workspace.tutorial-diagram-workspace--stacked .tvm-editor-body > .tutorial-diagram-pane-divider {
+    grid-column: 2;
+    grid-row: 2;
+    height: var(--tvm-splitter-hit-size);
+    margin-inline: 0;
+    margin-block: var(--tvm-splitter-hit-overhang);
+    --tvm-splitter-rail-direction: to bottom;
+    cursor: row-resize;
+  }
+
+  .tvm-workspace.tutorial-diagram-workspace--stacked .tvm-editor-body > .tutorial-diagram-pane-divider::before {
+    top: 50%;
+    bottom: auto;
+    left: 0;
+    right: 0;
+    width: auto;
+    height: var(--tvm-splitter-line-size);
+    transform: translateY(-50%);
+  }
+
+  .tvm-workspace.tutorial-diagram-workspace--stacked .tvm-editor-body > .tutorial-diagram-pane-divider::after {
+    width: var(--tvm-splitter-handle-length);
+    height: var(--tvm-splitter-handle-thickness);
+  }
+
+  .tvm-workspace.tutorial-diagram-workspace--stacked .tvm-editor-body > .tutorial-diagram-pane {
+    grid-column: 2;
+    grid-row: 3;
+    border-left: 0;
+    border-top: 1px solid #c8ccd2;
+  }
+
+  html.dark-mode .tvm-workspace.tutorial-diagram-workspace--stacked .tvm-editor-body > .tutorial-diagram-pane {
+    border-top-color: #3a3a42;
+  }
+}
+
+/* OUTPUT collapses to its bar: Run stays in view and the diagram takes the
+   height. Only the standard panel (bar, then output) collapses; tabbed and
+   terminal panels keep their size. */
+.tvm-workspace.tutorial-diagram-workspace--maximized:has(> .tvm-output-panel > .tvm-output-container) > .tvm-editor-panel {
+  flex: 1 1 auto !important;
+}
+
+.tvm-workspace.tutorial-diagram-workspace--maximized > .tvm-output-panel:has(> .tvm-output-container) {
+  flex: 0 0 auto !important;
+}
+
+.tvm-workspace.tutorial-diagram-workspace--maximized > .tvm-output-panel > .tvm-output-container,
+.tvm-workspace.tutorial-diagram-workspace--maximized:has(> .tvm-output-panel > .tvm-output-container) > .tvm-vsplitter {
+  display: none !important;
+}
+
+.tutorial-diagram-pane:fullscreen {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Explanation beside a disabled view button (e.g. before lock-in). In a
+   narrow pane it wraps below the buttons instead of widening the page. */
+.tvm-view-toggle {
+  flex-wrap: wrap;
+}
+
+.tvm-view-toggle-note {
+  flex: 1 1 12em;
+  min-width: 0;
+  align-self: center;
+  padding: 0 0.5em;
+  color: #4b535d;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+.tvm-view-toggle[hidden],
+.tvm-view-toggle .tvm-view-btn[hidden] {
+  display: none;
+}
+
+/* Inactive controls are exempt from contrast minimums; the note stays legible. */
+.tvm-view-btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+html.dark-mode .tutorial-diagram-pane {
+  background: #17181c;
+  color: #e6edf3;
+  border-left-color: #3a3a42;
+}
+
+html.dark-mode .tutorial-diagram-pane__bar {
+  background: #1f2026;
+  border-bottom-color: #3a3a42;
+}
+
+html.dark-mode .tutorial-diagram-pane__tab,
+html.dark-mode .tutorial-diagram-pane__tool {
+  background: #22232a;
+  color: #e6edf3;
+  border-color: #8b949e;
+}
+
+html.dark-mode .tutorial-diagram-pane__tab:hover,
+html.dark-mode .tutorial-diagram-pane__tool:not([aria-disabled="true"]):hover {
+  background: #2d2e36;
+}
+
+html.dark-mode .tutorial-diagram-pane__tab[aria-selected="true"] {
+  background: #1f3a5c;
+  border-color: #6cb2ff;
+  color: #ffffff;
+}
+
+html.dark-mode .tutorial-diagram-pane__tab:focus-visible,
+html.dark-mode .tutorial-diagram-pane__tool:focus-visible,
+html.dark-mode .tutorial-diagram-pane__canvas:focus-visible {
+  outline-color: #ffd100;
+}
+
+html.dark-mode .tutorial-diagram-pane__source {
+  background: #22232a;
+  color: #e6edf3;
+  border-color: #3a3a42;
+}
+
+html.dark-mode .tvm-view-toggle-note {
+  color: #b1bac4;
+}
+
+html.dark-mode .tutorial-diagram-pane__find {
+  background: #1f2026;
+  border-bottom-color: #3a3a42;
+}
+
+html.dark-mode .tutorial-diagram-pane__find-input {
+  background: #22232a;
+  color: #e6edf3;
+  border-color: #8b949e;
+}
+
+html.dark-mode .tutorial-diagram-pane__find-input:focus-visible,
+html.dark-mode .tutorial-diagram-pane__find-option input:focus-visible {
+  outline-color: #ffd100;
+}
+
+html.dark-mode .tutorial-diagram-pane__links-panel {
+  background: #1f2026;
+  border-color: #8b949e;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+}
+
+html.dark-mode .tutorial-diagram-pane__links-hint {
+  color: #b1bac4;
+}
+
+html.dark-mode .tutorial-diagram-pane__link-button {
+  color: #8ecfff;
+}
+
+html.dark-mode .tutorial-diagram-pane__link-button:hover {
+  border-color: #8b949e;
+  background: #2d2e36;
+}
+
+html.dark-mode .tutorial-diagram-pane__link-button:focus-visible {
+  outline-color: #ffd100;
+}
+
+html.dark-mode .tutorial-diagram-pane__hint {
+  background: #22232a;
+  color: #e6edf3;
+  border-color: #8b949e;
+}
+
+@media screen and (max-width: 900px) {
+  .tutorial-diagram-pane {
+    flex: 0 0 auto !important;
+    border-left: 0;
+    border-top: 1px solid #c8ccd2;
+  }
+
+  html.dark-mode .tutorial-diagram-pane {
+    border-top-color: #3a3a42;
+  }
+
+  .tutorial-diagram-pane .tutorial-diagram-pane__canvas {
+    flex: 0 0 auto;
+    height: 24em;
+  }
+
+  /* The page flows here, so there is nothing for the divider to resize. */
+  .tutorial-diagram-pane-divider {
+    display: none !important;
+  }
+}
+
+@media print {
+  .tutorial-diagram-pane-divider,
+  .tutorial-diagram-pane__tools,
+  .tutorial-diagram-pane__hint {
+    display: none !important;
+  }
+
+  .tutorial-diagram-pane {
+    border: 0;
+  }
+
+  /* Interactive aids print plain: no find bar, no search marks. */
+  .tutorial-diagram-pane__find {
+    display: none !important;
+  }
+
+  .tutorial-diagram-pane__canvas rect.tutorial-diagram-pane__hit-box {
+    display: none;
+  }
+}

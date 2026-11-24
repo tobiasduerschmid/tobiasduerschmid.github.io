@@ -93,15 +93,38 @@
   // ------------------------------------------------------------------
 
   /**
+   * A node's box in `ancestor`'s padding-box pixels, ignoring transforms
+   * (entrances and bumps), or null until the stage has laid it out.
+   */
+  function boxIn(node, ancestor) {
+    if (!node.offsetWidth) return null;
+    let x = 0;
+    let y = 0;
+    let current = node;
+    while (current && current !== ancestor) {
+      x += current.offsetLeft;
+      y += current.offsetTop;
+      current = current.offsetParent;
+      if (current && current !== ancestor) {
+        x += current.clientLeft;
+        y += current.clientTop;
+      }
+    }
+    return current ? { x, y, w: node.offsetWidth, h: node.offsetHeight } : null;
+  }
+
+  /**
    * objectCard(parent, { x, y, w, title, kind, fields, methods, at, until,
-   *   methodsAt, compact, lockAt })
+   *   methodsAt, compact, lockAt, pairs })
    * kind: 'object' (underlined `name : Class`), 'class', 'record' (state
    * only), 'blueprint' (names, no values). fields = [[name, value]];
    * methods = ['steer()', …]. With `methodsAt`, the methods compartment
-   * grows in at that time (a record becoming an object).
+   * grows in at that time (a record becoming an object). `pairs` lists the
+   * methods two to a row, for getter/setter pairs that wire() connects.
    */
-  function objectCard(parent, { x, y, w = 220, title, kind = 'object', fields = [], methods = [], at, until, methodsAt, compact = false, lockAt, unlocked = false }) {
-    const node = place(el('div', `oop-card oop-card--${kind}${compact ? ' oop-card--compact' : ''} is-staged`, parent), x, y);
+  function objectCard(parent, { x, y, w = 220, title, kind = 'object', fields = [], methods = [], at, until, methodsAt, compact = false, lockAt, unlocked = false, pairs = false }) {
+    const variants = `${compact ? ' oop-card--compact' : ''}${pairs ? ' oop-card--pairs' : ''}`;
+    const node = place(el('div', `oop-card oop-card--${kind}${variants} is-staged`, parent), x, y);
     node.style.width = `${w}px`;
     const head = el('div', 'oop-card-head', node);
     el('span', 'oop-card-title', head, title);
@@ -151,6 +174,36 @@
       if (lock) fx.bump(lock, lockAt, 0.5);
     }
     onFrame((t) => node.classList.toggle('is-unlocked', !latest(locks, t).locked));
+    // Wires from methods into fields: drawn once the card is laid out.
+    const fieldOrder = fields.map(([name]) => name);
+    const wires = [];
+    let wireLayer = null;
+    let wiresPlaced = false;
+    function placeWires() {
+      const placed = wires.map(({ name, methodNames, path, end, port }) => {
+        const row = boxIn(fieldRows.get(name).row, node);
+        const value = boxIn(fieldRows.get(name).valueNode, node);
+        const pills = methodNames.map((method) => boxIn(methodRows.get(method), node));
+        if (!row || !value || pills.some((pill) => !pill)) return false;
+        // Each wire climbs its own lane at the card's right: the top field's is outermost.
+        const lane = row.x + row.w - 6 - fieldOrder.indexOf(name) * 16;
+        const startX = Math.max(...pills.map((pill) => pill.x + pill.w)) + 6;
+        const startY = pills[0].y + pills[0].h / 2;
+        const tipX = value.x + value.w + 8;
+        const fieldY = row.y + row.h / 2;
+        const r = 7;
+        path.setAttribute('d', `M ${startX} ${startY} H ${lane - r} Q ${lane} ${startY} ${lane} ${startY - r} V ${fieldY + r} Q ${lane} ${fieldY} ${lane - r} ${fieldY} H ${tipX + 6}`);
+        end.setAttribute('transform', `translate(${tipX} ${fieldY})`);
+        port.setAttribute('cx', startX);
+        port.setAttribute('cy', startY);
+        return true;
+      });
+      return placed.every(Boolean);
+    }
+    onFrame(() => {
+      if (wiresPlaced || !wires.length || document.fonts?.status === 'loading') return;
+      wiresPlaced = placeWires();
+    });
     const api = {
       node,
       state,
@@ -174,6 +227,27 @@
         entry.versions.sort((p, q) => p.at - q.at);
         fx.bump(entry.row, atTime, 0.12);
         if (tone) during(entry.row, `is-${tone}`, atTime, toneUntil);
+        return api;
+      },
+      /**
+       * A wire from a row of methods (`methodNames`) into the field `name`,
+       * with its arrowhead at the field's value: those methods reach
+       * straight into it. Wires climb lanes up the card's right, outermost
+       * for the top field, so a `pairs` card that lists its method rows
+       * bottom field first gets wires that nest without crossing.
+       */
+      wire(name, methodNames, atTime) {
+        requireTime(atTime, 'wire');
+        if (!wireLayer) wireLayer = svg('svg', { class: 'oop-card-wires', 'aria-hidden': 'true' }, node);
+        const group = svg('g', {}, wireLayer);
+        const path = svg('path', { class: 'oop-card-wire' }, group);
+        const port = svg('circle', { class: 'oop-card-wire-end is-staged', r: 3.5 }, group);
+        const end = svg('path', { class: 'oop-card-wire-end is-staged', d: 'M 0 0 L 10 -5.5 L 10 5.5 Z' }, group);
+        wires.push({ name, methodNames, path, end, port });
+        wiresPlaced = false;
+        fx.fadeIn(port, atTime, 0.1);
+        fx.draw(path, atTime, 0.45);
+        fx.fadeIn(end, atTime + 0.4, 0.1);
         return api;
       },
       lock(atTime) {

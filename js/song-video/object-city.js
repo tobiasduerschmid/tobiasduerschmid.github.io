@@ -19,7 +19,7 @@
 (function () {
   'use strict';
 
-  const { onFrame, fx, hash01, beats, clamp, easeInOutCubic } = window.Timeline;
+  const { onFrame, fx, hash01, beats, clamp } = window.Timeline;
   const { el, svg, place } = window.SongKit;
   const W = 960;
   const H = 540;
@@ -100,9 +100,27 @@
     token: { w: 40, h: 24 },
   };
 
+  /** Tyres peeking out from under a body, one pair per axle at `xs`, `half` from the centre line. */
+  function wheels(g, xs, half, length = 8) {
+    for (const x of xs) {
+      for (const y of [-half - 1.6, half - 1.4]) svg('rect', { class: 'oc-wheel', x: x - length / 2, y, width: length, height: 3, rx: 1.2 }, g);
+    }
+  }
+
+  /** Door mirrors just behind the windscreen. */
+  function mirrors(g, x, half) {
+    svg('rect', { class: 'oc-mirror', x, y: -half - 2.2, width: 3, height: 2.6, rx: 0.8 }, g);
+    svg('rect', { class: 'oc-mirror', x, y: half - 0.4, width: 3, height: 2.6, rx: 0.8 }, g);
+  }
+
   function carBody(g, cls) {
     svg('rect', { class: `oc-shadow`, x: -19, y: -8, width: 42, height: 20, rx: 6 }, g);
+    wheels(g, [-12, 12], 10);
     svg('rect', { class: `oc-body ${cls}`, x: -21, y: -10, width: 42, height: 20, rx: 6 }, g);
+    mirrors(g, 8, 10);
+    // Light falls from the top of the stage: a sheen down the near side, hood creases, door seams.
+    svg('rect', { class: 'oc-sheen', x: -18, y: -9, width: 35, height: 3, rx: 1.5 }, g);
+    svg('path', { class: 'oc-seam', d: 'M13 -6.5 Q16 -3 18.5 -3.5 M13 6.5 Q16 3 18.5 3.5 M-3 -10 V-7.5 M-3 10 V7.5' }, g);
     svg('rect', { class: 'oc-glass', x: 2, y: -8, width: 9, height: 16, rx: 2.5 }, g);
     svg('rect', { class: 'oc-glass', x: -15, y: -7.5, width: 6, height: 15, rx: 2 }, g);
     svg('rect', { class: 'oc-roof', x: -9, y: -8, width: 11, height: 16, rx: 2 }, g);
@@ -121,9 +139,15 @@
       svg('path', { class: 'oc-bolt', d: 'M-2 -6 L-6 1 L-3 1 L-5 6 L1 -1 L-2 -1 Z' }, g);
     } else if (kind === 'bus') {
       svg('rect', { class: 'oc-shadow', x: -33, y: -10, width: 70, height: 24, rx: 4 }, g);
+      wheels(g, [-22, 22], 12, 10);
       svg('rect', { class: 'oc-body oc-body--bus', x: -35, y: -12, width: 70, height: 24, rx: 4 }, g);
+      mirrors(g, 31, 12);
       for (let i = 0; i < 5; i++) svg('rect', { class: 'oc-glass', x: -28 + i * 11, y: -9, width: 8, height: 18, rx: 1.5 }, g);
       svg('rect', { class: 'oc-glass', x: 26, y: -10, width: 6, height: 20, rx: 1.5 }, g);
+      // The roof's air-conditioning unit and, on the kerb side, the front door.
+      svg('rect', { class: 'oc-roof-unit', x: -12, y: -5, width: 14, height: 10, rx: 2 }, g);
+      svg('path', { class: 'oc-seam', d: 'M-12 0 H2 M-5 -5 V5' }, g);
+      svg('rect', { class: 'oc-door', x: 16, y: 9.5, width: 8, height: 2.5, rx: 0.8 }, g);
       svg('rect', { class: 'oc-brakelight', x: -35, y: -10, width: 2.5, height: 5, rx: 1 }, g);
       svg('rect', { class: 'oc-brakelight', x: -35, y: 5, width: 2.5, height: 5, rx: 1 }, g);
     } else if (kind === 'bike') {
@@ -132,10 +156,19 @@
       svg('rect', { class: 'oc-bike-wheel', x: 6, y: -1.5, width: 7, height: 3, rx: 1.5 }, g);
       svg('path', { class: 'oc-bike-bar', d: 'M6 -5 V5' }, g);
       svg('ellipse', { class: 'oc-rider', cx: -1, cy: 0, rx: 5, ry: 6 }, g);
+      // Arms reach forward to the grips; a helmet with a centre stripe.
+      svg('path', { class: 'oc-rider-arm', d: 'M0 -4.5 L5.5 -4.5 M0 4.5 L5.5 4.5' }, g);
       svg('circle', { class: 'oc-rider-head', cx: 3, cy: 0, r: 3.4 }, g);
+      svg('circle', { class: 'oc-helmet', cx: 2.3, cy: 0, r: 3.2 }, g);
+      svg('path', { class: 'oc-helmet-stripe', d: 'M-0.6 0 H5.2' }, g);
     } else if (kind === 'ambulance') {
       svg('rect', { class: 'oc-shadow', x: -23, y: -10, width: 50, height: 24, rx: 4 }, g);
+      wheels(g, [-15, 14], 12);
       svg('rect', { class: 'oc-body oc-body--ambulance', x: -25, y: -12, width: 50, height: 24, rx: 4 }, g);
+      mirrors(g, 15, 12);
+      // A red band down both sides.
+      svg('rect', { class: 'oc-amb-stripe', x: -24, y: -11, width: 36, height: 2.4 }, g);
+      svg('rect', { class: 'oc-amb-stripe', x: -24, y: 8.6, width: 36, height: 2.4 }, g);
       svg('rect', { class: 'oc-glass', x: 12, y: -9, width: 8, height: 18, rx: 2 }, g);
       svg('path', { class: 'oc-cross', d: 'M-9 -2 H-3 V-8 H3 V-2 H9 V4 H3 V10 H-3 V4 H-9 Z', transform: 'scale(0.75) translate(-4 -1)' }, g);
       svg('rect', { class: 'oc-lightbar', x: 4, y: -10, width: 5, height: 20, rx: 1.5 }, g);
@@ -150,36 +183,130 @@
     }
   }
 
-  /**
-   * Interpolates keyframes [{ t, x, y, a, ease }] (sorted by t). A key's
-   * `ease` shapes the segment that ends at it: 'linear', 'step' (hold the
-   * previous pose, then cut), or eased by default.
-   */
-  function poseAt(keys, t) {
-    if (t <= keys[0].t) return keys[0];
-    for (let i = 1; i < keys.length; i++) {
-      const k0 = keys[i - 1];
-      const k1 = keys[i];
-      if (t < k1.t) {
-        if (k1.ease === 'step' || !Number.isFinite(k0.t)) return k0;
-        const raw = (t - k0.t) / (k1.t - k0.t);
-        const p = k1.ease === 'linear' ? raw : easeInOutCubic(raw);
-        return { x: k0.x + (k1.x - k0.x) * p, y: k0.y + (k1.y - k0.y) * p, a: k0.a + (k1.a - k0.a) * p };
-      }
-    }
-    return keys[keys.length - 1];
+  // ------------------------------------------------------------------
+  // Driving: rounded routes and a speed that builds and fades
+  // ------------------------------------------------------------------
+
+  /** The signed turn, in degrees, from heading `a` to heading `b` (−180..180). */
+  function turnBetween(a, b) {
+    return ((((b - a) % 360) + 540) % 360) - 180;
   }
 
-  /** Dance moves on the beat: each kind answers the same beat its own way. */
-  const DANCES = {
-    car: (p) => ({ rotate: 14 * p, dx: -3 * p, sx: 1, sy: 1 }),          // a drift
-    hybrid: (p) => ({ rotate: -8 * p, dx: 0, sx: 1 + 0.08 * p, sy: 1 + 0.08 * p }),
-    bus: (p) => ({ rotate: 0, dx: 0, sx: 1 + 0.06 * p, sy: 1 - 0.22 * p }), // kneels
-    bike: (p) => ({ rotate: -24 * p, dx: 2 * p, sx: 1, sy: 1 }),          // a wheelie
-    ambulance: (p) => ({ rotate: 6 * p, dx: 0, sx: 1 + 0.05 * p, sy: 1 + 0.05 * p }),
-    token: () => ({ rotate: 0, dx: 0, sx: 1, sy: 1 }),
-    ghost: () => ({ rotate: 0, dx: 0, sx: 1, sy: 1 }),
-  };
+  /** Pulling away and braking each take this share of a drive's time. */
+  const RAMP = 0.3;
+
+  /**
+   * The share of its route a vehicle has covered after a share `p` of the
+   * drive's time. 'inOut' pulls away, cruises, and brakes to a stop; 'in'
+   * pulls away and leaves at cruising speed; 'out' arrives at cruising speed
+   * and brakes; 'linear' holds one speed and stops dead.
+   */
+  function travelled(p, ease) {
+    const f = RAMP;
+    if (ease === 'linear') return p;
+    if (ease === 'in') return p < f ? (p * p) / (f * (2 - f)) : (2 * p - f) / (2 - f);
+    if (ease === 'out') return 1 - travelled(1 - p, 'in');
+    if (p < f) return (p * p) / (2 * f * (1 - f));
+    if (p > 1 - f) return 1 - ((1 - p) * (1 - p)) / (2 * f * (1 - f));
+    return (p - f / 2) / (1 - f);
+  }
+
+  /**
+   * How far a drive of `seconds` goes when it cruises at `speed` px/s, with
+   * `ease` as in drive(), so one drive can end at the speed the next begins.
+   */
+  function distanceFor(speed, seconds, ease = 'inOut') {
+    const share = { linear: 1, in: 1 - RAMP / 2, out: 1 - RAMP / 2 }[ease] ?? 1 - RAMP;
+    return speed * seconds * share;
+  }
+
+  /** Extra effort, in pixels of straight road, per degree a route turns. */
+  const CORNER_EFFORT = 1.2;
+
+  /**
+   * A route through waypoints as a dense polyline: straight runs, with every
+   * corner rounded into a curve that starts `turn` pixels before it (less
+   * where a run is short). Returns { along(u) }: the point and heading a
+   * share `u` of the way along by effort, where a degree of turning costs
+   * CORNER_EFFORT pixels, so a vehicle slows into a corner and speeds up
+   * out of it. The heading eases from the vehicle's own (`startA`) over the
+   * first few pixels, so no drive snaps it round.
+   */
+  function route(start, points, turn, startA) {
+    const corners = [[start.x, start.y], ...points];
+    const pts = [corners[0]];
+    for (let i = 1; i < corners.length; i++) {
+      const [px, py] = corners[i];
+      const next = corners[i + 1];
+      if (!next) {
+        pts.push([px, py]);
+        break;
+      }
+      const [ax, ay] = corners[i - 1];
+      const inLen = Math.hypot(px - ax, py - ay);
+      const outLen = Math.hypot(next[0] - px, next[1] - py);
+      const cut = Math.min(turn, inLen / 2, outLen / 2);
+      if (!cut) {
+        pts.push([px, py]);
+        continue;
+      }
+      const sx = px - ((px - ax) / inLen) * cut;
+      const sy = py - ((py - ay) / inLen) * cut;
+      const ex = px + ((next[0] - px) / outLen) * cut;
+      const ey = py + ((next[1] - py) / outLen) * cut;
+      for (let k = 0; k <= 8; k++) {
+        const u = k / 8;
+        pts.push([
+          (1 - u) * (1 - u) * sx + 2 * (1 - u) * u * px + u * u * ex,
+          (1 - u) * (1 - u) * sy + 2 * (1 - u) * u * py + u * u * ey,
+        ]);
+      }
+    }
+    const dist = [0];
+    const effort = [0];
+    let lastHeading = null;
+    for (let i = 1; i < pts.length; i++) {
+      const dx = pts[i][0] - pts[i - 1][0];
+      const dy = pts[i][1] - pts[i - 1][1];
+      const step = Math.hypot(dx, dy);
+      const heading = step ? (Math.atan2(dy, dx) * 180) / Math.PI : lastHeading;
+      const bend = lastHeading === null || heading === null ? 0 : Math.abs(turnBetween(lastHeading, heading));
+      lastHeading = heading;
+      dist.push(dist[i - 1] + step);
+      effort.push(effort[i - 1] + step + bend * CORNER_EFFORT);
+    }
+    const len = dist[dist.length - 1];
+    const work = effort[effort.length - 1];
+    /** The distance along the route at which `e` of the effort is spent. */
+    function distanceAt(e) {
+      const target = clamp(e, 0, work);
+      let i = 1;
+      while (i < pts.length - 1 && effort[i] < target) i++;
+      const span = effort[i] - effort[i - 1] || 1;
+      return dist[i - 1] + ((target - effort[i - 1]) / span) * (dist[i] - dist[i - 1]);
+    }
+    function point(d) {
+      const target = clamp(d, 0, len);
+      let i = 1;
+      while (i < pts.length - 1 && dist[i] < target) i++;
+      const span = dist[i] - dist[i - 1] || 1;
+      const u = (target - dist[i - 1]) / span;
+      return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * u, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * u];
+    }
+    const settle = Math.min(24, len / 2);
+    return {
+      along(u) {
+        const d = distanceAt(u * work);
+        const [x, y] = point(d);
+        const [bx, by] = point(d - 4);
+        const [fx2, fy2] = point(d + 4);
+        const heading = len ? (Math.atan2(fy2 - by, fx2 - bx) * 180) / Math.PI : startA;
+        const blend = settle ? clamp(d / settle, 0, 1) : 1;
+        const smooth = blend * blend * (3 - 2 * blend);
+        return { x, y, a: startA + turnBetween(startA, heading) * smooth };
+      },
+    };
+  }
 
   // ------------------------------------------------------------------
   // The town: a game window with roads, a traffic light, and vehicles
@@ -222,16 +349,34 @@
         if (bh > 40) {
           const roofs = svg('rect', { class: 'oc-roof-block', x: cx, y: by + 12, width: rw, height: rh, rx: 3 }, blocks);
           roofs.dataset.ocBlock = '';
+          // A parapet inset, and on some roofs an air-conditioning unit or a stair hatch.
+          if (rw > 12 && rh > 12) svg('rect', { class: 'oc-roof-inset', x: cx + 3, y: by + 15, width: rw - 6, height: rh - 6, rx: 2 }, blocks);
+          const fixture = hash01(qi * 61 + k * 17);
+          if (fixture > 0.35 && rw > 20 && rh > 20) {
+            const fx0 = cx + 5 + Math.floor(hash01(qi * 7 + k * 3) * (rw - 18));
+            const fy0 = by + 17 + Math.floor(hash01(qi * 11 + k * 5) * (rh - 18));
+            svg('rect', { class: fixture > 0.7 ? 'oc-roof-hatch' : 'oc-roof-ac', x: fx0, y: fy0, width: 8, height: 7, rx: 1.2 }, blocks);
+          }
         }
-        if (hash01(qi * 5 + k) > 0.45 && bh > 50) svg('circle', { class: 'oc-tree', cx: cx + rw + 7, cy: by + bh - 16, r: 6 }, blocks);
+        if (hash01(qi * 5 + k) > 0.45 && bh > 50) {
+          // A two-tone canopy, lit from the top left.
+          svg('circle', { class: 'oc-tree', cx: cx + rw + 7, cy: by + bh - 16, r: 6 }, blocks);
+          svg('circle', { class: 'oc-tree-light', cx: cx + rw + 5.4, cy: by + bh - 17.6, r: 3 }, blocks);
+        }
         cx += rw + 16;
         k += 1;
       }
     });
     // Roads, lane markings, crosswalks.
     const roads = svg('g', { class: 'oc-roads' }, art);
+    // Sidewalks with a kerb line, under both roads.
+    svg('rect', { class: 'oc-sidewalk', x: 0, y: roadY - 30, width: w, height: 60 }, roads);
+    svg('rect', { class: 'oc-sidewalk', x: roadX - 30, y: 0, width: 60, height: h }, roads);
     svg('rect', { class: 'oc-road', x: 0, y: roadY - 26, width: w, height: 52 }, roads);
     svg('rect', { class: 'oc-road', x: roadX - 26, y: 0, width: 52, height: h }, roads);
+    svg('path', { class: 'oc-kerb', d: `M0 ${roadY - 26} H${roadX - 26} V0 M${roadX + 26} 0 V${roadY - 26} H${w} M0 ${roadY + 26} H${roadX - 26} V${h} M${roadX + 26} ${h} V${roadY + 26} H${w}` }, roads);
+    // Stop lines before each crosswalk, across the lane that drives toward it.
+    svg('path', { class: 'oc-stop-line', d: `M${roadX - 43} ${roadY + 2} V${roadY + 25} M${roadX + 43} ${roadY - 25} V${roadY - 2} M${roadX - 25} ${roadY - 43} H${roadX - 2} M${roadX + 2} ${roadY + 43} H${roadX + 25}` }, roads);
     svg('path', { class: 'oc-lane-dash', d: `M0 ${roadY} H${roadX - 30} M${roadX + 30} ${roadY} H${w}` }, roads);
     svg('path', { class: 'oc-lane-dash', d: `M${roadX} 0 V${roadY - 30} M${roadX} ${roadY + 30} V${h}` }, roads);
     for (let i = 0; i < 5; i++) {
@@ -278,9 +423,25 @@
       const holder = svg('g', { class: `oc-vehicle oc-vehicle--${kind}${cls ? ` ${cls}` : ''}` }, fleet);
       const body = svg('g', { class: 'oc-vehicle-body' }, holder);
       drawSprite(kind, body, label);
-      const keys = [{ t: -Infinity, x: vx, y: vy, a }];
+      // A token's or ghost's name stays upright whichever way the vehicle faces.
+      const name = body.querySelector('text');
+      // Legs of motion, sorted by start time; the latest leg that has
+      // started poses the vehicle (a new drive takes over from an old one).
+      const initial = { x: vx, y: vy, a };
+      const legs = [];
+      const addLeg = (leg) => {
+        legs.push(leg);
+        legs.sort((p, q) => p.t0 - q.t0);
+      };
+      const poseAt = (t) => {
+        let leg = null;
+        for (const l of legs) {
+          if (l.t0 > t) break;
+          leg = l;
+        }
+        return leg ? leg.pose(Math.min(t, leg.t1)) : initial;
+      };
       const flags = [];
-      const dances = [];
       // Visibility events; with none, the vehicle is always shown.
       const shows = [];
       const addShow = (atTime, on) => {
@@ -293,44 +454,47 @@
         node: holder,
         kind,
         /**
-         * Drive through waypoints [[x, y, a?], …] from `from` to `to` at a
-         * steady speed (one waypoint: an eased glide). Add drives in time order.
+         * Drive through waypoints [[x, y], …] from `from` to `to`, nose first
+         * along the road, with corners rounded (`turn`, in pixels) and the
+         * speed shaped by `ease` ('inOut' by default; see travelled()). One
+         * waypoint with a heading, [[x, y, a]], is a glide instead: the
+         * vehicle slides there while turning to `a`, for reversing and for
+         * pulling aside. Add drives in time order.
          */
-        drive(from, to, points, { ease } = {}) {
-          const start = poseAt(keys, from);
-          keys.push({ t: from, x: start.x, y: start.y, a: start.a });
-          let len = 0;
-          let px = start.x;
-          let py = start.y;
-          const lens = points.map(([qx, qy]) => {
-            len += Math.hypot(qx - px, qy - py);
-            px = qx;
-            py = qy;
-            return len;
-          });
-          points.forEach(([qx, qy, qa], i) => {
-            const prev = i ? points[i - 1] : [start.x, start.y];
-            const angle = qa !== undefined ? qa : (Math.atan2(qy - prev[1], qx - prev[0]) * 180) / Math.PI;
-            keys.push({ t: from + ((to - from) * lens[i]) / (len || 1), x: qx, y: qy, a: angle, ease: points.length > 1 ? 'linear' : ease });
-          });
-          keys.sort((p, q) => p.t - q.t);
+        drive(from, to, points, { ease = 'inOut', turn = 36 } = {}) {
+          const start = poseAt(from);
+          const span = Math.max(to - from, 1e-6);
+          const share = (t) => travelled(clamp((t - from) / span, 0, 1), ease);
+          const [gx, gy, ga] = points[points.length - 1];
+          if (points.length === 1 && ga !== undefined) {
+            const turnBy = turnBetween(start.a, ga);
+            addLeg({
+              t0: from, t1: to,
+              pose: (t) => {
+                const p = share(t);
+                return { x: start.x + (gx - start.x) * p, y: start.y + (gy - start.y) * p, a: start.a + turnBy * p };
+              },
+            });
+          } else {
+            const path = route(start, points.map(([qx, qy]) => [qx, qy]), turn, start.a);
+            addLeg({ t0: from, t1: to, pose: (t) => path.along(share(t)) });
+          }
           return api;
         },
         /** Jump to a pose at time `at` (for scene cuts). */
         set(atTime, qx, qy, qa = 0) {
-          keys.push({ t: atTime, x: qx, y: qy, a: qa, ease: 'step' });
-          keys.sort((p, q) => p.t - q.t);
+          const pose = { x: qx, y: qy, a: qa };
+          addLeg({ t0: atTime, t1: atTime, pose: () => pose });
           return api;
         },
         flag(className, from, to = Infinity) { flags.push({ className, from, to }); return api; },
         brake(from, to) { return api.flag('is-braking', from, to); },
-        dance(from, to) { dances.push({ from, to }); return api; },
         show(from, to) {
           addShow(from, true);
           if (to !== undefined) addShow(to, false);
           return api;
         },
-        position(t) { return poseAt(keys, t); },
+        position(t) { return poseAt(t); },
       };
       onFrame((t) => {
         if (!live(t)) return;
@@ -338,13 +502,9 @@
         for (const s of shows) if (s.at <= t) visible = s.on;
         holder.style.display = visible ? '' : 'none';
         if (!visible) return;
-        const pose = poseAt(keys, t);
+        const pose = poseAt(t);
         holder.setAttribute('transform', `translate(${pose.x.toFixed(1)} ${pose.y.toFixed(1)}) rotate(${pose.a.toFixed(1)})`);
-        let move = { rotate: 0, dx: 0, sx: 1, sy: 1 };
-        for (const d of dances) {
-          if (t >= d.from && t < d.to) move = DANCES[kind](beats.pulse(t, 0.22));
-        }
-        body.setAttribute('transform', `translate(${move.dx.toFixed(2)} 0) rotate(${move.rotate.toFixed(2)}) scale(${move.sx.toFixed(3)} ${move.sy.toFixed(3)})`);
+        if (name) name.setAttribute('transform', `rotate(${(-pose.a).toFixed(1)})`);
         for (const f of flags) holder.classList.toggle(f.className, t >= f.from && t < f.to);
       });
       return api;
@@ -412,5 +572,5 @@
     };
   }
 
-  window.ObjectCity = { town, sprite, SPRITES };
+  window.ObjectCity = { town, sprite, distanceFor, SPRITES };
 })();

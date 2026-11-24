@@ -155,11 +155,13 @@ self.cancelAnimationFrame = self.cancelAnimationFrame || function (id) { clearTi
 // ─── Lazy loaders ──────────────────────────────────────────────────────
 var loaded = { python: false, java: false, cpp: false, jsts: false, bundle: false };
 let pythonTypes = null;
+let javaSyntax = null;
 
 function ensureAnalyzer(lang) {
   if (!self.UMLSequenceDiagnostics) importScripts(resolve('uml-sequence-diagnostics.js'));
   if (!self.UMLConstantValues) importScripts(resolve('uml-constant-values.js'));
   if (!self.UMLReturnSummaries) importScripts(resolve('uml-return-summaries.js'));
+  if (!self.UMLSourceMap) importScripts(resolve('uml-source-map.js'));
   if (lang === 'python' && !loaded.python) {
     importScripts(resolve('uml-python-types.js'));
     importScripts(resolve('uml-analyzer-python.js'));
@@ -212,7 +214,11 @@ async function handleAnalyze(msg) {
       const inferredTypes = await pythonTypes.infer(sources);
       result = self.analyzePythonSources(sources, { ...options, inferredTypes });
     }
-    else if (lang === 'java')   result = self.analyzeJavaSources(sources);
+    else if (lang === 'java') {
+      if (!javaSyntax) javaSyntax = import(resolve('uml-java-syntax.mjs')).then(module => module.createJavaSyntaxWorkspace())
+        .catch(error => { javaSyntax = null; throw error; });
+      result = self.analyzeJavaSources(sources, options, (await javaSyntax).parse(sources));
+    }
     else if (lang === 'cpp')    result = self.analyzeCppSources(sources, options);
     else if (lang === 'js')     result = self.analyzeJSSources(sources, self.ts);
     else throw new Error('Unknown UML language: ' + lang);
@@ -229,6 +235,7 @@ async function handleAnalyze(msg) {
 function handleRender(msg) {
   var id = msg.id;
   var origTextWidth = null;
+  var origFingerprint = null;
   try {
     ensureBundle();
     renderCtx.cssVars = msg.cssVars || {};
@@ -249,6 +256,13 @@ function handleRender(msg) {
         var key = (bold ? 'B' : 'R') + '|' + fs + '|' + (ff || '') + '|' + (text || '');
         if (measurements[key] !== undefined) return measurements[key];
         return origTextWidth.call(this, text, bold, fontSize, fontFamily);
+      };
+      // ArchUML remembers compact drawings by their inputs, text measurement
+      // included: the page's widths are part of it while this table is in use.
+      origFingerprint = self.UMLShared.textMeasurementFingerprint;
+      var tableFingerprint = JSON.stringify(measurements);
+      self.UMLShared.textMeasurementFingerprint = function () {
+        return origFingerprint() + '|' + tableFingerprint;
       };
     }
 
@@ -272,5 +286,6 @@ function handleRender(msg) {
     self.postMessage({ type: 'renderResult', id: id, ok: false, error: (err && err.message) || String(err) });
   } finally {
     if (origTextWidth && self.UMLShared) self.UMLShared.textWidth = origTextWidth;
+    if (origFingerprint && self.UMLShared) self.UMLShared.textMeasurementFingerprint = origFingerprint;
   }
 }

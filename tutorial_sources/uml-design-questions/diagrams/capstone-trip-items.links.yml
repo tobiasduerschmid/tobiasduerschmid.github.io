@@ -1,0 +1,26 @@
+# Code links for capstone-trip-items.class.uml: double-clicking a label in the
+# drawing opens its line. text is the label exactly as the drawing shows it.
+- text: TripItem
+  path: services/opc/model/items.py
+  line: 17
+- text: FestivalPass
+  path: services/opc/model/items.py
+  line: 41
+- text: LodgingStay
+  path: services/opc/model/items.py
+  line: 56
+- text: Experience
+  path: services/opc/model/items.py
+  line: 75
+- text: TransportItem
+  path: services/opc/model/items.py
+  line: 92
+- text: ShuttleRide
+  path: services/opc/model/items.py
+  line: 102
+- text: "services::opc::payloads"
+  path: services/opc/payloads.py
+  line: 15
+- text: "services::website::checkout"
+  path: services/website/checkout.py
+  line: 76

@@ -1,0 +1,31 @@
+{%- comment -%}
+  What a tutorial's diagram challenges need where tutorial-print-content.html
+  shows the tutorial outside its own print page: the combined course pages
+  (_layouts/sebook-combined.html), which include this only when an entry has a
+  diagram challenge. ArchUML draws the diagrams; those pages load it for
+  entries whose page sets `uml_code_labs: true`.
+
+  The stylesheet arrives after the page's own styles, so print-light.css is
+  linked again after it. Each results card fills from this browser's saved
+  progress for its own tutorial (tutorial-progress-<id>), as the print view's
+  does.
+{%- endcomment -%}
+<link rel="stylesheet" href="{{ '/css/tutorial-diagram-challenge.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}?v={{ site.asset_version }}">
+<script src="{{ '/js/tutorial-diagram-challenge-core.js' | relative_url }}" defer></script>
+<script src="{{ '/js/tutorial-diagram-challenge.js' | relative_url }}" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!window.DiagramChallenge) return;
+    document.querySelectorAll('[data-diagram-challenge-results-host][data-diagram-challenge-tutorial]').forEach(function (host) {
+      var records = {};
+      try {
+        var saved = JSON.parse(localStorage.getItem('tutorial-progress-' + host.getAttribute('data-diagram-challenge-tutorial')) || 'null');
+        if (saved && saved.diagramChallenges && typeof saved.diagramChallenges === 'object') records = saved.diagramChallenges;
+      } catch (error) {
+        records = {};
+      }
+      window.DiagramChallenge.renderResults(host.parentNode, { records: records });
+    });
+  });
+</script>

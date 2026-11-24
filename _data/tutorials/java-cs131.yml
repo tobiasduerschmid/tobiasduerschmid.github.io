@@ -11,6 +11,7 @@ learning_objectives:
   - Use generic storage and iterator contracts without concrete-class assumptions.
   - Create and explain a small client that preserves its behavioral contract.
 backend: java
+debugger: true
 require_tests: false
 require_quiz: false
 allow_skip_steps: true
@@ -52,11 +53,13 @@ steps:
       reference](/SEBook/tools/java) provides syntax help.
 
 
-      **Execution note:** this page uses a Java-subset runner, not a full Java compiler or virtual
-      machine. The supplied runnable exercises use its supported behavior. **Compiler reasoning**
-      cards and quizzes describe standard Java; the Run button cannot establish static type safety,
-      overload resolution, or checked-cast errors. For those experiments, save a file locally and
-      use `javac FileName.java` followed by `java FileName` with a Java development kit.
+      **Run** compiles the files in this exercise with the Eclipse Java compiler and runs their
+      bytecode in a Java virtual machine in your browser. Try an incompatible assignment to see
+      a compiler diagnostic, then undo it and run again. You can edit while Java starts.
+
+
+      To see when the two variables below change, open **Output**, choose **Debug**, and step
+      through the assignments with the variables view open.
 
 
       ### The Small Syntax Bridge
@@ -164,9 +167,8 @@ steps:
             }
       explanation: >
         The comparison returns a Boolean directly. Equality belongs to the eligible case. Primitive
-        assignment in main copies 12, so changing credits later leaves saved at 12. Java normally
-        compiles source to bytecode for execution by the Java Virtual Machine; the browser runner
-        here is a different, limited execution tool.
+        assignment in main copies 12, so changing credits later leaves saved at 12. The compiler turns the source into bytecode,
+        which the Java Virtual Machine executes when you select Run.
     quiz:
       title: Step 1 — Knowledge Check
       min_score: 0.8
@@ -1046,8 +1048,8 @@ steps:
 
       `private` fields belong to the implementation. Clients call `cost()` rather than reaching into
       each class's data. **Compiler reasoning:** an `Admission` variable permits operations declared
-      by its type, even when its current object has additional methods. The browser runner does not
-      enforce that restriction.
+      by its type, even when its current object has additional methods. Try calling a method
+      declared only on the implementation and read the compiler diagnostic.
 
 
       ### Predict and Run
@@ -1253,9 +1255,9 @@ steps:
       `entry.price()` can dispatch to an override.
 
 
-      `@Override` asks a standard compiler to check that a method really overrides one. The browser
-      runner ignores annotations, so this check belongs to compiler reasoning. A `final` method
-      cannot be overridden; that does not make the receiver object immutable.
+      `@Override` asks the compiler to check that a method really overrides one. Changing its
+      parameter type can reveal an accidental overload. A `final` method prevents overriding.
+      Its receiver can still have mutable state.
 
 
       ### Your Task
@@ -1504,10 +1506,9 @@ steps:
       ### Compiler Reasoning
 
 
-      In standard Java, `(BonusToken) new Object()` passes the cast's compile-time check but throws
-      `ClassCastException` at runtime. The browser subset does **not** enforce reference casts, so
-      it cannot demonstrate that failure faithfully. The runnable task checks your guarded behavior;
-      use the quiz or a standard compiler/runtime for cast-failure reasoning.
+      `(BonusToken) new Object()` passes the cast's compile-time check. At runtime the object
+      has class `Object`, so the cast throws `ClassCastException`. Try the cast in `main`,
+      then undo the experiment and implement the guarded behavior.
 
 
       If all objects could expose the required operation through one interface, prefer that common
@@ -1696,8 +1697,8 @@ steps:
 
       `TypedShelf<String>` and `TypedShelf<Object>` are not interchangeable. Allowing the first
       where the second is required could let a client insert a non-String into a String shelf.
-      Standard Java rejects that assignment. It also rejects a wrong element type. The browser
-      runner erases generic information and does **not** check these restrictions.
+      The compiler rejects that assignment. It also rejects an attempt to insert the wrong
+      element type. Try each edit separately and compare the diagnostics.
 
 
       Java generics use reference type arguments: `Integer` is the wrapper used for integer values,
@@ -1896,9 +1897,9 @@ steps:
       passing the same iterator to sum twice differs from passing two fresh iterators.
 
 
-      **Standard Java connection:** enhanced `for` over an Iterable obtains an iterator and
-      repeatedly checks/advances it. The browser subset does not support enhanced-for over custom
-      Iterable implementations; use the explicit calls here.
+      Enhanced `for` over an `Iterable` obtains an iterator and repeatedly checks and advances
+      it. This exercise takes an existing `Iterator` so you can observe what happens to its
+      position between calls.
     files:
       - path: IteratorClient.java
         language: java
@@ -2161,9 +2162,9 @@ steps:
 
 
       A checked exception must be caught or declared with `throws`. RuntimeException and its
-      subclasses, including IllegalArgumentException, are unchecked. `throws` describes possible
-      propagation; it does not throw or catch anything. The browser runner does not enforce
-      checked-exception declarations, and this exercise uses a single catch type.
+      subclasses, including IllegalArgumentException, are unchecked. `throws` declares which
+      exceptions may propagate. The `throw` statement raises an exception, and a matching
+      `catch` handles it.
     files:
       - path: ExceptionFlow.java
         language: java

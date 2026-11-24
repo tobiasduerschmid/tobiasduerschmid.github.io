@@ -1,0 +1,392 @@
+/* ============================================================
+   Project-wide search (`project_search: true`)
+   Markup: js/tutorial-project-search.js, mounted in the Files
+   sidebar (css/tutorial-file-tree.css). While search is open, its
+   head (the Search files button and one search row: field, option
+   toggles, close) stays at the top of the scrolling sidebar, the
+   results and the tree scroll under it, and the sidebar widens. Controls inherit
+   the paragraph font; results show line numbers and marked
+   matches. Print hides the search UI with the sidebar.
+   ============================================================ */
+
+.tutorial-project-search__head {
+  padding: 0.6em 0.75em 0.4em;
+}
+
+.tutorial-project-search__toggle,
+.tutorial-project-search__close {
+  font: inherit;
+  border: 1px solid #6a737d;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #1f2328;
+  cursor: pointer;
+}
+
+.tutorial-project-search__toggle {
+  display: block;
+  width: 100%;
+  min-height: 2em;
+  margin: 0;
+  padding: 0.2em 0.75em;
+  text-align: left;
+}
+
+.tutorial-project-search__toggle[aria-expanded="true"] {
+  border-width: 2px;
+  font-weight: 600;
+}
+
+.tutorial-project-search__toggle:hover,
+.tutorial-project-search__close:hover {
+  background: #e6eaef;
+}
+
+.tutorial-project-search__toggle:focus-visible,
+.tutorial-project-search__close:focus-visible,
+.tutorial-project-search__match:focus-visible {
+  outline: 2px solid #005587;
+  outline-offset: 2px;
+}
+
+/* The search row: the label with the close button beside it, then the
+   field with its option toggles inside. The close button comes after the
+   field in focus order and sits at the end of the label's line. */
+.tutorial-project-search__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label close"
+    "field field";
+  align-items: center;
+  gap: 0.2em 0.4em;
+  margin: 0.45em 0 0;
+}
+
+.tutorial-project-search__form[hidden] {
+  display: none;
+}
+
+.tutorial-project-search__label {
+  grid-area: label;
+  margin: 0;
+  font-weight: 600;
+}
+
+.tutorial-project-search__close {
+  grid-area: close;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  width: 1.6em;
+  height: 1.6em;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  font-size: 1.1em;
+  line-height: 1;
+}
+
+.tutorial-project-search__field {
+  grid-area: field;
+  display: flex;
+  align-items: center;
+  gap: 0.15em;
+  min-width: 0;
+  padding: 0 0.2em 0 0;
+  border: 1px solid #6a737d;
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+.tutorial-project-search__field:has(.tutorial-project-search__input[aria-invalid="true"]) {
+  border: 2px solid #b3261e;
+}
+
+.tutorial-project-search__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 2em;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.2em 0.4em;
+  border: 0;
+  background: transparent;
+  color: #1f2328;
+  font: inherit;
+}
+
+/* Inside the field's border, so the ring stays clear of the toggles. */
+.tutorial-project-search__input:focus-visible {
+  outline: 2px solid #005587;
+  outline-offset: -1px;
+}
+
+.tutorial-project-search__options {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.1em;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* Each option is a native checkbox laid over its glyph, so the whole chip
+   is the click target. Checked: a frame, a tint, and bold, not color
+   alone. */
+.tutorial-project-search__option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  width: 1.9em;
+  height: 1.6em;
+  margin: 0;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: #1f2328;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.tutorial-project-search__option-box {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.tutorial-project-search__option-glyph {
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 0.9em;
+  line-height: 1;
+}
+
+.tutorial-project-search__option--wholeWord .tutorial-project-search__option-glyph {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.tutorial-project-search__option:hover {
+  background: #e6eaef;
+}
+
+.tutorial-project-search__option:has(.tutorial-project-search__option-box:checked) {
+  border-color: #0060a8;
+  background: #d8e6f5;
+  font-weight: 700;
+}
+
+.tutorial-project-search__option:has(.tutorial-project-search__option-box:focus-visible) {
+  outline: 2px solid #005587;
+  outline-offset: 1px;
+}
+
+.tutorial-project-search {
+  padding: 0 0.75em 0.75em;
+  border-bottom: 1px solid #c8ccd2;
+}
+
+.tutorial-project-search[hidden] {
+  display: none;
+}
+
+.tutorial-project-search__status {
+  margin: 0.25em 0;
+}
+
+.tutorial-project-search__status:empty {
+  margin: 0;
+}
+
+.tutorial-project-search__results,
+.tutorial-project-search__matches {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tutorial-project-search__file {
+  margin: 0.5em 0 0;
+}
+
+.tutorial-project-search__file-name {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.5em;
+  margin: 0 0 0.2em;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.tutorial-project-search__count {
+  font-weight: normal;
+  color: #4b535d;
+}
+
+.tutorial-project-search__match {
+  display: flex;
+  gap: 0.5em;
+  width: 100%;
+  min-height: 24px;
+  margin: 0;
+  padding: 0.15em 0.4em;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tutorial-project-search__match:hover {
+  background: #e6eaef;
+}
+
+.tutorial-project-search__line {
+  flex: 0 0 auto;
+  min-width: 2.2em;
+  color: #4b535d;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.tutorial-project-search__preview {
+  min-width: 0;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Bold and underlined as well as tinted, so matches never rely on color. */
+.tutorial-project-search__hit {
+  padding: 0;
+  background: #fff1a8;
+  color: #1f2328;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+/* Diagram groups (results in the Diagram pane's drawings) follow the files.
+   The visible "Diagram:" chip names the kind in text; the side rule and the
+   chip's frame repeat it without relying on color. */
+.tutorial-project-search__file--diagram {
+  padding-left: 0.5em;
+  border-left: 3px solid #6a737d;
+}
+
+.tutorial-project-search__kind {
+  padding: 0 0.35em;
+  border: 1px solid #6a737d;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+.tutorial-project-search__file--diagram .tutorial-project-search__path {
+  font-style: italic;
+}
+
+/* Wide screens: the head stays at the top of the scrolling sidebar (whose
+   background it repeats), and the sidebar widens while search is open so
+   result paths fit on one line. Narrow screens flow with the page. */
+@media screen and (min-width: 901px) {
+  /* The host lays its head and results out as children of the sidebar, so
+     the head can stick over the whole sidebar, the tree included. */
+  .tvm-project-search-host {
+    display: contents;
+  }
+
+  .tutorial-project-search-host--open .tutorial-project-search__head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f6f7f9;
+    border-bottom: 1px solid #c8ccd2;
+  }
+
+  .tvm-file-sidebar[open]:has(.tutorial-project-search-host--open) {
+    flex-basis: clamp(11em, 42%, 22.5em);
+  }
+
+  html.dark-mode .tutorial-project-search-host--open .tutorial-project-search__head {
+    background: #18181b;
+    border-bottom-color: #3a3a42;
+  }
+}
+
+html.dark-mode .tutorial-project-search__file--diagram,
+html.dark-mode .tutorial-project-search__kind {
+  border-color: #8b949e;
+}
+
+html.dark-mode .tutorial-project-search__toggle,
+html.dark-mode .tutorial-project-search__field {
+  background: #22232a;
+  color: #e6edf3;
+  border-color: #8b949e;
+}
+
+html.dark-mode .tutorial-project-search__close {
+  color: #e6edf3;
+}
+
+html.dark-mode .tutorial-project-search__input,
+html.dark-mode .tutorial-project-search__option {
+  color: #e6edf3;
+}
+
+html.dark-mode .tutorial-project-search__toggle:hover,
+html.dark-mode .tutorial-project-search__close:hover,
+html.dark-mode .tutorial-project-search__option:hover,
+html.dark-mode .tutorial-project-search__match:hover {
+  background: #2d2e36;
+}
+
+html.dark-mode .tutorial-project-search__option:has(.tutorial-project-search__option-box:checked) {
+  border-color: #6cb2ff;
+  background: #1f3a5c;
+  color: #ffffff;
+}
+
+html.dark-mode .tutorial-project-search__toggle:focus-visible,
+html.dark-mode .tutorial-project-search__close:focus-visible,
+html.dark-mode .tutorial-project-search__input:focus-visible,
+html.dark-mode .tutorial-project-search__option:has(.tutorial-project-search__option-box:focus-visible),
+html.dark-mode .tutorial-project-search__match:focus-visible {
+  outline-color: #ffd100;
+}
+
+html.dark-mode .tutorial-project-search {
+  border-bottom-color: #3a3a42;
+}
+
+html.dark-mode .tutorial-project-search__field:has(.tutorial-project-search__input[aria-invalid="true"]) {
+  border-color: #ff8a80;
+}
+
+html.dark-mode .tutorial-project-search__count,
+html.dark-mode .tutorial-project-search__line {
+  color: #b1bac4;
+}
+
+html.dark-mode .tutorial-project-search__hit {
+  background: #6b5600;
+  color: #ffffff;
+}
+
+@media print {
+  .tutorial-project-search__head,
+  .tutorial-project-search {
+    display: none !important;
+  }
+}

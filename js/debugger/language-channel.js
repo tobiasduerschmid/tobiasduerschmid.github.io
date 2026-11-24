@@ -22,6 +22,8 @@
       this.executor = null;
       this.generation += 1;
       if (executor) executor.terminate();
+      this.java?.destroy();
+      this.java = null;
     }
 
     startSession(config) {
@@ -29,6 +31,10 @@
       const generation = this.generation;
       const timeout = Number(config.options.execution_timeout_ms);
       this.timeoutMs = Number.isFinite(timeout) && timeout > 0 ? timeout : 30000;
+      if (this.tutorial.config.backend === 'java') {
+        this.startJava(config,generation);
+        return;
+      }
       try {
         this.executor = this.tutorial.config.backend === 'haskell'
           ? this.tutorial._createHaskellExecutor()
@@ -49,6 +55,26 @@
         this.armDeadline(120000);
       } catch (error) {
         this.fail(error.message);
+      }
+    }
+
+    async startJava(config, generation) {
+      try {
+        const { JavaWorkspace } = await import('/js/java/workspace.mjs');
+        if (generation !== this.generation) return;
+        this.java = new JavaWorkspace({runTimeoutMs:this.timeoutMs});
+        const result = await this.java.debug({
+          ...config, entry:config.filename,
+          onPause:event => { if (generation === this.generation) this.receive(event); },
+        });
+        if (generation !== this.generation) return;
+        if (result.stdout) this.tutorial._appendOutput(result.stdout,'stdout');
+        if (result.stderr) this.tutorial._appendOutput(result.stderr,'stderr');
+        const error = result.diagnostics?.filter(d => d.severity === 'error')
+          .map(d => d.file + ':' + d.line + ' ' + d.message).join('\n');
+        this.receive({type:'debugComplete',exitCode:result.exitCode,snapshots:result.snapshots,error});
+      } catch (error) {
+        if (generation === this.generation) this.fail(error.message);
       }
     }
 
@@ -89,6 +115,8 @@
         Promise.resolve().then(() => {
           if (generation === this.generation) this.controller.onDebugComplete({ exitCode: 0, stopped: true });
         });
+      } else if (this.java) {
+        this.java.debugCommand(command);
       } else if (this.executor) {
         this.armDeadline(this.timeoutMs);
         this.executor.postMessage({ type: 'command', command: command });
@@ -96,18 +124,24 @@
     }
 
     sendBreakpointChanges(changes) {
+      if (this.java) { this.java.debugCommand({type:'breakpoints',changes}); return true; }
       if (!this.executor) return false;
       this.executor.postMessage({ type: 'breakpoints', changes: changes });
       return true;
     }
 
     sendWatches(watches) {
+      if (this.java) { this.java.debugCommand({type:'watches',watches}); return true; }
       if (!this.executor) return false;
       this.executor.postMessage({ type: 'watches', watches: watches });
       return true;
     }
 
-    sendExceptionBreakpoints() { return false; }
+    sendExceptionBreakpoints(exceptions) {
+      if (!this.java) return false;
+      this.java.debugCommand({type:'exceptions',exceptions});
+      return true;
+    }
     sendLiveEdits() { return false; }
   }
 

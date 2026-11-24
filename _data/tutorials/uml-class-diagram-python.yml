@@ -919,7 +919,7 @@ steps:
       ### Your Target Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-      layout landscape
+      layout compact
       class Shape {
         + color: str
         + __init__(color: str): None
@@ -1261,7 +1261,7 @@ steps:
       ### Your Target Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-      layout landscape
+      layout compact
       class Instructor {
         + name: str
         + department: str
@@ -1540,7 +1540,7 @@ steps:
       ### Reference Design for the Domain Rules
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-spec='@startuml
-      layout landscape
+      layout compact
       class Professor {
         + name: String
         + field: String
@@ -1574,7 +1574,7 @@ steps:
       The target below uses Implementation details and shows the stored links inferred from the source. Compare it with the reference design above: which lifecycle claims are still unverified?
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="inferred-target" data-uml-spec='@startuml
-      layout landscape
+      layout compact
       class Professor {
         + name: str
         + field: str
@@ -2160,7 +2160,7 @@ steps:
       ### Your Target Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-      layout landscape
+      layout compact
       abstract class PaymentMethod {
         + {abstract} process(amount: float): bool
         + {abstract} get_name(): str
@@ -2673,7 +2673,7 @@ steps:
       | `OnlineStore` | Catalog, recorded orders, and request coordination | The store can look up the whole request and reject it before any product's stock changes. |
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-        layout landscape
+        layout compact
         class Product {
           +name: str
           +price: float

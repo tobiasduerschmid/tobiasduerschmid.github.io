@@ -56,6 +56,7 @@ extras:   # the song's own art and styles, loaded before its choreography
   scripts:
     - /js/song-video/drafting-room.js
     - /js/ArchUML/uml-bundle.js
+    - /js/archuml-compact-pane.js
     - /js/song-video/model-kit.js
     - /js/song-video/sketch-kit.js
     - /js/song-video/figure-geometry.js
@@ -219,7 +220,7 @@ sections:
         end: 44.54
         text: "Is there a flaw on paper? Rub it out, and you're already done."
         marks: {"is": 41.06, "there": 41.66, "a": 41.76, "flaw": 41.88, "on": 42.08, "paper": 42.32, "rub": 42.96, "it": 43.26, "out": 43.4, "and": 43.58, "youre": 43.74, "already": 43.9, "done": 44.26}
-        visual: "Left, under the sticker “On paper”: a pencil sketch of a room whose door swings into a wall. The flaw is circled in red, an eraser rubs it out, the door is redrawn swinging the other way, and a green check appears with the sticker “One eraser: done”. Beside the sketch, the architect taps the pencil at the flaw and nods when it is fixed."
+        visual: "Left, under the sticker “On paper”: a pencil sketch of a room whose door swings into a wall. The flaw is circled in red, an eraser rubs it out, the door is redrawn swinging the other way, and a green check appears with the sticker “One eraser: done”. Beside the sketch, the architect taps at the flaw, draws the hand inward, rolls the pencil between thumb and fingers, and regrips near its pink rubber. The rubber points toward the paper during erasing, and the architect nods when the flaw is fixed."
       - id: verse-1-6
         start: 45.08
         end: 49.14

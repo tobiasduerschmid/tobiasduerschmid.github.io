@@ -1,0 +1,133 @@
+{
+  "fps": 30,
+  "frameCount": 17618,
+  "duration": 587.2666666666667,
+  "holds": [
+    {
+      "section": "intro",
+      "outputStart": 0,
+      "outputEnd": 35.86666666666667,
+      "songTime": 0,
+      "pictureTime": 2.433333333333333
+    },
+    {
+      "section": "scrum-master",
+      "outputStart": 53.3,
+      "outputEnd": 84.13333333333334,
+      "songTime": 17.433333333333334,
+      "pictureTime": 18.133333333333333
+    },
+    {
+      "section": "product-owner",
+      "outputStart": 105.76666666666667,
+      "outputEnd": 137.5,
+      "songTime": 39.06666666666667,
+      "pictureTime": 39.766666666666666
+    },
+    {
+      "section": "developers",
+      "outputStart": 162.23333333333332,
+      "outputEnd": 190.96666666666667,
+      "songTime": 63.8,
+      "pictureTime": 64.46666666666667
+    },
+    {
+      "section": "who-keeps-track",
+      "outputStart": 206.63333333333333,
+      "outputEnd": 214.23333333333332,
+      "songTime": 79.46666666666667,
+      "pictureTime": 80.16666666666667
+    },
+    {
+      "section": "chorus-1",
+      "outputStart": 217.9,
+      "outputEnd": 243.76666666666668,
+      "songTime": 83.13333333333334,
+      "pictureTime": 83.83333333333333
+    },
+    {
+      "section": "the-sprint",
+      "outputStart": 262,
+      "outputEnd": 288.43333333333334,
+      "songTime": 101.36666666666666,
+      "pictureTime": 102.06666666666666
+    },
+    {
+      "section": "sprint-planning",
+      "outputStart": 294.8,
+      "outputEnd": 306.1,
+      "songTime": 107.73333333333333,
+      "pictureTime": 108.43333333333334
+    },
+    {
+      "section": "daily-scrum",
+      "outputStart": 321.8333333333333,
+      "outputEnd": 356.53333333333336,
+      "songTime": 123.46666666666667,
+      "pictureTime": 124.13333333333334
+    },
+    {
+      "section": "laptop",
+      "outputStart": 387.53333333333336,
+      "outputEnd": 391.26666666666665,
+      "songTime": 154.46666666666667,
+      "pictureTime": 155.13333333333333
+    },
+    {
+      "section": "definition-of-done",
+      "outputStart": 394.3,
+      "outputEnd": 409.4,
+      "songTime": 157.5,
+      "pictureTime": 158.16666666666666
+    },
+    {
+      "section": "sprint-review",
+      "outputStart": 420.43333333333334,
+      "outputEnd": 437.9,
+      "songTime": 168.53333333333333,
+      "pictureTime": 169.23333333333332
+    },
+    {
+      "section": "sprint-retrospective",
+      "outputStart": 445.46666666666664,
+      "outputEnd": 461.4,
+      "songTime": 176.1,
+      "pictureTime": 176.76666666666668
+    },
+    {
+      "section": "chorus-2",
+      "outputStart": 478.73333333333335,
+      "outputEnd": 485.73333333333335,
+      "songTime": 193.43333333333334,
+      "pictureTime": 194.13333333333333
+    },
+    {
+      "section": "quiz-intro",
+      "outputStart": 503.8666666666667,
+      "outputEnd": 515.4333333333333,
+      "songTime": 211.56666666666666,
+      "pictureTime": 212.26666666666668
+    },
+    {
+      "section": "quiz",
+      "outputStart": 518.2333333333333,
+      "outputEnd": 527.1333333333333,
+      "songTime": 214.36666666666667,
+      "pictureTime": 215.06666666666666
+    },
+    {
+      "section": "outro",
+      "outputStart": 565.6333333333333,
+      "outputEnd": 571.3666666666667,
+      "songTime": 252.86666666666667,
+      "pictureTime": 253.56666666666666
+    },
+    {
+      "section": "finale",
+      "outputStart": 575,
+      "outputEnd": 580.9666666666667,
+      "songTime": 256.5,
+      "pictureTime": 257.1666666666667
+    }
+  ]
+}

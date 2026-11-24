@@ -1,0 +1,124 @@
+/*
+ * My Teammate's persistent stage props. This artwork deliberately keeps the
+ * opera-house palette in both html.dark-mode and light page themes: its wall,
+ * floor, and stage lighting do not change with the surrounding player chrome.
+ * The player replaces the stage with its transcript for print.
+ * No animations live here; the controller evaluates motion from song time.
+ */
+.tm-aftermath-layer { position: absolute; left: 0; top: 0; width: 960px; height: 540px; overflow: visible; pointer-events: none; }
+.tm-aftermath-hidden { display: none; }
+.tm-aftermath-residue {
+  /* The action reads first; settled scenery recedes into the office palette. */
+  filter: saturate(calc(1 - 0.5 * var(--aftermath-rest, 0)))
+    contrast(calc(1 - 0.12 * var(--aftermath-rest, 0)))
+    brightness(calc(1 - 0.12 * var(--aftermath-rest, 0)));
+}
+.tm-aftermath-contact-shadow { fill: #170f0b; opacity: 0.35; }
+.tm-aftermath-slot { fill: none; stroke: #18232b; stroke-width: 5; stroke-linecap: round; }
+.tm-aftermath-box-crease { fill: none; stroke: #886238; stroke-width: 1.6; stroke-linejoin: round; }
+.ta-art { pointer-events: none; stroke-linecap: round; stroke-linejoin: round; }
+.ta-contact-shadow { fill: #170f0b; opacity: 0.35; }
+
+/* Cool metal with broad upper-left highlights and restrained mesh. */
+.ta-metal-stop-0 { stop-color: #647b80; }
+.ta-metal-stop-1 { stop-color: #92a5a8; }
+.ta-metal-stop-2 { stop-color: #8a9e9f; }
+.ta-metal-stop-3 { stop-color: #475c62; }
+.ta-interior-stop-0 { stop-color: #0e242b; }
+.ta-interior-stop-1 { stop-color: #30494e; }
+.ta-bin-body { fill: var(--ta-metal); }
+.ta-bin-rim-back { fill: #8d9fa0; stroke: #263e45; stroke-width: 1.6; }
+.ta-bin-interior { fill: var(--ta-interior); }
+.ta-bin-interior-seam { fill: none; stroke: #668085; stroke-width: 0.8; opacity: 0.5; }
+.ta-bin-side-shade { fill: #29434b; opacity: 0.32; }
+.ta-bin-side-light { fill: #bdc7c0; opacity: 0.28; }
+.ta-bin-mesh { fill: none; stroke: #3c565b; stroke-width: 0.8; opacity: 0.45; }
+.ta-bin-hoop { fill: none; stroke: #536d70; stroke-width: 1.6; }
+.ta-bin-outline { fill: none; stroke: #263e45; stroke-width: 1.8; }
+.ta-bin-rim-front { fill: #81999c; stroke: #29434b; stroke-width: 1.3; }
+.ta-metal-glint { fill: none; stroke: #bcc8c3; stroke-width: 1.5; opacity: 0.55; }
+.ta-bin-foot { fill: none; stroke: #31464b; stroke-width: 2.3; }
+
+/* The failed report uses unmistakable crosses instead of miniature prose. */
+.ta-paper-stop-0 { stop-color: #fffdf1; }
+.ta-paper-stop-1 { stop-color: #f1e9d6; }
+.ta-paper-stop-2 { stop-color: #d4c9af; }
+.ta-paper-thickness { fill: #bcb5a0; stroke: #6c6a5e; stroke-width: 1; }
+.ta-report-sheet { fill: var(--ta-paper); stroke: #7f7d6d; stroke-width: 1.3; }
+.ta-paper-fold-shade { fill: #b8af97; opacity: 0.36; }
+.ta-paper-fold-light { fill: #fffef5; opacity: 0.54; }
+.ta-paper-crease { fill: none; stroke: #a49d88; stroke-width: 1; opacity: 0.62; }
+.ta-report-fold { fill: #d5cfbb; stroke: #9a967f; stroke-width: 1; }
+.ta-report-cross { fill: none; stroke: #b52f35; stroke-width: 4.4; }
+.ta-report-rule { fill: none; stroke: #928c7a; stroke-width: 2; opacity: 0.65; }
+.ta-paper-edge-light { fill: none; stroke: #fffdf1; stroke-width: 1; opacity: 0.8; }
+
+/* Five thick paint colors share the held palette's oc-dab fills. */
+.ta-paint-relief { fill: #122c35; opacity: 0.42; }
+.ta-paint-body { stroke: #173947; stroke-width: 0.45; stroke-opacity: 0.28; }
+.ta-paint-ridge { fill: none; stroke: #fff8df; stroke-width: .9; opacity: .3; }
+.ta-paint-glint { fill: none; stroke: #e5dfcb; stroke-width: .6; opacity: .45; }
+.ta-paint-lowlight { fill: none; stroke: #233e58; stroke-width: 1.1; opacity: 0.2; }
+
+/* Coffee remains translucent, preserving the supporting wall's texture. */
+.ta-coffee-stop-0 { stop-color: #5a3420; stop-opacity: 0.66; }
+.ta-coffee-stop-1 { stop-color: #865432; stop-opacity: 0.58; }
+.ta-coffee-stop-2 { stop-color: #aa764c; stop-opacity: 0.2; }
+.ta-coffee-wash { fill: var(--ta-coffee); }
+.ta-coffee-drying-edge { fill: none; stroke: #bb8657; stroke-width: 0.8; opacity: 0.34; }
+.ta-coffee-pooling { fill: #57331f; opacity: 0.25; }
+.ta-coffee-satellite { fill: #9d663e; opacity: 0.6; }
+.ta-coffee-drip { fill: none; stroke: #9b6842; stroke-width: 1.8; opacity: 0.65; }
+.ta-coffee-drop { fill: #a26c43; opacity: 0.7; }
+.ta-coffee-floor { fill: #4c2b19; opacity: 0.57; }
+.ta-fragment-shadow { fill: #1c1811; opacity: 0.4; }
+.ta-ceramic { fill: #fbfbf8; stroke: #a29f90; stroke-width: 1; }
+.ta-ceramic-band { fill: #e2483d; }
+.ta-ceramic-edge { fill: none; stroke: #ffffff; stroke-width: 1; }
+.ta-ceramic-handle-shadow { fill: none; stroke: #8f958f; stroke-width: 3.2; }
+.ta-ceramic-handle { fill: none; stroke: #fbfbf8; stroke-width: 2.4; }
+.ta-ceramic-chip { fill: #eeeee5; stroke: #a29f90; stroke-width: 0.6; }
+
+/* Broad smoke falloff, then translucent overlapping charcoal deposits. */
+.ta-soot-stop-0 { stop-color: #29312d; stop-opacity: 0.78; }
+.ta-soot-stop-1 { stop-color: #323b35; stop-opacity: 0.6; }
+.ta-soot-stop-2 { stop-color: #665f4d; stop-opacity: 0; }
+.ta-scorch-warm-haze { fill: #8d7354; opacity: 0.3; filter: var(--ta-haze); }
+.ta-scorch-soot { fill: var(--ta-soot); filter: var(--ta-soft-soot); }
+.ta-scorch-core { fill: #202b29; opacity: 0.36; filter: var(--ta-soft-soot); }
+.ta-scorch-char { fill: #152320; opacity: 0.22; filter: var(--ta-soft-soot); }
+.ta-soot-streak { fill: none; stroke: #182824; stroke-width: 6; opacity: 0.18; filter: var(--ta-soft-soot); }
+.ta-soot-grain { fill: #10251f; opacity: 0.28; filter: var(--ta-soft-soot); }
+.ta-plume-stop-0 { stop-color: #f4e3ac; stop-opacity: 0.72; }
+.ta-plume-stop-1 { stop-color: #cbb48a; stop-opacity: 0.51; }
+.ta-plume-stop-2 { stop-color: #7a7b66; stop-opacity: 0.32; }
+.ta-plume-stop-3 { stop-color: #5c706a; stop-opacity: 0; }
+.ta-exhaust-haze { fill: var(--ta-plume); filter: var(--ta-haze); opacity: 0.55; }
+.ta-exhaust-plume { fill: var(--ta-plume); }
+.ta-exhaust-core { fill: var(--ta-plume); opacity: 0.48; }
+
+/* Rooted amber tongues retain the fixed stage palette in both page themes.
+   All paint stays opaque; song time drives slow growth and curling tips. */
+.ta-flame-root { fill: #43372d; }
+.ta-flame-shell { fill: #865d3f; stroke: #604a36; stroke-width: 0.6; }
+.ta-flame-fold { fill: #9b754b; }
+.ta-flame-core { fill: #b39668; }
+.ta-flame-edge { fill: none; stroke: #96764f; stroke-width: 0.7; }
+
+@media print {
+  /* These animated props have equivalent descriptions in the transcript. */
+  .ta-art { display: none; }
+}
+
+/* Small material cues follow the same cylindrical projection and light. */
+.ta-bin-base-light { fill: none; stroke: #9bafad; stroke-width: .8; opacity: .65; }
+.ta-bin-rim-seam { fill: none; stroke: #d0d8cf; stroke-width: .6; opacity: .65; }
+.ta-bin-rivet { fill: #bdcbc5; stroke: #4e686c; stroke-width: .4; }
+.ta-wet-paint-stop-0 { stop-color: #fff7dd; stop-opacity: .2; }
+.ta-wet-paint-stop-1 { stop-color: #fff7dd; stop-opacity: 0; }
+.ta-wet-paint-stop-2 { stop-color: #122b38; stop-opacity: .22; }
+.ta-paint-volume { fill: var(--ta-wet-paint); }
+
+
+.ta-coffee-tide { fill: none; stroke: #ab7d54; stroke-width: .55; opacity: .35; }
+.ta-coffee-speck { fill: #a37450; opacity: .55; }

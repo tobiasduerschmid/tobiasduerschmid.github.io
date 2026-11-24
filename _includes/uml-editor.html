@@ -609,6 +609,9 @@ Supported options:
   var isSequenceKeyword = diagramEditorParts.textSchemas.isSequenceKeyword;
   var relationSchemasFor = diagramEditorParts.textSchemas.relationSchemasFor;
   var findElementSchema = diagramEditorParts.textSchemas.findElementSchema;
+  var findInsertPointForDeclaration = diagramEditorParts.textRead.findInsertPointForDeclaration;
+  var STATE_KINDS = diagramEditorParts.textSchemas.STATE_KINDS;
+  var stateKindForStereotype = diagramEditorParts.textSchemas.stateKindForStereotype;
   var normalizeLineEndings = diagramEditorParts.textRead.normalizeLineEndings;
   var applyLayoutDirective = diagramEditorParts.textRead.applyLayoutDirective;
   var unquoteId = diagramEditorParts.textRead.unquoteId;
@@ -1107,6 +1110,16 @@ Supported options:
       if (undoStack.length > UNDO_LIMIT) undoStack.shift();
       redoStack.length = 0;
       refreshUndoButtons();
+    }
+    // Sequence edits address messages by line and insert into a framed
+    // source. An unframed one is framed where it is typed, so every later
+    // line number means the same line in both: the framed text and how far
+    // the typed text moved in it, or null for a framed or empty source.
+    function sequenceFrameOf(raw) {
+      if (!raw.trim() || raw.indexOf('@startuml') !== -1) return null;
+      var framed = sequenceSourceWithScaffold(raw);
+      var body = raw.trim();
+      return { text: framed, shift: framed.indexOf(body) - raw.indexOf(body) };
     }
     function refreshUndoButtons() {
       if (undoBtn) undoBtn.disabled = !undoStack.length;
@@ -1989,7 +2002,11 @@ Supported options:
       propsPane.hidden = false;
       propsPane.classList.remove('is-empty');
       var splitPropsEl = document.getElementById('uml-pg-split-props');
-      if (splitPropsEl) splitPropsEl.hidden = false;
+      if (splitPropsEl && splitPropsEl.hidden) {
+        splitPropsEl.hidden = false;
+        // The pane has a size again: report it on its separator.
+        describeSplitter('props', paneSize(propsPane));
+      }
       if (propsDelete) propsDelete.hidden = false;
       if (session.selection().size > 1) {
         buildGroupProps();
@@ -2352,7 +2369,7 @@ Supported options:
       replaceCrcCard(id, card);
     }
 
-    function crcListInput(items, onChange) {
+    function lineListInput(items, onChange) {
       var input = document.createElement('textarea');
       input.rows = Math.max(3, Math.min(8, items.length + 1));
       input.value = items.join('\n');
@@ -2370,10 +2387,10 @@ Supported options:
         if (!value.trim()) return;
         changeCrcCardProperty(id, 'name', value.trim());
       })));
-      propsContent.appendChild(field('Responsibilities (one per line)', crcListInput(card.responsibilities, function (items) {
+      propsContent.appendChild(field('Responsibilities (one per line)', lineListInput(card.responsibilities, function (items) {
         changeCrcCardProperty(id, 'responsibilities', items);
       })));
-      propsContent.appendChild(field('Collaborators (one per line)', crcListInput(card.collaborators, function (items) {
+      propsContent.appendChild(field('Collaborators (one per line)', lineListInput(card.collaborators, function (items) {
         changeCrcCardProperty(id, 'collaborators', items);
       })));
       var hint = document.createElement('p');
@@ -2459,6 +2476,10 @@ Supported options:
         }
       }
       if (!schema && type === 'activity') schema = findElementSchema('activity', 'action');
+      // A component that only connectors name has no declaration, but it is a component.
+      if (!schema && type === 'component' && textAdapter.contents().elements.some(function (element) {
+        return element.id === id && element.axis === 'xy';
+      })) schema = findElementSchema('component', 'component');
       propsTitle.textContent = (schema ? schema.label + ' — ' : 'Element — ') + id;
 
       if (/^note:\d+$/.test(String(id))) {
@@ -2511,6 +2532,7 @@ Supported options:
       if (type === 'class' && schema) {
         var info = parseClassDeclaration(line || (schema.keyword + ' ' + id));
         const memberInputs = [];
+        let classLabelInput;
         propsContent.appendChild(field('Name (id)', textInput(info.name, function (v) {
           info.name = v.trim() || info.name;
           replaceClassDeclaration(id, info);
@@ -2523,10 +2545,16 @@ Supported options:
               Object.assign(member, updated.members[index]);
               draftControlCommits.get(memberInputs[index]).setValue(member.text || '');
             });
+            draftControlCommits.get(classLabelInput).setValue(info.declarationLabel || info.name);
           } else {
             info.name = id;
           }
         })));
+        classLabelInput = textInput(info.declarationLabel || info.name, function (v) {
+          info.declarationLabel = v.trim() || info.declarationLabel || info.name;
+          replaceClassDeclaration(id, info);
+        });
+        propsContent.appendChild(field('Display label', classLabelInput));
         propsContent.appendChild(field('Kind', selectInput(
           [{ value: 'class', label: 'Class' }, { value: 'abstract', label: 'Abstract Class' },
            { value: 'interface', label: 'Interface' }, { value: 'enum', label: 'Enum' }],
@@ -2657,14 +2685,24 @@ Supported options:
       if (type === 'usecase' && schema && schema.supports.system) {
         buildSystemMembershipProps(function () { return id; });
       }
-      if (schema && schema.supports && schema.supports.stereotype) {
-        propsContent.appendChild(field('Stereotype (e.g. <<choice>>)', textInput(current.stereotype || '', function (v) {
+      var stateKind = type === 'state' ? stateKindForStereotype(current.stereotype) : '';
+      if (type === 'state' && line) {
+        var stateKindControl = selectInput(STATE_KINDS, stateKind, function (kind) {
+          current.stereotype = kind ? '<<' + kind + '>>' : '';
+          replaceGenericElement(id, schema, current);
+          rebuildPropsAfterStructuralChange(stateKindControl, '[data-state-kind]');
+        });
+        stateKindControl.setAttribute('data-state-kind', '');
+        propsContent.appendChild(field('Kind', stateKindControl));
+      }
+      if (schema && schema.supports && schema.supports.stereotype && !stateKind) {
+        propsContent.appendChild(field('Stereotype (e.g. <<service>>)', textInput(current.stereotype || '', function (v) {
           current.stereotype = v.trim() ? (/^<</.test(v.trim()) ? v.trim() : '<<' + v.trim().replace(/<<|>>/g, '') + '>>') : '';
           replaceGenericElement(id, schema, current);
         })));
       }
       if (schema && schema.supports && schema.supports.dashed) {
-        propsContent.appendChild(checkbox('Dashed outline', /\bdashed\b/i.test(line || ''), function (b) {
+        propsContent.appendChild(checkbox('Dashed outline', !!current.dashed, function (b) {
           current.dashed = b;
           replaceGenericElement(id, schema, current);
         }));
@@ -2692,8 +2730,34 @@ Supported options:
           }
         )));
       }
+      var stateBehaviour = type === 'state' ? stateBehaviourForId(readDocument(), id) : null;
+      if (stateBehaviour) {
+        var behaviourFs = document.createElement('fieldset');
+        behaviourFs.className = 'uml-pg-prop-fieldset';
+        var behaviourLegend = document.createElement('legend');
+        behaviourLegend.textContent = 'Behaviour';
+        behaviourFs.appendChild(behaviourLegend);
+        [['entry', 'Entry action'], ['doActivity', 'Do activity'], ['exit', 'Exit action']].forEach(function (action) {
+          behaviourFs.appendChild(field(action[1], textInput(stateBehaviour[action[0]], function (value) {
+            stateBehaviour[action[0]] = value.trim();
+            setStateBehaviour(readDocument(), id, stateBehaviour);
+          })));
+        });
+        behaviourFs.appendChild(field('Internal transitions (one per line: trigger [guard] / effect)',
+          lineListInput(stateBehaviour.internal, function (rows) {
+            var invalid = rows.filter(function (row) { return !isStateInternalTransitionRow(row); });
+            if (invalid.length) {
+              announce('An internal transition needs an effect after a slash, as in "tick [armed] / count()". Check: ' + invalid[0], true);
+              return;
+            }
+            stateBehaviour.internal = rows;
+            setStateBehaviour(readDocument(), id, stateBehaviour);
+          })));
+        propsContent.appendChild(behaviourFs);
+      }
+
       // ─── Container children editors (composite state / component ports / ER attrs) ───
-      if (type === 'state' && line) {
+      if (type === 'state' && line && !stateKind) {
         var body = parseBraceBody(line);
         if (body || (schema && schema.supports && schema.supports.subStates)) {
           var parsed = parseStateBody(body);
@@ -2758,6 +2822,29 @@ Supported options:
             commitState();
           });
           fs.appendChild(add);
+          // A region's own initial and final pseudostates are transitions
+          // written inside its block: `[*] --> First`, `Last --> [*]`.
+          [['+ Initial state', function (child) { return '[*] --> ' + child; }, 0],
+           ['+ Final state', function (child) { return child + ' --> [*]'; }, -1]].forEach(function (action) {
+            var regionButton = document.createElement('button');
+            regionButton.type = 'button';
+            regionButton.className = 'uml-pg-add-member';
+            regionButton.textContent = action[0];
+            regionButton.disabled = !parsed.children.length;
+            regionButton.addEventListener('click', function () {
+              parsed = parseStateBody(parseBraceBody(getDeclarationLine(readDocument(), type, id)));
+              var child = parsed.children[action[2] < 0 ? parsed.children.length - 1 : 0];
+              if (!child) return;
+              var transition = action[1](formatRelationEndpointId(child.name));
+              if (parsed.raw.indexOf(transition) !== -1) {
+                announce('This region already has that transition.', false);
+                return;
+              }
+              parsed.raw.push(transition);
+              commitState();
+            });
+            fs.appendChild(regionButton);
+          });
           propsContent.appendChild(fs);
         }
       }
@@ -3060,6 +3147,79 @@ Supported options:
 
     // ─── Container child helpers (composite state, component ports, ER attrs) ───
 
+    // ─── State behaviour: entry / do / exit actions and internal transitions ───
+    // The renderer reads these inside a state's block (`entry / start()`) or
+    // on a named row (`Idle : entry / start()`). The panel shows what the
+    // renderer shows; it writes the block form for a declared state and
+    // named rows for one that only transitions mention.
+    var STATE_ACTION_ROW = /^(entry|exit|do)\s*\/\s*(.+)$/i;
+
+    // `trigger [guard] / effect`: the effect slash is what tells it apart
+    // from a description row or a nested declaration.
+    function isStateInternalTransitionRow(row) {
+      return /^[^\s:{}][^:{}]*\/.*$/.test(row) && !/-->/.test(row) &&
+        !/^(?:state|note|callout|entry|exit|do)\b/i.test(row);
+    }
+
+    // The behaviour of state `id` in the document `text`, or null when it is not an ordinary state.
+    function stateBehaviourForId(text, id) {
+      var state = window.UMLStateDiagram.parse(stripLayoutMetadata(text)).states.find(function (candidate) {
+        return candidate.name === id;
+      });
+      if (!state || state.type !== 'state') return null;
+      return {
+        entry: state.entryAction || '',
+        doActivity: state.doActivity || '',
+        exit: state.exitAction || '',
+        internal: (state.internalTransitions || []).slice()
+      };
+    }
+
+    function stateBehaviourRows(behaviour) {
+      var rows = [];
+      if (behaviour.entry) rows.push('entry / ' + behaviour.entry);
+      if (behaviour.doActivity) rows.push('do / ' + behaviour.doActivity);
+      if (behaviour.exit) rows.push('exit / ' + behaviour.exit);
+      return rows.concat(behaviour.internal);
+    }
+
+    // The document with state `id`'s behaviour written as `behaviour`.
+    function sourceWithStateBehaviour(text, id, behaviour) {
+      var rows = stateBehaviourRows(behaviour);
+      // Drop the named rows first: they repeat the block's rows from outside it.
+      var namedRows = [];
+      sourceLinesWithoutNotes(text).forEach(function (line, index) {
+        var named = line.trim().match(/^(\S+)\s*:\s*(.+)$/);
+        if (named && named[1] === id && !/-->/.test(line) && /\//.test(named[2])) namedRows.push({ start: index, end: index });
+      });
+      if (namedRows.length) text = rewriteSourceLines(text, 'state', namedRows);
+      var declaration = getDeclarationLine(text, 'state', id);
+      if (declaration == null) {
+        // No declaration to hold a block, and adding one could lift the
+        // state out of its region: say it in named rows instead.
+        if (rows.length) {
+          var insertAt = findInsertPointForDeclaration(stripLayoutMetadata(text).split('\n'));
+          text = rewriteSourceLines(text, 'state', [{ start: insertAt, end: insertAt - 1,
+            replacement: rows.map(function (row) { return id + ' : ' + row; }).join('\n') }]);
+        }
+        return text;
+      }
+      var body = parseStateBody(parseBraceBody(declaration));
+      body.raw = rows.concat(body.raw.filter(function (row) {
+        return !STATE_ACTION_ROW.test(row) && !isStateInternalTransitionRow(row);
+      }));
+      return replaceBlockByMatch(text, 'state', function (line) { return declarationIdForLine(line, 'state') === id; },
+        setBraceBody(declaration, buildStateBody(body), true));
+    }
+
+    // One undo step, taken only when the behaviour changed the document `before`.
+    function setStateBehaviour(before, id, behaviour) {
+      var after = sourceWithStateBehaviour(before, id, behaviour);
+      if (after === before) return;
+      textAdapter.apply(buildOperation('source.replace', { text: after }, {}, null));
+      selectAfterRender(id, 'node');
+    }
+
     function parseStateBody(body) {
       // Only direct declarations are editable in this list. Preserve nested
       // blocks and action expressions as complete source statements.
@@ -3305,6 +3465,8 @@ Supported options:
         rels.map(function (r) { return { value: r.id, label: r.label }; }),
         info.kind, function (v) {
           info.kind = v;
+          var chosen = rels.find(function (relation) { return relation.id === v; });
+          if (!(chosen && chosen.supports && chosen.supports.stereotype)) info.stereotype = '';
           // These choices explicitly choose association direction. Whole-part
           // choices change the diamond while retaining the user's end marks.
           if (type === 'class' && /^(plain|assoc|biassoc)$/.test(v)) {
@@ -3512,6 +3674,10 @@ Supported options:
     // Defined here, before the first loadAutosaved() call, so the closure has
     // a real value and not a hoisted `undefined`.
     var autosaveScope = String(EDITOR_CONFIG.storageKey || '').trim();
+    // The draft this tab last read from or wrote to storage, per diagram type.
+    // A tab only writes a draft it has changed: one left open and untouched
+    // must not put its old copy over newer work saved from another tab.
+    var draftInStorage = Object.create(null);
     function autosaveKey(t) {
       var type = t || typeSelect.value;
       return autosaveScope
@@ -3599,9 +3765,24 @@ Supported options:
       rememberCurrentSource(currentType);
       renderGeneration++;
       cancelVisualEditorInstall();
-      var text = textarea.value.trim();
       var type = typeSelect.value;
-      updateDraftDiagnostics(text, type);
+      // The scaffold: an empty document gets its frame and starter, and a
+      // sequence source typed without @startuml is framed, caret kept in place.
+      var typed = normalizeLineEndings(textarea.value);
+      var emptyScaffold = !typed.trim() && supportsEmptyEditor(type);
+      var sequenceFrame = !emptyScaffold && type === 'sequence' ? sequenceFrameOf(typed) : null;
+      if (emptyScaffold || sequenceFrame) {
+        var caret = [textarea.selectionStart, textarea.selectionEnd];
+        setDocument(sequenceFrame ? sequenceFrame.text
+          : (type === 'sequence' ? sequenceSourceWithScaffold(typed) : sourceWithScaffold(typed)), { reason: 'scaffold' });
+        if (sequenceFrame && document.activeElement === textarea) {
+          textarea.setSelectionRange(caret[0] + sequenceFrame.shift, caret[1] + sequenceFrame.shift);
+        }
+      }
+      // Rendered ids carry source line numbers (`rel:4`, `seqmsg:5`) that the
+      // editor reads back against the textarea, so render it line for line.
+      var text = emptyScaffold ? typed : normalizeLineEndings(textarea.value);
+      updateDraftDiagnostics(text.trim(), type);
       // is-hidden has display:none !important — toggling the class is the
       // only reliable way to actually hide/show the error box. Setting
       // style.display alone is ignored.
@@ -3609,10 +3790,9 @@ Supported options:
       errorBox.style.display = '';
       output.innerHTML = '';
 
-      if (!text) {
+      if (!text.trim()) {
         calloutEditor.refresh(null, type);
         if (supportsEmptyEditor(type)) {
-          setDocument(type === 'sequence' ? sequenceSourceWithScaffold(readDocument()) : sourceWithScaffold(readDocument()), { reason: 'scaffold' });
           output.innerHTML = '<div class="uml-empty-msg"></div>';
           session.commands.installGenericEmptyEditor();
           rebuildSequenceModelPanel();
@@ -3756,9 +3936,7 @@ Supported options:
       rememberCurrentSource(prev);
       // Persist whatever's in the editor under the *previous* type before loading
       // the new type's content, so each type keeps its own draft.
-      if (persistenceEnabled) {
-        try { localStorage.setItem(autosaveKey(prev), readDocument()); } catch (e) {}
-      }
+      try { writeAutosave(prev, readDocument()); } catch (e) {}
       var saved = storedSourceForType(nextType);
       currentType = nextType;
       if (saved && saved.trim()) {
@@ -3773,6 +3951,8 @@ Supported options:
       session.setTool(null);
       session.select(null, { whenDrawn: true });
       session.select(null);
+      // A new diagram type starts unzoomed.
+      session.viewport.reset();
       session.viewport.revealOnNextSync();
       refreshPalette();
       renderDiagram();
@@ -3867,7 +4047,9 @@ Supported options:
         // again from the document as it is (a drag preview put back), an undo step of its own for an
         // in-place rename's commit, the CRC card form, and the forms a context menu opens.
         redraw: function () { renderDiagram(); },
-        startUndoStep: function () { snapshotForUndo(); },
+        // An in-place rename takes no step of its own: its write takes one, and
+        // a rename that is refused writes nothing, so undo and redo stay as they were.
+        startUndoStep: function () {},
         replaceCrcCard: replaceCrcCard,
         offersForm: function (form) {
           return form === 'callout' ? calloutEditor.isSupported() : !!selectedClassForActions();
@@ -3931,7 +4113,7 @@ Supported options:
       rememberCurrentSource(currentType);
       if (!persistenceEnabled) return;
       try {
-        localStorage.setItem(autosaveKey(currentType), textarea.value);
+        if (!writeAutosave(currentType, textarea.value)) return;
         if (autosaveFailed) {
           autosaveFailed = false;
           announce('Autosave recovered.', false);
@@ -3987,11 +4169,23 @@ Supported options:
     }
     function loadAutosaved(type) {
       if (!persistenceEnabled) return null;
-      try { return localStorage.getItem(autosaveKey(type)); }
+      try {
+        var saved = localStorage.getItem(autosaveKey(type));
+        draftInStorage[type] = saved;
+        return saved;
+      }
       catch (e) { return null; }
+    }
+    // Returns whether the draft was written. Storage errors reach the caller.
+    function writeAutosave(type, value) {
+      if (!persistenceEnabled || draftInStorage[type] === value) return false;
+      localStorage.setItem(autosaveKey(type), value);
+      draftInStorage[type] = value;
+      return true;
     }
     function clearAutosaved(type) {
       if (!persistenceEnabled) return;
+      delete draftInStorage[type];
       try { localStorage.removeItem(autosaveKey(type)); } catch (e) {}
     }
     function hasSourceDraft(type) {
@@ -4046,105 +4240,123 @@ Supported options:
     var splitProps = document.getElementById('uml-pg-split-props');
     var editorPane = document.getElementById('uml-pg-editor-pane');
 
+    // Below this width the panes stack and the splitters lie flat, so a pane
+    // size is a height. Stacked heights last for the visit; only side-by-side
+    // widths are stored, so a desktop width never becomes a phone height.
+    var stackedPanes = window.matchMedia('(max-width: 700px)');
+    var paneSplitters = { editor: splitEditor, props: splitProps };
+
+    function paneSize(paneEl) {
+      var rect = paneEl.getBoundingClientRect();
+      return stackedPanes.matches ? rect.height : rect.width;
+    }
+
+    function paneSizeLimits(kind) {
+      if (stackedPanes.matches) return { min: 120, max: Math.max(200, Math.round(window.innerHeight * 0.7)) };
+      // #uml-playground-body ships alongside the splitters, but this include
+      // can be embedded in customized markup — fall back to the pane's parent.
+      var bodyEl = document.getElementById('uml-playground-body') || editorPane.parentNode;
+      var bodyWidth = (bodyEl && bodyEl.getBoundingClientRect().width) || 1000;
+      return kind === 'editor'
+        ? { min: 180, max: Math.max(240, bodyWidth - 280) }
+        : { min: 200, max: Math.min(600, bodyWidth * 0.6) };
+    }
+
+    // Tell assistive technology where the separator sits and how far it moves.
+    function describeSplitter(kind, size) {
+      var splitter = paneSplitters[kind];
+      if (!splitter) return;
+      var limits = paneSizeLimits(kind);
+      splitter.setAttribute('aria-orientation', stackedPanes.matches ? 'horizontal' : 'vertical');
+      splitter.setAttribute('aria-valuemin', String(Math.round(limits.min)));
+      splitter.setAttribute('aria-valuemax', String(Math.round(limits.max)));
+      splitter.setAttribute('aria-valuenow', String(Math.round(size)));
+      splitter.setAttribute('aria-valuetext', Math.round(size) + ' pixels');
+    }
+
+    function applyPaneSize(paneEl, kind, newSize) {
+      var limits = paneSizeLimits(kind);
+      var size = Math.max(limits.min, Math.min(limits.max, newSize));
+      paneEl.style.flex = '0 0 ' + size + 'px';
+      describeSplitter(kind, size);
+    }
+
+    function storePaneSize(paneEl, kind) {
+      if (!persistenceEnabled || stackedPanes.matches) return;
+      try {
+        localStorage.setItem('uml-pg-' + kind + '-size', String(Math.round(paneSize(paneEl))));
+      } catch (e) {}
+    }
+
     function bindSplitter(splitter, paneEl, kind) {
       if (!splitter || !paneEl) return;
       var dragging = null;
-      // #uml-playground-body ships alongside the splitters, but this include
-      // can be embedded in customized markup — fall back to the pane's parent
-      // so a missing wrapper degrades to a working drag instead of a TypeError.
-      function playgroundBodyWidth() {
-        var bodyEl = document.getElementById('uml-playground-body') || paneEl.parentNode;
-        return bodyEl ? bodyEl.getBoundingClientRect().width : 0;
+      function endDrag(ev) {
+        if (!dragging) return;
+        dragging = null;
+        splitter.classList.remove('is-dragging');
+        try { splitter.releasePointerCapture(ev.pointerId); } catch (e) {}
+        storePaneSize(paneEl, kind);
+        // Re-render so canvas reflows.
+        setTimeout(renderDiagram, 30);
       }
       function onPointerDown(ev) {
         if (ev.button !== 0) return;
         ev.preventDefault();
         splitter.setPointerCapture(ev.pointerId);
         splitter.classList.add('is-dragging');
-        var paneRect = paneEl.getBoundingClientRect();
-        dragging = {
-          startX: ev.clientX,
-          startY: ev.clientY,
-          startWidth: paneRect.width,
-          bodyWidth: playgroundBodyWidth(),
-          horizontal: window.matchMedia('(max-width: 700px)').matches
-        };
+        dragging = { startX: ev.clientX, startY: ev.clientY, startSize: paneSize(paneEl) };
       }
       function onPointerMove(ev) {
         if (!dragging) return;
-        var newSize;
-        if (dragging.horizontal) {
-          newSize = dragging.startWidth + (ev.clientY - dragging.startY);
-        } else if (kind === 'editor') {
-          newSize = dragging.startWidth + (ev.clientX - dragging.startX);
-        } else { // props pane on the right — drag left to grow
-          newSize = dragging.startWidth - (ev.clientX - dragging.startX);
-        }
-        applyPaneSize(paneEl, kind, newSize, dragging.bodyWidth);
-      }
-      function onPointerUp(ev) {
-        dragging = null;
-        splitter.classList.remove('is-dragging');
-        try { splitter.releasePointerCapture(ev.pointerId); } catch (e) {}
-        if (persistenceEnabled) {
-          try {
-            var sz = paneEl.getBoundingClientRect().width;
-            localStorage.setItem('uml-pg-' + kind + '-size', String(Math.round(sz)));
-          } catch (e) {}
-        }
-        // Re-render so canvas reflows.
-        setTimeout(renderDiagram, 30);
+        var travel = stackedPanes.matches ? ev.clientY - dragging.startY : ev.clientX - dragging.startX;
+        // The properties pane sits after its splitter: dragging back grows it.
+        applyPaneSize(paneEl, kind, dragging.startSize + (kind === 'editor' ? travel : -travel));
       }
       function onKey(ev) {
         var step = ev.shiftKey ? 40 : 10;
-        var delta = 0;
-        if (ev.key === 'ArrowLeft') delta = kind === 'editor' ? -step : step;
-        else if (ev.key === 'ArrowRight') delta = kind === 'editor' ? step : -step;
-        else return;
+        var backKey = stackedPanes.matches ? 'ArrowUp' : 'ArrowLeft';
+        var forwardKey = stackedPanes.matches ? 'ArrowDown' : 'ArrowRight';
+        if (ev.key !== backKey && ev.key !== forwardKey) return;
+        var travel = ev.key === forwardKey ? step : -step;
         ev.preventDefault();
-        var rect = paneEl.getBoundingClientRect();
-        applyPaneSize(paneEl, kind, rect.width + delta, playgroundBodyWidth());
-        if (persistenceEnabled) {
-          try {
-            localStorage.setItem('uml-pg-' + kind + '-size', String(Math.round(paneEl.getBoundingClientRect().width)));
-          } catch (e) {}
-        }
+        applyPaneSize(paneEl, kind, paneSize(paneEl) + (kind === 'editor' ? travel : -travel));
+        storePaneSize(paneEl, kind);
         setTimeout(renderDiagram, 30);
       }
       splitter.addEventListener('pointerdown', onPointerDown);
       splitter.addEventListener('pointermove', onPointerMove);
-      splitter.addEventListener('pointerup', onPointerUp);
+      splitter.addEventListener('pointerup', endDrag);
+      splitter.addEventListener('pointercancel', endDrag);
       splitter.addEventListener('keydown', onKey);
-    }
-
-    function applyPaneSize(paneEl, kind, newSize, bodyWidth) {
-      var min = kind === 'editor' ? 180 : 200;
-      var max = kind === 'editor' ? Math.max(240, (bodyWidth || 1000) - 280) : Math.min(600, (bodyWidth || 1000) * 0.6);
-      var size = Math.max(min, Math.min(max, newSize));
-      paneEl.style.flex = '0 0 ' + size + 'px';
     }
 
     bindSplitter(splitEditor, editorPane, 'editor');
     bindSplitter(splitProps, propsPane, 'props');
 
-    function applyConfiguredPaneSizes() {
-      if (EDITOR_CONFIG.defaultEditorSize && editorPane) {
-        editorPane.style.flex = '0 0 ' + Number(EDITOR_CONFIG.defaultEditorSize) + 'px';
-      }
-      if (EDITOR_CONFIG.defaultPropsSize && propsPane) {
-        propsPane.style.flex = '0 0 ' + Number(EDITOR_CONFIG.defaultPropsSize) + 'px';
-      }
+    function storedPaneSize(kind) {
+      if (!persistenceEnabled) return 0;
+      try { return Number(localStorage.getItem('uml-pg-' + kind + '-size')) || 0; } catch (e) { return 0; }
     }
 
-    applyConfiguredPaneSizes();
-    if (persistenceEnabled) {
-      try {
-        var ed = localStorage.getItem('uml-pg-editor-size');
-        if (ed) editorPane.style.flex = '0 0 ' + Number(ed) + 'px';
-        var pp = localStorage.getItem('uml-pg-props-size');
-        if (pp && propsPane) propsPane.style.flex = '0 0 ' + Number(pp) + 'px';
-      } catch (e) {}
+    // Side by side: the author's configured widths, then the reader's stored
+    // ones. Stacked: the stylesheet's own heights.
+    function restorePaneSizes() {
+      [['editor', editorPane, EDITOR_CONFIG.defaultEditorSize], ['props', propsPane, EDITOR_CONFIG.defaultPropsSize]].forEach(function (pane) {
+        var kind = pane[0], paneEl = pane[1], configured = Number(pane[2]) || 0;
+        if (!paneEl) return;
+        paneEl.style.removeProperty('flex');
+        if (!stackedPanes.matches) {
+          if (configured) paneEl.style.flex = '0 0 ' + configured + 'px';
+          var stored = storedPaneSize(kind);
+          if (stored) applyPaneSize(paneEl, kind, stored);
+        }
+        describeSplitter(kind, paneSize(paneEl));
+      });
     }
+
+    restorePaneSizes();
+    stackedPanes.addEventListener('change', restorePaneSizes);
     var fullscreenPending = false;
     var fullscreenReturnFocus = null;
 
@@ -4270,6 +4482,12 @@ Supported options:
       if (mod && (key === '0' || event.code === 'Digit0') && inWrap) {
         event.preventDefault();
         session.viewport.fit();
+        return;
+      }
+      // A "+" drag holds the pointer, not the focus: cancel it wherever focus is.
+      if (key === 'Escape' && session.commands.cancelExtendDrag()) {
+        event.preventDefault();
+        announce('Cancelled.', false);
         return;
       }
       if (key === 'Escape' && inWrap) {

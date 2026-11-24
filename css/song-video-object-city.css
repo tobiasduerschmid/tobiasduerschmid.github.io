@@ -308,3 +308,23 @@
   font-size: 13px;
   font-weight: 800;
 }
+
+/* ---- Level of detail: kerbs, roofs, trees, and vehicle trim ------------ */
+
+.oc-sidewalk { fill: #33405f; }
+.oc-kerb { fill: none; stroke: rgba(200, 215, 255, 0.35); stroke-width: 1; }
+.oc-stop-line { fill: none; stroke: rgba(240, 244, 255, 0.7); stroke-width: 2.2; }
+.oc-roof-inset { fill: none; stroke: rgba(10, 18, 40, 0.45); stroke-width: 1; }
+.oc-roof-ac { fill: #3b5389; stroke: rgba(170, 200, 255, 0.35); stroke-width: 0.8; }
+.oc-roof-hatch { fill: #2b3f6b; stroke: rgba(10, 18, 40, 0.6); stroke-width: 0.8; }
+.oc-tree-light { fill: rgba(134, 239, 172, 0.32); }
+.oc-wheel { fill: #0b0f1a; }
+.oc-mirror { fill: #0f172a; }
+.oc-sheen { fill: rgba(255, 255, 255, 0.2); }
+.oc-seam { fill: none; stroke: rgba(0, 0, 0, 0.35); stroke-width: 0.9; stroke-linecap: round; }
+.oc-roof-unit { fill: #e5c210; stroke: rgba(0, 0, 0, 0.35); stroke-width: 0.8; }
+.oc-door { fill: #0f172a; }
+.oc-amb-stripe { fill: #e11d48; }
+.oc-rider-arm { stroke: #a78bfa; stroke-width: 2.2; stroke-linecap: round; }
+.oc-helmet { fill: #38bdf8; stroke: rgba(0, 0, 0, 0.4); stroke-width: 0.6; }
+.oc-helmet-stripe { stroke: #f8fafc; stroke-width: 1; }

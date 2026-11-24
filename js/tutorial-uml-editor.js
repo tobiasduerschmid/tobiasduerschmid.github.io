@@ -99,6 +99,12 @@
     if (popoutBtn) {
       popoutBtn.hidden = true;
     }
+    // "Hide instructions" and its rail (js/tutorial-instructions-rail.js).
+    // The instructions never pop out here, so the rail only shows when hidden.
+    var instructionsPanel = this.root.querySelector('.tvm-instructions-panel');
+    if (instructionsPanel && window.TutorialInstructionsRail) {
+      window.TutorialInstructionsRail.attach(instructionsPanel);
+    }
   };
 
   UMLTutorialEditor.prototype._stepHasTests = function (step) {

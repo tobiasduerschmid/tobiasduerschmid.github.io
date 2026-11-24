@@ -20,17 +20,17 @@ async function seekToCue(page, sceneId, pose) {
   const time = Number(((cue.start + cue.end) / 2).toFixed(2));
   await animation.getByRole('slider', { name: 'Animation position' }).fill(String(time));
   await expect(animation.getByRole('region', { name: 'Narration' })).toHaveText(story.scenes[sceneIndex].cues[cueIndex].text);
-  await expect.poll(() => animation.getByLabel('React narration by Kokoro').evaluate((audio) => audio.currentTime)).toBeCloseTo(time, 1);
+  await expect.poll(() => animation.getByLabel('React narration by Fish Audio Drama 3').evaluate((audio) => audio.currentTime)).toBeCloseTo(time, 1);
   return animation.getByRole('img');
 }
 
-test('starts paused with a complete downloadable script, captions and compressed Kokoro MP3', async ({ page, request }) => {
+test('starts paused with a complete downloadable script, captions and compressed narration MP3', async ({ page, request }) => {
   await page.goto(pageURL);
   const animation = player(page);
   await expect(animation.getByRole('button', { name: 'Play narration' })).toBeVisible();
   await expect(animation.getByRole('slider', { name: 'Animation position' })).toHaveValue('0');
   await expect(animation.getByRole('heading', { name: 'Describe the screen from data' })).toBeVisible();
-  await expect(animation.getByText('Narration: Kokoro.', { exact: false })).toBeVisible();
+  await expect(animation.getByText('Narration: Fish Audio Drama 3. Built with Fish Audio.', { exact: false })).toBeVisible();
   await expect(animation.getByText('No music.', { exact: false })).toHaveCount(0);
   for (const [name, phrase] of [['Download narration script', 'React is a Javascript library'], ['Download narration', null]]) {
     const link = animation.getByRole('link', { name, exact: true });
@@ -53,7 +53,7 @@ test('actual MP3 playback drives progress, pauses, and supports transport and sp
   await animation.getByRole('button', { name: 'Play narration' }).click();
   const slider = animation.getByRole('slider', { name: 'Animation position' });
   await expect.poll(async () => Number(await slider.inputValue())).toBeGreaterThan(0.2);
-  const audio = animation.getByLabel('React narration by Kokoro');
+  const audio = animation.getByLabel('React narration by Fish Audio Drama 3');
   expect(await audio.evaluate((element) => element.duration)).toBeCloseTo(timing.duration, 0);
   await openPlayerSettings(animation);
   await animation.getByRole('combobox', { name: 'Speed', exact: true }).selectOption('1.25');
@@ -74,7 +74,8 @@ test('actual MP3 playback drives progress, pauses, and supports transport and sp
   await slider.focus();
   await slider.press('End');
   await expect(animation.getByRole('heading', { name: "Synchronize beyond React's UI" })).toBeVisible();
-  await animation.getByRole('button', { name: 'Restart narration' }).click();
+  // 0 jumps to the start, as in the music player.
+  await slider.press('0');
   await expect(slider).toHaveValue('0');
 });
 
@@ -142,7 +143,7 @@ test('reduced motion, no-JavaScript and print retain the complete lesson', async
   const context = await browser.newContext({ javaScriptEnabled: false });
   const fallback = await context.newPage();
   await fallback.goto(pageURL);
-  await expect(player(fallback).getByLabel('React narration by Kokoro')).toBeVisible();
+  await expect(player(fallback).getByLabel('React narration by Fish Audio Drama 3')).toBeVisible();
   await player(fallback).getByText('Transcript and visual descriptions', { exact: true }).click();
   await expect(player(fallback).getByText(/Here is the adapted child/)).toBeVisible();
   await context.close();
@@ -172,6 +173,8 @@ for (const combinedPage of ['/SEBook/CS35L.html', '/SEBook/all.html']) {
     await expect(node.getByRole('combobox', { name: 'Scene', exact: true })).toHaveValue('0');
     await node.getByRole('combobox', { name: 'Scene', exact: true }).selectOption('2');
     await expect(node.getByRole('heading', { name: 'Blocking: the thread waits' })).toBeVisible();
+    // Opening one player's settings closes the other's, as focus leaves it.
+    await openPlayerSettings(react);
     await expect(react.getByRole('combobox', { name: 'Scene', exact: true })).toHaveValue('4');
     await expect(react.getByRole('img')).toHaveAttribute('aria-label', story.scenes[4].cues[0].visual);
     expect(errors).toEqual([]);

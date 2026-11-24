@@ -1,0 +1,169 @@
+@startuml
+layout compact
+package Headliner {
+  component TripWebsite <<WebApplication>> {
+    require "CardService" as web_card
+    require "Quotes" as web_quotes
+    require "Capacity" as web_capacity
+    require "PurchaseOrderService" as web_orders
+    require "SQL" as web_catalog
+  }
+  component CatalogDB <<Database>> {
+    provide "SQL" as catalog_sql
+  }
+  component OPC <<BackendService>> {
+    provide "PurchaseOrderService" as opc_orders
+    require "CardService" as opc_card
+    require "Booking" as opc_box_booking
+    provide "SupplierCallbackService" as opc_box_callback
+    require "Booking" as opc_exp_booking
+    provide "SupplierCallbackService" as opc_exp_callback
+    require "Booking" as opc_lodging_booking
+    provide "SupplierCallbackService" as opc_lodging_callback
+    require "Booking" as opc_shuttle_booking
+    provide "SupplierCallbackService" as opc_shuttle_callback
+    require "SQL" as opc_sql
+    require "Publish" as opc_publish
+  }
+  component OrderDB <<Database>> {
+    provide "SQL" as order_sql
+  }
+  component MessageBroker <<MessageBroker>> {
+    provide "Publish" as broker_publish
+  }
+  component Notifications <<BackendService>> {
+    require "SMTP" as notifications_smtp
+  }
+}
+component Bank <<ExternalSystem>> {
+  provide "CardService" as bank_card_web
+  provide "CardService" as bank_card_opc
+}
+component BoxOffice <<ExternalSystem>> {
+  provide "Quotes" as box_quotes
+  provide "Booking" as box_booking
+  require "SupplierCallbackService" as box_callback
+}
+component ExperienceProvider <<ExternalSystem>> {
+  provide "Capacity" as exp_capacity
+  provide "Booking" as exp_booking
+  require "SupplierCallbackService" as exp_callback
+}
+component LodgingProvider <<ExternalSystem>> {
+  provide "Booking" as lodging_booking
+  require "SupplierCallbackService" as lodging_callback
+}
+component ShuttleProvider <<ExternalSystem>> {
+  provide "Booking" as shuttle_booking
+  require "SupplierCallbackService" as shuttle_callback
+}
+component MailRelay <<ExternalSystem>> {
+  provide "SMTP" as mail_smtp
+}
+bank_card_web --> web_card
+box_quotes --> web_quotes
+exp_capacity --> web_capacity
+opc_orders --> web_orders
+catalog_sql --> web_catalog
+opc_card --> bank_card_opc
+opc_box_booking --> box_booking
+opc_box_callback --> box_callback
+opc_exp_booking --> exp_booking
+opc_exp_callback --> exp_callback
+lodging_booking --> opc_lodging_booking
+lodging_callback --> opc_lodging_callback
+shuttle_booking --> opc_shuttle_booking
+shuttle_callback --> opc_shuttle_callback
+order_sql --> opc_sql
+broker_publish --> opc_publish
+mail_smtp --> notifications_smtp
+MessageBroker -- OPC : <<consume>> {queues = "orders.received, supplier.answered"}
+Notifications -- MessageBroker : <<consume>> {queues = "notifications.trips"}
+
+
+note bottom of OrderDB
+Key: UML 2.5.1 component diagram.
+Stereotypes from the Headliner
+architecture profile.
+Ball and socket: a synchronous call;
+the socket side calls and waits
+for the answer.
+«consume» {queues}: the broker
+hands each queued message to the
+consumer later; the sender does
+not wait.
+end note
+note left of OPC
+PurchaseOrderService.submit stores
+the order and sends it to
+orders.received before it returns
+(services/opc/intake.py:21).
+The OPC workflow consumes
+orders.received, then captures the
+payment and places the supplier
+orders (services/opc/workflow.py:25).
+An order a supplier cannot take is
+sent again every 60 s
+(services/opc/supplier_task.py:10).
+A consumer whose service is down
+gets its message again later
+(infra/broker.py:139).
+Protocols: SQL to the databases
+(deploy/services.toml:13), AMQP to
+the broker (deploy/services.toml:16),
+SMTP to the mail relay
+(deploy/services.toml:24), HTTPS to
+the other services
+(deploy/services.toml:19).
+end note
+
+@layout
+CatalogDB @pos(0, 40)
+TripWebsite @pos(330, 0)
+Bank @pos(800, 150)
+BoxOffice @pos(1039, 70)
+ExperienceProvider @pos(1366, -10)
+OrderDB @pos(0, 744)
+OPC @pos(330, 560)
+LodgingProvider @pos(1696, 703)
+ShuttleProvider @pos(2003, 798)
+MessageBroker @pos(384, 1070)
+Notifications @pos(384, 1313)
+MailRelay @pos(1039, 1313)
+TripWebsite.web_catalog @pos(330, 96)
+CatalogDB.catalog_sql @pos(146, 96)
+TripWebsite.web_capacity @pos(537, 40)
+TripWebsite.web_quotes @pos(537, 120)
+TripWebsite.web_card @pos(537, 200)
+TripWebsite.web_orders @pos(400, 272)
+ExperienceProvider.exp_capacity @pos(1366, 40)
+BoxOffice.box_quotes @pos(1039, 120)
+Bank.bank_card_web @pos(800, 200)
+OPC.opc_orders @pos(400, 560)
+OPC.opc_card @pos(600, 560)
+OPC.opc_box_callback @pos(622, 633)
+OPC.opc_box_booking @pos(622, 590)
+OPC.opc_exp_booking @pos(622, 676)
+OPC.opc_exp_callback @pos(622, 719)
+Bank.bank_card_opc @pos(800, 270)
+BoxOffice.box_callback @pos(1279, 222)
+BoxOffice.box_booking @pos(1069, 222)
+ExperienceProvider.exp_booking @pos(1436, 142)
+ExperienceProvider.exp_callback @pos(1616, 142)
+OPC.opc_lodging_booking @pos(622, 762)
+OPC.opc_lodging_callback @pos(622, 805)
+OPC.opc_shuttle_booking @pos(622, 857)
+OPC.opc_shuttle_callback @pos(622, 900)
+LodgingProvider.lodging_booking @pos(1696, 762)
+LodgingProvider.lodging_callback @pos(1696, 805)
+ShuttleProvider.shuttle_booking @pos(2003, 857)
+ShuttleProvider.shuttle_callback @pos(2003, 900)
+OPC.opc_sql @pos(330, 800)
+OrderDB.order_sql @pos(143, 800)
+OPC.opc_publish @pos(440, 912)
+MessageBroker.broker_publish @pos(440, 1070)
+Notifications.notifications_smtp @pos(567, 1368)
+MailRelay.mail_smtp @pos(1039, 1368)
+note:95 @pos(0, 310)
+@endlayout
+@enduml

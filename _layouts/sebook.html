@@ -555,6 +555,19 @@
           });
         });
 
+        // The button names what it does now. Speech-input users say its
+        // visible label, so the accessible name starts with that label.
+        var readButtonShowsStop = false;
+        function renderReadButton(reading) {
+          if (reading === readButtonShowsStop) return;
+          readButtonShowsStop = reading;
+          readBtn.innerHTML = reading
+            ? '<i class="fa fa-stop tts-read-inline-icon" aria-hidden="true"></i>Stop Reading'
+            : '<i class="fa fa-volume-up tts-read-inline-icon" aria-hidden="true"></i>Read Aloud';
+          readBtn.setAttribute('aria-label', reading ? 'Stop reading the page aloud' : 'Read Aloud: read page aloud using text-to-speech');
+          readBtn.classList.toggle('is-reading', reading);
+        }
+
         function updateBar() {
           var speaking = TTSPlayer.isSpeaking();
           var paused   = TTSPlayer.isPaused();
@@ -572,11 +585,7 @@
             playPauseBtn.setAttribute('aria-pressed', paused ? 'false' : 'true');
           }
           if (rateDisplay) rateDisplay.textContent = TTSPlayer.rateLabel();
-          if (!speaking && !paused) {
-            readBtn.innerHTML = '<i class="fa fa-volume-up tts-read-inline-icon" aria-hidden="true"></i>Read Aloud';
-            readBtn.style.color = '#2774AE';
-            readBtn.style.borderColor = '#2774AE';
-          }
+          renderReadButton(speaking || paused);
         }
 
         readBtn.addEventListener('click', function () {
@@ -588,9 +597,6 @@
           var extracted = TTSPlayer.extract(content);
           if (!extracted.text) return;
 
-          readBtn.innerHTML = '<i class="fa fa-stop tts-read-inline-icon" aria-hidden="true"></i>Stop Reading';
-          readBtn.style.color = '#c0392b';
-          readBtn.style.borderColor = '#c0392b';
           // Show heading-skip buttons only when the page actually has
           // multiple headings to skip between.
           var hasHeadings = extracted.markers && extracted.markers.length > 1;

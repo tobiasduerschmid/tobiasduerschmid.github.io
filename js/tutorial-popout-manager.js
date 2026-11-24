@@ -222,6 +222,7 @@
         content: f.content || '',
         language: f.language || '',
         version: v,
+        readOnly: !!f.readOnly,
       };
     });
     this._post('pane-snapshot', {
@@ -470,6 +471,7 @@
       case 'request-save': this._safeHook('onSaveFileRequest', msg.filename); break;
       case 'quiz-passed': this._safeHook('onQuizPassedFromPopup', msg.stepIndex); break;
       case 'quiz-skipped': this._safeHook('onQuizSkippedFromPopup', msg.stepIndex); break;
+      case 'request-back-to-step': this._safeHook('onBackToStepRequest'); break;
       case 'request-run': this._safeHook('onRunOutputRequest', msg.args || ''); break;
       case 'request-stop': this._safeHook('onStopOutputRequest'); break;
       case 'request-clear': this._safeHook('onClearOutputRequest'); break;
@@ -686,6 +688,7 @@
       language: meta.language || '',
       version: v,
       darkMode: !!meta.darkMode,
+      readOnly: !!meta.readOnly,
     });
     this._writeStateMirror();
   };

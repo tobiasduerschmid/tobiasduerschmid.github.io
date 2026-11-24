@@ -452,6 +452,29 @@ class Playlist:
     });
   });
 
+  test('extract accepts whole lines selected together with their indentation', () => {
+    const before = text`
+class OrderService:
+    def checkout(self, payments, cents):
+        token = payments.authenticate()
+        paid = payments.capture(token, cents)
+        return paid
+`;
+    const workspace = workspaceFrom({ 'order_service.py': before }, 'order_service.py');
+    const analysis = analyze(workspace);
+    const exact = selectionBetween(before, 'token = payments.authenticate()', 'paid = payments.capture(token, cents)');
+    const fromColumnOne = { ...exact, startColumn: 1 };
+    const throughNextLineStart = { ...exact, startColumn: 1, endLineNumber: exact.endLineNumber + 1, endColumn: 1 };
+    const expected = applyPlan(workspace, adapter.planExtract(workspace, analysis, 'order_service.py', exact, 'charge'));
+    for (const selection of [fromColumnOne, throughNextLineStart]) {
+      const plan = adapter.planExtract(workspace, analysis, 'order_service.py', selection, 'charge');
+      expect(plan.error).toBeFalsy();
+      expect(applyPlan(workspace, plan)).toEqual(expected);
+      expect(api.computePythonActionAvailability(workspace, analysis, 'order_service.py',
+        { lineNumber: selection.startLineNumber, column: selection.startColumn }, selection, null).extract).toBe(true);
+    }
+  });
+
   test('does not extract partial expressions or indentation-only selections', () => {
     const before = text`
 def summarize(track, tax_rate):
@@ -581,6 +604,64 @@ def compute_score(track):
       selectionAt(before, 'score = track.duration_sec + 10'),
       'compute_score'
     );
+    expect(plan.error).toContain('already exists');
+  });
+
+  test('names an extracted method after another object\'s attribute, but not after the class\'s own members', () => {
+    // The helper is called as self.charge(...), so client.charge and a local
+    // named charge cannot clash with it. The class's own members can.
+    const before = text`
+class Checkout:
+    def __init__(self):
+        self.refund = 0
+
+    def pay(self, client, cents):
+        token = client.authenticate()
+        charge = client.charge(token, cents)
+        paid = charge.succeeded
+        return paid
+
+    def give_back(self, client, cents):
+        result = client.reverse(cents)
+        self.refund = cents
+        return result
+`;
+    const workspace = workspaceFrom({ 'checkout.py': before }, 'checkout.py');
+    const analysis = analyze(workspace);
+
+    const plan = adapter.planExtract(workspace, analysis, 'checkout.py',
+      selectionBetween(before, 'token = client.authenticate()', 'paid = charge.succeeded'), 'charge');
+    expect(plan.error).toBeUndefined();
+    const after = applyPlan(workspace, plan)['checkout.py'];
+    expect(after).toContain('        paid = self.charge(client, cents)\n');
+    expect(after).toContain('    def charge(self, client, cents):\n'
+      + '        token = client.authenticate()\n'
+      + '        charge = client.charge(token, cents)\n'
+      + '        paid = charge.succeeded\n'
+      + '        return paid\n');
+
+    // An instance attribute of the same class does clash: self.refund = ...
+    const clash = adapter.planExtract(workspace, analysis, 'checkout.py',
+      selectionAt(before, 'result = client.reverse(cents)'), 'refund');
+    expect(clash.error).toContain('already exists');
+    // So does a sibling method.
+    const sibling = adapter.planExtract(workspace, analysis, 'checkout.py',
+      selectionAt(before, 'result = client.reverse(cents)'), 'pay');
+    expect(sibling.error).toContain('already exists');
+  });
+
+  test('a local variable still blocks an extracted free function of the same name', () => {
+    // A bare call charge(...) would read the local instead of the new function.
+    const before = text`
+def pay(client, cents):
+    charge = client.charge(cents)
+    total = cents + 1
+    return charge, total
+`;
+    const workspace = workspaceFrom({ 'pay.py': before }, 'pay.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planExtract(workspace, analysis, 'pay.py',
+      selectionAt(before, 'total = cents + 1'), 'charge');
     expect(plan.error).toContain('already exists');
   });
 

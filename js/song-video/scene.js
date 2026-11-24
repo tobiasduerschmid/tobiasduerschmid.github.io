@@ -109,6 +109,8 @@
   /**
    * Build a song once; seek accepts absolute audio seconds, never frame deltas.
    * With `randomAvatar`, the viewer's hero is a new random one at each appearance.
+   * A choreography may return `{ layers }`, layers of its own on the stage,
+   * whose pictures are culled like those of the shared content and HUD layers.
    */
   function build(stage, storyboard, songId, { randomAvatar = false } = {}) {
     const { Timeline, SongKit: kit } = root;
@@ -126,7 +128,8 @@
     try {
       Timeline.beats.configure(storyboard.beats);
       stage.classList.add(`theme-${themeName}`);
-      theme.build(stage, { duration: storyboard.duration });
+      const song = songData(storyboard);
+      theme.build(stage, { duration: song.duration, song });
       const content = kit.el('div', 'layer camera', stage);
       Timeline.camera.attach(content);
       const hud = kit.el('div', 'layer hud', stage);
@@ -134,9 +137,9 @@
       const student = root.SongStudentAvatar ? root.SongStudentAvatar.create(content, stage, {
         laptopLogo: storyboard.student?.laptop_logo, randomAvatar,
       }) : null;
-      choreograph({ song: songData(storyboard), kit, layers: { stage, content, hud }, terminal, student });
+      const own = choreograph({ song, kit, layers: { stage, content, hud }, terminal, student });
       root.SongRoundedSurfaces.prepare(stage);
-      cullings.set(stage, manageVisibility([content, hud]));
+      cullings.set(stage, manageVisibility([content, hud, ...(own?.layers || [])]));
       Timeline.seek(0);
     } catch (error) {
       dispose();

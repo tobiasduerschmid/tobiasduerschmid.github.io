@@ -11,8 +11,8 @@ lesson:
   chapter: /SEBook/systems/security.html
   name: "Hugging Face 2026: a security case study"
 speech:
-  voice: af_heart
-  speed: 0.95
+  voice: drama3-female6
+  speed: 1.0
   pronunciations:
     CIA: C I A
     HDF5: H D F five

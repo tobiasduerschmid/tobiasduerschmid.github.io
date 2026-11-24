@@ -75,17 +75,16 @@
         </section>
         <div class="nja-narration vn-captions" id="{{ topic }}-video-captions" role="region" aria-label="Narration" tabindex="0"><p>{{ first_cue.text }}</p></div>
         {% capture video_settings %}{% if lesson.animation %}<label class="nja-motion"><input type="checkbox" data-setting="motion" checked> Animate visuals</label>{% endif %}
-          <button type="button" class="np-review-check" data-review-check>Knowledge check</button>
-          {% if explainer.languages %}<label class="np-language">Code language<select data-setting="language" aria-describedby="{{ topic }}-language-help">{% for language in explainer.languages %}<option value="{{ language }}"{% if language == explainer.default_language %} selected{% endif %}>{{ examples[language].label }}</option>{% endfor %}</select></label>
-          <span id="{{ topic }}-language-help" class="np-control-help">You can switch languages without restarting the narration.</span>{% endif %}{% endcapture %}
-        {% include narration-player-controls.html id=player_id duration=timing.duration seek_label="Narration position" scenes=explainer.scenes rates="0.5,0.75,1,1.25,1.5,2" settings=video_settings %}
+          <button type="button" class="np-review-check" data-review-check>Knowledge check</button>{% endcapture %}
+        {% capture video_view %}{% if explainer.languages %}{% include narration-player-language.html id=topic languages=explainer.languages default=explainer.default_language examples=examples %}{% endif %}{% endcapture %}
+        {% include narration-player-controls.html id=player_id duration=timing.duration seek_label="Narration position" scenes=explainer.scenes rates="0.5,0.75,1,1.25,1.5,2" view=video_view settings=video_settings %}
       </div>
       <p class="vn-phone-tip">Tip: turn your phone sideways for a bigger picture.</p>
       </div>
     </div>
     <div class="nja-explanation"><strong class="nja-step">{{ first_cue.step }}</strong><p class="nja-note">{{ first_cue.note | escape }}</p></div>
     <p class="nja-takeaway"><i class="fa fa-lightbulb" aria-hidden="true"></i><span data-vn-takeaway>{{ first_scene.takeaway }}</span></p>
-    {% capture audio_label %}{{ lesson.name }} narration by Kokoro{% endcapture %}
+    {% capture audio_label %}{{ lesson.name }} narration by Fish Audio Drama 3{% endcapture %}
     {% include narration-player-audio.html story=explainer label=audio_label %}
     <p class="nja-status" role="status" aria-live="polite"></p>
   </div>

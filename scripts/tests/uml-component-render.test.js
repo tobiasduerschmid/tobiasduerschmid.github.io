@@ -50,16 +50,17 @@ test("a component's display name is drawn and measured, and its alias stays a ho
   assert.equal(figure.texts.some((entry) => entry.text === 'e1'), false, 'the alias is never drawn');
 });
 
-test('keywords are drawn as a second italic line', async () => {
+// A keyword is a UML stereotype (UML 2.5.1, 9.2.4): «keyword» in plain face, centered above the bold name.
+test('keywords are drawn as a stereotype line above the name', async () => {
   const figure = await withBundle((page) => renderFigure(page,
     '@startuml\ncomponent "Registration API" as e1 <<Container: Python, FastAPI>> {\n  provide "A" as p1\n}\n@enduml', 760));
   const rect = boxById(figure, 'e1');
   const name = figure.texts.find((entry) => entry.text === 'Registration API');
   const keyword = figure.texts.find((entry) => entry.text === '«Container: Python, FastAPI»');
   assert.ok(name && keyword, `name and keyword are drawn; texts: ${JSON.stringify(figure.texts.map((entry) => entry.text))}`);
-  assert.equal(keyword.italic, true, 'the keyword line is italic');
+  assert.equal(keyword.italic, false, 'the keyword line is in plain face');
   assert.equal(name.italic, false, 'the name line is not italic');
-  assert.ok(keyword.y >= name.y + name.height - 1, 'the keyword is the line under the name');
+  assert.ok(keyword.y + keyword.height <= name.y + 1, 'the keyword is the line above the name');
   assert.ok(contains(rect, keyword), 'the keyword lies inside the box');
 });
 

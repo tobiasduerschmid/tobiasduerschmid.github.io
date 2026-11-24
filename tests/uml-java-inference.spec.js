@@ -46,7 +46,7 @@ test.describe('Java sequence diagram execution specifications', () => {
     const runDeactivateIdx = sequence.indexOf('deactivate w', finishDeactivateIdx + 1);
     const mainDeactivateIdx = sequence.indexOf('deactivate Main', runDeactivateIdx);
 
-    expect(sequence).toContain('participant Main as : Main');
+    expect(sequence).toContain('participant Main as : App');
     expect(mainActivateIdx).toBeGreaterThan(-1);
     expect(createIdx).toBeGreaterThan(mainActivateIdx);
     expect(runActivateIdx).toBeGreaterThan(runIdx);
@@ -60,4 +60,34 @@ test.describe('Java sequence diagram execution specifications', () => {
     expect(runDeactivateIdx).toBeGreaterThan(finishDeactivateIdx);
     expect(mainDeactivateIdx).toBeGreaterThan(runDeactivateIdx);
   });
+});
+
+test('the Java compiler refines an unresolved sequence call to the overload chosen for a variable', async ({ page }) => {
+  test.setTimeout(120000);
+  await page.goto('/robots.txt');
+  await page.addScriptTag({ url: '/js/uml-live.js' });
+  const diagrams = await page.evaluate(async () => {
+    const { JavaWorkspace } = await import('/js/java/workspace.mjs');
+    const workspace = new JavaWorkspace();
+    const uml = window.UMLLive.createClient();
+    const sources = {
+      'App.java': 'class App { public static void main(String[] args) { Picker p = new Picker(); int n = 3; p.pick(n); } }',
+      'Picker.java': 'class Picker { int pick(int n) { useNumber(); return n; } String pick(String text) { useText(); return text; } void useText() {} void useNumber() {} }'
+    };
+    try {
+      const preview = await uml.analyze({ language: 'java', sources });
+      const { bindings } = await workspace.analyze({ files: sources });
+      const resolved = await uml.analyze({ language: 'java', sources, options: { javaBindings: bindings } });
+      return { preview: preview.sequenceDiagram, resolved: resolved.sequenceDiagram };
+    } finally {
+      uml.dispose();
+      workspace.destroy();
+    }
+  });
+
+  expect(diagrams.preview).toContain('p: pick(n)');
+  expect(diagrams.preview).not.toMatch(/: useNumber\(\)|: useText\(\)|p --> Main:/);
+  expect(diagrams.resolved).toContain('p -> p: useNumber()');
+  expect(diagrams.resolved).toContain('p --> Main: int');
+  expect(diagrams.resolved).not.toContain(': useText()');
 });

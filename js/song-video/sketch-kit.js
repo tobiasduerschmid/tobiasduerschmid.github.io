@@ -159,6 +159,16 @@
     worried: { mouth: 'worried', brows: [-3, -3], tilt: 4, look: [0, 1] },
   };
 
+  // Expressions use the same controls as every other song's hero heads.
+  const HERO_MOODS = {
+    neutral: {},
+    happy: { brow: 0.15 },
+    think: { look: 0.45, down: -0.6, brow: 0.45, expression: 'thoughtful' },
+    puzzled: { look: -0.35, down: -0.2, brow: 0.9, expression: 'puzzled' },
+    surprised: { brow: 1, sing: 0.65 },
+    worried: { down: 0.4, frown: 0.85, expression: 'worried' },
+  };
+
   function drawHairBack(g, look) {
     if (look === 'curls') {
       path(g, 'sk-hair', cloudPath(70, 46, 42, 40, 16));
@@ -185,28 +195,55 @@
     }
   }
 
+  let garments = 0;
   function drawTop(g, look) {
-    path(g, 'sk-top', 'M6 160 C8 128 28 110 52 104 L88 104 C112 110 132 128 134 160 Z');
-    path(g, 'sk-top-shade', 'M100 108 C120 118 132 136 134 160 L112 160 C112 140 108 122 100 108 Z');
+    const id = `sk-fabric-${++garments}`;
+    const defs = svg('defs', {}, g);
+    const fabric = svg('linearGradient', { id, x1: '0%', y1: '0%', x2: '100%', y2: '45%' }, defs);
+    for (const [offset, tone] of [['0%', 'shade'], ['32%', 'light'], ['58%', 'base'], ['100%', 'shade']]) {
+      svg('stop', { offset, class: `sk-fabric--${tone}` }, fabric);
+    }
+    path(g, 'sk-garment-body', 'M6 160 C8 128 28 110 52 104 L88 104 C112 110 132 128 134 160 Z', { fill: `url(#${id})` });
+    path(g, 'sk-top-shade', 'M34 112 C22 127 20 144 22 160 H6 C8 138 17 122 34 112 Z M101 110 C120 120 132 137 134 160 H115 C114 137 109 122 101 110 Z');
+    path(g, 'sk-fabric-highlight', 'M40 116 C31 127 28 140 28 154 L35 151 C35 135 40 124 47 117 Z M90 117 C99 130 102 142 103 155 L108 157 C107 139 103 125 97 119 Z');
+    path(g, 'sk-garment-seam', 'M35 118 C28 132 25 145 26 158 M105 118 C112 132 115 145 114 158 M9 156 Q70 153 131 156');
+    path(g, 'sk-garment-fold', 'M28 136 Q34 137 41 142 M112 136 Q104 138 99 144 M45 151 Q49 143 50 136 M91 151 Q87 145 87 139');
+    path(g, 'sk-garment-light-seam', 'M36 119 C30 133 28 145 29 154 M12 158 Q70 155 128 158');
     if (look === 'hoodie') {
       path(g, 'sk-hood', 'M30 118 C38 98 52 92 70 94 C88 92 102 98 110 118 C98 108 86 106 70 106 C54 106 42 108 30 118 Z');
-      path(g, 'sk-string', 'M60 108 V128 M80 108 V128');
+      path(g, 'sk-hood-lining', 'M38 111 Q47 96 65 98 L70 105 Q51 102 38 111 Z M102 111 Q93 96 75 98 L70 105 Q89 102 102 111 Z');
+      path(g, 'sk-garment-light-seam', 'M33 115 Q46 103 61 104 M79 104 Q94 103 107 115');
+      path(g, 'sk-pocket', 'M48 139 Q70 142 92 139 L101 155 Q70 159 39 155 Z');
+      path(g, 'sk-garment-seam', 'M48 140 L43 150 M92 140 L97 150 M68 110 L68 136');
+      for (const cx of [60, 80]) svg('ellipse', { class: 'sk-eyelet', cx, cy: 109, rx: 1.7, ry: 1.2 }, g);
+      path(g, 'sk-string', 'M60 109 C58 116 61 122 59 130 M80 109 C82 116 79 121 81 127');
+      path(g, 'sk-aglet', 'M59 128 V131 M81 125 V128');
     } else if (look === 'beard') {
-      path(g, 'sk-collar', 'M54 104 L70 120 L86 104');
-      path(g, 'sk-knit', 'M22 140 Q30 138 38 141 M102 141 Q110 138 118 140');
-    } else if (look === 'curls') {
+      path(g, 'sk-ribbed-collar', 'M52 104 L70 123 L88 104 L84 102 L70 116 L56 102 Z');
+      path(g, 'sk-garment-light-seam', 'M55 105 L70 120 L85 105');
+      for (let x = 40; x <= 100; x += 5) {
+        path(g, 'sk-knit-detail', `M${x} 129 q-1 2 0 4 q1 2 0 4 m0 5 q-1 2 0 4 q1 2 0 4`);
+      }
+      path(g, 'sk-knit-detail', 'M56 105 L55 108 M60 109 L59 112 M64 113 L63 116 M68 117 L67 120 M72 117 L73 120 M76 113 L77 116 M80 109 L81 112 M84 105 L85 108');
+    } else {
+      path(g, 'sk-ribbed-collar', 'M51 104 Q70 125 89 104 L86 102 Q70 118 54 102 Z');
       path(g, 'sk-collar', 'M52 104 Q70 122 88 104');
+      path(g, 'sk-garment-light-seam', 'M55 109 Q70 121 85 109');
+      path(g, 'sk-garment-seam', 'M20 133 L31 138 M109 138 L120 133');
     }
   }
 
   /**
    * A teammate bust at (x, y), `size` px wide. moods = [[time, mood], ...]
    * from MOODS; `flip` faces them left. The face blinks on the song clock
-   * and the head bobs a little on the beat.
+   * and the head bobs a little on the beat. `hero` is a shared castHead
+   * wardrobe; its rendered head replaces the drawn fallback once ready.
    */
-  function teammate(parent, { x, y, size = 130, look, flip = false, at, until, moods = [], seed = 1 }) {
+  function teammate(parent, { x, y, size = 130, look, flip = false, at, until, moods = [], seed = 1, hero }) {
     const node = art(parent, { x, y, w: size, h: size * 160 / 140, viewBox: '0 0 140 160', className: `sk-teammate sk-teammate--${look}` });
+    node.dataset.testid = 'song-teammate';
     const body = svg('g', { transform: flip ? 'translate(140 0) scale(-1 1)' : '' }, node);
+    const wornUnder = svg('g', {}, body);
     const head = svg('g', { class: 'sk-head' }, body);
     drawHairBack(head, look);
     drawTop(body, look);
@@ -229,22 +266,61 @@
     path(head, 'sk-nose', 'M70 57 Q66.5 65 71 66.5');
     const mouths = Object.fromEntries(Object.entries(MOUTHS).map(([name, d]) => [name, path(head, `sk-mouth sk-mouth--${name}`, d)]));
     drawHairFront(head, look);
-    const marks = path(head, 'sk-puzzle-mark', 'M104 18 Q104 8 112 8 Q120 8 120 16 Q120 22 113 25 V30 M113 36 V37');
+    const wornOver = svg('g', {}, body);
+    const marks = svg('g', {}, body);
+    const question = path(marks, 'sk-puzzle-mark', 'M104 18 Q104 8 112 8 Q120 8 120 16 Q120 22 113 25 V30 M113 36 V37', {
+      // Mirror the glyph back about its own centre, keeping its position
+      // beside the mirrored character. Text is never read backwards.
+      transform: flip ? 'translate(224 0) scale(-1 1)' : '',
+      'data-testid': 'song-question-mark',
+    });
+    let worn;
+    let disposed = false;
+    window.Timeline.onDispose(() => { disposed = true; });
+    hero?.then((heads) => {
+      if (!heads || disposed) return;
+      heads.dresser((heroHead) => {
+        worn = heroHead.wear({ underCollar: wornUnder, overCollar: wornOver }, { x: 70, chin: 92, width: 52 });
+        head.setAttribute('display', 'none');
+      }, false);
+    }).catch(() => {
+      // An unavailable renderer leaves the original drawn teammate intact.
+    });
     const sorted = [...moods].sort((a, b) => a[0] - b[0]).map(([time, mood]) => ({ at: time, mood }));
     let drawn = '';
     onFrame((t) => {
-      const mood = MOODS[(latest(sorted, t) || { mood: 'neutral' }).mood];
+      if (!node.isConnected) return;
+      const index = sorted.findLastIndex((cue) => cue.at <= t);
+      const moodName = sorted[index]?.mood || 'neutral';
+      const beforeName = sorted[index - 1]?.mood || 'neutral';
+      const u = reducedMotion.matches || index < 0 ? 1 : progress(t, sorted[index].at, 0.45);
+      const blend = u * u * u * (10 - u * (15 - 6 * u));
+      const interpolate = (a, b) => a + (b - a) * blend;
+      const mood = MOODS[moodName];
+      const before = MOODS[beforeName];
+      const heroMood = HERO_MOODS[moodName], heroBefore = HERO_MOODS[beforeName];
+      const controls = Object.fromEntries(['look', 'down', 'brow', 'frown', 'sing'].map((key) => [key, interpolate(heroBefore[key] || 0, heroMood[key] || 0)]));
+      worn?.(t + seed * 0.7, {
+        ...controls, expression: heroMood.expression || 'neutral', expressionFrom: heroBefore.expression || 'neutral', expressionMix: blend,
+      }, reducedMotion.matches);
       const blink = blinkAt(t, seed);
       const bob = reducedMotion.matches ? 0 : Math.sin(t * 2.1 + seed) * 1.2;
-      const state = `${mood.mouth}|${blink}|${bob.toFixed(1)}|${mood.tilt}`;
+      const state = `${moodName}|${beforeName}|${blend}|${blink}|${bob.toFixed(1)}`;
       if (state === drawn) return;
       drawn = state;
-      head.setAttribute('transform', `rotate(${(mood.tilt + bob * 0.6).toFixed(2)} 70 96) translate(0 ${(bob * 0.5).toFixed(2)})`);
-      for (const [name, node] of Object.entries(mouths)) node.classList.toggle('is-shown', name === mood.mouth);
-      eyes.setAttribute('transform', `translate(${mood.look[0]} ${mood.look[1]})`);
+      const tilt = `rotate(${(interpolate(before.tilt, mood.tilt) + bob * 0.6).toFixed(2)} 70 96) translate(0 ${(bob * 0.5).toFixed(2)})`;
+      for (const layer of [head, wornUnder, wornOver, marks]) layer.setAttribute('transform', tilt);
+      for (const [name, node] of Object.entries(mouths)) {
+        const opacity = Number(name === before.mouth) * (1 - blend) + Number(name === mood.mouth) * blend;
+        node.classList.toggle('is-shown', opacity > 0);
+        node.setAttribute('opacity', opacity);
+      }
+      eyes.setAttribute('transform', `translate(${interpolate(before.look[0], mood.look[0])} ${interpolate(before.look[1], mood.look[1])})`);
       lids.forEach((lid) => lid.setAttribute('ry', blink ? '4.6' : '0.01'));
-      brows.forEach((brow, i) => brow.setAttribute('transform', `translate(0 ${mood.brows[i]})`));
-      marks.classList.toggle('is-shown', mood === MOODS.puzzled);
+      brows.forEach((brow, i) => brow.setAttribute('transform', `translate(0 ${interpolate(before.brows[i], mood.brows[i])})`));
+      const puzzled = interpolate(Number(beforeName === 'puzzled'), Number(moodName === 'puzzled'));
+      question.classList.toggle('is-shown', puzzled > 0);
+      marks.setAttribute('opacity', puzzled);
     });
     show(node, at, until, { from: 0.85 });
     return { node, head };
@@ -977,8 +1053,10 @@
     path(node, 'sk-robot-laptop', 'M10 124 H130 L122 140 H18 Z');
     path(node, 'sk-robot-keys sk-no-draw', 'M22 129 H118 M20 133 H120 M38 129 V133 M54 129 V133 M70 129 V133 M86 129 V133 M102 129 V133 M56 136 H84');
     onFrame((t) => {
-      const typing = t >= typeAt && t < typeUntil && !reducedMotion.matches;
-      arms.forEach((arm, i) => arm.setAttribute('transform', typing ? `translate(0 ${(Math.sin(t * 18 + i * Math.PI) * 3).toFixed(1)})` : ''));
+      const typing = reducedMotion.matches ? 0 : Math.sin(Math.PI / 2 * progress(t, typeAt, 0.25)) ** 2 * (1 - Math.sin(Math.PI / 2 * progress(t, typeUntil - 0.25, 0.25)) ** 2);
+      // The arm pivots at its fixed shoulder joint instead of sliding off
+      // it. Small alternating lifts keep the hands over the keyboard.
+      arms.forEach((arm, i) => arm.setAttribute('transform', `rotate(${(typing * Math.sin((t - typeAt) * 14 + i * Math.PI) * 3).toFixed(2)} ${i ? 114 : 26} 96)`));
       bulb.classList.toggle('is-lit', t >= typeAt && t < typeUntil && (reducedMotion.matches || Math.sin(t * 6) > -0.2));
       const blink = blinkAt(t, 9);
       eyes.forEach((eye) => eye.setAttribute('ry', blink ? '1' : '7'));

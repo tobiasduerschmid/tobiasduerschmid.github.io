@@ -26,7 +26,7 @@ const REFERENCE_EXAMPLE = [
 
 test('component text alternatives name aliased components by their display names, with their interfaces and connector', () => {
   const summary = descriptions.describe('component', REFERENCE_EXAMPLE);
-  assert.match(summary, /^UML component diagram with 2 components \(Planner Web App, Registration API\)\./);
+  assert.match(summary, /^UML component diagram with 2 components \(Planner Web App, a Container: TypeScript, React; Registration API, a Container: Python, FastAPI\)\./);
   assert.match(summary, /Planner Web App requires Enrollment API\./);
   assert.match(summary, /Registration API provides Enrollment API\./);
   assert.match(summary, /Connections: Registration API connects to Planner Web App labeled "POST \/v1\/enrollments"\./);
@@ -37,8 +37,8 @@ test('component detailed descriptions list each display name with its keyword an
   const verbose = descriptions.describeVerbose('component', REFERENCE_EXAMPLE);
   assert.deepEqual(JSON.parse(JSON.stringify(verbose.sections)), [
     { heading: 'Components', items: [
-      'Planner Web App (Container: TypeScript, React) — requires Enrollment API',
-      'Registration API (Container: Python, FastAPI) — provides Enrollment API',
+      'Planner Web App, a Container: TypeScript, React — requires Enrollment API',
+      'Registration API, a Container: Python, FastAPI — provides Enrollment API',
     ] },
     { heading: 'Connections', items: ['Registration API connects to Planner Web App labeled "POST /v1/enrollments"'] },
   ]);
@@ -89,10 +89,10 @@ test('a block port line may use the plain port keyword and end with dashed in an
   ]);
 });
 
-// The describer reads the bundle's grammar, so its component list must be the boxes the bundle draws: a keyword
-// glued to a bare name (`Billing<<Service>>`, no space before `<<`) stays part of the name, and a connector end that
-// names no declared component draws a box of its own.
-test('component descriptions name the boxes the bundle draws, a glued keyword and a connector-declared box included', async () => {
+// The describer reads the bundle's grammar, so its component list must be the boxes the bundle draws: a stereotype
+// glued to a bare name (`Billing<<Service>>`, no space before `<<`) is a stereotype, and a connector end that names no
+// declared component draws a box of its own.
+test('component descriptions name the boxes the bundle draws, a glued stereotype and a connector-declared box included', async () => {
   const { chromium } = require('playwright');
   const { chromiumLaunchOptions } = require('../chromium-launch-options');
   const source = [
@@ -101,7 +101,7 @@ test('component descriptions name the boxes the bundle draws, a glued keyword an
     '  provide "Tuition Charges" as charges',
     '}',
     'component "Planner Web App" as web <<Container>>',
-    'web --> Billing',
+    'web --> Ledger',
     'web ..> charges',
     '@enduml',
   ].join('\n');
@@ -111,12 +111,12 @@ test('component descriptions name the boxes the bundle draws, a glued keyword an
     const page = await browser.newPage();
     await page.setContent('<!doctype html><html lang="en"><title>Component boxes</title><body></body></html>');
     await page.addScriptTag({ path: path.join(__dirname, '../../js/ArchUML/uml-bundle.js') });
-    // Each box's text carries the box's id; a port's elements carry `box.port`. The first text of a box is its name.
+    // Each box's text carries the box's id; a port's elements carry `box.port`. A box's bold text is its name.
     drawn = await page.evaluate((spec) => {
       const container = document.body.appendChild(document.createElement('div'));
       window.UMLComponentDiagram.render(container, spec);
       const names = new Map();
-      for (const text of container.querySelectorAll('svg text[data-layout-id]')) {
+      for (const text of container.querySelectorAll('svg text[data-layout-id][font-weight="bold"]')) {
         const id = text.getAttribute('data-layout-id');
         if (!id.includes('.') && !names.has(id)) names.set(id, text.textContent);
       }
@@ -127,7 +127,7 @@ test('component descriptions name the boxes the bundle draws, a glued keyword an
   }
   // The describer runs in its own context; JSON gives its arrays this context's prototypes.
   const sections = JSON.parse(JSON.stringify(descriptions.describeVerbose('component', source).sections));
-  const described = sections.find((section) => section.heading === 'Components').items.map((item) => item.split(/ \(| — /)[0]);
-  assert.deepEqual(drawn, ['Billing<<Service>>', 'Planner Web App', 'Billing'], 'precondition: the bundle draws these boxes');
+  const described = sections.find((section) => section.heading === 'Components').items.map((item) => item.split(/ — |, (?:an? |with stereotypes )/)[0]);
+  assert.deepEqual(drawn, ['Billing', 'Planner Web App', 'Ledger'], 'precondition: the bundle draws these boxes');
   assert.deepEqual(described, drawn);
 });

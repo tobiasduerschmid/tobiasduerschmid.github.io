@@ -1,95 +1,48 @@
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const test = require('node:test');
-const vm = require('node:vm');
-const yaml = require('js-yaml');
+const { test, expect } = require('@playwright/test');
+const { loadTutorialConfig } = require('./tutorial-helpers');
 
-const root = path.resolve(__dirname, '../..');
-const tutorial = yaml.load(fs.readFileSync(path.join(root, '_data/tutorials/java-cs131.yml'), 'utf8'));
-const workerSource = fs.readFileSync(path.join(root, 'js/java-worker.js'), 'utf8');
+const tutorial = loadTutorialConfig('java-cs131');
 
-// Exercise the worker's public message protocol. The VM deadline bounds faulty
-// learner loops; only the worker's boot-notification timer is unnecessary here.
-function createJavaWorker() {
-  const messages = [];
-  const context = vm.createContext({
-    postMessage: message => messages.push(message),
-    setTimeout: () => {},
+// Keep one compiler warm across revisions, just as the editor does. Every
+// harness gets an isolated execution, even when two lessons name it __Test.
+let page;
+test.beforeAll(async ({ browser, baseURL }) => {
+  page = await browser.newPage({ baseURL });
+  await page.goto('/robots.txt');
+  await page.evaluate(async () => {
+    const { JavaWorkspace } = await import('/js/java/workspace.mjs');
+    window.contentWorkspace = new JavaWorkspace();
   });
-  vm.runInContext('var self = globalThis;', context);
-  vm.runInContext(workerSource, context);
-  let nextId = 1;
+});
+test.afterAll(async () => { await page?.close(); });
 
-  function request(message) {
-    const id = nextId++;
-    messages.length = 0;
-    context.pendingMessage = { data: { ...message, id } };
-    vm.runInContext('onmessage(pendingMessage)', context, { timeout: 2_000 });
-    const result = messages.find(entry => entry.id === id);
-    assert.ok(result, `Java worker must answer ${message.type}`);
-    return {
-      ...result,
-      diagnostic: messages.filter(entry => entry.type === 'stderr').map(entry => entry.text).join(''),
-    };
-  }
-
-  return {
-    write(files) {
-      for (const file of files) {
-        assert.equal(request({ type: 'write', path: '/tutorial/' + file.path, content: file.content }).type, 'write_ok');
-      }
-    },
-    run(file) { return request({ type: 'run', path: '/tutorial/' + file }); },
-    check(command) { return request({ type: 'runCode', code: command, silent: false }); },
-  };
-}
-
-function checkResults(worker, step) {
-  return step.tests.map(check => ({
-    description: check.description,
-    ...worker.check(check.command),
-  }));
-}
-
-function expectPassingChecks(worker, step) {
-  for (const result of checkResults(worker, step)) {
-    assert.equal(result.exitCode, 0, `${step.title}: ${result.description}\n${result.diagnostic}`);
-  }
+async function check(files, step, runMain = false) {
+  return page.evaluate(async ({ files, step, runMain }) => {
+    const workspace = window.contentWorkspace;
+    if (runMain) {
+      const result = await workspace.run({ files, entry: step.run_file });
+      if (result.exitCode !== 0) throw new Error(result.stderr);
+    }
+    const results = [];
+    for (const test of step.tests) {
+      const result = await workspace.test({ files, code: test.command });
+      results.push({ passed: result.exitCode === 0, error: result.stderr });
+    }
+    return results;
+  }, { files, step, runMain });
 }
 
 for (const step of tutorial.steps) {
-  test(`${step.title}: runnable starter leaves assessed work unfinished`, () => {
-    const worker = createJavaWorker();
-    worker.write(step.files);
-    const run = worker.run(step.run_file);
-    assert.equal(run.exitCode, 0, run.diagnostic);
-    assert.ok(checkResults(worker, step).some(result => result.exitCode !== 0), 'The starter must not earn a completed exercise');
-  });
-
-  test(`${step.title}: reference solution satisfies the authored behavioral contract`, () => {
-    const worker = createJavaWorker();
-    worker.write(step.solution.files);
-    const run = worker.run(step.run_file);
-    assert.equal(run.exitCode, 0, run.diagnostic);
-    expectPassingChecks(worker, step);
+  test(step.title + ' exercises runnable starter and reference solution', async () => {
+    test.setTimeout(120_000);
+    const starter = await check(step.files, step, true);
+    expect(starter.some(check => !check.passed)).toBe(true);
+    const solution = await check(step.solution.files, step, true);
+    for (const result of solution) expect(result.passed, result.error).toBe(true);
   });
 }
 
-test('solutions remain executable with drafts from earlier lessons in the workspace', () => {
-  const worker = createJavaWorker();
-  for (const step of tutorial.steps) {
-    worker.write(step.files);
-    worker.write(step.solution.files);
-    const run = worker.run(step.run_file);
-    assert.equal(run.exitCode, 0, `${step.title}\n${run.diagnostic}`);
-    expectPassingChecks(worker, step);
-  }
-});
-
-// These are alternate learner implementations of the declared public methods,
-// not mutations of the worker. A solution's internal refactoring is immaterial:
-// replace just the assessed method body while retaining the supplied scaffold.
 function withMethodBody(step, owner, method, body) {
   let replaced = false;
   const files = step.solution.files.map(file => {
@@ -255,23 +208,19 @@ const attempts = [
   },
 ];
 
+
 for (const attempt of attempts) {
   const step = tutorial.steps.find(candidate => candidate.key === attempt.key);
-  assert.ok(step, `Missing exercise ${attempt.key}`);
-
-  for (const [reason, body] of attempt.wrong) {
-    test(`${step.title}: rejects a solution that ${reason}`, () => {
-      const worker = createJavaWorker();
-      worker.write(withMethodBody(step, attempt.owner, attempt.method, body));
-      assert.ok(checkResults(worker, step).some(result => result.exitCode !== 0), reason);
-    });
-  }
-
-  for (const [index, body] of attempt.correct.entries()) {
-    test(`${step.title}: accepts equivalent implementation ${index + 1}`, () => {
-      const worker = createJavaWorker();
-      worker.write(withMethodBody(step, attempt.owner, attempt.method, body));
-      expectPassingChecks(worker, step);
-    });
-  }
+  assert.ok(step, 'Missing exercise ' + attempt.key);
+  test(step.title + ' distinguishes incorrect and equivalent implementations', async () => {
+    test.setTimeout(120_000);
+    for (const [reason, body] of attempt.wrong) {
+      const results = await check(withMethodBody(step, attempt.owner, attempt.method, body), step);
+      expect(results.some(result => !result.passed), reason).toBe(true);
+    }
+    for (const body of attempt.correct) {
+      const results = await check(withMethodBody(step, attempt.owner, attempt.method, body), step);
+      for (const result of results) expect(result.passed, result.error).toBe(true);
+    }
+  });
 }

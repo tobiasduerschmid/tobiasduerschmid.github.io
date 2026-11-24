@@ -58,11 +58,11 @@ second-level outline shows the current part's scenes; an overview without a
 `part` previews the first registered part's scenes without marking either a
 part or a scene as current. The control bar is the one every narration
 shares (`_includes/narration-player-controls.html`, see
-`docs/narration-format.md`): position; play, back and forward 5 seconds,
-previous and next scene, restart, and time; mute, volume, captions (CC),
-settings (scene, speed, caption size, landscape in full screen, and this
-player's "Animate visuals", knowledge check, and code language when there is
-code), and full screen.
+`docs/narration-format.md`), which is the music player's: position; play,
+back and forward 5 seconds, previous and next scene, and time; the code
+language when there is code, mute, volume, captions (CC), settings (scene,
+speed, caption size, landscape in full screen, and this player's "Animate
+visuals" and knowledge check), and full screen.
 
 The controls behave like the music player's because they reuse its modules
 through `js/narration-player-controls.js`:
@@ -233,8 +233,9 @@ presence of tags alone is not proof of PDF or full-site conformance.
    `_data/narration_visuals/<topic>.json`, and optional quizzes. Follow
    `docs/narration-format.md`; discovery and registration are automatic.
 2. Validate with `python3 scripts/render-explainer-narration.py --topic <topic> --check`,
-   then render with `--model` and `--voices` pointing to the Kokoro installation.
-   Run `node scripts/narration.js check <topic>` after rendering.
+   then render with a running Drama 3 server (`docs/narration-format.md#speech-engines`)
+   and review the cues the renderer lists. Run `node scripts/narration.js check <topic>`
+   after rendering.
 3. For animation, add `assets/video-narration/<topic>.html` (front matter
    `layout: video-narration-stage`, `topic`, `sitemap: false`), the choreography,
    its kit, and its stage CSS, and list them under `presentation.animation`

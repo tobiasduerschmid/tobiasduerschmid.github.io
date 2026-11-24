@@ -28,8 +28,8 @@ lesson:
     that do not depend on the data are not attached. Both designs print identical lines for the same
     edits and clicks.
 speech:
-  voice: af_heart
-  speed: 0.95
+  voice: drama3-female6
+  speed: 1.0
   pronunciations:
     UML: U M L
     CRC: C R C

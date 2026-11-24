@@ -1,0 +1,4 @@
+# Trip Website settings.
+
+ORDER_HISTORY_DSN = "postgres://order-db-replica.internal/orders"
+CATALOG_DSN = "postgres://catalog-db.internal/catalog"

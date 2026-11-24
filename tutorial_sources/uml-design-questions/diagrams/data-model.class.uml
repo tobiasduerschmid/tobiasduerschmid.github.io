@@ -1,0 +1,77 @@
+@startuml
+layout compact
+package services::opc::model {
+  class Fan
+  class TripOrder
+  class Payment
+  class Attendee
+  class SupplierOrder
+  abstract class TripItem
+  class FestivalPass
+  class LodgingStay
+  class Experience
+  abstract class TransportItem
+  class ShuttleRide
+}
+TripOrder "0..*" --> "1" Fan : buyer
+TripOrder "1" *-- "1" Payment : payment
+TripOrder "1" *-- "1..8" Attendee : attendees
+TripOrder "1" *-- "1..*" TripItem : items
+TripOrder "1" *-- "0..*" SupplierOrder : supplier_orders
+TripItem "1..*" --> "1..*" Attendee : attendees
+SupplierOrder "0..1" --> "0..*" TripItem : items
+FestivalPass --|> TripItem
+LodgingStay --|> TripItem
+Experience --|> TripItem
+TransportItem --|> TripItem
+ShuttleRide --|> TransportItem
+note top of TripOrder
+Multiplicities from type hints and
+validators: one payment
+(services/opc/model/orders.py:50),
+1 to 8 attendees
+(services/opc/model/orders.py:57),
+at least one item
+(services/opc/model/orders.py:59).
+end note
+note right of SupplierOrder
+One trip order per supplier order
+(services/opc/model/suppliers.py:21).
+end note
+note bottom of Experience
+{every attendee of an Experience holds
+a FestivalPass on the same order}
+(services/opc/model/rules.py:22)
+end note
+note left of TripItem
+{the attendees of an item are attendees of its
+trip order} (services/opc/model/rules.py:14)
+Each item has at least one attendee
+(services/opc/model/items.py:24).
+end note
+note left of Fan
+Key: UML 2.5.1 class diagram.
+Filled diamond: composition; the trip
+order owns the part.
+Arrow: navigable association, named
+after the field.
+Hollow triangle: generalization.
+Italic name, {abstract}: abstract class.
+{…} in a note: a constraint the
+code enforces.
+end note
+@layout
+Fan @pos(426, -2)
+Attendee @pos(160, 218)
+TripOrder @pos(420, 218)
+Payment @pos(740, 218)
+TripItem @pos(400, 423)
+SupplierOrder @pos(760, 435)
+FestivalPass @pos(40, 615)
+LodgingStay @pos(280, 615)
+Experience @pos(520, 615)
+TransportItem @pos(800, 615)
+ShuttleRide @pos(811, 780)
+note:45 @pos(32, 481)
+@endlayout
+@enduml

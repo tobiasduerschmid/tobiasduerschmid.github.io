@@ -1,0 +1,36 @@
+# Message broker topology: exchanges, work queues, and bindings.
+
+[[exchanges]]
+name = "trips"
+type = "topic"
+
+[[queues]]
+name = "orders.received"
+
+[[queues]]
+name = "supplier.answered"
+
+[[bindings]]
+queue = "loyalty.trips"
+exchange = "trips"
+pattern = "trip.confirmed"
+
+[[bindings]]
+queue = "warehouse.all"
+exchange = "trips"
+pattern = "#"
+
+[[bindings]]
+queue = "affiliates.trips"
+exchange = "trips"
+pattern = "trip.*"
+
+[[bindings]]
+queue = "support.cancellations"
+exchange = "trips"
+pattern = "trip.cancelled"
+
+[[bindings]]
+queue = "shuttle.planning"
+exchange = "trips"
+pattern = "supplier.shuttle.*"

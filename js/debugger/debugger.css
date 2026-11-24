@@ -775,7 +775,6 @@ html.dark-mode .tvm-eq-search .is-matched code { border-color: #8ee0b0; backgrou
   text-transform: uppercase;
   letter-spacing: 0.6px;
   line-height: 1.5;
-  transition: background-color 120ms;
 }
 .tvm-dbg-section-head:hover { background: rgba(255, 209, 0, 0.30); }
 /* WCAG 1.4.3: #7a5800 on #f1f1f1 = ~4.26:1, fails the 4.5:1 minimum. Darken
@@ -827,7 +826,6 @@ html.dark-mode .tvm-eq-search .is-matched code { border-color: #8ee0b0; backgrou
   color: #2c3e50;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  transition: background-color 120ms;
 }
 .tvm-debug-subsection-head:hover { background: rgba(255, 209, 0, 0.22); }
 .tvm-debug-subsection-chevron {
@@ -1465,61 +1463,63 @@ html.dark-mode .tvm-eq-search .is-matched code { border-color: #8ee0b0; backgrou
 .tvm-output-panel.tvm-debug-collapsed .tvm-output-container { display: none; }
 
 /* ============================================================================
-   Instructions-detached + debugger:true case.
-   When the user pops out the instructions to a separate window AND the tutorial
-   has the debugger enabled, we DON'T collapse the left panel to a thin strip
-   (which is the default behavior for non-debugger tutorials). The panel stays
-   full size so Watch / Call Stack / Variables / History remain visible. The
-   default `.tvm-instructions-detached` rule already hides .tvm-steps-view, so
-   here we just need to:
-     - keep the panel at its normal flex width (override the 56px shrink)
+   Instructions rail + debugger:true (js/tutorial-instructions-rail.js).
+   When the instructions are hidden or popped out AND the tutorial has the
+   debugger enabled, the left panel does NOT collapse to a rail (the default
+   for non-debugger tutorials). It keeps its width so Watch / Call Stack /
+   Variables / History remain visible. The default `.tvm-instructions-railed`
+   rule already hides .tvm-steps-view, so here we:
+     - keep the panel at its normal flex width (override the rail width)
      - keep the debug views visible (they're shown by activateTab)
-     - render the "popped out" placeholder as a compact bar above the tabs
-       instead of as a floating tile that takes the whole panel
+     - render the rail as a compact bar above the tabs
+   Text inherits the paragraph size.
    ========================================================================== */
-.tvm-instructions-panel.tvm-instructions-detached.tvm-instructions-detached-debugger {
+.tvm-instructions-panel.tvm-instructions-railed.tvm-instructions-rail-debugger {
   flex: 1 1 0 !important;       /* honour the panel's normal share of width */
   min-width: 0 !important;
   max-width: none !important;
   overflow: visible;
 }
-/* Compact "popped out" pill above the tab bar — single-line, click to reattach. */
-.tvm-instructions-panel.tvm-instructions-detached-debugger .tvm-instructions-detached-placeholder {
+/* Compact bar above the tab bar: the message, then the button. */
+.tvm-instructions-panel.tvm-instructions-rail-debugger .tvm-instructions-rail {
   display: flex;
   flex-direction: row;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
   padding: 4px 10px;
   background: #fff8d6;
   border-bottom: 1px solid #FFD100;
   flex: 0 0 auto;
-  writing-mode: horizontal-tb;
 }
-.tvm-instructions-panel.tvm-instructions-detached-debugger .tvm-detached-msg {
-  font-size: 11px;
+.tvm-instructions-panel.tvm-instructions-rail-debugger .tvm-instructions-rail[hidden] {
+  display: none;
+}
+.tvm-instructions-panel.tvm-instructions-rail-debugger .tvm-instructions-rail-msg {
   color: #5C4308;
   font-weight: 600;
   flex: 1;
 }
-.tvm-instructions-panel.tvm-instructions-detached-debugger .tvm-btn-reattach {
+.tvm-instructions-panel.tvm-instructions-rail-debugger .tvm-instructions-rail-btn {
+  order: 1;
+  min-height: 2em;
   background: #FFD100;
   color: #1A1A1A;
-  border: none;
+  border: 1px solid #8a6d00;
   border-radius: 3px;
   padding: 2px 8px;
-  font-size: 12px;
   font-weight: 700;
-  cursor: pointer;
 }
-.tvm-instructions-panel.tvm-instructions-detached-debugger .tvm-btn-reattach:hover {
+.tvm-instructions-panel.tvm-instructions-rail-debugger .tvm-instructions-rail-btn:hover {
   background: #FFB81C;
+  color: #1A1A1A;
 }
 /* Dark mode */
-html.dark-mode .tvm-instructions-panel.tvm-instructions-detached-debugger .tvm-instructions-detached-placeholder {
+html.dark-mode .tvm-instructions-panel.tvm-instructions-rail-debugger .tvm-instructions-rail {
   background: rgba(255, 209, 0, 0.14);
   border-bottom-color: rgba(255, 209, 0, 0.45);
 }
-html.dark-mode .tvm-instructions-panel.tvm-instructions-detached-debugger .tvm-detached-msg {
+html.dark-mode .tvm-instructions-panel.tvm-instructions-rail-debugger .tvm-instructions-rail-msg {
   color: #FFE066;
 }
 
@@ -1717,7 +1717,7 @@ html.dark-mode .tvm-debug-return {
 html.dark-mode .tvm-debug-var-row:hover { background: rgba(255, 209, 0, 0.14); }
 html.dark-mode .tvm-debug-expander { color: #FFE066; }
 html.dark-mode .tvm-debug-var-name { color: #f1f5f9; }
-html.dark-mode .tvm-debug-var-type { color: #94a3b8; }
+html.dark-mode .tvm-debug-var-type { color: #b5c4d8; }
 html.dark-mode .tvm-debug-var-value { color: #fbbf24; }
 html.dark-mode .tvm-debug-var-editable:hover {
   border-bottom-color: rgba(255, 224, 102, 0.8);

@@ -1,0 +1,38 @@
+# Code links for checkout-latency.sequence.uml: double-clicking a label in the
+# drawing opens its line. text is the label exactly as the drawing shows it.
+- text: "submit(fan, cart, cardToken)"
+  path: services/website/checkout.py
+  line: 45
+- text: "validate(cardToken, 0)"
+  path: services/website/payments.py
+  line: 18
+- text: price(cart)
+  path: services/website/checkout.py
+  line: 49
+- text: "quote(festivalId, ageGroup)"
+  path: services/website/pricing.py
+  line: 51
+- text: check(cart)
+  path: services/website/checkout.py
+  line: 50
+- text: "capacity(experienceId, count)"
+  path: services/website/availability.py
+  line: 17
+- text: submit(tripOrder)
+  path: services/website/checkout.py
+  line: 51
+- text: "checkout: CheckoutController"
+  path: services/website/checkout.py
+  line: 27
+- text: "pricer: TripPricer"
+  path: services/website/pricing.py
+  line: 36
+- text: "guard: AvailabilityGuard"
+  path: services/website/availability.py
+  line: 8
+- text: "boxOffice: BoxOffice"
+  path: stubs/box_office.py
+  line: 19
+- text: "experiences: ExperienceProvider"
+  path: stubs/experiences.py
+  line: 24

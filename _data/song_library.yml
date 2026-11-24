@@ -14,7 +14,7 @@ small_tools_one_job_each:
   topic: Unix shell
   category: Tools & systems
 let_the_object_decide:
-  thumbnail_time: 179
+  thumbnail_time: 169.34
   title: Let the Object Decide
   topic: Object-oriented programming
   category: Design & modeling
@@ -34,7 +34,7 @@ invest_in_your_stories:
   topic: User stories & INVEST
   category: Teamwork
 it_works_on_my_machine:
-  thumbnail_time: 281
+  thumbnail_time: 80
   title: It Works on My Machine
   topic: Teamwork
   category: Teamwork
@@ -42,6 +42,16 @@ unbox_the_stack:
   thumbnail_time: 173
   title: Unbox the Stack
   topic: Networking
+  category: Tools & systems
+not_a_one_time_investment:
+  thumbnail_time: 135
+  title: Not a One-Time Investment
+  topic: Design with reuse
+  category: Design & modeling
+design_it_in:
+  thumbnail_time: 21
+  title: Design It In Before They Break In
+  topic: Security
   category: Tools & systems
 draw_it_out:
   thumbnail_time: 170
@@ -53,3 +63,8 @@ every_module_keeps_a_secret:
   title: Every Module Keeps a Secret
   topic: Information hiding
   category: Design & modeling
+inspect_and_adapt:
+  thumbnail_time: 99.5
+  title: Inspect and Adapt
+  topic: Scrum
+  category: Teamwork

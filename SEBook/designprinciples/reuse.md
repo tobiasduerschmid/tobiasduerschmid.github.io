@@ -2,6 +2,7 @@
 title: Design with Reuse
 layout: sebook
 ---
+<link rel="stylesheet" href="/css/song-video.css">
 
 # Design with Reuse
 
@@ -277,6 +278,12 @@ end note
 This pattern is called the **Hollywood Principle**, or **Inversion of Control**: *"Don't call us, we'll call you."*
 
 Why it matters for reuse: a framework **makes more decisions for you** and gives you **less flexibility**, but in exchange it **hides a lot of complexity** so you write less code. The trade-off: decisions to use a framework are **harder to reverse later**, because the framework shapes the structure of your whole application. Choosing Express, React, Spring, or Rails is closer to a marriage than a date.
+
+**Review the cases as a song.** *Not a One-Time Investment* is a five-minute music video that walks through this chapter's cases on the pages of a casebook: urllib3, Heartbleed, left-pad and eslint-scope, Ariane 5, and libraries versus frameworks. Each case shows what happened, why it happened, and the principle it teaches, and the refrain is a checklist you can run on any package before you reuse it. It ends with six new cases: think of your answer before the singer gives it, or turn on the player's quiz pauses to stop before each answer. Captions are on by default.
+
+Before you press play, write one sentence: your code hasn't changed since yesterday. Can your build still break today? Why?
+
+{% include song-video.html song=site.data.songs.not_a_one_time_investment id="reuse-song" %}
 
 ## Making Design Decisions Well
 

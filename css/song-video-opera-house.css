@@ -26,18 +26,47 @@
 /* The window and its skies. */
 .oh-window-frame { fill: none; stroke: #e7dfcb; stroke-width: 5; stroke-linejoin: round; }
 .oh-window-sill { fill: #d8cfb8; }
-.oh-sky-day-stop-0 { stop-color: #7cc3f2; }
-.oh-sky-day-stop-1 { stop-color: #cdeafd; }
-.oh-sky-dusk-stop-0 { stop-color: #5a3f86; }
-.oh-sky-dusk-stop-1 { stop-color: #f08f55; }
-.oh-sky-night-stop-0 { stop-color: #070d22; }
-.oh-sky-night-stop-1 { stop-color: #1b2850; }
-.oh-sky-dawn-stop-0 { stop-color: #8fbde8; }
-.oh-sky-dawn-stop-1 { stop-color: #ffb07a; }
+.oh-back .oh-art { --oh-sky-warmth: 0%; --oh-sky-night: 0%; }
+.oh-sky-day-stop-0 { stop-color: #4c9dd9; }
+.oh-sky-day-stop-1 { stop-color: #8bc8ec; }
+.oh-sky-day-stop-2 { stop-color: #c2e3f2; }
+.oh-sky-day-stop-3 { stop-color: #eff0db; }
+.oh-sky-dusk-stop-0 { stop-color: #354b84; }
+.oh-sky-dusk-stop-1 { stop-color: #856492; }
+.oh-sky-dusk-stop-2 { stop-color: #e98b70; }
+.oh-sky-dusk-stop-3 { stop-color: #ffd18b; }
+.oh-sky-night-stop-0 { stop-color: #071329; }
+.oh-sky-night-stop-1 { stop-color: #14243d; }
+.oh-sky-night-stop-2 { stop-color: #26344f; }
+.oh-sky-night-stop-3 { stop-color: #454159; }
+.oh-sky-dawn-stop-0 { stop-color: #526da6; }
+.oh-sky-dawn-stop-1 { stop-color: #929abf; }
+.oh-sky-dawn-stop-2 { stop-color: #efb5a7; }
+.oh-sky-dawn-stop-3 { stop-color: #ffdc9c; }
 .oh-stars circle { fill: #f4f1dc; }
 .oh-moon circle { fill: #f6f0d6; }
-.oh-moon .oh-moon-shadow { fill: #0e1736; }
-.oh-sun { fill: #ffd94a; }
+/* The unlit lunar surface shares the sky's coordinates, avoiding a flat
+ * blue cutout against the new gradient while still occluding distant stars. */
+.oh-moon .oh-moon-shadow { fill: url(#oh-sky-night); }
+.oh-sun-disc-stop-0 { stop-color: color-mix(in srgb, #fff3c0, #ffb25f var(--oh-sky-warmth)); }
+.oh-sun-disc-stop-1 { stop-color: color-mix(in srgb, #ffe292, #fa813f var(--oh-sky-warmth)); }
+.oh-sun-disc-stop-2 { stop-color: color-mix(in srgb, #ffc765, #dc5533 var(--oh-sky-warmth)); }
+.oh-horizon-haze-stop-0 { stop-color: #ffd38b; stop-opacity: 0.8; }
+.oh-horizon-haze-stop-1 { stop-color: #ef945f; stop-opacity: 0.36; }
+.oh-horizon-haze-stop-2 { stop-color: #d96561; stop-opacity: 0; }
+.oh-sun-glow-stop-0 { stop-color: #fff2bd; stop-opacity: 0.65; }
+.oh-sun-glow-stop-1 { stop-color: #ffce8b; stop-opacity: 0.23; }
+.oh-sun-glow-stop-2 { stop-color: #f3aa7e; stop-opacity: 0; }
+/* Cool cloud volume and warm lower rims respond to the same sky cue. The
+ * opaque bodies cover stars; only the thin torn wisps transmit sky light. */
+.oh-cloud-ambient-stop-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #adc5d8, #78829c var(--oh-sky-warmth)), #19283f var(--oh-sky-night)); }
+.oh-cloud-ambient-stop-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #dce8ef, #baa8b3 var(--oh-sky-warmth)), #25344b var(--oh-sky-night)); }
+.oh-cloud-ambient-stop-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #f2f3e8, #d7b4a2 var(--oh-sky-warmth)), #304058 var(--oh-sky-night)); }
+.oh-cloud-direct-stop-0 { stop-color: #ffddad; stop-opacity: 0; }
+.oh-cloud-direct-stop-1 { stop-color: #ffc888; stop-opacity: 0.22; }
+.oh-cloud-direct-stop-2 { stop-color: color-mix(in srgb, #fff4d3, #ffb16b var(--oh-sky-warmth)); }
+.oh-cloud-folds { fill: color-mix(in srgb, #7489a1, #101d31 var(--oh-sky-night)); opacity: 0.18; }
+.oh-cloud-wisp { opacity: 0.48; }
 .oh-skyline { fill: #24324d; }
 .oh-city-lights rect { fill: #ffd36b; }
 
@@ -61,6 +90,7 @@
 .oh-lamp-glow--green { fill: #34d27a; }
 .oh-lamp-glow--red { fill: #ff4d5e; }
 .oh-lamp-mark { fill: none; stroke: #0b111b; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.oh-lamp-pending { fill: #e9eff8; }
 
 /* The stage floor and the footlights' warm wash on it. */
 .oh-floor-stop-0 { stop-color: #6e4b2c; }

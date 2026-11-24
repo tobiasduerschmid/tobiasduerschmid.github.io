@@ -1,11 +1,11 @@
 /* The control bar every narration player shares
-   (_includes/narration-player-controls.html), modeled on the song player:
-   five-second skips, volume, captions and their size, settings, keyboard
-   shortcuts, controls that hide during playback in full screen, a landscape
-   surface on portrait touch screens, and, where a player has a picture
-   control, play and skip by click and double-click. Shortcuts, gestures,
-   and hiding are the song player's own modules (js/song-video/), bound
-   through their class hooks. The narration transport
+   (_includes/narration-player-controls.html), which is the song player's:
+   five-second skips, mute and volume, captions and their size, the settings
+   panel, keyboard shortcuts, controls that hide during playback in full
+   screen, a landscape surface on portrait touch screens, and, where a player
+   has a picture control, play and skip by click and double-click. Shortcuts,
+   gestures, hiding, and the settings panel are the song player's own modules
+   (js/song-video/), bound through their class hooks. The narration transport
    (js/narrated-explainer.js) binds this module to every player. */
 (function () {
   'use strict';
@@ -64,24 +64,44 @@
     });
   }
 
+  // Escape closes the settings first; in full screen, a second Escape leaves it.
   function bindSettings(root, listen, visibility) {
-    const toggle = root.querySelector('.vn-settings-toggle');
-    const settings = root.querySelector('.vn-settings');
-    listen(toggle, 'click', () => {
-      const open = settings.hidden;
-      settings.hidden = !open;
-      toggle.setAttribute('aria-expanded', String(open));
-      if (visibility) visibility.reveal();
+    window.SongSettingsPanel.bind({
+      player: root.querySelector('[data-vn-video]'), listen,
+      panel: root.querySelector('.vn-settings'),
+      toggle: root.querySelector('.vn-settings-toggle'),
+      close: root.querySelector('.vn-settings-close'),
+      ...(visibility && { onActivity: visibility.reveal, focusControl: visibility.focusControl }),
     });
-    listen(settings, 'keydown', event => {
-      if (event.key !== 'Escape') return;
-      // Escape closes the settings first; in full screen, a second Escape leaves it.
-      event.preventDefault();
-      settings.hidden = true;
-      toggle.setAttribute('aria-expanded', 'false');
-      if (visibility) visibility.focusControl(toggle);
-      else toggle.focus();
+  }
+
+  // The mute button and the volume slider follow the audio, however its
+  // volume changed; muting keeps the volume to return to.
+  function bindSound(root, audio, listen) {
+    const mute = root.querySelector('[data-action="mute"]');
+    const volume = root.querySelector('.vn-volume');
+    function sync() {
+      const silent = audio.muted || audio.volume === 0;
+      const label = silent ? 'Unmute narration' : 'Mute narration';
+      mute.classList.toggle('is-muted', silent);
+      mute.setAttribute('aria-label', label);
+      mute.title = label;
+      mute.setAttribute('data-original-title', label);
+      volume.value = String(Math.round((audio.muted ? 0 : audio.volume) * 100));
+      volume.setAttribute('aria-valuetext', `${volume.value}%`);
+    }
+    listen(mute, 'click', () => {
+      if (audio.muted || audio.volume === 0) {
+        audio.muted = false;
+        if (audio.volume === 0) audio.volume = 1;
+      } else audio.muted = true;
     });
+    listen(volume, 'input', () => {
+      audio.volume = Number(volume.value) / 100;
+      audio.muted = audio.volume === 0;
+    });
+    listen(audio, 'volumechange', sync);
+    sync();
   }
 
   /**
@@ -96,7 +116,6 @@
     const seek = root.querySelector('.nja-seek');
     const cc = root.querySelector('.vn-cc');
     const feedback = root.querySelector('.vn-gesture-feedback');
-    const volume = root.querySelector('.vn-volume');
     const listen = (target, type, handler, options) => target.addEventListener(type, handler, options);
     const visibility = audio ? window.SongControlsVisibility.bind({ player: root, audio, listen }) : null;
     let feedbackTimer = 0;
@@ -129,12 +148,7 @@
     root.querySelectorAll('[data-vn-skip]').forEach(button => listen(button, 'click', () => skip(Math.sign(Number(button.dataset.vnSkip)))));
     if (cc) listen(cc, 'click', toggleCaptions);
     listen(root.querySelector('.vn-caption-size'), 'change', event => video.style.setProperty('--vn-caption-scale', event.target.value));
-    if (volume) {
-      listen(volume, 'input', () => {
-        audio.volume = Number(volume.value) / 100;
-        if (audio.volume > 0 && audio.muted) root.querySelector('[data-action="mute"]').click();
-      });
-    }
+    if (audio) bindSound(root, audio, listen);
     const picture = root.querySelector('.vn-picture-control');
     if (picture && audio) {
       const syncPicture = () => picture.setAttribute('aria-label', audio.paused ? 'Play video' : 'Pause video');

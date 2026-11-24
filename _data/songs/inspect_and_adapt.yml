@@ -1,0 +1,676 @@
+# Storyboard for "Inspect and Adapt", the Scrum musical: a New Developer
+# joins the team behind the Found It app and asks who the boss is; the Scrum
+# Master, the Product Owner, and the Developers each answer with their
+# accountabilities, and the second act runs one Sprint through its events
+# (lyrics, learning design, and Suno brief: docs/scrum-song-lyrics.md).
+#
+# This file is the single source of truth for the song's words and timing:
+#   - js/song-video/songs/inspect_and_adapt.js choreographs the live vector
+#     player (/assets/song-player/inspect-and-adapt.html) against each line's
+#     `start` and its `marks` (the times of the words the visuals hit). The
+#     cast are the singers of js/song-video/opera-cast.js in the team's
+#     office of js/song-video/team-room.js. js/song-video/scrum-scenes.js
+#     draws the roles in the CS 130 lecture's metaphors (the team coach on a
+#     basketball court, the value navigator on a sea chart, the builders
+#     stacking the Increment), empiricism's three pillars, and the role
+#     cards; js/song-video/pattern-kit.js and js/song-video/scrum-kit.js
+#     draw the cards, the Sprint strip, the Scrum board, and the quiz;
+#   - render.js writes the captions and the audio-described soundtrack from
+#     `text`, `answer`, and `narration`. This song has no MP4: it plays only
+#     in the live player;
+#   - the player page prints every line with its `visual` description as the
+#     transcript (WCAG 1.2.1 / 1.2.3), and each section's `narration` is
+#     spoken in the audio-described track (WCAG 1.2.5).
+# Each section names its singer (`voice`), so the captions and transcript say
+# who sings: the New Developer, the Scrum Master, the Product Owner, the
+# Developers, or the Whole Scrum Team.
+#
+# Times are seconds into the Suno take "Inspect and Adapt" (take 5, about 125
+# BPM). Suno sang the Scrum Master and the New Developer in one voice, so the
+# Scrum Master's four sections are coloured slightly warmer and darker: a
+# zero-phase EQ (+3 dB below 250 Hz, -3 dB above 3 kHz) on the Demucs vocal
+# stem, added to the mix as the difference it makes, with a 0.3 s crossfade
+# centred on each cut. Nothing else in the recording changes. The result is
+# about -16 LUFS, stored as stereo AAC at 192 kb/s with its index first. Line boundaries and word
+# marks come from local Whisper word timestamps (mlx whisper-large-v3-turbo)
+# aligned to the lyric sheet: 686 of 705 sheet words matched, and the rest
+# are interpolated between their neighbours. Captions follow the sheet. The
+# take sings each quiz answer right after its question, so each `pause_at`
+# sits just before the answer. Beats were tracked with librosa on the
+# instrumental stem and smoothed over +-5 beats.
+title: "Inspect and Adapt: a Scrum musical"   # the player's accessible name
+credit: Lyrics written for this page; music and vocals generated with Suno.
+theme: team-room   # stage look: the team's office of js/song-video/team-room.js
+extras:   # the song's own art and styles, loaded before its choreography
+  styles:
+    - /css/song-video-team-room.css
+    - /css/song-video-opera-cast.css
+    - /css/song-video-pattern-kit.css
+    - /css/song-video-scrum-kit.css
+    - /css/song-video-scrum-scenes.css
+  scripts:
+    - /js/song-video/team-room.js
+    - /js/song-video/figure-geometry.js
+    - /js/song-video/opera-cast.js
+    - /js/song-video/pattern-kit.js
+    - /js/song-video/scrum-kit.js
+    - /js/song-video/scrum-scenes.js
+player: /assets/song-player/inspect-and-adapt.html
+captions: /assets/audio/inspect-and-adapt.vtt
+described_captions: /assets/audio/inspect-and-adapt-described.vtt
+soundtrack: assets/audio/inspect-and-adapt.m4a   # repo path, played by the live player
+described_soundtrack: assets/audio/inspect-and-adapt-described.m4a
+described_timeline: /assets/audio/inspect-and-adapt-described.json
+narrator:
+  voice: Samantha   # macOS `say` voice for the audio-described track
+  rate: 205         # words per minute
+  pronounce:        # how the narrator says notation the captions keep as written
+    "≤": "at most"
+width: 1920
+height: 1080
+fps: 30
+duration: 262.8
+beats:
+  bpm: 125.22   # median of the tracked beats
+  first: 0.446
+  times: [
+    0.446, 0.93, 1.414, 1.898, 2.382, 2.867, 3.352, 3.836, 4.317, 4.798, 5.279, 5.763,
+    6.244, 6.723, 7.202, 7.682, 8.161, 8.64, 9.119, 9.598, 10.077, 10.557, 11.036, 11.517,
+    12.0, 12.484, 12.967, 13.449, 13.93, 14.413, 14.897, 15.38, 15.863, 16.347, 16.828, 17.309,
+    17.791, 18.27, 18.751, 19.232, 19.714, 20.195, 20.676, 21.158, 21.637, 22.118, 22.599, 23.081,
+    23.562, 24.043, 24.524, 25.004, 25.485, 25.966, 26.448, 26.931, 27.414, 27.896, 28.377, 28.86,
+    29.344, 29.825, 30.308, 30.792, 31.273, 31.754, 32.236, 32.717, 33.198, 33.679, 34.159, 34.64,
+    35.123, 35.605, 36.086, 36.569, 37.053, 37.534, 38.015, 38.499, 38.98, 39.463, 39.945, 40.426,
+    40.907, 41.389, 41.87, 42.349, 42.83, 43.312, 43.793, 44.274, 44.755, 45.235, 45.714, 46.195,
+    46.676, 47.156, 47.637, 48.118, 48.597, 49.076, 49.558, 50.039, 50.522, 51.006, 51.487, 51.966,
+    52.445, 52.925, 53.404, 53.885, 54.364, 54.843, 55.323, 55.802, 56.279, 56.758, 57.237, 57.718,
+    58.2, 58.679, 59.158, 59.639, 60.121, 60.602, 61.081, 61.56, 62.039, 62.519, 62.998, 63.477,
+    63.958, 64.44, 64.919, 65.398, 65.875, 66.354, 66.833, 67.313, 67.794, 68.275, 68.754, 69.233,
+    69.711, 70.19, 70.669, 71.15, 71.629, 72.111, 72.592, 73.073, 73.552, 74.034, 74.513, 74.994,
+    75.473, 75.952, 76.432, 76.911, 77.39, 77.869, 78.348, 78.83, 79.309, 79.788, 80.267, 80.748,
+    81.228, 81.705, 82.184, 82.663, 83.142, 83.619, 84.096, 84.576, 85.055, 85.534, 86.011, 86.492,
+    86.974, 87.455, 87.934, 88.413, 88.892, 89.371, 89.849, 90.328, 90.805, 91.284, 91.759, 92.236,
+    92.713, 93.192, 93.669, 94.148, 94.626, 95.105, 95.582, 96.061, 96.54, 97.021, 97.503, 97.984,
+    98.463, 98.942, 99.422, 99.903, 100.384, 100.865, 101.347, 101.828, 102.307, 102.786, 103.265, 103.747,
+    104.228, 104.709, 105.189, 105.668, 106.147, 106.624, 107.101, 107.58, 108.059, 108.536, 109.013, 109.493,
+    109.972, 110.451, 110.93, 111.411, 111.895, 112.378, 112.862, 113.343, 113.824, 114.303, 114.78, 115.258,
+    115.737, 116.214, 116.691, 117.166, 117.641, 118.116, 118.593, 119.07, 119.549, 120.028, 120.507, 120.984,
+    121.464, 121.943, 122.424, 122.903, 123.382, 123.859, 124.339, 124.818, 125.299, 125.778, 126.262, 126.747,
+    127.235, 127.725, 128.218, 128.712, 129.208, 129.705, 130.201, 130.697, 131.195, 131.689, 132.179, 132.666,
+    133.15, 133.633, 134.118, 134.606, 135.096, 135.588, 136.082, 136.578, 137.076, 137.574, 138.072, 138.57,
+    139.066, 139.56, 140.05, 140.538, 141.023, 141.505, 141.984, 142.461, 142.94, 143.419, 143.898, 144.377,
+    144.857, 145.338, 145.817, 146.296, 146.775, 147.255, 147.734, 148.213, 148.69, 149.169, 149.646, 150.123,
+    150.598, 151.075, 151.552, 152.029, 152.507, 152.986, 153.463, 153.942, 154.421, 154.9, 155.377, 155.854,
+    156.329, 156.804, 157.281, 157.756, 158.229, 158.704, 159.179, 159.652, 160.125, 160.6, 161.075, 161.55,
+    162.023, 162.495, 162.97, 163.445, 163.918, 164.391, 164.864, 165.337, 165.809, 166.282, 166.755, 167.228,
+    167.701, 168.172, 168.642, 169.115, 169.586, 170.059, 170.532, 171.004, 171.477, 171.952, 172.427, 172.902,
+    173.377, 173.852, 174.327, 174.802, 175.277, 175.752, 176.227, 176.702, 177.177, 177.652, 178.124, 178.599,
+    179.077, 179.551, 180.029, 180.503, 180.981, 181.456, 181.93, 182.405, 182.88, 183.355, 183.83, 184.305,
+    184.78, 185.253, 185.724, 186.194, 186.667, 187.142, 187.617, 188.092, 188.567, 189.042, 189.515, 189.988,
+    190.461, 190.938, 191.413, 191.888, 192.363, 192.838, 193.312, 193.787, 194.26, 194.733, 195.208, 195.683,
+    196.156, 196.631, 197.104, 197.574, 198.043, 198.514, 198.987, 199.459, 199.932, 200.403, 200.876, 201.349,
+    201.819, 202.29, 202.763, 203.236, 203.707, 204.177, 204.648, 205.119, 205.592, 206.062, 206.535, 207.008,
+    207.483, 207.956, 208.429, 208.904, 209.376, 209.849, 210.324, 210.797, 211.272, 211.745, 212.218, 212.691,
+    213.163, 213.638, 214.111, 214.586, 215.061, 215.534, 216.009, 216.482, 216.955, 217.43, 217.904, 218.379,
+    218.852, 219.325, 219.798, 220.271, 220.746, 221.219, 221.694, 222.169, 222.641, 223.114, 223.587, 224.06,
+    224.535, 225.008, 225.483, 225.955, 226.43, 226.903, 227.378, 227.853, 228.328, 228.803, 229.278, 229.753,
+    230.228, 230.703, 231.178, 231.651, 232.126, 232.599, 233.073, 233.546, 234.021, 234.496, 234.971, 235.446,
+    235.919, 236.394, 236.869, 237.342, 237.817, 238.29, 238.764, 239.239, 239.716, 240.191, 240.668, 241.146,
+    241.621, 242.098, 242.575, 243.05, 243.527, 244.002, 244.474, 244.947, 245.42, 245.893, 246.366, 246.841,
+    247.316, 247.791, 248.266, 248.741, 249.216, 249.693, 250.168, 250.643, 251.115, 251.59, 252.065, 252.54,
+    253.015, 253.492, 253.967, 254.442, 254.915, 255.39, 255.865, 256.34, 256.815, 257.29, 257.763, 258.238,
+    258.71, 259.183, 259.658, 260.134, 260.609, 261.085, 261.557
+  ]
+sections:
+  - id: intro
+    title: "Intro"
+    delivery: sung
+    voice: "New Developer"
+    narration: "Audio-described version: before each section, the picture pauses while I describe it. The Found It team's office: a big display on a warm white wall, a team sign above it reading Inspect and Adapt, a window over the city on the left, and the team's task board on the right. The display shows a lost wallet, then the Found It app on a phone: the wallet pinned on a map and a notification, Your wallet was found. The New Developer, a young man in a blue hoodie, walks in, and a badge beside him reads New on the team. The display shows the Scrum Team as six discs with their roles' emblems, a whistle, a compass, and four hard hats, then an org chart whose top box holds only a question mark."
+    lines:
+      - id: intro-1
+        start: 1.82
+        end: 5.16
+        text: "Somebody lost a wallet, left it in the hall."
+        marks: {"somebody": 1.82, "lost": 2.34, "a": 2.76, "wallet": 3.02, "left": 3.64, "it": 4.24, "in": 4.5, "the": 4.62, "hall": 4.72}
+        visual: "Lights up on the Found It team's office: a big display on a warm white wall, a team sign above it reading “Inspect and Adapt”, a window over the city on the left, and the team's task board, its sticky notes in three columns, on the right. The New Developer, a young man in a blue hoodie, walks in from the left. The display shows a lost wallet with a tag: “Lost in the hall”."
+      - id: intro-2
+        start: 5.36
+        end: 8.86
+        text: "Our app, Found It, finds it — we bring it back, that’s all."
+        marks: {"our": 5.36, "app": 5.66, "found": 5.94, "it": 6.38, "finds": 6.64, "it_2": 6.9, "we": 7.26, "bring": 7.5, "it_3": 7.72, "back": 7.86, "thats": 8.16, "all": 8.6}
+        visual: "Beside it, the Found It app opens on a phone: a pin, “Wallet · Hall B”, then a notification, “Your wallet was found”."
+      - id: intro-3
+        start: 9.36
+        end: 13.08
+        text: "I just joined the team — six of us, one product too."
+        marks: {"i": 9.36, "just": 9.88, "joined": 10.14, "the": 10.48, "team": 10.64, "six": 11.16, "of": 11.34, "us": 11.5, "one": 11.9, "product": 12.06, "too": 12.82}
+        visual: "A badge beside the New Developer's face reads “New on the team”. The screen shows the Scrum Team as six discs, each with its role's emblem: a whistle for the Scrum Master, a compass for the Product Owner, and a hard hat for each of four Developers, one of them marked “you”. A caption reads “Scrum Master · Product Owner · 4 Developers”."
+      - id: intro-4
+        start: 13.14
+        end: 17.0
+        text: "So who’s the boss around here? Who tells me what to do?"
+        marks: {"so": 13.14, "whos": 13.46, "the": 13.68, "boss": 13.8, "around": 14.1, "here": 14.38, "who": 14.9, "tells": 15.2, "me": 15.52, "what": 15.72, "to": 16.04, "do": 16.52}
+        visual: "An org chart appears whose top box holds only a question mark, labeled “Boss?”. The New Developer shrugs."
+  - id: scrum-master
+    title: "The Scrum Master"
+    delivery: sung
+    voice: "Scrum Master"
+    narration: "The Scrum Master, a man dressed as a coach, walks in from the right: a teal track jacket with striped sleeves, a whistle on a lanyard, and a clipboard. The slide reads Scrum Master, the team coach, with a list of what the Scrum Master is accountable for and a Not row. On a basketball court seen from above, the Developers play while the coach stays on the sideline: they draw their own plays and huddle, a game clock runs the Daily Scrum's fifteen minutes down to zero, a project manager's pyramid is crossed out beside a servant-leader's inverted one, and the coach clears a wall from a player's path."
+    lines:
+      - id: sm-1
+        start: 17.52
+        end: 20.84
+        text: "No boss here, my friend — I’m the Scrum Master, the coach."
+        marks: {"no": 17.52, "boss": 18.04, "here": 18.36, "my": 18.64, "friend": 18.7, "im": 19.18, "the": 19.4, "scrum": 19.56, "master": 19.94, "the_2": 20.42, "coach": 20.5}
+        visual: "The Scrum Master, a man dressed as a coach, walks in from the right: a teal track jacket with striped sleeves, a whistle on a lanyard, and a clipboard. The org chart's “Boss?” box is crossed out. A slide opens, “Scrum Master · the team coach”, with a list headed “Accountable for” and a “Not” row that strikes out “boss”. On a basketball court seen from above, four Developers stand on the court, labeled “Developers: on the court”, and the coach stands on the sideline, labeled “Scrum Master: on the sideline”."
+      - id: sm-2
+        start: 21.14
+        end: 24.16
+        text: "I won’t assign your tasks; the team picks its approach."
+        marks: {"i": 21.14, "wont": 21.48, "assign": 21.66, "your": 21.98, "tasks": 22.18, "the": 22.88, "team": 22.96, "picks": 23.28, "its": 23.66, "approach": 23.78}
+        visual: "Each Developer draws an arrow for their own play: “The team picks its own plays”. The Not row strikes out “task assigner”."
+      - id: sm-3
+        start: 24.16
+        end: 27.6
+        text: "I coach you to self-manage and help you all learn Scrum."
+        marks: {"i": 24.16, "coach": 24.76, "you": 25.02, "to": 25.26, "self": 25.4, "manage": 25.7, "and": 26.12, "help": 26.24, "you_2": 26.44, "all": 26.58, "learn": 26.78, "scrum": 27.04}
+        visual: "The Developers move into a huddle: “Self-management: the team decides”. On the sideline, a label with a book reads “The Scrum Guide”. The list adds “coaches self-management” and “teaches Scrum”."
+      - id: sm-4
+        start: 27.74
+        end: 31.16
+        text: "I keep each event timeboxed — a fixed time, then it’s done."
+        marks: {"i": 27.74, "keep": 28.0, "each": 28.24, "event": 28.5, "timeboxed": 29.21, "a": 29.62, "fixed": 29.72, "time": 29.96, "then": 30.42, "its": 30.72, "done": 30.92}
+        visual: "A game clock over the court reads “Daily Scrum” and runs from 15:00 down to 00:00, then stops; a label reads “Timebox: a fixed maximum time”. The list adds “timeboxes events”."
+      - id: sm-5
+        start: 31.5
+        end: 35.0
+        text: "No project manager — a servant-leader, serving you."
+        marks: {"no": 31.5, "project": 32.06, "manager": 32.54, "a": 33.22, "servant": 33.42, "leader": 33.9, "serving": 34.22, "you": 34.7}
+        visual: "The court gives way to two pyramids: a project manager's, with the manager on top directing the team, is crossed out; beside it an inverted pyramid has the Developers on top and the Scrum Master underneath, serving them. The Not row strikes out “project manager”, and the list adds “servant-leader”."
+      - id: sm-6
+        start: 35.3
+        end: 38.88
+        text: "I chase each impediment, a wall you can’t break through."
+        marks: {"i": 35.3, "chase": 35.5, "each": 35.9, "impediment": 36.24, "a": 37.06, "wall": 37.3, "you": 37.64, "cant": 37.84, "break": 38.24, "through": 38.48}
+        visual: "Back on the court, a brick wall drops in front of a running Developer: “Impediment: e.g. a missing license”. The coach comes off the sideline to the wall, the wall lifts, and the run goes on. The list adds “removes impediments”."
+  - id: product-owner
+    title: "The Product Owner"
+    delivery: sung
+    voice: "Product Owner"
+    narration: "The Product Owner, a woman dressed as a navigator, walks in from the right: a navy double-breasted sea coat with brass buttons and gold cuff braid over a striped shirt, a compass pin, and a spyglass. The slide reads Product Owner, the value navigator. A sea chart unrolls: its compass reads Value and points to the product vision, users on the shore speak to the ship directly, the user stories become numbered waypoints on a course ordered by value, a cool idea off the course is crossed out, a Developer's question gets an answer, and the ship sails to the first waypoint, where its acceptance criteria are ticked."
+    lines:
+      - id: po-1
+        start: 39.16
+        end: 42.82
+        text: "I’m the Product Owner — one person, value’s my call."
+        marks: {"im": 39.16, "the": 39.6, "product": 39.84, "owner": 40.48, "one": 41.1, "person": 41.22, "values": 41.68, "my": 42.18, "call": 42.42}
+        visual: "The Scrum Master leaves, and the Product Owner, a woman dressed as a navigator, walks in from the right: a navy double-breasted sea coat with brass buttons and gold braid at the cuffs over a striped Breton shirt, a gold compass pin, and a spyglass. A slide opens, “Product Owner · the value navigator”. A sea chart unrolls; its compass rose reads “Value”, and its needle swings toward an island flagged “Product vision”. The list adds “one person, maximizes value”."
+      - id: po-2
+        start: 43.12
+        end: 46.68
+        text: "I talk with users directly, not secondhand at all."
+        marks: {"i": 43.12, "talk": 43.16, "with": 43.46, "users": 43.66, "directly": 44.1, "not": 44.54, "secondhand": 45.06, "at": 45.96, "all": 46.4}
+        visual: "Two users stand on the shore with speech bubbles, “We lose things!” and “Tell us fast!”; a line runs from them straight to the ship, labeled “talks directly”. The list adds “talks with users directly”."
+      - id: po-3
+        start: 46.82
+        end: 50.44
+        text: "Needs become user stories; I order them, value on top."
+        marks: {"needs": 46.82, "become": 47.04, "user": 47.36, "stories": 48.12, "i": 48.86, "order": 48.94, "them": 49.2, "value": 49.38, "on": 49.82, "top": 50.12}
+        visual: "The requests become three flagged islands, the user stories “Post an item”, “Ping the owner”, and “Search by place”, numbered 1, 2, and 3; a dashed course runs from the ship through them in that order to the product vision. A label reads “Product Backlog: ordered by value”. The list adds “writes user stories” and “orders the Product Backlog”."
+      - id: po-4
+        start: 50.64
+        end: 54.32
+        text: "Not on the Product Backlog? Nobody builds it. Stop."
+        marks: {"not": 50.64, "on": 50.92, "the": 51.14, "product": 51.32, "backlog": 51.84, "nobody": 52.66, "builds": 53.4, "it": 53.8, "stop": 54.1}
+        visual: "A fog-ringed island, “Cool idea!”, appears off the course; a red course toward it is crossed out: “Not on the Product Backlog: not built”. The list adds “the single source of work”."
+      - id: po-5
+        start: 54.82
+        end: 56.68
+        text: "I answer all your questions,"
+        marks: {"i": 54.82, "answer": 55.18, "all": 55.62, "your": 55.88, "questions": 56.08}
+        visual: "A card shows a question and its answer: “Developer: exact spot or just the building?” and “Product Owner: the exact spot!”. The list adds “answers questions”."
+      - id: po-6
+        start: 56.68
+        end: 62.36
+        text: "and when a story’s done, I check acceptance criteria one by one."
+        marks: {"and": 56.68, "when": 57.08, "a": 57.28, "storys": 57.48, "done": 58.1, "i": 58.3, "check": 58.52, "acceptance": 58.84, "criteria": 59.5, "one": 60.44, "by": 61.3, "one_2": 61.78}
+        visual: "The ship sails to the first waypoint, and a checklist, “Acceptance criteria · Post an item”, ticks “description entered”, “pinned on the map”, and “posted in under a minute” one by one. The list adds “checks acceptance criteria”."
+  - id: developers
+    title: "The Developers"
+    delivery: sung
+    voice: "Developers"
+    narration: "Three Developers, two men and a woman, walk in and stand under the screen: a man in a painter's apron with a palette, a man in a green hoodie with a code tag, and a woman in a lab coat with a magnifier; the New Developer joins them. The slide reads Developers, the builders, over a building site: the Increment rises block by block, design, code, and test; a toolbox holds every skill; a task board reads We pick our tasks, then Our Sprint plan, re-planned every day; and a Definition of Done seal stamps the stack."
+    lines:
+      - id: dev-1
+        start: 63.88
+        end: 67.06
+        text: "We are the Developers — we design, we code, we test."
+        marks: {"we": 63.88, "are": 64.1, "the": 64.32, "developers": 64.56, "we_2": 65.16, "design": 65.48, "we_3": 66.1, "code": 66.2, "we_4": 66.58, "test": 66.68}
+        visual: "The Product Owner leaves. Three Developers, two men and a woman, walk in and stand under the screen, and the New Developer joins their row. A slide opens, “Developers · the builders”, over a building site on blueprint paper. A label reads “Developers build the Increment”, and blocks drop onto the stack as each skill is sung: “design” (the painter's apron raises a palette), “code” (the green hoodie presents), and “test” (the lab coat raises a magnifier)."
+      - id: dev-2
+        start: 67.06
+        end: 70.74
+        text: "Cross-functional, all skills here; we self-manage all the rest."
+        marks: {"cross": 67.06, "functional": 67.5, "all": 68.34, "skills": 68.52, "here": 68.88, "we": 69.1, "self": 69.32, "manage": 69.58, "all_2": 70.06, "the": 70.32, "rest": 70.48}
+        visual: "A toolbox holds a pencil, code brackets, and a magnifier, labeled design, code, and test: “cross-functional: every skill”. A task board titled “We pick our tasks” lists map view, post form, and ping service, and each Developer puts their own token on a task."
+      - id: dev-3
+        start: 70.74
+        end: 74.66
+        text: "We plan our Sprint’s own work; each day, we adapt the plan."
+        marks: {"we": 70.74, "plan": 70.96, "our": 71.28, "sprints": 71.46, "own": 72.13, "work": 72.38, "each": 72.58, "day": 72.92, "we_2": 73.34, "adapt": 73.6, "the": 73.92, "plan_2": 74.14}
+        visual: "The board's title changes to “Our Sprint plan”, two tasks swap places, and a label reads “re-planned every day”."
+      - id: dev-4
+        start: 74.66
+        end: 79.56
+        text: "Definition of Done — we hold to it, hand in hand."
+        marks: {"definition": 74.66, "of": 75.82, "done": 76.12, "we": 76.3, "hold": 76.74, "to": 77.2, "it": 77.44, "hand": 77.76, "in": 78.74, "hand_2": 79.12}
+        visual: "A green seal, “Definition of Done”, stamps the top of the Increment's stack, labeled “the whole team holds to it”. The Developers and the New Developer fling their arms wide."
+  - id: who-keeps-track
+    title: "The question"
+    delivery: sung
+    voice: "New Developer"
+    narration: "The screen sums up the three roles side by side as cards, each with its emblem and metaphor, and a question mark glows over the New Developer."
+    lines:
+      - id: question-1
+        start: 79.56
+        end: 83.1
+        text: "If nobody’s the boss, who keeps us all on track?"
+        marks: {"if": 79.56, "nobodys": 80.1, "the": 80.78, "boss": 80.88, "who": 81.32, "keeps": 81.54, "us": 81.84, "all": 82.02, "on": 82.44, "track": 82.74}
+        visual: "Three role cards stand side by side: “Scrum Master · the team coach: coaches the team, timeboxes events, removes impediments”; “Product Owner · the value navigator: maximizes value, talks with users, orders the Product Backlog”; and “Developers · the builders: build the Increment, plan and adapt daily, meet the Definition of Done”. A “?” plate glows over the New Developer, who spreads their hands."
+  - id: chorus-1
+    title: "Chorus"
+    delivery: sung
+    voice: "Whole Scrum Team"
+    narration: "The whole cast stands in a line under the screen and sings. A card reading Predict it all up front is crossed out for an eye: Learn from what we see. Then a temple: its pediment reads Empiricism, decide from what you observe, and three columns carry plates that light as they are named: Transparency, the work is on the wall; Inspection, check often, catch it small; Adaptation, off course, adjust now. A ribbon under its steps reads Sprint after Sprint, inspect and adapt."
+    lines:
+      - id: chorus-1-1
+        start: 83.22
+        end: 87.02
+        text: "We can’t predict it all — we learn from what we see."
+        marks: {"we": 83.22, "cant": 83.44, "predict": 83.82, "it": 84.2, "all": 84.62, "we_2": 85.24, "learn": 85.38, "from": 85.64, "what": 85.84, "we_3": 86.12, "see": 86.46}
+        visual: "The whole cast stands in a line under the screen. A card reading “Predict it all up front” is crossed out; an eye appears beside it: “Learn from what we see”."
+      - id: chorus-1-2
+        start: 87.16
+        end: 88.56
+        text: "That’s empiricism!"
+        marks: {"thats": 87.16, "empiricism": 87.66}
+        visual: "A temple rises on the screen: its pediment reads “Empiricism” and its architrave “decide from what you observe”."
+      - id: chorus-1-3
+        start: 89.88
+        end: 91.74
+        text: "Transparency — the work is on the wall!"
+        marks: {"transparency": 89.88, "the": 90.52, "work": 90.6, "is": 90.86, "on": 91.1, "the_2": 91.32, "wall": 91.44}
+        visual: "The first column's plate lights with a list icon: “Transparency: the work is on the wall”."
+      - id: chorus-1-4
+        start: 92.0
+        end: 94.52
+        text: "Inspection — check it often, catch it small!"
+        marks: {"inspection": 92.0, "check": 92.64, "it": 92.82, "often": 93.25, "catch": 93.48, "it_2": 93.92, "small": 94.14}
+        visual: "The second column's plate lights with a magnifying glass: “Inspection: check often, catch it small”."
+      - id: chorus-1-5
+        start: 94.98
+        end: 97.62
+        text: "Adaptation — off course? Change it, don’t stall!"
+        marks: {"adaptation": 94.98, "off": 95.74, "course": 95.9, "change": 96.46, "it": 96.68, "dont": 97.0, "stall": 97.34}
+        visual: "The third column's plate lights with a turning arrow: “Adaptation: off course? Adjust now”."
+      - id: chorus-1-6
+        start: 97.94
+        end: 101.2
+        text: "Sprint after Sprint — inspect and adapt!"
+        marks: {"sprint": 97.94, "after": 98.36, "sprint_2": 98.86, "inspect": 99.72, "and": 100.24, "adapt": 100.82}
+        visual: "A ribbon under the temple's steps reads “↻ Sprint after Sprint: inspect and adapt”; the cast throws up its arms on “adapt”."
+  - id: the-sprint
+    title: "The Sprint"
+    delivery: sung
+    voice: "Scrum Master"
+    narration: "Act two. The cast stays in its line; each singer steps forward. Across the top of the screen, the Sprint strip: a frame named Sprint holding four events in order, Sprint Planning, the Daily Scrum, which repeats every day, Sprint Review, and Sprint Retrospective, with an arrow from the end back to the start: next Sprint. Below it, a Scrum board with three columns: Product Backlog, Sprint Backlog, and Increment. The frame lights: a fixed timebox, one month or less."
+    lines:
+      - id: sprint-1
+        start: 101.46
+        end: 104.72
+        text: "The Sprint — a fixed timebox, one month or less, no more."
+        marks: {"the": 101.46, "sprint": 101.58, "a": 102.3, "fixed": 102.42, "timebox": 103.02, "one": 103.42, "month": 103.58, "or": 103.82, "less": 103.96, "no": 104.32, "more": 104.42}
+        visual: "The Scrum Master steps forward. Across the top of the screen, the Sprint strip: a frame named “Sprint” holding Sprint Planning (a target), Daily Scrum (a loop arrow, every day), Sprint Review (an eye), and Sprint Retrospective (the team). Its caption reads “fixed timebox · ≤ 1 month”. Below it, a Scrum board with three columns, “Product Backlog”, “Sprint Backlog”, and “Increment”, each with its icon, and three stories in the Product Backlog: “Post an item”, “Ping the owner”, and “Search by place”."
+      - id: sprint-2
+        start: 104.84
+        end: 107.82
+        text: "It holds the other events, and the next is at the door."
+        marks: {"it": 104.84, "holds": 105.28, "the": 105.64, "other": 105.78, "events": 105.96, "and": 106.44, "the_2": 106.66, "next": 106.78, "is": 107.1, "at": 107.3, "the_3": 107.44, "door": 107.52}
+        visual: "The four events light in turn inside the frame; then the arrow back to the start lights: “next Sprint ↺”."
+  - id: sprint-planning
+    title: "Sprint Planning"
+    delivery: sung
+    voice: "Product Owner"
+    narration: "Sprint Planning lights up on the Sprint strip. The Product Owner sets the Sprint Goal: post a found wallet and its owner gets a ping. The Developers pull the stories that fit into the Sprint Backlog and break them into tasks."
+    lines:
+      - id: planning-1
+        start: 107.82
+        end: 111.94
+        text: "Sprint Planning — first, the why: the Sprint Goal we all share."
+        marks: {"sprint": 107.82, "planning": 108.4, "first": 108.76, "the": 109.44, "why": 109.58, "the_2": 110.16, "sprint_2": 110.22, "goal": 110.52, "we": 110.88, "all": 111.24, "share": 111.44}
+        visual: "The Product Owner steps forward. Sprint Planning lights up on the strip. A gold card, “Why: the Sprint Goal”, appears at the top of the Sprint Backlog column."
+      - id: planning-2
+        start: 112.06
+        end: 115.68
+        text: "Post a found wallet — its owner gets a ping right there."
+        marks: {"post": 112.06, "a": 112.28, "found": 112.44, "wallet": 112.7, "its": 113.42, "owner": 113.68, "gets": 114.04, "a_2": 114.36, "ping": 114.62, "right": 114.88, "there": 115.2}
+        visual: "The Sprint Goal card fills in: “Goal: owner pinged”."
+      - id: planning-3
+        voice: "Developers"
+        start: 115.88
+        end: 117.56
+        text: "The what — we pick what fits."
+        marks: {"the": 115.88, "what": 116.04, "we": 116.28, "pick": 116.52, "what_2": 117.02, "fits": 117.12}
+        visual: "The Developers step forward and pull the top two stories, “Post an item” and “Ping the owner”, from the Product Backlog into the Sprint Backlog. A bar under the board reads “What: the stories that fit”."
+      - id: planning-4
+        voice: "Developers"
+        start: 117.84
+        end: 119.5
+        text: "The how — we break it down."
+        marks: {"the": 117.84, "how": 117.96, "we": 118.22, "break": 118.42, "it": 118.84, "down": 119.14}
+        visual: "Each pulled story gets small task notes, and the bar adds “How: tasks of a day or less”."
+      - id: planning-5
+        voice: "Developers"
+        start: 119.68
+        end: 123.36
+        text: "Why, what, and how together — our Sprint Backlog, written down."
+        marks: {"why": 119.68, "what": 119.98, "and": 120.18, "how": 120.34, "together": 120.82, "our": 121.56, "sprint": 121.68, "backlog": 122.02, "written": 122.46, "down": 122.9}
+        visual: "The Sprint Backlog column lights up: why, what, and how together. The bar reads “Sprint Planning: inspects the Product Backlog → adapts: a Sprint Backlog”."
+  - id: daily-scrum
+    title: "The Daily Scrum"
+    delivery: sung
+    voice: "Developers"
+    narration: "The Daily Scrum lights up on the Sprint strip, with a card: fifteen minutes, same time, same place. A progress bar fills along the Sprint Goal and two stories swap places. A status report addressed To: Manager is crossed out. On day four, a wall labeled impediment drops in front of the Sprint Backlog; the Scrum Master takes a form, it is stamped Signed, the wall lifts, and a bar with the coach's whistle says the coach cleared the impediment. A story swells to twice its size; it is cut in two, half returns to the Product Backlog, a padlock closes on the Sprint Goal, and a bar with the navigator's compass reads same destination, shorter route."
+    lines:
+      - id: daily-1
+        start: 123.54
+        end: 127.16
+        text: "Daily Scrum — fifteen minutes, standing, same time, same place."
+        marks: {"daily": 123.54, "scrum": 123.78, "fifteen": 124.58, "minutes": 124.84, "standing": 125.48, "same": 125.86, "time": 126.14, "same_2": 126.5, "place": 126.74}
+        visual: "The Daily Scrum lights up on the strip. Over the Increment column, a card reads “15 min · same time · same place”."
+      - id: daily-2
+        start: 127.34
+        end: 131.02
+        text: "Inspect: on track to the Sprint Goal? Adapt: re-plan, keep pace."
+        marks: {"inspect": 127.34, "on": 127.84, "track": 127.98, "to": 128.38, "the": 128.44, "sprint": 128.54, "goal": 128.88, "adapt": 129.36, "re": 129.88, "plan": 130.3, "keep": 130.48, "pace": 130.64}
+        visual: "On “Inspect”, a progress bar fills along the Sprint Goal card; on “Adapt”, the two stories swap places. The bar reads “Daily Scrum: inspects progress → adapts today's plan”."
+      - id: daily-3
+        start: 131.22
+        end: 132.8
+        text: "Is it a status report?"
+        marks: {"is": 131.22, "it": 131.44, "a": 131.64, "status": 131.78, "report": 132.22}
+        visual: "A card addressed “To: Manager” reads “Status report”."
+      - id: daily-4
+        voice: "Developers"
+        start: 133.02
+        end: 134.82
+        text: "No — it’s us, for us!"
+        marks: {"no": 133.02, "its": 133.46, "us": 133.74, "for": 134.1, "us_2": 134.46}
+        visual: "“Status report” is crossed out; the bar reads “Developers talking to Developers”."
+      - id: daily-5
+        voice: "Developers"
+        start: 134.82
+        end: 138.84
+        text: "Day four — we’re stuck: the lost-and-found won’t share its log."
+        marks: {"day": 134.82, "four": 135.14, "were": 135.48, "stuck": 135.83, "the": 136.04, "lost": 136.1, "and": 136.4, "found": 136.6, "wont": 137.0, "share": 137.46, "its": 137.96, "log": 138.67}
+        visual: "A card reads “Day 4”, and a brick wall labeled “Impediment: no access to the lost-and-found log” drops in front of the Sprint Backlog."
+      - id: daily-6
+        voice: "Scrum Master"
+        start: 138.88
+        end: 142.32
+        text: "An impediment — I’m on it! Keep building, off I go."
+        marks: {"an": 138.88, "impediment": 139.32, "im": 140.06, "on": 140.4, "it": 140.58, "keep": 141.1, "building": 141.32, "off": 141.68, "i": 141.94, "go": 142.1}
+        visual: "The Scrum Master steps forward with a form on a clipboard and salutes on “off I go”."
+      - id: daily-7
+        voice: "Scrum Master"
+        start: 142.8
+        end: 146.18
+        text: "The office signs the form; by Friday, the data flows."
+        marks: {"the": 142.8, "office": 142.86, "signs": 143.16, "the_2": 143.54, "form": 143.74, "by": 144.32, "friday": 144.4, "the_3": 145.08, "data": 145.54, "flows": 145.8}
+        visual: "The form is stamped “Signed”, the wall lifts away, and a bar with the coach's whistle reads “The coach cleared the impediment”."
+      - id: daily-8
+        voice: "Product Owner"
+        start: 146.42
+        end: 150.14
+        text: "One story’s twice as big? We’ll cut it down to size."
+        marks: {"one": 146.42, "storys": 146.56, "twice": 147.1, "as": 147.38, "big": 147.74, "well": 148.16, "cut": 148.54, "it": 148.78, "down": 148.96, "to": 149.36, "size": 149.68}
+        visual: "The Product Owner steps forward. The story “Post an item” swells to twice its size."
+      - id: daily-9
+        voice: "Product Owner"
+        start: 150.3
+        end: 153.88
+        text: "Trim the scope, not the goal — the Sprint Goal never slides."
+        marks: {"trim": 150.3, "the": 150.5, "scope": 150.66, "not": 151.06, "the_2": 151.4, "goal": 151.6, "the_3": 152.2, "sprint": 152.28, "goal_2": 152.6, "never": 152.94, "slides": 153.42}
+        visual: "The story is cut in two: “Post: basic form” stays, “Post: map picker” goes back to the Product Backlog, and a padlock closes on the Sprint Goal card. A bar with the navigator's compass reads “Same destination, shorter route: trim the scope, keep the Sprint Goal”."
+  - id: laptop
+    title: "It works on my laptop"
+    delivery: sung
+    voice: "New Developer"
+    narration: "The New Developer steps forward: works on my laptop."
+    lines:
+      - id: laptop-1
+        start: 154.54
+        end: 156.92
+        text: "It works on my laptop — so it’s done, right?"
+        marks: {"it": 154.54, "works": 154.66, "on": 154.94, "my": 155.08, "laptop": 155.22, "so": 155.86, "its": 156.2, "done": 156.42, "right": 156.78}
+        visual: "The New Developer steps forward. A gold card with a laptop icon reads “works on my laptop”."
+  - id: definition-of-done
+    title: "The Definition of Done"
+    delivery: sung
+    voice: "Developers"
+    narration: "A Definition of Done checklist covers the Sprint strip: code reviewed, tests pass, tried on a phone. The story Ping the owner gets all three ticks and joins the Increment as a green block. The story Post: basic form misses tried on a phone and goes back to the Product Backlog."
+    lines:
+      - id: done-2
+        start: 157.58
+        end: 160.58
+        text: "Definition of Done — reviewed, tests pass, tried on a phone."
+        marks: {"definition": 157.58, "of": 158.06, "done": 158.38, "reviewed": 158.79, "tests": 159.1, "pass": 159.24, "tried": 159.86, "on": 160.08, "a": 160.16, "phone": 160.28}
+        visual: "A checklist covers the Sprint strip: “Definition of Done · Ping the owner”, with boxes for “code reviewed”, “tests pass”, and “tried on a phone”."
+      - id: done-3
+        start: 160.72
+        end: 164.24
+        text: "Meet it all? It’s usable: the Increment has grown!"
+        marks: {"meet": 160.72, "it": 160.92, "all": 161.04, "its": 161.26, "usable": 161.46, "the": 162.18, "increment": 162.36, "has": 163.1, "grown": 163.9}
+        visual: "All three boxes are ticked; “Ping the owner” leaves the Sprint Backlog and lands in the Increment as a green block. The bar reads “Increment: usable, adds to all earlier work”."
+      - id: done-4
+        start: 164.24
+        end: 168.06
+        text: "Miss one? It isn’t done — back to the Product Backlog."
+        marks: {"miss": 164.24, "one": 164.68, "it": 165.0, "isnt": 165.3, "done": 165.7, "back": 166.26, "to": 166.46, "the": 166.82, "product": 167.06, "backlog": 167.5}
+        visual: "The checklist switches to “Post: basic form”: ticks for “code reviewed” and “tests pass”, a cross for “tried on a phone”. The story slides back to the Product Backlog; the bar reads “Not done: not in the Increment”."
+  - id: sprint-review
+    title: "Sprint Review"
+    delivery: sung
+    voice: "Product Owner"
+    narration: "Sprint Review lights up on the Sprint strip. A card reading Slides is crossed out for one reading Live demo with stakeholders. A user asks for photos of found items, the request lands at the top of the Product Backlog as a new card, and a bar with the navigator's compass reads Sprint Review inspects the Increment and adapts the Product Backlog."
+    lines:
+      - id: review-1
+        start: 168.62
+        end: 172.06
+        text: "Sprint Review — inspect the product: a live demo, not slides."
+        marks: {"sprint": 168.62, "review": 168.8, "inspect": 169.34, "the": 169.64, "product": 169.88, "a": 170.34, "live": 170.46, "demo": 170.76, "not": 171.34, "slides": 171.58}
+        visual: "The Product Owner steps forward. Sprint Review lights up on the strip. A card reading “Slides” is crossed out; a gold card reads “Live demo with stakeholders”."
+      - id: review-2
+        start: 172.4
+        end: 175.64
+        text: "Users ask for photos — to the Product Backlog it flies."
+        marks: {"users": 172.4, "ask": 172.7, "for": 173.02, "photos": 173.24, "to": 173.82, "the": 173.94, "product": 174.12, "backlog": 174.46, "it": 175.22, "flies": 175.34}
+        visual: "A speech bubble asks “Add photos of found items?”; a new card, “Photos of found items”, lands at the top of the Product Backlog, and the cards below move down. A bar with the navigator's compass reads “Sprint Review: inspects the Increment → adapts the Product Backlog”."
+  - id: sprint-retrospective
+    title: "Sprint Retrospective"
+    delivery: sung
+    voice: "Whole Scrum Team"
+    narration: "Sprint Retrospective lights up on the Sprint strip. A Sprint timeline shows every merge piled onto the last night; it is redrawn with a small merge every day. Two signs: Sprint Review, what we build; Sprint Retrospective, how we build. Then the strip's arrow carries the team back into Sprint Planning."
+    lines:
+      - id: retro-1
+        start: 176.18
+        end: 179.44
+        text: "Sprint Retrospective — the process: how did we work this time?"
+        marks: {"sprint": 176.18, "retrospective": 176.18, "the": 177.12, "process": 177.24, "how": 177.78, "did": 178.02, "we": 178.2, "work": 178.4, "this": 178.78, "time": 179.06}
+        visual: "Sprint Retrospective lights up on the strip. A gold card reads “How did we work?”."
+      - id: retro-2
+        start: 179.54
+        end: 183.22
+        text: "We merged it all on the last night — next Sprint, we merge as we go!"
+        marks: {"we": 179.54, "merged": 179.84, "it": 180.16, "all": 180.32, "on": 180.6, "the": 180.76, "last": 180.86, "night": 181.1, "next": 181.36, "sprint": 181.64, "we_2": 182.08, "merge": 182.22, "as": 182.54, "we_3": 182.78, "go": 182.96}
+        visual: "A timeline titled “This Sprint: every merge on the last night” shows four merges piled on day 10, two marked as conflicts. It is redrawn as “Next Sprint: merge a little every day”, one merge per day. The bar reads “Sprint Retrospective: inspects how we work → adapts the process”."
+      - id: retro-3
+        start: 183.52
+        end: 186.76
+        text: "Sprint Review — what we build. Sprint Retrospective — how."
+        marks: {"sprint": 183.52, "review": 183.78, "what": 184.48, "we": 184.62, "build": 184.82, "sprint_2": 185.38, "retrospective": 185.58, "how": 186.66}
+        visual: "Two signs face each other: “Sprint Review: WHAT we build” and “Sprint Retrospective: HOW we build”."
+      - id: retro-4
+        start: 186.82
+        end: 191.16
+        text: "Then round we go — Sprint Planning, the next Sprint starts right now!"
+        marks: {"then": 186.82, "round": 187.04, "we": 187.2, "go": 187.4, "sprint": 187.78, "planning": 187.94, "the": 188.76, "next": 188.88, "sprint_2": 189.2, "starts": 189.62, "right": 190.16, "now": 190.72}
+        visual: "The strip's arrow from the end back to the start lights, Sprint Planning lights again, and the frame's name changes to “Sprint 2”."
+  - id: chorus-2
+    title: "Final chorus"
+    delivery: sung
+    voice: "Whole Scrum Team"
+    narration: "The final chorus, as before: the temple of empiricism, its three pillars, and the ribbon, Sprint after Sprint."
+    lines:
+      - id: chorus-2-1
+        start: 193.52
+        end: 197.56
+        text: "We can’t predict it all — we learn from what we see."
+        marks: {"we": 193.52, "cant": 194.08, "predict": 194.46, "it": 194.84, "all": 195.32, "we_2": 195.7, "learn": 195.98, "from": 196.26, "what": 196.46, "we_3": 196.74, "see": 197.06}
+        visual: "The whole cast stands in a line under the screen. A card reading “Predict it all up front” is crossed out; an eye appears beside it: “Learn from what we see”."
+      - id: chorus-2-2
+        start: 197.56
+        end: 199.66
+        text: "That’s empiricism!"
+        marks: {"thats": 197.56, "empiricism": 198.24}
+        visual: "A temple rises on the screen: its pediment reads “Empiricism” and its architrave “decide from what you observe”."
+      - id: chorus-2-3
+        start: 200.38
+        end: 202.32
+        text: "Transparency — the work is on the wall!"
+        marks: {"transparency": 200.38, "the": 200.94, "work": 201.14, "is": 201.4, "on": 201.64, "the_2": 201.84, "wall": 201.96}
+        visual: "The first column's plate lights with a list icon: “Transparency: the work is on the wall”."
+      - id: chorus-2-4
+        start: 202.32
+        end: 205.08
+        text: "Inspection — check it often, catch it small!"
+        marks: {"inspection": 202.32, "check": 203.06, "it": 203.28, "often": 203.75, "catch": 203.98, "it_2": 204.4, "small": 204.66}
+        visual: "The second column's plate lights with a magnifying glass: “Inspection: check often, catch it small”."
+      - id: chorus-2-5
+        start: 205.08
+        end: 208.06
+        text: "Adaptation — off course? Change it, don’t stall!"
+        marks: {"adaptation": 205.08, "off": 206.17, "course": 206.34, "change": 206.76, "it": 207.12, "dont": 207.46, "stall": 207.8}
+        visual: "The third column's plate lights with a turning arrow: “Adaptation: off course? Adjust now”."
+      - id: chorus-2-6
+        start: 208.06
+        end: 211.66
+        text: "Sprint after Sprint — inspect and adapt!"
+        marks: {"sprint": 208.06, "after": 208.84, "sprint_2": 209.4, "inspect": 209.86, "and": 210.6, "adapt": 211.24}
+        visual: "A ribbon under the temple's steps reads “↻ Sprint after Sprint: inspect and adapt”; the cast throws up its arms on “adapt”."
+  - id: quiz-intro
+    title: "Pop quiz"
+    delivery: sung
+    voice: "New Developer"
+    narration: "Pop quiz, about a new team building a bus-tracker app. A quiz card on the screen shows each question; when the cast sings the answer, an answer bar slams in under it with the reason, and the role it names steps forward."
+    lines:
+      - id: quiz-intro-1
+        start: 211.66
+        end: 214.46
+        text: "Pop quiz! A new team, a bus-tracker app!"
+        marks: {"pop": 211.66, "quiz": 212.06, "a": 212.6, "new": 212.72, "team": 212.92, "a_2": 213.28, "bus": 213.5, "tracker": 213.76, "app": 214.1}
+        visual: "The sign over the display reads “Pop quiz”. A gold card reads “Pop quiz! A bus-tracker team”."
+  - id: quiz
+    title: "Pop quiz"
+    delivery: call
+    voice: "New Developer"
+    narration: "Seven questions, one card each; when the cast sings the answer, an answer bar slams in with the role's emblem and a short reason, and that role steps forward."
+    lines:
+      - id: quiz-1
+        start: 214.46
+        end: 219.88
+        text: "A manager wants the Daily Scrum as a status report. Okay?"
+        answer: "No — it’s the Developers’ plan for the day!"
+        answer_at: 217.76
+        pause_at: 217.59
+        marks: {"a": 214.46, "manager": 214.72, "wants": 215.06, "the": 215.36, "daily": 215.52, "scrum": 215.8, "as": 216.26, "a_2": 216.38, "status": 216.52, "report": 216.84, "okay": 217.4, "no": 217.76, "its": 218.22, "the_2": 218.38, "developers": 218.46, "plan": 219.08, "for": 219.36, "the_3": 219.56, "day": 219.68}
+        visual: "Question 1 of 7 on the quiz card, whose header reads “Pop quiz · A bus-tracker team”. On the answer, the Developers step forward, and the answer bar shows the builders' hard hat and “Developers re-plan their day”."
+      - id: quiz-2
+        start: 219.88
+        end: 225.5
+        text: "A dean emails a Developer — add dark mode now! Start coding?"
+        answer: "Not yet — it goes on the Product Backlog!"
+        answer_at: 223.76
+        pause_at: 223.64
+        marks: {"a": 219.88, "dean": 220.14, "emails": 220.42, "a_2": 220.9, "developer": 221.1, "add": 221.68, "dark": 221.86, "mode": 222.28, "now": 222.62, "start": 223.04, "coding": 223.24, "not": 223.76, "yet": 223.9, "it": 224.3, "goes": 224.38, "on": 224.52, "the": 224.66, "product": 224.78, "backlog": 225.06}
+        visual: "Question 2 of 7. On the answer, the Product Owner steps forward, and the answer bar shows the navigator's compass and “Product Owner orders it”."
+      - id: quiz-3
+        start: 225.78
+        end: 230.3
+        text: "Last day, three stories left. Stretch the Sprint a week?"
+        answer: "No — the timebox stays fixed!"
+        answer_at: 228.68
+        pause_at: 228.56
+        marks: {"last": 225.78, "day": 225.98, "three": 226.62, "stories": 226.78, "left": 227.18, "stretch": 227.48, "the": 227.86, "sprint": 228.06, "a": 228.28, "week": 228.46, "no": 228.68, "the_2": 229.0, "timebox": 229.35, "stays": 229.6, "fixed": 229.9}
+        visual: "Question 3 of 7. On the answer, the Scrum Master steps forward, and the answer bar shows a timer and “Unfinished work returns”."
+      - id: quiz-4
+        start: 230.42
+        end: 236.42
+        text: "At the demo, riders say the map’s too hard to read. Which event? What changes?"
+        answer: "Sprint Review — the Product Backlog changes!"
+        answer_at: 234.28
+        pause_at: 234.07
+        marks: {"at": 230.42, "the": 230.5, "demo": 230.6, "riders": 231.14, "say": 231.36, "the_2": 231.64, "maps": 231.76, "too": 232.08, "hard": 232.24, "to": 232.54, "read": 232.68, "which": 232.9, "event": 233.1, "what": 233.48, "changes": 233.58, "sprint": 234.28, "review": 234.64, "the_3": 235.1, "product": 235.16, "backlog": 235.44, "changes_2": 235.9}
+        visual: "Question 4 of 7. On the answer, the Product Owner steps forward, and the answer bar shows an eye and “The Product Backlog adapts”."
+      - id: quiz-5
+        start: 236.6
+        end: 241.36
+        text: "Their server license is stuck in Purchasing. Who chases it?"
+        answer: "The Scrum Master — it’s an impediment!"
+        answer_at: 239.56
+        pause_at: 239.44
+        marks: {"their": 236.6, "server": 236.76, "license": 237.1, "is": 237.5, "stuck": 237.76, "in": 238.06, "purchasing": 238.26, "who": 238.82, "chases": 238.94, "it": 239.36, "the": 239.56, "scrum": 239.7, "master": 240.04, "its": 240.6, "an": 240.72, "impediment": 240.82}
+        visual: "Question 5 of 7. On the answer, the Scrum Master steps forward, and the answer bar shows the coach's whistle and “Blockers are impediments”."
+      - id: quiz-6
+        start: 241.54
+        end: 246.68
+        text: "Done needs tests. Code’s reviewed, but no tests ran. Does it count?"
+        answer: "Not done — back to the Product Backlog!"
+        answer_at: 244.82
+        pause_at: 244.7
+        marks: {"done": 241.54, "needs": 241.7, "tests": 242.14, "codes": 242.3, "reviewed": 242.64, "but": 243.22, "no": 243.3, "tests_2": 243.7, "ran": 243.88, "does": 244.32, "it": 244.36, "count": 244.5, "not": 244.82, "done_2": 245.02, "back": 245.56, "to": 245.72, "the": 245.9, "product": 246.02, "backlog": 246.28}
+        visual: "Question 6 of 7. On the answer, the Developers step forward, and the answer bar shows the builders' hard hat and “Not in the Increment”."
+      - id: quiz-7
+        start: 246.84
+        end: 252.78
+        text: "Testing gets skipped, Sprint after Sprint. Which event fixes the habit?"
+        answer: "Sprint Retrospective — change how we work!"
+        answer_at: 250.34
+        pause_at: 250.17
+        marks: {"testing": 246.84, "gets": 247.16, "skipped": 247.42, "sprint": 247.76, "after": 248.24, "sprint_2": 248.5, "which": 248.94, "event": 249.06, "fixes": 249.3, "the": 249.66, "habit": 249.84, "sprint_3": 250.34, "retrospective": 250.58, "change": 251.56, "how": 251.8, "we": 252.1, "work": 252.36}
+        visual: "Question 7 of 7. On the answer, the whole cast steps forward, and the answer bar shows a loop arrow and “It adapts the process”."
+  - id: outro
+    title: "Outro"
+    delivery: sung
+    voice: "New Developer"
+    narration: "A plate over the New Developer changes from New on the team to Developer, and the three role cards return."
+    lines:
+      - id: outro-1
+        start: 252.96
+        end: 256.4
+        text: "First Sprint done — no boss in sight, just a team that learns."
+        marks: {"first": 252.96, "sprint": 253.18, "done": 253.62, "no": 254.08, "boss": 254.22, "in": 254.66, "sight": 254.88, "just": 255.26, "a": 255.5, "team": 255.68, "that": 255.96, "learns": 256.16}
+        visual: "A plate over the New Developer changes from “New on the team” to “Developer”, and the three role cards return: the team coach, the value navigator, and the builders."
+  - id: finale
+    title: "Finale"
+    delivery: sung
+    voice: "Whole Scrum Team"
+    narration: "The whole cast sings the last line together and bows under the temple of empiricism, its three pillars glowing."
+    lines:
+      - id: finale-1
+        start: 256.58
+        end: 261.12
+        text: "We can’t predict it all — so we inspect and adapt!"
+        marks: {"we": 256.58, "cant": 256.7, "predict": 257.04, "it": 257.44, "all": 257.82, "so": 258.42, "we_2": 258.54, "inspect": 258.82, "and": 259.42, "adapt": 260.28}
+        visual: "The temple returns with its three plates glowing and the ribbon “↻ Sprint after Sprint: inspect and adapt”; the whole cast bows on “adapt”."

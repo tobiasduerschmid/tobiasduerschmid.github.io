@@ -713,14 +713,14 @@
       if (functionContainer && functionContainer.async) {
         return { error: 'Async function extraction is not supported yet.' };
       }
-      if (helperNameConflicts(analysis, activeFile, functionContainer, name)) {
-        return { error: 'A symbol named ' + name + ' already exists in this scope.' };
-      }
       var isMethod = !!(functionContainer && functionContainer.className);
       var firstParam = functionContainer && functionContainer.params && functionContainer.params[0];
       var receiverName = isMethod && firstParam && (firstParam.name === 'self' || firstParam.name === 'cls')
         ? firstParam.name
         : null;
+      if (helperNameConflicts(analysis, activeFile, functionContainer, name, lines, receiverName)) {
+        return { error: 'A symbol named ' + name + ' already exists in this scope.' };
+      }
       var declaredBefore = collectDeclaredBeforeFromAnalysis(analysis, activeFile, functionContainer, start);
       var selectedIds = collectSymbolsInRange(analysis, activeFile, start, end, 'load', functionContainer);
       var assignedInside = collectSymbolsInRange(analysis, activeFile, start, end, 'store', functionContainer);
@@ -1420,6 +1420,7 @@
     if (!normalized || normalized.empty) {
       return { error: 'Select complete Python statements to extract.' };
     }
+    skipLeadingIndentation(normalized, content);
     var file = analysisFile(analysis, filename);
     if (!file) return { error: 'Select complete Python statements to extract.' };
 
@@ -1459,6 +1460,17 @@
       startLine: first.startLine - 1,
       endLine: last.endLine - 1,
     };
+  }
+
+  // Learners select whole lines, so a selection may start inside the first
+  // line's indentation. Move its start to the first token when the selection
+  // reaches past that indentation; an indentation-only selection stays as is.
+  function skipLeadingIndentation(normalized, content) {
+    var line = (content || '').split('\n')[normalized.startLine - 1] || '';
+    var indent = line.length - line.replace(/^\s+/, '').length;
+    if (indent === line.length || normalized.startCol >= indent) return;
+    var reachesPastIndent = normalized.endLine > normalized.startLine || normalized.endCol > indent;
+    if (reachesPastIndent) normalized.startCol = indent;
   }
 
   function isExtractableStatementKind(kind) {
@@ -1757,14 +1769,23 @@
     });
   }
 
-  function helperNameConflicts(analysis, filename, fn, name) {
+  // Would a new helper named `name` clash with an existing name? An extracted
+  // method is called through its receiver (`self.name(...)`), so only the
+  // receiver's own members can clash with it; a local variable, or another
+  // object's attribute such as `client.charge`, cannot. An extracted free
+  // function is called by its bare name, so locals and module names can.
+  function helperNameConflicts(analysis, filename, fn, name, lines, receiverName) {
     var file = analysisFile(analysis, filename);
     if (!file) return false;
     return (file.symbols || []).some(function (symbol) {
       if (symbol.name !== name || !symbol.range) return false;
+      if (symbol.kind === 'attribute') {
+        // `self.name` anywhere in the class: an instance attribute of that name.
+        return !!receiverName && symbol.className === fn.className && isReceiverAttribute(lines, symbol);
+      }
       if (!fn) return symbol.scope === null;
-      // local conflict inside the function we are extracting from
-      if (symbol.scope === fn.name && (symbol.className || null) === (fn.className || null)) return true;
+      // a local of the function we are extracting from shadows a bare call only
+      if (symbol.scope === fn.name && (symbol.className || null) === (fn.className || null)) return !receiverName;
       // module-level conflict only when extracting from a free function
       if (symbol.scope === null && !fn.className) return true;
       // sibling-method (or class-body assignment) conflict on the same class
@@ -1772,6 +1793,12 @@
           && (symbol.kind === 'function' || (symbol.kind === 'name' && symbol.ctx === 'store'))) return true;
       return false;
     });
+  }
+
+  // Is this attribute symbol read or written through `self.` or `cls.`?
+  function isReceiverAttribute(lines, symbol) {
+    var text = lines[symbol.range.startLine - 1] || '';
+    return /(^|[^\w.])(self|cls)\s*\.\s*$/.test(text.slice(0, symbol.range.startCol));
   }
 
   function hasVarArgsOrKwargs(fn) {
