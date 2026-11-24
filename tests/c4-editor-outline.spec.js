@@ -52,7 +52,9 @@ const MENTORING = [
  * records each request and answers yes. The root also records every keydown that reaches it, as the editor's own
  * shortcut handling would see it.
  */
-async function openOutline(page, { text = REFERENCE, view = 'landscape', reveal = 'all' } = {}) {
+// The default view is the scenario's: a view that opens no system's branch of the outline, so every test starts with the
+// elements collapsed (the editor has no landscape level, ED-10, so `landscape` would open the context view).
+async function openOutline(page, { text = REFERENCE, view = 'dynamic enroll', reveal = 'all' } = {}) {
   await page.setContent([
     '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>C4 editor outline</title></head>',
     '<body><main><h1>C4 editor outline</h1><p>Paragraph text sets the reading size.</p>',
@@ -286,7 +288,7 @@ test.describe('C4 editor outline', () => {
   });
 
   test('Enter on a scenario opens its dynamic view', async ({ page }) => {
-    const tree = await openOutline(page);
+    const tree = await openOutline(page, { view: 'context of registration' });
     await item(tree, 'Enroll in a planned schedule').focus();
 
     await page.keyboard.press('Enter');

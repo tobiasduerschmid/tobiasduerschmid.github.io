@@ -17,7 +17,8 @@ The scripts load in the order of `js/ArchUML/c4/manifest.json`: `core`, then `re
 ```js
 const editor = ArchUMLC4Editor.mount(rootElement, {
   text,                       // the document text (required in practice; default '')
-  view: 'containers of registration', // optional; the model's default view otherwise
+  view: 'containers of registration', // optional; the model's default view otherwise. `landscape` opens
+                              // the default view too: the editor's top view is the context view (ED-10)
   profile: 'novice',          // 'novice' | 'expert' (default 'expert')
   size: 'regular',            // 'compact' | 'regular' | 'tall' (a modifier class, never a style attribute), or
                               // 'fill': the host gives the root its height and the canvas takes what the rows

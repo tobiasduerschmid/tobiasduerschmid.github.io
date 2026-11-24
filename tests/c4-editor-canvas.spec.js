@@ -164,6 +164,18 @@ test.describe('C4 editor canvas: keyboard navigation', () => {
     await expect(option(editor, 'Registration API')).toHaveAttribute('aria-selected', 'true');
   });
 
+  test('Alt+ArrowUp stops at the context view, the top view, and says so', async ({ page }) => {
+    const editor = await openEditor(page, { view: 'containers of registration' });
+    await option(editor, 'Registration API').focus();
+    await page.keyboard.press('Alt+ArrowUp');
+    await expect(canvas(editor)).toHaveAccessibleName('Canvas: System context view: Course Registration');
+
+    await option(editor, 'Course Registration').focus();
+    await page.keyboard.press('Alt+ArrowUp');
+    await expect(editor.getByRole('status').filter({ hasText: 'This is the top view; no view contains it.' })).toHaveCount(1);
+    await expect(canvas(editor)).toHaveAccessibleName('Canvas: System context view: Course Registration');
+  });
+
   test('zooming into an element without children offers Add the first component, which adds one', async ({ page }) => {
     const editor = await openEditor(page);
     await option(editor, 'Planner Web App').focus();

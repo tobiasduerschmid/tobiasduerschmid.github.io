@@ -110,14 +110,15 @@ test.describe('C4 editor interface views: toolbar', () => {
   });
 
   test('the Interfaces button explains itself when no system, container, or component is selected', async ({ page }) => {
-    const editor = await openEditor(page, { view: 'landscape' });
+    // A scenario's view has no element of its own to fall back on.
+    const editor = await openEditor(page, { view: 'dynamic enroll' });
     await page.evaluate(() => window.editor.select('student'));
     await expect(interfacesButton(editor)).toHaveAttribute('aria-disabled', 'true');
     await expect(interfacesButton(editor)).toHaveAccessibleDescription(/Select a software system, container, or component/);
     // aria-disabled keeps the button focusable and pressable; pressing it opens nothing and says why.
     await interfacesButton(editor).click({ force: true });
     await expect.poll(async () => (await hostLog(page)).announced.at(-1)).toMatch(/^Select a software system, container, or component/);
-    await expect(canvas(editor), 'a disabled button opens nothing').toHaveAccessibleName(canvasNameOf('landscape'));
+    await expect(canvas(editor), 'a disabled button opens nothing').toHaveAccessibleName(canvasNameOf('dynamic enroll'));
 
     // Inside a scope, the view's own element is the fallback: the container view's system.
     await page.evaluate(() => {

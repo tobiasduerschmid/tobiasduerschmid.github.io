@@ -462,6 +462,15 @@ Paths under `js/ArchUML/` live in the ArchUML submodule, a separate repository. 
 - **If wrong:** None.
 - **Where:** Spec §9.1, §9.5. `js/ArchUML/c4/editor/c4-editor-interfaces.js`. Test: `tests/c4-editor-interface-views.spec.js`.
 
+### ED-10 The editor has no landscape level; the context view is its top view
+
+- **Date:** 2026-11-24 *(user: "drop the editor's Landscape level so Context is the top view")*
+- **Decision:** The toolbar has no Landscape view button, and the editor's breadcrumbs start at the context view, so Alt+↑ and the breadcrumbs stop there ("This is the top view; no view contains it."). A `landscape` request (the mount's `view`, `openView`, a host's selector, an outline item, an "Open in the C4 editor" link from a page whose example is `view: landscape`) opens the model's default view, the context view of its first internal software system. A model without an internal system (an empty model, or only people and external systems) keeps the whole-model drawing as its starting canvas, with the Context palette (Person, Software system) and no level button or breadcrumb; an edit never switches views, so adding the first system keeps that canvas until the reader presses Context. The renderer, the schema, the CLI, and the core's `listViews` and breadcrumbs keep `view: landscape` for static pages and the UML reference.
+- **Why:** CP-7 took the landscape out of the chapter; the editor follows the user's request with an editor-side rule (`resolveView` and `breadcrumbs` in the state controller), so nothing changes for static figures.
+- **Rejected:** Removing `landscape` from the core's view catalog (static pages and `REFERENCE.md` still draw it); switching to the context view when the first system is added (it would move the view under an in-place rename).
+- **If wrong:** Restore the `Landscape` entry of `LEVELS` in `c4-editor-toolbar.js` and drop the landscape branch of `resolveView`.
+- **Where:** `js/ArchUML/c4/editor/c4-editor-state.js` (`resolveView`, `breadcrumbs`), `c4-editor-toolbar.js` (`LEVELS`, `createBreadcrumbs`), `c4-editor-canvas.js` (`zoomOut`). Tests: `js/ArchUML/tests/c4/editor-state.test.js`, `tests/c4-editor-layout.spec.js`, `tests/c4-editor-canvas.spec.js`.
+
 ---
 
 ## UML-view editing
