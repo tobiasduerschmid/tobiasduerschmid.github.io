@@ -572,6 +572,34 @@ test.describe('members and lines of the code view', () => {
     expect((await hostLog(page)).texts, 'choosing a line changes nothing').toEqual([]);
   });
 
+  test('a dragged segment of an inheritance line is drawn where it was again and says the lines are routed for you, writing nothing', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const editor = await openUmlEditor(page, { view: CODE_VIEW });
+    // The renderer stamps no id on generalization and realization lines; the session names their segments by order.
+    // `which` names one segment (its route id and index); without it, the first segment of such a line.
+    const segmentAt = (which = null) => canvas(editor).evaluate((region, wanted) => {
+      const segment = [...region.querySelectorAll('.uml-pg-edge-hitbox')].find((line) => (wanted
+        ? line.getAttribute('data-route-id') === wanted.id && line.getAttribute('data-segment-index') === wanted.index
+        : /^edge-/.test(line.getAttribute('data-route-id') || '')));
+      segment.scrollIntoView({ block: 'center', inline: 'center' });
+      const box = segment.getBoundingClientRect();
+      return { id: segment.getAttribute('data-route-id'), index: segment.getAttribute('data-segment-index'),
+        drawn: ['x1', 'y1', 'x2', 'y2'].map((name) => Number(segment.getAttribute(name))),
+        middle: { x: box.left + box.width / 2, y: box.top + box.height / 2 } };
+    }, which);
+    const before = await segmentAt();
+
+    await dragBetween(page, before.middle, { x: before.middle.x + 60, y: before.middle.y + 70 });
+
+    const sentence = refusalTable.verdict('layout/inheritance-line', {}).message;
+    await expect(messageRegion(editor)).toContainText('Not done:');
+    await expect(messageRegion(editor)).toContainText(sentence);
+    await expect.poll(async () => (await segmentAt(before)).drawn, { message: 'the preview is put back' }).toEqual(before.drawn);
+    expect((await hostLog(page)).texts, 'nothing was written').toEqual([]);
+    expect(errors, 'the drag raises no error').toEqual([]);
+  });
+
   test('options say generalization, realization, or dependency, "routed for you" on an inheritance line, and "ends at <deep name> inside <box>" on a lifted end', async ({ page }) => {
     // UnitCapRule also extends PrerequisiteRule, and EnrollmentPolicy uses SeatHolds, a class inside Seat Gateway,
     // which code of policy draws as the one box Seat Gateway.
