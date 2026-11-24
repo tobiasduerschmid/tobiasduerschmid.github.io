@@ -43,10 +43,11 @@ const REPO = path.resolve(__dirname, '../../..');
 const NODE_MODULES = path.join(REPO, 'node_modules');
 
 // Counted on 2026-11-09 with the substring counts in independentCounts() and recounted on 2026-11-10 (REFERENCE.md
-// gained the interfaces-view example, so 24 code blocks). Recompute at the start of the task that runs the guard,
-// and update these numbers in that task if content changed since; never lower them to make a run pass. The other
-// corpora are checked against the independent count only.
-const EXPECTED = { component: { json: 45, dataSpec: 20, codeBlock: 24 } };
+// gained the interfaces-view example, so 24 code blocks) and on 2026-11-24 (the compact-layout work merged from
+// ArchUML main added two component examples to REFERENCE.md, so 26). Recompute at the start of the task that runs
+// the guard, and update these numbers in that task if content changed since; never lower them to make a run pass.
+// The other corpora are checked against the independent count only.
+const EXPECTED = { component: { json: 45, dataSpec: 20, codeBlock: 26 } };
 const FLOOR = { component: 80, deployment: 1, c4: 40 };
 
 const C4_PROBE = [
