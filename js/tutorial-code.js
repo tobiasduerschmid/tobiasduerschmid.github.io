@@ -581,6 +581,7 @@
     if (backend === 'tla') return 'TLA+ / PlusCal';
     if (backend === 'aadl') return 'AADL';
     if (backend === 'c4') return 'C4 model';
+    if (backend === 'none') return 'No runtime';
     if (backend === 'shell-pipeline') return 'Shell pipeline';
     if (backend === 'v86') return 'Linux VM';
     return backend;
@@ -618,6 +619,7 @@
     if (mixedBackendMode && declaredBackends.includes('tla')) throw new Error('TLA+ uses a single-backend tutorial workspace.');
     if (mixedBackendMode && declaredBackends.includes('aadl')) throw new Error('AADL uses a single-backend tutorial workspace.');
     if (mixedBackendMode && declaredBackends.includes('c4')) throw new Error('C4 uses a single-backend tutorial workspace.');
+    if (mixedBackendMode && declaredBackends.includes('none')) throw new Error('A tutorial without a runtime cannot mix backends.');
     var hasReactStep = declaredBackends.indexOf('react') !== -1;
     var hasV86Step = declaredBackends.indexOf('v86') !== -1;
     var useTerminal = !mixedBackendMode &&
@@ -723,6 +725,8 @@
     this._sessionDrafts = { files: {}, stepFiles: {} };
     // Diagram challenge records by _draftStepKey, saved as `diagramChallenges`.
     this._diagramChallengeRecords = {};
+    // Design review records by _draftStepKey, saved as `designReviews`.
+    this._designReviewRecords = {};
     this._originalContent = {};           // tracks original file content for dirty detection
     this.booted = false;
     this._httpEnabled = this.steps.some(function (s) { return s.http_client; });
@@ -942,7 +946,8 @@
     // `run: false` (tutorials whose files are read, never run): no Run button,
     // no OUTPUT panel, and no Ctrl/Cmd+Enter. Only the standard Output panel
     // is removed; terminal, preview, and tabbed bottom panels ignore it.
-    this.runEnabled = options.run !== false;
+    // `backend: none` has nothing to run, so it implies `run: false`.
+    this.runEnabled = options.run !== false && backend !== 'none';
     // `instructions_width: narrow` starts the instructions column narrower
     // (css/tutorial.css); a width the learner drags to still wins.
     this._instructionsWidth = options.instructions_width === 'narrow' ? 'narrow' : null;
@@ -1294,6 +1299,9 @@
             if (saved.diagramChallenges && typeof saved.diagramChallenges === 'object') {
               self._diagramChallengeRecords = Object.assign({}, saved.diagramChallenges);
             }
+            if (saved.designReviews && typeof saved.designReviews === 'object') {
+              self._designReviewRecords = Object.assign({}, saved.designReviews);
+            }
             // Suppress autosave for the entire restore sequence so loadStep's
             // end-of-step _autoSaveProgress cannot clobber localStorage with
             // starter-file content before the saved files have been applied.
@@ -1579,6 +1587,7 @@
     if (this._compilerSourceEditor) this._compilerSourceEditor.destroy();
     if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(this.root);
     if (window.DiagramChallenge) window.DiagramChallenge.destroyWithin(this.root);
+    if (window.DesignReview) window.DesignReview.destroyWithin(this.root);
     (this._splitterObservers || []).forEach(function (observer) { observer.disconnect(); });
     this._splitterObservers = [];
     if (this._smalltalkInitController) this._smalltalkInitController.abort();
@@ -3766,8 +3775,17 @@
     if (backend === 'tla') return this._initTLA();
     if (backend === 'aadl') return this._initAADL();
     if (backend === 'c4') return this._initC4();
+    if (backend === 'none') return this._initNoRuntime();
     if (backend === 'shell-pipeline') return this._initShellPipeline();
     return Promise.reject(new Error('Unknown backend: ' + backend));
+  };
+
+  // `backend: none`: a workspace without a runtime, for steps that show
+  // diagrams or read-only files (design reviews). Nothing boots.
+  TutorialCode.prototype._initNoRuntime = function () {
+    if (this.setupCommands.length) return Promise.reject(new Error('A tutorial without a runtime cannot run setup_commands.'));
+    this.booted = true;
+    return Promise.resolve();
   };
 
   // Compiler files stay in Monaco; each request uses a disposable worker.
@@ -7810,6 +7828,7 @@
   // ---------------------------------------------------------------------------
   var BACKEND_EDITOR_LANGUAGES = {
     pyodide: { id: 'python', label: 'Python' },
+    none: { id: 'plaintext', label: 'Text' },
     react: { id: 'jsx', label: 'JSX' },
     browser: { id: 'javascript', label: 'JavaScript' },
     webcontainer: { id: 'javascript', label: 'JavaScript' },
@@ -9690,6 +9709,7 @@
       nextLocked: this._isNextStepLocked(),
       nextLockedLabel: this._nextLockedLabel(this.currentStep),
       challengeRecords: this._diagramChallengeRecords,
+      reviewRecords: this._designReviewRecords,
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
       testGate: this._testGate(),
@@ -9726,9 +9746,9 @@
     // must not credit a replacement lesson's required tests.
     var testsOk = !this._stepHasTests(step) || waived || this._stepsPassed.has(index) ||
       (!this.progressVersion && this._stepsUnlocked.has(index + 1));
-    var challengeOk = !this._stepHasDiagramChallenge(step) || waived || this._diagramChallengePassed(index);
+    var exercisesOk = waived || this._stepExercisesPassed(index);
     var quizOk = (options && options.quiz === false) || !this.requireQuiz || !this._hasUnpassedQuiz(index);
-    return testsOk && challengeOk && quizOk;
+    return testsOk && exercisesOk && quizOk;
   };
 
   /** Next: open the knowledge check, or unlock and load the following step. */
@@ -9745,7 +9765,7 @@
       return;
     }
     // A step with nothing to pass completes timed practice by continuing.
-    var nothingToPass = !this._stepHasTests(step) && !this._stepHasDiagramChallenge(step);
+    var nothingToPass = !this._stepHasTests(step) && !this._stepHasExercise(step);
     this._markTimedPracticeCompleteIfSolved(index, { force: nothingToPass });
     this._stepsUnlocked.add(index + 1);
     if (this.autoSaveEnabled) this._autoSaveProgress();
@@ -9795,13 +9815,13 @@
     if (index < 0 || !record) return;
     var wasPassed = this._diagramChallengePassed(index);
     this._diagramChallengeRecords[key] = record;
-    if (!wasPassed && this._diagramChallengePassed(index)) this._recordDiagramChallengePass(index);
+    if (!wasPassed && this._diagramChallengePassed(index)) this._recordExercisePass(index);
     else if (this.autoSaveEnabled) this._autoSaveProgress();
     this._broadcastNavState();
   };
 
-  /** A passed challenge completes a step without tests and may unlock the next. */
-  TutorialCode.prototype._recordDiagramChallengePass = function (index) {
+  /** A passed exercise completes a step without tests and may unlock the next. */
+  TutorialCode.prototype._recordExercisePass = function (index) {
     if (!this._stepHasTests(this.steps[index])) this._stepsPassed.add(index);
     if (this._stepGateSatisfied(index)) this._stepsUnlocked.add(index + 1);
     this._markTimedPracticeCompleteIfSolved(index);
@@ -9822,6 +9842,70 @@
     if (this.autoSaveEnabled) this._autoSaveProgress();
   };
 
+  // ---------------------------------------------------------------------------
+  // Design reviews (js/tutorial-design-review.js). As for diagram challenges,
+  // the widget owns the review UI and DesignReviewCore its rules; the runtime
+  // owns the records (`designReviews` in the progress record, keyed by
+  // _draftStepKey) and gating.
+  // ---------------------------------------------------------------------------
+  TutorialCode.prototype._stepHasDesignReview = function (step) {
+    return !!(step && step.design_review && typeof step.design_review === 'object');
+  };
+
+  TutorialCode.prototype.currentStepHasDesignReview = function () {
+    return this._stepHasDesignReview(this.steps[this.currentStep]);
+  };
+
+  TutorialCode.prototype._designReviewPassed = function (index) {
+    var core = window.DesignReviewCore;
+    return !!(core && core.isPassed(this._designReviewRecords[this._draftStepKey(index)]));
+  };
+
+  /** A step's own exercise: a diagram challenge or a design review. */
+  TutorialCode.prototype._stepHasExercise = function (step) {
+    return this._stepHasDiagramChallenge(step) || this._stepHasDesignReview(step);
+  };
+
+  TutorialCode.prototype._stepExercisesPassed = function (index) {
+    var step = this.steps[index];
+    return (!this._stepHasDiagramChallenge(step) || this._diagramChallengePassed(index)) &&
+      (!this._stepHasDesignReview(step) || this._designReviewPassed(index));
+  };
+
+  /** Mount the current step's review; joins the step readiness barrier. */
+  TutorialCode.prototype._mountDesignReviews = function () {
+    if (!window.DesignReview || !this.stepContentEl) return Promise.resolve();
+    var self = this;
+    return window.DesignReview.initFrom(this.stepContentEl, {
+      runtime: this,
+      instructorMode: this.instructorMode,
+      records: this._designReviewRecords,
+      onRecord: function (key, record) { self._storeDesignReviewRecord(key, record); },
+    });
+  };
+
+  TutorialCode.prototype._storeDesignReviewRecord = function (key, record) {
+    var index = this._stepIndexForDraftKey(key);
+    if (index < 0 || !record) return;
+    var wasPassed = this._designReviewPassed(index);
+    this._designReviewRecords[key] = record;
+    if (!wasPassed && this._designReviewPassed(index)) this._recordExercisePass(index);
+    else if (this.autoSaveEnabled) this._autoSaveProgress();
+    this._broadcastNavState();
+  };
+
+  /** Reset Step, after its confirmation: the review starts empty. */
+  TutorialCode.prototype._resetDesignReview = function (index) {
+    if (!this._stepHasDesignReview(this.steps[index])) return;
+    // The widget's final record arrives as it closes; discard it afterwards.
+    if (window.DesignReview) window.DesignReview.destroyWithin(this.stepContentEl);
+    delete this._designReviewRecords[this._draftStepKey(index)];
+    this._mountDesignReviews();
+    if (index === this.currentStep) this._refreshStepControls();
+    this._broadcastNavState();
+    if (this.autoSaveEnabled) this._autoSaveProgress();
+  };
+
   /** Re-render Prev / Test / Next unless the knowledge check owns the bar. */
   TutorialCode.prototype._refreshStepControls = function () {
     if (this.quizPanelEl && this.quizPanelEl.style.display !== 'none') return;
@@ -9830,8 +9914,12 @@
 
   TutorialCode.prototype._nextLockedLabel = function (index) {
     var step = this.steps[index];
-    return this._stepHasDiagramChallenge(step) && !this._stepHasTests(step)
-      ? 'Finish the diagram challenge to continue' : 'Pass all tests to continue';
+    if (this._stepHasTests(step)) return 'Pass all tests to continue';
+    if (this._stepHasDesignReview(step) && !this._designReviewPassed(index)) {
+      return 'Write your review and compare it with the expert review to continue';
+    }
+    if (this._stepHasDiagramChallenge(step)) return 'Finish the diagram challenge to continue';
+    return 'Pass all tests to continue';
   };
 
   TutorialCode.prototype._broadcastStepState = function () {
@@ -9850,6 +9938,7 @@
       nextLocked: this._isNextStepLocked(),
       nextLockedLabel: this._nextLockedLabel(this.currentStep),
       challengeRecords: this._diagramChallengeRecords,
+      reviewRecords: this._designReviewRecords,
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
       testGate: this._testGate(),
@@ -9877,6 +9966,7 @@
       nextLocked: this._isNextStepLocked(),
       nextLockedLabel: this._nextLockedLabel(this.currentStep),
       challengeRecords: this._diagramChallengeRecords,
+      reviewRecords: this._designReviewRecords,
       hasQuiz: this._stepHasQuiz(this.steps[this.currentStep]),
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
@@ -11353,6 +11443,7 @@
     var step = this.steps[this.currentStep];
     // Diagram challenges show their answer keys only from here in instructor mode.
     if (window.DiagramChallenge && this.stepContentEl) window.DiagramChallenge.showAnswerKeysWithin(this.stepContentEl);
+    if (window.DesignReview && this.stepContentEl) window.DesignReview.showExpertReviewsWithin(this.stepContentEl);
     if (!step || !step.solution) return;
     if (this.config.backend === 'tla') this._invalidateTLA();
     if (this.config.backend === 'c4') this._invalidateC4();
@@ -11714,6 +11805,7 @@
       quizPassed: Array.from(this._quizPassed)
     };
     if (Object.keys(this._diagramChallengeRecords).length) data.diagramChallenges = this._diagramChallengeRecords;
+    if (Object.keys(this._designReviewRecords).length) data.designReviews = this._designReviewRecords;
     if (this.shellCommandEl) data.shellCommands = prev.shellCommands;
     if (prev.draftScopeVersion !== undefined) data.draftScopeVersion = prev.draftScopeVersion;
     try {
@@ -11892,6 +11984,7 @@
     this._shellCommandDrafts = {};
     this._sessionDrafts = { files: {}, stepFiles: {} };
     this._diagramChallengeRecords = {};
+    this._designReviewRecords = {};
     if (this._smalltalkAdapter) this._smalltalkAdapter.clearSavedProgress();
     return this.resetStep();
   };
@@ -11900,6 +11993,7 @@
     var step = this.steps[this.currentStep];
     if (!step) return;
     this._resetDiagramChallenge(this.currentStep);
+    this._resetDesignReview(this.currentStep);
     if (this.config.backend === 'tla') this._invalidateTLA();
     if (this.config.backend === 'aadl') {
       this._aadlRootOverride = null;
@@ -12223,13 +12317,13 @@
     if (!step) return false;
     var hasTests = this._stepHasTests(step);
     var hasQuiz = !this.disableQuiz && step.quiz && step.quiz.questions && step.quiz.questions.length > 0;
-    var hasChallenge = this._stepHasDiagramChallenge(step);
-    if (!hasTests && !hasQuiz && !hasChallenge) return false;
+    var hasExercise = this._stepHasExercise(step);
+    if (!hasTests && !hasQuiz && !hasExercise) return false;
     // Evidence of completion, whatever require_tests says (see _stepGateSatisfied).
     var testsOk = !hasTests || this._stepsPassed.has(index);
-    var challengeOk = !hasChallenge || this._diagramChallengePassed(index);
+    var exercisesOk = this._stepExercisesPassed(index);
     var quizOk = !hasQuiz || this._quizPassed.has(index);
-    return testsOk && challengeOk && quizOk;
+    return testsOk && exercisesOk && quizOk;
   };
 
   TutorialCode.prototype._markTimedPracticeCompleteIfSolved = function (index, opts) {
@@ -12268,6 +12362,7 @@
 
     if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(this.stepContentEl);
     if (window.DiagramChallenge) window.DiagramChallenge.destroyWithin(this.stepContentEl);
+    if (window.DesignReview) window.DesignReview.destroyWithin(this.stepContentEl);
     var titleHTML = this._renderInlineMarkdown(step.title || '');
     var breakHTML = '<h3>Practice break</h3>' +
       '<p>This timed practice attempt has ended. You can return to earlier steps while this one cools down.</p>';
@@ -12839,6 +12934,7 @@
       this._stepInstructionsHTML(step) + '</div>';
     if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(this.stepContentEl);
     if (window.DiagramChallenge) window.DiagramChallenge.destroyWithin(this.stepContentEl);
+    if (window.DesignReview) window.DesignReview.destroyWithin(this.stepContentEl);
     this.stepContentEl.innerHTML = html;
     this._prepareInstructionScrollables(this.stepContentEl);
     this._initTooltips(this.stepContentEl);
@@ -12851,6 +12947,7 @@
       ? window.ObjectReferenceLab.initFrom(this.stepContentEl)
       : Promise.resolve();
     const diagramChallengesReady = this._mountDiagramChallenges();
+    const designReviewsReady = this._mountDesignReviews();
     // Initialize any inline GitCommandLab widgets embedded in the instructions
     if (window.GitCommandLab) {
       if (GitCommandLab.initFrom) GitCommandLab.initFrom(this.stepContentEl);
@@ -12929,7 +13026,7 @@
     // File writes define the first phase of step readiness. Setup commands may
     // read those files, so every later preparation phase is chained after this
     // barrier rather than being launched independently.
-    var stepReadyPromise = Promise.all(stepFileSyncs.concat([instructionLabsReady, diagramChallengesReady]));
+    var stepReadyPromise = Promise.all(stepFileSyncs.concat([instructionLabsReady, diagramChallengesReady, designReviewsReady]));
     if (self._smalltalkAdapter) {
       self._invalidateSmalltalkCredit();
       stepReadyPromise = stepReadyPromise.then(function () {
