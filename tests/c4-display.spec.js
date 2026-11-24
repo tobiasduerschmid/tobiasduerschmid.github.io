@@ -24,10 +24,10 @@ function referenceDrawingCount() {
 }
 
 /**
- * The chapter's C4 drawings: 13 `c4-view` includes and 7 fenced `c4` blocks in the text, and 5 in its quiz, less its
+ * The chapter's C4 drawings: 13 `c4-view` includes and 6 fenced `c4` blocks in the text, and 5 in its quiz, less its
  * 3 interface descriptions, which are cards of text (spec §6.6).
  */
-const CHAPTER_FIGURES = { url: CHAPTER_URL, figures: 22, prerendered: true };
+const CHAPTER_FIGURES = { url: CHAPTER_URL, figures: 21, prerendered: true };
 /**
  * test-uml.html's C4 drawings: the container view and the interfaces views of the Registration API and the
  * Registration Coordinator (Ruling 19). Its two interface cards are text, so the drawing gates leave them out.

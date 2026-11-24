@@ -462,6 +462,33 @@ Paths under `js/ArchUML/` live in the ArchUML submodule, a separate repository. 
 - **If wrong:** None.
 - **Where:** Spec §9.1, §9.5. `js/ArchUML/c4/editor/c4-editor-interfaces.js`. Test: `tests/c4-editor-interface-views.spec.js`.
 
+### ED-10 The editor has no landscape level; the context view is its top view
+
+- **Date:** 2026-11-24 *(user: "drop the editor's Landscape level so Context is the top view")*
+- **Decision:** The toolbar has no Landscape view button, and the editor's breadcrumbs start at the context view, so Alt+↑ and the breadcrumbs stop there ("This is the top view; no view contains it."). A `landscape` request (the mount's `view`, `openView`, a host's selector, an outline item, an "Open in the C4 editor" link from a page whose example is `view: landscape`) opens the model's default view, the context view of its first internal software system. A model without an internal system (an empty model, or only people and external systems) keeps the whole-model drawing as its starting canvas, with the Context palette (Person, Software system) and no level button or breadcrumb; an edit never switches views, so adding the first system keeps that canvas until the reader presses Context. The renderer, the schema, the CLI, and the core's `listViews` and breadcrumbs keep `view: landscape` for static pages and the UML reference.
+- **Why:** CP-7 took the landscape out of the chapter; the editor follows the user's request with an editor-side rule (`resolveView` and `breadcrumbs` in the state controller), so nothing changes for static figures.
+- **Rejected:** Removing `landscape` from the core's view catalog (static pages and `REFERENCE.md` still draw it); switching to the context view when the first system is added (it would move the view under an in-place rename).
+- **If wrong:** Restore the `Landscape` entry of `LEVELS` in `c4-editor-toolbar.js` and drop the landscape branch of `resolveView`.
+- **Where:** `js/ArchUML/c4/editor/c4-editor-state.js` (`resolveView`, `breadcrumbs`), `c4-editor-toolbar.js` (`LEVELS`, `createBreadcrumbs`), `c4-editor-canvas.js` (`zoomOut`). Tests: `js/ArchUML/tests/c4/editor-state.test.js`, `tests/c4-editor-layout.spec.js`, `tests/c4-editor-canvas.spec.js`.
+
+### ED-11 Undo and Redo are easy to find
+
+- **Date:** 2026-11-24 *(user: Undo/Redo existed but went unnoticed)*
+- **Decision:** The toolbar's Undo and Redo carry the UML editor's glyphs (↶, ↷; hidden from assistive technology) before their words, a tooltip that is also their accessible description ("Undo: Rename Student. Ctrl+Z (Cmd+Z on a Mac)"; "Nothing to undo. …" when there is no step), and `aria-keyshortcuts` with exactly the keys the mount routes (`Control+Z Meta+Z`; `Control+Y Control+Shift+Z Meta+Shift+Z Meta+Y`). The step's name comes from the editor's history (`undoLabel`, `redoLabel`); a host-owned history (the C4 tutorial's Monaco stack) has no labels, so there the tooltip says "Undo the last change." Unavailable, they keep a button's solid outline and background and only mute the text: their disabled look belongs to the history group, not to the shared dashed `[aria-disabled]` style.
+- **Why:** The dashed, faint disabled style is right for commands that are unavailable for a reason the toolbar's note explains; Undo and Redo are always-present commands whose availability only follows the history, and the faint look hid them.
+- **Rejected:** Changing the shared disabled style (it would blur the "unavailable for a reason" cue of the other commands); icon-only buttons (the words stay).
+- **If wrong:** Remove `.c4-editor__history-button[aria-disabled="true"]`.
+- **Where:** `js/ArchUML/c4/editor/c4-editor-toolbar.js` (`HISTORY_COMMANDS`, `createHistory`), `c4-editor-state.js` (`undoLabel`, `redoLabel`), `js/ArchUML/css/c4-editor.css`, `shortcuts.html`. Tests: `js/ArchUML/tests/c4/editor-state.test.js`, `tests/c4-editor-editing.spec.js`, `tests/c4-editor-layout.spec.js`, `tests/c4-tutorial.spec.js`.
+
+### ED-12 A double-click edits the text under the pointer; it no longer zooms
+
+- **Date:** 2026-11-24 *(user: "I want to edit text in-place by double-clicking on it in the editor")*
+- **Decision:** In the C4-notation views (context, containers, components), a double-click opens a field over the text under the pointer: an element's name, description, technology (its type line, for a container or component), or one responsibility line, and a relationship's description (its label) or technology. A double-click on a box outside its text lines, or on a line with no editable text (the type line of a person, system, or code element, an annotation, "+2 more"), renames the element. The field is named for what it edits ("Description of Registration API"), commits through the shared actions (one command, one undo step, one announcement: `editElementText`, `renameElement`, `updateRelationship`), keeps a refusal in the field after Enter and only announces it after the field loses focus, and Escape cancels. A description is edited in a wrapping field as many rows high as the drawing shows it (at least two); Enter keeps it and line breaks are not kept, because the drawing wraps the text itself. A line that stands for several relationships (a derived line with "(+N more)") is not edited in place: the editor says to edit each where it is drawn or in the inspector; a derived line that stands for one relationship edits that relationship. A double-click never zooms: Enter, the zoom badge, the breadcrumbs, and the Scope list do. F2 still renames, and every text stays editable in the inspector. The renderer marks each line with the part it shows (`data-c4-text`, `data-c4-index`; the projection's `lineParts`), so the editor reads the part under the pointer instead of guessing it from the text. The click on a selected element's name that renamed it after a 500 ms delay (only there because a double-click used to zoom) is gone: the double-click is the pointer's way, as in the site's UML editor.
+- **Why:** The UML views of the editor and the site's UML editor already edit text on double-click; zooming has three other pointer and keyboard paths.
+- **Rejected:** Keeping the delayed click-to-rename beside the double-click (two pointer paths with a timer between them); opening the inspector instead of a field over the text.
+- **If wrong:** Restore `openFrom` on double-click in `c4-editor-canvas.js` and drop the `dblclick` listener of `c4-editor-canvas-editing.js`.
+- **Where:** `js/ArchUML/c4/editor/c4-editor-canvas-text.js` (new), `c4-editor-canvas-editing.js`, `c4-editor-canvas.js`, `c4-editor-actions-elements.js` (`editElementText`), `js/ArchUML/c4/c4-render.js` (`textLine`, `showing`), `js/ArchUML/c4/c4-projection.js` (`boxLines`), `js/ArchUML/css/c4-editor.css`, `shortcuts.html`, `_data/tutorials/c4.yml`. Tests: `js/ArchUML/tests/c4/projection-c4.test.js`, `tests/c4-editor-editing.spec.js`, `tests/c4-editor-canvas.spec.js`, `tests/c4-editor-a11y.spec.js`, `tests/c4-tutorial.spec.js`.
+
 ---
 
 ## UML-view editing
@@ -802,6 +829,15 @@ The four UML-notation views of the C4 editor (code, dynamic, deployment, interfa
 - **Rejected:** Fixing W4 for all chapters in this change.
 - **If wrong:** Deep links to the old anchors break (none existed).
 - **Where:** `SEBook/architecture/c4.md`. Test: `tests/c4-chapter.spec.js`.
+
+### CP-7 The chapter teaches the system context view, not the system landscape
+
+- **Date:** 2026-11-24 *(user)*
+- **Decision:** The chapter has no System Landscape section, figure, or quick-check item. Its two remaining points moved: "Anatomy of a View" says that *external* (outside the system described) differs from being outside the enterprise, and the external-system flashcard contrasts the billing team's own model instead of a landscape. The renderer, the editor, and the UML reference still support `view: landscape`.
+- **Why:** The landscape introduced eight elements used nowhere else for one idea, drew 1328 px wide (it scrolled even at 1440 px), and its title lacked its scope, against the chapter's own Anatomy rule 1. The context view already answers who uses a system and what it depends on.
+- **Rejected:** Redrawing the landscape narrower; keeping it as reference material.
+- **If wrong:** Restore the section from git history (before this change) and the quick-check item 6.
+- **Where:** `SEBook/architecture/c4.md` (Anatomy of a View, Supplementary Views), `_data/flashcards/c4_model.yml`. Test: `tests/c4-display.spec.js` (chapter figure count).
 
 ---
 

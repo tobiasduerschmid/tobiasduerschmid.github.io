@@ -17,7 +17,8 @@ The scripts load in the order of `js/ArchUML/c4/manifest.json`: `core`, then `re
 ```js
 const editor = ArchUMLC4Editor.mount(rootElement, {
   text,                       // the document text (required in practice; default '')
-  view: 'containers of registration', // optional; the model's default view otherwise
+  view: 'containers of registration', // optional; the model's default view otherwise. `landscape` opens
+                              // the default view too: the editor's top view is the context view (ED-10)
   profile: 'novice',          // 'novice' | 'expert' (default 'expert')
   size: 'regular',            // 'compact' | 'regular' | 'tall' (a modifier class, never a style attribute), or
                               // 'fill': the host gives the root its height and the canvas takes what the rows
@@ -74,7 +75,7 @@ The returned handle:
 
 ### Undo
 
-With `undo: 'editor'` the editor keeps text snapshots: at most 100 steps, and edits within 600 ms of the previous edit join its step. A `setText` that changes the text is a step of its own, so the learner can undo the host's change. Every Undo and Redo, from the toolbar, the keys, or the YAML tab, is announced with the label of the step it takes back or repeats ("Undone: Move Student."; a step the host made reads "a change made outside the editor"). With `undo: 'host'` the host owns the one undo stack, as VS Code and tutorials whose Monaco model is the persisted document do. The SEBook site keeps editor undo, and its Monaco YAML tab routes undo/redo to the editor.
+With `undo: 'editor'` the editor keeps text snapshots: at most 100 steps, and edits within 600 ms of the previous edit join its step. A `setText` that changes the text is a step of its own, so the learner can undo the host's change. Every Undo and Redo, from the toolbar, the keys, or the YAML tab, is announced with the label of the step it takes back or repeats ("Undone: Move Student."; a step the host made reads "a change made outside the editor"). With `undo: 'host'` the host owns the one undo stack, as VS Code and tutorials whose Monaco model is the persisted document do. The SEBook site keeps editor undo, and its Monaco YAML tab routes undo/redo to the editor. The toolbar's "↶ Undo" and "↷ Redo" name the step they would take back or repeat in their tooltip and accessible description ("Undo: Move Student. Ctrl+Z (Cmd+Z on a Mac)"; with `undo: 'host'`, "Undo the last change."), carry `aria-keyshortcuts`, and stay solid buttons with muted text when there is nothing to undo (ED-11).
 
 ### The echo rule (as implemented)
 
@@ -83,6 +84,10 @@ With `undo: 'editor'` the editor keeps text snapshots: at most 100 steps, and ed
 ## The message region
 
 An editable editor has one visible message region, `role="region"` named "Messages", directly before the canvas in DOM order and drawn over the canvas's top edge (UML-view editing spec §7.5). It keeps the height of one line of text, so a message never pushes the drawing away under the pointer. It shows one message at a time: the instruction of a mode or a tool, or the last refusal, result, or notice. A refusal starts with the label "Not done:" and an icon. A message stays until the next one, a successful edit, another view, or Dismiss; it never disappears on a timer. A message may carry one offer, a native button ("Open code of Seat Gateway", "Move Enrollment Policy to a free place"), and Dismiss is another; both come right before the canvas in the tab order, so Shift+Tab from the canvas reaches them. The region is not live: each message is also written once to the editor's polite live region and passed to `host.announce`. A read-only editor has no region. Print hides it.
+
+## Editing text in place on the C4-notation views
+
+On a context, container, or component view, F2 renames the focused element, and a double-click edits the text under the pointer in a field laid over it: an element's name, description, technology (its type line, for a container or component), or one responsibility line, and a relationship's description or technology (ED-12). A double-click on a box outside its text renames it; it never zooms (Enter, the zoom badge, the breadcrumbs, and the Scope list do). The field is named for what it edits ("Description of Registration API"); Enter keeps the text as one undo step, Escape keeps the old text, and leaving the field keeps what was typed. A refusal (read-only, a lock, YAML errors, an invalid value) stays in the field with its reason after Enter. A description is edited in a wrapping field; Enter keeps it, and line breaks are not kept. The renderer marks each line of a box or a label with the part it shows (`data-c4-text`: `name`, `type`, `description`, `responsibility` with `data-c4-index`, `more`, `annotation`, `interfaces`, `technology`), the hook the editor reads.
 
 ## Editing the UML-notation views
 

@@ -232,8 +232,17 @@ test.describe('C4 editor layout', () => {
     await expect(canvas(page)).toHaveAccessibleName('Canvas: System context view: Warehouse');
   });
 
-  test('a level button opens the selected element’s own view of that level', async ({ page }) => {
+  test('the levels start at Context: there is no Landscape level, and a landscape request opens the context view', async ({ page }) => {
     await openEditor(page, { text: TWO_SYSTEMS_MODEL, view: 'landscape' });
+
+    await expect(viewButtons(page).getByRole('button')).toHaveText(['Context', 'Containers', 'Components']);
+    await expect(canvas(page)).toHaveAccessibleName('Canvas: System context view: Shop');
+    await expect(viewButtons(page).getByRole('button', { name: 'Context' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(breadcrumbs(page).getByRole('link')).toHaveText(['Context: Shop']);
+  });
+
+  test('a level button opens the selected element’s own view of that level', async ({ page }) => {
+    await openEditor(page, { text: TWO_SYSTEMS_MODEL, view: 'context of shop' });
     await page.evaluate(() => window.editor.select('stock'));
 
     await viewButtons(page).getByRole('button', { name: 'Components' }).click();
@@ -245,7 +254,7 @@ test.describe('C4 editor layout', () => {
     await openEditor(page, { view: 'components of api' });
     const crumbs = breadcrumbs(page);
     await expect(crumbs.getByRole('link')).toHaveText([
-      'Landscape', 'Context: Course Registration', 'Containers: Course Registration', 'Components: Registration API',
+      'Context: Course Registration', 'Containers: Course Registration', 'Components: Registration API',
     ]);
     await expect(crumbs.getByRole('link', { name: 'Components: Registration API' })).toHaveAttribute('aria-current', 'page');
     const up = crumbs.getByRole('link', { name: 'Containers: Course Registration' });
@@ -255,14 +264,15 @@ test.describe('C4 editor layout', () => {
     await up.click();
 
     await expect(canvas(page)).toHaveAccessibleName('Canvas: Container view: Course Registration');
-    await expect(crumbs.getByRole('link')).toHaveText(['Landscape', 'Context: Course Registration', 'Containers: Course Registration']);
+    await expect(crumbs.getByRole('link')).toHaveText(['Context: Course Registration', 'Containers: Course Registration']);
     const current = crumbs.getByRole('link', { name: 'Containers: Course Registration' });
     await expect(current).toHaveAttribute('aria-current', 'page');
     await expect(current).toBeFocused();
 
-    await crumbs.getByRole('link', { name: 'Landscape' }).press('Enter');
-    await expect(canvas(page)).toHaveAccessibleName('Canvas: System landscape');
-    expect((await hostCalls(page, 'view')).map((call) => call.selector)).toEqual(['containers of registration', 'landscape']);
+    await crumbs.getByRole('link', { name: 'Context: Course Registration' }).press('Enter');
+    await expect(canvas(page)).toHaveAccessibleName('Canvas: System context view: Course Registration');
+    await expect(crumbs.getByRole('link')).toHaveText(['Context: Course Registration']);
+    expect((await hostCalls(page, 'view')).map((call) => call.selector)).toEqual(['containers of registration', 'context of registration']);
   });
 
   test('magnification changes --c4-zoom and Reset zoom returns to 100%', async ({ page }) => {
@@ -541,10 +551,12 @@ test.describe('C4 editor layout', () => {
     expect(copied.args[0]).toMatch(/^@startuml[\s\S]*Registration Coordinator/);
   });
 
-  test('only Add relationship, Full screen, and Help announce keyboard shortcuts', async ({ page }) => {
+  test('only Add relationship, Undo, Redo, Full screen, and Help announce keyboard shortcuts', async ({ page }) => {
     await openEditor(page, { parts: ['actions'] });
 
-    await expect(page.locator('#editor [aria-keyshortcuts]')).toHaveCount(3);
+    await expect(page.locator('#editor [aria-keyshortcuts]')).toHaveCount(5);
+    await expect(button(page, 'Undo')).toHaveAttribute('aria-keyshortcuts', 'Control+Z Meta+Z');
+    await expect(button(page, 'Redo')).toHaveAttribute('aria-keyshortcuts', 'Control+Y Control+Shift+Z Meta+Shift+Z Meta+Y');
     await expect(button(page, 'Add relationship')).toHaveAttribute('aria-keyshortcuts', 'C');
     await expect(button(page, 'Full screen')).toHaveAttribute('aria-keyshortcuts', 'F');
     await expect(button(page, 'Help')).toHaveAttribute('aria-keyshortcuts', 'Shift+?');

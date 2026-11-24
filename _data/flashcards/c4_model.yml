@@ -34,7 +34,7 @@ cards:
     hint: >-
       Ask: outside of what?
     answer: "Yes. **External** means outside the system being described, not necessarily outside the organization. The registration team does not build or run billing, so it is an external software system for this model."
-    explanation: "Whether an element is external depends on who draws the model. In a university-wide landscape the Billing System is not external at all, and in both views it is inside the university's enterprise boundary. Being inside the enterprise is a separate question from being inside the system."
+    explanation: "Whether an element is external depends on who draws the model. In the billing team's own model, the Billing System is the system in focus and not external at all, and in both models it is inside the university's enterprise boundary. Being inside the enterprise is a separate question from being inside the system."
 
   # objective: 2
   - id: c4-know-do-decide
