@@ -1509,9 +1509,7 @@ steps:
         flaw: "..."                          # Each ≤ 320 characters.
         consequence: "..."
         fix: "..."
-        accept_fixes: ["..."]                # Optional lists, each joined with "; "
-        not_the_flaw: ["..."]                # ≤ 220 characters.
-        not_a_fix: ["..."]
+        accept_fixes: ["..."]                # Optional; joined with "; " ≤ 220 chars.
       signals:                               # Per criterion: case-insensitive JS
         flaw: ["regex", ...]                 # regexes; a model YES without any of
         consequence: [...]                   # them in the comment becomes PARTLY.
@@ -2072,7 +2070,10 @@ model's ratings never gate.
   `_includes/tutorial-design-review-print.html` the print block (case,
   diagrams, writing area; expert review and key in the instructor block).
 - **The model only classifies.** For the flaw, its consequence, and the fix
-  it answers `VERDICT: YES|PARTLY|NO` plus a quote. A verdict without a quote
+  it is shown the key's point and answers with a quote from the comment and
+  `VERDICT: YES|PARTLY|NO` (evidence first; paraphrases count). The prompt
+  wording comes from trials with the real model (docs/browser-llm.md): do not
+  change it without re-running a labeled comment set. A verdict without a quote
   found in the comment becomes NO; a YES whose comment matches none of the
   criterion's `signals` becomes PARTLY. Correctness: correct (flaw and fix
   YES), close, not yet. Convincingness: convincing (consequence YES and an

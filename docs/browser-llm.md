@@ -86,11 +86,10 @@ tutorial's save preference (`designReviews` in the progress record); nothing
 is sent to a server.
 
 The model only classifies. `js/browser-llm/design-review-judge.mjs` asks
-three narrow questions, one per criterion (does the comment identify the
-flaw; explain what goes wrong in the Given scenario; propose a fix that
-removes the cause), each against the step's authored answer key, and asks
-for `VERDICT: YES|PARTLY|NO` plus a quote from the comment (48 output tokens,
-greedy decoding). The app then checks the quote against the comment (an
+three narrow questions, one per criterion (does the comment make the key's
+point about the design flaw; about what goes wrong; about the fix), and asks
+for a quote from the comment followed by `VERDICT: YES|PARTLY|NO` (up to 96
+output tokens, greedy decoding). The app then checks the quote against the comment (an
 unsupported verdict becomes NO), downgrades a YES whose comment contains none
 of the criterion's authored concept signals to PARTLY, and turns the verdicts
 into two ratings: correctness and convincingness (the latter also needs a
@@ -98,6 +97,21 @@ diagram element of the flaw to be named). Everything the learner reads is
 authored coaching selected by these verdicts, except the verified quotes.
 Comments are capped at 900 characters so every prompt stays within the ONNX
 engine's 768-token input limit.
+
+**Real-model trials (2026-11-24, Chrome, WebLLM 3B, M-series Mac).** With
+the first wording (answer key first, then a yes/no question, verdict before
+quote) the model answered NO to nearly every comment, including a complete
+correct review. Asking for the supporting sentence first and stating that
+paraphrases count fixed this: on 13 labeled comments for the food-truck
+review (correct, paraphrased without class names, flaw only, fix only, wrong
+claims, a negation, a keyword list, off-topic, a symptom-only fix, an
+interface-removal fix, a subtle negation, a prompt injection, a vague
+comment) it agreed with the labels on 37 of 39 YES-versus-not decisions,
+with no false YES; both misses were a correct point scored PARTLY. Adding
+the authored lists of wrong claims to the prompt made agreement slightly
+worse, so they are not sent. All three questions took 2–4 seconds together.
+These results cover one review, one engine, and authored comments, not
+real students.
 
 This is formative feedback with known limits: a small model can miss a
 paraphrase or accept a near miss, the signal guard can misjudge unusual

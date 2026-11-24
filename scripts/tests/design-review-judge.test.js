@@ -8,8 +8,6 @@ const key = {
   consequence: 'With 1 in 100 packets lost, Ben hears the audio freeze and then rush, far over the 150 ms the story allows.',
   fix: 'Send audio chunks over UDP so a lost chunk is skipped; keep joining the call on HTTPS.',
   accept_fixes: ['WebRTC media streams', 'RTP over UDP'],
-  not_the_flaw: ['the relay server is a single point of failure', '20 ms chunks are too small'],
-  not_a_fix: ['a bigger playback buffer', 'a faster server'],
 };
 const signals = { flaw: ['\\btcp\\b', 'resen', 'retransmi', 'in order'], fix: ['\\budp\\b', 'webrtc', '\\brtp\\b'] };
 const anchors = [{ label: 'POST /audio', pattern: 'post\\s*/?audio|/audio' }];
@@ -23,7 +21,7 @@ function maximalInputs(limits) {
   return {
     key: {
       flaw: words(limits.maxKeyChars), consequence: words(limits.maxKeyChars), fix: words(limits.maxKeyChars),
-      not_the_flaw: [words(limits.maxListChars - 2)], accept_fixes: [words(limits.maxListChars - 2)], not_a_fix: [],
+      accept_fixes: [words(limits.maxListChars - 2)],
     },
     review: words(limits.maxReviewChars),
   };
@@ -35,11 +33,12 @@ test('each criterion prompt carries its own key point and the comment, and no ot
   const consequence = reviewMessages({ criterion: 'consequence', key, review: strongReview }).map(m => m.content).join('\n');
   const fix = reviewMessages({ criterion: 'fix', key, review: strongReview }).map(m => m.content).join('\n');
   for (const prompt of [flaw, consequence, fix]) assert.ok(prompt.includes(strongReview), 'the comment reaches the model');
-  assert.ok(flaw.includes(key.flaw) && flaw.includes('single point of failure'));
-  assert.ok(!flaw.includes(key.fix) && !flaw.includes(key.consequence));
+  assert.ok(flaw.includes(key.flaw) && !flaw.includes(key.fix) && !flaw.includes(key.consequence));
   assert.ok(consequence.includes(key.consequence) && !consequence.includes(key.fix) && !consequence.includes(key.flaw));
-  assert.ok(fix.includes(key.fix) && fix.includes('WebRTC media streams') && fix.includes('a bigger playback buffer'));
-  assert.ok(!fix.includes(key.flaw));
+  assert.ok(fix.includes(key.fix) && fix.includes('WebRTC media streams') && !fix.includes(key.flaw));
+  assert.match(flaw, /about the design flaw\?$/);
+  assert.match(consequence, /about what goes wrong\?$/);
+  assert.match(fix, /about the fix\?$/);
 });
 
 test('the largest allowed prompt stays inside the 768-token ONNX input limit at three characters per token', async () => {
@@ -124,7 +123,7 @@ function scriptedGenerate(replies) {
   return {
     calls,
     generate: async (messages, options) => {
-      calls.push({ question: messages[1].content.split('Question: ')[1], options });
+      calls.push({ question: messages[1].content.split('\n').at(-1), options });
       return { text: replies[calls.length - 1], finishReason: 'stop' };
     },
   };
@@ -140,8 +139,8 @@ test('judging asks one question per criterion, in order, and applies the guard t
   const seen = [];
   const result = await judgeReview({ key, review: strongReview, signals, anchors, generate: model.generate, onCriterion: name => seen.push(name) });
   assert.deepEqual(seen, ['flaw', 'consequence', 'fix']);
-  assert.match(model.calls[0].question, /identify the flaw/);
-  assert.match(model.calls[2].question, /removes the cause/);
+  assert.match(model.calls[0].question, /about the design flaw/);
+  assert.match(model.calls[2].question, /about the fix/);
   assert.ok(model.calls.every(call => call.options.maxTokens === REVIEW_LIMITS.maxOutputTokens));
   assert.deepEqual(result.verdicts, { flaw: 'yes', consequence: 'no', fix: 'yes' });
   assert.deepEqual(result.quotes, { flaw: 'TCP delivers in order', consequence: '', fix: 'stream the audio over UDP' });
