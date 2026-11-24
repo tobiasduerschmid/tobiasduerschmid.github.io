@@ -1,0 +1,194 @@
+{
+  "id": "method-added-with-the-member-form-enter-key-on-the-homework",
+  "family": "class",
+  "type": "class",
+  "page": "/SEBook/designpatterns/monopoly-state-pattern-uml-homework",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Customer — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Add method"
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "label": "Method signature"
+      },
+      "value": "+rename(name: str): void"
+    },
+    {
+      "do": "press",
+      "target": {
+        "label": "Method signature"
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { + name: str; + rename(name: str): void }\nclass Invoice @pos(80, 300)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Added method to \"Customer\"."
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Customer"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Class — Customer\":\n  - heading \"Class — Customer\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Customer\n  - text: Display label\n  - textbox \"Display label\": Customer\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\" [selected]\n      - option \"- private\"\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 1)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"name: str\"\n    - button \"Delete member 1\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\" [selected]\n      - option \"- private\"\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 2)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"rename(name: str): void\"\n    - button \"Delete member 2\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { + name: str; + rename(name: str): void }\nclass Invoice @pos(80, 300)\n@enduml",
+    "selection": [
+      "Customer"
+    ],
+    "focus": {
+      "tag": "button",
+      "id": "uml-pg-class-add-method",
+      "role": "button",
+      "name": "Add method",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Customer"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Class — Customer\":\n  - heading \"Class — Customer\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Customer\n  - text: Display label\n  - textbox \"Display label\": Customer\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\" [selected]\n      - option \"- private\"\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 1)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"name: str\"\n    - button \"Delete member 1\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+    "selection": [
+      "Customer"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Customer — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Customer"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { + name: str; + rename(name: str): void }\nclass Invoice @pos(80, 300)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Customer"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Class — Customer\":\n  - heading \"Class — Customer\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Customer\n  - text: Display label\n  - textbox \"Display label\": Customer\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\" [selected]\n      - option \"- private\"\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 1)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"name: str\"\n    - button \"Delete member 1\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\" [selected]\n      - option \"- private\"\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 2)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"rename(name: str): void\"\n    - button \"Delete member 2\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { + name: str; + rename(name: str): void }\nclass Invoice @pos(80, 300)\n@enduml",
+    "selection": [
+      "Customer"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Customer — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Customer"
+    }
+  },
+  "operations": [
+    {
+      "type": "class",
+      "before": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+      "operation": {
+        "op": "member.add",
+        "revision": "r89762cab:144",
+        "owner": "Customer",
+        "list": "members",
+        "index": 1,
+        "text": "+rename(name: str): void",
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { + name: str; + rename(name: str): void }\nclass Invoice @pos(80, 300)\n@enduml"
+    }
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: the Display label field in Properties (origin/master 5f9541e2)."
+  }
+}

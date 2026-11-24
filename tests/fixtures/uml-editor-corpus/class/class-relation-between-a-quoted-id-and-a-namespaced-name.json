@@ -1,0 +1,192 @@
+{
+  "id": "class-relation-between-a-quoted-id-and-a-namespaced-name",
+  "family": "class",
+  "type": "class",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nclass \"Line Item\" @pos(40, 60) { +quantity: int }\nclass shop::Order @pos(260, 60) { +lines: List<Line Item> }\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Add relation: Composition"
+      }
+    },
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "role": "button",
+          "name": "Element shop::Order — Enter to select, arrows to nudge, Delete to remove"
+        },
+        "at": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      }
+    },
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "role": "button",
+          "name": "Element Line Item — Enter to select, arrows to nudge, Delete to remove"
+        },
+        "at": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nclass \"Line Item\" @pos(40, 60) { +quantity: int }\nclass shop::Order @pos(260, 60) { +lines: List<Line Item> }\nshop::Order *-- \"Line Item\"\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Connected \"shop::Order\" to \"Line Item\". Edit the selected relation in Properties."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — shop::Order → Line Item\":\n  - heading \"Relation — shop::Order → Line Item\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Generalization\"\n    - option \"Realization\"\n    - option \"Composition\" [selected]\n    - option \"Aggregation\"\n    - option \"Association\"\n    - option \"Bidirectional\"\n    - option \"Plain Assoc.\"\n    - option \"Dependency\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Line Item\"\n    - option \"shop::Order\" [selected]\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Line Item\" [selected]\n    - option \"shop::Order\"\n  - text: Label\n  - textbox \"Label\"\n  - text: Source multiplicity / cardinality\n  - textbox \"Source multiplicity / cardinality\"\n  - text: Target multiplicity / cardinality\n  - textbox \"Target multiplicity / cardinality\"\n  - text: Source navigability\n  - combobox \"Source navigability\":\n    - option \"Unspecified\" [selected]\n    - option \"Navigable\"\n    - option \"Non-navigable\"\n  - text: Target navigability\n  - combobox \"Target navigability\":\n    - option \"Unspecified\" [selected]\n    - option \"Navigable\"\n    - option \"Non-navigable\"\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "rel:3"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nclass \"Line Item\" @pos(40, 60) { +quantity: int }\nclass shop::Order @pos(260, 60) { +lines: List<Line Item> }\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Generalization\" [selected]\n    - option \"Realization\"\n    - option \"Composition\"\n    - option \"Aggregation\"\n    - option \"Association\"\n    - option \"Bidirectional\"\n    - option \"Plain Assoc.\"\n    - option \"Dependency\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Line Item\" [selected]\n    - option \"shop::Order\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Line Item\" [selected]\n    - option \"shop::Order\"\n  - text: Label\n  - textbox \"Label\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nclass \"Line Item\" @pos(40, 60) { +quantity: int }\nclass shop::Order @pos(260, 60) { +lines: List<Line Item> }\nshop::Order *-- \"Line Item\"\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — shop::Order → Line Item\":\n  - heading \"Relation — shop::Order → Line Item\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Generalization\"\n    - option \"Realization\"\n    - option \"Composition\" [selected]\n    - option \"Aggregation\"\n    - option \"Association\"\n    - option \"Bidirectional\"\n    - option \"Plain Assoc.\"\n    - option \"Dependency\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Line Item\"\n    - option \"shop::Order\" [selected]\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Line Item\" [selected]\n    - option \"shop::Order\"\n  - text: Label\n  - textbox \"Label\"\n  - text: Source multiplicity / cardinality\n  - textbox \"Source multiplicity / cardinality\"\n  - text: Target multiplicity / cardinality\n  - textbox \"Target multiplicity / cardinality\"\n  - text: Source navigability\n  - combobox \"Source navigability\":\n    - option \"Unspecified\" [selected]\n    - option \"Navigable\"\n    - option \"Non-navigable\"\n  - text: Target navigability\n  - combobox \"Target navigability\":\n    - option \"Unspecified\" [selected]\n    - option \"Navigable\"\n    - option \"Non-navigable\"\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "rel:3"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "class",
+      "before": "@startuml\nclass \"Line Item\" @pos(40, 60) { +quantity: int }\nclass shop::Order @pos(260, 60) { +lines: List<Line Item> }\n@enduml",
+      "operation": {
+        "op": "relation.add",
+        "revision": "r81338de1:127",
+        "tool": "compose",
+        "from": "shop::Order",
+        "to": "Line Item",
+        "label": null,
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nclass \"Line Item\" @pos(40, 60) { +quantity: int }\nclass shop::Order @pos(260, 60) { +lines: List<Line Item> }\nshop::Order *-- \"Line Item\"\n@enduml"
+    }
+  ]
+}

@@ -1,0 +1,182 @@
+{
+  "id": "use-case-put-into-a-system-with-its-checkbox",
+  "family": "behaviour",
+  "type": "usecase",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Online Shop — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "check",
+      "target": {
+        "role": "checkbox",
+        "name": "Include Track Order",
+        "within": {
+          "css": "#uml-pg-props-content"
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n  UC2\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"System Boundary — Online Shop\":\n  - heading \"System Boundary — Online Shop\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Online Shop\n  - text: Display label\n  - textbox \"Display label\": Online Shop\n  - group \"Use cases in this system\":\n    - text: Use cases in this system\n    - checkbox \"Include Place Order\" [checked]\n    - text: Include Place Order\n    - checkbox \"Include Track Order\" [checked]\n    - text: Include Track Order\n    - checkbox \"Include Pay\" [checked]\n    - text: Include Pay\n    - checkbox \"Include Cancel Order\"\n    - text: Include Cancel Order\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n  UC2\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+    "selection": [
+      "Online Shop"
+    ],
+    "focus": {
+      "tag": "input",
+      "id": "",
+      "role": "checkbox",
+      "name": "Include Track Order",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"System Boundary — Online Shop\":\n  - heading \"System Boundary — Online Shop\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Online Shop\n  - text: Display label\n  - textbox \"Display label\": Online Shop\n  - group \"Use cases in this system\":\n    - text: Use cases in this system\n    - checkbox \"Include Place Order\" [checked]\n    - text: Include Place Order\n    - checkbox \"Include Track Order\"\n    - text: Include Track Order\n    - checkbox \"Include Pay\" [checked]\n    - text: Include Pay\n    - checkbox \"Include Cancel Order\"\n    - text: Include Cancel Order\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+    "selection": [
+      "Online Shop"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Online Shop — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Online Shop"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n  UC2\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"System Boundary — Online Shop\":\n  - heading \"System Boundary — Online Shop\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Online Shop\n  - text: Display label\n  - textbox \"Display label\": Online Shop\n  - group \"Use cases in this system\":\n    - text: Use cases in this system\n    - checkbox \"Include Place Order\" [checked]\n    - text: Include Place Order\n    - checkbox \"Include Track Order\" [checked]\n    - text: Include Track Order\n    - checkbox \"Include Pay\" [checked]\n    - text: Include Pay\n    - checkbox \"Include Cancel Order\"\n    - text: Include Cancel Order\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n  UC2\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+    "selection": [
+      "Online Shop"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Online Shop — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Online Shop"
+    }
+  },
+  "operations": [
+    {
+      "type": "usecase",
+      "before": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+      "operation": {
+        "op": "element.update",
+        "revision": "r86c8f9cb:236",
+        "ref": "Online Shop",
+        "changes": {
+          "membership": {
+            "member": "UC2",
+            "included": true
+          }
+        },
+        "facts": {},
+        "undo": {
+          "key": "system-membership:Online Shop"
+        }
+      },
+      "after": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n  UC2\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml"
+    }
+  ]
+}

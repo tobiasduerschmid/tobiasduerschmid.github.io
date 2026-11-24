@@ -3,6 +3,7 @@ title: "ArchUML Syntax Reference"
 layout: sebook
 permalink: /SEBook/tools/uml-reference
 no_auto_uml: true
+c4: true
 ---
 
 <p class="uml-reference-intro">Diagrams render after the page loads. Scroll to see each one.</p>
@@ -14,11 +15,14 @@ no_auto_uml: true
 
 <script>
 /* Deferred-but-eager rendering for the reference page.
-   The sebook layout's deferred bundle is suppressed via no_auto_uml: true.
+   The sebook layout always loads the bundle with a deferred script tag
+   (no_auto_uml only tells this page's own script to take over).
    This script runs synchronously before any JS loads:
      1. Converts every pre>code.language-uml-* into a placeholder div
         (so auto-init finds nothing when the bundle loads)
-     2. Loads the bundle after idle so content paints first
+     2. After idle, waits for the layout's bundle (or loads it when the
+        layout has none) so content paints first; loading a second copy
+        would give two fit-control counters and duplicate ids
      3. Renders every diagram up-front once the bundle is in.
 
    Up-front rendering (instead of an IntersectionObserver that fires while the
@@ -37,6 +41,7 @@ no_auto_uml: true
     'deployment': 'UMLDeploymentDiagram',
     'usecase':    'UMLUseCaseDiagram',
     'activity':   'UMLActivityDiagram',
+    'c4':         'UMLC4Diagram',
   };
   var prefix = 'language-uml-';
 
@@ -82,6 +87,8 @@ no_auto_uml: true
 
   function loadBundle() {
     if (window.UMLClassDiagram) { renderAll(); return; }
+    var pending = document.querySelector('script[src$="/js/ArchUML/uml-bundle.js"]');
+    if (pending) { pending.addEventListener('load', renderAll); return; }
     var s = document.createElement('script');
     s.src = '/js/ArchUML/uml-bundle.js';
     s.onload = renderAll;

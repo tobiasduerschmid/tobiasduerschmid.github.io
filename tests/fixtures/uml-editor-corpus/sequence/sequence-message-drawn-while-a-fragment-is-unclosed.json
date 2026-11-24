@@ -1,0 +1,207 @@
+{
+  "id": "sequence-message-drawn-while-a-fragment-is-unclosed",
+  "family": "sequence",
+  "type": "sequence",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Add relation: Synchronous"
+      }
+    },
+    {
+      "do": "drag",
+      "from": {
+        "target": {
+          "role": "button",
+          "name": "Relation segment 1 of seqmsg:5 —",
+          "exact": false
+        },
+        "at": {
+          "x": 1,
+          "y": 0.5
+        },
+        "offset": {
+          "x": 0,
+          "y": 30
+        }
+      },
+      "to": {
+        "target": {
+          "role": "button",
+          "name": "Relation segment 1 of seqmsg:5 —",
+          "exact": false
+        },
+        "at": {
+          "x": 0,
+          "y": 0.5
+        },
+        "offset": {
+          "x": 0,
+          "y": 30
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\napp -> user : message()\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": ""
+      },
+      "uml-pg-tool-status": {
+        "text": "Added Synchronous message from \"app\" to \"user\". Tool stays active - drag another message or press Esc."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "Draft diagnosticsYour draft is retained. These checks cover common notation problems, not every UML constraint.Line 5: alt is missing its closing end.",
+        "hidden": false
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — app → user\":\n  - heading \"Relation — app → user\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Async reply\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\"\n    - option \"app\" [selected]\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Label\n  - textbox \"Label\": message()\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "seqmsg:6"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": ""
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "Draft diagnosticsYour draft is retained. These checks cover common notation problems, not every UML constraint.Line 5: alt is missing its closing end.",
+        "hidden": false
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Async reply\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Label\n  - textbox \"Label\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\napp -> user : message()\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": ""
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "Draft diagnosticsYour draft is retained. These checks cover common notation problems, not every UML constraint.Line 5: alt is missing its closing end.",
+        "hidden": false
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — app → user\":\n  - heading \"Relation — app → user\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Async reply\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\"\n    - option \"app\" [selected]\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Label\n  - textbox \"Label\": message()\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "seqmsg:6"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "sequence",
+      "before": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\n@enduml",
+      "operation": {
+        "op": "relation.add",
+        "revision": "r9c2f4960:97",
+        "tool": "sync",
+        "from": "app",
+        "to": "user",
+        "label": null,
+        "facts": {
+          "at": {
+            "beforeLine": 6
+          }
+        },
+        "undo": {
+          "key": "seq-add-message"
+        }
+      },
+      "after": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\napp -> user : message()\n@enduml"
+    }
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: the Async reply message kind (origin/master 71fbaeca)."
+  }
+}

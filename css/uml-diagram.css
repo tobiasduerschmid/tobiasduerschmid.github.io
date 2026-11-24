@@ -52,12 +52,14 @@ pre:has(> code.diagram-folder-tree),
 pre:has(> code.diagram-venn),
 pre:has(> code.diagram-er),
 pre:has(> code.diagram-crc),
+pre:has(> code.diagram-c4),
 pre:has(> code.language-freeform),
 pre:has(> code.language-gitgraph),
 pre:has(> code.language-folder-tree),
 pre:has(> code.language-venn),
 pre:has(> code.language-er),
 pre:has(> code.language-crc),
+pre:has(> code.language-c4),
 [data-uml-type]:not([data-uml-rendered="true"]) {
   display: none !important;
 }
@@ -75,7 +77,8 @@ pre:has(> code.language-crc),
 .uml-folder-tree-diagram-container,
 .uml-venn-diagram-container,
 .uml-er-diagram-container,
-.uml-crc-diagram-container {
+.uml-crc-diagram-container,
+.uml-c4-diagram-container {
   display: block;
   min-width: 0;
   max-width: 100%;
@@ -107,13 +110,30 @@ html.dark-mode .uml-freeform-diagram-container svg:not(.uml-with-callouts),
 html.dark-mode .uml-folder-tree-diagram-container svg:not(.uml-with-callouts),
 html.dark-mode .uml-venn-diagram-container svg:not(.uml-with-callouts),
 html.dark-mode .uml-er-diagram-container svg:not(.uml-with-callouts),
-html.dark-mode .uml-crc-diagram-container svg:not(.uml-with-callouts) {
+html.dark-mode .uml-crc-diagram-container svg:not(.uml-with-callouts),
+html.dark-mode .uml-c4-diagram-container svg:not(.uml-with-callouts) {
   filter: invert(1) hue-rotate(180deg);
 }
 
 html.dark-mode {
   --git-graph-text: #f0f0f0;
   --git-graph-bg: #121212;
+}
+
+/* A C4 relationship label's backdrop is baked white, the light page. The dark theme shows the drawing through the
+   filter above, which turns white into a black patch on the dark page (#111827). --c4-label-backdrop is the colour
+   that filter turns into the page around the figure, so a label sits on the page in both themes: #e1e8f7 becomes
+   #111827. Screen only: print draws without the filter, on white. */
+@media screen {
+  html.dark-mode .uml-c4-diagram-container {
+    --c4-label-backdrop: #e1e8f7;
+  }
+
+  /* Dark mode only: elsewhere the renderer's baked palette.labelFill (a host may pass its own) stands. */
+  html.dark-mode .uml-c4-diagram-container svg [data-c4-label-backdrop] {
+    fill: var(--c4-label-backdrop);
+    stroke: var(--c4-label-backdrop);
+  }
 }
 
 /* Serialized graphs can be embedded without git-graph.css or a live theme
@@ -158,7 +178,8 @@ html.dark-mode .uml-error-msg {
 .uml-folder-tree-diagram-container svg,
 .uml-venn-diagram-container svg,
 .uml-er-diagram-container svg,
-.uml-crc-diagram-container svg {
+.uml-crc-diagram-container svg,
+.uml-c4-diagram-container svg {
   display: block;
   margin: 0 auto;
   overflow: visible;
@@ -178,6 +199,216 @@ html.dark-mode [data-uml-scroll-tabindex]:focus-visible {
   outline-color: #8ecfff;
 }
 
+/* A C4 view drawn by a UML renderer sits in an inner element of the C4
+   figure (inside the figure body of an interfaces view). The figure is the
+   image and the one scroll target (WCAG 4.1.2: an image holds no controls),
+   so the inner element grows with its drawing instead of scrolling it.
+   `!important` outranks the SEBook narrow-screen rule that makes every UML
+   container scroll (css/sebook-theme.css). Print keeps the shared rule
+   below, which fits the drawing to the page. */
+@media screen {
+  .uml-c4-diagram-container .c4-uml-view {
+    width: max-content;
+    min-width: 100%;
+    max-width: none !important;
+    overflow: visible !important;
+  }
+}
+
+/* The title, legend line, and notes around an interfaces view's drawing
+   (spec §6.6) are text in the C4 figure. They keep the figure's paragraph
+   size and the page's own text colour, so light, dark, and print each read
+   them like the surrounding prose; the dark-mode invert filter reaches only
+   the drawing. They wrap at the figure's width while a wide drawing scrolls. */
+.c4-figure-body > p {
+  margin: 0.5em 0;
+  text-align: start;
+}
+
+.c4-figure-body > .c4-figure-title {
+  margin-top: 0;
+  font-weight: 700;
+}
+
+/* The problems an embed opts in to (`# diagnostics: true`) follow its image
+   container as an ordinary list. It inherits the paragraph's size and colour,
+   so light, dark, and print each read it in the page's own text colour. */
+.c4-diagnostics {
+  margin: 0.5em 0 0;
+  padding-inline-start: 1.5em;
+  text-align: start;
+}
+
+/* ── C4 interface description card (spec §6.6) ──
+   The card is semantic HTML, not a drawing: no SVG, so the dark-mode invert
+   filter above never reaches it. Its text inherits the paragraph size; group
+   labels are 1.2em and the name 1.3em. Colours are site tokens (sebook-theme.css)
+   with fallbacks for pages without the theme, the dark values redefine them, and
+   print-light.css restores the light ones on paper.
+   Light: text #1f2328 on #fff 15.8:1, on the #eef6fc band 14.4:1; labels
+   #17324d 12.9:1; rules #2774ae 4.8:1. Dark: text #e6edf3 on #111827 15.3:1, on
+   the #101b28 band 15.0:1; labels #b9d9eb 12.0:1; rules #8bb8e8 8.4:1. */
+.c4-interface {
+  --c4-card-text: #1f2328;
+  --c4-card-surface: var(--sebook-surface, #ffffff);
+  --c4-card-band: var(--sebook-surface-band, #eef6fc);
+  --c4-card-label: var(--sebook-navy, #17324d);
+  --c4-card-rule: var(--sebook-blue, #2774ae);
+  box-sizing: border-box;
+  max-width: 100%;
+  margin: 0;
+  padding: 0.75em 1em;
+  border: 2px solid var(--c4-card-rule);
+  border-radius: 6px;
+  color: var(--c4-card-text);
+  background: var(--c4-card-surface);
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+
+html.dark-mode .c4-interface {
+  --c4-card-text: #e6edf3;
+  --c4-card-surface: var(--sebook-surface, #111827);
+  --c4-card-band: var(--sebook-surface-band, #101b28);
+  --c4-card-label: var(--sebook-navy, #b9d9eb);
+  --c4-card-rule: var(--sebook-blue, #8bb8e8);
+}
+
+.c4-interface p,
+.c4-interface-name,
+.c4-interface-panel-label,
+.c4-interface-block-label,
+.c4-interface dl,
+.c4-interface ul {
+  margin: 0.4em 0;
+}
+
+.c4-interface code {
+  font-size: inherit;
+  color: inherit;
+}
+
+.c4-interface-name {
+  font-size: 1.3em;
+  font-weight: bold;
+  color: var(--c4-card-label);
+}
+
+.c4-interface-type {
+  font-style: italic;
+}
+
+.c4-interface-panel {
+  margin-top: 1em;
+  padding-top: 0.5em;
+  border-top: 2px solid var(--c4-card-rule);
+}
+
+.c4-interface-panel-label {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: var(--c4-card-label);
+}
+
+.c4-interface-block {
+  margin: 0.6em 0;
+  padding-inline-start: 0.75em;
+  border-inline-start: 3px solid var(--c4-card-rule);
+}
+
+/* An operation's group is labelled like a panel (at least 1.2em); the panel's
+   top rule and the block's side rule tell the two levels apart. */
+.c4-interface-block-label {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.c4-interface-term,
+.c4-interface dt {
+  font-weight: bold;
+}
+
+.c4-interface dd {
+  margin-inline-start: 1.5em;
+}
+
+.c4-interface ul {
+  padding-inline-start: 1.5em;
+}
+
+/* A data table may scroll at 320 CSS px (WCAG 1.4.10 exception); its region is
+   the keyboard stop. Everything else in the card wraps. */
+.c4-interface-table-scroll {
+  max-width: 100%;
+  margin: 0.6em 0;
+  overflow-x: auto;
+}
+
+.c4-interface-table-scroll:focus-visible {
+  outline: 3px solid var(--c4-card-rule);
+  outline-offset: 2px;
+}
+
+/* Chapter pages make every table a block and let cells break inside words
+   (`body.sebook-layout #main-content table …` in sebook-theme.css, an id-level
+   selector); `!important` keeps the card's data table a table whose cells
+   break only between words, so the region above scrolls instead. */
+.c4-interface-table {
+  display: table !important;
+  border-collapse: collapse;
+  /* main.css sets tables to 16px; the card's text keeps the paragraph size. */
+  font-size: inherit;
+}
+
+.c4-interface-table caption {
+  margin-bottom: 0.3em;
+  padding: 0;
+  font-weight: bold;
+  color: var(--c4-card-text);
+  text-align: start;
+}
+
+.c4-interface-table th,
+.c4-interface-table td {
+  padding: 0.3em 0.5em;
+  border: 1px solid var(--c4-card-rule);
+  color: var(--c4-card-text);
+  background: var(--c4-card-surface);
+  text-align: start;
+  vertical-align: top;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+}
+
+.c4-interface-table th {
+  color: var(--c4-card-label);
+}
+
+.c4-interface-table thead th {
+  background: var(--c4-card-band);
+}
+
+@media print {
+  .c4-interface-block,
+  .c4-interface-table tr {
+    break-inside: avoid;
+  }
+
+  /* Paper cannot scroll: the table fits the page width and its words wrap. */
+  .c4-interface-table-scroll {
+    overflow: visible;
+  }
+
+  .c4-interface-table {
+    width: 100%;
+  }
+
+  .c4-interface-table th,
+  .c4-interface-table td {
+    overflow-wrap: anywhere !important;
+  }
+}
+
 @media print {
   .sebook-figure--archuml > [role="img"],
   [data-uml-scroll-tabindex] {
@@ -188,6 +419,41 @@ html.dark-mode [data-uml-scroll-tabindex]:focus-visible {
   .sebook-figure--archuml > [role="img"] svg,
   [data-uml-scroll-tabindex] svg {
     max-width: 100% !important;
+  }
+}
+
+/* Printed C4 labels are at least 9 pt. A C4 drawing that would print its
+   smallest text smaller in a portrait column is marked
+   data-c4-print="landscape" by js/ArchUML/c4/c4-render.js and prints, with
+   its caption, on landscape pages of its own, whose column is about 1.5 times
+   wider. The page keeps the paper size the print uses. Its 0.75 cm margins
+   override the shared 2 cm (an !important rule in _sass/_print.scss): on
+   Letter they leave the widest C4 view on the site (1569 units) 9.2 pt
+   labels, where 1 cm margins would print them at 8.99 pt. A drawing taller
+   than the page continues on the next one, as a tall portrait figure does;
+   keeping it whole would only push it past an empty page. Chromium also
+   leaves an empty landscape page before a figure with a top margin, and
+   prints the text after a drawing that continues across pages on a
+   landscape page too, unless the figure is a flex column. A quiz question
+   card (_includes/quiz.html) prints whole on the landscape page: a figure
+   inside it would leave the rest of the card's box on an empty page. */
+@page c4-landscape {
+  size: landscape;
+  margin: 0.75cm !important;
+}
+
+@media print {
+  .quiz-question-card:has(svg[data-c4-print="landscape"]),
+  .sebook-figure:has(svg[data-c4-print="landscape"]):not(.quiz-question-card *),
+  .uml-c4-diagram-container:has(svg[data-c4-print="landscape"]):not(.sebook-figure *, .quiz-question-card *) {
+    page: c4-landscape;
+    display: flex;
+    flex-direction: column;
+    margin-top: 0;
+  }
+
+  .uml-c4-diagram-container:has(svg[data-c4-print="landscape"]) {
+    break-inside: auto;
   }
 }
 
@@ -384,6 +650,19 @@ html.dark-mode .sebook-figure__caption {
 }
 .sebook-figure__caption--auto {
   display: none;
+}
+
+/* "Open in the C4 editor" under a C4 figure (js/c4-editor-link.js runs on every SEBook page, and this stylesheet
+   loads on every page, unlike the editor's own styles). A gap above it on screen; print has no editor to open, so
+   no page prints it. */
+.c4-editor-link {
+  margin-block: 0.5em 0;
+}
+
+@media print {
+  .c4-editor-link {
+    display: none !important;
+  }
 }
 
 /* Screen-reader-only verbose breakdown — every class member, transition,

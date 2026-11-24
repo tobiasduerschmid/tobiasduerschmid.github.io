@@ -554,6 +554,33 @@ info_nav_title: "Browser storage"
     <i class="fa fa-trash" aria-hidden="true"></i> Reset UML Playground state &amp; drafts
   </button>
 
+  <h3 id="c4-editor">C4 editor draft</h3>
+  <p>
+    The <a href="{{ '/SEBook/tools/c4-editor' | relative_url }}">C4 editor page</a> keeps one draft of your model,
+    written a moment after you edit it and never before. C4 editors inside chapters and tutorials do not use this entry.
+  </p>
+  <table class="storage-table" data-category="c4-editor">
+    <thead>
+      <tr>
+        <th class="col-key">Key</th>
+        <th class="col-purpose">Purpose</th>
+        <th class="col-status">Status</th>
+        <th class="col-action">Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-storage="localStorage" data-key="c4-editor-draft">
+        <td class="storage-key">c4-editor-draft</td>
+        <td>Your C4 model draft from the C4 editor page, saved after each edit and offered again when you return. Format: <code>{version: 1, text, savedAt, view}</code>, where <code>text</code> is the <code>design.yml</code> text, <code>savedAt</code> the time of the last save, and <code>view</code> the view that was open. All tabs share this one draft: the tab you edited last overwrites it, and other open tabs tell you when that happens.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="cookies-btn danger" data-clear-category="c4-editor" type="button">
+    <i class="fa fa-trash" aria-hidden="true"></i> Delete the C4 editor draft
+  </button>
+
   <h2>Where else does this site store data?</h2>
   <p>For full transparency, here is everything else the site touches that <em>could</em> be considered storage &mdash; with what's actually used:</p>
   <ul>

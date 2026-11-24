@@ -1,0 +1,19 @@
+{%- comment -%}
+  One view of a shared C4 model from _includes/c4-models/.
+  Parameters: model (file name without .yml), view (selector), caption, description (optional), panels (optional, e.g. syntax).
+  The directive comments come first (the caption must be the first non-empty line), then the single view line,
+  then the model, which never declares a view of its own.
+{%- endcomment -%}
+```c4
+{% if include.caption -%}
+# caption: {{ include.caption | strip_newlines }}
+{% endif -%}
+{% if include.description -%}
+# description: {{ include.description | strip_newlines }}
+{% endif -%}
+{% if include.panels -%}
+# panels: {{ include.panels | strip_newlines }}
+{% endif -%}
+view: {{ include.view }}
+{% include c4-models/{{ include.model }}.yml %}
+```

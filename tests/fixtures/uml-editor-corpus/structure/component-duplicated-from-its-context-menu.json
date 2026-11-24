@@ -1,0 +1,198 @@
+{
+  "id": "component-duplicated-from-its-context-menu",
+  "family": "structure",
+  "type": "component",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+  "steps": [
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "css": ".uml-pg-edit-hitbox[data-layout-id=\"Backend\"]"
+        },
+        "at": {
+          "x": 0.5,
+          "y": 0
+        },
+        "offset": {
+          "x": 0,
+          "y": 8
+        }
+      },
+      "button": "right"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "menuitem",
+        "name": "Duplicate"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\ncomponent Backend_copy {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Component — Backend_copy\":\n  - heading \"Component — Backend_copy\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Backend_copy\n  - text: Display label\n  - textbox \"Display label\": Backend_copy\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - checkbox \"Dashed outline\"\n  - text: Dashed outline Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Ports & Interfaces\":\n    - text: Ports & Interfaces\n    - combobox \"Port / interface kind\":\n      - option \"→ port-in\" [selected]\n      - option \"port-out →\"\n      - option \"port (standalone)\"\n      - option \"○ provide (ball)\"\n      - option \"⊃ require (socket)\"\n    - textbox \"Port 1 name\":\n      - /placeholder: Port name\n      - text: httpIn\n    - button \"Remove port 1\": ✕\n    - checkbox \"dashed\"\n    - text: dashed\n    - combobox \"Port / interface kind\":\n      - option \"→ port-in\"\n      - option \"port-out →\" [selected]\n      - option \"port (standalone)\"\n      - option \"○ provide (ball)\"\n      - option \"⊃ require (socket)\"\n    - textbox \"Port 2 name\":\n      - /placeholder: Port name\n      - text: dbOut\n    - button \"Remove port 2\": ✕\n    - checkbox \"dashed\"\n    - text: dashed\n    - button \"+ Add port-in\"\n    - button \"+ Add port-out\"\n    - button \"Add provided interface (ball)\": + Provided I/F\n    - button \"Add required interface (socket)\": + Required I/F\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Backend_copy"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Backend_copy — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Backend_copy"
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Element — Backend_copy\":\n  - heading \"Element — Backend_copy\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Backend_copy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\ncomponent Backend_copy {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Component — Backend_copy\":\n  - heading \"Component — Backend_copy\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Backend_copy\n  - text: Display label\n  - textbox \"Display label\": Backend_copy\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - checkbox \"Dashed outline\"\n  - text: Dashed outline Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Ports & Interfaces\":\n    - text: Ports & Interfaces\n    - combobox \"Port / interface kind\":\n      - option \"→ port-in\" [selected]\n      - option \"port-out →\"\n      - option \"port (standalone)\"\n      - option \"○ provide (ball)\"\n      - option \"⊃ require (socket)\"\n    - textbox \"Port 1 name\":\n      - /placeholder: Port name\n      - text: httpIn\n    - button \"Remove port 1\": ✕\n    - checkbox \"dashed\"\n    - text: dashed\n    - combobox \"Port / interface kind\":\n      - option \"→ port-in\"\n      - option \"port-out →\" [selected]\n      - option \"port (standalone)\"\n      - option \"○ provide (ball)\"\n      - option \"⊃ require (socket)\"\n    - textbox \"Port 2 name\":\n      - /placeholder: Port name\n      - text: dbOut\n    - button \"Remove port 2\": ✕\n    - checkbox \"dashed\"\n    - text: dashed\n    - button \"+ Add port-in\"\n    - button \"+ Add port-out\"\n    - button \"Add provided interface (ball)\": + Provided I/F\n    - button \"Add required interface (socket)\": + Required I/F\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Backend_copy"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Backend_copy — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Backend_copy"
+    }
+  },
+  "operations": [
+    {
+      "type": "component",
+      "before": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+      "operation": {
+        "op": "element.duplicate",
+        "revision": "r6dc6b1f2:240",
+        "refs": [
+          "Backend"
+        ],
+        "offset": {
+          "x": 30,
+          "y": 30
+        },
+        "scope": "element",
+        "facts": {
+          "positions": {
+            "Backend": {
+              "x": 286,
+              "y": 84
+            }
+          }
+        },
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\ncomponent Backend_copy {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\n@enduml"
+    }
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: the Display label field in Properties (origin/master 5f9541e2); focus stays in the editor after a menu or chooser item (origin/master 71fbaeca); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
+}

@@ -1,0 +1,2938 @@
+# Follow-up tutorial "Describe an interface" (spec docs/superpowers/specs/2026-11-08-c4-model-design.md §11, decision D10;
+# plan 2026-11-08-c4-tutorial.md, Task 5b). Serves chapter objective 7 (spec §12). About 30 minutes: 4 + 15 + 10 + 3 = 32.
+# Assigned with the interoperability lecture, so it spaces the interface practice after the C4 tutorial.
+# Grading is structural (spec §8): presence, counts, realizes ids, units present, and checks predicates over interface/* rules.
+# The only text lookups that grade are seeded, locked field names (name_any) and step 2's documented unit spelling
+# (unit_any: [quarter], spec §8).
+# Expected results for every seed, solution, and alternative: scripts/tests/fixtures/c4-tutorial/c4-interfaces/expectations.md.
+# Hint ladders are condition-driven: each failed state of a test reaches at least one hint (orient), partial attempts reach
+# a diagnosis, and further progress reaches an incomplete scaffold; no hint contains target text.
+title: 'Describe an interface'
+description: 'Predict what a syntax-only interface description leaves open, complete the semantic view of a REST operation in the C4 editor, describe another team’s message interface from a brief, and check when a valid message is still misread. For readers of the C4 model chapter and the interoperability chapter, after the C4 tutorial. Allow about 30 minutes.'
+learning_objectives:
+  - Predict how an independently built client could misread an interface description that states only its syntax.
+  - Write the semantic view of an operation (purpose, side effects, usage restrictions, errors, and an example) and each field’s meaning, unit, or format.
+  - Link an operation to the provider responsibilities it realizes, and a relationship to the operation it uses.
+  - Write a complete interface description, syntax and semantics, for a message another team receives.
+  - Explain why syntactic agreement alone does not make two systems interoperable and what catches a misreading, and tell a compatible interface change from one that needs a new version.
+backend: c4
+require_tests: true
+progress_version: 1
+autosave_type: files
+reset_type: files
+c4:
+  file: design.yml
+  profile: novice
+  # Credit for consistency comes only from checks: tests (spec §8), so a checks.ignore entry in design.yml must not
+  # silence a graded rule. No step teaches justified suppression.
+  checks:
+    honorFileIgnores: false
+steps:
+  # Pedagogy: PRIMM — Predict. A commit-then-reveal pretest on a syntax-only card (generation before instruction); step 2
+  # revisits the learner's written misreadings and resolves them in the semantic view.
+  # Reasoning check: one multiple-answer knowledge check. Objectives: 1 (tutorial), 7 (chapter).
+  # Minutes: 4 (spec §11, interface tutorial step 1).
+  - title: What Syntax Leaves Open
+    key: predict-from-syntax
+    instructions: |
+      ### Why this matters
+
+      A team that never talks to you builds its client from your interface description alone. Seeing what a description of call syntax and data types cannot tell that team shows you what else to write down before their first wrong guess reaches users.
+
+      ### 🎯 You will learn to
+
+      - Analyze a syntax-only interface description for values another team could read differently.
+      - Distinguish what the syntactic view of an interface settles from what it leaves open.
+
+      Course Registration lets students enroll in the sections of a planned term schedule. Its Registration API offers the Enrollment API, and a team outside Course Registration is about to build a new client for it. This card is everything that team has: the interface's **syntactic view**, which says how to call the operation and how each value is written.
+
+      ```c4
+      # caption: The Enrollment API as a team outside Course Registration receives it: the syntactic view only.
+      # panels: syntax
+      view: interface enrollment-api
+      name: Course Registration
+      systems:
+        registration:
+          name: Course Registration
+          description: Plans term schedules and enrolls students in their sections.
+          containers:
+            api:
+              name: Registration API
+              technology: Python, FastAPI
+              description: Decides eligibility and enrolls students atomically.
+              provides:
+                enrollment-api:
+                  name: Enrollment API
+                  description: Enrolls one student in every section of a planned schedule, or in none.
+                  style: rest
+                  technology: JSON/HTTPS
+                  version: 1
+                  operations:
+                    submit-plan:
+                      syntax: POST /v1/enrollments
+                      input: EnrollmentRequest
+                      output: EnrollmentOutcome
+                  types:
+                    EnrollmentRequest:
+                      description: One student's plan for one term.
+                      fields:
+                        student_id:
+                          type: string
+                        term:
+                          type: string
+                        section_ids:
+                          type: string[]
+                          constraints: 1 to 8 items, no duplicates
+                    EnrollmentOutcome:
+                      description: The decision for the whole plan.
+                      fields:
+                        status:
+                          type: string
+                          values: [enrolled, refused]
+                        units_enrolled:
+                          type: number
+                        decided_at:
+                          type: datetime
+                        reason:
+                          type: string
+                          required: false
+      ```
+
+      1. **Recall, then extend:** From memory, name the two misreadings the chapter found on this card. Then find one more value that the card leaves open and the chapter did not discuss, and say what that misreading would cost a student. Write all three down; step 2 asks for them again.
+      2. **Check:** Choose **Next** to open the knowledge check.
+
+      The editor shows the Registration API with the interfaces it provides and requires, and is read-only in this step. This step has no model checks: the knowledge check confirms which questions the card leaves open, but it cannot read the misreadings you wrote down.
+    c4:
+      view: interfaces of api
+      read_only: true
+      scaffolds:
+        definitions: false
+        sentenceFrames: false
+        inlineLint: false
+        carryDown: false
+        trace: false
+        emptyStateGuide: false
+    files:
+      - path: design.yml
+        language: yaml
+        reseed: true
+        content: |
+          schema: c4-design/1
+          name: Course Registration
+          description: Students plan a term schedule and enroll in every section of it, or in none.
+          status: proposed
+          enterprise: UCLA
+
+          requirements:
+            FR-07: A student who lacks a prerequisite or would exceed the unit cap is refused before any seat is held, and is told why.
+            FR-09: A student is enrolled in every section of a plan, or in none.
+            FR-11: Every completed enrollment is charged tuition, and a billing outage never delays an enrollment.
+
+          vocabulary:
+            quarter unit: the UCLA credit unit; most courses are worth 4 quarter units
+
+          people:
+            student:
+              name: Student
+              description: Plans and confirms one term schedule.
+              collaborators:
+                web: plans a schedule and enrolls using
+
+          systems:
+            registration:
+              name: Course Registration
+              description: Plans term schedules and enrolls students in their sections.
+              responsibilities:
+                - decide: whether a student may enroll in a section
+                  id: sys-eligibility
+                  requirements: [FR-07]
+                - do: hold a seat in every section of a plan, or in none
+                  id: sys-holds
+                  requirements: [FR-09]
+                - do: request the tuition charge for every completed enrollment
+                  id: sys-billing
+                  requirements: [FR-11]
+              containers:
+                web:
+                  name: Planner Web App
+                  kind: browser_app
+                  technology: TypeScript, React
+                  description: Lets students compare draft schedules in the browser.
+                  responsibilities:
+                    - do: let students compare draft schedules
+                  collaborators:
+                    coordinator: {description: submits plans to, technology: JSON/HTTPS}
+                api:
+                  name: Registration API
+                  technology: Python, FastAPI
+                  description: Decides eligibility and enrolls students atomically.
+                  responsibilities:
+                    - decide: whether a student may enroll in a section
+                      id: api-eligibility
+                      refines: sys-eligibility
+                    - do: hold a seat in every section of a plan, or in none
+                      id: api-holds
+                      refines: sys-holds
+                    - do: request the tuition charge for every completed enrollment
+                      id: api-billing
+                      refines: sys-billing
+                  provides:
+                    enrollment-api:
+                      name: Enrollment API
+                      description: Enrolls one student in every section of a planned schedule, or in none.
+                      style: rest
+                      technology: JSON/HTTPS
+                      version: 1
+                      operations:
+                        submit-plan:
+                          syntax: POST /v1/enrollments
+                          input: EnrollmentRequest
+                          output: EnrollmentOutcome
+                      types:
+                        EnrollmentRequest:
+                          description: One student's plan for one term.
+                          fields:
+                            student_id:
+                              type: string
+                            term:
+                              type: string
+                            section_ids:
+                              type: string[]
+                              constraints: 1 to 8 items, no duplicates
+                        EnrollmentOutcome:
+                          description: The decision for the whole plan.
+                          fields:
+                            status:
+                              type: string
+                              values: [enrolled, refused]
+                            units_enrolled:
+                              type: number
+                            decided_at:
+                              type: datetime
+                            reason:
+                              type: string
+                              required: false
+                  choices:
+                    technology:
+                      chosen: FastAPI 0.115 on Python 3.12
+                      alternatives: [Django REST Framework, Flask]
+                      because: typed request models and async database access
+                    styles: [layers]
+                  components:
+                    coordinator:
+                      name: Registration Coordinator
+                      technology: Python module
+                      stereotypes: [coordinator]
+                      responsibilities:
+                        - do: sequence one enrollment attempt
+                        - decide: which step of the attempt runs next
+                      collaborators:
+                        policy: asks for an eligibility decision from
+                        seats: reserves all seats or none through
+                        billing-gateway: asks for tuition charges through
+                      invariants: [never decides eligibility or writes seat state]
+                      quality: [an enrollment outcome appears within 2 s for 95% of attempts]
+                    policy:
+                      name: Enrollment Policy
+                      technology: Python module
+                      stereotypes: [service_provider]
+                      responsibilities:
+                        - decide: whether prerequisites and unit caps allow enrollment
+                          refines: api-eligibility
+                      code:
+                        EnrollmentPolicy:
+                          kind: class
+                          operations: ["+ decide(student, section): Decision"]
+                          collaborators: {EnrollmentRule: delegates each eligibility check to}
+                          choices: {patterns: [{pattern: Strategy, role: Context, instance: eligibility-rules}]}
+                        EnrollmentRule:
+                          kind: interface
+                          operations: ["+ evaluate(student, section): RuleResult"]
+                          choices: {patterns: [{pattern: Strategy, role: Strategy, instance: eligibility-rules}]}
+                        PrerequisiteRule:
+                          kind: class
+                          implements: [EnrollmentRule]
+                          operations: ["+ evaluate(student, section): RuleResult"]
+                          choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                        UnitCapRule:
+                          kind: class
+                          implements: [EnrollmentRule]
+                          operations: ["+ evaluate(student, section): RuleResult"]
+                          choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                    seats:
+                      name: Seat Gateway
+                      technology: Python module
+                      stereotypes: [interfacer]
+                      owns: [seat holds]
+                      responsibilities:
+                        - know: which seats are held for each attempt
+                        - do: hold every requested seat atomically, or none
+                          refines: api-holds
+                      collaborators:
+                        db: {description: writes seat holds to, technology: SQL/TCP}
+                    billing-gateway:
+                      name: Billing Gateway
+                      technology: Python module
+                      stereotypes: [interfacer]
+                      responsibilities:
+                        - do: request tuition charges for a completed enrollment
+                          refines: api-billing
+                      collaborators:
+                        billing:
+                          description: requests tuition charges from
+                          technology: AMQP
+                          connector: message
+                          uses: billing
+                          choices:
+                            technology: {chosen: RabbitMQ, alternatives: [synchronous HTTPS call], because: a billing outage must not block enrollment}
+                db:
+                  name: Registration Database
+                  kind: database
+                  technology: PostgreSQL 16
+                  description: Durably stores plans, enrollment attempts, and seat holds.
+                  responsibilities:
+                    - do: durably store plans, enrollment attempts, and seat holds
+            billing:
+              name: Billing System
+              external: true
+              description: Charges tuition and fees for the university.
+              provides: ["send ChargeRequested to the queue billing.charges"]
+          scenarios:
+            enroll:
+              title: Enroll in a planned schedule
+              steps:
+                - web -> coordinator: submits the plan to
+                - coordinator -> policy: asks for an eligibility decision from
+                - alt:
+                    - when: eligible
+                      steps:
+                        - coordinator -> seats: reserves all seats or none through
+                        - coordinator -> billing-gateway: asks for tuition charges through
+                    - when: not eligible
+                      steps:
+                        - coordinator -> web: reports the refusal and its reason to
+
+          deployment:
+            production:
+              name: Production
+              nodes:
+                laptop:
+                  name: Student's computer
+                  kind: device
+                  nodes:
+                    browser:
+                      name: Web browser
+                      kind: environment
+                      technology: "Chrome, Firefox, or Safari"
+                      hosts: [web]
+                      collaborators:
+                        ingress: sends HTTPS requests to
+                campus-cloud:
+                  name: Campus cloud
+                  kind: environment
+                  technology: Kubernetes
+                  nodes:
+                    ingress:
+                      name: Ingress load balancer
+                      kind: infrastructure
+                      technology: NGINX
+                      collaborators:
+                        api-pod: forwards HTTPS requests to
+                    api-pod: {name: API pod, kind: environment, technology: Kubernetes pod, instances: 3, hosts: [api]}
+                    postgres: {name: Managed database, kind: environment, technology: PostgreSQL 16, hosts: [db]}
+                data-centre:
+                  name: University data center
+                  kind: environment
+                  hosts: [billing]
+
+          decisions:
+            one-database:
+              title: Keep plans and seat holds in one relational database
+              status: accepted
+              context: Seat holds and enrollment must commit atomically.
+              decision: One PostgreSQL database with serializable transactions for seat holds.
+              alternatives: [a separate seat service with its own store]
+              consequences: The database is a single point of failure.
+              affects: [db, seats]
+    quiz:
+      title: 'Step 1 — Knowledge Check'
+      min_score: 0.8
+      questions:
+        - type: multiple
+          difficulty: intermediate
+          # objective: 7 (chapter), tutorial objective 1; spec §11 interface tutorial step 1 (units_enrolled, decided_at, term,
+          # and a distractor about the HTTP method), plus `reason`, which the chapter's reveal does not discuss (transfer
+          # beyond recall). Each distractor is settled by a line of the syntactic view.
+          question: 'A team that has only the Enrollment API card above builds a client for it. Which of these could that team get wrong, because the card does not settle them? Select all that apply.'
+          options:
+            - 'Which kind of credit unit `units_enrolled` counts'
+            - 'In which time zone `decided_at` reports the decision'
+            - 'How to write the winter term of 2027 in `term`'
+            - 'Which HTTP method sends a plan to `/v1/enrollments`'
+            - 'Whether `section_ids` may list one section twice'
+            - 'Which values `status` can take in an outcome'
+            - 'Whether `reason` is written for the student or for a developer'
+          correct_indices: [0, 1, 2, 6]
+          option_feedback:
+            0: 'The type `number` says how the value is written, not what a value of 1 counts. Universities count credit in quarter units, semester units, or credit hours, and nothing on the card says which.'
+            1: 'The type `datetime` names a kind of value, not a format: the card does not say how the value is written or which time zone it uses, so two clients can show the same decision on different days.'
+            2: 'The type of `term` is `string`, and `2027-winter`, `Winter 2027`, and `W27` are all strings. The card does not say which spelling the API accepts.'
+            3: 'The syntax line already reads `POST /v1/enrollments`, so every client sends the same method. The syntactic view settles how to call the operation.'
+            4: 'The constraints column says `1 to 8 items, no duplicates`, so a client can check this before it sends a plan. A constraint is part of the syntactic view, and a schema can check it.'
+            5: 'The allowed values `enrolled` and `refused` are listed on the card. What each value means for the student’s seats is still open, but which values exist is not.'
+            6: 'The type `string` says only that `reason` is text. Nothing says who reads it, what language it is in, or whether a client may show it unchanged.'
+          explanation: 'The syntactic view settles how to call the operation and how each value is written: the method and path, the types, which fields are required, the allowed values, and the constraints. It leaves open what the values mean: which unit a number counts, which time zone a timestamp uses, how a text value is spelled, and who a text is written for. A schema such as OpenAPI would accept every one of these misreadings, because each is still valid syntax.'
+    solution:
+      files:
+        - path: design.yml
+          language: yaml
+          content: |
+            schema: c4-design/1
+            name: Course Registration
+            description: Students plan a term schedule and enroll in every section of it, or in none.
+            status: proposed
+            enterprise: UCLA
+
+            requirements:
+              FR-07: A student who lacks a prerequisite or would exceed the unit cap is refused before any seat is held, and is told why.
+              FR-09: A student is enrolled in every section of a plan, or in none.
+              FR-11: Every completed enrollment is charged tuition, and a billing outage never delays an enrollment.
+
+            vocabulary:
+              quarter unit: the UCLA credit unit; most courses are worth 4 quarter units
+
+            people:
+              student:
+                name: Student
+                description: Plans and confirms one term schedule.
+                collaborators:
+                  web: plans a schedule and enrolls using
+
+            systems:
+              registration:
+                name: Course Registration
+                description: Plans term schedules and enrolls students in their sections.
+                responsibilities:
+                  - decide: whether a student may enroll in a section
+                    id: sys-eligibility
+                    requirements: [FR-07]
+                  - do: hold a seat in every section of a plan, or in none
+                    id: sys-holds
+                    requirements: [FR-09]
+                  - do: request the tuition charge for every completed enrollment
+                    id: sys-billing
+                    requirements: [FR-11]
+                containers:
+                  web:
+                    name: Planner Web App
+                    kind: browser_app
+                    technology: TypeScript, React
+                    description: Lets students compare draft schedules in the browser.
+                    responsibilities:
+                      - do: let students compare draft schedules
+                    collaborators:
+                      coordinator: {description: submits plans to, technology: JSON/HTTPS}
+                  api:
+                    name: Registration API
+                    technology: Python, FastAPI
+                    description: Decides eligibility and enrolls students atomically.
+                    responsibilities:
+                      - decide: whether a student may enroll in a section
+                        id: api-eligibility
+                        refines: sys-eligibility
+                      - do: hold a seat in every section of a plan, or in none
+                        id: api-holds
+                        refines: sys-holds
+                      - do: request the tuition charge for every completed enrollment
+                        id: api-billing
+                        refines: sys-billing
+                    provides:
+                      enrollment-api:
+                        name: Enrollment API
+                        description: Enrolls one student in every section of a planned schedule, or in none.
+                        style: rest
+                        technology: JSON/HTTPS
+                        version: 1
+                        operations:
+                          submit-plan:
+                            syntax: POST /v1/enrollments
+                            input: EnrollmentRequest
+                            output: EnrollmentOutcome
+                        types:
+                          EnrollmentRequest:
+                            description: One student's plan for one term.
+                            fields:
+                              student_id:
+                                type: string
+                              term:
+                                type: string
+                              section_ids:
+                                type: string[]
+                                constraints: 1 to 8 items, no duplicates
+                          EnrollmentOutcome:
+                            description: The decision for the whole plan.
+                            fields:
+                              status:
+                                type: string
+                                values: [enrolled, refused]
+                              units_enrolled:
+                                type: number
+                              decided_at:
+                                type: datetime
+                              reason:
+                                type: string
+                                required: false
+                    choices:
+                      technology:
+                        chosen: FastAPI 0.115 on Python 3.12
+                        alternatives: [Django REST Framework, Flask]
+                        because: typed request models and async database access
+                      styles: [layers]
+                    components:
+                      coordinator:
+                        name: Registration Coordinator
+                        technology: Python module
+                        stereotypes: [coordinator]
+                        responsibilities:
+                          - do: sequence one enrollment attempt
+                          - decide: which step of the attempt runs next
+                        collaborators:
+                          policy: asks for an eligibility decision from
+                          seats: reserves all seats or none through
+                          billing-gateway: asks for tuition charges through
+                        invariants: [never decides eligibility or writes seat state]
+                        quality: [an enrollment outcome appears within 2 s for 95% of attempts]
+                      policy:
+                        name: Enrollment Policy
+                        technology: Python module
+                        stereotypes: [service_provider]
+                        responsibilities:
+                          - decide: whether prerequisites and unit caps allow enrollment
+                            refines: api-eligibility
+                        code:
+                          EnrollmentPolicy:
+                            kind: class
+                            operations: ["+ decide(student, section): Decision"]
+                            collaborators: {EnrollmentRule: delegates each eligibility check to}
+                            choices: {patterns: [{pattern: Strategy, role: Context, instance: eligibility-rules}]}
+                          EnrollmentRule:
+                            kind: interface
+                            operations: ["+ evaluate(student, section): RuleResult"]
+                            choices: {patterns: [{pattern: Strategy, role: Strategy, instance: eligibility-rules}]}
+                          PrerequisiteRule:
+                            kind: class
+                            implements: [EnrollmentRule]
+                            operations: ["+ evaluate(student, section): RuleResult"]
+                            choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                          UnitCapRule:
+                            kind: class
+                            implements: [EnrollmentRule]
+                            operations: ["+ evaluate(student, section): RuleResult"]
+                            choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                      seats:
+                        name: Seat Gateway
+                        technology: Python module
+                        stereotypes: [interfacer]
+                        owns: [seat holds]
+                        responsibilities:
+                          - know: which seats are held for each attempt
+                          - do: hold every requested seat atomically, or none
+                            refines: api-holds
+                        collaborators:
+                          db: {description: writes seat holds to, technology: SQL/TCP}
+                      billing-gateway:
+                        name: Billing Gateway
+                        technology: Python module
+                        stereotypes: [interfacer]
+                        responsibilities:
+                          - do: request tuition charges for a completed enrollment
+                            refines: api-billing
+                        collaborators:
+                          billing:
+                            description: requests tuition charges from
+                            technology: AMQP
+                            connector: message
+                            uses: billing
+                            choices:
+                              technology: {chosen: RabbitMQ, alternatives: [synchronous HTTPS call], because: a billing outage must not block enrollment}
+                  db:
+                    name: Registration Database
+                    kind: database
+                    technology: PostgreSQL 16
+                    description: Durably stores plans, enrollment attempts, and seat holds.
+                    responsibilities:
+                      - do: durably store plans, enrollment attempts, and seat holds
+              billing:
+                name: Billing System
+                external: true
+                description: Charges tuition and fees for the university.
+                provides: ["send ChargeRequested to the queue billing.charges"]
+            scenarios:
+              enroll:
+                title: Enroll in a planned schedule
+                steps:
+                  - web -> coordinator: submits the plan to
+                  - coordinator -> policy: asks for an eligibility decision from
+                  - alt:
+                      - when: eligible
+                        steps:
+                          - coordinator -> seats: reserves all seats or none through
+                          - coordinator -> billing-gateway: asks for tuition charges through
+                      - when: not eligible
+                        steps:
+                          - coordinator -> web: reports the refusal and its reason to
+
+            deployment:
+              production:
+                name: Production
+                nodes:
+                  laptop:
+                    name: Student's computer
+                    kind: device
+                    nodes:
+                      browser:
+                        name: Web browser
+                        kind: environment
+                        technology: "Chrome, Firefox, or Safari"
+                        hosts: [web]
+                        collaborators:
+                          ingress: sends HTTPS requests to
+                  campus-cloud:
+                    name: Campus cloud
+                    kind: environment
+                    technology: Kubernetes
+                    nodes:
+                      ingress:
+                        name: Ingress load balancer
+                        kind: infrastructure
+                        technology: NGINX
+                        collaborators:
+                          api-pod: forwards HTTPS requests to
+                      api-pod: {name: API pod, kind: environment, technology: Kubernetes pod, instances: 3, hosts: [api]}
+                      postgres: {name: Managed database, kind: environment, technology: PostgreSQL 16, hosts: [db]}
+                  data-centre:
+                    name: University data center
+                    kind: environment
+                    hosts: [billing]
+
+            decisions:
+              one-database:
+                title: Keep plans and seat holds in one relational database
+                status: accepted
+                context: Seat holds and enrollment must commit atomically.
+                decision: One PostgreSQL database with serializable transactions for seat holds.
+                alternatives: [a separate seat service with its own store]
+                consequences: The database is a single point of failure.
+                affects: [db, seats]
+      explanation: |
+        Four values on the card can be read differently by a team that never talked to the registration team: the unit that `units_enrolled` counts, the format and time zone of `decided_at`, the spelling of `term`, and who `reason` is written for. The method, the allowed values of `status`, and the rule against duplicate sections are settled by the syntactic view. Step 2 resolves them in the semantic view.
+
+  # Pedagogy: completion problem (the syntactic view is given and locked; the learner writes the semantic view) with
+  # interface sentence frames, live lint, and the description card as immediate feedback. The provider's knowledge comes as
+  # informal team notes, so the work is deciding where each fact belongs (purpose, side effect, restriction, error, meaning,
+  # unit, format) and writing what an independent client needs. Reasoning check: one written prompt with a gated
+  # comparison that revisits the step 1 prediction and pairs it with the Mars Climate Orbiter.
+  # Then transfer within the step (instructor decision 2026-11-09): a second operation, check-plan, given as syntax only,
+  # whose semantics differ from submit-plan's (nothing changes; it realizes only the decision). Tests T12-T15.
+  # Objectives: 2 and 3 (tutorial); 7 (chapter). Minutes: 15 (spec §11, interface tutorial step 2).
+  - title: The Semantic View
+    key: complete-semantic-view
+    instructions: |
+      ### Why this matters
+
+      A purpose, an error list, and a unit beside every number turn a list of call signatures into a contract that teams can build against without meeting. The cheapest moment to settle what each value means is before two implementations disagree about it.
+
+      ### 🎯 You will learn to
+
+      - Write the semantic view of an operation: purpose, side effects, usage restrictions, errors, and an example.
+      - State each field's meaning, and its unit or format where a reader needs one.
+      - Link the operation to the responsibilities it realizes, and the client's relationship to the operation it calls.
+      - Transfer the description to a second operation whose effects and links differ from the first.
+
+      You are on the registration team now. The editor shows the Enrollment API's description card: its **Syntactic view** is given and locked. A teammate already described `student_id` and `section_ids` (a meaning and a format each) and the 401 error under **All operations**: use them as worked examples. Every other "not stated" line is yours to fill. Your team's meeting notes:
+
+      - **Callers:** only the Planner Web App calls the API, for the student who is signed in, and each student gets at most 10 calls a minute.
+      - **Ids and terms:** student ids are the nine-digit university ids; section ids have six digits; a term looks like `2027-winter`.
+      - **Time:** the API stamps each decision when it makes it, as ISO 8601 text with the UTC offset, such as `2027-01-05T09:30:00-08:00`.
+      - **Credit:** this university counts credit in quarter units; most courses are worth 4.
+      - **Failures:** a caller not signed in as that student gets 401; too many calls get 429 with a Retry-After time; a plan that breaks a request constraint, or names a section the term does not have, gets 422.
+      - **Outcomes:** a refused plan holds no seat and comes with a reason; an enrolled plan holds a seat in every section of the plan and asks Billing to charge tuition.
+      - **Checking a plan:** before submitting, the web app lets a student check a plan. A check answers whether the student may enroll in the whole plan now and how many units the plan adds up to; it holds no seat and asks Billing for nothing.
+
+      Billing appears in the model only as a one-line sketch of its queue; leave it for step 3.
+
+      1. **Recall:** Reread the misreadings you wrote down in step 1.
+      2. **Describe the operation:** On the card, choose **Edit submit-plan**, then the **Semantic view** tab. Fill in, in this order:
+         - **Purpose:** when a client calls it, and what the API then does.
+         - **Errors:** what else can go wrong, and what the client should do then. Limits and errors that apply to every operation go under **All operations**, beside the given 401.
+         - **Side effects** (open the disclosure): what has changed after each of the two outcomes.
+         - **Restrictions** (open the disclosure): who may call, and how often.
+         - **Examples** (open the disclosure): one request with its outcome.
+      3. **Describe the data:** Under **Meaning of data**, give every field a meaning, state a unit or a format where a field needs one, and say what each `status` value means for the student. The check accepts the unit of credit the notes name in any spelling.
+      4. **Link it:** Under **Realizes**, tick the responsibilities of the Registration API that a client relies on when it calls this operation. Then zoom into the Registration API, select the Planner Web App, and in the inspector under **Relationships in this view** choose its relationship to the Registration Coordinator; under **Uses** choose the operation it calls.
+      5. **Transfer:** The card has a second operation, `check-plan`, given as syntax only. Describe it on your own: its purpose, its side effects (what has changed after a check), a meaning for each field of `PlanCheck` and a unit where a number needs one, and under **Realizes** only the responsibilities a check fulfills. Then add `check-plan` to the web app's **Uses** as well.
+      6. **Check:** Choose **Test My Work**, or press <kbd><abbr data-platform-modifier title="Control" data-no-tooltip="true">Ctrl</abbr>+Enter</kbd> in the canvas.
+      7. **Write it down:** For each misreading from step 1, which line of your description now rules it out? Then name one way two teams could still disagree that no line of a description can prevent.
+
+      <details markdown="1">
+      <summary>Compare your answer (step 2)</summary>
+
+      - **The credit unit of `units_enrolled`:** its Unit names quarter units, and the model's shared vocabulary says what a quarter unit is.
+      - **The time zone of `decided_at`:** its Format, ISO 8601 with a UTC offset, puts the offset into every value.
+      - **The spelling of `term`:** its Format says that the year comes first and names the four seasons as written.
+      - **Who `reason` is written for:** its Meaning says who reads it, so a client knows whether it may show the text unchanged.
+
+      A description cannot stop a team from ignoring it. In 1999 the Mars Climate Orbiter was lost although its interface specification stated the unit: it required newton-seconds, the ground software wrote pound-force seconds, and no test compared the file with the specification. Every number was valid syntax on both sides. Here, the remedy is an integration test that sends a real plan through the Planner Web App and checks the units and the time a student sees.
+
+      **The plan check** shows what changes from one operation to the next. Its side effect is that nothing changes, and saying so is what tells a client it may check as often as it likes. It realizes only the eligibility decision: a client that copied `submit-plan`'s links would expect a check to hold seats and request a charge.
+
+      One question the notes left to you: does `units_enrolled` count the units of this plan or the student's total for the term? Either reading passes the checks, but a client that shows the wrong one misleads every student. The reference says the term total.
+
+      </details>
+
+      The checks see which parts of the description are present, how many errors and examples there are, which responsibilities each operation is linked to, and whether a unit names quarter units. They cannot judge whether your purpose is true, whether the error list is complete, whether another team would read a meaning the same way, or whether a unit or format is the one the client expects. An integration test between the two implementations settles that.
+    c4:
+      view: interface enrollment-api
+      scaffolds:
+        definitions: true
+        sentenceFrames: true
+        inlineLint: true
+        carryDown: false
+        trace: false
+        emptyStateGuide: false
+      checks:
+        display: live
+      # Syntactic keys only (controller ruling: dotted paths accept "*" wildcards); meanings, units, formats, value
+      # meanings, examples, and every semantic key stay editable. Grading never relies on locks: test 11 guards the syntax.
+      locked_fields:
+        - systems.registration.containers.api.provides.enrollment-api.style
+        - systems.registration.containers.api.provides.enrollment-api.technology
+        - systems.registration.containers.api.provides.enrollment-api.version
+        - systems.registration.containers.api.provides.enrollment-api.operations.*.syntax
+        - systems.registration.containers.api.provides.enrollment-api.operations.*.input
+        - systems.registration.containers.api.provides.enrollment-api.operations.*.output
+        - systems.registration.containers.api.provides.enrollment-api.types.*.fields.*.type
+        - systems.registration.containers.api.provides.enrollment-api.types.*.fields.*.required
+        - systems.registration.containers.api.provides.enrollment-api.types.*.fields.*.constraints
+    files:
+      - path: design.yml
+        language: yaml
+        reseed: true
+        content: |
+          schema: c4-design/1
+          name: Course Registration
+          description: Students plan a term schedule and enroll in every section of it, or in none.
+          status: proposed
+          enterprise: UCLA
+
+          requirements:
+            FR-07: A student who lacks a prerequisite or would exceed the unit cap is refused before any seat is held, and is told why.
+            FR-09: A student is enrolled in every section of a plan, or in none.
+            FR-11: Every completed enrollment is charged tuition, and a billing outage never delays an enrollment.
+
+          vocabulary:
+            quarter unit: the UCLA credit unit; most courses are worth 4 quarter units
+
+          people:
+            student:
+              name: Student
+              description: Plans and confirms one term schedule.
+              collaborators:
+                web: plans a schedule and enrolls using
+
+          systems:
+            registration:
+              name: Course Registration
+              description: Plans term schedules and enrolls students in their sections.
+              responsibilities:
+                - decide: whether a student may enroll in a section
+                  id: sys-eligibility
+                  requirements: [FR-07]
+                - do: hold a seat in every section of a plan, or in none
+                  id: sys-holds
+                  requirements: [FR-09]
+                - do: request the tuition charge for every completed enrollment
+                  id: sys-billing
+                  requirements: [FR-11]
+              containers:
+                web:
+                  name: Planner Web App
+                  kind: browser_app
+                  technology: TypeScript, React
+                  description: Lets students compare draft schedules in the browser.
+                  responsibilities:
+                    - do: let students compare draft schedules
+                  collaborators:
+                    coordinator: {description: submits plans to, technology: JSON/HTTPS}
+                api:
+                  name: Registration API
+                  technology: Python, FastAPI
+                  description: Decides eligibility and enrolls students atomically.
+                  responsibilities:
+                    - decide: whether a student may enroll in a section
+                      id: api-eligibility
+                      refines: sys-eligibility
+                    - do: hold a seat in every section of a plan, or in none
+                      id: api-holds
+                      refines: sys-holds
+                    - do: request the tuition charge for every completed enrollment
+                      id: api-billing
+                      refines: sys-billing
+                  provides:
+                    enrollment-api:
+                      name: Enrollment API
+                      description: Enrolls one student in every section of a planned schedule, or in none.
+                      style: rest
+                      technology: JSON/HTTPS
+                      version: 1
+                      errors:
+                        unauthorized:
+                          code: 401
+                          when: the caller is not signed in as the student named in the request; the client asks the student to sign in again
+                      operations:
+                        submit-plan:
+                          syntax: POST /v1/enrollments
+                          input: EnrollmentRequest
+                          output: EnrollmentOutcome
+                        check-plan:
+                          syntax: POST /v1/plan-checks
+                          input: EnrollmentRequest
+                          output: PlanCheck
+                      types:
+                        EnrollmentRequest:
+                          description: One student's plan for one term.
+                          fields:
+                            student_id:
+                              type: string
+                              meaning: university id of the student who enrolls
+                              format: nine digits
+                            term:
+                              type: string
+                            section_ids:
+                              type: string[]
+                              meaning: the sections the student wants to take together
+                              format: six-digit section ids
+                              constraints: 1 to 8 items, no duplicates
+                        EnrollmentOutcome:
+                          description: The decision for the whole plan.
+                          fields:
+                            status:
+                              type: string
+                              values: [enrolled, refused]
+                            units_enrolled:
+                              type: number
+                            decided_at:
+                              type: datetime
+                            reason:
+                              type: string
+                              required: false
+                        PlanCheck:
+                          description: The eligibility decision for a whole plan, made without enrolling.
+                          fields:
+                            eligible:
+                              type: boolean
+                            units_planned:
+                              type: number
+                            reason:
+                              type: string
+                              required: false
+                  choices:
+                    technology:
+                      chosen: FastAPI 0.115 on Python 3.12
+                      alternatives: [Django REST Framework, Flask]
+                      because: typed request models and async database access
+                    styles: [layers]
+                  components:
+                    coordinator:
+                      name: Registration Coordinator
+                      technology: Python module
+                      stereotypes: [coordinator]
+                      responsibilities:
+                        - do: sequence one enrollment attempt
+                        - decide: which step of the attempt runs next
+                      collaborators:
+                        policy: asks for an eligibility decision from
+                        seats: reserves all seats or none through
+                        billing-gateway: asks for tuition charges through
+                      invariants: [never decides eligibility or writes seat state]
+                      quality: [an enrollment outcome appears within 2 s for 95% of attempts]
+                    policy:
+                      name: Enrollment Policy
+                      technology: Python module
+                      stereotypes: [service_provider]
+                      responsibilities:
+                        - decide: whether prerequisites and unit caps allow enrollment
+                          refines: api-eligibility
+                      code:
+                        EnrollmentPolicy:
+                          kind: class
+                          operations: ["+ decide(student, section): Decision"]
+                          collaborators: {EnrollmentRule: delegates each eligibility check to}
+                          choices: {patterns: [{pattern: Strategy, role: Context, instance: eligibility-rules}]}
+                        EnrollmentRule:
+                          kind: interface
+                          operations: ["+ evaluate(student, section): RuleResult"]
+                          choices: {patterns: [{pattern: Strategy, role: Strategy, instance: eligibility-rules}]}
+                        PrerequisiteRule:
+                          kind: class
+                          implements: [EnrollmentRule]
+                          operations: ["+ evaluate(student, section): RuleResult"]
+                          choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                        UnitCapRule:
+                          kind: class
+                          implements: [EnrollmentRule]
+                          operations: ["+ evaluate(student, section): RuleResult"]
+                          choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                    seats:
+                      name: Seat Gateway
+                      technology: Python module
+                      stereotypes: [interfacer]
+                      owns: [seat holds]
+                      responsibilities:
+                        - know: which seats are held for each attempt
+                        - do: hold every requested seat atomically, or none
+                          refines: api-holds
+                      collaborators:
+                        db: {description: writes seat holds to, technology: SQL/TCP}
+                    billing-gateway:
+                      name: Billing Gateway
+                      technology: Python module
+                      stereotypes: [interfacer]
+                      responsibilities:
+                        - do: request tuition charges for a completed enrollment
+                          refines: api-billing
+                      collaborators:
+                        billing:
+                          description: requests tuition charges from
+                          technology: AMQP
+                          connector: message
+                          uses: billing
+                          choices:
+                            technology: {chosen: RabbitMQ, alternatives: [synchronous HTTPS call], because: a billing outage must not block enrollment}
+                db:
+                  name: Registration Database
+                  kind: database
+                  technology: PostgreSQL 16
+                  description: Durably stores plans, enrollment attempts, and seat holds.
+                  responsibilities:
+                    - do: durably store plans, enrollment attempts, and seat holds
+            billing:
+              name: Billing System
+              external: true
+              description: Charges tuition and fees for the university.
+              provides: ["send ChargeRequested to the queue billing.charges"]
+          scenarios:
+            enroll:
+              title: Enroll in a planned schedule
+              steps:
+                - web -> coordinator: submits the plan to
+                - coordinator -> policy: asks for an eligibility decision from
+                - alt:
+                    - when: eligible
+                      steps:
+                        - coordinator -> seats: reserves all seats or none through
+                        - coordinator -> billing-gateway: asks for tuition charges through
+                    - when: not eligible
+                      steps:
+                        - coordinator -> web: reports the refusal and its reason to
+
+          deployment:
+            production:
+              name: Production
+              nodes:
+                laptop:
+                  name: Student's computer
+                  kind: device
+                  nodes:
+                    browser:
+                      name: Web browser
+                      kind: environment
+                      technology: "Chrome, Firefox, or Safari"
+                      hosts: [web]
+                      collaborators:
+                        ingress: sends HTTPS requests to
+                campus-cloud:
+                  name: Campus cloud
+                  kind: environment
+                  technology: Kubernetes
+                  nodes:
+                    ingress:
+                      name: Ingress load balancer
+                      kind: infrastructure
+                      technology: NGINX
+                      collaborators:
+                        api-pod: forwards HTTPS requests to
+                    api-pod: {name: API pod, kind: environment, technology: Kubernetes pod, instances: 3, hosts: [api]}
+                    postgres: {name: Managed database, kind: environment, technology: PostgreSQL 16, hosts: [db]}
+                data-centre:
+                  name: University data center
+                  kind: environment
+                  hosts: [billing]
+
+          decisions:
+            one-database:
+              title: Keep plans and seat holds in one relational database
+              status: accepted
+              context: Seat holds and enrollment must commit atomically.
+              decision: One PostgreSQL database with serializable transactions for seat holds.
+              alternatives: [a separate seat service with its own store]
+              consequences: The database is a single point of failure.
+              affects: [db, seats]
+    tests:
+      - description: The operation says what it is for and what it changes, with one example
+        c4:
+          exists:
+            operation: {of: enrollment-api, id: submit-plan, purpose: present, side_effects: present, examples_at_least: 1}
+        hints:
+          - title: Purpose, side effects, and an example
+            text: 'This check reads three parts of the Semantic view: the Purpose, the Side effects, and the Examples. Start with whichever is still not stated; for the Purpose, ask who sends this request and what is true for the student afterwards.'
+          - title: What another system can notice
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: submit-plan, purpose: present, side_effects: absent}}}}
+            text: 'Your purpose says what the operation is for. What can another system notice after an enrolled outcome that was not true before the call? And after a refusal?'
+          - title: One request a real client could send
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: submit-plan, purpose: present, side_effects: present}}}}
+            text: 'Write one request a real client could send, with the outcome it gets back. Use the field names of the two types, and values that fit their types and formats.'
+      - description: Clients learn who may call it and what can go wrong
+        c4:
+          exists:
+            operation: {of: enrollment-api, id: submit-plan, restrictions: present, errors_at_least: 2}
+        hints:
+          - title: Who may call, and how often
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: submit-plan, restrictions: absent}}}}
+            text: 'Who is allowed to send this request, and how often? Write each limit as a usage restriction, for this operation or under All operations.'
+          - title: What else can go wrong
+            text: 'The step began with one error under All operations: a caller who is not signed in. What else can go wrong, because of what the client sends or how often it calls, and what should the client do then?'
+      - description: Every request field says what it means
+        c4:
+          absent:
+            operation: {of: enrollment-api, id: submit-plan, input_has_field: {meaning: absent}}
+        hints:
+          - title: Fields still without a meaning
+            text: 'Some request fields still have no Meaning. For each one, ask what it identifies or measures, and for whom; the fields that had a Meaning when the step began show the shape. A type says only how a value is written.'
+          # Reached only after some request field has a meaning: the `of` filter adds the second field condition.
+          - title: A list needs a meaning too
+            condition: {c4: {exists: {operation: {of: {id: enrollment-api, has_operation: {input_has_field: {name_any: [section_ids], meaning: absent}}}, id: submit-plan, input_has_field: {meaning: present}}}}}
+            text: 'A list field needs a meaning for the list as a whole. Which sections are these, and what do they have in common?'
+      - description: Every outcome field says what it means
+        c4:
+          absent:
+            operation: {of: enrollment-api, id: submit-plan, output_has_field: {meaning: absent}}
+        hints:
+          - title: What the outcome tells the client
+            text: 'Read the outcome as the web app’s team would. What does each field tell them about the student’s plan?'
+          - title: Fields still without a meaning
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: submit-plan, output_has_field: {meaning: present}}}}}
+            text: 'Some outcome fields still have no Meaning. An optional field needs one too: say when it is present.'
+          # Reached only after some outcome field has a meaning (same pattern as above).
+          - title: A field with values
+            condition: {c4: {exists: {operation: {of: {id: enrollment-api, has_operation: {output_has_field: {name_any: [status], meaning: absent}}}, id: submit-plan, output_has_field: {meaning: present}}}}}
+            text: '`status` has two allowed values. First say what the field as a whole tells the client; the values come next.'
+      - description: Each status value says what it means for the student
+        c4:
+          exists:
+            operation: {of: enrollment-api, id: submit-plan, output_has_field: {name_any: [status], values: meaningful}}
+        hints:
+          - title: What each value promises
+            text: 'A client shows the status to a student. After each value, what is true about the student’s seats in this plan?'
+          - title: One meaning per value
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: submit-plan, output_has_field: {name_any: [status], meaning: present}}}}}
+            text: 'Your Meaning describes `status` as a whole. Each allowed value needs a meaning of its own: describe each value separately under the field’s values.'
+      - description: The number of units says which kind of unit it counts
+        c4:
+          exists:
+            operation: {of: enrollment-api, id: submit-plan, output_has_field: {name_any: [units_enrolled], type: number, unit_any: [quarter]}}
+        hints:
+          - title: Numbers in the outcome
+            text: 'Look at every number in the outcome. Would a team at another university read it the same way?'
+          - title: Units belong in Unit
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: submit-plan, output_has_field: {name_any: [units_enrolled], unit: absent, meaning: present}}}}}
+            text: 'If your meaning mentions what the number counts, put that in Unit as well, so clients and checks can find it.'
+          - title: Which kind of unit
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: submit-plan, output_has_field: {name_any: [units_enrolled], type: number, unit: present}}}}}
+            text: 'Universities count credit in different kinds of units. Which kind does this university use? The team notes and the shared vocabulary both name it.'
+      - description: The term says how it is written
+        c4:
+          exists:
+            operation: {of: enrollment-api, id: submit-plan, input_has_field: {name_any: [term], format: present}}
+        hints:
+          - title: How the term is written
+            text: 'How would a client write the winter term of 2027? Would every team write it the same way?'
+          - title: From meaning to format
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: submit-plan, input_has_field: {name_any: [term], format: absent, meaning: present}}}}}
+            text: 'Your meaning says what a term is. Now say how it is written: which part comes first, and how is each part spelled?'
+      - description: The operation is linked to the API responsibilities a client relies on
+        c4:
+          exists:
+            operation: {of: enrollment-api, id: submit-plan, realizes: [api-eligibility, api-holds]}
+        hints:
+          - title: Obligations a client asks for
+            text: 'An operation is how a client asks the Registration API to meet one of its obligations. Which obligations does submitting a plan ask for?'
+          - title: Compare the links with the outcomes
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: submit-plan, realizes_at_least: 1}}}}
+            text: 'Compare your links with the side effects you wrote. Which obligations of the Registration API does an enrolled outcome fulfill, and which one does a refused outcome still fulfill?'
+          - title: Before a seat is held
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: submit-plan, realizes_any: [api-holds]}}}}
+            text: 'Before any seat is held, something has to be decided. Which responsibility of the Registration API decides it?'
+          - title: After the decision
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: submit-plan, realizes_any: [api-eligibility]}}}}
+            text: 'An enrolled outcome changes something for the student that a decision alone does not. Which responsibility promises that change?'
+          - title: A link to the inside
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: submit-plan, realizes_any: [coordinator-do-1]}}}}
+            text: 'One link names how the API divides its work inside, not something a client can notice. Which one?'
+      - description: The description passes the interface consistency checks
+        c4:
+          checks: {max_warnings: 0, rules: [interface/no-unit, interface/no-format, interface/no-purpose, interface/example-mismatch, interface/realizes-internal, interface/undefined-type]}
+        hints:
+          - title: Read the Problems panel
+            text: 'Open Problems. Each warning names the operation, field, example, or link it is about. Fix them one at a time.'
+          - title: Check the example against the types
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: submit-plan, examples_at_least: 1}}}}
+            text: 'If a warning is about your example, compare each key with the field names of the two types, and each value with its field’s type and allowed values.'
+          - title: A link a client cannot notice
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: submit-plan, realizes_at_least: 3}}}}
+            text: 'If a warning is about a link, ask whether a client of the Registration API could ever notice that obligation, or whether it describes how the API divides its work inside.'
+      - description: The web app names the operation it calls
+        c4:
+          exists:
+            relationship: {from: web, to: api, uses: enrollment-api.submit-plan}
+        hints:
+          - title: The call the web app makes
+            text: 'Select the relationship from the Planner Web App. Which operation does submitting a plan call?'
+          - title: The whole interface or one operation
+            condition: {c4: {exists: {relationship: {from: web, to: api, uses_interface: whole}}}}
+            text: 'Your relationship names the whole Enrollment API. Which single operation does submitting a plan call?'
+          - title: Which interface it enters through
+            condition: {c4: {exists: {relationship: {from: web, to: api, uses_interface: present}}}}
+            text: 'Check what your Uses names. The plan enters the Registration API through one interface and one operation; does your choice name both?'
+      - description: The given syntactic view is unchanged
+        c4:
+          same_as_seed: {interface: {id: enrollment-api}, part: syntax}
+        hints:
+          - title: The given syntax
+            text: 'The operation line, its input and output, and every field’s type, required flag, allowed values, and constraints were given. Undo any change to them, and describe meanings on the Semantic view tab.'
+      # T12-T15: the plan check (transfer within the step). The checks test above (T9) already requires a unit on units_planned.
+      - description: The plan check says what it is for, what it changes, and which decision it makes
+        c4:
+          exists:
+            operation: {of: enrollment-api, id: check-plan, purpose: present, side_effects: present, realizes: api-eligibility}
+        hints:
+          - title: What a check is for
+            text: 'This check reads the plan check’s Purpose, its Side effects, and its Realizes links. The second operation answers a question without enrolling anyone: who asks it, when, and what does the answer tell them?'
+          - title: What a check changes
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: check-plan, purpose: present, side_effects: absent}}}}
+            text: 'Compare a check with a submission. What can another system notice after a check? A client needs that answer too, to know whether it may call the operation freely.'
+          - title: The obligation a check fulfills
+            condition: {c4: {exists: {operation: {of: enrollment-api, id: check-plan, purpose: present, side_effects: present}}}}
+            text: 'Which obligation of the Registration API does a check fulfill for the client? Compare it with the links you gave submit-plan.'
+      - description: Every field of the plan check’s outcome says what it means
+        c4:
+          absent:
+            operation: {of: enrollment-api, id: check-plan, output_has_field: {meaning: absent}}
+        hints:
+          - title: Read the check’s outcome as a stranger
+            text: 'What does each field of PlanCheck tell the web app’s team about the plan? An optional field needs a meaning too: say when it is present.'
+      - description: The plan check promises no seat and no charge
+        c4:
+          absent:
+            operation: {of: enrollment-api, id: check-plan, realizes_any: [api-holds, api-billing]}
+        hints:
+          - title: What a check never does
+            text: 'A check holds no seat and asks Billing for nothing. Which of the plan check’s links promises something a check never does?'
+      - description: The web app names the plan check it calls
+        c4:
+          exists:
+            relationship: {from: web, to: api, uses: enrollment-api.check-plan}
+        hints:
+          - title: Both calls the web app makes
+            text: 'The web app lets students check a plan before they submit it. Does its relationship name every operation it calls?'
+    solution:
+      files:
+        - path: design.yml
+          language: yaml
+          content: |
+            schema: c4-design/1
+            name: Course Registration
+            description: Students plan a term schedule and enroll in every section of it, or in none.
+            status: proposed
+            enterprise: UCLA
+
+            requirements:
+              FR-07: A student who lacks a prerequisite or would exceed the unit cap is refused before any seat is held, and is told why.
+              FR-09: A student is enrolled in every section of a plan, or in none.
+              FR-11: Every completed enrollment is charged tuition, and a billing outage never delays an enrollment.
+
+            vocabulary:
+              quarter unit: the UCLA credit unit; most courses are worth 4 quarter units
+
+            people:
+              student:
+                name: Student
+                description: Plans and confirms one term schedule.
+                collaborators:
+                  web: plans a schedule and enrolls using
+
+            systems:
+              registration:
+                name: Course Registration
+                description: Plans term schedules and enrolls students in their sections.
+                responsibilities:
+                  - decide: whether a student may enroll in a section
+                    id: sys-eligibility
+                    requirements: [FR-07]
+                  - do: hold a seat in every section of a plan, or in none
+                    id: sys-holds
+                    requirements: [FR-09]
+                  - do: request the tuition charge for every completed enrollment
+                    id: sys-billing
+                    requirements: [FR-11]
+                containers:
+                  web:
+                    name: Planner Web App
+                    kind: browser_app
+                    technology: TypeScript, React
+                    description: Lets students compare draft schedules in the browser.
+                    responsibilities:
+                      - do: let students compare draft schedules
+                    collaborators:
+                      coordinator: {description: submits plans to, technology: JSON/HTTPS, uses: [enrollment-api.submit-plan, enrollment-api.check-plan]}
+                  api:
+                    name: Registration API
+                    technology: Python, FastAPI
+                    description: Decides eligibility and enrolls students atomically.
+                    responsibilities:
+                      - decide: whether a student may enroll in a section
+                        id: api-eligibility
+                        refines: sys-eligibility
+                      - do: hold a seat in every section of a plan, or in none
+                        id: api-holds
+                        refines: sys-holds
+                      - do: request the tuition charge for every completed enrollment
+                        id: api-billing
+                        refines: sys-billing
+                    provides:
+                      enrollment-api:
+                        name: Enrollment API
+                        description: Enrolls one student in every section of a planned schedule, or in none.
+                        style: rest
+                        technology: JSON/HTTPS
+                        version: 1
+                        restrictions:
+                          - Only the Planner Web App may call it, acting for the signed-in student named in the request.
+                          - A student may send at most 10 requests per minute.
+                        errors:
+                          unauthorized:
+                            code: 401
+                            when: the caller is not signed in as the student named in the request; the client asks the student to sign in again
+                          too-many-requests:
+                            code: 429
+                            when: the student sent more than 10 requests in one minute; the client waits for the Retry-After time and tries again
+                        operations:
+                          submit-plan:
+                            syntax: POST /v1/enrollments
+                            input: EnrollmentRequest
+                            output: EnrollmentOutcome
+                            purpose: When a client submits a student's plan for one term, the API decides whether the student may enroll and then enrolls the student in every section of the plan, or in none.
+                            side_effects:
+                              - An enrolled outcome holds a seat in every section of the plan and requests the tuition charge from Billing.
+                              - A refused outcome changes nothing.
+                            errors:
+                              invalid-plan:
+                                code: 422
+                                when: the plan breaks a constraint of EnrollmentRequest, such as a section listed twice; the client shows the broken constraint
+                              unknown-section:
+                                code: 422
+                                when: a section id does not exist in the requested term; the client shows the section and lets the student remove it
+                            examples:
+                              - input: {student_id: "905123456", term: 2027-winter, section_ids: ["187204", "187310"]}
+                                output: {status: enrolled, units_enrolled: 8, decided_at: "2027-01-05T09:30:00-08:00"}
+                                note: Two 4-unit sections that do not clash.
+                            realizes: [api-eligibility, api-holds, api-billing]
+                          check-plan:
+                            syntax: POST /v1/plan-checks
+                            input: EnrollmentRequest
+                            output: PlanCheck
+                            purpose: When a client checks a student's plan for one term before submitting it, the API decides whether the student may enroll in every section of the plan and returns the decision with the plan's units, without enrolling the student.
+                            side_effects:
+                              - None; a check holds no seat and requests no tuition charge, so a client may repeat it.
+                            examples:
+                              - input: {student_id: "905123456", term: 2027-winter, section_ids: ["187204", "187310"]}
+                                output: {eligible: true, units_planned: 8}
+                                note: The plan of submit-plan's example, checked first; no seat is held.
+                            realizes: [api-eligibility]
+                        types:
+                          EnrollmentRequest:
+                            description: One student's plan for one term.
+                            fields:
+                              student_id:
+                                type: string
+                                meaning: university id of the student who enrolls
+                                format: nine digits
+                              term:
+                                type: string
+                                meaning: the academic term of every section in the plan
+                                format: "<year>-<fall | winter | spring | summer>"
+                              section_ids:
+                                type: string[]
+                                meaning: the sections the student wants to take together
+                                format: six-digit section ids
+                                constraints: 1 to 8 items, no duplicates
+                          EnrollmentOutcome:
+                            description: The decision for the whole plan.
+                            fields:
+                              status:
+                                type: string
+                                meaning: whether the plan was accepted
+                                values:
+                                  enrolled: the student now holds a seat in every section of the plan
+                                  refused: the student holds no new seat; reason says why
+                              units_enrolled:
+                                type: number
+                                meaning: total units the student holds in the term after this attempt
+                                unit: quarter units
+                              decided_at:
+                                type: datetime
+                                meaning: the moment the API decided the outcome
+                                format: ISO 8601 with a UTC offset
+                              reason:
+                                type: string
+                                meaning: the reason for a refusal in words a student understands
+                                required: false
+                          PlanCheck:
+                            description: The eligibility decision for a whole plan, made without enrolling.
+                            fields:
+                              eligible:
+                                type: boolean
+                                meaning: whether the student may enroll in every section of the plan now
+                              units_planned:
+                                type: number
+                                meaning: total units of the sections in the plan
+                                unit: quarter units
+                              reason:
+                                type: string
+                                meaning: why the student may not enroll in the plan, in words a student understands
+                                required: false
+                        vocabulary:
+                          section: one scheduled offering of a course in one term
+                          plan: the sections a student wants to take together in one term
+                    choices:
+                      technology:
+                        chosen: FastAPI 0.115 on Python 3.12
+                        alternatives: [Django REST Framework, Flask]
+                        because: typed request models and async database access
+                      styles: [layers]
+                    components:
+                      coordinator:
+                        name: Registration Coordinator
+                        technology: Python module
+                        stereotypes: [coordinator]
+                        responsibilities:
+                          - do: sequence one enrollment attempt
+                          - decide: which step of the attempt runs next
+                        collaborators:
+                          policy: asks for an eligibility decision from
+                          seats: reserves all seats or none through
+                          billing-gateway: asks for tuition charges through
+                        invariants: [never decides eligibility or writes seat state]
+                        quality: [an enrollment outcome appears within 2 s for 95% of attempts]
+                      policy:
+                        name: Enrollment Policy
+                        technology: Python module
+                        stereotypes: [service_provider]
+                        responsibilities:
+                          - decide: whether prerequisites and unit caps allow enrollment
+                            refines: api-eligibility
+                        code:
+                          EnrollmentPolicy:
+                            kind: class
+                            operations: ["+ decide(student, section): Decision"]
+                            collaborators: {EnrollmentRule: delegates each eligibility check to}
+                            choices: {patterns: [{pattern: Strategy, role: Context, instance: eligibility-rules}]}
+                          EnrollmentRule:
+                            kind: interface
+                            operations: ["+ evaluate(student, section): RuleResult"]
+                            choices: {patterns: [{pattern: Strategy, role: Strategy, instance: eligibility-rules}]}
+                          PrerequisiteRule:
+                            kind: class
+                            implements: [EnrollmentRule]
+                            operations: ["+ evaluate(student, section): RuleResult"]
+                            choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                          UnitCapRule:
+                            kind: class
+                            implements: [EnrollmentRule]
+                            operations: ["+ evaluate(student, section): RuleResult"]
+                            choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                      seats:
+                        name: Seat Gateway
+                        technology: Python module
+                        stereotypes: [interfacer]
+                        owns: [seat holds]
+                        responsibilities:
+                          - know: which seats are held for each attempt
+                          - do: hold every requested seat atomically, or none
+                            refines: api-holds
+                        collaborators:
+                          db: {description: writes seat holds to, technology: SQL/TCP}
+                      billing-gateway:
+                        name: Billing Gateway
+                        technology: Python module
+                        stereotypes: [interfacer]
+                        responsibilities:
+                          - do: request tuition charges for a completed enrollment
+                            refines: api-billing
+                        collaborators:
+                          billing:
+                            description: requests tuition charges from
+                            technology: AMQP
+                            connector: message
+                            uses: billing
+                            choices:
+                              technology: {chosen: RabbitMQ, alternatives: [synchronous HTTPS call], because: a billing outage must not block enrollment}
+                  db:
+                    name: Registration Database
+                    kind: database
+                    technology: PostgreSQL 16
+                    description: Durably stores plans, enrollment attempts, and seat holds.
+                    responsibilities:
+                      - do: durably store plans, enrollment attempts, and seat holds
+              billing:
+                name: Billing System
+                external: true
+                description: Charges tuition and fees for the university.
+                provides: ["send ChargeRequested to the queue billing.charges"]
+            scenarios:
+              enroll:
+                title: Enroll in a planned schedule
+                steps:
+                  - web -> coordinator: submits the plan to
+                  - coordinator -> policy: asks for an eligibility decision from
+                  - alt:
+                      - when: eligible
+                        steps:
+                          - coordinator -> seats: reserves all seats or none through
+                          - coordinator -> billing-gateway: asks for tuition charges through
+                      - when: not eligible
+                        steps:
+                          - coordinator -> web: reports the refusal and its reason to
+
+            deployment:
+              production:
+                name: Production
+                nodes:
+                  laptop:
+                    name: Student's computer
+                    kind: device
+                    nodes:
+                      browser:
+                        name: Web browser
+                        kind: environment
+                        technology: "Chrome, Firefox, or Safari"
+                        hosts: [web]
+                        collaborators:
+                          ingress: sends HTTPS requests to
+                  campus-cloud:
+                    name: Campus cloud
+                    kind: environment
+                    technology: Kubernetes
+                    nodes:
+                      ingress:
+                        name: Ingress load balancer
+                        kind: infrastructure
+                        technology: NGINX
+                        collaborators:
+                          api-pod: forwards HTTPS requests to
+                      api-pod: {name: API pod, kind: environment, technology: Kubernetes pod, instances: 3, hosts: [api]}
+                      postgres: {name: Managed database, kind: environment, technology: PostgreSQL 16, hosts: [db]}
+                  data-centre:
+                    name: University data center
+                    kind: environment
+                    hosts: [billing]
+
+            decisions:
+              one-database:
+                title: Keep plans and seat holds in one relational database
+                status: accepted
+                context: Seat holds and enrollment must commit atomically.
+                decision: One PostgreSQL database with serializable transactions for seat holds.
+                alternatives: [a separate seat service with its own store]
+                consequences: The database is a single point of failure.
+                affects: [db, seats]
+      explanation: |
+        The solution adds the semantic view of the reference model: a purpose that names the caller and the all-or-none result; side effects for both outcomes; two interface-level restrictions (only the Planner Web App, for the signed-in student; at most 10 requests a minute) and two interface-level errors (401, 429), plus two operation errors (422 for a broken constraint or an unknown section), each saying what the client does next; one example whose keys and values match the two types; a meaning for every field; `unit: quarter units` on `units_enrolled`; formats on `student_id`, `term`, `section_ids`, and `decided_at`; a meaning for each `status` value; and the vocabulary terms *section* and *plan*.
+
+        `realizes: [api-eligibility, api-holds, api-billing]` links the operation to what a client relies on: the decision (fulfilled by a refusal too), the all-or-none seat holds, and the tuition request. Linking the refining component responsibilities instead (the Enrollment Policy's decision, the Seat Gateway's holds) also covers them; linking the coordinator's sequencing does not, because it is private to how the API divides its work. The web app's relationship now names `enrollment-api.submit-plan`, so the relationship requests what the operation realizes.
+
+        `check-plan` is the transfer: its purpose says it decides without enrolling; its side effect is that nothing changes (so a client may repeat it); `PlanCheck` has a meaning for each field and `unit: quarter units` on `units_planned`; it realizes only `api-eligibility`; and the web app's relationship names both operations.
+
+        Pair the learner's step 1 prediction with the Mars Climate Orbiter: a schema-valid number, two units, and no test that compared them.
+
+  # Pedagogy: transfer with faded scaffolds (frames off, lint on request) — describe another team's message interface from a
+  # prose brief, syntax included; the step 2 solution sits in the model as a worked example of a full description.
+  # Reasoning check: one written prompt (an integration test both teams would run) with a gated comparison.
+  # Objectives: 2, 3, 4 (tutorial); 7 (chapter). Minutes: 10 (spec §11, interface tutorial step 3).
+  - title: A Message Interface From a Brief
+    key: describe-billing
+    instructions: |
+      ### Why this matters
+
+      Sometimes you are the client, and the interface you depend on belongs to another team. Writing their interface down from what they told you, syntax and semantics, is how you find the questions to ask them before you build on a guess.
+
+      ### 🎯 You will learn to
+
+      - Write a complete interface description, syntax and semantics, for a message interface from a prose brief.
+      - Make a relationship name the interface it uses.
+
+      Inside the Registration API, the Billing Gateway sends Billing one message per completed enrollment. The Billing System belongs to another university team. In step 2 its queue was only a one-line sketch; Billing's team deleted the sketch from the shared model, which also removed the gateway's use of it, and sent this brief:
+
+      > Registration must tell Billing about each completed enrollment, so that Billing can charge tuition. We accept one message per enrollment on a queue. The message names the student, the term, the number of units, and the amount owed; a repeated message must not charge twice.
+
+      Their answers to your follow-up questions: the queue is `billing.charges`; amounts are in US cents, before financial aid and without fees; a message Billing cannot read, or one that names a student Billing does not know, goes to the queue `billing.charges.rejected`, where Registration's operators review it. Billing receives these messages as commands: one receiver acts on each message. The editor shows the Registration API's components with Billing beside them. The model now holds the reference description of the Enrollment API, an example of a full description if you want one; the reference describes `submit-plan` only, so your plan check is not in it.
+
+      1. **Plan:** On paper, list the message's fields with a type for each, and decide which numbers need a unit.
+      2. **Describe:** Select the Billing System, add an interface in its **Interfaces** section, and describe it: its style, its technology, one operation with its syntax line, the message type with its fields, and then the semantic view.
+      3. **Connect:** Select the Billing Gateway, and in the inspector under **Relationships in this view** choose its relationship to the Billing System; under **Uses** choose what it sends through.
+      4. **Check:** Choose **Check now** and read the Problems panel, then choose **Test My Work**.
+      5. **Write it down:** Describe one integration test that Registration and Billing should run together: what Registration sends, and what Billing's side should show if both teams read your description the same way.
+
+      <details markdown="1">
+      <summary>Compare your answer (step 3)</summary>
+
+      One test: send a message for a student who enrolled in 8 quarter units, with an amount of 418400, and check that the student's account shows one tuition charge of 4,184.00 US dollars; send the same message again and check that the account still shows one charge. The first half catches a unit that one side reads as dollars; the second checks the promise that a repeated message charges once.
+
+      Compare your description with these questions. Does a field identify each request, so that Billing can recognize a repeated message, and does a side effect say so? Does every number have a unit, and does the amount say what it includes? Does each error say where the message goes and who finds out? Step 4 shows the reference description of Tuition Charges.
+
+      One more thing to remember for step 4: Billing can later add an optional field to this message and every existing sender keeps working; removing or renaming a field, or making an optional one required, breaks messages that senders already send, so it needs a new version.
+
+      </details>
+
+      The checks see that Billing describes an interface whose operation has a purpose, a typed number with a unit, and an error, that every message field has a meaning, that the gateway names what it uses, and that no consistency warnings remain. They cannot judge whether Billing's team would agree with your description: whether your unit and format are the ones Billing expects, whether the error list is complete, or whether a repeated message really charges once. The integration test you just described settles that.
+    c4:
+      view: components of api with interfaces
+      scaffolds:
+        definitions: true
+        sentenceFrames: false
+        inlineLint: false
+        carryDown: false
+        trace: false
+        emptyStateGuide: false
+      checks:
+        display: on-request
+    files:
+      - path: design.yml
+        language: yaml
+        reseed: true
+        content: |
+          schema: c4-design/1
+          name: Course Registration
+          description: Students plan a term schedule and enroll in every section of it, or in none.
+          status: proposed
+          enterprise: UCLA
+
+          requirements:
+            FR-07: A student who lacks a prerequisite or would exceed the unit cap is refused before any seat is held, and is told why.
+            FR-09: A student is enrolled in every section of a plan, or in none.
+            FR-11: Every completed enrollment is charged tuition, and a billing outage never delays an enrollment.
+
+          vocabulary:
+            quarter unit: the UCLA credit unit; most courses are worth 4 quarter units
+
+          people:
+            student:
+              name: Student
+              description: Plans and confirms one term schedule.
+              collaborators:
+                web: plans a schedule and enrolls using
+
+          systems:
+            registration:
+              name: Course Registration
+              description: Plans term schedules and enrolls students in their sections.
+              responsibilities:
+                - decide: whether a student may enroll in a section
+                  id: sys-eligibility
+                  requirements: [FR-07]
+                - do: hold a seat in every section of a plan, or in none
+                  id: sys-holds
+                  requirements: [FR-09]
+                - do: request the tuition charge for every completed enrollment
+                  id: sys-billing
+                  requirements: [FR-11]
+              containers:
+                web:
+                  name: Planner Web App
+                  kind: browser_app
+                  technology: TypeScript, React
+                  description: Lets students compare draft schedules in the browser.
+                  responsibilities:
+                    - do: let students compare draft schedules
+                  collaborators:
+                    coordinator: {description: submits plans to, technology: JSON/HTTPS, uses: enrollment-api.submit-plan}
+                api:
+                  name: Registration API
+                  technology: Python, FastAPI
+                  description: Decides eligibility and enrolls students atomically.
+                  responsibilities:
+                    - decide: whether a student may enroll in a section
+                      id: api-eligibility
+                      refines: sys-eligibility
+                    - do: hold a seat in every section of a plan, or in none
+                      id: api-holds
+                      refines: sys-holds
+                    - do: request the tuition charge for every completed enrollment
+                      id: api-billing
+                      refines: sys-billing
+                  provides:
+                    enrollment-api:
+                      name: Enrollment API
+                      description: Enrolls one student in every section of a planned schedule, or in none.
+                      style: rest
+                      technology: JSON/HTTPS
+                      version: 1
+                      restrictions:
+                        - Only the Planner Web App may call it, acting for the signed-in student named in the request.
+                        - A student may send at most 10 requests per minute.
+                      errors:
+                        unauthorized:
+                          code: 401
+                          when: the caller is not signed in as the student named in the request; the client asks the student to sign in again
+                        too-many-requests:
+                          code: 429
+                          when: the student sent more than 10 requests in one minute; the client waits for the Retry-After time and tries again
+                      operations:
+                        submit-plan:
+                          syntax: POST /v1/enrollments
+                          input: EnrollmentRequest
+                          output: EnrollmentOutcome
+                          purpose: When a client submits a student's plan for one term, the API decides whether the student may enroll and then enrolls the student in every section of the plan, or in none.
+                          side_effects:
+                            - An enrolled outcome holds a seat in every section of the plan and requests the tuition charge from Billing.
+                            - A refused outcome changes nothing.
+                          errors:
+                            invalid-plan:
+                              code: 422
+                              when: the plan breaks a constraint of EnrollmentRequest, such as a section listed twice; the client shows the broken constraint
+                            unknown-section:
+                              code: 422
+                              when: a section id does not exist in the requested term; the client shows the section and lets the student remove it
+                          examples:
+                            - input: {student_id: "905123456", term: 2027-winter, section_ids: ["187204", "187310"]}
+                              output: {status: enrolled, units_enrolled: 8, decided_at: "2027-01-05T09:30:00-08:00"}
+                              note: Two 4-unit sections that do not clash.
+                          realizes: [api-eligibility, api-holds, api-billing]
+                      types:
+                        EnrollmentRequest:
+                          description: One student's plan for one term.
+                          fields:
+                            student_id:
+                              type: string
+                              meaning: university id of the student who enrolls
+                              format: nine digits
+                            term:
+                              type: string
+                              meaning: the academic term of every section in the plan
+                              format: "<year>-<fall | winter | spring | summer>"
+                            section_ids:
+                              type: string[]
+                              meaning: the sections the student wants to take together
+                              format: six-digit section ids
+                              constraints: 1 to 8 items, no duplicates
+                        EnrollmentOutcome:
+                          description: The decision for the whole plan.
+                          fields:
+                            status:
+                              type: string
+                              meaning: whether the plan was accepted
+                              values:
+                                enrolled: the student now holds a seat in every section of the plan
+                                refused: the student holds no new seat; reason says why
+                            units_enrolled:
+                              type: number
+                              meaning: total units the student holds in the term after this attempt
+                              unit: quarter units
+                            decided_at:
+                              type: datetime
+                              meaning: the moment the API decided the outcome
+                              format: ISO 8601 with a UTC offset
+                            reason:
+                              type: string
+                              meaning: the reason for a refusal in words a student understands
+                              required: false
+                      vocabulary:
+                        section: one scheduled offering of a course in one term
+                        plan: the sections a student wants to take together in one term
+                  choices:
+                    technology:
+                      chosen: FastAPI 0.115 on Python 3.12
+                      alternatives: [Django REST Framework, Flask]
+                      because: typed request models and async database access
+                    styles: [layers]
+                  components:
+                    coordinator:
+                      name: Registration Coordinator
+                      technology: Python module
+                      stereotypes: [coordinator]
+                      responsibilities:
+                        - do: sequence one enrollment attempt
+                        - decide: which step of the attempt runs next
+                      collaborators:
+                        policy: asks for an eligibility decision from
+                        seats: reserves all seats or none through
+                        billing-gateway: asks for tuition charges through
+                      invariants: [never decides eligibility or writes seat state]
+                      quality: [an enrollment outcome appears within 2 s for 95% of attempts]
+                    policy:
+                      name: Enrollment Policy
+                      technology: Python module
+                      stereotypes: [service_provider]
+                      responsibilities:
+                        - decide: whether prerequisites and unit caps allow enrollment
+                          refines: api-eligibility
+                      code:
+                        EnrollmentPolicy:
+                          kind: class
+                          operations: ["+ decide(student, section): Decision"]
+                          collaborators: {EnrollmentRule: delegates each eligibility check to}
+                          choices: {patterns: [{pattern: Strategy, role: Context, instance: eligibility-rules}]}
+                        EnrollmentRule:
+                          kind: interface
+                          operations: ["+ evaluate(student, section): RuleResult"]
+                          choices: {patterns: [{pattern: Strategy, role: Strategy, instance: eligibility-rules}]}
+                        PrerequisiteRule:
+                          kind: class
+                          implements: [EnrollmentRule]
+                          operations: ["+ evaluate(student, section): RuleResult"]
+                          choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                        UnitCapRule:
+                          kind: class
+                          implements: [EnrollmentRule]
+                          operations: ["+ evaluate(student, section): RuleResult"]
+                          choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                    seats:
+                      name: Seat Gateway
+                      technology: Python module
+                      stereotypes: [interfacer]
+                      owns: [seat holds]
+                      responsibilities:
+                        - know: which seats are held for each attempt
+                        - do: hold every requested seat atomically, or none
+                          refines: api-holds
+                      collaborators:
+                        db: {description: writes seat holds to, technology: SQL/TCP}
+                    billing-gateway:
+                      name: Billing Gateway
+                      technology: Python module
+                      stereotypes: [interfacer]
+                      responsibilities:
+                        - do: request tuition charges for a completed enrollment
+                          refines: api-billing
+                      collaborators:
+                        billing:
+                          description: requests tuition charges from
+                          technology: AMQP
+                          connector: message
+                          choices:
+                            technology: {chosen: RabbitMQ, alternatives: [synchronous HTTPS call], because: a billing outage must not block enrollment}
+                db:
+                  name: Registration Database
+                  kind: database
+                  technology: PostgreSQL 16
+                  description: Durably stores plans, enrollment attempts, and seat holds.
+                  responsibilities:
+                    - do: durably store plans, enrollment attempts, and seat holds
+            billing:
+              name: Billing System
+              external: true
+              description: Charges tuition and fees for the university.
+          scenarios:
+            enroll:
+              title: Enroll in a planned schedule
+              steps:
+                - web -> coordinator: submits the plan to
+                - coordinator -> policy: asks for an eligibility decision from
+                - alt:
+                    - when: eligible
+                      steps:
+                        - coordinator -> seats: reserves all seats or none through
+                        - coordinator -> billing-gateway: asks for tuition charges through
+                    - when: not eligible
+                      steps:
+                        - coordinator -> web: reports the refusal and its reason to
+
+          deployment:
+            production:
+              name: Production
+              nodes:
+                laptop:
+                  name: Student's computer
+                  kind: device
+                  nodes:
+                    browser:
+                      name: Web browser
+                      kind: environment
+                      technology: "Chrome, Firefox, or Safari"
+                      hosts: [web]
+                      collaborators:
+                        ingress: sends HTTPS requests to
+                campus-cloud:
+                  name: Campus cloud
+                  kind: environment
+                  technology: Kubernetes
+                  nodes:
+                    ingress:
+                      name: Ingress load balancer
+                      kind: infrastructure
+                      technology: NGINX
+                      collaborators:
+                        api-pod: forwards HTTPS requests to
+                    api-pod: {name: API pod, kind: environment, technology: Kubernetes pod, instances: 3, hosts: [api]}
+                    postgres: {name: Managed database, kind: environment, technology: PostgreSQL 16, hosts: [db]}
+                data-centre:
+                  name: University data center
+                  kind: environment
+                  hosts: [billing]
+
+          decisions:
+            one-database:
+              title: Keep plans and seat holds in one relational database
+              status: accepted
+              context: Seat holds and enrollment must commit atomically.
+              decision: One PostgreSQL database with serializable transactions for seat holds.
+              alternatives: [a separate seat service with its own store]
+              consequences: The database is a single point of failure.
+              affects: [db, seats]
+    tests:
+      - description: Billing describes the interface this team relies on
+        c4:
+          exists:
+            interface: {of: billing, has_operation: {purpose: present}}
+        hints:
+          - title: Where the interface lives
+            text: 'Which element offers this interface, and which element only uses it? Describe it on the element that receives the messages.'
+          - title: Billing is gone
+            condition: {c4: {absent: {element: {type: system, name_any: [billing]}}}}
+            text: 'The Billing System is no longer in the model, so its interface has nowhere to live. Undo the deletion: the interface belongs on the element that receives the messages.'
+          - title: The sender is not the provider
+            condition: {c4: {exists: {interface: {of: billing-gateway}}}}
+            text: 'Your interface sits on the Billing Gateway, which sends the messages. A client addresses the element that receives them; which element is that?'
+          - title: An operation with a purpose
+            condition: {c4: {exists: {interface: {of: billing}}}}
+            text: 'Billing offers an interface now. Does it have an operation written as a client would write it, with a Purpose that says when Registration sends the message and what Billing then does?'
+      - description: The message carries a typed quantity with a unit
+        c4:
+          exists:
+            interface: {of: billing, has_operation: {input_has_field: {type_any: [integer, number, decimal], unit: present}}}
+        hints:
+          - title: The numbers in the message
+            text: 'Which values in the brief are numbers? For each one, what does a value of 1 mean?'
+          - title: A number without a unit
+            condition: {c4: {exists: {interface: {of: billing, has_operation: {input_has_field: {type_any: [integer, number, decimal], unit: absent}}}}}}
+            text: 'A number in your message has no Unit. Would Billing’s accountants and Registration’s developers read a value of 1 the same way?'
+          - title: Quantities written as text
+            condition: {c4: {absent: {interface: {of: billing, has_operation: {input_has_field: {type_any: [integer, number, decimal]}}}}}}
+            text: 'No message on the Billing System’s own interface has a number field yet: Billing has no interface of its own, its message type is not described yet, or the amount and the number of units have a type that is not a number, such as text. Which type fits a count, and which fits money? A message described on another element does not count here.'
+      - description: The operation says what can go wrong
+        c4:
+          exists:
+            interface: {of: billing, has_operation: {errors_at_least: 1}}
+        hints:
+          - title: A message that cannot be charged
+            text: 'What happens to a message Billing cannot act on, and how does the sender find out?'
+          - title: Two kinds of failure
+            condition: {c4: {exists: {interface: {of: billing}}}}
+            text: 'Think of what can be wrong with the message itself, and of what it can name that Billing does not have. For each, where does the message go, and who finds out?'
+      - description: The gateway’s relationship names the interface it uses
+        c4:
+          exists:
+            relationship: {from: billing-gateway, to: billing, uses_interface: present}
+        hints:
+          - title: The gateway’s side
+            text: 'Select the relationship from the Billing Gateway to the Billing System. What does it send?'
+          - title: Billing is gone
+            condition: {c4: {absent: {element: {type: system, name_any: [billing]}}}}
+            text: 'The Billing System is no longer in the model, so the gateway has nothing to send its messages to. Undo the deletion, then name on the gateway’s relationship the interface it uses.'
+          - title: Name what it uses
+            condition: {c4: {exists: {interface: {of: billing}}}}
+            text: 'Billing’s interface has an id now. Under Uses, the gateway’s relationship can name the interface or the operation it sends through.'
+      - description: The description passes the interface consistency checks
+        c4:
+          checks: {max_warnings: 0, rules: [interface/no-syntax, interface/untyped-field, interface/undefined-type, interface/no-unit, interface/no-format, interface/no-purpose, interface/no-errors, interface/example-mismatch]}
+        hints:
+          - title: Read the Problems panel
+            text: 'Choose Check now, then open Problems. Each warning names the field, operation, or example it is about.'
+          - title: Check the example against the types
+            condition: {c4: {exists: {interface: {of: billing, has_operation: {examples_at_least: 1}}}}}
+            text: 'If a warning is about your example, compare each key with your field names, and each value with its field’s type.'
+      - description: Every message field says what it means
+        c4:
+          absent:
+            interface: {of: billing, has_operation: {input_has_field: {meaning: absent}}}
+        hints:
+          - title: A meaning for every field
+            text: 'For each field, what does it identify or measure, and for whom?'
+          - title: Billing is gone
+            condition: {c4: {absent: {element: {type: system, name_any: [billing]}}}}
+            text: 'The Billing System is no longer in the model, so its message has no fields to describe. Undo the deletion, then give each field of the message a meaning.'
+    solution:
+      files:
+        - path: design.yml
+          language: yaml
+          content: |
+            schema: c4-design/1
+            name: Course Registration
+            description: Students plan a term schedule and enroll in every section of it, or in none.
+            status: proposed
+            enterprise: UCLA
+
+            requirements:
+              FR-07: A student who lacks a prerequisite or would exceed the unit cap is refused before any seat is held, and is told why.
+              FR-09: A student is enrolled in every section of a plan, or in none.
+              FR-11: Every completed enrollment is charged tuition, and a billing outage never delays an enrollment.
+
+            vocabulary:
+              quarter unit: the UCLA credit unit; most courses are worth 4 quarter units
+
+            people:
+              student:
+                name: Student
+                description: Plans and confirms one term schedule.
+                collaborators:
+                  web: plans a schedule and enrolls using
+
+            systems:
+              registration:
+                name: Course Registration
+                description: Plans term schedules and enrolls students in their sections.
+                responsibilities:
+                  - decide: whether a student may enroll in a section
+                    id: sys-eligibility
+                    requirements: [FR-07]
+                  - do: hold a seat in every section of a plan, or in none
+                    id: sys-holds
+                    requirements: [FR-09]
+                  - do: request the tuition charge for every completed enrollment
+                    id: sys-billing
+                    requirements: [FR-11]
+                containers:
+                  web:
+                    name: Planner Web App
+                    kind: browser_app
+                    technology: TypeScript, React
+                    description: Lets students compare draft schedules in the browser.
+                    responsibilities:
+                      - do: let students compare draft schedules
+                    collaborators:
+                      coordinator: {description: submits plans to, technology: JSON/HTTPS, uses: enrollment-api.submit-plan}
+                  api:
+                    name: Registration API
+                    technology: Python, FastAPI
+                    description: Decides eligibility and enrolls students atomically.
+                    responsibilities:
+                      - decide: whether a student may enroll in a section
+                        id: api-eligibility
+                        refines: sys-eligibility
+                      - do: hold a seat in every section of a plan, or in none
+                        id: api-holds
+                        refines: sys-holds
+                      - do: request the tuition charge for every completed enrollment
+                        id: api-billing
+                        refines: sys-billing
+                    provides:
+                      enrollment-api:
+                        name: Enrollment API
+                        description: Enrolls one student in every section of a planned schedule, or in none.
+                        style: rest
+                        technology: JSON/HTTPS
+                        version: 1
+                        restrictions:
+                          - Only the Planner Web App may call it, acting for the signed-in student named in the request.
+                          - A student may send at most 10 requests per minute.
+                        errors:
+                          unauthorized:
+                            code: 401
+                            when: the caller is not signed in as the student named in the request; the client asks the student to sign in again
+                          too-many-requests:
+                            code: 429
+                            when: the student sent more than 10 requests in one minute; the client waits for the Retry-After time and tries again
+                        operations:
+                          submit-plan:
+                            syntax: POST /v1/enrollments
+                            input: EnrollmentRequest
+                            output: EnrollmentOutcome
+                            purpose: When a client submits a student's plan for one term, the API decides whether the student may enroll and then enrolls the student in every section of the plan, or in none.
+                            side_effects:
+                              - An enrolled outcome holds a seat in every section of the plan and requests the tuition charge from Billing.
+                              - A refused outcome changes nothing.
+                            errors:
+                              invalid-plan:
+                                code: 422
+                                when: the plan breaks a constraint of EnrollmentRequest, such as a section listed twice; the client shows the broken constraint
+                              unknown-section:
+                                code: 422
+                                when: a section id does not exist in the requested term; the client shows the section and lets the student remove it
+                            examples:
+                              - input: {student_id: "905123456", term: 2027-winter, section_ids: ["187204", "187310"]}
+                                output: {status: enrolled, units_enrolled: 8, decided_at: "2027-01-05T09:30:00-08:00"}
+                                note: Two 4-unit sections that do not clash.
+                            realizes: [api-eligibility, api-holds, api-billing]
+                        types:
+                          EnrollmentRequest:
+                            description: One student's plan for one term.
+                            fields:
+                              student_id:
+                                type: string
+                                meaning: university id of the student who enrolls
+                                format: nine digits
+                              term:
+                                type: string
+                                meaning: the academic term of every section in the plan
+                                format: "<year>-<fall | winter | spring | summer>"
+                              section_ids:
+                                type: string[]
+                                meaning: the sections the student wants to take together
+                                format: six-digit section ids
+                                constraints: 1 to 8 items, no duplicates
+                          EnrollmentOutcome:
+                            description: The decision for the whole plan.
+                            fields:
+                              status:
+                                type: string
+                                meaning: whether the plan was accepted
+                                values:
+                                  enrolled: the student now holds a seat in every section of the plan
+                                  refused: the student holds no new seat; reason says why
+                              units_enrolled:
+                                type: number
+                                meaning: total units the student holds in the term after this attempt
+                                unit: quarter units
+                              decided_at:
+                                type: datetime
+                                meaning: the moment the API decided the outcome
+                                format: ISO 8601 with a UTC offset
+                              reason:
+                                type: string
+                                meaning: the reason for a refusal in words a student understands
+                                required: false
+                        vocabulary:
+                          section: one scheduled offering of a course in one term
+                          plan: the sections a student wants to take together in one term
+                    choices:
+                      technology:
+                        chosen: FastAPI 0.115 on Python 3.12
+                        alternatives: [Django REST Framework, Flask]
+                        because: typed request models and async database access
+                      styles: [layers]
+                    components:
+                      coordinator:
+                        name: Registration Coordinator
+                        technology: Python module
+                        stereotypes: [coordinator]
+                        responsibilities:
+                          - do: sequence one enrollment attempt
+                          - decide: which step of the attempt runs next
+                        collaborators:
+                          policy: asks for an eligibility decision from
+                          seats: reserves all seats or none through
+                          billing-gateway: asks for tuition charges through
+                        invariants: [never decides eligibility or writes seat state]
+                        quality: [an enrollment outcome appears within 2 s for 95% of attempts]
+                      policy:
+                        name: Enrollment Policy
+                        technology: Python module
+                        stereotypes: [service_provider]
+                        responsibilities:
+                          - decide: whether prerequisites and unit caps allow enrollment
+                            refines: api-eligibility
+                        code:
+                          EnrollmentPolicy:
+                            kind: class
+                            operations: ["+ decide(student, section): Decision"]
+                            collaborators: {EnrollmentRule: delegates each eligibility check to}
+                            choices: {patterns: [{pattern: Strategy, role: Context, instance: eligibility-rules}]}
+                          EnrollmentRule:
+                            kind: interface
+                            operations: ["+ evaluate(student, section): RuleResult"]
+                            choices: {patterns: [{pattern: Strategy, role: Strategy, instance: eligibility-rules}]}
+                          PrerequisiteRule:
+                            kind: class
+                            implements: [EnrollmentRule]
+                            operations: ["+ evaluate(student, section): RuleResult"]
+                            choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                          UnitCapRule:
+                            kind: class
+                            implements: [EnrollmentRule]
+                            operations: ["+ evaluate(student, section): RuleResult"]
+                            choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                      seats:
+                        name: Seat Gateway
+                        technology: Python module
+                        stereotypes: [interfacer]
+                        owns: [seat holds]
+                        responsibilities:
+                          - know: which seats are held for each attempt
+                          - do: hold every requested seat atomically, or none
+                            refines: api-holds
+                        collaborators:
+                          db: {description: writes seat holds to, technology: SQL/TCP}
+                      billing-gateway:
+                        name: Billing Gateway
+                        technology: Python module
+                        stereotypes: [interfacer]
+                        responsibilities:
+                          - do: request tuition charges for a completed enrollment
+                            refines: api-billing
+                        collaborators:
+                          billing:
+                            description: requests tuition charges from
+                            technology: AMQP
+                            connector: message
+                            uses: tuition-charges.charge-tuition
+                            choices:
+                              technology: {chosen: RabbitMQ, alternatives: [synchronous HTTPS call], because: a billing outage must not block enrollment}
+                  db:
+                    name: Registration Database
+                    kind: database
+                    technology: PostgreSQL 16
+                    description: Durably stores plans, enrollment attempts, and seat holds.
+                    responsibilities:
+                      - do: durably store plans, enrollment attempts, and seat holds
+              billing:
+                name: Billing System
+                external: true
+                description: Charges tuition and fees for the university.
+                provides:
+                  tuition-charges:
+                    name: Tuition Charges
+                    description: Accepts requests to charge tuition to a student's account.
+                    style: message
+                    technology: AMQP, JSON
+                    version: 2
+                    restrictions:
+                      - Only systems holding a university service credential may send to billing.charges.
+                    operations:
+                      charge-tuition:
+                        syntax: send ChargeRequested to the queue billing.charges
+                        input: ChargeRequested
+                        purpose: When a registration system reports a completed enrollment, Billing adds the tuition for the enrolled units to the student's account.
+                        side_effects:
+                          - Adds one charge to the student's account; a repeated message with the same request_id adds nothing.
+                        errors:
+                          malformed-message: the message does not match ChargeRequested; Billing moves it to the queue billing.charges.rejected, where the sender's operators review it
+                          unknown-student: no student account exists for student_id; Billing moves the message to billing.charges.rejected
+                        examples:
+                          - input: {request_id: 7f3c2a, student_id: "905123456", term: 2027-winter, units: 8, amount: 418400}
+                            note: Billing sends no reply; the charge appears on the student's account.
+                    types:
+                      ChargeRequested:
+                        description: One request to charge tuition for one enrollment attempt.
+                        fields:
+                          request_id:
+                            type: string
+                            meaning: identifies one charge request so that a repeated message is charged once
+                          student_id:
+                            type: string
+                            meaning: university id of the student to charge
+                            format: nine digits
+                          term:
+                            type: string
+                            meaning: the term the tuition is for
+                            format: "<year>-<fall | winter | spring | summer>"
+                          units:
+                            type: number
+                            meaning: units the student enrolled in by this attempt
+                            unit: quarter units
+                          amount:
+                            type: integer
+                            meaning: tuition owed for these units, before financial aid and without fees
+                            unit: US cents
+
+            scenarios:
+              enroll:
+                title: Enroll in a planned schedule
+                steps:
+                  - web -> coordinator: submits the plan to
+                  - coordinator -> policy: asks for an eligibility decision from
+                  - alt:
+                      - when: eligible
+                        steps:
+                          - coordinator -> seats: reserves all seats or none through
+                          - coordinator -> billing-gateway: asks for tuition charges through
+                      - when: not eligible
+                        steps:
+                          - coordinator -> web: reports the refusal and its reason to
+
+            deployment:
+              production:
+                name: Production
+                nodes:
+                  laptop:
+                    name: Student's computer
+                    kind: device
+                    nodes:
+                      browser:
+                        name: Web browser
+                        kind: environment
+                        technology: "Chrome, Firefox, or Safari"
+                        hosts: [web]
+                        collaborators:
+                          ingress: sends HTTPS requests to
+                  campus-cloud:
+                    name: Campus cloud
+                    kind: environment
+                    technology: Kubernetes
+                    nodes:
+                      ingress:
+                        name: Ingress load balancer
+                        kind: infrastructure
+                        technology: NGINX
+                        collaborators:
+                          api-pod: forwards HTTPS requests to
+                      api-pod: {name: API pod, kind: environment, technology: Kubernetes pod, instances: 3, hosts: [api]}
+                      postgres: {name: Managed database, kind: environment, technology: PostgreSQL 16, hosts: [db]}
+                  data-centre:
+                    name: University data center
+                    kind: environment
+                    hosts: [billing]
+
+            decisions:
+              one-database:
+                title: Keep plans and seat holds in one relational database
+                status: accepted
+                context: Seat holds and enrollment must commit atomically.
+                decision: One PostgreSQL database with serializable transactions for seat holds.
+                alternatives: [a separate seat service with its own store]
+                consequences: The database is a single point of failure.
+                affects: [db, seats]
+      explanation: |
+        The reference describes **Tuition Charges** on the Billing System, the element that receives the messages: a `message` interface over `AMQP, JSON`, version 2, with one operation, `charge-tuition`, whose syntax line names the queue (`send ChargeRequested to the queue billing.charges`). `ChargeRequested` has a `request_id` (so a repeated message is charged once, which the side effect states), the student's nine-digit id, the term with its format, `units` in quarter units, and `amount` as an integer in US cents, before financial aid and without fees. Two errors say where an unreadable message or an unknown student goes and who reviews it; an interface restriction says who may send to the queue. The Billing Gateway's relationship uses `tuition-charges.charge-tuition`.
+
+        Describing it on the gateway would make the sender the provider; the provider of a `message` interface is its receiver. Writing `units` and `amount` as text leaves a schema nothing to check and a client nothing to compute with.
+
+  # Pedagogy: transfer and interleaved retrieval (Evaluate): a schema-valid request read in two units (the orbiter pattern in
+  # a new domain, a carrier's rate quotes) and a compatible versus a breaking change. Quiz-only step; the read-only editor shows the reference
+  # description of Tuition Charges as feedback on step 3. Objectives: 5 (tutorial); 7 (chapter).
+  # Minutes: 3 (spec §11, interface tutorial step 4).
+  - title: Agreement Beyond the Schema
+    key: transfer-check
+    instructions: |
+      ### Why this matters
+
+      Two systems can exchange messages that pass every schema check and still disagree about what a number means, and a shared interface that changes can break clients its team never met. Telling these cases apart decides whether the fix is a line of description, a test, or a new version.
+
+      ### 🎯 You will learn to
+
+      - Explain why a message that validates can still be misread, and what catches it.
+      - Tell a change that keeps existing clients working from one that needs a new version.
+
+      The editor shows the reference description of Billing's **Tuition Charges**, read-only. Compare it with the one you wrote in step 3, which stays saved in that step. Name one line the reference has that yours lacks; go back to step 3 and add it before you continue.
+
+      Remember from step 3 how a shared interface changes: adding an optional field keeps every existing client working; removing or renaming a field, or making an optional one required, breaks messages that clients already send, so it needs a new version. Then choose **Next** to open the knowledge check.
+
+      This step has no model checks: the knowledge check confirms your reasoning about two cases, but it cannot check an interface of your own. For that, take one interface between the client and the server of your team project and draft its description: its syntax, with each parameter's type, and its semantics, with the meaning of the request and of each parameter and the errors that can occur. Then ask which field another team would most likely misread.
+    c4:
+      view: interface tuition-charges
+      read_only: true
+      scaffolds:
+        definitions: false
+        sentenceFrames: false
+        inlineLint: false
+        carryDown: false
+        trace: false
+        emptyStateGuide: false
+    files:
+      - path: design.yml
+        language: yaml
+        reseed: true
+        content: |
+          schema: c4-design/1
+          name: Course Registration
+          description: Students plan a term schedule and enroll in every section of it, or in none.
+          status: proposed
+          enterprise: UCLA
+
+          requirements:
+            FR-07: A student who lacks a prerequisite or would exceed the unit cap is refused before any seat is held, and is told why.
+            FR-09: A student is enrolled in every section of a plan, or in none.
+            FR-11: Every completed enrollment is charged tuition, and a billing outage never delays an enrollment.
+
+          vocabulary:
+            quarter unit: the UCLA credit unit; most courses are worth 4 quarter units
+
+          people:
+            student:
+              name: Student
+              description: Plans and confirms one term schedule.
+              collaborators:
+                web: plans a schedule and enrolls using
+
+          systems:
+            registration:
+              name: Course Registration
+              description: Plans term schedules and enrolls students in their sections.
+              responsibilities:
+                - decide: whether a student may enroll in a section
+                  id: sys-eligibility
+                  requirements: [FR-07]
+                - do: hold a seat in every section of a plan, or in none
+                  id: sys-holds
+                  requirements: [FR-09]
+                - do: request the tuition charge for every completed enrollment
+                  id: sys-billing
+                  requirements: [FR-11]
+              containers:
+                web:
+                  name: Planner Web App
+                  kind: browser_app
+                  technology: TypeScript, React
+                  description: Lets students compare draft schedules in the browser.
+                  responsibilities:
+                    - do: let students compare draft schedules
+                  collaborators:
+                    coordinator: {description: submits plans to, technology: JSON/HTTPS, uses: enrollment-api.submit-plan}
+                api:
+                  name: Registration API
+                  technology: Python, FastAPI
+                  description: Decides eligibility and enrolls students atomically.
+                  responsibilities:
+                    - decide: whether a student may enroll in a section
+                      id: api-eligibility
+                      refines: sys-eligibility
+                    - do: hold a seat in every section of a plan, or in none
+                      id: api-holds
+                      refines: sys-holds
+                    - do: request the tuition charge for every completed enrollment
+                      id: api-billing
+                      refines: sys-billing
+                  provides:
+                    enrollment-api:
+                      name: Enrollment API
+                      description: Enrolls one student in every section of a planned schedule, or in none.
+                      style: rest
+                      technology: JSON/HTTPS
+                      version: 1
+                      restrictions:
+                        - Only the Planner Web App may call it, acting for the signed-in student named in the request.
+                        - A student may send at most 10 requests per minute.
+                      errors:
+                        unauthorized:
+                          code: 401
+                          when: the caller is not signed in as the student named in the request; the client asks the student to sign in again
+                        too-many-requests:
+                          code: 429
+                          when: the student sent more than 10 requests in one minute; the client waits for the Retry-After time and tries again
+                      operations:
+                        submit-plan:
+                          syntax: POST /v1/enrollments
+                          input: EnrollmentRequest
+                          output: EnrollmentOutcome
+                          purpose: When a client submits a student's plan for one term, the API decides whether the student may enroll and then enrolls the student in every section of the plan, or in none.
+                          side_effects:
+                            - An enrolled outcome holds a seat in every section of the plan and requests the tuition charge from Billing.
+                            - A refused outcome changes nothing.
+                          errors:
+                            invalid-plan:
+                              code: 422
+                              when: the plan breaks a constraint of EnrollmentRequest, such as a section listed twice; the client shows the broken constraint
+                            unknown-section:
+                              code: 422
+                              when: a section id does not exist in the requested term; the client shows the section and lets the student remove it
+                          examples:
+                            - input: {student_id: "905123456", term: 2027-winter, section_ids: ["187204", "187310"]}
+                              output: {status: enrolled, units_enrolled: 8, decided_at: "2027-01-05T09:30:00-08:00"}
+                              note: Two 4-unit sections that do not clash.
+                          realizes: [api-eligibility, api-holds, api-billing]
+                      types:
+                        EnrollmentRequest:
+                          description: One student's plan for one term.
+                          fields:
+                            student_id:
+                              type: string
+                              meaning: university id of the student who enrolls
+                              format: nine digits
+                            term:
+                              type: string
+                              meaning: the academic term of every section in the plan
+                              format: "<year>-<fall | winter | spring | summer>"
+                            section_ids:
+                              type: string[]
+                              meaning: the sections the student wants to take together
+                              format: six-digit section ids
+                              constraints: 1 to 8 items, no duplicates
+                        EnrollmentOutcome:
+                          description: The decision for the whole plan.
+                          fields:
+                            status:
+                              type: string
+                              meaning: whether the plan was accepted
+                              values:
+                                enrolled: the student now holds a seat in every section of the plan
+                                refused: the student holds no new seat; reason says why
+                            units_enrolled:
+                              type: number
+                              meaning: total units the student holds in the term after this attempt
+                              unit: quarter units
+                            decided_at:
+                              type: datetime
+                              meaning: the moment the API decided the outcome
+                              format: ISO 8601 with a UTC offset
+                            reason:
+                              type: string
+                              meaning: the reason for a refusal in words a student understands
+                              required: false
+                      vocabulary:
+                        section: one scheduled offering of a course in one term
+                        plan: the sections a student wants to take together in one term
+                  choices:
+                    technology:
+                      chosen: FastAPI 0.115 on Python 3.12
+                      alternatives: [Django REST Framework, Flask]
+                      because: typed request models and async database access
+                    styles: [layers]
+                  components:
+                    coordinator:
+                      name: Registration Coordinator
+                      technology: Python module
+                      stereotypes: [coordinator]
+                      responsibilities:
+                        - do: sequence one enrollment attempt
+                        - decide: which step of the attempt runs next
+                      collaborators:
+                        policy: asks for an eligibility decision from
+                        seats: reserves all seats or none through
+                        billing-gateway: asks for tuition charges through
+                      invariants: [never decides eligibility or writes seat state]
+                      quality: [an enrollment outcome appears within 2 s for 95% of attempts]
+                    policy:
+                      name: Enrollment Policy
+                      technology: Python module
+                      stereotypes: [service_provider]
+                      responsibilities:
+                        - decide: whether prerequisites and unit caps allow enrollment
+                          refines: api-eligibility
+                      code:
+                        EnrollmentPolicy:
+                          kind: class
+                          operations: ["+ decide(student, section): Decision"]
+                          collaborators: {EnrollmentRule: delegates each eligibility check to}
+                          choices: {patterns: [{pattern: Strategy, role: Context, instance: eligibility-rules}]}
+                        EnrollmentRule:
+                          kind: interface
+                          operations: ["+ evaluate(student, section): RuleResult"]
+                          choices: {patterns: [{pattern: Strategy, role: Strategy, instance: eligibility-rules}]}
+                        PrerequisiteRule:
+                          kind: class
+                          implements: [EnrollmentRule]
+                          operations: ["+ evaluate(student, section): RuleResult"]
+                          choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                        UnitCapRule:
+                          kind: class
+                          implements: [EnrollmentRule]
+                          operations: ["+ evaluate(student, section): RuleResult"]
+                          choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                    seats:
+                      name: Seat Gateway
+                      technology: Python module
+                      stereotypes: [interfacer]
+                      owns: [seat holds]
+                      responsibilities:
+                        - know: which seats are held for each attempt
+                        - do: hold every requested seat atomically, or none
+                          refines: api-holds
+                      collaborators:
+                        db: {description: writes seat holds to, technology: SQL/TCP}
+                    billing-gateway:
+                      name: Billing Gateway
+                      technology: Python module
+                      stereotypes: [interfacer]
+                      responsibilities:
+                        - do: request tuition charges for a completed enrollment
+                          refines: api-billing
+                      collaborators:
+                        billing:
+                          description: requests tuition charges from
+                          technology: AMQP
+                          connector: message
+                          uses: tuition-charges.charge-tuition
+                          choices:
+                            technology: {chosen: RabbitMQ, alternatives: [synchronous HTTPS call], because: a billing outage must not block enrollment}
+                db:
+                  name: Registration Database
+                  kind: database
+                  technology: PostgreSQL 16
+                  description: Durably stores plans, enrollment attempts, and seat holds.
+                  responsibilities:
+                    - do: durably store plans, enrollment attempts, and seat holds
+            billing:
+              name: Billing System
+              external: true
+              description: Charges tuition and fees for the university.
+              provides:
+                tuition-charges:
+                  name: Tuition Charges
+                  description: Accepts requests to charge tuition to a student's account.
+                  style: message
+                  technology: AMQP, JSON
+                  version: 2
+                  restrictions:
+                    - Only systems holding a university service credential may send to billing.charges.
+                  operations:
+                    charge-tuition:
+                      syntax: send ChargeRequested to the queue billing.charges
+                      input: ChargeRequested
+                      purpose: When a registration system reports a completed enrollment, Billing adds the tuition for the enrolled units to the student's account.
+                      side_effects:
+                        - Adds one charge to the student's account; a repeated message with the same request_id adds nothing.
+                      errors:
+                        malformed-message: the message does not match ChargeRequested; Billing moves it to the queue billing.charges.rejected, where the sender's operators review it
+                        unknown-student: no student account exists for student_id; Billing moves the message to billing.charges.rejected
+                      examples:
+                        - input: {request_id: 7f3c2a, student_id: "905123456", term: 2027-winter, units: 8, amount: 418400}
+                          note: Billing sends no reply; the charge appears on the student's account.
+                  types:
+                    ChargeRequested:
+                      description: One request to charge tuition for one enrollment attempt.
+                      fields:
+                        request_id:
+                          type: string
+                          meaning: identifies one charge request so that a repeated message is charged once
+                        student_id:
+                          type: string
+                          meaning: university id of the student to charge
+                          format: nine digits
+                        term:
+                          type: string
+                          meaning: the term the tuition is for
+                          format: "<year>-<fall | winter | spring | summer>"
+                        units:
+                          type: number
+                          meaning: units the student enrolled in by this attempt
+                          unit: quarter units
+                        amount:
+                          type: integer
+                          meaning: tuition owed for these units, before financial aid and without fees
+                          unit: US cents
+
+          scenarios:
+            enroll:
+              title: Enroll in a planned schedule
+              steps:
+                - web -> coordinator: submits the plan to
+                - coordinator -> policy: asks for an eligibility decision from
+                - alt:
+                    - when: eligible
+                      steps:
+                        - coordinator -> seats: reserves all seats or none through
+                        - coordinator -> billing-gateway: asks for tuition charges through
+                    - when: not eligible
+                      steps:
+                        - coordinator -> web: reports the refusal and its reason to
+
+          deployment:
+            production:
+              name: Production
+              nodes:
+                laptop:
+                  name: Student's computer
+                  kind: device
+                  nodes:
+                    browser:
+                      name: Web browser
+                      kind: environment
+                      technology: "Chrome, Firefox, or Safari"
+                      hosts: [web]
+                      collaborators:
+                        ingress: sends HTTPS requests to
+                campus-cloud:
+                  name: Campus cloud
+                  kind: environment
+                  technology: Kubernetes
+                  nodes:
+                    ingress:
+                      name: Ingress load balancer
+                      kind: infrastructure
+                      technology: NGINX
+                      collaborators:
+                        api-pod: forwards HTTPS requests to
+                    api-pod: {name: API pod, kind: environment, technology: Kubernetes pod, instances: 3, hosts: [api]}
+                    postgres: {name: Managed database, kind: environment, technology: PostgreSQL 16, hosts: [db]}
+                data-centre:
+                  name: University data center
+                  kind: environment
+                  hosts: [billing]
+
+          decisions:
+            one-database:
+              title: Keep plans and seat holds in one relational database
+              status: accepted
+              context: Seat holds and enrollment must commit atomically.
+              decision: One PostgreSQL database with serializable transactions for seat holds.
+              alternatives: [a separate seat service with its own store]
+              consequences: The database is a single point of failure.
+              affects: [db, seats]
+    quiz:
+      title: 'Step 4 — Knowledge Check'
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: advanced
+          # objective: 7 (chapter), tutorial objective 5; spec §11 interface tutorial step 4, item 1 (feedback for "the schema
+          # would reject it" and "add a meaning sentence"). Transfer to a domain no artifact uses (alignment review 2026-11-09):
+          # a valid number read in two units, and what catches it. The stem names a stated unit, so the key is the test.
+          question: 'A warehouse system asks a carrier’s Rate Quotes API for a price with `weight: 12`, meaning 12 pounds. Rate Quotes says that `weight` is a number with the Unit kilograms, and the request passes the carrier’s schema. What does the carrier price, and what would have caught the mistake before a parcel shipped?'
+          options:
+            - 'A 12-kilogram parcel; a test that sends a real quote and checks it against the stated Unit'
+            - 'Nothing; the carrier’s schema rejects 12 because the value is not a valid weight in kilograms'
+            - 'A 12-kilogram parcel; a Meaning such as “weight of the parcel” on `weight` in Rate Quotes'
+            - 'A 12-kilogram parcel; changing the type of `weight` in Rate Quotes from number to decimal'
+          correct_index: 0
+          option_feedback:
+            1: '12 is a number, so the request validates. A schema checks how a value is written, not which unit the sender meant, which is why the mistake goes through.'
+            2: 'A meaning without a unit leaves the same question open: weight in what? Rate Quotes already states the unit, kilograms. The Unit was already stated; only a test that runs both sides shows whether both follow it.'
+            3: 'A decimal type is more precise syntax, but 12 and 12.0 are both valid, and both sides can still read them in different units.'
+          explanation: 'The carrier reads 12 as kilograms and prices a parcel more than twice as heavy as the real one. The description already states the unit, so another line of description would not have helped: the warehouse’s code did not follow it. Like the Mars Climate Orbiter, the failure is a valid number read in two units, and only a test that runs both implementations together, sending a real request and comparing the result with the stated unit, shows the difference before it costs anything.'
+        - type: single
+          difficulty: advanced
+          # objective: 7 (chapter), tutorial objective 5; spec §11 interface tutorial step 4, item 2 (feedback for "every client
+          # must change" and "no version change is ever needed").
+          question: 'Billing’s team wants to add an optional `discount` field to ChargeRequested. Which clients must change, and which later change to the message would need a new version?'
+          options:
+            - 'Only clients that want to send a discount; removing or renaming a field would need one'
+            - 'Every client that sends ChargeRequested; any change to the message needs a new version'
+            - 'No client; no change to the message ever needs a new version while Billing documents it'
+            - 'Only clients that want to send a discount; making `discount` required would not need one'
+          correct_index: 0
+          option_feedback:
+            1: 'An optional field changes nothing for a client that does not send it: its messages still validate and mean what they meant. Only clients that want a discount have work to do.'
+            2: 'Documenting a change does not make it compatible. Removing or renaming a field, or making one required, breaks messages that existing clients already send, so that change needs a new version.'
+            3: 'A required field breaks every existing client that does not send it, so making `discount` required is a breaking change that needs a new version.'
+          explanation: 'Adding an optional field is a compatible extension: existing clients keep working, and only clients that want the new behavior change. Removing or renaming a field, or making a field required, breaks messages that clients already send, so it needs a new version, and every client pays for the migration. Allowing such variability up front costs effort, but it is what lets an interface change without breaking its clients.'
+    solution:
+      files:
+        - path: design.yml
+          language: yaml
+          content: |
+            schema: c4-design/1
+            name: Course Registration
+            description: Students plan a term schedule and enroll in every section of it, or in none.
+            status: proposed
+            enterprise: UCLA
+
+            requirements:
+              FR-07: A student who lacks a prerequisite or would exceed the unit cap is refused before any seat is held, and is told why.
+              FR-09: A student is enrolled in every section of a plan, or in none.
+              FR-11: Every completed enrollment is charged tuition, and a billing outage never delays an enrollment.
+
+            vocabulary:
+              quarter unit: the UCLA credit unit; most courses are worth 4 quarter units
+
+            people:
+              student:
+                name: Student
+                description: Plans and confirms one term schedule.
+                collaborators:
+                  web: plans a schedule and enrolls using
+
+            systems:
+              registration:
+                name: Course Registration
+                description: Plans term schedules and enrolls students in their sections.
+                responsibilities:
+                  - decide: whether a student may enroll in a section
+                    id: sys-eligibility
+                    requirements: [FR-07]
+                  - do: hold a seat in every section of a plan, or in none
+                    id: sys-holds
+                    requirements: [FR-09]
+                  - do: request the tuition charge for every completed enrollment
+                    id: sys-billing
+                    requirements: [FR-11]
+                containers:
+                  web:
+                    name: Planner Web App
+                    kind: browser_app
+                    technology: TypeScript, React
+                    description: Lets students compare draft schedules in the browser.
+                    responsibilities:
+                      - do: let students compare draft schedules
+                    collaborators:
+                      coordinator: {description: submits plans to, technology: JSON/HTTPS, uses: enrollment-api.submit-plan}
+                  api:
+                    name: Registration API
+                    technology: Python, FastAPI
+                    description: Decides eligibility and enrolls students atomically.
+                    responsibilities:
+                      - decide: whether a student may enroll in a section
+                        id: api-eligibility
+                        refines: sys-eligibility
+                      - do: hold a seat in every section of a plan, or in none
+                        id: api-holds
+                        refines: sys-holds
+                      - do: request the tuition charge for every completed enrollment
+                        id: api-billing
+                        refines: sys-billing
+                    provides:
+                      enrollment-api:
+                        name: Enrollment API
+                        description: Enrolls one student in every section of a planned schedule, or in none.
+                        style: rest
+                        technology: JSON/HTTPS
+                        version: 1
+                        restrictions:
+                          - Only the Planner Web App may call it, acting for the signed-in student named in the request.
+                          - A student may send at most 10 requests per minute.
+                        errors:
+                          unauthorized:
+                            code: 401
+                            when: the caller is not signed in as the student named in the request; the client asks the student to sign in again
+                          too-many-requests:
+                            code: 429
+                            when: the student sent more than 10 requests in one minute; the client waits for the Retry-After time and tries again
+                        operations:
+                          submit-plan:
+                            syntax: POST /v1/enrollments
+                            input: EnrollmentRequest
+                            output: EnrollmentOutcome
+                            purpose: When a client submits a student's plan for one term, the API decides whether the student may enroll and then enrolls the student in every section of the plan, or in none.
+                            side_effects:
+                              - An enrolled outcome holds a seat in every section of the plan and requests the tuition charge from Billing.
+                              - A refused outcome changes nothing.
+                            errors:
+                              invalid-plan:
+                                code: 422
+                                when: the plan breaks a constraint of EnrollmentRequest, such as a section listed twice; the client shows the broken constraint
+                              unknown-section:
+                                code: 422
+                                when: a section id does not exist in the requested term; the client shows the section and lets the student remove it
+                            examples:
+                              - input: {student_id: "905123456", term: 2027-winter, section_ids: ["187204", "187310"]}
+                                output: {status: enrolled, units_enrolled: 8, decided_at: "2027-01-05T09:30:00-08:00"}
+                                note: Two 4-unit sections that do not clash.
+                            realizes: [api-eligibility, api-holds, api-billing]
+                        types:
+                          EnrollmentRequest:
+                            description: One student's plan for one term.
+                            fields:
+                              student_id:
+                                type: string
+                                meaning: university id of the student who enrolls
+                                format: nine digits
+                              term:
+                                type: string
+                                meaning: the academic term of every section in the plan
+                                format: "<year>-<fall | winter | spring | summer>"
+                              section_ids:
+                                type: string[]
+                                meaning: the sections the student wants to take together
+                                format: six-digit section ids
+                                constraints: 1 to 8 items, no duplicates
+                          EnrollmentOutcome:
+                            description: The decision for the whole plan.
+                            fields:
+                              status:
+                                type: string
+                                meaning: whether the plan was accepted
+                                values:
+                                  enrolled: the student now holds a seat in every section of the plan
+                                  refused: the student holds no new seat; reason says why
+                              units_enrolled:
+                                type: number
+                                meaning: total units the student holds in the term after this attempt
+                                unit: quarter units
+                              decided_at:
+                                type: datetime
+                                meaning: the moment the API decided the outcome
+                                format: ISO 8601 with a UTC offset
+                              reason:
+                                type: string
+                                meaning: the reason for a refusal in words a student understands
+                                required: false
+                        vocabulary:
+                          section: one scheduled offering of a course in one term
+                          plan: the sections a student wants to take together in one term
+                    choices:
+                      technology:
+                        chosen: FastAPI 0.115 on Python 3.12
+                        alternatives: [Django REST Framework, Flask]
+                        because: typed request models and async database access
+                      styles: [layers]
+                    components:
+                      coordinator:
+                        name: Registration Coordinator
+                        technology: Python module
+                        stereotypes: [coordinator]
+                        responsibilities:
+                          - do: sequence one enrollment attempt
+                          - decide: which step of the attempt runs next
+                        collaborators:
+                          policy: asks for an eligibility decision from
+                          seats: reserves all seats or none through
+                          billing-gateway: asks for tuition charges through
+                        invariants: [never decides eligibility or writes seat state]
+                        quality: [an enrollment outcome appears within 2 s for 95% of attempts]
+                      policy:
+                        name: Enrollment Policy
+                        technology: Python module
+                        stereotypes: [service_provider]
+                        responsibilities:
+                          - decide: whether prerequisites and unit caps allow enrollment
+                            refines: api-eligibility
+                        code:
+                          EnrollmentPolicy:
+                            kind: class
+                            operations: ["+ decide(student, section): Decision"]
+                            collaborators: {EnrollmentRule: delegates each eligibility check to}
+                            choices: {patterns: [{pattern: Strategy, role: Context, instance: eligibility-rules}]}
+                          EnrollmentRule:
+                            kind: interface
+                            operations: ["+ evaluate(student, section): RuleResult"]
+                            choices: {patterns: [{pattern: Strategy, role: Strategy, instance: eligibility-rules}]}
+                          PrerequisiteRule:
+                            kind: class
+                            implements: [EnrollmentRule]
+                            operations: ["+ evaluate(student, section): RuleResult"]
+                            choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                          UnitCapRule:
+                            kind: class
+                            implements: [EnrollmentRule]
+                            operations: ["+ evaluate(student, section): RuleResult"]
+                            choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+                      seats:
+                        name: Seat Gateway
+                        technology: Python module
+                        stereotypes: [interfacer]
+                        owns: [seat holds]
+                        responsibilities:
+                          - know: which seats are held for each attempt
+                          - do: hold every requested seat atomically, or none
+                            refines: api-holds
+                        collaborators:
+                          db: {description: writes seat holds to, technology: SQL/TCP}
+                      billing-gateway:
+                        name: Billing Gateway
+                        technology: Python module
+                        stereotypes: [interfacer]
+                        responsibilities:
+                          - do: request tuition charges for a completed enrollment
+                            refines: api-billing
+                        collaborators:
+                          billing:
+                            description: requests tuition charges from
+                            technology: AMQP
+                            connector: message
+                            uses: tuition-charges.charge-tuition
+                            choices:
+                              technology: {chosen: RabbitMQ, alternatives: [synchronous HTTPS call], because: a billing outage must not block enrollment}
+                  db:
+                    name: Registration Database
+                    kind: database
+                    technology: PostgreSQL 16
+                    description: Durably stores plans, enrollment attempts, and seat holds.
+                    responsibilities:
+                      - do: durably store plans, enrollment attempts, and seat holds
+              billing:
+                name: Billing System
+                external: true
+                description: Charges tuition and fees for the university.
+                provides:
+                  tuition-charges:
+                    name: Tuition Charges
+                    description: Accepts requests to charge tuition to a student's account.
+                    style: message
+                    technology: AMQP, JSON
+                    version: 2
+                    restrictions:
+                      - Only systems holding a university service credential may send to billing.charges.
+                    operations:
+                      charge-tuition:
+                        syntax: send ChargeRequested to the queue billing.charges
+                        input: ChargeRequested
+                        purpose: When a registration system reports a completed enrollment, Billing adds the tuition for the enrolled units to the student's account.
+                        side_effects:
+                          - Adds one charge to the student's account; a repeated message with the same request_id adds nothing.
+                        errors:
+                          malformed-message: the message does not match ChargeRequested; Billing moves it to the queue billing.charges.rejected, where the sender's operators review it
+                          unknown-student: no student account exists for student_id; Billing moves the message to billing.charges.rejected
+                        examples:
+                          - input: {request_id: 7f3c2a, student_id: "905123456", term: 2027-winter, units: 8, amount: 418400}
+                            note: Billing sends no reply; the charge appears on the student's account.
+                    types:
+                      ChargeRequested:
+                        description: One request to charge tuition for one enrollment attempt.
+                        fields:
+                          request_id:
+                            type: string
+                            meaning: identifies one charge request so that a repeated message is charged once
+                          student_id:
+                            type: string
+                            meaning: university id of the student to charge
+                            format: nine digits
+                          term:
+                            type: string
+                            meaning: the term the tuition is for
+                            format: "<year>-<fall | winter | spring | summer>"
+                          units:
+                            type: number
+                            meaning: units the student enrolled in by this attempt
+                            unit: quarter units
+                          amount:
+                            type: integer
+                            meaning: tuition owed for these units, before financial aid and without fees
+                            unit: US cents
+
+            scenarios:
+              enroll:
+                title: Enroll in a planned schedule
+                steps:
+                  - web -> coordinator: submits the plan to
+                  - coordinator -> policy: asks for an eligibility decision from
+                  - alt:
+                      - when: eligible
+                        steps:
+                          - coordinator -> seats: reserves all seats or none through
+                          - coordinator -> billing-gateway: asks for tuition charges through
+                      - when: not eligible
+                        steps:
+                          - coordinator -> web: reports the refusal and its reason to
+
+            deployment:
+              production:
+                name: Production
+                nodes:
+                  laptop:
+                    name: Student's computer
+                    kind: device
+                    nodes:
+                      browser:
+                        name: Web browser
+                        kind: environment
+                        technology: "Chrome, Firefox, or Safari"
+                        hosts: [web]
+                        collaborators:
+                          ingress: sends HTTPS requests to
+                  campus-cloud:
+                    name: Campus cloud
+                    kind: environment
+                    technology: Kubernetes
+                    nodes:
+                      ingress:
+                        name: Ingress load balancer
+                        kind: infrastructure
+                        technology: NGINX
+                        collaborators:
+                          api-pod: forwards HTTPS requests to
+                      api-pod: {name: API pod, kind: environment, technology: Kubernetes pod, instances: 3, hosts: [api]}
+                      postgres: {name: Managed database, kind: environment, technology: PostgreSQL 16, hosts: [db]}
+                  data-centre:
+                    name: University data center
+                    kind: environment
+                    hosts: [billing]
+
+            decisions:
+              one-database:
+                title: Keep plans and seat holds in one relational database
+                status: accepted
+                context: Seat holds and enrollment must commit atomically.
+                decision: One PostgreSQL database with serializable transactions for seat holds.
+                alternatives: [a separate seat service with its own store]
+                consequences: The database is a single point of failure.
+                affects: [db, seats]
+      explanation: |
+        The carrier prices a 12-kilogram parcel: the request is schema-valid, and the unit in Rate Quotes was stated but not followed, the orbiter pattern; an integration test that runs both sides catches it. An optional field is a compatible extension that only interested clients act on; removing or renaming a field, or making one required, needs a new version.

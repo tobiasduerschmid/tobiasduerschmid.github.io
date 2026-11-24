@@ -29,6 +29,10 @@
   description: A class that defines a shared interface or contract but is not meant to be instantiated directly. In Python, ABCs are commonly created with the abc module and abstractmethod decorators.
   related: [OOP]
 
+- term: ADR
+  definition: Architecture Decision Record
+  description: "A short document that records one architecture decision: its context, the options considered, the choice made, and its consequences, so later readers know why the system looks the way it does."
+
 - term: AGREE
   definition: Assume Guarantee Reasoning Environment
   description: A compositional model checker for AADL that reasons about component assumptions and guarantees to establish properties of their composition.
@@ -41,7 +45,7 @@
 
 - term: AMQP
   definition: Advanced Message Queuing Protocol
-  description: An open protocol for message brokers. Producers publish messages to exchanges, which copy each message into the queues whose bindings match it, and consumers read the messages from those queues.
+  description: An open protocol for message brokers, such as RabbitMQ. Producers publish messages to exchanges, which copy each message into the queues whose bindings match it, and consumers read the messages from those queues. A relationship that travels through a queue often names it as its technology.
   related: [TCP]
 
 - term: API
@@ -59,10 +63,25 @@
   description: A tree representation of source code structure used by compilers, interpreters, linters, refactoring tools, and code-analysis systems.
   related: [CST, EBNF]
 
+- term: C4 model
+  definition: Context, Containers, Components, and Code model
+  description: "Simon Brown's way to describe a software architecture at four zoom levels: the system context, its containers (applications and data stores), the components inside a container, and their code. Every diagram is a view of one model."
+  related: [UML, ADR]
+
 - term: CST
   definition: Concrete Syntax Tree
   description: A parse tree that records how grammar productions derive a token sequence, including punctuation and grammar helper rules that an abstract syntax tree may omit.
   related: [AST, EBNF]
+
+- term: DLL
+  definition: Dynamic-Link Library
+  description: A file of compiled code that programs on Windows load while they run. A DLL is not a C4 container, because it runs inside the program that loads it.
+  related: [JAR]
+
+- term: DSL
+  definition: Domain-Specific Language
+  description: A small language made for one kind of problem, such as Structurizr's language for C4 models or SQL for database queries.
+  related: [SQL]
 
 - term: EBNF
   definition: Extended Backus–Naur Form
@@ -143,8 +162,8 @@
 
 - term: DB
   definition: Database
-  description: An organized store of persistent data that services query and update, usually through a database management system. Component names such as Order DB name one running database.
-  related: [DBMS, SQL]
+  description: An organized, persistent store of data that programs query and update, usually through a database management system. Component names such as Order DB name one running database. In a C4 model, a database that a system's own code reads and writes is one of that system's containers.
+  related: [DBMS, SQL, C4 model]
 
 - term: DBMS
   definition: Database Management System
@@ -318,10 +337,29 @@
   description: The newer 128-bit version of IP, designed to provide vastly more address space than IPv4.
   related: [IP]
 
+- term: IR
+  definition: Intermediate Representation
+  description: A structured form between a source and its outputs that tools can read and transform. A design IR, such as a design.yml file, is the one text from which every diagram view is computed.
+  related: [C4 model]
+
+- term: ISO 8601
+  definition: International Organization for Standardization standard 8601 for dates and times
+  description: The international standard for writing dates and times as text, such as 2027-01-05T09:30:00-08:00. A value can carry its offset from UTC, so two systems read the same moment even in different time zones.
+  related: [UTC]
+
 - term: ISP
   definition: Interface Segregation Principle or Internet Service Provider
   description: In design-principle content, ISP usually means Interface Segregation Principle, where clients should not depend on methods they do not use. In networking content, ISP can mean Internet Service Provider.
   related: [SOLID, DNS]
+
+- term: IT
+  definition: Information Technology
+  description: The computing systems, networks, and services an organization runs, and, as in central IT, the team that operates them for the whole organization.
+
+- term: JAR
+  definition: Java Archive
+  description: A file that packages compiled Java classes and their resources. An executable JAR that runs on its own is a C4 container; a library JAR runs inside one.
+  related: [JVM, DLL]
 
 - term: JIT
   definition: Just-In-Time
@@ -526,6 +564,11 @@
   description: A DBMS based on relational tables, schemas, keys, and SQL queries.
   related: [DBMS, SQL]
 
+- term: RDD
+  definition: Responsibility-Driven Design
+  description: A design method by Rebecca Wirfs-Brock and colleagues that gives each element responsibilities to know, do, or decide, and names the collaborators it asks for help.
+  related: [CRC]
+
 - term: RegEx
   definition: Regular Expression
   description: A pattern language for matching, validating, searching, or transforming text.
@@ -581,6 +624,11 @@
   description: An application-layer protocol used to send and relay email between mail servers.
   related: [TCP, POP]
 
+- term: SOAP
+  definition: Simple Object Access Protocol
+  description: A protocol for exchanging XML messages between systems under a formal contract that describes every operation, usually sent over HTTP.
+  related: [XML, HTTP]
+
 - term: SOLID
   definition: Single-responsibility, Open-closed, Liskov substitution, Interface segregation, Dependency inversion
   description: An acronym for five object-oriented design principles popularised by Robert C. Martin. The principles guide how to keep classes small, loosely coupled, and easy to change.
@@ -630,6 +678,15 @@
   definition: System Under Test
   description: The component or system whose behavior a test is exercising. Test doubles often replace collaborators around the SUT.
   related: [TDD]
+
+- term: SVG
+  definition: Scalable Vector Graphics
+  description: An XML-based image format for drawings made of shapes and text, which stays sharp at every size. The diagrams on this site are SVG images.
+  related: [XML]
+
+- term: TBD
+  definition: To Be Decided
+  description: Marks a choice that is still open, such as a technology nobody has picked yet. Writing TBD is more honest than inventing an answer.
 
 - term: TCP
   definition: Transmission Control Protocol

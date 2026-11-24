@@ -1,0 +1,205 @@
+{
+  "id": "initial-pseudostate-added-by-a-palette-drop",
+  "family": "behaviour",
+  "type": "state",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+  "steps": [
+    {
+      "do": "drag",
+      "from": {
+        "target": {
+          "role": "button",
+          "name": "Add element: Initial ●"
+        }
+      },
+      "to": {
+        "target": {
+          "css": "#uml-pg-preview-pane"
+        },
+        "at": {
+          "x": 0.85,
+          "y": 0.2
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n[*] --> New\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Added an initial transition. Use Target endpoint in Properties to rewire it to an existing state."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — [*] → New\":\n  - heading \"Relation — [*] → New\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Transition\" [selected]\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"__initial__0 - Initial pseudostate\"\n    - option \"Idle\"\n    - option \"Busy\"\n    - option \"Done\"\n    - option \"__final__0 - Final pseudostate\"\n    - option \"__initial__1 - Initial pseudostate\"\n    - option \"New\"\n    - option \"[*] - Initial / final pseudostate\" [selected]\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"__initial__0 - Initial pseudostate\"\n    - option \"Idle\"\n    - option \"Busy\"\n    - option \"Done\"\n    - option \"__final__0 - Final pseudostate\"\n    - option \"__initial__1 - Initial pseudostate\"\n    - option \"New\" [selected]\n    - option \"[*] - Initial / final pseudostate\"\n  - text: Label\n  - textbox \"Label\"\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "edge-4"
+    ],
+    "focus": {
+      "tag": "button",
+      "id": "",
+      "role": "button",
+      "name": "Add element: Initial ●",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - paragraph: This connection could not be matched to one line of the source, so it cannot be edited here.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n[*] --> New\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — [*] → New\":\n  - heading \"Relation — [*] → New\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Transition\" [selected]\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"__initial__0 - Initial pseudostate\"\n    - option \"Idle\"\n    - option \"Busy\"\n    - option \"Done\"\n    - option \"__final__0 - Final pseudostate\"\n    - option \"__initial__1 - Initial pseudostate\"\n    - option \"New\"\n    - option \"[*] - Initial / final pseudostate\" [selected]\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"__initial__0 - Initial pseudostate\"\n    - option \"Idle\"\n    - option \"Busy\"\n    - option \"Done\"\n    - option \"__final__0 - Final pseudostate\"\n    - option \"__initial__1 - Initial pseudostate\"\n    - option \"New\" [selected]\n    - option \"[*] - Initial / final pseudostate\"\n  - text: Label\n  - textbox \"Label\"\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "edge-4"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "state",
+      "before": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+      "operation": {
+        "op": "element.add",
+        "revision": "rd8d825cb:88",
+        "tool": "initial",
+        "name": null,
+        "into": null,
+        "anchor": null,
+        "placed": "dropped",
+        "facts": {
+          "at": {
+            "x": 375.1058708639706,
+            "y": 19.235294117647072
+          },
+          "positions": {
+            "__initial__0": {
+              "x": 82,
+              "y": 30
+            },
+            "Idle": {
+              "x": 30,
+              "y": 101
+            },
+            "Busy": {
+              "x": 30,
+              "y": 204
+            },
+            "Done": {
+              "x": 30,
+              "y": 307
+            },
+            "__final__0": {
+              "x": 79,
+              "y": 412
+            }
+          }
+        },
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n[*] --> New\n@enduml"
+    }
+  ]
+}

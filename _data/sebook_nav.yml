@@ -64,6 +64,16 @@ topics:
     url: /SEBook/software_architecture.html
     subtopics:
 
+    - name: C4 Model
+      url: /SEBook/architecture/c4
+      items:
+        - name: The C4 Model in Practice (Tutorial)
+          url: /SEBook/architecture/c4-tutorial
+        - name: Describe an Interface (Tutorial)
+          url: /SEBook/architecture/c4-interfaces-tutorial
+        - name: C4 Editor
+          url: /SEBook/tools/c4-editor
+
     - name: AADL
       url: /SEBook/architecture/aadl
       items:

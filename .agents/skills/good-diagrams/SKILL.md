@@ -54,11 +54,11 @@ These are the 10 rules a reviewer should check against. Each is tied to a specif
 
 **1. One diagram = one takeaway.** If it teaches two things, split it into two figures. (Coherence Principle.)
 
-**2. Pick one abstraction level and commit.** Don't mix a user-facing service box with a database's internal schema on the same figure. The C4 model's whole point is that Context, Container, Component, and Code are *separate* diagrams. Mixing levels makes peers unidentifiable.
+**2. Pick one abstraction level and commit.** Don't mix a user-facing service box with a database's internal schema on the same figure. The C4 model's whole point is that Context, Container, Component, and Code are *separate* diagrams. Mixing levels makes peers unidentifiable. For C4 views, read this as **one decomposed scope per view**: a container view opens exactly one software system, and a component view exactly one container. The people, external systems, and neighbouring containers that the scope talks to may appear as context; they are not decomposed and look different from the scope's own elements (see "C4 views" below).
 
 **3. Place the diagram adjacent to the prose that references it.** Same screen, same scroll. The Spatial Contiguity Principle shows co-location produces learning gains (effect size 1.10, 22/22 experiments). If the paragraph that introduces the diagram is two screens up, readers lose the thread.
 
-**4. Labels go on the thing, not in a distant legend.** Split-Attention Effect (Chandler & Sweller): forcing readers to fuse an image with a separate key inflates cognitive load. Put the role name inside the box, the verb on the arrow, the multiplicity at the endpoint — not in a side table.
+**4. Labels go on the thing, not in a distant legend.** Split-Attention Effect (Chandler & Sweller): forcing readers to fuse an image with a separate key inflates cognitive load. Put the role name inside the box, the verb on the arrow, the multiplicity at the endpoint — not in a side table. C4 views are no exception: every box states its type in text (`[Container: Python, FastAPI]`, "external" where it applies), and the small legend inside the figure only repeats the shapes, line styles, and colours actually used, so no box has to be decoded from the legend.
 
 **5. Signal what matters most.** Use weight, color, numbered callouts, or arrow emphasis to mark the critical path. Supporting infrastructure should recede visually. Mayer's Signaling Principle: cued elements are processed more deeply.
 
@@ -66,7 +66,7 @@ These are the 10 rules a reviewer should check against. Each is tied to a specif
 
 **7. Keep notation consistent with the rest of the book.** Same shape means the same thing everywhere. If a cylinder is a database in the architecture chapter, it cannot be a queue in the state-machine chapter. Check neighboring chapters before inventing notation.
 
-**8. Prefer the most specific diagram type available.** A state machine drawn in freeform is worse than one drawn with `language-uml-state` — the renderer gives you proper initial/final markers, guard syntax, and transition labels for free. Same for commit DAGs (use `diagram-gitgraph`), directory trees (use `diagram-folder-tree`), class hierarchies (use `language-uml-class`), set-membership comparisons (use `diagram-venn`, not freeform circles), and database schemas (use `diagram-er` for Chen-notation entities/relationships).
+**8. Prefer the most specific diagram type available.** A state machine drawn in freeform is worse than one drawn with `language-uml-state` — the renderer gives you proper initial/final markers, guard syntax, and transition labels for free. Same for commit DAGs (use `diagram-gitgraph`), directory trees (use `diagram-folder-tree`), class hierarchies (use `language-uml-class`), set-membership comparisons (use `diagram-venn`, not freeform circles), database schemas (use `diagram-er` for Chen-notation entities/relationships), and software architecture at C4 zoom levels (use the `c4` type, a view of one model, not boxes drawn by hand).
 
 **9. Cap complexity per figure.** Soft caps that have worked in SEBook:
    - Class diagram: ≤ 7 classes visible at once; show only methods/fields relevant to the point (Fowler's "sketch mode").
@@ -83,6 +83,16 @@ These are the 10 rules a reviewer should check against. Each is tied to a specif
    - **Anonymous instance:** `participant proxy as : PackageProxy` shows `: PackageProxy` when the diagram has only one object of that type and its name adds nothing.
    - **Several objects of one type** are different instances of the *same* type: `agentA: Agent` and `agentB: Agent`, or `workerA: DatasetWorker` and `workerB: DatasetWorker`. Never invent `AgentA` / `AgentB` or `WorkerPod` / `OtherWorker` as if they were separate classes; that misstates the model and hides that both run the same code.
    - Name types in the singular (`: ResponseTeam`, not `: Responders`), and give every lifeline in a diagram the same notation. A human actor uses `actor user: User` in the same form.
+
+## C4 views
+
+C4 diagrams follow the rules above, with three reconciliations that the C4 renderer builds in and authors must not undo:
+
+- **One decomposed scope per view.** Each view answers one question for one audience at one zoom level. Its scope boundary (dashed, labelled "Course Registration [Software System]") is the only thing opened up. Elements outside it are context, not peers. A figure that opens two systems, or shows components of two containers, mixes levels; split it into two views.
+- **Context neighbours look different.** People, external systems, and elements outside the scope are drawn outside the boundary, external elements in grey *and* with the word "external", so the difference never depends on colour alone (WCAG 1.4.1).
+- **Type text on every box, plus a small legend.** The type line carries the meaning (rule 4); the legend lists only the encodings the view uses. Every relationship is a sentence from initiator to receiver ("submits plans to"), with the technology where it matters.
+
+Choose the view by the question: context for scope and outside dependencies, containers for technology and deployable units, components for one container's internals, dynamic for one scenario, deployment for where instances run, and `interface <id>` or `interfaces of <element>` for what a client may rely on. Container and context views are usually enough; add component and code views only where they answer a real question. Keep each view under the complexity caps of rule 9 (about ten boxes); the checker warns above 20 elements (`c4/large-view`). Write the caption around the takeaway, as for any figure. A clean model check means the model is consistent, not that the architecture is adequate. The `diagrams` skill covers the syntax, and the `c4-model` skill (if available) covers modelling judgement.
 
 ## Placement and caption conventions
 
@@ -109,7 +119,8 @@ Go through each diagram on the page and ask:
 8. **Redundancy** — every box, arrow, color carries information? Strip what doesn't.
 9. **Right type** — is this freeform when a specific type (`language-uml-state`, `diagram-gitgraph`, `diagram-folder-tree`, etc.) would fit? Switch.
 10. **Co-location** — is the diagram on the same screen as its introducing paragraph? Move it.
-11. **Instances in sequence diagrams** — is every lifeline labeled `name: Type` or `: Type`, with several objects of one type shown as instances of that one type? Fix bare type names and invented per-object types.
+11. **C4 scope** — does each C4 view decompose exactly one scope, show neighbours as context outside its boundary, and give every box its type in text? Split or relabel.
+12. **Instances in sequence diagrams** — is every lifeline labeled `name: Type` or `: Type`, with several objects of one type shown as instances of that one type? Fix bare type names and invented per-object types.
 
 ## How this skill pairs with others
 

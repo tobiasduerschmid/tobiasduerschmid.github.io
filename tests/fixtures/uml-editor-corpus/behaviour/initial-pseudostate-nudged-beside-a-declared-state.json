@@ -1,0 +1,196 @@
+{
+  "id": "initial-pseudostate-nudged-beside-a-declared-state",
+  "family": "behaviour",
+  "type": "state",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nstate Idle\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Initial pseudostate — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "ArrowRight"
+    }
+  ],
+  "after": {
+    "text": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"__initial__0\" x=92 y=30\nnode \"Busy\" x=30 y=204\nnode \"Done\" x=30 y=307\nnode \"__final__0\" x=79 y=412\n@endlayout\nstate Idle @pos(30, 101)\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Initial pseudostate\":\n  - heading \"Initial pseudostate\" [level=2]\n  - button \"✕ Delete\"\n  - paragraph: This pseudostate is defined by an outgoing transition. Select that transition to change its target endpoint.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "__initial__0"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Initial pseudostate — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "__initial__0"
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nstate Idle\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Initial pseudostate\":\n  - heading \"Initial pseudostate\" [level=2]\n  - button \"✕ Delete\"\n  - paragraph: This pseudostate is defined by an outgoing transition. Select that transition to change its target endpoint.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "__initial__0"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Initial pseudostate — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "__initial__0"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"__initial__0\" x=92 y=30\nnode \"Busy\" x=30 y=204\nnode \"Done\" x=30 y=307\nnode \"__final__0\" x=79 y=412\n@endlayout\nstate Idle @pos(30, 101)\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Initial pseudostate\":\n  - heading \"Initial pseudostate\" [level=2]\n  - button \"✕ Delete\"\n  - paragraph: This pseudostate is defined by an outgoing transition. Select that transition to change its target endpoint.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "__initial__0"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Initial pseudostate — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "__initial__0"
+    }
+  },
+  "operations": [
+    {
+      "type": "state",
+      "before": "@startuml\nstate Idle\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+      "operation": {
+        "op": "layout.set",
+        "revision": "rd5e79c68:99",
+        "positions": {
+          "__initial__0": {
+            "x": 92,
+            "y": 30
+          }
+        },
+        "routes": [],
+        "facts": {
+          "positions": {
+            "Idle": {
+              "x": 30,
+              "y": 101
+            },
+            "__initial__0": {
+              "x": 82,
+              "y": 30
+            },
+            "Busy": {
+              "x": 30,
+              "y": 204
+            },
+            "Done": {
+              "x": 30,
+              "y": 307
+            },
+            "__final__0": {
+              "x": 79,
+              "y": 412
+            }
+          },
+          "shiftedRoutes": {}
+        },
+        "undo": {
+          "key": "nudge:__initial__0"
+        }
+      },
+      "after": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"__initial__0\" x=92 y=30\nnode \"Busy\" x=30 y=204\nnode \"Done\" x=30 y=307\nnode \"__final__0\" x=79 y=412\n@endlayout\nstate Idle @pos(30, 101)\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml"
+    }
+  ]
+}

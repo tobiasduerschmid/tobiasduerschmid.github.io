@@ -98,11 +98,13 @@
   <script src="{{ '/js/sebook-code-preferences.js' | relative_url }}" defer></script>
   <script src="{{ '/js/sebook-language-viewport.js' | relative_url }}" defer></script>
   <script src="{{ '/js/sebook-language-switcher.js' | relative_url }}" defer></script>
-  {% if combined_has_uml_code_labs %}
+  {% if combined_has_uml_code_labs or combined_has_c4 or combined_has_c4_editor %}
+  {% if combined_has_c4 or combined_has_c4_editor %}{% include c4-scripts.html %}{% endif %}
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
-  {% include uml-code-lab-scripts.html %}
   {% endif %}
+  {% if combined_has_uml_code_labs %}{% include uml-code-lab-scripts.html %}{% endif %}
+  {% if combined_has_c4_editor %}{% include c4-editor-scripts.html %}{% endif %}
   {% if combined_has_diagram_challenges %}{% include tutorial-diagram-challenge-embedded-assets.html %}{% endif %}
   {% include scripts.html %}
 

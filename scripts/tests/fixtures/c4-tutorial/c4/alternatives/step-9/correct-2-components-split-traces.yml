@@ -1,0 +1,116 @@
+# CORRECT (traces split across two DO responsibilities; relationships declared one level deeper on components of the Loans API): must pass T1 and T2.
+schema: c4-design/1
+name: Makerspace Equipment Loans
+description: Members borrow tools from the campus makerspace.
+
+requirements:
+  MS-1: A member can borrow a tool only after completing that tool's safety training.
+  MS-2: Each tool is lent to at most one member at a time, and desk staff can see who has each tool.
+  MS-3: A member who returns a tool more than two days late cannot borrow any tool for the next seven days.
+
+people:
+  member:
+    name: Member
+    description: A student or staff member who borrows tools from the makerspace.
+    collaborators:
+      desk: taps a campus ID card to borrow and return tools at
+  staff:
+    name: Desk Staff
+    description: Hands tools out, takes them back, and teaches tool trainings.
+    collaborators:
+      desk: lends tools, takes returns, and records completed trainings using
+
+systems:
+  loans:
+    name: Makerspace Loans
+    description: Lends tools to trained members and tracks who has each tool.
+    responsibilities:
+      - decide: whether a member may borrow a tool
+        id: sys-may-borrow
+        requirements: [MS-1, MS-3]
+      - know: which members completed each tool's safety training
+        id: sys-trainings
+        requirements: [MS-1]
+      - do: lend each tool to at most one member at a time
+        id: sys-one-holder
+        requirements: [MS-2]
+      - do: block a member from borrowing for seven days after a return more than two days late
+        id: sys-late-block
+        requirements: [MS-3]
+      - know: which member has each tool
+        id: sys-holders
+        requirements: [MS-2]
+      - know: which members returned a tool more than two days late, and when
+        id: sys-late-returns
+        requirements: [MS-3]
+    containers:
+      desk:
+        name: Desk App
+        description: Lets desk staff lend tools, take returns, and record completed trainings.
+        kind: browser_app
+        technology: TypeScript, React
+        responsibilities:
+          - do: let desk staff lend tools, take returns, and record completed trainings
+        collaborators:
+          checkout:
+            description: sends loans, returns, and training completions to
+            technology: JSON/HTTPS
+      api:
+        name: Loans API
+        description: Decides who may borrow and records every loan, return, and completed training.
+        technology: Java, Spring Boot
+        responsibilities:
+          - decide: whether a member may borrow a tool
+            refines: sys-may-borrow
+          - know: which members completed each tool's safety training
+            refines: sys-trainings
+          - do: lend each tool to at most one member at a time
+            refines: sys-one-holder
+          - know: which member has each tool
+            refines: sys-holders
+          - know: which members returned a tool more than two days late, and when
+            id: api-late-returns
+            refines: sys-late-returns
+          - do: block a member from borrowing for seven days after a return more than two days late
+            refines: sys-late-block
+        owns: [loans, training completions]
+        components:
+          checkout:
+            name: Checkout Coordinator
+            description: Sequences each loan and return.
+            technology: Spring component
+            stereotypes: [coordinator]
+            responsibilities:
+              - do: sequence one loan or return
+            collaborators:
+              card: {description: asks whose campus ID card was tapped from, technology: JSON/HTTPS}
+              ledger: asks to record each loan and return through
+          ledger:
+            name: Loan Ledger
+            description: Records loans, returns, and completed trainings.
+            technology: Spring component
+            stereotypes: [information_holder]
+            responsibilities:
+              - know: which members returned a tool more than two days late, and when
+                refines: api-late-returns
+            collaborators:
+              db: {description: reads and writes loans and training completions in, technology: SQL/TCP}
+      db:
+        name: Loans Database
+        description: Durably stores loans, returns, and completed trainings.
+        kind: database
+        technology: PostgreSQL 16
+        responsibilities:
+          - do: durably store loans, returns, and completed trainings
+  card:
+    name: Campus Card System
+    description: Identifies students and staff by their campus ID cards.
+    external: true
+
+views:
+  for-manager:
+    view: context of loans
+    description: For the makerspace manager approving the system, shows who uses Makerspace Loans and which campus systems it depends on. The container view is left out, because technology choices do not change the approval.
+  for-developer:
+    view: containers of loans
+    description: For the developer building the borrowing rule, shows which application decides whether a member may borrow and what it asks other systems. A component view is left out until the Loans API's insides are designed.

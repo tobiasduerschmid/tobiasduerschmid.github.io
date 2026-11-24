@@ -20,11 +20,18 @@
   {% if print_challenge_steps.size > 0 %}
   <link rel="stylesheet" href="{{ '/css/tutorial-diagram-challenge.css' | relative_url }}">
   {% endif %}
+  {% if site.data.tutorials[page.tutorial].backend == 'c4' %}
+  <link rel="stylesheet" href="{{ '/css/tutorial-c4.css' | relative_url }}">
+  {% endif %}
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js"
           integrity="sha384-T/0lMUdJpd2S1ZHtRiofG3htU3xPCrFVeAQ1UUE2TJwlEJSV5NUwn30kP28n238E"
           crossorigin="anonymous" defer></script>
   <script src="{{ '/js/mermaid-theme.js' | relative_url }}" defer></script>
+  {%- if site.data.tutorials[page.tutorial].backend == 'c4' %}
+  {%- comment -%} C4 tutorials preload the C4 toolkit, so their instruction figures render before printing (spec §3.2, §11). {%- endcomment -%}
+  {% include c4-scripts.html %}
+  {%- endif %}
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
   <script src="{{ '/js/object-reference-graph.js' | relative_url }}" defer></script>
@@ -124,13 +131,32 @@
         }
       }
 
+      // The bundle draws fences already in the page as soon as it runs, before uml-auto-describe.js (deferred after
+      // it) can attach its detailed description. C4 figures keep their source, so they are described here.
+      function describeEarlyC4Figures() {
+        if (!window.UMLAutoDescribe) return;
+        document.querySelectorAll('.uml-c4-diagram-container').forEach(function (container) {
+          var source = container.querySelector('script[data-c4-source]');
+          var figure = container.closest('figure') || container.parentElement;
+          if (!source || figure.querySelector('[data-uml-verbose="true"]')) return;
+          window.UMLAutoDescribe.apply(container, 'c4', JSON.parse(source.textContent));
+        });
+      }
+
+      // Resolves once the ArchUML figures are drawn, so automatic printing waits for them.
       function renderUmlDiagrams() {
-        if (window.UMLShared && typeof window.UMLShared.renderAll === 'function') {
-          window.UMLShared.renderAll();
-          makeScrollableCodeFocusable();
-        } else {
-          setTimeout(renderUmlDiagrams, 80);
-        }
+        return new Promise(function (resolve) {
+          (function attempt() {
+            if (window.UMLShared && typeof window.UMLShared.renderAll === 'function') {
+              window.UMLShared.renderAll();
+              describeEarlyC4Figures();
+              makeScrollableCodeFocusable();
+              resolve();
+            } else {
+              setTimeout(attempt, 80);
+            }
+          })();
+        });
       }
 
       // A plan-first diagram challenge prints its results card from the
@@ -154,8 +180,8 @@
         makeScrollableCodeFocusable();
         renderInlineSummaryMarkdown();
         renderChallengeResults();
-        renderUmlDiagrams();
         const diagramsReady = Promise.all([
+          renderUmlDiagrams(),
           window.SebookMermaid.render(document),
           window.ObjectReferenceLab.initFrom(document)
         ]).then(function () {

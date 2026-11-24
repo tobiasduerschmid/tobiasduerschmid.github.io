@@ -26,6 +26,7 @@ info_nav_title: "Keyboard shortcuts"
       <li><a href="#refactoring">Refactoring engine</a></li>
       <li><a href="#chat">Tutor chat</a></li>
       <li><a href="#diagrams">UML &amp; diagram viewers</a></li>
+      <li><a href="#c4-editor">C4 editor</a></li>
       <li><a href="#quizzes">Quizzes, flashcards &amp; Parsons problems</a></li>
       <li><a href="#popouts">Popout windows &amp; modals</a></li>
       <li><a href="#tooltips">Tooltips</a></li>
@@ -97,7 +98,7 @@ info_nav_title: "Keyboard shortcuts"
       </tr>
       <tr>
         <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>Enter</kbd></td>
-        <td>In Python, C++, browser, Java, Haskell, or mixed-backend tutorial code editors, run the current program. In a TLA+ tutorial editor, check the configured model. In an AADL tutorial editor, analyze the current architecture. On macOS, use <kbd>Cmd</kbd> (the <abbr title="Command" data-no-tooltip="true">⌘</abbr> key)<span class="key-sep">+</span><kbd>Enter</kbd>.</td>
+        <td>In Python, C++, browser, Java, Haskell, or mixed-backend tutorial code editors, run the current program. In a TLA+ tutorial editor, check the configured model. In an AADL tutorial editor, analyze the current architecture. In a C4 tutorial&rsquo;s YAML editor, run Test My Work (see the C4 editor section). On macOS, use <kbd>Cmd</kbd> (the <abbr title="Command" data-no-tooltip="true">⌘</abbr> key)<span class="key-sep">+</span><kbd>Enter</kbd>.</td>
       </tr>
       <tr>
         <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>P</kbd></td>
@@ -502,6 +503,14 @@ info_nav_title: "Keyboard shortcuts"
         <td>Nudge the focused element by 10 px (or 1 px with <kbd>Shift</kbd>).</td>
       </tr>
       <tr>
+        <td class="shortcuts-keys-cell"><kbd>Shift</kbd><span class="key-sep">+</span><kbd>F10</kbd> or <kbd>Menu</kbd> on a focused diagram item</td>
+        <td>Open the item&rsquo;s menu, as a right-click does. An element&rsquo;s menu offers &ldquo;Move&hellip;&rdquo;; a line&rsquo;s menu offers &ldquo;Add a bend&rdquo;, &ldquo;Move bend <em>n</em>&hellip;&rdquo;, &ldquo;Remove bend <em>n</em>&rdquo;, and &ldquo;Straighten&rdquo;. The &ldquo;&#8943;&rdquo; button beside the one selected element or line opens the same menu.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>, then <kbd>Enter</kbd>, while a move runs</td>
+        <td>After &ldquo;Move&hellip;&rdquo;, &ldquo;Add a bend&rdquo;, or &ldquo;Move bend <em>n</em>&hellip;&rdquo;: move the item or the bend by 10 px (or exactly 1 px with <kbd>Shift</kbd>), then place it with <kbd>Enter</kbd>. A click on the canvas places it too. The diagram changes only when it is placed.</td>
+      </tr>
+      <tr>
         <td class="shortcuts-keys-cell"><kbd>↑</kbd> <kbd>↓</kbd> on a sequence activation bar</td>
         <td>Move where the selected activation bar <em>starts</em> by one message (when the object becomes active). <kbd>Shift</kbd><span class="key-sep">+</span><kbd>↑</kbd>/<kbd>↓</kbd> moves where it <em>stops</em>; <kbd>Alt</kbd><span class="key-sep">+</span><kbd>↑</kbd>/<kbd>↓</kbd> moves the whole bar. <kbd>Delete</kbd> removes it (drops the matching <code>activate</code>/<code>deactivate</code> pair).</td>
       </tr>
@@ -519,7 +528,7 @@ info_nav_title: "Keyboard shortcuts"
       </tr>
       <tr>
         <td class="shortcuts-keys-cell"><kbd>Esc</kbd></td>
-        <td>Cancel a callout drag without changing its attachment, cancel a drag from an element&rsquo;s <kbd>+</kbd> handle before it connects anything, cancel the active tool, close the relation chooser popup or a context menu, exit fullscreen mode, or deselect the current element.</td>
+        <td>Cancel a callout drag without changing its attachment, cancel a running move (nothing is changed), cancel a drag from an element&rsquo;s <kbd>+</kbd> handle before it connects anything, cancel the active tool, close the relation chooser popup or a context menu, exit fullscreen mode, or deselect the current element.</td>
       </tr>
       <tr>
         <td class="shortcuts-keys-cell"><kbd>↑</kbd> <kbd>↓</kbd> or <kbd>Tab</kbd> in a context menu or chooser</td>
@@ -588,6 +597,101 @@ info_nav_title: "Keyboard shortcuts"
       <tr>
         <td class="shortcuts-keys-cell"><kbd>←</kbd> <kbd>→</kbd> on a pane divider</td>
         <td>On a focused divider between the source, diagram, and properties panes, make the pane beside it smaller or larger by 10 px (40 px with <kbd>Shift</kbd>). On a narrow screen the panes stack and the divider lies flat: use <kbd>↑</kbd> <kbd>↓</kbd> there.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="c4-editor">C4 editor</h2>
+  <p class="shortcuts-note">Shortcuts in the C4 editor on <a href="{{ '/SEBook/tools/c4-editor' | relative_url }}">/SEBook/tools/c4-editor</a> and in the editors inside C4 chapters and tutorials. Letter keys act only while the drawing (or, for <kbd>Enter</kbd>, <kbd>F2</kbd>, and <kbd>Delete</kbd>, an outline item) has focus; they never fire while you type in a field, the outline, a menu, or the YAML tab. Every shortcut also has a button or menu command.</p>
+  <table class="shortcuts-table">
+    <caption>Keyboard shortcuts for the C4 editor.</caption>
+    <thead>
+      <tr><th scope="col">Keys</th><th scope="col">Action</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&rarr;</kbd> <kbd>&darr;</kbd></td>
+        <td>In the drawing, move focus between its elements. On the canvas region itself, scroll the drawing.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Enter</kbd></td>
+        <td>Show the inside of the focused element (its containers, components, or code). In an interfaces view, open the focused element&rsquo;s own interfaces view; in a code view nothing opens. While Add relationship or a message waits for its source, choose the focused element or lifeline. In the outline, open the focused item.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>&uarr;</kbd></td>
+        <td>Go up to the view that contains this one. On macOS, use <kbd>Option</kbd><span class="key-sep">+</span><kbd>&uarr;</kbd>.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>F2</kbd></td>
+        <td>Rename the focused element in the drawing or the outline. In a dynamic view, edit the focused step&rsquo;s description or the focused fragment&rsquo;s first guard. <kbd>Enter</kbd> keeps the new text; <kbd>Esc</kbd> cancels.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Delete</kbd><span class="key-sep">/</span><kbd>Backspace</kbd></td>
+        <td>Delete the focused element in the drawing or the outline. The editor lists what refers to it and asks you to confirm first.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>M</kbd></td>
+        <td>Move the focused element: arrow keys move it (<kbd>Shift</kbd> for larger steps), <kbd>Enter</kbd> places it and pins its position, <kbd>Esc</kbd> cancels. In a dynamic view, <kbd>&uarr;</kbd> and <kbd>&darr;</kbd> choose a new place for the focused step or fragment, and <kbd>&larr;</kbd> and <kbd>&rarr;</kbd> a new place for the focused lifeline; <kbd>Enter</kbd> moves it there. After &ldquo;Add a bend&rdquo; or &ldquo;Move bend <em>n</em>&hellip;&rdquo; on a line, the arrow keys move the bend and <kbd>Enter</kbd> places it.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>C</kbd></td>
+        <td>Start a relationship from the focused element, then move to its target with the arrow keys and press <kbd>Enter</kbd>; <kbd>Esc</kbd> cancels. The toolbar&rsquo;s Add relationship button does the same. On a step or fragment of a dynamic view, open the form for a new step after it.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Shift</kbd><span class="key-sep">+</span><kbd>F10</kbd> / Menu key</td>
+        <td>Open the focused element&rsquo;s commands in the drawing (Move&hellip;, Add relationship, Move to&hellip;, Zoom in, Change id&hellip;, Delete), as a right-click, a long press, or its &ldquo;&#8943;&rdquo; button does. On a focused line of a code or deployment view, its commands add and remove its bends: &ldquo;Add a bend&rdquo;, &ldquo;Move bend <em>n</em>&hellip;&rdquo;, &ldquo;Remove bend <em>n</em>&rdquo;, and &ldquo;Straighten&rdquo;. A message of a dynamic view has no bends.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>A</kbd></td>
+        <td>Open the Add menu of element types while the drawing has focus.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>F</kbd></td>
+        <td>Turn full screen on or off while the drawing has focus. Where the browser lets the editor keep <kbd>Esc</kbd> (Chrome and Edge), the editor fills the screen and <kbd>Esc</kbd> closes its menus and dialogs first; holding <kbd>Esc</kbd> down leaves full screen at once. In other browsers the editor fills the browser window instead.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Shift</kbd><span class="key-sep">+</span><kbd>?</kbd></td>
+        <td>Show the editor&rsquo;s help while the drawing has focus.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>=</kbd> / <kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>&minus;</kbd></td>
+        <td>Zoom the drawing in or out while it has focus. This changes the drawing&rsquo;s magnification, not the C4 level.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>0</kbd></td>
+        <td>Reset the drawing to 100% while it has focus.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>Z</kbd></td>
+        <td>Undo the last change to the model while the drawing or the YAML tab has focus. Both share one history, so undo in the YAML tab can take back a change made in the drawing, and the reverse. Form fields keep their own undo while you type in them.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>Y</kbd> / <kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>Shift</kbd><span class="key-sep">+</span><kbd>Z</kbd></td>
+        <td>Redo while the drawing or the YAML tab has focus. On macOS, use <kbd>Cmd</kbd><span class="key-sep">+</span><kbd>Shift</kbd><span class="key-sep">+</span><kbd>Z</kbd>.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Esc</kbd></td>
+        <td>Close the innermost open layer, one per press: a popover, then a menu, then the open &ldquo;Responsibilities to refine&rdquo; tray when focus is in it (focus returns to its button), then a dialog, then a move in progress, then full screen; finally clear the selection.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>&larr;</kbd> <kbd>&rarr;</kbd> <kbd>Home</kbd> <kbd>End</kbd></td>
+        <td>In the outline tree, move between items; <kbd>&rarr;</kbd> and <kbd>&larr;</kbd> expand and collapse a branch. Typing letters jumps to the next item whose name starts with them. <kbd>Shift</kbd><span class="key-sep">+</span><kbd>F10</kbd> or the Menu key opens the item&rsquo;s commands.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>Home</kbd> <kbd>End</kbd></td>
+        <td>In an open menu (Add, More, an element&rsquo;s &ldquo;&#8943;&rdquo; menu, Refine into&hellip;), move between commands; a letter jumps to the next command that starts with it, <kbd>Enter</kbd> or <kbd>Space</kbd> chooses, <kbd>Esc</kbd> or <kbd>Tab</kbd> closes the menu. <kbd>&darr;</kbd> or <kbd>&uarr;</kbd> on a menu button opens it.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>&larr;</kbd> <kbd>&rarr;</kbd> <kbd>Home</kbd> <kbd>End</kbd></td>
+        <td>In a tab list (the Problems, Review, Explain, and YAML panels, or an interface&rsquo;s Syntactic view and Semantic view), move to another tab and show it.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>Enter</kbd></td>
+        <td>In tutorials: runs Test My Work (the step's tests) in every check-display mode; on a step that asks you to Submit for review first, it is disabled until you have.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>S</kbd></td>
+        <td>In tutorials: passed to the tutorial, which saves your work as in its code editors.</td>
       </tr>
     </tbody>
   </table>
@@ -683,7 +787,7 @@ info_nav_title: "Keyboard shortcuts"
   </table>
 
   <h2 id="conflicts">Conflicts with browser and operating system shortcuts</h2>
-  <p>The shortcuts above are scoped to specific widgets — they only fire while the widget is focused. None of them override browser-wide shortcuts (such as <kbd>Ctrl</kbd>+<kbd>T</kbd> for a new tab or <kbd>Ctrl</kbd>+<kbd>W</kbd> for closing a tab) or operating system shortcuts. The debugger keys (<kbd>F5</kbd>, <kbd>F10</kbd>, <kbd>F11</kbd>) shadow the browser&rsquo;s reload and devtools shortcuts; this only happens during a debug session while focus is in the debugger or its code editor. Move focus outside them to use the browser&rsquo;s default behaviour.</p>
+  <p>The shortcuts above are scoped to specific widgets — they only fire while the widget is focused. None of them override browser-wide shortcuts (such as <kbd>Ctrl</kbd>+<kbd>T</kbd> for a new tab or <kbd>Ctrl</kbd>+<kbd>W</kbd> for closing a tab) or operating system shortcuts. The debugger keys (<kbd>F5</kbd>, <kbd>F10</kbd>, <kbd>F11</kbd>) shadow the browser&rsquo;s reload and devtools shortcuts; this only happens during a debug session while focus is in the debugger or its code editor. Move focus outside them to use the browser&rsquo;s default behaviour. On a focused diagram item of the UML editors, Shift+F10 and the Menu key open the item's own menu in place of the browser's context menu, as a right-click there does. In the C4 editor, <kbd>Ctrl</kbd>+<kbd>=</kbd>, <kbd>Ctrl</kbd>+<kbd>&minus;</kbd>, and <kbd>Ctrl</kbd>+<kbd>0</kbd> magnify the drawing instead of the page, and <kbd>Ctrl</kbd>+<kbd>Z</kbd> and <kbd>Ctrl</kbd>+<kbd>Y</kbd> undo and redo the model; the magnification keys only work while focus is in the editor&rsquo;s drawing, so the browser&rsquo;s page zoom works everywhere else, and the undo keys work in the drawing and in the YAML tab, where they replace the text field&rsquo;s own undo.</p>
 
   <h2 id="reporting">Reporting accessibility issues</h2>
   <p>If a shortcut on this page does not work, or if you encounter an interactive widget that cannot be operated by keyboard, please <a href="https://github.com/tobiasduerschmid/tobiasduerschmid.github.io/issues">open an issue on GitHub</a>.</p>
