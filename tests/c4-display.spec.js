@@ -225,6 +225,46 @@ function keyboardStops(containers) {
   }));
 }
 
+/**
+ * For each figure, how wide its drawing is shown against the widths the readable-fit rule allows: the pane (the
+ * figure's content box), the drawing's natural width (one SVG unit per CSS px), and its readable width, at which its
+ * smallest label is exactly the figure's text size (derived from the width and smallest label it is shown with).
+ */
+function shownWidths(containers) {
+  return containers.map((container) => {
+    const svg = container.querySelector('svg');
+    const style = getComputedStyle(container);
+    const labels = [...svg.querySelectorAll('text')].filter((label) => label.textContent.trim()).map((label) => {
+      const matrix = label.getScreenCTM();
+      return parseFloat(getComputedStyle(label).fontSize) * Math.hypot(matrix.c, matrix.d);
+    });
+    const shown = svg.getBoundingClientRect().width;
+    const textSize = parseFloat(style.fontSize);
+    const smallestLabel = Math.min(...labels);
+    return {
+      name: container.getAttribute('aria-label'),
+      shown: Math.round(shown),
+      pane: Math.round(container.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)),
+      natural: Math.round(svg.viewBox.baseVal.width),
+      readable: Math.round(shown * textSize / smallestLabel),
+      overflowing: container.scrollWidth > container.clientWidth + 1,
+    };
+  });
+}
+
+/** The focus ring of the focused element: its style and width, and its contrast against the page's background. */
+function focusRing() {
+  const element = document.activeElement;
+  const style = getComputedStyle(element);
+  const { parse, contrastRatio, backgroundOf } = window.c4ColourMaths;
+  return {
+    focusVisible: element.matches(':focus-visible'),
+    style: style.outlineStyle,
+    width: parseFloat(style.outlineWidth),
+    contrast: Math.round(contrastRatio(parse(style.outlineColor).rgb, backgroundOf(element.parentElement)) * 100) / 100,
+  };
+}
+
 /** The position of every element box of an SVG drawing (given as markup), keyed by element id. */
 function nodePositions(svgText) {
   const svg = new DOMParser().parseFromString(svgText, 'image/svg+xml').documentElement;
@@ -411,6 +451,24 @@ for (const pageFigures of PAGES) {
       expect(stops.some((stop) => stop.overflowing), 'some figure overflows at 320 px').toBe(true);
       expect(stops.flatMap((stop) => stop.focusableInside)).toEqual([]);
     });
+
+    // The readable-fit rule: a figure takes its pane's width, but never less than its readable width (its smallest
+    // label at the figure's text size) and never more than its natural width unless that is needed to reach the
+    // readable width. A figure whose readable width exceeds the pane scrolls at exactly that width.
+    for (const width of [320, 1440]) {
+      test(`every C4 figure fits its pane at paragraph size or scrolls at paragraph size at ${width} px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 1000 });
+        const figures = await openWithFigures(page, pageFigures);
+        await page.evaluate(() => document.fonts.ready);
+        const widths = await figures.evaluateAll(shownWidths);
+        const misfits = widths.filter(({ shown, pane, natural, readable, overflowing }) =>
+          Math.abs(shown - Math.max(readable, Math.min(natural, pane))) > 1 || overflowing !== shown > pane + 1);
+        expect(misfits, 'shown width is max(readable, min(natural, pane)), and only a wider drawing scrolls').toEqual([]);
+        const fitControls = page.locator('figure').filter({ has: c4Containers(page) })
+          .getByRole('button', { name: /^(Fit diagram to screen|Restore previous diagram view)$/ });
+        await expect(fitControls, 'no control shrinks a C4 figure below paragraph size').toHaveCount(0);
+      });
+    }
 
     test('dark mode inverts the C4 SVG once and keeps baked fills identical', async ({ page }) => {
       test.slow();
@@ -648,6 +706,35 @@ test.describe(`the lazily loaded C4 figure on ${LAZY_URL}`, () => {
     await figure.press('Tab');
     await expect(figure).not.toBeFocused();
   });
+
+  test('the figure scrolls in a narrow window and stops being a keyboard stop when the window widens', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 800 });
+    const figure = await openLazyFigure(page);
+    await expect(figure, 'the figure fits a wide window').not.toHaveAttribute('tabindex', '0');
+    await page.setViewportSize({ width: 320, height: 800 });
+    await expect(figure, 'a narrow window makes it scroll').toHaveAttribute('tabindex', '0');
+    expect(await figure.evaluateAll(labelsBelowParagraphSize), 'labels stay readable while it scrolls').toEqual([]);
+    await page.setViewportSize({ width: 1440, height: 800 });
+    await expect(figure, 'a wide window fits it again').not.toHaveAttribute('tabindex', '0');
+  });
+
+  for (const dark of [false, true]) {
+    test(`a scrolling C4 figure reached by keyboard shows a focus ring of at least 3:1 in ${dark ? 'dark' : 'light'} mode`, async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 800 });
+      const figure = await openLazyFigure(page);
+      if (dark) await switchToDarkMode(page, figure, LAZY_FIGURES);
+      await expect(figure).toHaveAttribute('tabindex', '0');
+      // Arrive by keyboard: from the figure, Tab away and Shift+Tab back.
+      await figure.focus();
+      await figure.press('Tab');
+      await page.keyboard.press('Shift+Tab');
+      await expect(figure).toBeFocused();
+      const ring = await page.evaluate(focusRing);
+      expect(ring, 'a solid ring at least 2 px wide').toMatchObject({ focusVisible: true, style: 'solid' });
+      expect(ring.width).toBeGreaterThanOrEqual(2);
+      expect(ring.contrast, 'the ring against the page (WCAG 1.4.11)').toBeGreaterThanOrEqual(3);
+    });
+  }
 });
 
 // ---- Interface description cards (spec §6.6, J11) ------------------------------------------------------------

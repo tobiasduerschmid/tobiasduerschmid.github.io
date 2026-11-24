@@ -374,3 +374,58 @@ test('the reference deployment view routes the browser through the ingress', asy
     assert.deepEqual(fromBrowser, ['browser -> ingress'], 'no path leads from the browser straight to the API pod or its container');
   });
 });
+
+// ---- Figures in compact layout (pane-fitting compact, js/ArchUML/REFERENCE.md "layout compact") ------------------
+// A figure is read, not edited: a code or interfaces view without a stored layout is drawn in ArchUML's compact
+// layout, which makes it narrower at paragraph size, so it fits more panes before it has to scroll. The editor draws
+// the same view without it (renderDelegatedView), because its gestures store positions against the plain metrics.
+
+/**
+ * The width of the drawing in #diagram in units of its smallest text. A page shows a drawing at least as large as
+ * makes that text the paragraph size, so this is its narrowest readable width in em.
+ */
+const readableEm = (page) => page.evaluate(() => {
+  const svg = document.querySelector('#diagram svg');
+  const svgMatrix = svg.getScreenCTM();
+  const sizes = [...svg.querySelectorAll('text')].filter((text) => text.textContent.trim()).map((text) => {
+    const local = svgMatrix.inverse().multiply(text.getScreenCTM());
+    return parseFloat(getComputedStyle(text).fontSize) * Math.hypot(local.c, local.d);
+  });
+  return svg.viewBox.baseVal.width / Math.min(...sizes);
+});
+
+/** Draws `text`'s view into #diagram as the C4 editor's canvas does (renderDelegatedView, no options). */
+const drawAsEditor = (page, text) => page.evaluate((source) => {
+  const core = window.ArchUMLC4;
+  const viewModel = core.project(core.load(source), core.extractEmbed(source).selector);
+  window.ArchUMLC4Render.renderDelegatedView(document.getElementById('diagram'), viewModel, {});
+}, text);
+
+for (const [selector, model] of [['code of policy', REFERENCE_MODEL], ['interfaces of api', INTERFACES_MODEL]]) {
+  test(`a figure of ${selector} is narrower at paragraph size than the editor's drawing of it`, async () => {
+    await withC4(async (page) => {
+      await drawAsEditor(page, embed(selector, model));
+      const editor = await readableEm(page);
+      await renderEmbed(page, embed(selector, model));
+      const figure = await readableEm(page);
+      assert.ok(figure < 0.9 * editor, `the figure spans ${figure.toFixed(1)} em, the editor's drawing ${editor.toFixed(1)} em`);
+    });
+  });
+}
+
+test("a figure of a view with a stored layout keeps the editor's drawing of it", async () => {
+  const stored = `${REFERENCE_MODEL.replace(/\n*$/, '\n')}layout:\n  code of policy:\n    positions:\n      EnrollmentPolicy: [80, 40]\n`;
+  await withC4(async (page) => {
+    // Where every box and text sits, and how large each text is: the arrangement and the metrics it was stored with.
+    const drawing = () => page.evaluate(() => {
+      const svg = document.querySelector('#diagram svg');
+      const attributes = (element, names) => names.map((name) => element.getAttribute(name)).join(' ');
+      return [...svg.querySelectorAll('rect, text')].map((element) => `${element.tagName} ${attributes(element, ['x', 'y', 'width', 'height', 'font-size'])}`)
+        .concat(svg.getAttribute('viewBox'));
+    });
+    await drawAsEditor(page, embed('code of policy', stored));
+    const editor = await drawing();
+    await renderEmbed(page, embed('code of policy', stored));
+    assert.deepEqual(await drawing(), editor);
+  });
+});
