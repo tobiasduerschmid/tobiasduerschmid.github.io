@@ -2,7 +2,8 @@
 // The dynamic view `dynamic enroll` edited end to end on the C4 editor (UML-view editing spec §5.3, §7.3–§7.7; plan
 // Task 45): what the options say about each lifeline and step; the step and fragment forms that confirm every new step
 // and fragment, on every path (a drag, the pointer alone, the keyboard alone), each as one undo step announced with its
-// place, and Escape adding nothing; moving steps and lifelines without a drag; a selected step's row in the scenario
+// place, and Escape adding nothing; a step dragged to another place, and a dragged step a lock refuses put back where it
+// was; moving steps and lifelines without a drag; a selected step's row in the scenario
 // form; focus after the forms and across a redraw; two editors on one page, each with its own forms; and the
 // accessibility of a message being drawn and of both forms.
 //
@@ -19,6 +20,7 @@ const {
 } = require('./helpers/c4-uml-editing.js');
 const dynamicView = require('../js/ArchUML/c4/editor/c4-editor-uml-dynamic.js');
 const refusalTable = require('../js/ArchUML/c4/editor/c4-editor-uml-refusals.js');
+const { createEditorState } = require('../js/ArchUML/c4/editor/c4-editor-state.js');
 
 const VIEW = 'dynamic enroll';
 const SCENARIO = 'enroll';
@@ -151,6 +153,41 @@ function messageY(editor, line) {
     const box = segment.getBoundingClientRect();
     return box.top + box.height / 2;
   }, { layer: HIT_LAYER, id: `seqmsg:${line}` });
+}
+
+/** The client centre of the drawn message on line `line`, where a press starts a drag of the message. */
+function messageCentre(editor, line) {
+  return canvas(editor).evaluate((region, { layer, id }) => {
+    const segment = region.querySelector(`${layer} .uml-pg-edge-hitbox[data-route-id="${id}"]`);
+    const box = segment.getBoundingClientRect();
+    return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+  }, { layer: HIT_LAYER, id: `seqmsg:${line}` });
+}
+
+/** Where the drawing puts the message on line `line`: the drawing-unit y of its segment's start. */
+function messageDrawnAt(editor, line) {
+  return canvas(editor).evaluate((region, { layer, id }) => Number(region
+    .querySelector(`${layer} .uml-pg-edge-hitbox[data-route-id="${id}"]`).getAttribute('y1')), { layer: HIT_LAYER, id: `seqmsg:${line}` });
+}
+
+/** The client y of the bottom of the drawn fragment on line `line` (the lower edge of its frame). */
+function fragmentBottom(editor, line) {
+  return canvas(editor).evaluate((region, id) => {
+    const svg = region.querySelector('.c4-editor__diagram svg');
+    const fragment = window.ArchUMLDiagramEditorParts.scene.findRenderedFragments(svg).find((each) => each.id === id);
+    const frame = fragment.frameBox;
+    return new DOMPoint(frame.x, frame.y + frame.height).matrixTransform(svg.getScreenCTM()).y;
+  }, `frag:${line}`);
+}
+
+/** A press on the drawn message on line `line`, dragged straight up or down to client height `y`, and released. */
+async function dragMessage(editor, line, y) {
+  const page = editor.page();
+  const from = await messageCentre(editor, line);
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(from.x, y, { steps: 10 });
+  await page.mouse.up();
 }
 
 /** The client y of the top of the drawn fragment on line `line` (its frame, where its operator label sits). */
@@ -452,6 +489,50 @@ test.describe('drags', () => {
       contextOf(INTERFACES_REFERENCE));
     expect(await changes(page, 1, 'one undo step')).toBe(applied(INTERFACES_REFERENCE, plan));
     await expect(messageRegion(editor)).toContainText(plan.message);
+  });
+
+  test('dragging step 1 down between step 2 and the alt moves it there, as one announced change', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const editor = await openUmlEditor(page, { view: VIEW });
+    const line = lineOfStep(INTERFACES_REFERENCE, { containerPath: [], index: 0 });
+
+    await dragMessage(editor, line, await heightBetween(editor, INTERFACES_REFERENCE, STEP_2, ALT));
+
+    const plan = dynamicView.plan({ op: 'message.move', ref: `seqmsg:${line}`, at: ALT }, contextOf(INTERFACES_REFERENCE));
+    expect(await changes(page, 1, 'one undo step')).toBe(applied(INTERFACES_REFERENCE, plan));
+    await expect(messageRegion(editor)).toContainText(plan.message);
+    expect(errors, 'the drag raises no error').toEqual([]);
+  });
+
+  test('dragging step 2 below the alt, the last step, moves it to the end of the scenario', async ({ page }) => {
+    const editor = await openUmlEditor(page, { view: VIEW });
+    const line = lineOfStep(INTERFACES_REFERENCE, STEP_2);
+
+    await dragMessage(editor, line, (await fragmentBottom(editor, lineOfStep(INTERFACES_REFERENCE, ALT))) + 20);
+
+    const end = contextOf(INTERFACES_REFERENCE).uml.source.scenarioEnd;
+    const plan = dynamicView.plan({ op: 'message.move', ref: `seqmsg:${line}`, at: end }, contextOf(INTERFACES_REFERENCE));
+    expect(await changes(page, 1, 'one undo step')).toBe(applied(INTERFACES_REFERENCE, plan));
+    expect(stepsOf(applied(INTERFACES_REFERENCE, plan)).at(-1), 'step 2 is the scenario\'s last step now')
+      .toBe('coordinator -> policy: asks for an eligibility decision from');
+  });
+
+  test('a step dragged in a scenario the task locks is drawn where it was again and says why, and nothing is written', async ({ page }) => {
+    const lockedFields = ['scenarios.enroll'];
+    const editor = await openUmlEditor(page, { view: VIEW, lockedFields });
+    const line = lineOfStep(INTERFACES_REFERENCE, { containerPath: [], index: 0 });
+    const drawnAt = await messageDrawnAt(editor, line);
+
+    await dragMessage(editor, line, await heightBetween(editor, INTERFACES_REFERENCE, STEP_2, ALT));
+
+    const plan = dynamicView.plan({ op: 'message.move', ref: `seqmsg:${line}`, at: ALT }, contextOf(INTERFACES_REFERENCE));
+    const lock = createEditorState({ text: INTERFACES_REFERENCE, view: VIEW, lockedFields, host: { onTextChange: () => {} } })
+      .lockRefusal({ op: 'batch', commands: plan.commands });
+    await expect(messageRegion(editor)).toContainText('Not done:');
+    await expect(messageRegion(editor)).toContainText(lock.message);
+    await expect.poll(() => messageDrawnAt(editor, line), { message: 'the preview is put back' }).toBe(drawnAt);
+    expect((await hostLog(page)).texts, 'nothing was written').toEqual([]);
   });
 
   test('a plain click on Enrollment Policy\'s head, which may be dragged, still selects it and changes nothing', async ({ page }) => {
