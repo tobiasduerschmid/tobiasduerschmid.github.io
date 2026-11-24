@@ -76,6 +76,36 @@ The interface starts with the editable specification and an expandable public fu
 
 Check Python works without a model. It checks the current editor contents and reports only conceptual mismatches, syntax/runtime trouble, or unavailable checks. If a model is already downloaded, it loads when needed to suggest questions from the public prose and failed categories. Passing checks and syntax/runtime errors need no model initialization. It never receives hidden test source, input/output values, or exception text. Its suggestions may be wrong; failed code is not proof of a faulty specification. Passing checks is not proof of completeness. Generated Python is previewed, applied only by a separate action, and checked through Python only. Edits/navigation invalidate stale suggestions and cancel in-flight work. Feedback appears below the actions only when there is something to report.
 
+## Design review checks
+
+Design review tutorials (`backend: none`, `llm: true`, steps with
+`design_review`; see the tutorial-authoring skill) use the same model panel,
+titled "Review assistant" on review steps, to read a learner's review comment
+of an AI agent's UML design. The comment and the model's ratings follow the
+tutorial's save preference (`designReviews` in the progress record); nothing
+is sent to a server.
+
+The model only classifies. `js/browser-llm/design-review-judge.mjs` asks
+three narrow questions, one per criterion (does the comment identify the
+flaw; explain what goes wrong in the Given scenario; propose a fix that
+removes the cause), each against the step's authored answer key, and asks
+for `VERDICT: YES|PARTLY|NO` plus a quote from the comment (48 output tokens,
+greedy decoding). The app then checks the quote against the comment (an
+unsupported verdict becomes NO), downgrades a YES whose comment contains none
+of the criterion's authored concept signals to PARTLY, and turns the verdicts
+into two ratings: correctness and convincingness (the latter also needs a
+diagram element of the flaw to be named). Everything the learner reads is
+authored coaching selected by these verdicts, except the verified quotes.
+Comments are capped at 900 characters so every prompt stays within the ONNX
+engine's 768-token input limit.
+
+This is formative feedback with known limits: a small model can miss a
+paraphrase or accept a near miss, the signal guard can misjudge unusual
+wording, and passing a check is not proof of understanding. The step is
+completed by comparing with the expert review, never by the model's rating,
+and everything works without a model. Evaluate prompt changes against a
+labeled set of comments in a real browser before claiming accuracy.
+
 ## Engines and selection
 
 - WebLLM 0.2.87: WebGPU, MLC `q4f16_1`, **1,743,386,562 model bytes** including metadata/tokenizer, pinned at revision `5213029e7ae2ad46baf9657aa491186e56cd34d6`.
