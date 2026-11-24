@@ -21,7 +21,11 @@ const facts = JSON.parse(fs.readFileSync(
 
 const steps = config.steps;
 const challengeSteps = steps.filter(step => step.diagram_challenge);
-const codeFirstSteps = challengeSteps.filter(step => step.diagram_challenge.mode !== 'plan-first');
+// The results card has one row per challenge that answers set questions: every one but the plan-first capstone.
+const resultSteps = challengeSteps.filter(step => step.diagram_challenge.mode !== 'plan-first');
+const isDiagramFirst = challengeSpec => challengeSpec.mode === 'diagram-first';
+/** The last stage compares answers from the code with the diagram's; without a code attempt it reviews them. */
+const doneName = challengeSpec => (isDiagramFirst(challengeSpec) ? 'Review your answers' : 'Compare your answers');
 const stepByKey = key => steps.find(step => step.key === key);
 const sharedFileLines = filePath => config.shared_files.find(file => file.path === filePath).content.split('\n');
 
@@ -320,9 +324,17 @@ async function answerFollowUpAndEvidence(page, challengeSpec) {
   await followUp.getByRole('button', { name: checkLabel(challengeSpec.follow_up), exact: true }).click();
   await expect(followUp.getByText(`${challengeSpec.follow_up.length} of ${challengeSpec.follow_up.length} correct`)).toBeVisible();
   const evidenceCheck = challengeSpec.evidence_check;
+  const showDone = followUp.getByRole('button', { name: isDiagramFirst(challengeSpec) ? 'Show the review' : 'Show the comparison' });
   if (evidenceCheck) {
     const questions = [evidenceCheck.claim_question, evidenceCheck.question].filter(Boolean);
     const group = followUp.getByRole('group', { name: 'Check the diagram against the code' });
+    if (evidenceCheck.graded === false) {
+      // Practice: said so, and the stage can be left without it.
+      await expect(group.getByText('Practice: this check sends you into the code and does not count toward your score.')).toBeVisible();
+      await expect(showDone).toBeVisible();
+    } else {
+      await expect(showDone).toBeHidden();
+    }
     for (const [index, question] of questions.entries()) {
       const field = questions.length > 1 ? numberedGroup(group, index + 1) : stemGroup(group, question);
       await choose(field, question, keyIndices(question));
@@ -330,12 +342,13 @@ async function answerFollowUpAndEvidence(page, challengeSpec) {
     await group.getByRole('button', { name: checkLabel(questions), exact: true }).click();
     await expect(group.getByText(`${questions.length} of ${questions.length} correct`)).toBeVisible();
   }
-  await followUp.getByRole('button', { name: 'Show the comparison' }).click();
-  await expect(stage(page, 'Compare your answers').getByRole('heading', { name: 'Compare your answers' })).toBeFocused();
+  await showDone.click();
+  const name = doneName(challengeSpec);
+  await expect(stage(page, name).getByRole('heading', { name })).toBeFocused();
 }
 
 async function finishChallenge(page, challengeSpec) {
-  const compare = stage(page, 'Compare your answers');
+  const compare = stage(page, doneName(challengeSpec));
   const debrief = challengeSpec.debrief;
   await compare.getByLabel(new RegExp('^' + textPattern(debrief.consolidation_prompt) + '$'))
     .fill('The view put each relation I had searched for next to the others.');
@@ -452,42 +465,29 @@ test.describe('the whole tutorial, as a student', () => {
     await completeCodeFirst(step.key);
   });
 
-  test('Event Consumers: every challenge state survives a reload', async () => {
+  test('Event Consumers: the diagram is there from the start, and every state survives a reload', async () => {
     test.setTimeout(240_000);
     const step = stepByKey('event-consumers');
     const challengeSpec = step.diagram_challenge;
-    const fromCode = () => stage(page, 'Answer from the code');
+    const withDiagram = () => stage(page, 'Answer with the diagram');
     const firstQuestion = challengeSpec.questions[0];
-    await expect(page.getByRole('button', { name: 'Diagram', exact: true })).toHaveAttribute('aria-disabled', 'true');
 
-    // Exploring, with a draft.
-    await writeAttempt(page, step);
-    await choose(numberedGroup(fromCode(), 1), firstQuestion, [wrongIndex(firstQuestion)]);
-    await reload();
-    await expect(fromCode().getByLabel('Your hypothesis, in one sentence')).toHaveValue(`My hypothesis for ${step.title}.`);
-    for (const ref of Object.values(pinRefs(challengeSpec))) {
-      await expect(fromCode().getByRole('button', { name: ref, exact: true })).toBeVisible();
-    }
-    await expectChosen(numberedGroup(fromCode(), 1), firstQuestion, [wrongIndex(firstQuestion)]);
-    await audit('exploring');
-
-    // Locked: part A is read-only, the reply and the diagram stay available.
-    await answerFromCode(page, step);
-    await lockIn(page, 'Lock in my answer');
+    // No attempt from the code: the reply, its diagram, and the questions at once.
     await expect(diagramRegion(page, 'component')).toBeVisible();
-    await expect(fileTree(page)).toBeHidden();
-    await audit('locked, maximized diagram');
-    await reload();
-    await expect(stage(page, 'The agent’s reply')).toBeVisible();
-    await expect(fromCode().getByRole('button', { name: 'Lock in my answer' })).toBeHidden();
-    // The reload returns to the diagram; Part A is a closed summary.
-    await expect(diagramRegion(page, 'component')).toBeVisible();
-    await openLockedAnswer(page);
-    await expectChosen(numberedGroup(fromCode(), 1), firstQuestion, keyIndices(firstQuestion));
-    await expect(optionsOf(numberedGroup(fromCode(), 1), firstQuestion).first()).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Diagram', exact: true })).not.toHaveAttribute('aria-disabled', 'true');
-    await page.getByRole('button', { name: 'Diagram', exact: true }).click();
+    await expect(stage(page, 'Answer from the code')).toHaveCount(0);
+    await expect(challenge(page).getByRole('button', { name: /^Lock in/ })).toHaveCount(0);
+    await expect(challenge(page).getByRole('list', { name: 'Challenge progress' }).getByRole('listitem'))
+      .toHaveText(['With the diagram', 'New questions', 'Review']);
+    await expect(nextButton(page)).toBeDisabled();
+    await audit('diagram first, maximized diagram');
+
+    // With the diagram, with a draft.
+    await choose(numberedGroup(withDiagram(), 1), firstQuestion, [wrongIndex(firstQuestion)]);
+    await reload();
     await expect(diagramRegion(page, 'component')).toBeVisible();
+    await expectChosen(numberedGroup(withDiagram(), 1), firstQuestion, [wrongIndex(firstQuestion)]);
+    // The code stays one click away.
     await openEvidence(page, challengeSpec);
     await audit('code beside the diagram');
 
@@ -495,14 +495,17 @@ test.describe('the whole tutorial, as a student', () => {
     await answerWithDiagram(page, challengeSpec, { firstWrong: true });
     await reload();
     await expect(stage(page, followUpName(challengeSpec))).toBeVisible();
-    await expect(numberedGroup(stage(page, 'Answer with the diagram'), 1).getByText('Correct', { exact: true })).toBeVisible();
+    await expect(numberedGroup(withDiagram(), 1).getByText('Correct', { exact: true })).toBeVisible();
 
-    // Done.
+    // Done: a review, with no answers from the code to compare.
     await answerFollowUpAndEvidence(page, challengeSpec);
     await expect(nextButton(page)).toBeDisabled();
+    const review = stage(page, 'Review your answers');
+    await expect(review.getByText('From the code', { exact: true })).toHaveCount(0);
+    await expect(review.getByText(/^Your experience, not an experiment: with the diagram /)).toBeVisible();
     await finishChallenge(page, challengeSpec);
     await reload();
-    await expect(stage(page, 'Compare your answers').getByText('You completed this challenge. Further checks are practice.')).toBeVisible();
+    await expect(stage(page, 'Review your answers').getByText('You completed this challenge. Further checks are practice.')).toBeVisible();
     await continueToNextStep(page, step);
   });
 
@@ -530,7 +533,27 @@ test.describe('the whole tutorial, as a student', () => {
     await continueToNextStep(page, step);
   }
 
-  test('Failure Paths: the repro output, the trace, and the evidence check', async () => {
+  /** One diagram-first challenge: the reply and its diagram at once, then the review. */
+  async function completeDiagramFirst(key) {
+    const step = stepByKey(key);
+    const challengeSpec = step.diagram_challenge;
+    await expect(stepHeading(page, step)).toBeVisible();
+    await expect(stage(page, 'Answer from the code')).toHaveCount(0);
+    await expect(nextButton(page)).toBeDisabled();
+    if (challengeSpec.reply.contrast) {
+      await expect(diagramRegion(page, diagramKind(challengeSpec.reply.contrast.diagram))).toBeVisible();
+      await expect(stage(page, 'Answer with the diagram')).toHaveCount(0);
+      await answerContrast(page, challengeSpec);
+    }
+    await expect(diagramRegion(page, diagramKind(challengeSpec.reply.diagrams[0]))).toBeVisible();
+    await openEvidence(page, challengeSpec);
+    await answerWithDiagram(page, challengeSpec);
+    await answerFollowUpAndEvidence(page, challengeSpec);
+    await finishChallenge(page, challengeSpec);
+    await continueToNextStep(page, step);
+  }
+
+  test('Failure Paths: the repro output, the sequence view, and a practice check against the code', async () => {
     test.setTimeout(180_000);
     // The task shows what the repro prints: symptoms only, the trip's
     // status and the charge, never the cause (no refund).
@@ -538,17 +561,17 @@ test.describe('the whole tutorial, as a student', () => {
     await expect(repro).toContainText(': failed');
     await expect(repro).toContainText('$1,136.80');
     await expect(repro).not.toContainText(/refund/i);
-    await completeCodeFirst('failed-trips');
+    await completeDiagramFirst('failed-trips');
   });
 
-  test('What the Data Model Allows: a predicted view and a class diagram', async () => {
+  test('What the Data Model Allows: a class diagram from the start', async () => {
     test.setTimeout(180_000);
-    await completeCodeFirst('data-model');
+    await completeDiagramFirst('data-model');
   });
 
   test('Outages: the contrast view comes first, then the component view', async () => {
     test.setTimeout(180_000);
-    await completeCodeFirst('outages');
+    await completeDiagramFirst('outages');
   });
 
   test('Latency on the Checkout Path: the repro output times the checkout', async () => {
@@ -556,7 +579,7 @@ test.describe('the whole tutorial, as a student', () => {
     // The task shows the total the repro prints, with one decimal, as facts.json measured it.
     await expect(page.getByRole('code').filter({ hasText: 'Time until the fan saw it' }))
       .toContainText(`${facts.checkout_latency.elapsed_seconds.toFixed(1)} s`);
-    await completeCodeFirst('checkout-latency');
+    await completeDiagramFirst('checkout-latency');
   });
 
   test('The Right View: the plan, four diagrams, and the results card', async () => {
@@ -594,18 +617,18 @@ test.describe('the whole tutorial, as a student', () => {
     await answerWithDiagram(page, challengeSpec);
     await answerFollowUpAndEvidence(page, challengeSpec);
 
-    // One row per code-first challenge: all answered from the code (after a
-    // changed first choice), the diagram's first check, and the new question.
+    // One row per challenge. Only the first was answered from the code (after
+    // a changed first choice); each has the diagram's first check and the new question.
     const compare = stage(page, 'Compare your answers');
     const table = compare.getByRole('table', { name: 'Correct answers and times for each diagram challenge' });
-    await expect(table.getByRole('row')).toHaveCount(codeFirstSteps.length + 1);
-    for (const codeFirst of codeFirstSteps) {
+    await expect(table.getByRole('row')).toHaveCount(resultSteps.length + 1);
+    for (const codeFirst of resultSteps) {
       const spec = codeFirst.diagram_challenge;
       const total = spec.questions.length;
       // Event Consumers' first check with the diagram missed question 1.
       const firstCheck = codeFirst.key === 'event-consumers' ? total - 1 : total;
       await expect(table.getByRole('row', { name: new RegExp('^' + escapeRegExp(codeFirst.title)) }).getByRole('cell')).toHaveText([
-        new RegExp(`^${total} of ${total} correct\\d.* · Fairly sure$`),
+        isDiagramFirst(spec) ? 'Not asked' : new RegExp(`^${total} of ${total} correct\\d.* · Fairly sure$`),
         new RegExp(`^${firstCheck} of ${total} correct\\d`),
         new RegExp(`^${spec.follow_up.length} of ${spec.follow_up.length} correct\\d`),
         new RegExp('^' + textPattern(spec.debrief.hidden_by) + '$'),
@@ -623,7 +646,10 @@ test.describe('the whole tutorial, as a student', () => {
     for (const [index, step] of challengeSteps.entries()) {
       const reply = step.diagram_challenge.reply;
       const block = blocks.nth(index);
-      await expect(block.getByRole('heading', { name: 'Shown after you lock in' })).toBeVisible();
+      const diagramFirst = isDiagramFirst(step.diagram_challenge);
+      await expect(block.getByRole('heading', { name: diagramFirst ? 'The agent’s reply' : 'Shown after you lock in' })).toBeVisible();
+      // Without an attempt from the code, the questions are printed once, with the diagram.
+      await expect(block.getByRole('heading', { name: 'Answer from the code' })).toHaveCount(diagramFirst || step.diagram_challenge.mode === 'plan-first' ? 0 : 1);
       const printed = [reply.contrast && reply.contrast.diagram, ...reply.diagrams].filter(Boolean);
       const images = block.getByRole('img', { name: /^UML \w+ diagram/i });
       await expect(images).toHaveCount(printed.length);
@@ -638,7 +664,7 @@ test.describe('the whole tutorial, as a student', () => {
       await expect(block.getByRole('heading', { name: 'Diagram challenge key', includeHidden: true })).toBeHidden();
     }
     const results = page.getByRole('region', { name: 'Your results across the challenges' });
-    for (const codeFirst of codeFirstSteps) {
+    for (const codeFirst of resultSteps) {
       await expect(results.getByRole('row', { name: new RegExp('^' + escapeRegExp(codeFirst.title)) })).toBeVisible();
     }
   });
@@ -654,10 +680,28 @@ test.describe('the whole tutorial, as a student', () => {
 
 const EVENT_CONSUMERS = stepByKey('event-consumers');
 
-async function openEventConsumers(page) {
+/** A diagram-first step opens on its diagram; this control brings the code back beside it. */
+async function showCodeBesideDiagram(page) {
+  const beside = page.getByRole('button', { name: 'Code beside diagram' });
+  await beside.click();
+  await expect(beside).toHaveAttribute('aria-pressed', 'true');
+}
+
+/** Editor swaps the diagram for the code workspace, with Files and Search files. */
+async function showEditor(page) {
+  const editor = page.getByRole('button', { name: 'Editor', exact: true });
+  await editor.click();
+  await expect(editor).toHaveAttribute('aria-pressed', 'true');
+}
+
+/** Opens the step, which shows its diagram; `view` then leaves it, puts the code beside it, or swaps to the editor. */
+async function openEventConsumers(page, { view = 'beside' } = {}) {
   await page.goto(PAGE + '?autosave=false#event-consumers');
   await waitForBoot(page);
   await expect(stepHeading(page, EVENT_CONSUMERS)).toBeVisible();
+  await expect(diagramRegion(page, 'component')).toBeVisible();
+  if (view === 'beside') await showCodeBesideDiagram(page);
+  if (view === 'editor') await showEditor(page);
 }
 
 /** The browser reports the tab hidden or shown, as when switching tabs. */
@@ -675,16 +719,19 @@ test.describe('timing', () => {
   test('the clock pauses while the tab is hidden', async ({ page }) => {
     test.setTimeout(180_000);
     await page.clock.install();
-    await openEventConsumers(page);
-    const challengeSpec = EVENT_CONSUMERS.diagram_challenge;
+    const codeFirst = steps[0];
+    await page.goto(PAGE + '?autosave=false');
+    await waitForBoot(page);
+    await expect(stepHeading(page, codeFirst)).toBeVisible();
+    const challengeSpec = codeFirst.diagram_challenge;
 
     await page.clock.fastForward('01:00');
     await setTabHidden(page, true);
     await page.clock.fastForward('30:00');
     await setTabHidden(page, false);
     await page.clock.fastForward('01:00');
-    await writeAttempt(page, EVENT_CONSUMERS);
-    await answerFromCode(page, EVENT_CONSUMERS);
+    await writeAttempt(page, codeFirst);
+    await answerFromCode(page, codeFirst);
     await lockIn(page, 'Lock in my answer');
     await answerWithDiagram(page, challengeSpec);
     await answerFollowUpAndEvidence(page, challengeSpec);
@@ -702,9 +749,6 @@ test.describe('code links', () => {
   test('clicking a linked label in the reply diagram opens its code', async ({ page }) => {
     test.setTimeout(180_000);
     await openEventConsumers(page);
-    await writeAttempt(page, EVENT_CONSUMERS);
-    await answerFromCode(page, EVENT_CONSUMERS);
-    await lockIn(page, 'Lock in my answer');
     const [diagram] = EVENT_CONSUMERS.diagram_challenge.reply.diagrams;
     const link = diagram.links.find(item => item.text === 'Notifications');
     const label = diagramRegion(page, diagram.type).locator('svg text').filter({ hasText: /^\s*Notifications\s*$/ });
@@ -749,13 +793,16 @@ async function expectVisibleFocus(page) {
 test.describe('keyboard only', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('tree, file, search, lock-in, evidence line, and back to the form', async ({ page }) => {
+  test('tree, file, search, evidence line, and the form with the diagram', async ({ page }) => {
     test.setTimeout(180_000);
-    await openEventConsumers(page);
+    await openEventConsumers(page, { view: 'diagram' });
     const challengeSpec = EVENT_CONSUMERS.diagram_challenge;
-    const fromCode = stage(page, 'Answer from the code');
     const searchRef = parseRef(challengeSpec.reply.evidence.find(item => item.ref.startsWith('deploy/')).ref);
 
+    // The step opens on the diagram; Editor brings back the code with its file tree.
+    await tabTo(page, page.getByRole('button', { name: 'Editor', exact: true }));
+    await expectVisibleFocus(page);
+    await page.keyboard.press('Enter');
     // The tree is one tab stop; arrows move inside it, Enter opens a file.
     await tabTo(page, fileTree(page).getByRole('treeitem', { name: 'events.py', exact: true }));
     await expectVisibleFocus(page);
@@ -776,57 +823,8 @@ test.describe('keyboard only', () => {
     await expect(codeEditor(page)).toBeFocused();
     await expect.poll(() => editorLocation(page)).toEqual(searchRef);
 
-    // Back to the form: pin the line, write the attempt, and answer.
     await page.keyboard.press('Escape');
-    await tabTo(page, fromCode.getByLabel('Your hypothesis, in one sentence'), { backward: true });
-    await expectVisibleFocus(page);
-    await page.keyboard.type('Every queue bound to the trips exchange receives the event.');
-    await tabTo(page, fromCode.getByRole('button', { name: 'Pin this line' }));
-    await expectVisibleFocus(page);
-    await page.keyboard.press('Enter');
-    await expect(fromCode.getByRole('button', { name: `${searchRef.path}:${searchRef.line}`, exact: true })).toBeVisible();
-    // Each further line the step asks for: back to the editor, one line down, pin it.
-    for (let pinned = 1; pinned < challengeSpec.attempt.evidence_pins; pinned++) {
-      await tabTo(page, codeEditor(page));
-      await page.keyboard.press('ArrowDown');
-      await page.keyboard.press('Escape');
-      await tabTo(page, fromCode.getByRole('button', { name: 'Pin this line' }), { backward: true });
-      await page.keyboard.press('Enter');
-      await expect(fromCode.getByRole('button', { name: `${searchRef.path}:${searchRef.line + pinned}`, exact: true })).toBeVisible();
-    }
-    await tabTo(page, fromCode.getByLabel('What would you want a diagram of this code to show?'));
-    await page.keyboard.type('Each consumer with its binding key.');
-    for (const [index, question] of challengeSpec.questions.entries()) {
-      const options = optionsOf(numberedGroup(fromCode, index + 1), question);
-      if (question.type === 'multiple') {
-        for (const key of keyIndices(question)) {
-          await tabTo(page, options.nth(key));
-          await expectVisibleFocus(page);
-          await page.keyboard.press('Space');
-        }
-      } else {
-        // A radio group is one tab stop; arrows choose within it.
-        await tabTo(page, options.first());
-        for (let step = 0; step < question.correct_index; step++) await page.keyboard.press('ArrowDown');
-        await expect(options.nth(question.correct_index)).toBeChecked();
-      }
-    }
-    await tabTo(page, fromCode.getByLabel('Guessing', { exact: true }));
-    await page.keyboard.press('ArrowDown');
-    await expect(fromCode.getByLabel('Fairly sure', { exact: true })).toBeChecked();
-    await expectVisibleFocus(page);
-
-    // Lock in through the confirmation dialog.
-    await tabTo(page, fromCode.getByRole('button', { name: 'Lock in my answer' }));
-    await expectVisibleFocus(page);
-    await page.keyboard.press('Enter');
-    const dialog = page.getByRole('dialog', { name: 'Lock in your answer?' });
-    await tabTo(page, dialog.getByRole('button', { name: 'Lock in', exact: true }));
-    await expectVisibleFocus(page);
-    await page.keyboard.press('Enter');
     const reply = stage(page, 'The agent’s reply');
-    await expect(reply.getByRole('heading', { name: 'The agent’s reply' })).toBeFocused();
-    await expectVisibleFocus(page);
 
     // The evidence list opens from its summary; a note opens its line; Escape leaves the editor.
     const evidence = parseRef(challengeSpec.reply.evidence[0].ref);
@@ -842,9 +840,24 @@ test.describe('keyboard only', () => {
     await expect.poll(() => editorLocation(page)).toEqual(evidence);
     await page.keyboard.press('Escape');
 
-    // Back to the form with the diagram: check the answers.
+    // Back to the form with the diagram: answer, then check.
     const withDiagram = stage(page, 'Answer with the diagram');
-    await tabTo(page, withDiagram.getByRole('button', { name: checkLabel(challengeSpec.questions), exact: true }), { backward: true });
+    for (const [index, question] of challengeSpec.questions.entries()) {
+      const options = optionsOf(numberedGroup(withDiagram, index + 1), question);
+      if (question.type === 'multiple') {
+        for (const key of keyIndices(question)) {
+          await tabTo(page, options.nth(key), { backward: index === 0 && key === keyIndices(question)[0] });
+          await expectVisibleFocus(page);
+          await page.keyboard.press('Space');
+        }
+      } else {
+        // A radio group is one tab stop; arrows choose within it.
+        await tabTo(page, options.first());
+        for (let step = 0; step < question.correct_index; step++) await page.keyboard.press('ArrowDown');
+        await expect(options.nth(question.correct_index)).toBeChecked();
+      }
+    }
+    await tabTo(page, withDiagram.getByRole('button', { name: checkLabel(challengeSpec.questions), exact: true }));
     await expectVisibleFocus(page);
     await page.keyboard.press('Enter');
     await expect(withDiagram.getByRole('heading', { name: /^\d+ of \d+ correct$/ })).toBeFocused();
@@ -890,23 +903,12 @@ for (const { name, viewport, deviceScaleFactor } of [
         .toBeLessThanOrEqual((await page.getByRole('group', { name: /^File tabs/ }).boundingBox()).y);
       await expectNoHorizontalScroll(page);
 
-      const fromCode = stage(page, 'Answer from the code');
-      const { searchRef, treeRef } = pinRefs(EVENT_CONSUMERS.diagram_challenge);
-      await fromCode.getByLabel('Your hypothesis, in one sentence').fill('Every bound queue receives it.');
-      await fromCode.getByLabel('Your hypothesis, in one sentence').focus();
-      // Files is a closed disclosure at this width, so both lines come from search.
-      await pinThroughSearch(page, fromCode, searchRef);
-      await pinThroughSearch(page, fromCode, treeRef);
-      await fromCode.getByLabel('What would you want a diagram of this code to show?').fill('Each consumer and its binding.');
-      await answerFromCode(page, EVENT_CONSUMERS);
-      await lockIn(page, 'Lock in my answer');
-
       const pane = page.getByRole('region', { name: 'Diagram', exact: true });
       await expect(diagramRegion(page, 'component')).toBeVisible();
       const formBox = await stage(page, 'Answer with the diagram').boundingBox();
       expect((await pane.boundingBox()).y).toBeGreaterThanOrEqual(formBox.y + formBox.height - 1);
       await expectNoHorizontalScroll(page);
-      await a11yCheckpoint(page, `uml-design-questions: locked at ${name}`, { feature: 'diagram-challenge' });
+      await a11yCheckpoint(page, `uml-design-questions: diagram first at ${name}`, { feature: 'diagram-challenge' });
     });
   });
 }
@@ -954,6 +956,7 @@ test.describe('workspace options at 1440 px', () => {
     await page.goto(PAGE + '?autosave=false#failed-trips');
     await waitForBoot(page);
     await expect(stepHeading(page, stepByKey('failed-trips'))).toBeVisible();
+    await showCodeBesideDiagram(page);
     await expect(codeEditor(page)).toBeVisible();
     await expect(runButton(page)).toHaveCount(0);
     await expect(page.getByRole('button', { name: /Debug/ })).toHaveCount(0);
@@ -1028,7 +1031,7 @@ test.describe('Search files at 1440 px', () => {
   }
 
   test('choosing a result keeps the results and the Search files button in view', async ({ page }) => {
-    await openEventConsumers(page);
+    await openEventConsumers(page, { view: 'editor' });
     await searchFromButton(page, 'trip.confirmed');
     const result = searchResult(page, 'services/notifications/consumers.py', 25);
 
@@ -1040,7 +1043,7 @@ test.describe('Search files at 1440 px', () => {
   });
 
   test('the file names over the results fit on one line', async ({ page }) => {
-    await openEventConsumers(page);
+    await openEventConsumers(page, { view: 'editor' });
     await searchFromButton(page, 'trip.confirmed');
     const name = page.getByRole('list', { name: 'Search results' })
       .getByText('services/notifications/consumers.py', { exact: true });

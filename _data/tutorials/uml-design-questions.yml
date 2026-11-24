@@ -1,5 +1,5 @@
 title: "Answering Design Questions with UML"
-description: "Answer design questions about Headliner, a festival-trip system in Python, first from its code and then with a UML diagram drawn from that code, and compare what each showed you. Assumes you can read UML class, sequence, and component diagrams."
+description: "Answer design questions about Headliner, a festival-trip system in Python, with UML diagrams drawn from its code. You answer the first question from the code alone, then compare what the code and the diagram each showed you. Assumes you can read UML class, sequence, and component diagrams."
 
 # Hidden from the /SEBook/tutorials index until the TA pilot (spec §14). The
 # release checklist is plan Task C10 Step 4.
@@ -5389,7 +5389,7 @@ steps:
       3. **Decide.** Below, write a hypothesis, say what a diagram should show, answer, and lock in. Five minutes is enough; there is no time limit.
       4. **Compare.** An AI coding agent's diagram opens in the **Diagram** pane. Answer again, then answer three new questions with it.
 
-      Every later step works this way.
+      Later steps start with the diagram.
     diagram_challenge:
       mode: code-first
       budget_minutes: 5
@@ -5564,18 +5564,12 @@ steps:
 
       ### Your task
 
-      1. **Scope.** `services/opc/events.py` is open. Use **Files** and **Search files** to find every component that receives an event built by `_trip`. Pin the line that proves your least obvious receiver.
-      2. **Consequence.** Open each receiver's handler, note what it does with the event's body, and pin one line that reads the name.
-      3. **Decide.** Answer the challenge below from the code alone, then lock in.
-      4. **Compare.** Answer again with the agent's diagram, then answer its two new questions.
+      1. **Read the view.** The agent's diagram is open in the **Diagram** pane. Find every component that receives an event built by `_trip`, and what each one does with the event's body.
+      2. **Decide.** Answer the challenge below with the diagram, then answer its two new questions.
+      3. **Check a detail if you like.** **Editor**, above the workspace, brings back the code with **Files** and **Search files**, and each evidence note in the agent's reply opens the line it cites. You do not need the code to answer.
     diagram_challenge:
-      mode: code-first
-      budget_minutes: 7
+      mode: diagram-first
       min_score: 0.8
-      attempt:
-        hypothesis: true
-        evidence_pins: 2
-        view_wish: true
       questions:
         - id: breaks
           type: multiple
@@ -5758,17 +5752,12 @@ steps:
            HL-1001-glampingco: confirmed
            HL-1001-shuttle: rejected
          ```
-      2. **Trace.** Follow the trip order from the moment the OPC receives it to the supplier's rejection. Pin the line where the card is charged and the line that handles a rejection.
-      3. **Decide** what happens to the money and which fix to ask for, then lock in.
-      4. **Compare.** Answer again with the agent's diagram. A short knowledge check follows.
+      2. **Read the view.** The agent's diagram in the **Diagram** pane follows the trip order from the moment the OPC receives it to the supplier's rejection. Find where the card is charged and what handles a rejection.
+      3. **Decide** what happens to the money and which fix to ask for. You do not need the code to answer.
+      4. **Verify.** One practice check sends you into the code, because a diagram can be wrong. A short knowledge check follows.
     diagram_challenge:
-      mode: code-first
-      budget_minutes: 7
+      mode: diagram-first
       min_score: 0.8
-      attempt:
-        hypothesis: true
-        evidence_pins: 2
-        view_wish: true
       questions:
         - id: money
           type: single
@@ -5860,6 +5849,7 @@ steps:
             3: "`Intake.accept` stores the order before it queues it, whatever the workflow does afterwards."
           explanation: "The checkout only asks the bank whether the card is open (an amount of 0), so a capture can still be declined. Charging first needs a refund when a booking fails; charging last needs cancellations when the charge fails. Either order works only with its compensating steps, and the diagram lets you slide one message down and read off what now comes before it."
       evidence_check:
+        graded: false
         prompt: "Before you ask for the fix: the diagram shows no refund and no cancellation on the reject path. An absence in a diagram is a hypothesis. Open the reject branch in `services/opc/invoice_task.py` and check what it does."
         question:
           id: reject-branch
@@ -5984,18 +5974,12 @@ steps:
 
       ### Your task
 
-      1. **Investigate** the trip-order model in `services/opc/model/`.
-      2. **Commit.** Answer from the code, choose the view you would ask an agent for, and lock in.
-      3. **Compare.** Answer again with the expert's view, then answer its new question.
+      1. **Read the view.** The agent's diagram of the trip-order model is open in the **Diagram** pane.
+      2. **Decide.** Answer the challenge below with it, then answer its new question.
+      3. **Check a detail if you like.** **Editor**, above the workspace, brings back the model's code in `services/opc/model/`. You do not need the code to answer.
     diagram_challenge:
-      mode: code-first
-      budget_minutes: 7
+      mode: diagram-first
       min_score: 0.8
-      predict_view: true
-      attempt:
-        hypothesis: true
-        evidence_pins: 1
-        view_wish: true
       questions:
         - id: ideas
           type: multiple
@@ -6114,18 +6098,12 @@ steps:
 
       ### Your task
 
-      1. **Trace** what the Trip Website does when a fan presses **Book now**, and follow the order into the OPC until the request returns. Pin two lines where the request waits for another system.
-      2. **Decide.** Answer from the code, choose the view you would ask for, and lock in.
-      3. **Compare.** The agent replies twice. Judge whether its first view fits the question, then answer with the second.
+      1. **Judge the first reply.** The agent replies twice. Its first view is open in the **Diagram** pane: decide whether it fits the question.
+      2. **Decide.** Answer with the second view, which follows a **Book now** request into the OPC until it returns. You do not need the code to answer.
+      3. **Verify.** One practice check sends you into the code, because a diagram can be wrong.
     diagram_challenge:
-      mode: code-first
-      budget_minutes: 7
+      mode: diagram-first
       min_score: 0.8
-      predict_view: true
-      attempt:
-        hypothesis: true
-        evidence_pins: 2
-        view_wish: true
       questions:
         - id: windows
           type: multiple
@@ -6254,6 +6232,7 @@ steps:
             2: "Then the website waits for the broker instead of the OPC: the dependency is still on the fan's path."
           explanation: "This is a transactional outbox: the Order DB stores the order and its message in one transaction, and a separate job sends stored messages when the broker is available. The submit request then waits only for the database. The price is a second delivery path: a job that sends stored messages and may send one twice, so the workflow must stay safe to repeat, as `PaymentTask.capture` already is."
       evidence_check:
+        graded: false
         prompt: "Your broker answer rests on one claim: the OPC hands a new order to the broker while the fan's submit request is still waiting. A diagram can be wrong; find the code that hands the order over and check."
         question:
           id: request-waits
@@ -6324,17 +6303,11 @@ steps:
          5 attendees, 3 experiences: Order received
          Time until the fan saw it: 8.4 s (target: 2.0 s)
          ```
-      2. **Trace** the request from **Book now** to **Order received**, and find how long each kind of call takes. Pin two lines where a call to another system sits inside a loop.
-      3. **Decide, then compare.** Answer from the code, choose your view, lock in, and answer again with the expert's view. A short knowledge check follows.
+      2. **Read the view.** The agent's diagram in the **Diagram** pane follows the request from **Book now** to **Order received**. Find the calls to other systems that sit inside a loop.
+      3. **Decide.** Answer the challenge below with the diagram; you do not need the code. A short knowledge check follows.
     diagram_challenge:
-      mode: code-first
-      budget_minutes: 7
+      mode: diagram-first
       min_score: 0.8
-      predict_view: true
-      attempt:
-        hypothesis: true
-        evidence_pins: 2
-        view_wish: true
       questions:
         - id: budget
           type: single
@@ -6549,7 +6522,7 @@ steps:
 
       1. **Plan.** For each question, choose what you would ask the agent for: a class, component, or sequence diagram, or no diagram and one file to read. Then lock in your plan.
       2. **Answer** each question with the expert's views. They open as tabs in the **Diagram** pane.
-      3. **Check** the one claim an answer depends on against the code, then review your results across all the challenges.
+      3. **Verify** the one claim an answer depends on against the code, as practice, then review your results across all the challenges.
     diagram_challenge:
       mode: plan-first
       budget_minutes: 5
@@ -6776,6 +6749,7 @@ steps:
             3: "A search finds the client, but not whether the order request waits for it, or whether a queue sits in between."
           explanation: "Whether an outage stops a request depends on which connectors lie on its path and whether the caller waits. A component view of the path shows that, as it did for Headliner's broker. The answer then rests on one connector, and a diagram can be wrong about one connector, so you open the code behind it."
       evidence_check:
+        graded: false
         claim_question:
           id: claim
           type: single

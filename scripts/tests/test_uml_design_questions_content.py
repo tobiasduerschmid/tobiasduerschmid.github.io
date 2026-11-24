@@ -52,8 +52,10 @@ STEP_KEYS = [
 ]
 WARM_UP = STEP_KEYS[0]  # a small first challenge that also introduces the tools
 TASK_KEYS = STEP_KEYS[1:6]  # the code-first tasks; the last step is the capstone
-CODE_FIRST_KEYS = [WARM_UP] + TASK_KEYS
-BUDGET_MINUTES = {WARM_UP: 5}  # the nudge in Part A; 7 minutes elsewhere
+CODE_FIRST_KEYS = [WARM_UP]  # only the first challenge is answered from the code first
+DIAGRAM_FIRST_KEYS = TASK_KEYS  # the others start with the agent's diagram
+GUIDED_KEYS = CODE_FIRST_KEYS + DIAGRAM_FIRST_KEYS  # every challenge but the capstone
+BUDGET_MINUTES = {WARM_UP: 5}  # the nudge in Part A
 # The view each task's request asks for (spec §7.1); round two (§7.1: steps
 # 4 to 6) has students predict it before the reply arrives. The warm-up's
 # package diagram is drawn by the class renderer.
@@ -65,7 +67,6 @@ EXPERT_VIEW = {
     "outages": "component",
     "checkout-latency": "sequence",
 }
-PREDICTS_VIEW = {"data-model", "outages", "checkout-latency"}
 # The generated diagram anchor (x-diagrams) each reply shows, in tab order.
 REPLY_DIAGRAMS = {
     "headliner": ["shared_code"],
@@ -343,7 +344,7 @@ def test_code_first_challenges_ask_for_a_real_attempt():
     for key in CODE_FIRST_KEYS:
         spec = challenge(key)
         assert spec.get("mode", "code-first") == "code-first", key
-        assert spec.get("budget_minutes") == BUDGET_MINUTES.get(key, 7), key
+        assert spec.get("budget_minutes") == BUDGET_MINUTES[key], key
         assert spec.get("min_score") == 0.8, key
         attempt = spec.get("attempt") or {}
         assert attempt.get("hypothesis") is True, key
@@ -351,11 +352,28 @@ def test_code_first_challenges_ask_for_a_real_attempt():
         assert attempt.get("view_wish") is True, key
 
 
-def test_round_two_predicts_the_view_that_the_expert_asks_for():
-    for key, view in EXPERT_VIEW.items():
+def test_the_later_challenges_start_with_the_diagram_and_never_require_the_code():
+    for key in DIAGRAM_FIRST_KEYS:
         spec = challenge(key)
-        assert bool(spec.get("predict_view")) == (key in PREDICTS_VIEW), key
-        assert spec["reply"]["diagrams"][0]["type"] == view, key
+        assert spec.get("mode") == "diagram-first", key
+        assert spec.get("min_score") == 0.8, key
+        # Nothing to attempt from the code: no hypothesis, pins, budget, or view guess.
+        for field in ("attempt", "budget_minutes", "predict_view"):
+            assert field not in spec, f"{key}: {field}"
+        assert "need the code" in step(key)["instructions"], key
+
+
+def test_a_check_against_the_code_is_practice_once_the_code_is_optional():
+    for key in DIAGRAM_FIRST_KEYS + [STEP_KEYS[-1]]:
+        check = challenge(key).get("evidence_check")
+        if check:
+            assert check.get("graded") is False, key
+    assert {key for key in DIAGRAM_FIRST_KEYS if challenge(key).get("evidence_check")} == {"failed-trips", "outages"}
+
+
+def test_each_reply_opens_with_the_view_an_expert_asks_for():
+    for key, view in EXPERT_VIEW.items():
+        assert challenge(key)["reply"]["diagrams"][0]["type"] == view, key
 
 
 def test_the_outage_reply_contrasts_the_package_view_first():
@@ -454,9 +472,9 @@ def message_sender(key):
 def test_code_first_debriefs_judge_a_claim_and_end_with_a_reply():
     # Second redesign: each mechanism question quotes someone's reasoning to
     # judge, and the closing sentence answers the person who asked.
-    stems = [challenge(key)["debrief"]["mechanism_question"]["question"] for key in CODE_FIRST_KEYS]
+    stems = [challenge(key)["debrief"]["mechanism_question"]["question"] for key in GUIDED_KEYS]
     assert len(set(stems)) == len(stems), "each step judges its own claim"
-    for key, stem in zip(CODE_FIRST_KEYS, stems):
+    for key, stem in zip(GUIDED_KEYS, stems):
         assert stem.rstrip().endswith("?") and "Which mechanism hid" not in stem, key
         prompt = challenge(key)["debrief"]["consolidation_prompt"]
         assert message_sender(key).lower() in prompt.lower(), f"{key}: reply to {message_sender(key)}"
