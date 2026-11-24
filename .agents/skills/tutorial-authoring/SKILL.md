@@ -1400,7 +1400,12 @@ steps:
                                              # from the code, then with an authored
                                              # agent diagram. See "Diagram
                                              # challenges" below this block.
-      mode: code-first                       # code-first (default) | plan-first
+      mode: code-first                       # code-first (default) | plan-first |
+                                             # diagram-first: the reply, its diagram,
+                                             # and the questions from the start; no
+                                             # attempt from the code, no lock-in
+                                             # (`attempt`, `budget_minutes`, and
+                                             # `predict_view` do not apply).
       budget_minutes: 7                      # Soft nudge in Part A; never a limit.
       min_score: 0.8                         # Default 0.8; see §4.8.
       predict_view: false                    # code-first: Part A also asks which
@@ -1455,6 +1460,10 @@ steps:
         label: "Prepared in advance by an AI coding agent ..."
       follow_up: [questions]                 # New questions, timed separately.
       evidence_check:                        # Optional, graded, after follow_up:
+        graded: false                        #   practice: asked, not scored, and
+                                             #   not needed to leave the stage. Use
+                                             #   it where the code is optional
+                                             #   (diagram-first steps).
         claim_question: {...}                #   capstone only
         prompt: "..."                        #   what to check in the code
         question: {...}
@@ -1872,7 +1881,10 @@ steps:
 #### Diagram challenges
 
 `diagram_challenge` steps run in four states, all reached through the
-widget in the step's instructions: **exploring** (Part A from the code, or
+widget in the step's instructions (a `diagram-first` step starts in
+**locked**: the diagram opens with the step, the stepper has no first
+phase, Part B is the only pass through the questions, and the last stage is
+"Review your answers", not a comparison): **exploring** (Part A from the code, or
 the plan in `plan-first`) → **locked** (the confirmed lock-in shows the reply
 card and opens its diagram maximized in the Diagram pane; Part B repeats the
 questions, prefilled from Part A in code-first) → **follow-up** (new
