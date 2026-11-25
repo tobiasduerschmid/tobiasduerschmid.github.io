@@ -17,7 +17,7 @@ const OWN_WORDS = 'Adding BruinPay changes the PaymentGateway interface plus Ord
 
 async function open(page) {
   await page.goto(URL);
-  await expect(page.getByRole('heading', { name: 'Review 1: Late-Night Food-Truck Pre-Orders' })).toBeVisible({ timeout: 60000 });
+  await expect(page.getByRole('heading', { name: STEPS[0].title, exact: true })).toBeVisible({ timeout: 60000 });
   await expect(page.getByRole('textbox', { name: 'Review comment' })).toBeVisible();
 }
 

