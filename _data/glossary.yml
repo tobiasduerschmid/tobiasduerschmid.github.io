@@ -180,6 +180,10 @@
   description: The SOLID principle that high-level policy should depend on abstractions, not concrete low-level details. The abstractions should be shaped by the high-level module's needs.
   related: [SOLID, OOP, DI]
 
+- term: DJ
+  definition: Disc Jockey
+  description: The person who picks and plays music on a radio station or at an event. In the agent design reviews tutorial, the DJ console writes the radio station's play log.
+
 - term: DM
   definition: Direct Message
   description: A private message sent straight to one person in a social or chat app, instead of a public post.
@@ -727,6 +731,10 @@
   definition: Text-to-Speech
   description: Software that synthesizes spoken audio from written text. The Node.js introduction uses Kokoro to generate its narration offline.
 
+- term: TV
+  definition: Television
+  description: A screen that shows broadcast or streamed video, and in a lounge or living room often a shared display for a game or app.
+
 - term: UDP
   definition: User Datagram Protocol
   description: A transport-layer protocol that provides connectionless, unreliable, message-oriented communication. Used where low latency matters more than guaranteed delivery — for example, real-time video, games, and DNS lookups.
@@ -751,6 +759,10 @@
   definition: Uniform Resource Locator
   description: The address of a resource on the web. A URL identifies the protocol (https), the host (example.com), an optional path (/page), and optional query parameters and fragment.
   related: [HTTP, HTTPS, HTML]
+
+- term: UTF-8
+  definition: Unicode Transformation Format, 8-bit
+  description: The most common text encoding on the web and in files. It stores every Unicode character as one to four bytes, and plain English letters, digits, and punctuation take one byte each.
 
 - term: UX
   definition: User Experience

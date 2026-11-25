@@ -122,6 +122,8 @@ The most important career lesson is not "AI makes homework easier." It is "AI am
 
 Use the flashcards to retrieve the core concepts without looking, then use the quiz to apply them to realistic engineering decisions. If a quiz explanation surprises you, return to the section above and ask: "What would I do differently the next time an AI agent offers me code?"
 
+To practice judging an agent's design instead of its code, work through the [Reviewing an AI Agent's Design with UML tutorial](/SEBook/development_practices/agent-design-reviews-tutorial): ten designs an agent drew as UML diagrams, each with one flaw that a course concept explains.
+
 {% include flashcards.html id="dev_practice_genai" %}
 
 {% include quiz.html id="dev_practice_genai" %}
