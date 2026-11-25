@@ -42,5 +42,25 @@
     window.UMLShared.applySvgAccessibility(container, type, source, label);
   }
 
-  window.NarrationDiagram = { show };
+  function showReadingStep(container, settled, { type, focus, prefix }) {
+    // Reuse the finished ArchUML geometry from the HTML reading version. A cue
+    // changes emphasis or adds steps, never the fitting scale of a drawn step.
+    const source = settled.dataset.npDiagramSource;
+    show(container, settled.querySelector('svg'), { type, source }, prefix);
+    // An anonymous lifeline (`participant x as : Cls`) displays its label, not its id.
+    const alias = focus && source.match(new RegExp(`^participant ${focus} as (.+)$`, 'm'));
+    const shown = alias ? alias[1].trim() : focus;
+    const label = focus && Array.from(container.querySelectorAll('svg text')).find(text =>
+      text.textContent.trim() === shown || text.textContent.split(':')[0].trim() === shown);
+    if (label) {
+      const bounds = label.getBoundingClientRect();
+      const viewport = container.getBoundingClientRect();
+      // Only pan when necessary; moving emphasis must not recenter a readable diagram.
+      if (bounds.left < viewport.left || bounds.right > viewport.right) {
+        container.scrollLeft += bounds.left - viewport.left - (container.clientWidth - bounds.width) / 2;
+      }
+    }
+  }
+
+  window.NarrationDiagram = { show, showReadingStep };
 })();

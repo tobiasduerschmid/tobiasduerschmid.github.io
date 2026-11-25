@@ -180,7 +180,7 @@ test('a multi-question summary retains its results before finishing the narratio
   await expect(check.getByText('Knowledge Check Complete!', { exact: true })).toBeVisible();
   await check.getByRole('button', { name: 'Finish review', exact: true }).click();
   await expect(check).toBeHidden();
-  await expect(player.getByRole('status').filter({ hasText: 'Narration and final knowledge check finished.' })).toBeVisible();
+  await expect(player.getByRole('status').filter({ hasText: 'Lesson complete.' })).toBeVisible();
 });
 
 test('grouped check dots support Space, Escape and keyboard selection on phones', async ({ page }) => {
@@ -281,8 +281,8 @@ test('security final decision continues to its paired song and returns to the ca
   await openPlayerSettings(player);
   await player.getByRole('combobox', { name: 'Review a scene' }).selectOption(String(lesson.story.scenes.length - 1));
   for (const cue of scene.cues.slice(1)) await player.getByRole('button', { name: 'Next step', exact: true }).click();
-  await player.getByRole('button', { name: 'Choose next action', exact: true }).click();
-  const check = player.getByRole('region', { name: /— Choose the next action$/ });
+  await player.getByRole('button', { name: 'Knowledge check', exact: true }).click();
+  const check = player.getByRole('region', { name: /— Knowledge check$/ });
   await check.getByRole('radio').filter({ hasText: scene.checkpoint.options[scene.checkpoint.correct_index] }).click();
   await expect(check.getByText(scene.checkpoint.explanation, { exact: true })).toBeVisible();
   await expect(songFrame).toHaveCount(0);

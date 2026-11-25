@@ -1,7 +1,7 @@
 /* Narrated design-pattern lessons. All visual state is derived from the current
    cue and language: code marks change in place, while diagrams and topic
    illustrations are copied from the build-time reading step for the same cue
-   (js/narrated-lesson.js holds the parts every narrated lesson shares). */
+   (NarrationPlayer owns the shared lesson lifecycle). */
 (function () {
   'use strict';
 
@@ -15,17 +15,41 @@
     });
   }
 
-  function enhance(root) {
-    if (root.classList.contains('is-enhanced')) return;
-    const { story, timing, examples, quizzes } = window.NarratedExplainer.readData(root);
-    const { renderDiagram, highlightCode, mount } = window.NarratedLesson;
+  // Marks a cue's focus lines in the visible language of a code panel and
+  // scrolls them into view. When the marked lines do not all fit, the block's
+  // `scroll` map may name the line that matters most for this focus; that line
+  // is shown instead of the first. `scope` holds the per-language panels.
+  function highlightCode(scope, block, focus) {
+    const lines = block.focus[focus] || [];
+    const active = scope.querySelector('[data-code-language]:not([hidden])');
+    active.querySelectorAll('[data-line]').forEach(line => {
+      const highlighted = lines.includes(Number(line.dataset.line));
+      line.classList.toggle('is-highlighted', highlighted);
+      if (highlighted) line.setAttribute('aria-current', 'true');
+      else line.removeAttribute('aria-current');
+    });
+    const codeWindow = active.querySelector('pre');
+    const marked = active.querySelectorAll('.is-highlighted');
+    let target = marked[0];
+    // Focus names such as `constructor` must not find inherited properties.
+    const keyLine = block.scroll && Object.hasOwn(block.scroll, focus) ? block.scroll[focus] : null;
+    if (target && keyLine) {
+      const last = marked[marked.length - 1];
+      const span = last.offsetTop + last.offsetHeight - target.offsetTop;
+      if (span > codeWindow.clientHeight - 20) target = active.querySelector(`[data-line="${keyLine}"]`) || target;
+    }
+    codeWindow.scrollTop = target ? target.offsetTop - codeWindow.offsetTop - 20 : 0;
+    scope.querySelector('[data-focus-lines]').textContent = lines.length ? lines.join(', ') : 'Whole example';
+  }
+
+  function createRenderer(root, { story, examples }) {
     const topic = root.dataset.npTopic;
     const languageSelect = root.querySelector('[data-setting="language"]');
     let lastCue = null;
     let lastLanguage = null;
     let lastDiagramKey = null;
 
-    function render(scene, storyScene, cue) {
+    function render({ element: scene, scene: storyScene, cue }) {
       // A lesson without code has no language selector.
       const language = languageSelect ? languageSelect.value : '';
       if (cue === lastCue && language === lastLanguage) return;
@@ -49,8 +73,8 @@
       if (diagramName && diagramKey !== lastDiagramKey) {
         const diagram = story.diagrams[diagramName];
         const container = scene.querySelector('[data-np-diagram]');
-        renderDiagram(container, readingStep.querySelector('.np-diagram'),
-          diagram.type || 'class', cue.diagram_focus, `player-${topic}-${storyScene.id}-${diagramName}`);
+        window.NarrationDiagram.showReadingStep(container, readingStep.querySelector('.np-diagram'),
+          { type: diagram.type || 'class', focus: cue.diagram_focus, prefix: `player-${topic}-${storyScene.id}-${diagramName}` });
         container.setAttribute('aria-label', diagram.label);
         const caption = scene.querySelector('.np-diagram-caption');
         if (caption) caption.textContent = diagram.caption || '';
@@ -58,10 +82,8 @@
       }
     }
 
-    mount(root, { story, timing, quizzes, examples, render });
+    return render;
   }
 
-  function init() { document.querySelectorAll('section.narrated-pattern').forEach(enhance); }
-  if (document.readyState !== 'complete') document.addEventListener('DOMContentLoaded', init, { once: true });
-  else init();
+  window.NarratedPatternVisuals = { createRenderer };
 })();

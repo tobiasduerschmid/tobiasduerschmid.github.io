@@ -127,7 +127,7 @@ including the introduction, transfer, and summary. Each part jumps to its first
 scene. Under it, show the current part's scene links; a scene without `part`
 previews Context's scenes. Mark only the actual current part and scene with
 `aria-current="step"`, so an overview preview has no current marker. Use the
-shared `narrated-lesson-navigation.html` include and `NarratedLesson.mount`
+shared `narrated-lesson-navigation.html` include and `NarrationPlayer.mount`
 helper, also used by video narrations. Navigation must work before playback,
 by keyboard and touch, in mobile/fullscreen layouts and both themes; keep
 focus in the destination navigation after a jump. Do not invent a storyboard

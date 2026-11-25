@@ -13,7 +13,7 @@
 {% assign timing = site.data.explainers[timing_key] %}
 {% assign examples = site.data.explainers[examples_key] %}
 {% assign quizzes = site.data.explainers[quizzes_key] %}
-<section class="narrated-explainer narrated-lesson narrated-pattern {{ topic }}-animation mathjax_ignore" id="{{ topic }}-animation" aria-labelledby="{{ topic }}-animation-title" data-np-topic="{{ topic }}">
+<section data-narration-renderer="NarratedPatternVisuals" class="narrated-explainer narrated-lesson narrated-pattern {{ topic }}-animation mathjax_ignore" id="{{ topic }}-animation" aria-labelledby="{{ topic }}-animation-title" data-np-topic="{{ topic }}">
   <h2 id="{{ topic }}-animation-title">{{ explainer.title }}</h2>
   <p>{{ lesson.summary }} {{ lesson.prerequisites }}</p>
   {% assign player_id = topic | append: '-animation' %}
@@ -70,12 +70,7 @@
       </div>
       {% endfor %}
     </div>
-    <section class="np-quiz" aria-labelledby="{{ topic }}-quiz-title" hidden>
-      <button type="button" class="vn-check-exit">Exit full screen</button>
-      <h3 id="{{ topic }}-quiz-title" tabindex="-1">Knowledge check</h3>
-      <div data-quiz-host></div>
-      <p class="tvm-quiz-status" role="status" aria-live="polite"></p>
-    </section>
+    {% include narration-player-check.html id=player_id %}
     <div class="nja-narration vn-captions" id="{{ player_id }}-captions" role="region" aria-label="Narration" tabindex="0"><p>{{ explainer.scenes.first.cues.first.text }}</p></div>
     </div>
     </div>
@@ -95,11 +90,7 @@
   {% include narration-data.html topic=include.topic %}
 </section>
 {% include narration-player-scripts.html %}
-<script src="{{ '/js/parsons-grading.js' | relative_url }}" defer></script>
-<script src="{{ '/js/tutorial-quiz.js' | relative_url }}" defer></script>
 <script src="{{ '/js/narrated-pattern-document.js' | relative_url }}" defer></script>
-<script src="{{ '/js/narration-diagram.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
-<script src="{{ '/js/narrated-lesson.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 {%- comment -%} Topic scripts for live illustrations run before the player renders its first cue. {%- endcomment -%}
 {% for script in lesson.scripts %}
 <script src="{{ '/js/' | append: script | relative_url }}" defer></script>

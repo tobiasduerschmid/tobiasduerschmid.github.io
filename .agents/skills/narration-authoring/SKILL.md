@@ -50,15 +50,16 @@ Like tutorials, a new lesson supplies data and a page referencing its ID; do not
   and section checks. Read `design-pattern-narration` for its teaching structure.
 - `explainer`: the Node.js/React artwork adapters with the shared transport.
 - `case-study`: evidence and decision checkpoints, supporting narrated and
-  self-paced investigation. Keep its decision controller in its adapter.
+  self-paced investigation. Its renderer only presents evidence; the common
+  player owns decisions and step navigation.
   A case study may be text only: omit `media` until its speech is rendered.
-  Its player then steps through cues with `NarratedExplainer.step`, `check`
+  `NarrationTransport.mount` then selects cue stepping without audio; `check`
   reports it as text only, and a leftover timing file is an error. Other
   kinds always need `media`.
 
-A new topic does not require a new kind. Add a new adapter only when a concrete
-interaction cannot fit these contracts. Do not force distinct teaching flows
-through conditionals in the transport.
+A new topic does not require a new kind. Kinds select visual templates and
+renderers. Every kind uses the same player and knowledge-check lifecycle;
+add common behavior there rather than creating a topic-specific controller.
 
 ## Shared core
 
@@ -116,21 +117,35 @@ transport. Close markers share a dot that opens a named choice list, retaining
 24px targets and one row at phone widths. `js/narration-quiz.js` adapts the shared quiz next action:
 one-question feedback leads directly to Continue narration (or the final
 action), for correct and incorrect answers; multi-question checks keep results.
-The same adapter owns **Re-listen to segment** after a wrong answer and on
-multi-question results containing mistakes. The audio transport registers its
-player and ordered `checkScenes` once through `NarrationQuiz.bindReplay`.
-Replay starts after the previous authored check, or at scene zero for the first
-check, including any intervening unchecked scenes. It preserves answers and
-returns to the same check at the segment boundary. Text-only case studies keep
-their evidence-review action; do not duplicate replay logic in lesson adapters.
+`NarrationQuiz.create` owns the shared panel, retained answer state, feedback,
+and **Re-listen to segment** buttons. It delegates grading to `SebookQuiz` and
+invokes the player's continuation/replay callbacks. `NarrationPlayer` computes
+the replay start after the previous authored check, or at scene zero for the
+first check, including intervening unchecked scenes. Replay returns to the
+same check with answers preserved. Text-only lessons offer scene review.
 
-`narration-data.html` and `NarratedExplainer.readData` define one browser data
-boundary. `NarratedExplainer.enhance` owns audio time, seeking, captions, motion,
-speed, and fullscreen. `NarratedExplainer.step` presents the same cues without
-a clock, sharing the scene display, fullscreen, and transcript printing; do not
-copy that logic into an adapter. Pattern/video adapters use `NarratedLesson.mount` for
-section checks, navigation/focus, and language refresh; adapters supply cue
-rendering only. Keep all players paused until explicit playback.
+`narration-data.html` and `NarrationPlayer` define one browser data boundary.
+Companion quizzes and inline `scene.checkpoint` questions normalize there into
+one scene-indexed check list. `NarrationPlayer.mount(root)` owns continuation,
+replay, roadmap/step navigation, focus, language refresh, and song handoff for
+all kinds. `_includes/narration-player-check.html` is their one check template,
+styled by `.narration-check` in `css/narrated-explainer.css`.
+
+A root declares `data-narration-renderer` naming a visual module. The common
+bootstrap mounts every root once after deferred scripts load. A visual module
+implements `createRenderer(root, data)` and returns `render(frame)`, where
+`frame` contains `element`, `scene`, `cue`, `sceneIndex`, `cueIndex`, `progress`,
+`motion`, and audio `time` when available. A renderer only presents that frame;
+it never creates a transport, binds navigation, or mounts a quiz.
+
+`NarrationTransport.mount` supplies audio or text-only cue navigation behind
+one session contract. Audio sessions additionally expose `play` and `seekTo`.
+The transport owns the clock, captions, motion, speed, fullscreen, and transcript
+printing. Audio runs continuously through unchecked scenes and pauses at
+checks. Keep every player paused until explicit playback. Step-mode continuation
+stays silent; check labels and single-question completion follow the same UI
+for every kind. Shared controls, timeline, and song modules keep their existing
+specialized responsibilities.
 
 For lessons with parts, show the clickable two-level roadmap from the very
 first frame, even when the introduction has no part. Preview the first part's

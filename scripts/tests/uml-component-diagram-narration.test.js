@@ -157,7 +157,7 @@ test('speech, captions, and timing are generated from the published storyboard',
 });
 
 test('every check opens after at least two seconds of silence with the finished picture', () => {
-  // js/narrated-explainer.js stops 0.3 s before a section boundary.
+  // js/narration-transport.js stops 0.3 s before a section boundary.
   story.scenes.forEach((scene, index) => {
     assert.ok((scene.cues.at(-1).pause_after ?? 0.55) >= 2.5, `${scene.id} ends with too little silence`);
     const last = timing.scenes[index].cues.at(-1);

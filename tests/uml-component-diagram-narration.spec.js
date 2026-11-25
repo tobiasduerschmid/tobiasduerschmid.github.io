@@ -154,7 +154,7 @@ for (const dark of [false, true]) {
     await animation.getByRole('button', { name: 'Knowledge check', exact: true }).click();
     const question = questionsOf('trace')[0];
     const wrong = Number(Object.keys(question.option_feedback)[0]);
-    await animation.locator('.np-quiz').getByRole('radio').filter({ hasText: question.options[wrong] }).click();
+    await animation.getByRole('region', { name: /— (Knowledge check|Summary quiz)$/ }).getByRole('radio').filter({ hasText: question.options[wrong] }).click();
     await expect(animation.getByText(question.option_feedback[wrong], { exact: true })).toBeVisible();
     await a11yCheckpoint(page, 'mobile incorrect answer', { include: '#uml_component_diagram-animation .nja-player', feature: 'uml-component-diagram-narration' });
     await animation.locator('.nja-player').screenshot({ path: testInfo.outputPath('quiz-mobile.png') });

@@ -168,7 +168,7 @@ test('speech, captions, and timing are generated from the published storyboard',
 });
 
 test('every check follows a viewing pause, so the finished picture stays up before it opens', () => {
-  // js/narrated-explainer.js opens a check 0.3 s before the section boundary.
+  // js/narration-transport.js opens a check 0.3 s before the section boundary.
   story.scenes.forEach((scene, index) => {
     assert.ok(scene.cues.at(-1).pause_after >= 2.5, `${scene.id}: viewing pause before its check`);
     const sceneTiming = timing.scenes[index];

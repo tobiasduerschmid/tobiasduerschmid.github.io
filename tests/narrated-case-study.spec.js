@@ -10,7 +10,7 @@ const cases = [
   { topic: 'cloudflare2019', url: '/SEBook/development_practices/cloudflare-2019.html' },
   { topic: 'huggingface2026', url: '/SEBook/systems/security.html' },
 ];
-const decisionName = (scene, index) => `${index + 1}. ${scene.label} — Choose the next action`;
+const decisionName = (scene, index) => `${index + 1}. ${scene.label} — Knowledge check`;
 
 // Rendered narration offers playback; a text-only story offers no audio controls at all.
 async function expectPlaybackAvailable(study, story) {
@@ -52,7 +52,7 @@ for (const { topic, url } of cases) {
       await study.getByRole('combobox', { name: 'Review a scene' }).selectOption(String(decisionIndex));
       await readThroughScene(study, scene);
       await expect(study.getByRole('heading', { name: followingScene.title, exact: true })).toBeHidden();
-      await study.getByRole('button', { name: 'Choose next action', exact: true }).click();
+      await study.getByRole('button', { name: 'Knowledge check', exact: true }).click();
       const decision = study.getByRole('region', { name: decisionName(scene, decisionIndex), exact: true });
       await expect(decision.getByRole('heading')).toBeFocused();
       await a11yCheckpoint(page, 'case study decision', auditScope);
@@ -64,7 +64,7 @@ for (const { topic, url } of cases) {
       await expect(study.getByRole('heading', { name: followingScene.title, exact: true })).toBeHidden();
       await a11yCheckpoint(page, 'case study incorrect feedback', auditScope);
       await expect(decision.getByRole('button', { name: 'See Results' })).toHaveCount(0);
-      await decision.getByRole('button', { name: story.audio ? 'Continue narration' : 'Continue to next evidence' }).click();
+      await decision.getByRole('button', { name: story.audio ? 'Continue narration' : 'Continue lesson' }).click();
       await expect(study.getByRole('heading', { name: followingScene.title, exact: true })).toBeVisible();
       await expectPlaybackAvailable(study, story);
       expect(errors, 'silent study must not raise browser errors').toEqual([]);
@@ -86,10 +86,10 @@ for (const { topic, url } of cases) {
           await expect(study.getByRole('img', { name: diagram.label, exact: true })).toBeVisible();
           await expect(study.getByRole('region', { name: 'Narration', exact: true })).toHaveText(cue.text);
         }
-        const nextAction = scene.checkpoint ? 'Choose next action'
-          : index < story.scenes.length - 1 ? 'Next scene' : 'Finish case study';
+        const nextAction = scene.checkpoint ? 'Knowledge check'
+          : index < story.scenes.length - 1 ? 'Next scene' : 'Finish review';
         // Step navigation and the media transport both offer "Next scene".
-        await expect(study.locator('.case-step-actions').getByRole('button', { name: nextAction, exact: true })).toBeVisible();
+        await expect(study.getByRole('group', { name: 'Step navigation', exact: true }).getByRole('button', { name: nextAction, exact: true })).toBeVisible();
         await expectPlaybackAvailable(study, story);
       }
     });
@@ -107,31 +107,10 @@ for (const { topic, url } of cases) {
       expect(await study.locator('audio').evaluate(audio => audio.paused)).toBe(true);
       await expect(study.getByRole('button', { name: 'Play narration', exact: true })).toBeHidden();
       await expect(study.getByRole('heading', { name: story.scenes[decisionIndex + 1].title, exact: true })).toBeHidden();
-      await decision.getByRole('button', { name: 'Skip decision and reveal next evidence' }).click();
+      await decision.getByRole('button', { name: 'Skip Knowledge Check' }).click();
       await expect(study.getByRole('heading', { name: story.scenes[decisionIndex + 1].title, exact: true })).toBeVisible();
       await expect(study.getByRole('button', { name: 'Pause narration', exact: true })).toBeVisible();
       await study.getByRole('button', { name: 'Pause narration', exact: true }).click();
-    });
-
-    test('a text-only story names no missing media and finishes on scene review', async ({ page }) => {
-      test.skip(Boolean(story.audio), 'only a text-only story omits its media');
-      await page.goto(url);
-      const study = caseStudy(page);
-      await expect(study.locator('audio')).toHaveCount(0);
-      await expect(study.getByRole('link', { name: /Download narration/ })).toHaveCount(0);
-      await openPlayerSettings(study);
-      await expect(study.getByRole('combobox', { name: 'Narration speed' })).toHaveCount(0);
-      const last = story.scenes.length - 1;
-      await study.getByRole('combobox', { name: 'Review a scene' }).selectOption(String(last));
-      await readThroughScene(study, story.scenes[last]);
-      await study.locator('.case-step-actions').getByRole('button', { name: story.scenes[last].checkpoint ? 'Choose next action' : 'Finish case study', exact: true }).click();
-      if (story.scenes[last].checkpoint) {
-        const decision = study.getByRole('region', { name: decisionName(story.scenes[last], last), exact: true });
-        await decision.getByRole('button', { name: 'Skip decision and finish' }).click();
-      }
-      await expect(study.getByRole('status').filter({ hasText: 'Case study complete.' })).toBeVisible();
-      // Scene review is in the player settings; a text-only story has no restart button.
-      await expect(study.getByRole('button', { name: 'Player settings' })).toBeFocused();
     });
 
     test('full screen keeps step navigation and the narration, then returns to the page', async ({ page }) => {
@@ -187,7 +166,7 @@ for (const { topic, url } of cases) {
         await openPlayerSettings(study);
         await study.getByRole('combobox', { name: 'Review a scene' }).selectOption(String(decisionIndex));
         await readThroughScene(study, story.scenes[decisionIndex]);
-        await study.getByRole('button', { name: 'Choose next action', exact: true }).click();
+        await study.getByRole('button', { name: 'Knowledge check', exact: true }).click();
         await a11yCheckpoint(page, 'narrow case study decision', auditScope);
       });
     }

@@ -92,9 +92,10 @@ at build time), and the topic illustrations. It is the reading and print views
 and the chapter transcript. `js/narrated-pattern.js` derives the player's stage
 from the current cue: it marks code lines in place and copies the matching
 reading step's diagram and illustrations, so no topic needs its own script.
-`js/narrated-lesson.js` holds what it shares with video narrations
-(`docs/video-narration.md`): copying a cue's diagram, marking code lines,
-section checks, and the `mount` lifecycle shared by both adapters. The roadmap markup comes from
+`js/narration-player.js` owns the same lifecycle used by video, explainer,
+and case-study narrations. The pattern module supplies a visual renderer;
+`NarrationDiagram.showReadingStep` copies focused diagrams, and code highlighting
+stays in the pattern renderer. The roadmap markup comes from
 `_includes/narrated-lesson-navigation.html`; jumps preserve playback state and
 move keyboard focus to the matching control in the destination scene.
 Shared styles apply to the `narrated-lesson` class, and the
@@ -105,7 +106,7 @@ preference and the theme carried in view links, and the explainer reader
 (`_layouts/narrated-reader.html`) uses the same `np-*` hooks. The script is
 safe to load once per lesson on combined course pages.
 
-`js/narrated-explainer.js` stops for each section's check 0.3 s before the
+`js/narration-transport.js` stops for each section's check 0.3 s before the
 section boundary, inside the silence after its last cue, because the next
 section's speech begins exactly at the boundary. Every section must therefore
 end with at least 2.5 s of silence, giving learners time to inspect the

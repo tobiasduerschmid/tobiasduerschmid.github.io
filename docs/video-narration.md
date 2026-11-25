@@ -37,7 +37,7 @@ The versioned authoring contract and a complete minimal example are in
 | `_layouts/narrated-pattern-reader.html` | Reading and print views of both lesson types (`video_narration: true`). |
 | `js/video-narration.js` | The player adapter: panels per cue, copies settled panels, poses the stage. |
 | `js/video-narration-stage.js` | Inside the frame: turns cues into song lines, builds the choreography, `seek(time)`. |
-| `js/narrated-lesson.js` | Shared with the pattern lessons: diagram copies, code marks, section checks, and roadmap jumps with keyboard focus. |
+| `js/narration-player.js` | Shared by every kind: playback lifecycle, section checks, replay, continuation, and roadmap/step navigation. Visuals come from `VideoNarrationVisuals.createRenderer`; diagram copies use `NarrationDiagram`. |
 | `css/video-narration.css` | The screen, panels, and slide layouts, in both themes and print. |
 | `js/video-narration/<topic>.js`, `<topic>-kit.js`, `css/video-narration-<topic>.css` | The topic's choreography and artwork, loaded only in its frame. |
 | `_data/explainers/<topic>_notes.yml` | Key points per cue for the printable notes. |

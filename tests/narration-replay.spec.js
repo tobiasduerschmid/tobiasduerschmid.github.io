@@ -44,9 +44,9 @@ async function openCheck(player, lesson, index) {
     for (const cue of lesson.story.scenes[index].cues.slice(1)) {
       await player.getByRole('button', { name: 'Next step', exact: true }).click();
     }
-    await player.getByRole('button', { name: 'Choose next action', exact: true }).click();
+    await player.getByRole('button', { name: 'Knowledge check', exact: true }).click();
   } else await player.getByRole('button', { name: 'Knowledge check', exact: true }).click();
-  return player.getByRole('region', { name: /— (Knowledge check|Summary quiz|Choose the next action)$/ });
+  return player.getByRole('region', { name: /— (Knowledge check|Summary quiz)$/ });
 }
 
 async function answer(check, question, correct) {

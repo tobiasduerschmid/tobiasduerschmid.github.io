@@ -53,7 +53,7 @@ live separately in `_data/narration_visuals/react.json`.
 - `css/react-animation.css`: React-specific artwork. `js/react-animation-art.js`:
   deterministic poses calculated from the audio clock, including backward seeks.
 - `_includes/narrated-explainer*.html`, `css/narrated-explainer.css`, and
-  `js/narrated-explainer.js`: player infrastructure shared with Node.js.
+  `js/narration-player.js` and `js/narration-transport.js`: player infrastructure shared with Node.js.
 - `assets/audio/react-basics.mp3`, `assets/narration/react-basics.txt` and
   `assets/narration/react-basics.vtt`: publishable MP3, TTS input and captions.
 

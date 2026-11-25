@@ -100,6 +100,10 @@
   };
 
   window.NodejsAnimationArt = {
+    createRenderer() {
+      return ({ element, scene, cue, progress, motion }) =>
+        window.NodejsAnimationArt.render(element, scene.id, cue, progress, motion);
+    },
     render(root, sceneId, cue, progress, animate) {
       root.dataset.currentPose = cue.pose;
       text(root, '.nja-step', cue.step);

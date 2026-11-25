@@ -129,7 +129,7 @@ test('speech, captions, and timing are generated from the published storyboard',
 });
 
 test('every section ends in enough silence for the player to stop before the next section', () => {
-  // js/narrated-explainer.js stops 0.3 s before a section boundary; the
+  // js/narration-transport.js stops 0.3 s before a section boundary; the
   // renderer's default pause after a cue is 0.55 s.
   for (const scene of story.scenes) {
     assert.ok((scene.cues.at(-1).pause_after ?? 0.55) > 0.3, `${scene.id} ends with too little silence`);

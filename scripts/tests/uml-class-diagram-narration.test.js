@@ -266,7 +266,7 @@ test('speech, captions, and timing are generated from the published script', () 
 });
 
 test('the player stops in each section-ending silence with at least two seconds to look', () => {
-  // js/narrated-explainer.js opens a check 0.3 s before the section boundary.
+  // js/narration-transport.js opens a check 0.3 s before the section boundary.
   for (const scene of timing.scenes) {
     const last = scene.cues.at(-1);
     assert.ok(last.end - last.speech_end - 0.3 >= 2, `${scene.id}: ${last.end - last.speech_end} s of silence`);

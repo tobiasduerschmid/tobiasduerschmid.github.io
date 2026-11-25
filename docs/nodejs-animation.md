@@ -40,7 +40,7 @@ live separately in `_data/narration_visuals/nodejs.json`.
 - `_includes/nodejs-animation*.html`, `css/nodejs-animation.css`, and
   `js/nodejs-animation-art.js`: Node.js-specific structure and poses.
 - `_includes/narrated-explainer*.html`, `css/narrated-explainer.css`, and
-  `js/narrated-explainer.js`: shared player (including its full-screen button),
+  `js/narration-player.js` and `js/narration-transport.js`: shared player (including its full-screen button),
   code presentation, and transcript.
 
 Native audio is the sole playback clock. Seeking derives the complete visual state

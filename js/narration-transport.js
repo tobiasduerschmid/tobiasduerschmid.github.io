@@ -1,6 +1,8 @@
-/* Shared narration transport. Native audio is the only clock (step() has none); scene renderers own visuals. */
+/* Media and cue transport for NarrationPlayer. Native audio is the only clock;
+   text-only lessons expose the same scene/cue navigation without a clock. */
 (function () {
   'use strict';
+  if (window.NarrationTransport) return;
   // Media clocks quantize timestamps; a sub-millisecond roundoff is not a previous cue.
   const TIME_EPSILON = 0.001;
   // A section's audio ends with its last cue's silence, and the next section's
@@ -196,19 +198,20 @@
 
   // Printing includes the complete transcript, then restores the reader's choice.
   function printTranscript(root, beforePrint) {
-    let wasOpen = false;
+    const transcript = root.querySelector('.nja-transcript');
+    let openBeforePrint = [];
     window.addEventListener('beforeprint', () => {
       if (beforePrint) beforePrint();
-      const transcript = root.querySelector('.nja-transcript');
-      wasOpen = transcript.open;
-      transcript.open = true;
+      openBeforePrint = [transcript, ...transcript.querySelectorAll('details')]
+        .map(element => ({ element, open: element.open }));
+      openBeforePrint.forEach(({ element }) => { element.open = true; });
     });
     window.addEventListener('afterprint', () => {
-      root.querySelector('.nja-transcript').open = wasOpen;
+      openBeforePrint.forEach(({ element, open }) => { element.open = open; });
     });
   }
 
-  function enhance(root, options) {
+  function audioSession(root, options) {
     if (root.classList.contains('is-enhanced')) return;
     const { storyboard, timing } = options;
     const presenter = cuePresenter(root, storyboard);
@@ -243,8 +246,9 @@
       currentCue = cueIndex;
       const progress = Math.max(0, Math.min(1, (position - cueTiming.start) / (cueTiming.end - cueTiming.start)));
       // Renderers that pose artwork on the narration clock also get its time.
-      options.render(scenes[index], storyboard.scenes[index],
-        storyboard.scenes[index].cues[cueIndex], progress, motion ? motion.checked : false, position);
+      options.render({ element: scenes[index], scene: storyboard.scenes[index],
+        cue: storyboard.scenes[index].cues[cueIndex], sceneIndex: index, cueIndex,
+        progress, motion: motion ? motion.checked : false, time: position });
       seek.value = String(position);
       seek.setAttribute('aria-valuetext', `${clockLabel(position)} of ${clockLabel(timing.duration)}`);
       timeline.update(position);
@@ -257,7 +261,7 @@
 
     function renderPlayback(time) {
       const boundary = currentScene >= 0 ? timing.scenes[currentScene].end : Infinity;
-      if (options.onSectionEnd && time + TIME_EPSILON >= boundary - SECTION_END_LEAD) {
+      if (options.checkScenes.includes(currentScene) && time + TIME_EPSILON >= boundary - SECTION_END_LEAD) {
         audio.pause();
         // Keep the completed section on screen while its checkpoint is open.
         audio.currentTime = Math.max(0, boundary - 0.002);
@@ -393,16 +397,21 @@
       selectScene,
       play,
       currentScene: () => currentScene,
+      currentCue: () => currentCue,
+      pause: () => audio.pause(),
+      showCue(sceneIndex, cueIndex) {
+        audio.pause();
+        seekTo(timing.scenes[sceneIndex].cues[cueIndex].start);
+      },
     };
-    window.NarrationQuiz.bindReplay(root, { player: api, checkScenes: options.checkScenes });
     bindPlayerControls(root, api);
     return api;
   }
 
   // A lesson without rendered speech: the reader moves through the same cues,
-  // and the adapter calls showCue instead of following an audio clock. The
-  // scene display, scene select, full screen, and printing match enhance.
-  function step(root, options) {
+  // and the player calls showCue instead of following an audio clock. The
+  // scene display, scene select, full screen, and printing match audio sessions.
+  function stepSession(root, options) {
     if (root.classList.contains('is-enhanced')) return null;
     const { storyboard } = options;
     const presenter = cuePresenter(root, storyboard);
@@ -410,14 +419,17 @@
     const status = root.querySelector('.nja-status');
     const fullscreen = fullscreenControl(root, fullscreenTargetOf(root, options));
     let currentScene = -1;
+    let currentCue = -1;
 
     function showCue(index, cueIndex) {
       if (options.onSeek) options.onSeek();
       presenter.show(index, cueIndex);
       currentScene = index;
+      currentCue = cueIndex;
       const scene = storyboard.scenes[index];
       // Without a clock, each cue shows its settled picture without motion.
-      options.render(presenter.scenes[index], scene, scene.cues[cueIndex], 1, false);
+      options.render({ element: presenter.scenes[index], scene, cue: scene.cues[cueIndex],
+        sceneIndex: index, cueIndex, progress: 1, motion: false });
     }
 
     function selectScene(index) {
@@ -430,44 +442,22 @@
     root.classList.add('is-enhanced');
     root.querySelectorAll('.nja-controls').forEach((controls) => { controls.hidden = false; });
     showCue(0, 0);
-    const api = { showCue, selectScene, isFullscreen: fullscreen.isFullscreen, exitFullscreen: fullscreen.exitFullscreen, toggleFullscreen: fullscreen.toggleFullscreen, currentScene: () => currentScene };
+    const api = {
+      showCue, selectScene,
+      refresh: () => showCue(currentScene, currentCue),
+      isFullscreen: fullscreen.isFullscreen, exitFullscreen: fullscreen.exitFullscreen, toggleFullscreen: fullscreen.toggleFullscreen,
+      currentScene: () => currentScene, currentCue: () => currentCue,
+      pause() {},
+    };
     bindPlayerControls(root, api);
     return api;
   }
 
-  // Templates and adapters share one compiled lesson data boundary.
-  function readData(root) {
-    // Cached pages and incremental Jekyll previews can pair older markup with
-    // the current runtime. Normalize those published data attributes here.
-    const legacy = {
-      story: '[data-np-storyboard], [data-explainer-storyboard], [data-case-storyboard]',
-      timing: '[data-np-timing], [data-explainer-timing], [data-case-timing]',
-      examples: '[data-np-examples]',
-      quizzes: '[data-np-quizzes]',
-    };
-    const read = (name, fallback) => {
-      const data = root.querySelector(`[data-narration-${name}]`) || root.querySelector(legacy[name]);
-      if (data) return JSON.parse(data.textContent);
-      if (fallback !== undefined) return fallback;
-      throw new Error(`Narration ${name} data is missing.`);
-    };
-    return { story: read('story'), timing: read('timing'), examples: read('examples', {}), quizzes: read('quizzes', {}) || {} };
+  /** Create one transport. Audio and text-only sessions share cue navigation,
+   * fullscreen, controls, and printing; only an audio session exposes play/seekTo. */
+  function mount(root, options) {
+    return options.storyboard.audio ? audioSession(root, options) : stepSession(root, options);
   }
 
-  window.NarratedExplainer = { enhance, step, readData };
-
-  // Generic lessons supply a renderer by name. Observer supplies its own
-  // adapter so section checkpoints stay outside the shared transport.
-  document.querySelectorAll('.narrated-explainer[data-art-renderer]').forEach((root) => {
-    const artwork = window[root.dataset.artRenderer];
-    // Combined chapters load renderer/player pairs in document order.
-    if (!artwork) return;
-    const { story, timing } = readData(root);
-    enhance(root, {
-      storyboard: story, timing,
-      render(scene, storyScene, cue, progress, motion) {
-        artwork.render(scene, storyScene.id, cue, progress, motion);
-      },
-    });
-  });
+  window.NarrationTransport = { mount };
 })();

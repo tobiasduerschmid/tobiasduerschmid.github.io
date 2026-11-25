@@ -227,7 +227,7 @@ test('speech, captions, and timing are generated from the published storyboard',
 });
 
 test('the words and the picture finish before every check, and predictions leave time to think', () => {
-  // js/narrated-explainer.js opens a check 0.3 s before its section ends.
+  // js/narration-transport.js opens a check 0.3 s before its section ends.
   for (const scene of story.scenes) {
     assert.ok(scene.cues.at(-1).pause_after >= 2.5, `${scene.id} leaves too little time to look before its check`);
     scene.cues.forEach((cue, index) => {

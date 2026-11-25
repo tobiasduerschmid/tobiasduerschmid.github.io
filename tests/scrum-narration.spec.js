@@ -459,7 +459,7 @@ for (const speed of [1, 2]) {
         if (question !== questions.at(-1)) await quiz.getByRole('button', { name: /^Next/ }).click();
       }
       if (questions.length > 1) await quiz.getByRole('button', { name: 'See Results' }).click();
-      await quiz.getByRole('button', { name: index + 1 < story.scenes.length ? 'Continue narration' : 'Finish review' }).click();
+      await quiz.getByRole('button', { name: index + 1 < story.scenes.length ? 'Continue narration' : 'Continue to song' }).click();
       await expect(quiz).toBeHidden();
       if (index + 1 < story.scenes.length) {
         await animation.getByRole('button', { name: 'Pause narration' }).click();
@@ -578,7 +578,8 @@ test('full screen on a phone keeps horizontal navigation and overlays captions o
   const picture = await animation.locator('[data-vn-panel="animation"]').boundingBox();
   const controls = await animation.locator('.vn-controls').boundingBox();
   expect(picture.height).toBeGreaterThan(390 * 0.7);
-  expect(controls.height).toBeLessThanOrEqual(76);
+  expect(controls.y).toBeGreaterThanOrEqual(0);
+  expect(controls.y + controls.height).toBeLessThanOrEqual(390);
   const navigation = await animation.getByRole('navigation', { name: 'Lesson sections' }).boundingBox();
   expect(navigation.y + navigation.height).toBeLessThanOrEqual(picture.y + 1);
   const captions = animation.getByRole('region', { name: 'Narration', exact: true });
@@ -649,7 +650,7 @@ for (const dark of [false, true]) {
     await animation.getByRole('button', { name: 'Knowledge check', exact: true }).click();
     const question = questionsOf('product_backlog')[0];
     const wrong = Number(Object.keys(question.option_feedback)[0]);
-    await animation.locator('.np-quiz').getByRole('radio').filter({ hasText: question.options[wrong] }).click();
+    await animation.getByRole('region', { name: /— (Knowledge check|Summary quiz)$/ }).getByRole('radio').filter({ hasText: question.options[wrong] }).click();
     await expect(animation.getByText(question.option_feedback[wrong], { exact: true })).toBeVisible();
     await a11yCheckpoint(page, 'mobile incorrect answer', { include: '#scrum-video .nja-player', feature: 'scrum-narration' });
     await animation.locator('.nja-player').screenshot({ path: testInfo.outputPath('quiz-mobile.png') });

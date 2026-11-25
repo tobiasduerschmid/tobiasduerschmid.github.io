@@ -1,0 +1,8 @@
+{%- comment -%}The same knowledge-check surface for every narration renderer.{%- endcomment -%}
+<section class="narration-check" aria-labelledby="{{ include.id }}-check-title" hidden>
+  <button type="button" class="vn-check-exit">Exit full screen</button>
+  <h3 id="{{ include.id }}-check-title" tabindex="-1">Knowledge check</h3>
+  <div data-quiz-host></div>
+  <p class="tvm-quiz-status" role="status" aria-live="polite"></p>
+  <button type="button" data-narration-action="review-scene"{% unless include.text_only %} hidden{% endunless %}>Review this scene</button>
+</section>

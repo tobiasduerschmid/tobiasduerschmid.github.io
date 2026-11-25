@@ -1,9 +1,10 @@
 # Narrated diagram case studies
 
 `_includes/narrated-case-study.html` presents a case as diagram snapshots, short
-narration cues, and decisions. `js/narrated-case-study.js` adapts the existing
-`NarratedExplainer` media transport and `SebookQuiz` question renderer; it does
-not introduce another playback clock, grader, or persistence mechanism.
+narration cues, and decisions. `js/narrated-case-study.js` supplies only
+`NarratedCaseStudyVisuals.createRenderer`. `NarrationPlayer` owns the same
+playback, step navigation, knowledge checks, replay, and continuation used by
+every narration. `NarrationQuiz` delegates grading to `SebookQuiz`.
 
 Use a static SEBook page with `static_uml: true` and the common entry point:
 
@@ -129,8 +130,8 @@ case on the Security chapter did before its narration was rendered. Omit the `me
 identifies the text that later audio must match. The include then renders no
 audio element, transport, narration speed, or download links, and its
 introduction invites self-paced study. The include places a hidden full-screen
-button in the settings row, and the adapter uses `NarratedExplainer.step`
-instead of the audio clock. **Next step**, **Previous step**, scene review,
+button in the settings row. The shared player selects a text-only session
+through `NarrationTransport.mount`. **Next step**, **Previous step**, scene review,
 full screen, and every decision behave as in the narrated player; the reading
 version, print view, and lesson notes are unchanged.
 `node scripts/narration.js check` reports the lesson as text only, and fails

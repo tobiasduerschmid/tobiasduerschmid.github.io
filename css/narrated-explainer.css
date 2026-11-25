@@ -54,7 +54,7 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer {
 .narrated-explainer [hidden] { display: none !important; }
 .narrated-explainer .nja-player { background: var(--nja-bg); color: var(--nja-text); border: 2px solid var(--nja-line); border-radius: 8px; overflow: hidden; }
 /* Where a browser cannot show an element full screen (Safari on iPhone), the
-   player fills the viewport itself (js/narrated-explainer.js), and the page
+   player fills the viewport itself (js/narration-transport.js), and the page
    behind it stops scrolling. The html state class lifts this rule above any
    lesson's own layout of the element, as the browser's full-screen rules are. */
 html.has-viewport-fullscreen .narrated-explainer .is-viewport-fullscreen { position: fixed; inset: 0; z-index: 2147483000; width: 100vw; height: 100vh; height: 100dvh; margin: 0; }
@@ -264,7 +264,7 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .vn-settings { box-sha
    has the room; the checkpoint's own buttons continue the narration. The
    selector follows the checkpoint's hidden attribute at once, so a player
    can focus a bar control in the same step that closes the checkpoint. */
-.narrated-explainer .vn-video:has(:is(.np-quiz, .case-quiz):not([hidden])) .vn-controls { display: none; }
+.narrated-explainer .vn-video:has(.narration-check:not([hidden])) .vn-controls { display: none; }
 /* The settings panel floats over the picture at the lower right, as the song
    player's does (js/song-video/settings-panel.js), but just above the bar, so
    every control stays reachable while it is open; it scrolls on its own. */
@@ -321,7 +321,7 @@ html.has-viewport-fullscreen .narrated-explainer .vn-video.is-viewport-fullscree
    lets its end scroll above them. */
 .narrated-explainer .vn-video.is-fullscreen .nja-stage:not(.vn-screen) { grid-area: 2 / 1 / 4 / 2; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 12em; }
 .narrated-explainer .vn-video.is-fullscreen [data-fullscreen-scroll]:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: -3px; }
-.narrated-explainer .vn-video.is-fullscreen :is(.np-quiz, .case-quiz) { grid-area: 2 / 1 / 4 / 2; z-index: 5; min-height: 0; overflow-y: auto; background: var(--nja-bg); }
+.narrated-explainer .vn-video.is-fullscreen .narration-check { grid-area: 2 / 1 / 4 / 2; z-index: 5; min-height: 0; overflow-y: auto; background: var(--nja-bg); }
 .narrated-explainer .vn-video.is-fullscreen .vn-check-exit { display: block; margin: 0 0 0.6em auto; min-height: 2.4em; padding: 0.3em 0.7em; font: inherit; color: var(--nja-text); background: var(--nja-chrome); border: 1px solid var(--nja-line); border-radius: 4px; cursor: pointer; }
 .narrated-explainer .vn-video.is-fullscreen .vn-check-exit:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
 .narrated-explainer .vn-video.is-fullscreen .vn-captions { grid-area: 2 / 1; z-index: 3; align-self: end; justify-self: center; width: min(60em, calc(100% - 1em)); min-height: 0; max-height: min(5em, 40%); overflow-y: auto; margin-bottom: 0.35em; padding: 0.3em 0.6em; background: var(--nja-bg); border: 1px solid var(--nja-line); border-radius: 5px; color: var(--nja-text); font-size: calc(1em * var(--vn-caption-scale, 1)); line-height: 1.4; text-align: center; }
@@ -350,44 +350,44 @@ html.has-viewport-fullscreen .narrated-explainer .vn-video.is-viewport-fullscree
 }
 
 /* Checkpoints in the player: SebookQuiz supplies the interaction of a lesson's
-   knowledge check (.np-quiz) and a case study's decision (.case-quiz); the
+   knowledge-check surface (.narration-check); the
    player's theme tokens style both. */
-.narrated-explainer :is(.np-quiz, .case-quiz) { padding: 1.4em; color: var(--nja-text); background: var(--nja-bg); }
-.narrated-explainer :is(.np-quiz, .case-quiz) h3 { font-size: 1.3em; color: inherit; line-height: 1.4; }
-.narrated-explainer :is(.np-quiz, .case-quiz) h4 { font-size: 1.2em; color: inherit; }
-.narrated-explainer :is(.np-quiz, .case-quiz) p { font: inherit; color: inherit; line-height: 1.6; }
-.narrated-explainer :is(.np-quiz, .case-quiz) button { font: inherit; min-height: 2.6em; border: 2px solid var(--nja-line); border-radius: 6px; padding: 0.6em 0.8em; background: var(--nja-input); color: var(--nja-text); cursor: pointer; }
-.narrated-explainer :is(.np-quiz, .case-quiz) button:not(.quiz-option):hover:not(:disabled) { background: var(--nja-hover); }
-.narrated-explainer :is(.np-quiz, .case-quiz) :is(button, h3):focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .tvm-quiz-gate-header { display: flex; align-items: center; gap: 0.8em; margin-bottom: 1em; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .tvm-quiz-gate-icon { font-size: 1.5em; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .quiz-container { margin: 1em 0; padding: 1em; background: var(--nja-panel); border: 2px solid var(--nja-line); border-radius: 8px; color: var(--nja-text); font: inherit; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .quiz-question-card { display: none; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .quiz-question-card.active { display: block; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .question-text { color: var(--nja-text); font: inherit; font-weight: 600; margin: 0 0 1em; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .quiz-options { display: flex; flex-direction: column; gap: 0.6em; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .quiz-option { display: flex; gap: 0.7em; align-items: flex-start; text-align: left; width: 100%; margin: 0; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .quiz-option:hover:not([disabled]) { background: var(--nja-hover); border-color: var(--nja-cyan); }
-.narrated-explainer :is(.np-quiz, .case-quiz) .quiz-option.correct { background: var(--nja-success-bg); color: var(--nja-green); border-color: var(--nja-green); }
-.narrated-explainer :is(.np-quiz, .case-quiz) .quiz-option.incorrect { background: var(--nja-error-bg); color: var(--nja-coral); border-color: var(--nja-coral); }
-.narrated-explainer :is(.np-quiz, .case-quiz) .quiz-option.correct::after { content: '✓'; margin-left: auto; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .quiz-option.incorrect::after { content: '✗'; margin-left: auto; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .option-label { display: inline-grid; place-items: center; flex-shrink: 0; min-width: 1.8em; min-height: 1.8em; padding: 0.1em; border: 1px solid var(--nja-line); border-radius: 50%; background: var(--nja-chrome); color: var(--nja-text); font: inherit; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .option-checkbox { display: none; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .option-content { min-width: 0; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .option-feedback { margin: 0.3em 0 0.5em; padding: 0.6em 0.8em; background: var(--nja-warning-bg); border-left: 3px solid var(--nja-accent); color: var(--nja-text); font: inherit; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .quiz-explanation { margin: 1em 0 0; padding: 0.8em; background: var(--nja-note-bg); border: 1px solid var(--nja-line); border-left: 4px solid var(--nja-accent); color: var(--nja-text); font: inherit; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .explanation-title { color: var(--nja-accent); font: inherit; font-weight: bold; }
-.narrated-explainer :is(.np-quiz, .case-quiz) :is(.quiz-shortcuts-hint, .quiz-next-shortcut-hint, .quiz-result-shortcut-hint) { font-size: 1em; line-height: 1.5; margin-top: 0.8em; color: var(--nja-muted); }
-.narrated-explainer :is(.np-quiz, .case-quiz) kbd { color: var(--nja-text); background: var(--nja-input); border: 1px solid var(--nja-line); font: inherit; padding: 0.1em 0.3em; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .quiz-progress-bar { height: 0.5em; background: var(--nja-line); border-radius: 6px; margin-bottom: 1em; overflow: hidden; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .progress-fill { height: 100%; background: var(--nja-accent); }
-.narrated-explainer :is(.np-quiz, .case-quiz) .quiz-correct-answers { display: none; gap: 0.5em; color: var(--nja-green); font: inherit; margin-top: 0.8em; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .correct-label-badge { padding: 0.2em 0.5em; border: 1px solid var(--nja-green); border-radius: 4px; color: var(--nja-green); background: var(--nja-success-bg); font: inherit; }
-.narrated-explainer :is(.np-quiz, .case-quiz) :is(.score-display, .score-summary, .tvm-quiz-threshold) { color: var(--nja-text); font: inherit; margin: 0.8em 0; }
-.narrated-explainer :is(.np-quiz, .case-quiz) .results-actions { display: flex; flex-wrap: wrap; gap: 0.8em; }
+.narrated-explainer .narration-check { padding: 1.4em; color: var(--nja-text); background: var(--nja-bg); }
+.narrated-explainer .narration-check h3 { font-size: 1.3em; color: inherit; line-height: 1.4; }
+.narrated-explainer .narration-check h4 { font-size: 1.2em; color: inherit; }
+.narrated-explainer .narration-check p { font: inherit; color: inherit; line-height: 1.6; }
+.narrated-explainer .narration-check button { font: inherit; min-height: 2.6em; border: 2px solid var(--nja-line); border-radius: 6px; padding: 0.6em 0.8em; background: var(--nja-input); color: var(--nja-text); cursor: pointer; }
+.narrated-explainer .narration-check button:not(.quiz-option):hover:not(:disabled) { background: var(--nja-hover); }
+.narrated-explainer .narration-check :is(button, h3):focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
+.narrated-explainer .narration-check .tvm-quiz-gate-header { display: flex; align-items: center; gap: 0.8em; margin-bottom: 1em; }
+.narrated-explainer .narration-check .tvm-quiz-gate-icon { font-size: 1.5em; }
+.narrated-explainer .narration-check .quiz-container { margin: 1em 0; padding: 1em; background: var(--nja-panel); border: 2px solid var(--nja-line); border-radius: 8px; color: var(--nja-text); font: inherit; }
+.narrated-explainer .narration-check .quiz-question-card { display: none; }
+.narrated-explainer .narration-check .quiz-question-card.active { display: block; }
+.narrated-explainer .narration-check .question-text { color: var(--nja-text); font: inherit; font-weight: 600; margin: 0 0 1em; }
+.narrated-explainer .narration-check .quiz-options { display: flex; flex-direction: column; gap: 0.6em; }
+.narrated-explainer .narration-check .quiz-option { display: flex; gap: 0.7em; align-items: flex-start; text-align: left; width: 100%; margin: 0; }
+.narrated-explainer .narration-check .quiz-option:hover:not([disabled]) { background: var(--nja-hover); border-color: var(--nja-cyan); }
+.narrated-explainer .narration-check .quiz-option.correct { background: var(--nja-success-bg); color: var(--nja-green); border-color: var(--nja-green); }
+.narrated-explainer .narration-check .quiz-option.incorrect { background: var(--nja-error-bg); color: var(--nja-coral); border-color: var(--nja-coral); }
+.narrated-explainer .narration-check .quiz-option.correct::after { content: '✓'; margin-left: auto; }
+.narrated-explainer .narration-check .quiz-option.incorrect::after { content: '✗'; margin-left: auto; }
+.narrated-explainer .narration-check .option-label { display: inline-grid; place-items: center; flex-shrink: 0; min-width: 1.8em; min-height: 1.8em; padding: 0.1em; border: 1px solid var(--nja-line); border-radius: 50%; background: var(--nja-chrome); color: var(--nja-text); font: inherit; }
+.narrated-explainer .narration-check .option-checkbox { display: none; }
+.narrated-explainer .narration-check .option-content { min-width: 0; }
+.narrated-explainer .narration-check .option-feedback { margin: 0.3em 0 0.5em; padding: 0.6em 0.8em; background: var(--nja-warning-bg); border-left: 3px solid var(--nja-accent); color: var(--nja-text); font: inherit; }
+.narrated-explainer .narration-check .quiz-explanation { margin: 1em 0 0; padding: 0.8em; background: var(--nja-note-bg); border: 1px solid var(--nja-line); border-left: 4px solid var(--nja-accent); color: var(--nja-text); font: inherit; }
+.narrated-explainer .narration-check .explanation-title { color: var(--nja-accent); font: inherit; font-weight: bold; }
+.narrated-explainer .narration-check :is(.quiz-shortcuts-hint, .quiz-next-shortcut-hint, .quiz-result-shortcut-hint) { font-size: 1em; line-height: 1.5; margin-top: 0.8em; color: var(--nja-muted); }
+.narrated-explainer .narration-check kbd { color: var(--nja-text); background: var(--nja-input); border: 1px solid var(--nja-line); font: inherit; padding: 0.1em 0.3em; }
+.narrated-explainer .narration-check .quiz-progress-bar { height: 0.5em; background: var(--nja-line); border-radius: 6px; margin-bottom: 1em; overflow: hidden; }
+.narrated-explainer .narration-check .progress-fill { height: 100%; background: var(--nja-accent); }
+.narrated-explainer .narration-check .quiz-correct-answers { display: none; gap: 0.5em; color: var(--nja-green); font: inherit; margin-top: 0.8em; }
+.narrated-explainer .narration-check .correct-label-badge { padding: 0.2em 0.5em; border: 1px solid var(--nja-green); border-radius: 4px; color: var(--nja-green); background: var(--nja-success-bg); font: inherit; }
+.narrated-explainer .narration-check :is(.score-display, .score-summary, .tvm-quiz-threshold) { color: var(--nja-text); font: inherit; margin: 0.8em 0; }
+.narrated-explainer .narration-check .results-actions { display: flex; flex-wrap: wrap; gap: 0.8em; }
 .narrated-explainer .narration-quiz-actions { display: flex; flex-wrap: wrap; gap: 0.8em; }
-.narrated-explainer :is(.np-quiz, .case-quiz) :is(.hidden, .is-hidden) { display: none !important; }
+.narrated-explainer .narration-check :is(.hidden, .is-hidden) { display: none !important; }
 
 /* Shared lesson actions stay next to the player, before its supplemental links. */
 .narrated-explainer .narration-notes-actions { display: flex; flex-wrap: wrap; gap: 0.5em; margin: 0.55em 0; }
@@ -426,10 +426,10 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .narration-note-action
 @media (max-width: 520px) {
   .narrated-explainer .nja-stage, .narrated-explainer .nja-narration { padding: 0.85em; }
   .narrated-explainer .nja-controls { padding-inline: 0.5em; }
-  .narrated-explainer :is(.np-quiz, .case-quiz) { padding: 0.85em; }
-  .narrated-explainer :is(.np-quiz, .case-quiz) .quiz-container { padding: 0.65em; }
-  .narrated-explainer :is(.np-quiz, .case-quiz) .quiz-option { gap: 0.5em; padding: 0.55em 0.45em; }
-  .narrated-explainer :is(.np-quiz, .case-quiz) .option-label { min-width: 1.4em; min-height: 1.4em; }
+  .narrated-explainer .narration-check { padding: 0.85em; }
+  .narrated-explainer .narration-check .quiz-container { padding: 0.65em; }
+  .narrated-explainer .narration-check .quiz-option { gap: 0.5em; padding: 0.55em 0.45em; }
+  .narrated-explainer .narration-check .option-label { min-width: 1.4em; min-height: 1.4em; }
   .narrated-explainer .nja-scene h3 { font-size: 1.4em; }
   .narrated-explainer .nja-code-line { grid-template-columns: 1.3em minmax(0, 1fr); gap: 0.35em; padding-right: 0.4em; }
   .narrated-explainer .nja-narration { min-height: 0; }

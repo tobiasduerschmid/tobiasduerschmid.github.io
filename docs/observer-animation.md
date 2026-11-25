@@ -65,8 +65,8 @@ live separately in `_data/narration_visuals/observer.json`.
   illustrated editor. The player, reader, and print views are the shared narrated
   pattern lesson (`docs/narrated-pattern.md`), discovered from the shared narration specification.
 
-`js/narrated-explainer.js` shares the native-audio transport with Node.js and React. The
-shared pattern-lesson adapter (`js/narrated-pattern.js`) adds section checkpoints and derives visual state from the
+`NarrationPlayer` owns the shared playback and knowledge-check lifecycle.
+The pattern renderer (`js/narrated-pattern.js`) derives visual state from the
 current cue. `narrated-explainer-code.html` and `css/narrated-explainer.css` share Rouge
 highlighting and the theme. Light and dark palettes follow `html.dark-mode`,
 including diagram, controls, code, focus markers, and quiz feedback.

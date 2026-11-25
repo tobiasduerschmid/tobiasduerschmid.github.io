@@ -104,7 +104,7 @@ test('speech, captions, and timing are generated from the published storyboard',
 });
 
 test('every quiz leaves at least two seconds to inspect the final picture after speech', () => {
-  // js/narrated-explainer.js stops 0.3 s before a section boundary.
+  // js/narration-transport.js stops 0.3 s before a section boundary.
   timing.scenes.filter(scene => quizzes[scene.id]).forEach(scene => {
     const last = scene.cues.at(-1);
     const viewingTime = scene.end - 0.3 - last.speech_end;

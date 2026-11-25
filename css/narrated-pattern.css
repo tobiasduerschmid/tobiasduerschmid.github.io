@@ -78,6 +78,6 @@
 .narrated-lesson .nja-art pre { max-height: 24em; overflow-y: auto; scrollbar-color: var(--nja-line) var(--nja-code-bg); }
 .narrated-lesson .nja-art pre:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: -3px; }
 @media print {
-  .narrated-lesson .np-quiz { display: none !important; }
+  .narrated-lesson .narration-check { display: none !important; }
   .narrated-lesson .np-print-question details::details-content { display: block; content-visibility: visible; }
 }

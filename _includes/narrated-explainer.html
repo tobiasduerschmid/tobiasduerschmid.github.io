@@ -2,7 +2,7 @@
 {% assign timing_key = include.topic | append: '_timing' %}
 {% assign timing = site.data.explainers[timing_key] %}
 {% assign art_include = include.topic | append: '-animation-art.html' %}
-<section class="narrated-explainer {{ include.topic }}-animation mathjax_ignore" id="{{ include.topic }}-animation" aria-labelledby="{{ include.topic }}-animation-title" data-art-renderer="{{ include.renderer }}">
+<section data-narration-renderer="{{ include.renderer }}" class="narrated-explainer {{ include.topic }}-animation mathjax_ignore" id="{{ include.topic }}-animation" aria-labelledby="{{ include.topic }}-animation-title" data-art-renderer="{{ include.renderer }}">
   <h2 id="{{ include.topic }}-animation-title">{{ explainer.title }}</h2>
   {% assign player_id = include.topic | append: '-animation' %}
   <div class="nja-player">
@@ -37,6 +37,7 @@
       </div>
       {% endfor %}
     </div>
+    {% include narration-player-check.html id=player_id %}
     <div class="nja-narration vn-captions" id="{{ player_id }}-captions" role="region" aria-label="Narration" tabindex="0"><p>{{ explainer.scenes.first.cues.first.text }}</p></div>
     </div>
     </div>
@@ -72,5 +73,5 @@
   {% include narration-data.html topic=include.topic %}
 </section>
 {% assign art_script = '/js/' | append: include.topic | append: '-animation-art.js' %}
-<script src="{{ art_script | relative_url }}" defer></script>
+<script src="{{ art_script | relative_url }}?v={{ site.asset_version }}" defer></script>
 {% include narration-player-scripts.html %}

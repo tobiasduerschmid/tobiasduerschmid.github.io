@@ -3,7 +3,7 @@
    or the animated stage. Slides, diagrams, and code are copied from the
    build-time reading step for the cue; the animated stage is a same-origin
    frame that poses the song-video engine at the narration's time.
-   js/narrated-lesson.js holds what every narrated lesson shares, and
+   js/narration-player.js owns the shared lesson lifecycle, and
    js/narration-player-controls.js the control bar of every player. */
 (function () {
   'use strict';
@@ -56,10 +56,7 @@
     };
   }
 
-  function enhance(root) {
-    if (root.classList.contains('is-enhanced')) return;
-    const { story, timing, examples, quizzes } = window.NarratedExplainer.readData(root);
-    const { renderDiagram, mount } = window.NarratedLesson;
+  function createRenderer(root, { story, timing, examples }) {
     const topic = root.dataset.vnTopic;
     const screen = root.querySelector('[data-vn-screen]');
     const panels = Object.fromEntries(Array.from(screen.querySelectorAll('[data-vn-panel]'), panel => [panel.dataset.vnPanel, panel]));
@@ -99,14 +96,14 @@
       if (diagramKey === lastDiagramKey) return;
       const diagram = story.diagrams[diagramName];
       const container = panels.diagram.querySelector('[data-np-diagram]');
-      renderDiagram(container, readingStep.querySelector('[data-vn-settled="diagram"] .np-diagram'),
-        diagram.type || 'class', cue.diagram_focus, `player-${topic}-${storyScene.id}-${diagramName}`);
+      window.NarrationDiagram.showReadingStep(container, readingStep.querySelector('[data-vn-settled="diagram"] .np-diagram'),
+        { type: diagram.type || 'class', focus: cue.diagram_focus, prefix: `player-${topic}-${storyScene.id}-${diagramName}` });
       container.setAttribute('aria-label', diagram.label);
       panels.diagram.querySelector('.np-diagram-caption').textContent = diagram.caption || '';
       lastDiagramKey = diagramKey;
     }
 
-    function render(scene, storyScene, cue, progress, motion, position) {
+    function render({ scene: storyScene, cue, motion, time: position }) {
       const shown = cue.show || storyScene.show;
       if (animation && shown.includes('animation')) {
         animation.pose(motion ? position : restingTime(storyScene, cue), cue.visual);
@@ -135,11 +132,8 @@
       root.querySelector('.nja-takeaway').hidden = Boolean(cue.prediction);
     }
 
-    // The shared control bar comes with the transport (js/narration-player-controls.js).
-    mount(root, { story, timing, quizzes, examples, render });
+    return render;
   }
 
-  function init() { document.querySelectorAll('section.video-narration').forEach(enhance); }
-  if (document.readyState !== 'complete') document.addEventListener('DOMContentLoaded', init, { once: true });
-  else init();
+  window.VideoNarrationVisuals = { createRenderer };
 })();

@@ -1,15 +1,16 @@
 {% assign case_story = site.data.explainers[include.topic] %}
 {% assign case_timing_key = include.topic | append: '_timing' %}
 {% assign case_timing = site.data.explainers[case_timing_key] %}
+{% assign case_text_only = true %}{% if case_story.audio %}{% assign case_text_only = false %}{% endif %}
 {% assign case_id = include.topic | append: '-case-study' %}
-<section class="narrated-case-study narrated-explainer mathjax_ignore" id="{{ case_id }}" aria-labelledby="{{ case_id }}-title">
+<section data-narration-renderer="NarratedCaseStudyVisuals" class="narrated-case-study narrated-explainer mathjax_ignore" id="{{ case_id }}" aria-labelledby="{{ case_id }}-title">
   <h2 id="{{ case_id }}-title">{{ case_story.title | escape }}</h2>
   {% if case_story.description %}<p>{{ case_story.description | escape }}</p>{% endif %}
   <p>Use <strong>Next step</strong> to investigate {% if case_story.audio %}without audio, or play the narration{% else %}at your own pace{% endif %}. Each decision pauses before the next evidence. You may revisit any scene; this is practice, not an exam.</p>
   <div class="nja-player">
     <div class="vn-video song-player-screen" data-vn-video tabindex="-1">
     <div class="vn-surface">
-    {% capture case_steps %}<span class="case-step-actions"><button type="button" data-case-action="previous-step">Previous step</button><button type="button" data-case-action="next-step">Next step</button><output data-case-progress aria-label="Current step"></output></span>{% endcapture %}
+    {% capture case_steps %}<span class="case-step-actions" role="group" aria-label="Step navigation"><button type="button" data-narration-action="previous-step">Previous step</button><button type="button" data-narration-action="next-step">Next step</button><output data-narration-progress aria-label="Current step"></output></span>{% endcapture %}
     {%- comment -%} A text-only story has no media until its speech is rendered, so its bar offers no audio controls. {%- endcomment %}
     {% if case_story.audio %}
     {% include narration-player-controls.html id=case_id duration=case_timing.duration seek_label="Narration position" scenes=case_story.scenes scene_label="Review a scene" speed_label="Narration speed" lead=case_steps %}
@@ -42,13 +43,7 @@
       </section>
       {% endfor %}
     </div>
-    <section class="case-quiz" aria-labelledby="{{ case_id }}-decision-title" hidden>
-      <button type="button" class="vn-check-exit">Exit full screen</button>
-      <h3 id="{{ case_id }}-decision-title" tabindex="-1">Choose the next action</h3>
-      <div data-quiz-host></div>
-      <p class="tvm-quiz-status" role="status" aria-live="polite"></p>
-      <button type="button" data-case-action="review-evidence">Review this scene</button>
-    </section>
+    {% include narration-player-check.html id=case_id text_only=case_text_only %}
     <div class="nja-narration vn-captions" id="{{ case_id }}-captions" role="region" aria-label="Narration" tabindex="0"><p>{{ case_story.scenes.first.cues.first.text | escape }}</p></div>
     </div>
     </div>
@@ -66,7 +61,7 @@
   {% else %}
   {% include narration-player-tips.html id=case_id text_only=true %}
   {% endif %}
-  <div class="case-reading-actions" hidden><button type="button" data-case-action="read">Read at my own pace</button><button type="button" data-case-action="print">Print the case study</button></div>
+  <div class="case-reading-actions" data-narration-reading-actions hidden><button type="button" data-narration-action="read">Read at my own pace</button><button type="button" data-narration-action="print">Print the case study</button></div>
   <details class="nja-transcript" open>
     <summary>Complete transcript, diagrams, and decision explanations (contains later findings)</summary>
     {% include narrated-case-study-reading.html story=case_story prefix=case_id %}
@@ -74,7 +69,4 @@
   {% include narration-data.html topic=include.topic %}
 </section>
 {% include narration-player-scripts.html %}
-<script src="{{ '/js/parsons-grading.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
-<script src="{{ '/js/tutorial-quiz.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
-<script src="{{ '/js/narration-diagram.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/narrated-case-study.js' | relative_url }}?v={{ site.asset_version }}" defer></script>

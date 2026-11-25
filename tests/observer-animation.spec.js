@@ -119,7 +119,7 @@ test('each section ends in exactly one tutorial question and resumes only when r
       await expect(animation.getByRole('button', { name: 'Play narration' })).toBeEnabled();
       await expect(animation.getByRole('heading', { name: story.scenes[index + 1].title, exact: true })).toBeVisible();
     } else {
-      await expect(animation.getByText('Narration and final knowledge check finished. Revisit any section to review.')).toBeVisible();
+      await expect(animation.getByRole('status').filter({ hasText: 'Lesson complete.' })).toBeVisible();
     }
   }
 });
@@ -200,7 +200,7 @@ for (const dark of [false, true]) {
     await seek(page, timing.scenes[sceneIndex('views')].cues[2].start + 1);
     await openPlayerSettings(animation);
     await animation.getByRole('button', { name: 'Knowledge check', exact: true }).click();
-    const quiz = animation.locator('.np-quiz');
+    const quiz = animation.getByRole('region', { name: /— (Knowledge check|Summary quiz)$/ });
     // The check replaces the control bar until it is answered or skipped.
     await expect(animation.getByRole('button', { name: 'Play narration' })).toBeHidden();
     await quiz.getByRole('radio').filter({ hasText: quizzes.views.options[0] }).click();
@@ -233,7 +233,7 @@ test('previous and next navigate directly past knowledge checks; an open check i
   await page.goto(url);
   const animation = player(page);
   const selection = animation.getByRole('combobox', { name: 'Scene', exact: true });
-  const quiz = animation.locator('.np-quiz');
+  const quiz = animation.getByRole('region', { name: /— (Knowledge check|Summary quiz)$/ });
   await animation.getByRole('combobox', { name: 'Code language' }).selectOption('java');
   await seek(page, timing.scenes[3].start + 1);
   await animation.getByRole('button', { name: 'Next scene', exact: true }).click();

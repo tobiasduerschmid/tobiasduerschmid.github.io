@@ -27,7 +27,7 @@
 {% assign first_scene = explainer.scenes.first %}
 {% assign first_cue = first_scene.cues.first %}
 {% assign player_id = topic | append: '-video' %}
-<section class="narrated-explainer narrated-lesson video-narration {{ topic }}-video mathjax_ignore" id="{{ topic }}-video" aria-labelledby="{{ topic }}-video-title" data-vn-topic="{{ topic }}">
+<section data-narration-renderer="VideoNarrationVisuals" class="narrated-explainer narrated-lesson video-narration {{ topic }}-video mathjax_ignore" id="{{ topic }}-video" aria-labelledby="{{ topic }}-video-title" data-vn-topic="{{ topic }}">
   <h2 id="{{ topic }}-video-title">{{ explainer.title }}</h2>
   <p>{{ lesson.summary }} {{ lesson.prerequisites }}</p>
   <div class="nja-player">
@@ -71,12 +71,7 @@
           <span class="vn-gesture-feedback" aria-hidden="true" hidden></span>
           <noscript><p>{{ first_cue.visual | escape }}</p></noscript>
         </div>
-        <section class="np-quiz" aria-labelledby="{{ topic }}-quiz-title" hidden>
-          <button type="button" class="vn-check-exit">Exit full screen</button>
-          <h3 id="{{ topic }}-quiz-title" tabindex="-1">Knowledge check</h3>
-          <div data-quiz-host></div>
-          <p class="tvm-quiz-status" role="status" aria-live="polite"></p>
-        </section>
+        {% include narration-player-check.html id=player_id %}
         <div class="nja-narration vn-captions" id="{{ topic }}-video-captions" role="region" aria-label="Narration" tabindex="0"><p>{{ first_cue.text }}</p></div>
       </div>
       <p class="vn-phone-tip">Tip: turn your phone sideways for a bigger picture.</p>
@@ -100,9 +95,5 @@
   {% include narration-data.html topic=include.topic %}
 </section>
 {% include narration-player-scripts.html %}
-<script src="{{ '/js/parsons-grading.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
-<script src="{{ '/js/tutorial-quiz.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/narrated-pattern-document.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
-<script src="{{ '/js/narration-diagram.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
-<script src="{{ '/js/narrated-lesson.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/video-narration.js' | relative_url }}?v={{ site.asset_version }}" defer></script>

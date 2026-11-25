@@ -233,7 +233,7 @@ shares its modules. Rules that came from review:
   `scene.part` must never hide navigation or require a fabricated part value
   in the speech storyboard. Verify the opening frame, each jump target,
   inline and mobile fullscreen layouts, and both themes. Reuse the shared
-  `narrated-lesson-navigation.html` include and `NarratedLesson.mount`
+  `narrated-lesson-navigation.html` include and `NarrationPlayer.mount`
   helper used by design-pattern lessons; a jump keeps keyboard focus in the
   destination navigation.
 - Every picture has a heading strip: a tag naming the role, artifact, or
@@ -285,7 +285,7 @@ Check full screen at 1440x900, 1920x1080, 1024x768, 844x390, 390x844, and
 touch (tap the picture to play, double-tap a side to skip).
 
 Full screen works in every browser, so keep it working when you change the
-player (`js/narrated-explainer.js`):
+player (`js/narration-transport.js`):
 
 - The transport uses the standard API or Safari's prefixed one. Where neither
   exists (Safari on iPhone), or the browser refuses the request, the player

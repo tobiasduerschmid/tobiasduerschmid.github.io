@@ -6,7 +6,7 @@
    has a picture control, play and skip by click and double-click. Shortcuts,
    gestures, hiding, and the settings panel are the song player's own modules
    (js/song-video/), bound through their class hooks. The narration transport
-   (js/narrated-explainer.js) binds this module to every player. */
+   (js/narration-transport.js) binds this module to every player. */
 (function () {
   'use strict';
 
@@ -51,7 +51,7 @@
   // checkpoint's own buttons continue; in full screen, its exit button leaves
   // full screen.
   function bindCheckpoint(root, listen) {
-    const checkpoint = root.querySelector('.np-quiz, .case-quiz');
+    const checkpoint = root.querySelector('.narration-check');
     if (!checkpoint) return;
     new MutationObserver(() => {
       if (!checkpoint.hidden && !root.querySelector('.vn-settings').hidden) {

@@ -79,7 +79,7 @@ A `case-study` lesson may omit `media` while its speech is not yet rendered.
 Such a text-only lesson keeps the same `say` text, fingerprint, and decisions,
 but it has no audio, captions, script, or timing file. Its player offers
 step-by-step cue navigation, decisions, scene review, and full screen through
-`NarratedExplainer.step`, and `node scripts/narration.js check`
+`NarrationTransport.mount` in text-only mode, and `node scripts/narration.js check`
 reports it as text only instead of requiring timing. A text-only lesson that
 still has a timing file is an error. To add narration later, add the `media`
 block and render the audio as described below. Other kinds always need `media`,
@@ -414,13 +414,17 @@ and verification screenshots outside the repository.
   before a player's own scripts, and the scene and speed selects, the audio
   element, and the download credit complete the set. Change a shared control
   here once, not in each player.
-- `js/narrated-explainer.js`: shared audio clock, seeking, speed, motion,
-  fullscreen, print lifecycle, and `readData` boundary for every adapter.
-  `enhance` follows the audio clock; `step` shows the same cues without one
-  for a text-only case study, sharing the scene display, fullscreen, and
-  transcript printing. Both bind the control bar to the player they create
-  and expose `toggleFullscreen()` / `exitFullscreen()` for embedded media
-  that use the narration container as their fullscreen host.
+- `js/narration-player.js`: the single player entry point and data boundary.
+  It normalizes companion quizzes and inline scene checkpoints, mounts the
+  declared visual renderer, and owns check continuation, replay boundaries,
+  roadmap and step navigation, focus, language refresh, and final song handoff.
+  Every kind uses this lifecycle, including explainers without authored checks.
+- `js/narration-transport.js`: the audio clock, seeking, speed, motion,
+  fullscreen, cue presentation, and print lifecycle. `mount` selects an audio
+  or text-only session from the presence of authored media. Both support scene
+  and cue navigation, refresh, pause, and fullscreen; audio sessions also expose
+  play and time seeking. Unchecked scenes play continuously. Printing opens the
+  transcript and its nested answer disclosures, then restores their state.
 - `js/narration-player-controls.js`: the control bar's behavior, from the song
   player's own modules (`js/song-video/`): the same keys in every player (K or
   Space, the arrow keys, 0 to 9, C, F, and Escape, documented at
@@ -440,25 +444,26 @@ and verification screenshots outside the repository.
   narration adds its 16:9 screen and roadmap (`css/video-narration.css`).
 - `js/narration-diagram.js`: copies a diagram the build drew in the reading
   version into a player, renaming its ids, for lessons and case studies.
-- `js/narrated-lesson.js`: common mounting, quiz lifecycle, navigation/focus,
-  language refresh, diagram focus, and code highlighting for pattern/video lessons.
-- In-player checkpoints (`.np-quiz` and a case study's `.case-quiz`) share one
-  SebookQuiz style in `css/narrated-explainer.css`.
-- `js/narration-quiz.js` adapts SebookQuiz for narration: one-question checks
-  keep answer feedback, then **Continue narration** returns directly to the
-  lesson, including after an incorrect answer. The adapter captures the shared
-  `.next-btn` action (also activated by Enter) before results navigation.
-  Multi-question summaries retain results. When the chapter pairs a song with
-  `narration="<narration-root-id>"` on `song-video.html`, the final action is
-  **Continue to song**. Unpaired lessons finish normally; intermediate checks
-  continue the narration.
-  Its shared **Re-listen to segment** action appears after incorrect answers
-  and on multi-question results with mistakes. Audio transports register via
-  `NarrationQuiz.bindReplay`; the adapter uses the quiz engine's `onAnswer`
-  callback, not a second grading implementation. Replay starts immediately
-  after the previous authored knowledge check (or at the beginning), preserves
-  answers, and returns to the same check. The behavior covers every audio
-  narration; text-only case studies retain their evidence-review action.
+- `_includes/narration-player-check.html`: one semantic check panel for all
+  kinds, using `.narration-check` and the common light/dark/print styling.
+- `js/narration-quiz.js`: the check presentation lifecycle, including mounting,
+  opening, closing, retained answers, and replay feedback. It delegates grading
+  to SebookQuiz and receives continuation/replay callbacks from NarrationPlayer.
+  Single-question feedback goes directly to **Continue narration** (or
+  **Continue lesson** without audio); multi-question summaries retain results.
+  The final action is **Continue to song** for a paired song, otherwise
+  **Finish review**. The same labels apply to case-study decisions.
+  **Re-listen to segment** appears after wrong answers and on results with
+  mistakes. The player replays from after the previous authored check, or the
+  beginning, retaining answers until the check returns. Text-only lessons
+  offer **Review this scene**. No renderer owns check or replay behavior.
+- Visual modules expose `createRenderer(root, data)`, returning `render(frame)`.
+  The root's `data-narration-renderer` names the module. A frame contains the DOM
+  `element`, authored `scene` and `cue`, `sceneIndex`, `cueIndex`, `progress`,
+  `motion`, and audio `time` when available. Pattern, video, case-study, Node.js,
+  and React renderers implement this contract. They only present visuals.
+  Pattern code highlighting stays with its renderer; focused diagram copying
+  is shared by `NarrationDiagram.showReadingStep`.
 - `js/narration-song.js` owns the paired media session. It pauses narration,
   hides its surface without destroying its DOM or clock, and loads a song iframe
   inside the same `[data-vn-video]` container. `SongPlayerEmbeds.register(frame)`
