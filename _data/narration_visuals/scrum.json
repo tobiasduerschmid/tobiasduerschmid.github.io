@@ -7,11 +7,13 @@
       "styles": [
         "/css/song-video-story-wall.css",
         "/css/song-video-story-kit.css",
+        "/css/video-narration-wall-kit.css",
         "/css/video-narration-scrum.css"
       ],
       "scripts": [
         "/js/song-video/story-wall.js",
         "/js/song-video/story-kit.js",
+        "/js/video-narration/wall-kit.js",
         "/js/video-narration/scrum-kit.js",
         "/js/video-narration/scrum.js"
       ]

@@ -1,7 +1,8 @@
 const { loadStory, loadRegistry } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
-const { openPlayerSettings } = require('./helpers/narration-player');
+const { openPlayerSettings, seekNarration, setSiteTheme, serveAudioRanges } = require('./helpers/narration-player');
+const { WALL_SKIPPED, stageTextProblems, crowdedBoxes, stageContrastProblems, stagePaint } = require('./helpers/video-narration-stage');
 const { readFileSync } = require('node:fs');
 const yaml = require('js-yaml');
 
@@ -18,29 +19,8 @@ const cueTime = (sceneIndex, cueIndex, fraction = 0.5) => {
   return cue.start + (cue.end - cue.start) * fraction;
 };
 
-async function seek(page, time) {
-  const animation = player(page);
-  await animation.getByRole('slider', { name: 'Narration position' }).fill(String(Number(time.toFixed(2))));
-  await expect.poll(() => animation.locator('audio').evaluate(audio => audio.currentTime)).toBeCloseTo(time, 1);
-}
-async function theme(page, dark) {
-  const toggle = page.getByRole('checkbox', { name: 'Toggle dark mode' });
-  if (await toggle.isChecked() !== dark) await toggle.press('Space');
-  // Colors cross-fade between themes; measure contrast only once they have settled.
-  await page.waitForFunction(() => document.getAnimations().every(animation => !(animation instanceof CSSTransition) || animation.playState !== 'running'));
-}
-// WEBrick may answer a conditional MP3 range request with 304 instead of the
-// bytes Chromium needs after seeking; drop validators from range requests.
-async function serveAudioRanges(page) {
-  await page.route(`**${story.audio}`, route => {
-    const headers = { ...route.request().headers() };
-    if (headers.range) {
-      delete headers['if-none-match'];
-      delete headers['if-modified-since'];
-    }
-    return route.continue({ headers });
-  });
-}
+const seek = (page, time) => seekNarration(player(page), time);
+const theme = setSiteTheme;
 
 test('each cue shows its panels on one screen named by the cue\'s visual', async ({ page }) => {
   test.setTimeout(180000);
@@ -146,104 +126,6 @@ test('the animated stage builds every scene and poses the narration\'s picture',
   }
 });
 
-// Finds text that another piece's text overlaps, text that a piece drawn after
-// it covers, and text outside the stage, in the pose the stage shows now.
-function stageTextProblems() {
-  const stageNode = document.getElementById('stage');
-  const stage = stageNode.getBoundingClientRect();
-  const shown = (node) => {
-    for (let n = node; n && n !== stageNode; n = n.parentElement) {
-      const style = getComputedStyle(n);
-      if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) < 0.35) return false;
-    }
-    return true;
-  };
-  const pieceOf = (node) => {
-    let n = node;
-    while (n.parentElement && !n.parentElement.matches('.scene, .sk-body')) n = n.parentElement;
-    return n.parentElement ? n : null;
-  };
-  const texts = [];
-  const walker = document.createTreeWalker(stageNode, NodeFilter.SHOW_TEXT);
-  while (walker.nextNode()) {
-    const node = walker.currentNode;
-    const piece = node.textContent.trim() && shown(node.parentElement) && pieceOf(node.parentElement);
-    if (!piece) continue;
-    const range = document.createRange();
-    range.selectNodeContents(node);
-    for (const box of range.getClientRects()) {
-      if (box.width > 2 && box.height > 2) texts.push({ piece, text: node.textContent.trim().slice(0, 28), box });
-    }
-  }
-  const overlap = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
-  const painted = (piece) => {
-    const style = getComputedStyle(piece);
-    return style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.backgroundImage !== 'none' || [...piece.querySelectorAll('*')].some(shown);
-  };
-  const problems = new Set();
-  texts.forEach((a, i) => {
-    if (a.box.left < stage.left - 2 || a.box.right > stage.right + 2 || a.box.top < stage.top - 2 || a.box.bottom > stage.bottom + 2) problems.add(`off stage: ${a.text}`);
-    for (const b of texts.slice(i + 1)) {
-      if (a.piece !== b.piece && !a.piece.contains(b.piece) && !b.piece.contains(a.piece) && overlap(a.box, b.box) > 30) problems.add(`text on text: ${a.text} / ${b.text}`);
-    }
-  });
-  for (const scene of stageNode.querySelectorAll('.scene')) {
-    if (!shown(scene)) continue;
-    const pieces = [...scene.children].flatMap((child) => (child.matches('.sk-body') ? [...child.children] : [child])).filter((piece) => shown(piece) && painted(piece) && !piece.matches('.confetti-layer, .sk-overlay'));
-    pieces.forEach((cover, i) => {
-      const box = cover.getBoundingClientRect();
-      for (const t of texts) {
-        const index = pieces.indexOf(t.piece);
-        // Even one hidden letter counts; the floor ignores the empty corner of a
-        // rotated sticker's bounding box.
-        if (index >= 0 && index < i && overlap(t.box, box) > Math.max(30, 0.04 * t.box.width * t.box.height)) problems.add(`covered: ${t.text} by ${cover.className}`);
-      }
-    });
-  }
-  return [...problems];
-}
-
-// Finds painted boxes (cards, badges, notes, panels, chips, days) closer than
-// a small gap to another box without one containing the other, in the pose
-// the stage shows now. Stickers, stamps, arrows, and structures built from
-// touching parts (a temple, a balance, a loop) sit over or against artwork
-// on purpose and are left out.
-function crowdedBoxes() {
-  const GAP = 4;
-  const SKIPPED = '.sticker, .stamp, .kinetic, .confetti-layer, .sk-overlay, .sk-arrow, .sk-bracket, .sk-frame, .sk-slot, .sk-loop, .sk-loop-dot, .sk-loop-label, .sk-dot, .sk-wave, .sk-ball, .sk-person, .sk-roof, .sk-base, .sk-pillar, .sk-balance-post, .sk-balance-beam, .sk-topic';
-  const stageNode = document.getElementById('stage');
-  const shown = (node) => {
-    for (let n = node; n && n !== stageNode; n = n.parentElement) {
-      const style = getComputedStyle(n);
-      if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) < 0.35) return false;
-    }
-    return true;
-  };
-  const painted = (node) => {
-    const style = getComputedStyle(node);
-    return style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.backgroundImage !== 'none' || parseFloat(style.borderTopWidth) > 0;
-  };
-  const name = (node) => `${node.classList[0]} "${node.textContent.trim().slice(0, 20)}"`;
-  const crowded = [];
-  for (const scene of stageNode.querySelectorAll('.scene')) {
-    if (!shown(scene)) continue;
-    const boxes = [...scene.children].flatMap((child) => (child.matches('.sk-body') ? [...child.children] : [child]))
-      .filter((piece) => !piece.matches(SKIPPED) && shown(piece) && painted(piece))
-      .map((piece) => ({ piece, box: piece.getBoundingClientRect() }));
-    boxes.forEach((a, i) => {
-      for (const b of boxes.slice(i + 1)) {
-        const inside = (outer, inner) => inner.left >= outer.left - 1 && inner.right <= outer.right + 1 && inner.top >= outer.top - 1 && inner.bottom <= outer.bottom + 1;
-        if (inside(a.box, b.box) || inside(b.box, a.box)) continue;
-        const dx = Math.max(b.box.left - a.box.right, a.box.left - b.box.right);
-        const dy = Math.max(b.box.top - a.box.bottom, a.box.top - b.box.bottom);
-        if (dx < GAP && dy < GAP) crowded.push(`${name(a.piece)} / ${name(b.piece)}`);
-      }
-    });
-  }
-  return crowded;
-}
-// END crowdedBoxes
-
 test('no cue\'s picture overlaps its words or leaves the stage', async ({ page }) => {
   test.setTimeout(120000);
   await page.setViewportSize({ width: 960, height: 540 });
@@ -261,64 +143,6 @@ test('no cue\'s picture overlaps its words or leaves the stage', async ({ page }
   expect(found).toEqual({});
 });
 
-// Finds stage text below 4.5:1 against what is painted behind it, in the pose
-// the stage shows now. A translucent fill is blended over the wall's color; a
-// gradient counts as its first color stop.
-function stageContrastProblems() {
-  const stageNode = document.getElementById('stage');
-  const parse = (value) => (value.match(/rgba?\(([^)]+)\)/) || [])[1]?.split(',').map(Number);
-  // The wall's own color, from the stage's --bg token.
-  const wall = (() => {
-    const probe = document.createElement('div');
-    probe.style.color = getComputedStyle(stageNode).getPropertyValue('--bg');
-    stageNode.append(probe);
-    const color = parse(getComputedStyle(probe).color);
-    probe.remove();
-    return color;
-  })();
-  const luminance = ([r, g, b]) => [r, g, b].map((v) => v / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)).reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
-  const over = (top, bottom) => {
-    const alpha = top[3] ?? 1;
-    return [0, 1, 2].map((i) => top[i] * alpha + bottom[i] * (1 - alpha));
-  };
-  const shown = (node) => {
-    for (let n = node; n && n !== stageNode; n = n.parentElement) {
-      const style = getComputedStyle(n);
-      if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) < 0.35) return false;
-    }
-    return true;
-  };
-  const behind = (node) => {
-    const fills = [];
-    for (let n = node; n && n !== stageNode; n = n.parentElement) {
-      const style = getComputedStyle(n);
-      // The bottom gradient layer is the fill; a layer with transparent stops is only marks on top.
-      const layers = style.backgroundImage.split(/,\s*(?=(?:linear|radial|repeating)-gradient)/);
-      const base = layers[layers.length - 1];
-      const image = base.includes('gradient') && !base.includes('rgba(0, 0, 0, 0)') ? parse(base) : null;
-      const color = parse(style.backgroundColor);
-      const fill = image || (color && (color[3] ?? 1) > 0 ? color : null);
-      if (fill) {
-        fills.push(fill);
-        if ((fill[3] ?? 1) >= 1) break;
-      }
-    }
-    return fills.reduceRight((under, fill) => over(fill, under), wall);
-  };
-  const problems = new Set();
-  const walker = document.createTreeWalker(stageNode, NodeFilter.SHOW_TEXT);
-  while (walker.nextNode()) {
-    const node = walker.currentNode;
-    const element = node.parentElement;
-    if (!node.textContent.trim() || !shown(element) || element.closest('.confetti-layer')) continue;
-    const text = over(parse(getComputedStyle(element).color), behind(element));
-    const [light, dark] = [luminance(text), luminance(behind(element))].sort((a, b) => b - a);
-    const ratio = (light + 0.05) / (dark + 0.05);
-    if (ratio < 4.5) problems.add(`${node.textContent.trim().slice(0, 28)}: ${ratio.toFixed(2)}`);
-  }
-  return [...problems];
-}
-
 for (const dark of [false, true]) {
   test(`every cue's text keeps 4.5:1 contrast in ${dark ? 'dark' : 'light'} mode`, async ({ page }) => {
     test.setTimeout(120000);
@@ -335,16 +159,6 @@ for (const dark of [false, true]) {
       }
     }
     expect(found).toEqual({});
-  });
-}
-
-// Every stage element's painted colors, in document order: what the viewer
-// sees, without the pixel noise a GPU-rasterized screenshot carries.
-function stagePaint() {
-  const props = ['color', 'backgroundColor', 'backgroundImage', 'borderTopColor', 'outlineColor', 'fill', 'stroke'];
-  return [...document.querySelectorAll('#stage *')].map((node, index) => {
-    const style = getComputedStyle(node);
-    return `${index} ${node.getAttribute('class') || node.tagName}: ${props.map((prop) => style[prop]).join(' ')}`;
   });
 }
 
@@ -389,6 +203,9 @@ for (const [from, to] of [['light', 'dark'], ['dark', 'light']]) {
   });
 }
 
+// The Scrum kit's figures and scenery also sit against the artwork on purpose.
+const SCRUM_SKIPPED = `${WALL_SKIPPED}, .sk-wave, .sk-ball, .sk-person`;
+
 test('every cue keeps a visible gap between its cards, badges, and panels', async ({ page }) => {
   test.setTimeout(120000);
   // The top story is held up in front of the board, below the column headings.
@@ -401,7 +218,7 @@ test('every cue keeps a visible gap between its cards, badges, and panels', asyn
     for (const [cueIndex] of scene.cues.entries()) {
       const id = `${scene.id}-${cueIndex + 1}`;
       await page.evaluate((time) => window.VideoNarrationStage.seek(time), timing.scenes[sceneIndex].cues[cueIndex].end - 0.3);
-      const crowded = (await page.evaluate(crowdedBoxes)).filter((pair) => !(intended[id] && intended[id].test(pair)));
+      const crowded = (await page.evaluate(crowdedBoxes, SCRUM_SKIPPED)).filter((pair) => !(intended[id] && intended[id].test(pair)));
       if (crowded.length) found[id] = crowded;
     }
   }
@@ -411,7 +228,7 @@ test('every cue keeps a visible gap between its cards, badges, and panels', asyn
 for (const speed of [1, 2]) {
   test(`narration at ${speed}x holds the final picture after speech before each check, and a section without one plays on`, async ({ page }) => {
     test.setTimeout(240000);
-    await serveAudioRanges(page);
+    await serveAudioRanges(page, story.audio);
     await page.addInitScript(() => {
       const pause = HTMLMediaElement.prototype.pause;
       HTMLMediaElement.prototype.pause = function recordPause() {
@@ -524,7 +341,7 @@ test('the video controls match the music player: skips, keys, captions, volume, 
 
 test('full screen fills the display with the video, hides idle controls, and keeps checks inside', async ({ page }) => {
   test.setTimeout(60000);
-  await serveAudioRanges(page);
+  await serveAudioRanges(page, story.audio);
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(url);
   const animation = player(page);
