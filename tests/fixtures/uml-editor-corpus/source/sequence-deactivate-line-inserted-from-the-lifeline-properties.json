@@ -1,0 +1,177 @@
+{
+  "id": "sequence-deactivate-line-inserted-from-the-lifeline-properties",
+  "family": "source",
+  "type": "sequence",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nparticipant Client\nparticipant Server\nClient -> Server : request\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Client — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Add a deactivate Client marker"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nparticipant Client\nparticipant Server\nClient -> Server : request\ndeactivate Client\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Inserted: deactivate Client"
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Participant — Client\":\n  - heading \"Participant — Client\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Client\n  - text: Display label\n  - textbox \"Display label\": Client\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Lifeline\":\n    - text: Lifeline\n    - button \"Add an activate Client bar\": + activate\n    - button \"Add a deactivate Client marker\": + deactivate\n    - button \"Mark Client as destroyed (X)\": + destroy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nparticipant Client\nparticipant Server\nClient -> Server : request\ndeactivate Client\n@enduml",
+    "selection": [
+      "Client"
+    ],
+    "focus": {
+      "tag": "button",
+      "id": "",
+      "role": "button",
+      "name": "Add a deactivate Client marker",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nparticipant Client\nparticipant Server\nClient -> Server : request\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Participant — Client\":\n  - heading \"Participant — Client\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Client\n  - text: Display label\n  - textbox \"Display label\": Client\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Lifeline\":\n    - text: Lifeline\n    - button \"Add an activate Client bar\": + activate\n    - button \"Add a deactivate Client marker\": + deactivate\n    - button \"Mark Client as destroyed (X)\": + destroy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nparticipant Client\nparticipant Server\nClient -> Server : request\n@enduml",
+    "selection": [
+      "Client"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Client — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Client"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nparticipant Client\nparticipant Server\nClient -> Server : request\ndeactivate Client\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Participant — Client\":\n  - heading \"Participant — Client\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Client\n  - text: Display label\n  - textbox \"Display label\": Client\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Lifeline\":\n    - text: Lifeline\n    - button \"Add an activate Client bar\": + activate\n    - button \"Add a deactivate Client marker\": + deactivate\n    - button \"Mark Client as destroyed (X)\": + destroy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nparticipant Client\nparticipant Server\nClient -> Server : request\ndeactivate Client\n@enduml",
+    "selection": [
+      "Client"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Client — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Client"
+    }
+  },
+  "operations": [
+    {
+      "type": "sequence",
+      "before": "@startuml\nparticipant Client\nparticipant Server\nClient -> Server : request\n@enduml",
+      "operation": {
+        "op": "source.insertLines",
+        "revision": "r73e83034:82",
+        "lines": [
+          "deactivate Client"
+        ],
+        "at": "end",
+        "frame": false,
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nparticipant Client\nparticipant Server\nClient -> Server : request\ndeactivate Client\n@enduml"
+    }
+  ]
+}

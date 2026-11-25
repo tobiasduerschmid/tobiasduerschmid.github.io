@@ -29,8 +29,18 @@ html.print-light-mode.dark-mode .uml-folder-tree-diagram-container svg,
 html.print-light-mode.dark-mode .uml-venn-diagram-container svg,
 html.print-light-mode.dark-mode .uml-er-diagram-container svg,
 html.print-light-mode.dark-mode .uml-crc-diagram-container svg,
+html.print-light-mode.dark-mode .uml-c4-diagram-container svg,
 html.print-light-mode.dark-mode .uml-sym svg {
   filter: none !important;
+}
+
+/* The C4 interface card (css/uml-diagram.css) prints in its light tokens. */
+html.print-light-mode.dark-mode .c4-interface {
+  --c4-card-text: #1f2328;
+  --c4-card-surface: #ffffff;
+  --c4-card-band: #eef6fc;
+  --c4-card-label: #17324d;
+  --c4-card-rule: #2774ae;
 }
 
 html.print-light-mode.dark-mode .uml-empty-msg,
@@ -392,8 +402,32 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
   html.dark-mode:not(.print-light-mode) .uml-venn-diagram-container svg,
   html.dark-mode:not(.print-light-mode) .uml-er-diagram-container svg,
   html.dark-mode:not(.print-light-mode) .uml-crc-diagram-container svg,
+  html.dark-mode:not(.print-light-mode) .uml-c4-diagram-container svg,
   html.dark-mode:not(.print-light-mode) .uml-sym svg {
     filter: none !important;
+  }
+
+  html.dark-mode:not(.print-light-mode) .c4-interface {
+    --c4-card-text: #1f2328;
+    --c4-card-surface: #ffffff;
+    --c4-card-band: #eef6fc;
+    --c4-card-label: #17324d;
+    --c4-card-rule: #2774ae;
+  }
+
+  /* The dark-page reset above greys every border (#ddd, 1.4:1) and clears
+     every fill; the card keeps its rules at 3:1 and its header band. */
+  html.dark-mode:not(.print-light-mode) .c4-interface,
+  html.dark-mode:not(.print-light-mode) .c4-interface * {
+    border-color: var(--c4-card-rule) !important;
+  }
+
+  html.dark-mode:not(.print-light-mode) .c4-interface {
+    background-color: var(--c4-card-surface) !important;
+  }
+
+  html.dark-mode:not(.print-light-mode) .c4-interface-table thead th {
+    background-color: var(--c4-card-band) !important;
   }
 
   html.dark-mode:not(.print-light-mode) .uml-empty-msg,

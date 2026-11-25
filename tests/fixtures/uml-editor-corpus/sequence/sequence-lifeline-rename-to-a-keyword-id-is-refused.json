@@ -1,0 +1,177 @@
+{
+  "id": "sequence-lifeline-rename-to-a-keyword-id-is-refused",
+  "family": "sequence",
+  "type": "sequence",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nactor user\nparticipant app\nparticipant db\nuser -> app: login\napp -> db: query\ndb --> app: rows\napp --> user: ok\n@enduml",
+  "steps": [
+    {
+      "do": "pointerDblclick",
+      "point": {
+        "target": {
+          "role": "button",
+          "name": "Element app —",
+          "exact": false
+        },
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "role": "textbox",
+        "name": "Rename app"
+      },
+      "value": "loop: Gateway"
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "textbox",
+        "name": "Rename app"
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nactor user\nparticipant app\nparticipant db\nuser -> app: login\napp -> db: query\ndb --> app: rows\napp --> user: ok\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "\"loop\" is a sequence-diagram keyword. Pick a different identifier."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Participant — app\":\n  - heading \"Participant — app\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": app\n  - text: Display label\n  - textbox \"Display label\": app\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Lifeline\":\n    - text: Lifeline\n    - button \"Add an activate app bar\": + activate\n    - button \"Add a deactivate app marker\": + deactivate\n    - button \"Mark app as destroyed (X)\": + destroy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "app"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element app — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "app"
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nactor user\nparticipant app\nparticipant db\nuser -> app: login\napp -> db: query\ndb --> app: rows\napp --> user: ok\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "\"loop\" is a sequence-diagram keyword. Pick a different identifier."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Participant — app\":\n  - heading \"Participant — app\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": app\n  - text: Display label\n  - textbox \"Display label\": app\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Lifeline\":\n    - text: Lifeline\n    - button \"Add an activate app bar\": + activate\n    - button \"Add a deactivate app marker\": + deactivate\n    - button \"Mark app as destroyed (X)\": + destroy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "app"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element app — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "app"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nactor user\nparticipant app\nparticipant db\nuser -> app: login\napp -> db: query\ndb --> app: rows\napp --> user: ok\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "\"loop\" is a sequence-diagram keyword. Pick a different identifier."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Participant — app\":\n  - heading \"Participant — app\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": app\n  - text: Display label\n  - textbox \"Display label\": app\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Lifeline\":\n    - text: Lifeline\n    - button \"Add an activate app bar\": + activate\n    - button \"Add a deactivate app marker\": + deactivate\n    - button \"Mark app as destroyed (X)\": + destroy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "app"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element app — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "app"
+    }
+  },
+  "operations": [],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: a rename that is refused or changes nothing leaves undo and redo alone (origin/master 71fbaeca)."
+  }
+}

@@ -1,0 +1,787 @@
+# Edit speech and teaching text here. Visual state lives in ../narration_visuals/blood_groups.json.
+# Sources for every claim: docs/blood-groups-narration.md.
+version: 1
+id: blood_groups
+kind: video
+title: What does your code know?
+lesson:
+  name: Module Blood Groups
+  summary: >-
+    Follow a campus scooter app to sort code into four <strong>blood groups, A, T, AT, and
+    0</strong>, by what it knows, see how the groups mix, and design modules that survive
+    technology and rule changes.
+  prerequisites: >-
+    Assumes you have written classes and called an external API, such as a database or a web
+    service.
+  chapter: /SEBook/designprinciples/blood-groups.html
+  views: /SEBook/designprinciples/blood-groups
+  parts:
+    - Groups
+    - Mixing
+    - Design
+    - Change
+  parts_label: Part of the lesson
+speech:
+  voice: drama3-female6
+  speed: 1
+  pronunciations:
+    AT: A T
+    AB: A B
+    SDK: S D K
+    API: A P I
+    SQL: S Q L
+    HTTP: H T T P
+    end_ride: end ride
+    start_ride: start ride
+    RideRecord: Ride Record
+media:
+  audio: /assets/audio/blood-groups-narration.mp3
+  captions: /assets/narration/blood-groups-narration.vtt
+  script: /assets/narration/blood-groups-narration.txt
+scenes:
+  - id: intro
+    label: Glide, the scooter app
+    title: Nine fifty-six, lecture at ten
+    purpose: Meet the app this lesson takes apart, and the change that hurts it.
+    takeaway: >-
+      Glide's code mixes ride rules with technology, so one technology change ripples through
+      the whole app.
+    cues:
+      - id: late
+        say: >-
+          It's nine fifty-six, and your lecture starts at ten, across campus. You grab a scooter,
+          unlock it with your phone, and zip downhill. You stop outside the lecture hall, tap End
+          ride, and the app says: No parking here.
+        step: A ride across campus
+        note: The app knows where riders may park.
+        visual: >-
+          A paper campus map: Dorms at the top left, the Lecture hall at the bottom right, and
+          green dashed parking zones marked P. A clock reads 9:56. A scooter rides down the path
+          and stops beside the lecture hall, outside every zone. A phone running Glide shows an
+          End ride button, and a red banner pops up: No parking here.
+      - id: jobs
+        say: >-
+          Behind that message, the app does three kinds of work. It applies rules: where you may
+          park, and what a ride costs, with a student discount. It talks to technology: a map
+          service, a payment service, the scooter's Bluetooth lock. And it does plain math, like
+          checking whether a point lies inside a zone.
+        step: Rules, technology, and math
+        note: One app, three kinds of work.
+        visual: >-
+          The map slides aside, and three trays fill in. Rules: Where you may park, What a ride
+          costs, Student discount. Technology: Map service, Payment service, Bluetooth lock. Plain
+          math: Is a point inside a zone?, with a dot inside a shaded polygon.
+      - id: price_hike
+        say: >-
+          The app comes from Glide, a student startup, and you've just joined its dev team. Week
+          one brings bad news: the map service raises its prices tenfold, so the team must switch
+          providers. How hard can that be? You open the function that ends a ride.
+        step: A forced technology change
+        note: Switching map providers should be a small job.
+        visual: >-
+          A badge reads You, new on the Glide team. An invoice from the map service shows the
+          monthly price jumping from $400 to $4,000, stamped Price hike, and a sticker reads Switch
+          providers. An editor tab opens: end_ride.py.
+  - id: tangle
+    label: The tangle
+    title: One function, two worlds
+    purpose: See why mixing rules and technology makes every change expensive.
+    takeaway: >-
+      When rules and technology share the same lines, a change to either one touches both, and
+      the rules cannot move anywhere else.
+    cues:
+      - id: braided
+        say: >-
+          Here's end_ride. First, it asks the map provider's SDK where the scooter is. Then it
+          checks the parking rule, using the SDK's own zone check. Then it prices the ride: unlock
+          fee, minutes, student discount. Finally, it charges the card through the payment API and
+          locks the scooter over Bluetooth.
+        step: Read the function
+        note: Rule lines and technology calls sit side by side.
+        source: >-
+          Siedersleben and Denert 2000, section 1.2: return codes of technical APIs mixed with
+          application problems within a few lines of code.
+        visual: >-
+          A Python code card titled end_ride.py shows ten lines: locate the scooter with mapsdk,
+          check mapsdk.inside against the parking zones, show a toast, count the minutes, price
+          1.00 plus 0.30 per minute, a 20 percent student discount, payapi.charge, and
+          bluetooth.write to lock. Each line lights up as it is described.
+      - id: predict_switch
+        say: >-
+          Let's tag each line as rule or technology. The tags alternate down the function: the two
+          are braided together. So predict: to switch map providers, which lines of end_ride must
+          you touch? Only the lines that call the map, or more?
+        prediction: true
+        pause_after: 4
+        step: Predict the switch
+        note: Rule and technology lines alternate. Which lines change with the map provider?
+        visual: >-
+          A word tag appears in the margin of every line: Tech, Rule and tech, Tech, Rule, Rule,
+          Rule, Rule, Tech, Tech. Two threads braid down the margin. A dashed box beside the code
+          asks: Which lines change?
+      - id: ripple
+        say: >-
+          More. The parking rule is written in the old SDK's terms, so the rule changes too. And
+          end_ride isn't alone. Search the codebase for the SDK: forty-seven hits in twelve files,
+          from start_ride to the trip history. One provider switch ripples through the whole app.
+        step: The change ripples
+        note: A rule written in technology terms changes with the technology.
+        visual: >-
+          The lines that call the map, including the parking rule, get Must change stickers. The
+          code card shrinks, and a search panel opens with the query mapsdk: 47 results in 12
+          files, listing start_ride.py, end_ride.py, zones_screen.py, trip_history.py, and more,
+          each marked Must change. A stamp reads Weeks of work.
+      - id: three_pains
+        say: >-
+          It's not only the map. When finals week brings a new rule, ten free minutes for students,
+          you edit those same tangled lines, and you can't test them without the SDK. When the
+          campus bike-share asks for your pricing rules, they come welded to scooter locks and
+          payment calls.
+        step: Every change hits the tangle
+        note: Technology changes, rule changes, and reuse requests all land on the same code.
+        visual: >-
+          Three change cards arrive and each one points at the end_ride card: Tech change, New map
+          provider; Rule change, Finals week: 10 free minutes; Reuse request, Bike-share wants the
+          pricing rules. Stickers read Can't test without the SDK and Welded to locks and
+          payments.
+      - id: preview
+        say: >-
+          The fix starts with one habit: before you write a line, ask what the code knows. The
+          answers sort all code into four groups, named like blood groups: A, T, AT, and zero.
+          Let's meet the groups, see how they mix, design with them, and then test the design
+          against change.
+        step: Ask what the code knows
+        note: Four groups, named like blood groups.
+        visual: >-
+          Four blood-drop badges drop in, labeled A, T, AT, and 0. Beneath them, four signposts
+          preview the lesson: Groups, Mixing, Design, and Change.
+  - id: two_questions
+    outline: Two questions
+    part: Groups
+    label: "Groups: two questions"
+    title: What does this code know?
+    purpose: Learn the two questions that sort any code into a group.
+    takeaway: >-
+      Ask whether code knows the application domain and whether it knows a technology; the two
+      answers give its group.
+    cues:
+      - id: questions
+        say: >-
+          Ask two questions about any code. Does it know the application domain, the business's
+          own words, like ride, rider, parking zone, and price? And does it know a technology, a
+          concrete API like the map SDK, the payment API, Bluetooth, or a database? Knowing means
+          depending: if that changed, this code would change too.
+        step: Two questions
+        note: Knowing something means depending on it.
+        source: >-
+          Siedersleben et al., Segregating the Layers of Business Information Systems, section
+          1.2.4: "determined by" reads as "knows about", "depends on", or "is influenced by".
+        visual: >-
+          Two large question cards. Knows the domain?, with word chips ride, rider, parking zone,
+          and price. Knows a technology?, with chips map SDK, payment API, Bluetooth, and
+          database. A note underneath reads: Knows means depends on. If it changed, this code
+          would change.
+      - id: grid
+        say: >-
+          Two yes-or-no answers give four groups. Code that knows neither is group zero. Only the
+          domain, group A, for application. Only a technology, group T. Both at once, group AT.
+          Like a blood group, every piece of code has exactly one, and its group decides where it
+          can go later.
+        pause_after: 2.5
+        step: Four groups
+        note: Two yes-or-no answers place code in exactly one group.
+        source: CMU 17-723 lecture on design for reuse, slide 22 (module categories).
+        visual: >-
+          A two-by-two grid: columns Knows a technology? No and Yes; rows Knows the domain? No and
+          Yes. Blood-drop badges drop into the cells: 0 where both answers are no, T for
+          technology only, A for domain only, and AT where both are yes. A sticker reads Exactly
+          one group.
+  - id: group_a
+    outline: Group A
+    part: Groups
+    label: "Groups: A, the application"
+    title: The rules the business is paid for
+    purpose: See what A code knows, why it matters most, and where it can be reused.
+    takeaway: >-
+      Group A knows the domain and no technology; it can be reused wherever the same rules apply,
+      on any technology.
+    cues:
+      - id: rules
+        say: >-
+          Group A knows the domain and no technology. Pull the rule lines out of end_ride, and
+          that's what you get: a dollar to unlock, thirty cents a minute, twenty percent off for
+          students, and rides end only inside a parking zone. No SDK, no API, just rules in the
+          business's own words.
+        step: A knows the domain
+        note: Rules in the business's own words, with no technology.
+        visual: >-
+          The rule lines slide out of the end_ride card into a new module card, Ride rules, with an
+          A drop: the price is 1.00 plus 0.30 per minute, students pay 80 percent, and a ride ends
+          only inside a parking zone. A sticker reads No SDK, no API.
+      - id: paid_for
+        say: >-
+          This is the code the business is paid for. Riders don't care which map service you use;
+          they care that the price is right and the rules are fair. Code in group A changes when
+          the business changes, like a new discount, and stays put when the technology changes.
+        step: A changes with the business
+        note: Group A is the business's value; it changes with the business, not the technology.
+        source: Siedersleben, architecture workshop 2000, slide 6 (A is what we are paid for).
+        visual: >-
+          A sticker on the Ride rules card reads What the business is paid for. Two change cards
+          approach: Rule change, New discount, lands on the card with the sticker Changes here;
+          Tech change, New map service, stops short with the sticker Not affected.
+      - id: a_reuse
+        say: >-
+          Where can group A go? Anywhere the same rules apply, on any technology. The campus
+          bike-share locks bikes in docking stations instead of Bluetooth, but it prices rides the
+          same way. It could reuse Glide's ride rules as they are.
+        pause_after: 2.5
+        step: Where A can go
+        note: Group A moves to any technology that needs the same rules.
+        source: Siedersleben and Denert 2000, section 1.2 (reusing A software).
+        visual: >-
+          A bike-share docking station appears, and a copy of the Ride rules card moves into its
+          panel. A reuse row below lists four places: Glide in a new city, Bike-share, Food truck,
+          and Campus game. For A it reads Yes, Yes, No, No: reusable where the same rules apply.
+  - id: group_t
+    outline: Group T
+    part: Groups
+    label: "Groups: T, the technology"
+    title: Talks to a technology, knows no rides
+    purpose: See what T code knows, why every app needs it, and where it can be reused.
+    takeaway: >-
+      Group T knows a technology and no domain; it can be reused by any application that uses the
+      same technology.
+    cues:
+      - id: drivers
+        say: >-
+          Now pull out the technology lines, and you get group T: code that knows a technology and
+          nothing about the domain. A payment client charges any amount to any card; it has never
+          heard of a ride. A lock driver locks and unlocks a device. A map client finds where a
+          device is.
+        step: T knows a technology
+        note: Group T talks to a technology and knows nothing about rides.
+        visual: >-
+          The technology lines slide out of end_ride into three module cards with T drops: Payment
+          client, charge(card, cents); Lock driver, lock(device) and unlock(device); Map client,
+          locate(device). Chips name each technology: Payment API, Bluetooth, and Map SDK. A
+          sticker reads Never heard of a ride.
+      - id: t_reuse
+        say: >-
+          You can't avoid group T: no app runs in thin air. But T code is reusable too, anywhere
+          the same technology runs. The campus food-truck app takes cards through the same payment
+          service, so it could reuse Glide's payment client without changing a line.
+        pause_after: 2.5
+        step: Where T can go
+        note: Group T moves to any application that uses the same technology.
+        source: >-
+          Siedersleben et al., Segregating the Layers, section 1.2.4 (no system can run in thin
+          air; T software is reused wherever the same technical environment is used).
+        visual: >-
+          A sticker reads Every app needs T. A food truck appears, and a copy of the Payment client
+          card moves into its panel. The reuse row for T reads Yes, No, Yes, No: reusable where
+          the same technology runs.
+  - id: group_zero
+    outline: Group zero
+    part: Groups
+    label: "Groups: zero, neither"
+    title: Knows nothing, fits everywhere
+    purpose: See what zero code is, why it is the universal donor, and why it needs a partner.
+    takeaway: >-
+      Group zero knows neither domain nor technology; it can be reused anywhere but does nothing
+      useful alone.
+    cues:
+      - id: geometry
+        say: >-
+          One job in end_ride needs neither: the math behind the zone check. Is this point inside
+          this polygon? Pulled out, that code knows no rides and no SDK, just coordinates. That's
+          group zero. Zero code implements an abstract idea, like a sorted list, a dictionary, or a
+          state machine.
+        step: Zero knows neither
+        note: Zero code implements an abstract idea, such as geometry or a dictionary.
+        source: Siedersleben and Denert 2000, section 1.2 (0 software implements an abstract concept).
+        visual: >-
+          A Geometry card with a 0 drop: inside(point, polygon). Beside it, a polygon with a dot
+          inside gets the label Inside. Chips name other zero ideas: Sorted list, Dictionary, and
+          State machine.
+      - id: donor
+        say: >-
+          Zero is the universal donor: a delivery app, a campus tour, a game, any of them can reuse
+          it. But alone, zero code does nothing useful. It needs group A or T to give it a job. In
+          Glide, the parking rule asks it whether a scooter stands inside a zone.
+        pause_after: 2.5
+        step: Zero is the universal donor
+        note: Zero code fits everywhere but needs A or T code to give it a job.
+        source: Siedersleben, architecture workshop 2000, slide 6 (0 is ideally reusable but useless alone).
+        visual: >-
+          Arrows run from the Geometry card to three apps, Delivery zones, Campus tour, and Game. A
+          sticker reads Universal donor, and another reads Useless alone. An arrow from the Ride
+          rules card to Geometry shows the parking rule using it. The reuse row for 0 reads Yes in
+          all four places.
+  - id: group_at
+    outline: Group AT
+    part: Groups
+    label: "Groups: AT, both at once"
+    title: Welded to one place
+    purpose: See what AT code is, why it is so easy to write, and why it can almost never move.
+    takeaway: >-
+      Group AT knows both domain and technology; it changes with either one and can be reused
+      almost nowhere.
+    cues:
+      - id: both
+        say: >-
+          Put all those lines back into one function, and you have end_ride as it stands: rules and
+          technology braided together. That's group AT. To be fair, AT code is easy to write: one
+          function, everything within reach, done by lunch. That's why every codebase has some.
+        step: AT knows both
+        note: AT code mixes domain and technology, and it is easy to write.
+        source: >-
+          Siedersleben et al., Segregating the Layers, section 1.2.4 (at a small scale, AT code is
+          easy and straightforward to write).
+        visual: >-
+          The cards slide back together into the end_ride card, which now wears a split drop, half A
+          and half T, labeled AT. Stickers read Easy to write and Done by lunch.
+      - id: at_chart
+        say: >-
+          Now finish the reuse chart. Group A goes wherever the same rules apply, group T wherever
+          the same technology runs. Group AT needs both at once: only a scooter app with Glide's
+          exact rules and the same three providers. Everywhere else, it's welded in place.
+        step: Where AT can go
+        note: AT code moves only where both the rules and the technology match.
+        source: CMU 17-723 lecture on design for reuse, slides 23 and 24.
+        visual: >-
+          The full reuse chart: columns Glide in a new city (same rules, same tech), Bike-share
+          (same rules, new tech), Food truck (new rules, same tech), and Campus game (new rules, new
+          tech). Row 0 reads Yes four times; row A, Yes, Yes, No, No; row T, Yes, No, Yes, No; row
+          AT, Yes, No, No, No, stamped Welded in place.
+      - id: at_cost
+        say: >-
+          And AT code changes whenever the business or the technology changes, so it changes most
+          often and is the hardest to maintain. Here's the rule of thumb: the larger a design's
+          share of AT code, the lower its quality. AT is the group to shrink.
+        pause_after: 2.5
+        step: The cost of AT
+        note: AT changes with both; a larger share of AT code means lower design quality.
+        source: >-
+          Siedersleben et al., Segregating the Layers, section 1.2.4 (AT software is hard to
+          maintain; architectural quality is inversely proportional to the share of AT code).
+        visual: >-
+          A Rule change card and a Tech change card both land on the AT card, which shows two hit
+          marks. A meter reads Share of AT code; as the share rises, Quality falls. A sticker reads
+          Shrink AT.
+  - id: mixing
+    outline: Mixing rules
+    part: Mixing
+    label: "Mixing: the blood-group rules"
+    title: Why they're called blood groups
+    purpose: Learn how groups combine when code is mixed, and why AT never dilutes.
+    takeaway: Zero adds nothing, A plus T gives AT, and AT stays AT whatever you add.
+    cues:
+      - id: rules
+        say: >-
+          Here's why they're called blood groups: they combine the way blood types are inherited.
+          Put code from two groups into one module, and the module gets every letter either part
+          had. A plus A stays A. T plus T stays T. Zero adds no letter, so it mixes into any group
+          without changing it.
+        step: Mixing keeps every letter
+        note: A module has every letter of its parts; zero adds none.
+        source: Siedersleben and Denert 2000, section 1.2 (software categories resemble blood groups).
+        visual: >-
+          A mixing station: two drops fall into a flask, and its label shows the result. Equation
+          cards line up: A + A = A, T + T = T, A + 0 = A, and T + 0 = T. A sticker reads Zero adds
+          no letter.
+      - id: predict_mix
+        say: >-
+          Now a riskier mix. Glide's ride rules are clean group A. A teammate in a hurry adds one
+          line to the price function: charge the card through the payment API, right there. So
+          predict: what group is the price function now?
+        prediction: true
+        pause_after: 4
+        step: Predict the mix
+        note: One payment call is added to the price function. Which group is it now?
+        visual: >-
+          The Ride rules card with its A drop shows price(ride). A new line types in at the bottom,
+          payapi.charge(rider.card, cents), tagged Tech. A dashed box with a question mark covers
+          the drop: Which group now?
+      - id: a_plus_t
+        say: >-
+          Group AT. One line of technology, and the whole function now knows the payment API. A
+          plus T gives AT, just as inheriting A from one parent and B from the other gives blood
+          type AB. Now the rules can't move to the bike-share without dragging the payment provider
+          along.
+        step: A plus T gives AT
+        note: One technology call turns an A function into AT.
+        visual: >-
+          The dashed box opens on a split drop, half A and half T, labeled AT. The equation A + T =
+          AT joins the row, beside an inset: A from one parent, B from the other, blood type AB.
+          The move to the bike-share is crossed out: Can't move alone.
+      - id: absorb
+        say: >-
+          And AT absorbs everything. Add more rules, more helpers, more zero code: it stays AT. It
+          never turns back into A or T by itself, so you can't dilute it. The only cure is to
+          separate the parts again, and that's what the design rules are for.
+        pause_after: 2.5
+        step: AT never dilutes
+        note: Adding code never turns AT back into A or T; only separation does.
+        visual: >-
+          More drops, A, 0, and T, fall into the AT flask, and its label stays AT each time. The
+          equation AT + anything = AT joins the row. Stickers read Can't dilute and Separate
+          instead.
+  - id: leaks
+    outline: Leaky interfaces
+    part: Mixing
+    label: "Mixing: leaks through interfaces"
+    title: When technology leaks through an interface
+    purpose: See how a technology type in an interface turns its callers into AT.
+    takeaway: >-
+      An interface that exposes technology types spreads AT to every caller, so speak in neutral or
+      domain words instead.
+    cues:
+      - id: leak
+        say: >-
+          Mixing can also sneak in through an interface. Say the map client is clean group T, but
+          its locate method returns the SDK's own location object. Every rule that reads that
+          object now depends on the SDK. The technology leaks through the interface, and the rules
+          turn AT.
+        step: A leaky interface
+        note: A technology type in an interface spreads to every caller.
+        visual: >-
+          The Map client card with a T drop shows locate(device) returning SdkLocation, marked as a
+          technology type. An orange drip runs along the arrow from Map client to the Ride rules
+          card, whose drop flips from A to AT. A sticker reads Leak: SdkLocation.
+      - id: plug
+        say: >-
+          Plug the leak with neutral words. Let locate return a plain point, just latitude and
+          longitude: a zero type any code may know. Now the parking rule depends on a point, not on
+          the SDK, and stays group A. Errors count too: translate the provider's errors into the
+          app's own.
+        step: Plug it with neutral words
+        note: Return neutral or domain types, and translate the provider's errors.
+        source: >-
+          Quasar Teil 2 (2003), p. 52: technical error codes are transformed into business errors
+          and must not run through the application core.
+        visual: >-
+          The signature changes to locate(device) returning Point, and Point gets a 0 drop. The
+          drip stops, and the Ride rules drop turns back to A. A small card shows MapSdkError
+          becoming ScooterNotFound, with the sticker Translate errors too.
+      - id: signs
+        say: >-
+          Learn the warning signs in a signature: SDK objects, SQL strings, HTTP status codes, a
+          provider's error types. A method that takes raw SQL from the rules is the classic leak.
+          It hands the database's language to the domain, and every caller becomes AT.
+        pause_after: 2.5
+        step: Spot leaks
+        note: Technology types or query strings in a signature are leaks.
+        source: >-
+          Siedersleben et al., Segregating the Layers, section 2.5: a find method that accepts SQL
+          pollutes the application kernel, effectively turning it into AT software.
+        visual: >-
+          A list card titled Leak signs lists SDK objects, SQL strings, HTTP status codes, and
+          Provider error types. Below it, a method find(sql) receives a SELECT string from a caller
+          whose A drop flips to AT, stamped Leak.
+  - id: separate
+    outline: Minimize AT
+    part: Design
+    label: "Design: minimize AT, maximize zero"
+    title: Separate what the code knows
+    purpose: Apply the first design rule by splitting technology from application concerns.
+    takeaway: >-
+      Minimize AT and maximize zero: rules go in A modules, each technology in its own T module,
+      and general ideas in zero modules.
+    cues:
+      - id: rule_one
+        say: >-
+          Here's design rule one. Minimize AT modules, maximize zero modules. Assumptions about a
+          technology limit reuse to software that uses it; assumptions about the domain limit reuse
+          to that domain. So separate technological concerns from application concerns: rules in A
+          modules, technology in T modules, general ideas in zero.
+        step: Minimize AT, maximize zero
+        note: Technology assumptions and domain assumptions each limit reuse, so keep them apart.
+        source: CMU 17-723 lecture on design for reuse, slide 24.
+        visual: >-
+          The end_ride card splits into labeled cards: Ride rules (A); Map client, Payment client,
+          and Lock driver (T each); and Geometry (0). A banner reads Minimize AT, maximize 0, with
+          Separate technology from application.
+      - id: one_concern
+        say: >-
+          Then keep each module to one concern. Each T module talks to one technology: the map
+          client never charges cards. Each A module covers one topic: pricing rules live apart from
+          rider accounts. It's the single responsibility principle, sharpened: one reason to
+          change, of one kind.
+        pause_after: 2.5
+        step: One concern per module
+        note: One technology per T module, and one topic per A module.
+        source: >-
+          Siedersleben and Denert 2000, section 1.2 (each T component deals with one technical API;
+          each A component with one application topic).
+        visual: >-
+          Each T card holds exactly one technology chip: Map SDK, Payment API, and Bluetooth. Ride
+          rules sits beside a separate Rider accounts card, both A. A sticker reads Single
+          responsibility, sharpened: one reason to change, of one kind.
+  - id: invert
+    outline: Invert dependencies
+    part: Design
+    label: "Design: let technology plug in"
+    title: The rules own the plugs
+    purpose: Apply the second design rule, no dependencies from big A modules to T modules.
+    takeaway: >-
+      A modules declare interfaces in their own words, and technology plugs in through thin
+      adapters that translate but never decide.
+    cues:
+      - id: flip
+        say: >-
+          Here's design rule two. Avoid dependencies from large, complex A modules to T modules. If
+          the ride rules call the payment client directly, they know the payment API exists, and
+          its quirks creep in. So invert the dependency: the rules declare what they need, in their
+          own words.
+        step: No arrows from A to T
+        note: Large A modules must not depend on T modules.
+        source: CMU 17-723 lecture on design for reuse, slides 26 and 27.
+        visual: >-
+          Ride rules (A) sits in the center, with Map client, Payment client, and Lock driver (T)
+          around it. Arrows from Ride rules to each T card appear and are crossed out, with the
+          sticker No A to T. Then the arrows turn around, pointing from each T card toward Ride
+          rules.
+      - id: sockets
+        say: >-
+          The rules say what they need, never how. Charge this rider an amount. Find this scooter's
+          position. Lock this scooter. Those needs become interfaces the A side owns: Payments,
+          Locator, and Locks. They mention riders and scooters, never cards, SDKs, or Bluetooth.
+        step: A owns the interfaces
+        note: Interfaces in domain words say what the rules need, not how it is done.
+        source: Quasar Teil 2 (2003), p. 41 (a technology-neutral interface says that, not how).
+        visual: >-
+          Three sockets grow out of the Ride rules card, in the A color: Payments.charge(rider,
+          amount), Locator.position(scooter) returning Point, and Locks.lock(scooter). A sticker
+          reads Owned by A: what, not how.
+      - id: dongles
+        say: >-
+          Then each technology plugs in through a small adapter, like a dongle between your laptop
+          and a new monitor. The payment adapter turns charge this rider into the payment API's
+          call. It's the only code that knows both sides, so it's AT. But it's thin, boring, and
+          easy to replace.
+        step: Thin adapters plug technology in
+        note: Adapters are the only AT code left, and they stay thin.
+        source: CMU 17-723 lecture on design for reuse, slide 28 (the adapter is AT).
+        visual: >-
+          Adapter pieces shaped like dongles slide in between each socket and its T card: Payment
+          adapter, Map adapter, and Lock adapter, each with a small AT drop. The payment adapter
+          shows one translation: charge(rider, 2.80) becomes payapi.charge(card, 280). Stickers read
+          Thin and Easy to replace.
+      - id: rhesus
+        say: >-
+          Thin means it translates but never decides: a rider into a card, dollars into cents, a
+          zone into a map overlay. Translation like this is the one AT worth keeping. It even has
+          its own letter, R, for representation; in blood terms, a positive Rhesus factor. It's
+          schematic enough that tools can often generate it.
+        pause_after: 2.5
+        step: "R: the AT worth keeping"
+        note: Thin translators that never decide are R, the mild, acceptable kind of AT.
+        source: >-
+          Siedersleben and Denert 2000, section 1.2 (R software, a mild kind of AT, transforms
+          between business objects and external representations, can be generated, and is a
+          positive Rhesus factor); architecture workshop 2000, slide 6.
+        visual: >-
+          The payment adapter opens to show only translations: rider to card, dollars to cents,
+          zone to map overlay. A sticker reads Translates, never decides. The adapters' AT drops
+          gain a small R tag, beside a drop labeled R: representation, the Rhesus factor.
+  - id: frameworks
+    outline: Frameworks
+    part: Design
+    label: "Design: keep frameworks at arm's length"
+    title: Don't marry the framework
+    purpose: Recognize inheriting from a framework class as AT, and fix it with an adapter.
+    takeaway: >-
+      Domain classes that inherit from framework classes are married to the framework; for large
+      domain classes, put a thin adapter in between.
+    cues:
+      - id: married
+        say: >-
+          Frameworks pull you into AT through inheritance. Say Glide's Ride class extends the web
+          framework's database model class. Now every ride is also a framework object, and the
+          rules inside it are married to that framework: you can't reuse them, or even test them
+          easily, without it.
+        step: Inheriting from a framework
+        note: A domain class that extends a framework class is AT.
+        source: CMU 17-723 lecture on design for reuse, slide 28.
+        visual: >-
+          A class card, Ride(db.Model), holds the price and parking rules. A hollow-triangle
+          inheritance arrow points up to a framework card, db.Model, with a T drop. Two rings appear
+          on the arrow with the sticker Married to the framework, and the Ride drop flips to AT.
+      - id: divorce
+        say: >-
+          For a large, complex domain class, put an adapter in between. A thin RideRecord extends
+          the framework's model and copies fields to and from a plain Ride class, which keeps every
+          rule and knows no framework. For a tiny app, inheriting directly can be fine. Size
+          decides.
+        pause_after: 2.5
+        step: An adapter between framework and domain
+        note: A thin record class adapts the framework; the plain domain class stays A.
+        visual: >-
+          A thin RideRecord(db.Model) card with an AT drop inherits from db.Model and has an arrow to
+          a plain Ride card with an A drop that keeps the rules. A sticker reads Large and complex:
+          add an adapter, and a note reads Tiny app: inheriting can be fine.
+  - id: change_test
+    outline: Replay changes
+    part: Change
+    label: "Change: replay the changes"
+    title: Every change lands in one place
+    purpose: Evaluate a design by replaying technology, rule, and reuse changes against it.
+    takeaway: >-
+      In a well-separated design, a technology change touches only T code, a rule change only A
+      code, and a storage or display change only the thin translators.
+    cues:
+      - id: replay
+        say: >-
+          Time to test the new design the way an architect would: replay real changes and count
+          what each one touches. Remember the three that hit the tangled end_ride: a new map
+          provider, ten free minutes in finals week, and the bike-share's request for your pricing
+          rules.
+        step: Replay the changes
+        note: Evaluate a design by replaying likely changes and counting what each one touches.
+        source: >-
+          Siedersleben and Denert 2000, section 1.1 (variability analysis: play through the change
+          cases and examine their impact).
+        visual: >-
+          The separated design: Ride rules (A) in the center with its three sockets; the Map,
+          Payment, and Lock cards (T) plugged in through adapters; and Geometry (0) below. On the
+          right wait the same three change cards: New map provider, Finals week: 10 free minutes,
+          and Bike-share wants the pricing rules.
+      - id: predict_replay
+        say: >-
+          Start with the price hike that began this story. Glide switches map providers once more.
+          So predict: in the separated design, which modules must change, and which stay exactly as
+          they are?
+        prediction: true
+        pause_after: 4
+        step: Predict the replay
+        note: Glide switches map providers again. Which modules change now?
+        visual: >-
+          The change card New map provider hovers over the design, and every module wears a dashed
+          question mark: Change, or stay?
+      - id: results
+        say: >-
+          Only the map's T module and its thin adapter. The rules still ask the locator for a point
+          and never notice. The finals-week rule touches only the A rules, which you can test with
+          no SDK at all. And the bike-share reuses the rules, plugging its docks in through its own
+          adapter.
+        step: Each change lands in one place
+        note: "Map switch: T module plus adapter. Rule change: A only. Reuse: A plus a new adapter."
+        source: >-
+          Quasar Teil 2 (2003), p. 13 (changing the persistence product re-implements only the
+          adapters); CMU 17-723 lecture on design for reuse, slides 37 and 39.
+        visual: >-
+          The old Map client and Map adapter slide out and new ones slide in; only they are marked
+          Changed. Next, Finals week: 10 free minutes lands on Ride rules alone, beside a test card
+          that passes with No SDK needed. Then a copy of Ride rules moves to the bike-share, where a
+          Dock adapter plugs in.
+      - id: x_changes
+        say: >-
+          That's the goal in one line: a technology change touches only group T, a rule change
+          only group A, and a change in how data is stored or shown only the thin translators. When
+          each change lands in one small place, the design is ready for change, and for reuse.
+        pause_after: 2.5
+        step: Each kind of change, one kind of code
+        note: "Technology: T. Rules: A. How data is stored or shown: the R translators."
+        source: >-
+          Siedersleben and Denert 2000, section 3 (X changes affect only X software, for X = R, T,
+          or A); architecture workshop 2000, slide 7.
+        visual: >-
+          Three rows: Technology change goes to T modules; Rule change goes to A modules; Storage or
+          display change goes to R translators. Each row's change card lands in exactly one small
+          box. A banner reads Each change lands in one place.
+  - id: balance
+    outline: Don't overdo it
+    part: Change
+    label: "Change: know when to stop"
+    title: Separation has a price
+    purpose: Judge when separating is worth it, and when it is over-engineering.
+    takeaway: >-
+      Wrap what varies, such as providers and frameworks; leave zero code alone, and match the
+      effort to the change and reuse you expect.
+    cues:
+      - id: overkill
+        say: >-
+          Don't overdo it. Hiding Python's own strings behind an interface protects nothing: zero
+          code like strings, lists, or geometry doesn't change when your business or your
+          technology does. Use it directly, and wrap what actually varies: the providers and
+          frameworks you might swap.
+        step: Don't wrap zero code
+        note: Zero code doesn't vary with business or technology; wrap only what varies.
+        source: >-
+          Siedersleben, Moderne Softwarearchitektur (2004), section 1.2: hiding even the String class
+          behind an interface is overdoing it.
+        visual: >-
+          A str chip sits wrapped in three nested boxes, IString, StringAdapter, and StringFactory,
+          stamped Overkill. Beside it, the Map client inside its adapter gets a check: Worth it,
+          might be swapped.
+      - id: curve
+        say: >-
+          Separation pays off where change and reuse are likely: big rule sets, and technology that
+          keeps changing. For a weekend script, a little AT is fine. Too little design gives you a
+          tangle; too much gives you layers nobody can follow. Aim for the top of the curve.
+        step: Aim for the top of the curve
+        note: Match design effort to the change and reuse you expect.
+        source: CMU 17-723 lecture on design for reuse, slides 40 and 41.
+        visual: >-
+          A curve plots Code quality against Engineering effort. A dot rises from Tangle at the low
+          left to Ideal at the peak, then slides down toward Over-engineered on the right. A sticker
+          reads Weekend script: a little AT is fine.
+      - id: cost
+        say: >-
+          And at runtime? One extra call through an interface costs next to nothing, except in the
+          tightest embedded code. The real price is design time, paid once. The payoff arrives
+          every time the business or the technology changes, and over time, both will.
+        pause_after: 2.5
+        step: The real cost
+        note: Runtime cost is tiny; design time is paid once and repaid with every change.
+        source: >-
+          CMU 17-723 lecture on design for reuse, slides 37 and 42; Siedersleben, Moderne
+          Softwarearchitektur (2004), section 1.4.
+        visual: >-
+          A stopwatch reads One extra call: next to nothing. A balance weighs Design time, paid
+          once, against Payoff, with every change; the payoff side sinks. A sticker reads Technology
+          will change.
+  - id: summary
+    label: Summary
+    title: Two questions, four groups, one test
+    purpose: Recall the groups, the mixing rules, the design rules, and the change test.
+    takeaway: >-
+      Ask what code knows, keep A and T apart with interfaces the rules own and thin adapters, and
+      test a design by replaying changes against it.
+    cues:
+      - id: recap_groups
+        say: >-
+          Let's recap. Ask what each piece of code knows: the domain, a technology, both, or
+          neither. That gives its group: A, T, AT, or zero. Zero goes everywhere. Group A goes
+          wherever its rules apply, group T wherever its technology runs, and group AT almost
+          nowhere.
+        step: Four groups
+        note: Two questions give the group, and the group decides where code can go.
+        visual: >-
+          The two-by-two grid returns with its four drops, beside the reuse chart: 0 Yes
+          everywhere, A Yes where the rules match, T Yes where the technology matches, and AT Yes
+          only where both match.
+      - id: recap_rules
+        say: >-
+          Groups combine like blood types: zero adds nothing, A plus T makes AT, and AT never
+          dilutes. So minimize AT and maximize zero. Let the rules own their interfaces, plug
+          technology in through thin adapters that translate but never decide, and keep frameworks
+          at arm's length.
+        step: Mixing and design rules
+        note: Zero adds nothing and A plus T makes AT; owned interfaces and thin adapters keep AT small.
+        visual: >-
+          The equation cards return: A + 0 = A, A + T = AT, and AT + anything = AT. Beside them,
+          the separated design: Ride rules (A) with its sockets, thin adapters with R tags, and T
+          modules plugged in.
+      - id: recap_test
+        say: >-
+          Then test your design: replay a technology change, a rule change, and a reuse request. If
+          each lands in one small place, you've designed for change. Next time you write a
+          function, ask the two questions before line one.
+        pause_after: 2.5
+        step: The change test
+        note: Replay changes; each one should land in one small place.
+        visual: >-
+          The three change cards land, each in one small place, with checks. A final sticker reads
+          Ask the two questions before line one.

@@ -1,0 +1,211 @@
+{
+  "id": "state-named-only-in-transitions-dragged",
+  "family": "behaviour",
+  "type": "state",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+  "steps": [
+    {
+      "do": "drag",
+      "from": {
+        "target": {
+          "role": "button",
+          "name": "Element Busy — Enter to select, arrows to nudge, Delete to remove"
+        }
+      },
+      "to": {
+        "target": {
+          "role": "button",
+          "name": "Element Busy — Enter to select, arrows to nudge, Delete to remove"
+        },
+        "offset": {
+          "x": 160,
+          "y": 0
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"__initial__0\" x=82 y=30\nnode \"Idle\" x=30 y=101\nnode \"Busy\" x=180 y=200\nnode \"Done\" x=30 y=307\nnode \"__final__0\" x=79 y=412\n@endlayout\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Element — Busy\":\n  - heading \"Element — Busy\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Busy\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Busy"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Element — Busy\":\n  - heading \"Element — Busy\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Busy\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Busy"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Busy — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Busy"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"__initial__0\" x=82 y=30\nnode \"Idle\" x=30 y=101\nnode \"Busy\" x=180 y=200\nnode \"Done\" x=30 y=307\nnode \"__final__0\" x=79 y=412\n@endlayout\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Element — Busy\":\n  - heading \"Element — Busy\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Busy\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Busy"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Busy — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Busy"
+    }
+  },
+  "operations": [
+    {
+      "type": "state",
+      "before": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+      "operation": {
+        "op": "layout.set",
+        "revision": "rd8d825cb:88",
+        "positions": {
+          "Busy": {
+            "x": 180,
+            "y": 200
+          }
+        },
+        "routes": [],
+        "facts": {
+          "positions": {
+            "__initial__0": {
+              "x": 82,
+              "y": 30
+            },
+            "Idle": {
+              "x": 30,
+              "y": 101
+            },
+            "Busy": {
+              "x": 30,
+              "y": 204
+            },
+            "Done": {
+              "x": 30,
+              "y": 307
+            },
+            "__final__0": {
+              "x": 79,
+              "y": 412
+            }
+          },
+          "shiftedRoutes": {}
+        },
+        "undo": {
+          "key": "drag:elt:Busy"
+        }
+      },
+      "after": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"__initial__0\" x=82 y=30\nnode \"Idle\" x=30 y=101\nnode \"Busy\" x=180 y=200\nnode \"Done\" x=30 y=307\nnode \"__final__0\" x=79 y=412\n@endlayout\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml"
+    }
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: a state's Behaviour fields and its region's initial and final states (origin/master 71fbaeca)."
+  }
+}

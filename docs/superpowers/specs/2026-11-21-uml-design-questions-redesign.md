@@ -716,3 +716,22 @@ The step 1 view needed packages as nodes. ArchUML class diagrams gained: a `pack
 - Keys: `facts.py` imports each service in a fresh interpreter and lists the `infra` modules in memory (`shared_code.loads`), and reads which names each service takes from a module. `diagram_facts.py` reads every import statement for the view and records which type names the OPC lists and the website writes.
 - `progress_version` is 3: records saved under earlier versions are dropped.
 - Not yet checked with learners: whether Part A of step 1 takes about 5 minutes, and how many students find the chain through `infra/broker.py` without the view.
+
+## 10. Third redesign: only the first task starts from the code
+
+Requested on 2026-11-24. Step 1 stays code-first: one attempt from the code,
+then the diagram, then the comparison. Steps 2 to 6 are `diagram-first`: the
+step opens with the agent's reply, its diagram, and the questions. The code
+stays in Files and behind the evidence notes, but no graded question needs it.
+
+- **Runtime.** `diagram_challenge.mode: diagram-first` starts in the locked
+  state: no Part A, no lock-in, no view prediction, no budget nudge. The
+  stepper reads With the diagram, New question(s), Review, and the last stage
+  is "Review your answers".
+- **Checks against the code** (steps 3 and 5, and the capstone) carry
+  `evidence_check.graded: false`: they are practice, say so, do not count
+  toward the score, and are not needed to move on.
+- **Results card.** Its "From the code" column reads "Not asked" for a
+  diagram-first step.
+- **Saved progress.** A record saved while a step was still exploring from
+  the code continues with the diagram; `progress_version` stays 3.

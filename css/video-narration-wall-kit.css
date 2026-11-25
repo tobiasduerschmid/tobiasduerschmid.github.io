@@ -1,0 +1,381 @@
+/*
+ * The wall kit's materials (js/video-narration/wall-kit.js), shared by every
+ * animated video narration and loaded only inside its frame: paper cards,
+ * notes, badges, speech bubbles, and checklists; dark list cards; frames,
+ * columns, brackets, arrows, slots, loops, balances, and pillars; and every
+ * picture's heading strip. Surfaces, lines, and text take their colors from
+ * the stage's --vn-* tokens (css/video-narration-stage.css), so the picture
+ * follows the site's light or dark mode; paper pieces stay paper in both.
+ * Text clears 4.5:1 against its own background in both modes. Labels are at
+ * least 20px on the 960x540 stage, and nothing depends on color alone. Class
+ * names keep the sk- (stage kit) prefix the Scrum lesson introduced; a topic
+ * kit's stylesheet loads after this one and adds the topic's own objects.
+ */
+.stage .sk-text-xl { font-size: 40px; font-weight: 900; }
+/* Every picture has a heading strip: the topic tag sits in the top 48px, and
+   the picture's artwork (.sk-body) is scaled to 91% beneath it, so no piece
+   can ever cover the heading. The tag names which role, artifact, or event
+   the picture teaches, with the icon that stands for it throughout the video;
+   the kind's color is repeated in words, never alone. */
+.sk-body { position: absolute; inset: 0; transform-origin: 50% 100%; scale: 0.91; }
+.sk-topic {
+  position: absolute;
+  top: 3px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 16px 3px 3px;
+  border: 2px solid var(--sk-topic, var(--vn-panel-line));
+  border-radius: 999px;
+  background: var(--vn-label-bg);
+  color: var(--text);
+  box-shadow: var(--vn-paper-shadow);
+  white-space: nowrap;
+}
+.sk-topic-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--sk-topic, var(--vn-chip)); color: #0b0f1a; }
+.sk-topic-icon svg { width: 22px; height: 22px; }
+.sk-topic-words { display: flex; align-items: baseline; gap: 10px; }
+.sk-topic-words small { color: var(--muted); font-size: 17px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.sk-topic-words b { font-size: 22px; font-weight: 900; }
+/* An empty layer over a picture, for effects that belong on top. */
+.sk-overlay { position: absolute; inset: 0; pointer-events: none; }
+/* A role badge on a lanyard: icon, role, and an optional skill tag. */
+.sk-badge {
+  position: absolute;
+  width: 112px;
+  padding: 10px 8px 12px;
+  border-radius: 12px;
+  background: #fdfbf3;
+  color: #0b0f1a;
+  text-align: center;
+  box-shadow: var(--vn-paper-shadow);
+}
+.sk-badge::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -26px;
+  width: 6px;
+  height: 26px;
+  margin-left: -3px;
+  background: var(--vn-cyan-ink);
+}
+.sk-badge-icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 6px;
+  border-radius: 50%;
+  background: #1b2340;
+  color: var(--gold);
+}
+.sk-badge-icon svg { width: 32px; height: 32px; }
+.sk-badge-role { display: block; font-size: 20px; font-weight: 800; line-height: 1.15; }
+.sk-skill {
+  position: absolute;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--violet);
+  color: #0b0f1a;
+  font-size: 20px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+/* A pill sized to sit under one badge: its words wrap, centered. */
+.sk-skill.is-wrapped { padding: 6px 8px; border-radius: 14px; line-height: 1.15; text-align: center; white-space: normal; }
+/* A frame around the team, labeled at its top-left corner. */
+.sk-frame {
+  position: absolute;
+  border: 4px dashed var(--vn-dashed);
+  border-radius: 18px;
+}
+.sk-frame-label {
+  position: absolute;
+  left: 18px;
+  top: -24px;
+  padding: 4px 14px;
+  border-radius: 8px;
+  background: var(--vn-label-bg);
+  color: var(--vn-gold-ink);
+  font-size: 26px;
+  font-weight: 900;
+}
+/* Paper cards: story cards, task notes, the board's columns. */
+.sk-card {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 260px;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fdfbf3;
+  color: #0b0f1a;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: var(--vn-paper-shadow);
+}
+.sk-card-rank {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #0b4a7a;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+}
+.sk-card--new { background: #fff1ad; }
+.sk-card--blocked { background: #ffd6dc; }
+/* Too big and vague to build: a dashed edge until refinement splits it. */
+.sk-card--fuzzy { background: #e6ebf6; font-style: italic; outline: 3px dashed #4a5578; outline-offset: -7px; }
+.sk-note {
+  position: absolute;
+  width: 170px;
+  padding: 10px 12px;
+  background: #ffe680;
+  color: #0b0f1a;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: var(--vn-paper-shadow);
+}
+.sk-note--pink { background: #ffc2dc; }
+.sk-note--cyan { background: #b8f0fb; }
+.sk-note--green { background: #c4f5d3; }
+.sk-note--red { background: #ff9aa8; }
+.sk-column {
+  position: absolute;
+  border: 3px solid var(--vn-panel-line);
+  border-radius: 12px;
+  background: var(--vn-column);
+}
+.sk-column-head {
+  padding: 8px 12px;
+  border-bottom: 3px solid var(--vn-panel-line);
+  color: var(--text);
+  font-size: 24px;
+  font-weight: 900;
+  text-align: center;
+}
+.sk-banner {
+  position: absolute;
+  padding: 10px 14px;
+  border: 3px solid #0b0f1a;
+  border-radius: 10px;
+  background: var(--gold);
+  color: #0b0f1a;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+.sk-banner b { display: block; font-size: 17px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; }
+.sk-banner svg { position: absolute; right: -16px; top: -16px; width: 40px; height: 40px; padding: 6px; border-radius: 50%; background: #0b0f1a; color: var(--gold); }
+/* Speech bubbles, larger than the story kit's. */
+.sk-speech {
+  position: absolute;
+  max-width: 420px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: #fdfbf3;
+  color: #0b0f1a;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  box-shadow: var(--vn-paper-shadow);
+}
+.sk-speech::after {
+  content: '';
+  position: absolute;
+  left: 26px;
+  bottom: -16px;
+  border: 10px solid transparent;
+  border-top: 16px solid #fdfbf3;
+}
+.sk-speech b { display: block; margin-bottom: 2px; color: #0b4a7a; font-size: 17px; text-transform: uppercase; letter-spacing: 0.06em; }
+.sk-speech--small { padding: 8px 12px; border-radius: 14px; font-size: 20px; }
+
+/* Kit stickers and stamps, enlarged for this stage. */
+.stage .sticker { font-size: 22px; padding: 8px 16px; }
+.stage .sticker svg { width: 24px; height: 24px; }
+.stage .stamp:not(.stamp--small) { font-size: 40px; }
+/* A loop of stages with a marker that travels around it. */
+.sk-loop { position: absolute; border: 6px solid var(--vn-ring); border-radius: 50%; }
+.sk-loop-dot { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; background: var(--vn-lit); box-shadow: 0 0 0 6px var(--vn-ring); }
+.sk-loop-label {
+  position: absolute;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: var(--vn-label-bg);
+  border: 3px solid var(--vn-cyan-ink);
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 800;
+  white-space: nowrap;
+  translate: -50% -50%;
+}
+.sk-label {
+  position: absolute;
+  color: var(--text);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.sk-label--muted { color: var(--muted); }
+/* A checklist card, such as the Definition of Done. */
+.sk-checklist {
+  position: absolute;
+  width: 380px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: #fdfbf3;
+  color: #0b0f1a;
+  box-shadow: var(--vn-paper-shadow);
+}
+.sk-checklist-title { margin: 0 0 8px; color: #0b4a7a; font-size: 24px; font-weight: 900; }
+.sk-check { display: flex; align-items: center; gap: 10px; margin: 6px 0; font-size: 22px; font-weight: 700; }
+.sk-check-box { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border: 3px solid #0b0f1a; border-radius: 6px; }
+.sk-check-box svg { width: 22px; height: 22px; color: #176138; }
+/* A bracket over a span, named in a gap in its top edge: the edge is two
+   segments beside the name, so no line ever runs behind the text. */
+.sk-bracket {
+  position: absolute;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  height: 40px;
+  border: 4px solid currentColor;
+  border-top: 0;
+  border-bottom: 0;
+  color: var(--vn-gold-ink);
+  font-size: 24px;
+  font-weight: 900;
+}
+.sk-bracket::before,
+.sk-bracket::after { content: ''; flex: 1; height: 4px; background: currentColor; }
+.sk-bracket::before { margin-left: -4px; }
+.sk-bracket::after { margin-right: -4px; }
+.sk-bracket span { flex: none; margin-top: -13px; line-height: 1.2; white-space: nowrap; }
+.sk-bracket--next { color: var(--vn-cyan-ink); }
+/* Beneath a span, opening upward: the name sits in a gap in the bottom edge. */
+.sk-bracket--under { align-items: flex-end; }
+.sk-bracket--under span { margin-top: 0; margin-bottom: -13px; }
+.sk-dot { position: absolute; width: 20px; height: 20px; border-radius: 50%; background: var(--vn-cyan-ink); }
+.sk-flag {
+  position: absolute;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--pink);
+  color: #0b0f1a;
+  font-size: 20px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+/* A card with an icon, a title, and a list; a trap and its fix are printed
+   on pink and green paper. Sizes include padding and border. */
+.sk-list {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 14px 18px;
+  border: 3px solid var(--vn-panel-line);
+  border-radius: 14px;
+  background: var(--vn-panel);
+  color: var(--text);
+}
+.sk-list-head { display: flex; align-items: center; gap: 12px; }
+.sk-list-icon { display: grid; place-items: center; flex: none; width: 52px; height: 52px; border-radius: 50%; background: var(--vn-chip); color: var(--vn-gold-ink); }
+.sk-list-icon svg { width: 30px; height: 30px; }
+.sk-list-title { margin: 0; font-size: 26px; font-weight: 900; line-height: 1.1; }
+.sk-list-text { margin: 8px 0 0; color: var(--muted); font-size: 20px; font-weight: 700; line-height: 1.25; }
+.sk-list-items { margin: 6px 0 0; padding: 0; list-style: none; }
+.sk-list-items--two { display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; }
+.sk-list-item { display: flex; align-items: center; gap: 10px; margin: 6px 0 0; font-size: 21px; font-weight: 800; line-height: 1.2; }
+.sk-list-item svg { flex: none; width: 24px; height: 24px; color: var(--vn-cyan-ink); }
+.sk-list.is-lit { border: 5px solid var(--vn-lit); background: var(--vn-panel-lit); }
+.sk-list--trap,
+.sk-list--fix { border: 0; color: #0b0f1a; box-shadow: var(--vn-paper-shadow); }
+.sk-list--trap { background: #ffd6dc; }
+.sk-list--fix { background: #c4f5d3; }
+.sk-list--trap .sk-list-icon,
+.sk-list--fix .sk-list-icon { background: #0b0f1a; }
+.sk-list--trap .sk-list-icon { color: #ff6b7d; }
+.sk-list--fix .sk-list-icon { color: #4ade80; }
+.sk-list--trap .sk-list-text,
+.sk-list--fix .sk-list-text { color: #0b0f1a; }
+
+/* Empiricism as a temple: a roof and a base around three stone pillars. */
+.sk-roof {
+  position: absolute;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 110px;
+  padding-bottom: 14px;
+  background: var(--vn-structure);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  color: var(--vn-gold-ink);
+  font-size: 32px;
+  font-weight: 900;
+}
+.sk-base {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--vn-structure);
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 800;
+  text-align: center;
+}
+.sk-pillar {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(90deg, #c7cfdf, #f3f5fa 45%, #c7cfdf);
+  color: #0b0f1a;
+  text-align: center;
+  box-shadow: var(--vn-paper-shadow);
+}
+.sk-pillar-cap { margin: 0 -10px; padding: 10px 4px; border-bottom: 5px solid #8a97b8; border-radius: 6px; background: #e6ebf6; color: #0b4a7a; font-size: 21px; font-weight: 900; box-shadow: var(--vn-paper-shadow); }
+.sk-pillar-text { margin: auto 0; padding: 0 12px; font-size: 21px; font-weight: 800; line-height: 1.25; }
+.sk-pillar.is-lit { outline: 5px solid var(--vn-lit); outline-offset: 5px; }
+
+/* A balance: a beam on a post, and a list card hanging from each end. */
+.sk-balance-post { position: absolute; width: 20px; height: 320px; border-radius: 6px; background: var(--vn-structure-line); }
+.sk-balance-post::after { content: ''; position: absolute; left: -80px; bottom: -12px; width: 180px; height: 20px; border-radius: 10px; background: var(--vn-structure-line); }
+.sk-balance-beam { position: absolute; height: 16px; border-radius: 8px; background: var(--vn-line); }
+.sk-balance-pan::before { content: ''; position: absolute; left: 50%; top: -43px; width: 4px; height: 40px; margin-left: -2px; background: var(--vn-line); }
+
+/* Arrows for a flow of work, growing from the tail to the head. */
+.sk-arrow { position: absolute; height: 6px; margin-top: -3px; border-radius: 3px; background: currentColor; color: var(--vn-gold-ink); transform-origin: 0 50%; }
+.sk-arrow::after { content: ''; position: absolute; right: -16px; top: 50%; margin-top: -11px; border-left: 20px solid currentColor; border-top: 11px solid transparent; border-bottom: 11px solid transparent; }
+.sk-arrow--dashed { background: repeating-linear-gradient(90deg, currentColor 0 14px, transparent 14px 24px); }
+
+/* An open question: an empty, dashed place. */
+.sk-slot {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  border: 4px dashed var(--vn-dashed);
+  border-radius: 10px;
+  color: var(--vn-gold-ink);
+  font-size: 32px;
+  font-weight: 900;
+}
+
+/* A story's progress: a label over a bar. */
+.sk-progress { position: absolute; color: var(--text); font-size: 20px; font-weight: 800; }
+.sk-progress-label { display: block; margin-bottom: 6px; }
+.sk-progress-bar { display: block; height: 24px; overflow: hidden; border: 3px solid var(--vn-line); border-radius: 8px; background: var(--vn-inset); }
+.sk-progress-fill { display: block; width: 0; height: 100%; background: var(--gold); }

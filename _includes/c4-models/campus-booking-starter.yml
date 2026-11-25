@@ -1,0 +1,52 @@
+schema: c4-design/1
+name: Campus Room Booking
+description: Students and staff find free rooms on campus and book them for meetings and study.
+status: sketch
+enterprise: UCLA
+
+requirements:
+  RB-01: A student can find a room that is free at a chosen time and fits the group.
+  RB-02: Two bookings never overlap in the same room.
+  RB-03: A booking that nobody checks into within 15 minutes is released for others.
+  RB-04: Only staff can book lecture halls.
+
+people:
+  student:
+    name: Student
+    description: Books study and meeting rooms for small groups.
+    collaborators:
+      booking: finds, books, and checks into rooms using
+  facilities-staff:
+    name: Facilities Staff
+    description: Keeps the list of rooms, capacities, and opening hours current.
+    collaborators:
+      booking: maintains rooms and opening hours using
+
+systems:
+  booking:
+    name: Room Booking
+    description: Finds free rooms and books them without overlaps.
+    responsibilities:
+      - know: which rooms exist, their capacity, and their opening hours
+        id: rb-rooms
+        requirements: [RB-01]
+      - know: which rooms are free at a requested time
+        id: rb-free
+        requirements: [RB-01]
+      - do: record a booking so that no two bookings overlap in one room
+        id: rb-record
+        requirements: [RB-02]
+      - do: release a booking that nobody checked into within 15 minutes
+        id: rb-release
+        requirements: [RB-03]
+    collaborators:
+      identity: delegates sign-in and campus-role lookup to
+      calendar: adds confirmed bookings to people's calendars through
+  identity:
+    name: Campus Single Sign-On
+    external: true
+    description: Signs in students and staff and reports each person's campus role.
+  calendar:
+    name: Campus Calendar
+    external: true
+    description: Hosts the personal calendars of students and staff.

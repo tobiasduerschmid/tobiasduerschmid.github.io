@@ -1,0 +1,272 @@
+title: "C4 Model Practice"
+description: "Read and critique C4 model views, assign and refine responsibilities, choose the levels an audience needs, and describe interfaces."
+active: true
+questions:
+  # objective: 1
+  - id: 1
+    difficulty: basic
+    type: single
+    question: >
+      A team runs three identical instances of its Ride API behind a load balancer, so that the service survives when one instance fails. In a **C4 model** container view of the ride-sharing system, how many containers does the Ride API account for?
+    options:
+      - "Three, because each running instance is a separate container"
+      - "One, because the three instances run the same application"
+      - "Two: one for the Ride API and one for its load balancer"
+      - "None, because running instances belong only in a deployment view"
+    correct_index: 1
+    option_feedback:
+      0: "The three instances run the same application with the same responsibilities, so three boxes would say the same thing three times. The container view shows the application once; a deployment view shows how many instances run it."
+      2: "The load balancer spreads requests over the instances, but it holds none of the ride-sharing system's responsibilities. It is infrastructure, and it belongs in a deployment view."
+      3: "The instances belong in a deployment view, but the application they run stays in the container view. The Ride API must be running for the system to work, so it is one container (definition adapted from c4model.com, CC BY 4.0)."
+    explanation: "A C4 container is an application or data store that must be running for the system to work, and it appears once however many instances run it. A deployment view shows the Ride API once with three instances. If the instances run in Docker containers, that is only one way to run them, not three C4 containers. The C4 element definitions are adapted from [c4model.com](https://c4model.com/abstractions) by Simon Brown, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)."
+
+  # objective: 1
+  - id: 2
+    difficulty: intermediate
+    type: single
+    question: >
+      In a **C4 model** of a hotel-reservation system, the Reservation API's Rate Policy decides each room's nightly price behind one interface, `quoteRate()`. Four Java classes implement it, packaged as a non-executable JAR that the Reservation API loads. How should the C4 views show the Rate Policy?
+    options:
+      - "As four components of the Reservation API, one for each class that implements it"
+      - "As one component of the Reservation API; its four classes belong in a code view"
+      - "As a container of its own, since it is built and shipped as a separate JAR file"
+      - "As one component whose box lists the four class names as its responsibilities"
+    correct_index: 1
+    option_feedback:
+      0: "One box per class turns the component view into a code view. A component is a group of functionality behind one interface (definition adapted from c4model.com, CC BY 4.0), however many classes implement it, and the rest of the Reservation API depends on that one interface."
+      2: "A container must be running for the system to work (definition adapted from c4model.com, CC BY 4.0), and a non-executable JAR runs only inside the application that loads it. The separate packaging changes how the code is built, not its level: the Rate Policy is still a component of the Reservation API."
+      3: "A responsibility is a promise in plain language, here deciding each room's nightly price, not a list of the classes that keep it. Class names belong in a code view, where each class appears with its relationships."
+    explanation: "The Rate Policy is one component: related functionality behind one interface inside the Reservation API container, deployed with that container. Its four classes are code elements that implement it, and a code view can show them if one is worth drawing. The C4 element definitions are adapted from [c4model.com](https://c4model.com/abstractions) by Simon Brown, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)."
+
+  # objective: 2
+  - id: 3
+    difficulty: intermediate
+    type: single
+    question: |
+      In this **C4 model** component view, which uses Responsibility-Driven Design, a reviewer says the Booking Coordinator breaks the rule that each KNOW and each DECIDE has exactly one owner. How should the team respond?
+
+      <div data-uml-type="c4" data-uml-spec='view: components of api&#10;name: Clinic Appointments&#10;systems:&#10;  clinic:&#10;    name: Clinic Appointments&#10;    description: Lets patients book and cancel clinic appointments.&#10;    responsibilities:&#10;      - decide: whether a patient may book an appointment type&#10;    containers:&#10;      api:&#10;        name: Appointments API&#10;        technology: Java, Spring Boot&#10;        description: Decides who may book which appointment and records every booking.&#10;        responsibilities:&#10;          - decide: whether a patient may book an appointment type&#10;        components:&#10;          coordinator:&#10;            name: Booking Coordinator&#10;            technology: Java, Spring service&#10;            stereotypes: [coordinator]&#10;            responsibilities:&#10;              - do: sequence one booking attempt&#10;              - know: why a booking attempt was refused&#10;            collaborators:&#10;              policy: asks for a booking decision and its reason from&#10;          policy:&#10;            name: Booking Policy&#10;            technology: Java, Spring service&#10;            stereotypes: [service_provider]&#10;            responsibilities:&#10;              - decide: whether a patient may book an appointment type'></div>
+    options:
+      - "Reject it: KNOW means being able to provide a fact, including by asking the policy"
+      - "Accept it: only the element that decides may know the reason, so the KNOW should go"
+      - "Accept it: the coordinator must keep a copy of the rules to explain any refusal"
+      - "Reject it: coordinators are exempt from the one-owner rule for KNOW items"
+    correct_index: 0
+    option_feedback:
+      1: "Knowing and owning are different promises. The owner of a decision is the one element that makes it; other elements may know its outcome and its reason by asking. The coordinator needs the reason to report it, and it gets it from the policy."
+      2: "A copy of the rules would create a second authority that can drift away from the policy's. The coordinator can report the reason without holding any rules, by passing on what the policy answers."
+      3: "No element is exempt, and none needs to be: the coordinator knows the reason by asking, and the policy remains the source of the decision and its reason, so there is still one owner."
+    explanation: "To know something means being able to provide it, whether by holding it, deriving it, or asking a collaborator. The coordinator asks the Booking Policy for the decision and its reason and passes the answer on, so the policy remains the only owner of the DECIDE and the source of the reason."
+
+  # objective: 2
+  - id: 4
+    difficulty: intermediate
+    type: single
+    question: |
+      A reviewer traces the `refines` links in this excerpt of a **C4 model** `design.yml` for a clinic's appointment system, which uses Responsibility-Driven Design. What does the trace show?
+
+      ```yaml
+      systems:
+        clinic:
+          responsibilities:
+            - decide: whether a patient may book an appointment
+              id: sys-book
+            - know: which patients wait for a cancellation, in order
+              id: sys-waitlist
+          containers:
+            api:
+              responsibilities:
+                - decide: whether a patient may book an appointment
+                  id: api-book
+                  refines: sys-book
+              components:
+                slots:
+                  responsibilities:
+                    - decide: whether the clinician has a free slot
+                      refines: api-book
+                coverage:
+                  responsibilities:
+                    - decide: whether insurance covers the visit
+                      refines: api-book
+      ```
+    options:
+      - "No container refines the waitlist KNOW, so it needs an owner with `refines`"
+      - "Two components refine the booking DECIDE, which breaks the one-owner rule"
+      - "Nothing is missing: the system box lists the waitlist, so the system owns it"
+      - "The waitlist belongs to the database container, since data stores hold facts"
+    correct_index: 0
+    option_feedback:
+      1: "A parent responsibility may be divided among several children. Each component makes a different decision, whether a slot is free and whether insurance covers the visit, so each decision still has one owner, and a coordinator can combine the two answers."
+      2: "Zooming in must allocate every system responsibility to an element inside the system. A responsibility that no container refines has no owner yet, so nobody is accountable for keeping the waitlist."
+      3: "A database stores facts for the element that owns them; storage is a DO, custody rather than authority. The waitlist needs an owner that alone writes it, such as a component of the API, which may then store it in the database."
+    explanation: "Refinement makes coverage checkable: every system responsibility must be refined somewhere below it. The booking decision is divided between two components, each with its own decision, which is fine. The waitlist KNOW is refined nowhere, so the repair is to allocate it to a container, and later a component, with `refines`."
+
+  # objective: 2
+  - id: 5
+    difficulty: intermediate
+    type: single
+    question: >
+      In a **C4 model** component view of a clinic's appointment system, the Booking Coordinator and the Referral Policy both list "DECIDE whether a visit needs a referral". The two copies will diverge when the referral rule changes. Which repair is best?
+    options:
+      - "The Referral Policy keeps the DECIDE, and the coordinator asks it"
+      - "Merge both into one Booking Manager that owns every booking decision"
+      - "Move the referral decision into the appointments database as a constraint"
+      - "Keep both copies and add a test that checks that the two agree"
+    correct_index: 0
+    option_feedback:
+      1: "Merging produces one element that hoards decisions, which is hard to change and hard to test. The repair is a single owner for this decision, not a bigger element."
+      2: "A database can enforce a constraint, but making it the owner of a business rule splits the rule from the element responsible for it and hides the rule from the design. The policy can keep the decision while the database stores what it decides."
+      3: "A test detects drift after it happens, but the design still has two authorities for one decision, and every rule change must be made twice. Give the decision one owner instead."
+    explanation: "Each DECIDE needs exactly one owner. The Referral Policy keeps the decision, and the Booking Coordinator asks for it through a relationship, so a change to the referral rule touches one element."
+
+  # objective: 5
+  - id: 6
+    difficulty: intermediate
+    type: single
+    question: |
+      A teammate shares this **C4 model** container view for review. Which review-checklist failures should the reviewer raise?
+
+      <div data-uml-type="c4" data-uml-spec='view: containers of permits&#10;name: Parking Permits&#10;people:&#10;  driver:&#10;    name: Driver&#10;    description: Applies for and renews campus parking permits.&#10;    collaborators:&#10;      portal: applies for permits using&#10;systems:&#10;  permits:&#10;    name: Parking Permits&#10;    description: Issues campus parking permits and charges their fees.&#10;    responsibilities:&#10;      - decide: whether a driver may receive a permit for a zone&#10;    containers:&#10;      portal:&#10;        name: Permit Portal&#10;        kind: browser_app&#10;        technology: TypeScript, Vue&#10;        description: Lets drivers apply for and renew permits.&#10;        responsibilities:&#10;          - do: let drivers apply for and renew permits&#10;        collaborators:&#10;          service-a: calls&#10;      service-a:&#10;        name: Service A&#10;        technology: Java&#10;        description: Handles requests.&#10;        responsibilities:&#10;          - decide: whether a driver may receive a permit for a zone&#10;        collaborators:&#10;          permit-db: data&#10;          payments: {description: requests permit fees from, technology: HTTPS}&#10;      permit-db:&#10;        name: Permit Database&#10;        kind: database&#10;        technology: PostgreSQL&#10;        description: Stores drivers, permits, and payments.&#10;        responsibilities:&#10;          - do: durably store drivers, permits, and payments&#10;  payments:&#10;    name: City Payments&#10;    external: true&#10;    description: Takes card payments for city and campus fees.'></div>
+    options:
+      - "Elements and relationships: Service A states no job, and 'calls' and 'data' are not sentences"
+      - "Presentation and elements: City Payments is marked by gray alone, and the cylinder is unexplained"
+      - "Presentation and scope: the database box should be larger, and people do not belong here"
+      - "Relationships and scope: arrows should follow the data, and City Payments needs its own view"
+    correct_index: 0
+    option_feedback:
+      1: "City Payments is gray and its type text also says 'external', and the legend explains the cylinder, so neither meaning rests on color or shape alone."
+      2: "Boxes keep equal sizes, because readers take a bigger box as more important. A container view also shows the same people and external systems as the context view, so the two views join up."
+      3: "This view follows one consistent convention, arrows from the element that starts an interaction, which the checklist accepts. A container view shows the external systems its containers talk to, so City Payments belongs here."
+    explanation: "'Service A' and 'Handles requests.' would fit any server, so the element check fails. 'Calls' and 'data' say neither what is asked nor how it travels, and those two arrows cross a container boundary without naming a technology, so the relationship check fails. The legend, the type text, and the arrow direction are in order."
+
+  # objective: 3
+  - id: 7
+    difficulty: intermediate
+    type: single
+    question: |
+      One arrow in this **C4 model** container view has a label that fails the C4 guidance for relationships. Which replacement label fixes it, assuming the technology line stays?
+
+      <div data-uml-type="c4" data-uml-spec='view: containers of bikes&#10;name: Bike Share&#10;people:&#10;  rider:&#10;    name: Rider&#10;    description: Rents bikes for short trips.&#10;    collaborators:&#10;      app: unlocks bikes using&#10;systems:&#10;  bikes:&#10;    name: Bike Share&#10;    description: Lets riders unlock bikes and pay for trips.&#10;    responsibilities:&#10;      - decide: whether a rider may unlock a bike&#10;    containers:&#10;      app:&#10;        name: Rider App&#10;        kind: mobile_app&#10;        technology: Kotlin, Android&#10;        description: Shows nearby bikes and unlocks the one a rider picks.&#10;        responsibilities:&#10;          - do: show nearby bikes and send unlock requests&#10;        collaborators:&#10;          api: {description: uses, technology: JSON/HTTPS}&#10;      api:&#10;        name: Bike API&#10;        technology: Go&#10;        description: Decides whether a rider may unlock a bike and records the trip.&#10;        responsibilities:&#10;          - decide: whether a rider may unlock a bike&#10;        collaborators:&#10;          trips: {description: writes trip records to, technology: SQL/TCP}&#10;      trips:&#10;        name: Trip Database&#10;        kind: database&#10;        technology: PostgreSQL&#10;        description: Stores trips and payments.&#10;        responsibilities:&#10;          - do: durably store trips and payments'></div>
+    options:
+      - "Bike unlock requests and responses"
+      - "REST over HTTPS with JSON bodies"
+      - "Requests bike unlocks from"
+      - "Is called by the Bike API for unlocks"
+    correct_index: 2
+    option_feedback:
+      0: "A noun phrase says what flows but not who asks whom for what. The label should read as a sentence in the direction of the arrow, from the Rider App to the Bike API."
+      1: "Technology belongs on its own line, and it is not a purpose. The label itself must state what the Rider App asks of the Bike API."
+      3: "This sentence runs against the arrow. The arrow points from the Rider App to the Bike API, so the label must read from the app to the API."
+    explanation: "The arrow labeled 'uses' runs from the Rider App to the Bike API. A relationship label reads as a sentence from source to target and states the intent: the Rider App requests bike unlocks from the Bike API. The technology stays on the second line, and the arrow keeps pointing from the initiator."
+
+  # objective: 4
+  - id: 8
+    difficulty: advanced
+    type: single
+    question: >
+      A team documents its conference talk-review system with the **C4 model**. A product owner wants to know which outside systems the product depends on. A developer who joined this week must find where reviewers' scores are combined into an accept-or-reject decision inside the Review API container. Which views serve the two readers best?
+    options:
+      - "Context view for the owner; component view of the Review API for the developer"
+      - "Container view for the owner; component view of the Review API for the developer"
+      - "Context view for the owner; code view of the scoring classes for the developer"
+      - "Deployment view for the owner; container view of the system for the developer"
+    correct_index: 0
+    option_feedback:
+      1: "A container view also shows the outside systems, but among technologies and internals the owner does not need; the context view answers the question directly. The developer's half of this plan is right."
+      2: "A code view shows classes, not which part of the container makes the decision, and it is usually generated on demand rather than maintained. The component view of the Review API answers the developer's question at the right level."
+      3: "A deployment view shows where containers run, which answers neither reader's question. A container view locates the Review API but does not show which of its parts combines the scores."
+    explanation: "The owner's question is answered by a system context view, which shows the system, its users, and the systems it depends on. The developer already knows the container, so its component view shows where the decision lives."
+
+  # objective: 4
+  - id: 9
+    difficulty: advanced
+    type: single
+    question: >
+      Four experienced engineers maintain a city's transit-fare system with three containers: a rider app redesigned every few weeks, a Fare Ledger whose fare rules are audited every year and rarely change, and a database. All views are generated from the team's `design.yml` in continuous integration, but each view still needs its part of the model kept current. Which **C4 model** documentation plan fits best?
+    options:
+      - "Context and container views, plus a component view of the Fare Ledger"
+      - "Context and container views, plus component views of all three containers"
+      - "Context and container views only, since experienced engineers read the code"
+      - "Context view, plus a component view of the rider app, where most change happens"
+    correct_index: 0
+    option_feedback:
+      1: "Generation removes the drawing, not the upkeep: someone must keep the rider app's components current in the model while it changes every few weeks, and a database has no interesting internals. Those two component views cost more than they answer."
+      2: "Experience helps, but auditors and newcomers still need to see how the audited fare rules are divided and who decides what. The Fare Ledger is stable and important, so its component view repays its upkeep."
+      3: "A component view of the part that changes most goes stale fastest, and dropping the container view leaves readers without a map of what runs and how the parts talk."
+    explanation: "Draw the context and container views for every system. A component view earns its place where the internals are important and stable enough to keep current, here the audited Fare Ledger, and not where they change every few weeks or barely exist. Leaving a level out for a stated reason is a legitimate decision."
+
+  # objective: 5
+  - id: 10
+    difficulty: advanced
+    type: single
+    question: |
+      The team behind this **C4 model** system context view builds and runs everything in it except the Mail Provider. Which change would make the view correct?
+
+      <div data-uml-type="c4" data-uml-spec='view: context of review&#10;name: Talk Review&#10;people:&#10;  reviewer:&#10;    name: Program Committee Member&#10;    description: Reviews and scores submitted conference talks.&#10;    collaborators:&#10;      review: reviews and scores talks using&#10;systems:&#10;  review:&#10;    name: Talk Review&#10;    description: Collects reviews of submitted talks and decides which are accepted.&#10;    responsibilities:&#10;      - decide: whether a submitted talk is accepted&#10;    collaborators:&#10;      events: publishes finished reviews to&#10;      mail: asks for decision emails to be sent through&#10;  events:&#10;    name: Review Events Queue&#10;    description: Holds finished reviews in order until Talk Review processes them.&#10;    responsibilities:&#10;      - do: hold finished reviews in order until they are processed&#10;  mail:&#10;    name: Mail Provider&#10;    external: true&#10;    description: Sends email on behalf of its customers.'></div>
+    options:
+      - "Label every arrow with its technology, since a context view should show how systems talk"
+      - "Remove the Review Events Queue here; it is a container of Talk Review, shown one level down"
+      - "Mark the Review Events Queue external, since the team did not write the queue software"
+      - "Draw Talk Review's containers inside its box, so that the queue appears in its context"
+    correct_index: 1
+    option_feedback:
+      0: "Context views leave out technology on purpose. They state each interaction's purpose in business terms for readers who will never read code. Protocols belong on container-level arrows."
+      2: "External means not designed or owned by this team. The team configures and runs this queue as part of its own system, so it is a container of Talk Review; the broker product is its technology, not a separate system."
+      3: "A context view shows the system as a single box with nothing inside. Opening it up mixes levels. The containers belong in a separate container view."
+    explanation: "A queue that the team builds and runs for its own system is a container of that system (`kind: queue`), not a software system of its own. The context view keeps Talk Review as one box, and the queue appears in the container view. A team can legitimately own several software systems, so nothing in the model's structure shows that this one is really part of Talk Review; telling a part from a separate system is a boundary judgment for a reviewer."
+
+  # objective: 6
+  - id: 11
+    difficulty: intermediate
+    type: single
+    question: >
+      A `design.yml` file describing a system in the **C4 model** passes every automated check with no errors and no warnings. Which conclusion does that justify?
+    options:
+      - "The design is adequate, so its boundaries and owners are the right ones"
+      - "The system will meet the latency target recorded in the model"
+      - "Its references resolve, its nesting is valid, and no fact has rival declared owners"
+      - "The code in the repository matches the containers and components in the model"
+    correct_index: 2
+    option_feedback:
+      0: "A check can test whether the model is consistent with its own rules. Whether a decision belongs in one component or another is a design judgment that no rule can settle."
+      1: "A quality target in the model is a record of what the team intends. Only measuring the running system can show whether it is met."
+      3: "The checks read the model file, not the code. Keeping the two in sync takes practices such as changing both in the same pull request."
+    explanation: "Automated checks can establish consistency and some completeness: references resolve, nesting is valid, and no fact listed under `owns` has two rival owners (two elements outside one containment chain). They cannot establish adequacy, measured quality, or agreement with the code, which remain judgments and measurements."
+
+  # objective: 5
+  - id: 12
+    difficulty: advanced
+    type: single
+    question: |
+      Which assessment of the control style in this **C4 model** component view, which uses Responsibility-Driven Design, is best?
+
+      <div data-uml-type="c4" data-uml-spec='view: components of api&#10;name: Talk Review&#10;systems:&#10;  review:&#10;    name: Talk Review&#10;    description: Collects reviews of submitted talks and decides which are accepted.&#10;    responsibilities:&#10;      - decide: whether a submitted talk is accepted&#10;        id: sys-accept&#10;    containers:&#10;      api:&#10;        name: Review API&#10;        technology: Java, Spring Boot&#10;        description: Applies the program committee&#39;s rules and records every decision.&#10;        responsibilities:&#10;          - decide: whether a submitted talk is accepted&#10;            id: api-accept&#10;            refines: sys-accept&#10;        components:&#10;          controller:&#10;            name: Review Controller&#10;            technology: Java, Spring service&#10;            stereotypes: [controller]&#10;            responsibilities:&#10;              - decide: whether a submitted talk is accepted&#10;                refines: api-accept&#10;              - decide: whether a reviewer has a conflict of interest&#10;              - decide: which talks need a third review&#10;            collaborators:&#10;              reviews: asks for submitted scores from&#10;              reviewers: asks for affiliations and topics from&#10;              talks: asks for authors and topics from&#10;          reviews:&#10;            name: Review Records&#10;            technology: Java, Spring service&#10;            stereotypes: [information_holder]&#10;            responsibilities:&#10;              - know: which scores each talk has received&#10;          reviewers:&#10;            name: Reviewer Directory&#10;            technology: Java, Spring service&#10;            stereotypes: [information_holder]&#10;            responsibilities:&#10;              - know: each reviewer&#39;s affiliation and topics&#10;          talks:&#10;            name: Talk Catalog&#10;            technology: Java, Spring service&#10;            stereotypes: [information_holder]&#10;            responsibilities:&#10;              - know: the authors, topics, and track of each submitted talk'></div>
+    options:
+      - "Centralized: simple to follow, but the controller grows with every new rule"
+      - "Delegated: harder to follow, but each decision sits beside its own data"
+      - "Centralized: experiments found it easier to maintain than a delegated design"
+      - "Invalid: an element with several DECIDE items breaks the one-owner rule"
+    correct_index: 0
+    option_feedback:
+      1: "Delegation would give capable collaborators the decisions within their own areas. Here the collaborators only know facts, and the controller makes every decision from data it fetches, so the decisions do not sit beside their data."
+      2: "The experiment behind this claim found that senior maintainers handled the delegated design faster, while novices did better with the centralized one. The result depends on who maintains the code, so neither style is easier for every maintainer."
+      3: "The one-owner rule asks that each decision has a single owner, not that each element owns a single decision. The three decisions here each have exactly one owner. The concern is accumulation, not duplication."
+    explanation: "One controller makes every decision while its collaborators only hold data, which is a centralized style. It is simple to read, which helps novices, but the controller grows with every new rule. A delegated style spreads decisions over more elements and pays off for maintainers who can follow it."
+
+  # objective: 7
+  - id: 13
+    difficulty: intermediate
+    type: single
+    question: >
+      Campus Shop sells event tickets through booking partners, and its interface description gives each booking a field `price` of type `number`. A booking partner and Campus Shop disagree on totals although every message validates against the schema. Which revision of the interface description most directly prevents this?
+    options:
+      - "State that price is in US cents and whether it includes sales tax"
+      - "Add a JSON Schema that gives price type number and minimum 0"
+      - "Add the meaning 'the price of the booking' to the price field"
+      - "Change the type of price from number to decimal for exact sums"
+    correct_index: 0
+    option_feedback:
+      1: "A schema constrains structure and values, so it can reject a negative price. Both sides can still read a valid 4999 differently, as cents or dollars, with or without tax, and every message still passes."
+      2: "A meaning without a unit leaves the same question open: the price of the booking, but in cents or dollars, and with tax or without? With a meaning and no unit, one side can send dollars while the other reads cents, and every message still validates."
+      3: "A decimal type avoids rounding errors, but 49.99 can still be dollars before tax or after it. The disagreement is about what the number means, which a more precise type does not state."
+    explanation: "Every message parses and validates, so the two sides differ in how they read the number, not in its form. Stating the unit and what the total includes removes both readings that the syntax allows; a schema, a meaning without a unit, and a finer type each leave them open."

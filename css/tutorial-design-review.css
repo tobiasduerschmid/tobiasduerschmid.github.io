@@ -1,0 +1,416 @@
+/* ============================================================
+   Design review (js/tutorial-design-review.js) inside a tutorial
+   step's instructions, plus its print-view block
+   (_includes/tutorial-design-review-print.html).
+
+   Colors are tokens on the widget root with an html.dark-mode
+   override; print is always the light palette. Text inherits the
+   instruction pane's paragraph size; hints are 0.9em. The pane's
+   paragraph rules (.tvm-step-instructions p, li) carry higher
+   specificity, so rules that recolor a paragraph list both a
+   dark-mode and an html:not(.dark-mode) selector.
+   ============================================================ */
+
+.tutorial-design-review {
+  --tdr-text: #1f2328;
+  --tdr-muted: #4b535d;
+  --tdr-heading: #0060a8;
+  --tdr-border: #6e7781;
+  --tdr-border-soft: #c8ccd2;
+  --tdr-surface: #f6f8fa;
+  --tdr-field: #ffffff;
+  --tdr-field-readonly: #eef1f4;
+  --tdr-accent: #005587;
+  --tdr-given: #8a5a00;
+  --tdr-given-bg: #fff8e6;
+  --tdr-primary-bg: #005587;
+  --tdr-primary-hover: #003b5c;
+  --tdr-primary-text: #ffffff;
+  --tdr-mark: #005587;
+  --tdr-ask-bg: #e6eff6;
+  --tdr-focus: #005587;
+  margin: 1.6em 0 1em;
+  padding-top: 0.8em;
+  border-top: 2px solid var(--tdr-border-soft);
+  color: var(--tdr-text);
+  font: inherit;
+}
+
+html.dark-mode .tutorial-design-review {
+  --tdr-text: #e6edf3;
+  --tdr-muted: #b1bac4;
+  --tdr-border: #8b949e;
+  --tdr-border-soft: #3a3a42;
+  --tdr-surface: #22232a;
+  --tdr-field: #17181c;
+  --tdr-field-readonly: #2a2b33;
+  --tdr-accent: #79c0ff;
+  --tdr-given: #e3b341;
+  --tdr-given-bg: #2b2414;
+  --tdr-primary-bg: #79c0ff;
+  --tdr-primary-hover: #a5d6ff;
+  --tdr-primary-text: #0d1117;
+  --tdr-mark: #79c0ff;
+  --tdr-ask-bg: #1c2b3a;
+  --tdr-focus: #ffd100;
+}
+
+.tutorial-design-review .tutorial-design-review__title {
+  font-size: 1.2em;
+  margin: 0 0 0.6em;
+}
+
+/* ----- The case: request, story, the agent's reply, Given ------------------- */
+
+.tutorial-design-review__case {
+  display: grid;
+  gap: 0.75em;
+}
+
+.tutorial-design-review__card {
+  padding: 0.6em 0.9em;
+  border: 1px solid var(--tdr-border-soft);
+  border-left: 4px solid var(--tdr-accent);
+  border-radius: 6px;
+  background: var(--tdr-surface);
+}
+
+/* The Given scenario is what the learner traces: it stands out by its frame
+   and its heading, not by color alone. */
+.tutorial-design-review__card--given {
+  border-left-color: var(--tdr-given);
+  border-left-width: 6px;
+  background: var(--tdr-given-bg);
+}
+
+.tutorial-design-review .tutorial-design-review__card-title,
+.tutorial-design-review .tutorial-design-review__section-title {
+  margin: 0.1em 0 0.35em;
+  font-size: 1.05em;
+  font-weight: 700;
+  color: var(--tdr-text);
+}
+
+.tutorial-design-review .tutorial-design-review__card--given .tutorial-design-review__card-title {
+  color: var(--tdr-given);
+}
+
+.tutorial-design-review .tutorial-design-review__subtitle {
+  margin: 0.8em 0 0.3em;
+  font-size: 1em;
+  font-weight: 700;
+  color: var(--tdr-text);
+}
+
+.tutorial-design-review__card > :last-child {
+  margin-bottom: 0.2em;
+}
+
+.tutorial-design-review__criteria {
+  margin: 0.2em 0 0.4em;
+}
+
+.tutorial-design-review__section-title:focus-visible {
+  outline: 3px solid var(--tdr-focus);
+  outline-offset: 3px;
+}
+
+/* Recolored paragraphs: see the note at the top of this file. */
+.tutorial-design-review .tutorial-design-review__hint,
+html:not(.dark-mode) .tutorial-design-review .tutorial-design-review__hint,
+.tutorial-design-review .tutorial-design-review__count,
+html:not(.dark-mode) .tutorial-design-review .tutorial-design-review__count {
+  margin: 0.3em 0 0.5em;
+  font-size: 0.9em;
+  color: var(--tdr-muted);
+}
+
+.tutorial-design-review .tutorial-design-review__status,
+html:not(.dark-mode) .tutorial-design-review .tutorial-design-review__status {
+  margin: 0.3em 0;
+  color: var(--tdr-text);
+  font-weight: 600;
+}
+
+.tutorial-design-review .tutorial-design-review__status:empty {
+  display: none;
+}
+
+/* ----- Writing the review ----------------------------------------------------- */
+
+.tutorial-design-review__write,
+.tutorial-design-review__feedback,
+.tutorial-design-review__lesson {
+  margin-top: 1.3em;
+}
+
+.tutorial-design-review .tutorial-design-review__label,
+html:not(.dark-mode) .tutorial-design-review .tutorial-design-review__label {
+  display: block;
+  margin: 0.6em 0 0.2em;
+  font-weight: 600;
+  color: var(--tdr-text);
+}
+
+.tutorial-design-review__textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 9em;
+  padding: 0.5em 0.65em;
+  border: 1px solid var(--tdr-border);
+  border-radius: 4px;
+  background: var(--tdr-field);
+  color: var(--tdr-text);
+  font: inherit;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.tutorial-design-review__textarea:read-only {
+  background: var(--tdr-field-readonly);
+}
+
+.tutorial-design-review__textarea:focus-visible {
+  outline: 3px solid var(--tdr-focus);
+  outline-offset: 2px;
+}
+
+.tutorial-design-review__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  margin: 0.8em 0 0.4em;
+}
+
+.tutorial-design-review__button,
+.tutorial-design-review__primary {
+  min-height: 2.2em;
+  min-width: 2.2em;
+  padding: 0.3em 0.9em;
+  border-radius: 4px;
+  font: inherit;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.tutorial-design-review__button {
+  border: 1px solid var(--tdr-border);
+  background: var(--tdr-field);
+  color: var(--tdr-text);
+}
+
+.tutorial-design-review__button:hover:not(:disabled) {
+  background: var(--tdr-surface);
+}
+
+.tutorial-design-review__primary {
+  border: 1px solid var(--tdr-primary-bg);
+  background: var(--tdr-primary-bg);
+  color: var(--tdr-primary-text);
+  font-weight: 600;
+}
+
+.tutorial-design-review__primary:hover:not(:disabled) {
+  border-color: var(--tdr-primary-hover);
+  background: var(--tdr-primary-hover);
+}
+
+/* Unavailable until the comment or the model is ready; the note says why. */
+.tutorial-design-review__primary:disabled,
+.tutorial-design-review__button:disabled {
+  border-style: dashed;
+  border-color: var(--tdr-border);
+  background: var(--tdr-surface);
+  color: var(--tdr-muted);
+  cursor: not-allowed;
+}
+
+.tutorial-design-review__button:focus-visible,
+.tutorial-design-review__primary:focus-visible {
+  outline: 3px solid var(--tdr-focus);
+  outline-offset: 2px;
+}
+
+/* ----- The assistant's reading ------------------------------------------------ */
+
+.tutorial-design-review__ratings {
+  display: grid;
+  gap: 0.5em;
+  margin: 0.5em 0 0.8em;
+}
+
+.tutorial-design-review__rating {
+  display: grid;
+  grid-template-columns: minmax(8.5em, max-content) 1fr;
+  gap: 0.25em 0.8em;
+  align-items: baseline;
+}
+
+.tutorial-design-review__rating dt {
+  font-weight: 700;
+}
+
+.tutorial-design-review__rating dd {
+  margin: 0;
+}
+
+/* Two marks per rating: filled marks count the levels reached. The level is
+   always written out next to them, so the marks are never the only signal. */
+.tutorial-design-review__meter {
+  display: inline-flex;
+  gap: 0.25em;
+  margin-right: 0.45em;
+  vertical-align: -0.1em;
+}
+
+.tutorial-design-review__mark {
+  width: 0.8em;
+  height: 0.8em;
+  border: 2px solid var(--tdr-mark);
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.tutorial-design-review__mark--on {
+  background: var(--tdr-mark);
+}
+
+.tutorial-design-review__explanation {
+  color: var(--tdr-muted);
+}
+
+.tutorial-design-review__coaching {
+  margin: 0.4em 0 0.8em;
+}
+
+.tutorial-design-review__quotes {
+  margin: 0.6em 0;
+}
+
+.tutorial-design-review__quotes summary {
+  min-height: 1.8em;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tutorial-design-review__quotes summary:focus-visible {
+  outline: 3px solid var(--tdr-focus);
+  outline-offset: 2px;
+}
+
+/* ----- The expert review -------------------------------------------------------- */
+
+.tutorial-design-review__lesson {
+  padding: 0.6em 0.9em 0.8em;
+  border: 2px solid var(--tdr-accent);
+  border-radius: 6px;
+}
+
+.tutorial-design-review__ask {
+  margin: 0.6em 0;
+  padding: 0.3em 0.8em;
+  border-left: 4px solid var(--tdr-accent);
+  background: var(--tdr-ask-bg);
+}
+
+.tutorial-design-review__self-check {
+  margin: 1em 0 0.2em;
+  padding: 0.5em 0.8em 0.6em;
+  border: 1px solid var(--tdr-border-soft);
+  border-radius: 4px;
+}
+
+.tutorial-design-review__self-check legend {
+  width: auto;
+  margin: 0;
+  padding: 0 0.3em;
+  border: 0;
+  font-size: 1em;
+  font-weight: 700;
+  color: var(--tdr-text);
+}
+
+.tutorial-design-review__self-item {
+  display: flex;
+  gap: 0.5em;
+  align-items: flex-start;
+  margin: 0.35em 0;
+}
+
+.tutorial-design-review__self-item input {
+  flex: none;
+  width: 1.15em;
+  height: 1.15em;
+  margin-top: 0.25em;
+}
+
+.tutorial-design-review__self-item input:focus-visible {
+  outline: 3px solid var(--tdr-focus);
+  outline-offset: 2px;
+}
+
+/* ----- Print view (_includes/tutorial-design-review-print.html) ---------------- */
+
+.tutorial-design-review-print {
+  margin: 1.5em 0;
+  padding-top: 0.8em;
+  border-top: 2px solid #c8ccd2;
+  color: #1f2328;
+}
+
+.tutorial-design-review-print__heading {
+  margin: 1em 0 0.3em;
+  font-size: 1.05em;
+}
+
+.tutorial-design-review-print__diagram {
+  margin: 0.8em 0;
+}
+
+.tutorial-design-review-print__scaffold {
+  white-space: pre-wrap;
+  padding: 0.5em 0.7em;
+  border: 1px solid #c8ccd2;
+  background: #f6f8fa;
+  color: #1f2328;
+  font: inherit;
+}
+
+/* Ruled lines for a handwritten review comment. */
+.tutorial-design-review-print__writing {
+  min-height: 9em;
+  margin: 0.4em 0 1em;
+  border: 1px solid #6e7781;
+  border-radius: 4px;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 1.75em, #c8ccd2 1.75em, #c8ccd2 calc(1.75em + 1px));
+}
+
+html.dark-mode .tutorial-design-review-print {
+  border-top-color: #3a3a42;
+  color: #e6edf3;
+}
+
+html.dark-mode .tutorial-design-review-print__scaffold {
+  border-color: #3a3a42;
+  background: #22232a;
+  color: #e6edf3;
+}
+
+html.dark-mode .tutorial-design-review-print__writing {
+  border-color: #8b949e;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 1.75em, #3a3a42 1.75em, #3a3a42 calc(1.75em + 1px));
+}
+
+@media print {
+  .tutorial-design-review button,
+  .tutorial-design-review__availability,
+  .tutorial-design-review__status {
+    display: none !important;
+  }
+
+  .tutorial-design-review-print__diagram,
+  .tutorial-design-review-print__writing {
+    break-inside: avoid;
+  }
+}

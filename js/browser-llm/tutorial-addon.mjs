@@ -50,8 +50,15 @@ class TutorialModelAddon {
   refresh() {
     this.view.controls({busy:!!this.operation,ready:this.runtime.ready,cached:!!this.plan?.cached && !!this.plan?.canLoad,prepared:!!this.plan?.canLoad,
       suggestion:!!this.suggestion,exercise:!!this.exercise,specificationOnly:this.exercise?.mode === 'specification',
-      chat:this.tutorial.config.ai_tutor === true,
+      chat:this.tutorial.config.ai_tutor === true,review:!!this.review,
       deleting:this.operation?.kind === 'delete',comparable:!!this.plan?.comparable,operation:this.operation?.kind});
+    // Design-review widgets (js/tutorial-design-review.js) follow this state.
+    this.tutorial.root?.dispatchEvent(new CustomEvent('tvm:llm-state',{detail:this.reviewState()}));
+  }
+  /** What a design-review check can do right now. */
+  reviewState() {
+    return {usable:this.runtime.ready || (!!this.plan?.cached && !!this.plan?.canLoad),busy:!!this.operation,
+      reviewing:this.operation?.kind === 'review',unavailable:this.unavailable || ''};
   }
   async prepare() {
     const request = this.prepareRequest = (this.prepareRequest || 0)+1;
@@ -61,9 +68,11 @@ class TutorialModelAddon {
       const plan = await this.runtime.prepare(this.view.fields.engine.value,this.view.selection());
       if (request !== this.prepareRequest || this.destroyed) return;
       this.plan = plan;
+      this.unavailable = '';
       this.view.showPlan(plan,this.runtime);
     } catch(error) {
       if (request === this.prepareRequest && error.name !== 'AbortError') {
+        this.unavailable = error.message;
         this.view.status(error.message);
         this.view.fields.setup.textContent = error.message;
         this.view.fields.device.textContent = 'No compatible engine selected.';
@@ -77,6 +86,8 @@ class TutorialModelAddon {
     this.beforeStepChange();
     this.suggestion = null;
     this.exercise = this.tutorial.steps[this.tutorial.currentStep]?.llm;
+    this.review = this.tutorial.steps[this.tutorial.currentStep]?.design_review || null;
+    this.view.title(this.review ? 'Review assistant' : 'Specification assistant');
     this.view.positionBeforeInstructions(this.exercise?.mode === 'specification');
     this.view.fields.exercise.hidden = !this.exercise;
     this.view.fields.result.hidden = true;
@@ -156,6 +167,27 @@ class TutorialModelAddon {
         throw new Error(history.length
           ? 'The conversation and source exceed this engine’s context limit. Your messages and question are unchanged. Use Start fresh context, then include your own short recap with the next question. No source or instructions were shortened.'
           : 'This step’s source and instructions exceed this engine’s input limit even in fresh context. Try Processor in Model & storage. No files were shortened; you can also use the lesson or ask a TA.');
+      }
+      throw error;
+    } finally { if (!this.runtime.ready && !this.operation) await this.prepare(); }
+  }
+  /**
+   * Read a design-review comment against the step's answer key
+   * (js/browser-llm/design-review-judge.mjs). Resolves to the judgement;
+   * rejects with AbortError when cancelled.
+   */
+  async reviewDesign({spec,review,onCriterion}) {
+    if (!this.runtime.ready && !(this.plan?.cached && this.plan?.canLoad)) {
+      throw new Error('Download the model in the Review assistant panel first.');
+    }
+    const {judgeReview} = await import('./design-review-judge.mjs');
+    try {
+      return await this.perform('review',signal=>judgeReview({key:spec.key,review,signals:spec.signals,anchors:spec.anchors,signal,onCriterion,
+        generate:(messages,options)=>this.runtime.generate(messages,{...options,
+          onProgress:value=>this.generationProgress(value,signal,'Reading your review comment locally…')})}),{rethrow:true});
+    } catch(error) {
+      if (error.name === 'InputError') {
+        throw new Error('This comment is too long for the selected engine. Shorten it, or choose Processor in Model & storage.');
       }
       throw error;
     } finally { if (!this.runtime.ready && !this.operation) await this.prepare(); }
@@ -304,7 +336,10 @@ class TutorialModelAddon {
   }
 }
 export function mountTutorialModel(tutorial,template) {
-  if (tutorial.config.backend !== 'pyodide' || tutorial._mixedBackendMode) throw new Error('The specification assistant requires a Python-only tutorial.');
+  // Python exercises need the Python worker; design reviews need no runtime.
+  if (!['pyodide','none'].includes(tutorial.config.backend) || tutorial._mixedBackendMode) {
+    throw new Error('The local model add-on requires a Python-only tutorial or one without a runtime.');
+  }
   tutorial.llmAddon = new TutorialModelAddon(tutorial,template);
   return tutorial.llmAddon;
 }

@@ -1,8 +1,8 @@
 {%- comment -%}
   Results-card rows for a plan-first diagram challenge: one entry per
-  code-first challenge of the tutorial, read by
+  code-first or diagram-first challenge of the tutorial, read by
   js/tutorial-diagram-challenge.js (live step and print view). Each entry has
-  the record key, the questions and follow-up needed to grade a saved record,
+  the record key, the mode, the questions and follow-up needed to grade a saved record,
   and templates with the rendered title and `debrief.hidden_by`.
   Param: tutorial. A trailing null keeps the JSON list simple to emit.
 {%- endcomment -%}
@@ -10,7 +10,7 @@
   {%- assign tdcr_challenge = tdcr_step.diagram_challenge -%}
   {%- if tdcr_challenge and tdcr_challenge.mode != 'plan-first' -%}
     {%- if tdcr_step.key -%}{%- assign tdcr_key = 'key:' | append: tdcr_step.key -%}{%- else -%}{%- assign tdcr_key = 'index:' | append: forloop.index0 -%}{%- endif -%}
-    {"key":{{ tdcr_key | jsonify }},"title":{{ tdcr_step.title | jsonify }},"spec":{"questions":{{ tdcr_challenge.questions | jsonify }},"follow_up":{{ tdcr_challenge.follow_up | jsonify }}}},
+    {"key":{{ tdcr_key | jsonify }},"title":{{ tdcr_step.title | jsonify }},"spec":{"mode":{{ tdcr_challenge.mode | default: 'code-first' | jsonify }},"questions":{{ tdcr_challenge.questions | jsonify }},"follow_up":{{ tdcr_challenge.follow_up | jsonify }}}},
   {%- endif -%}
 {%- endfor -%}null]{%- endcapture -%}
 <script type="application/json" data-diagram-challenge-results>{{ tdcr_json | replace: '&', '\u0026' | replace: '<', '\u003c' | replace: '>', '\u003e' }}</script>

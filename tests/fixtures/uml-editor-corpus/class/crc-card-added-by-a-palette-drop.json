@@ -1,0 +1,198 @@
+{
+  "id": "crc-card-added-by-a-palette-drop",
+  "family": "class",
+  "type": "crc",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\ncard Cart @pos(40, 40) {\n  responsibility: Know selected products\n  collaborator: Catalog\n}\ncard Catalog @pos(40, 300) {\n  responsibility: Provide current prices\n}\n@enduml",
+  "steps": [
+    {
+      "do": "drag",
+      "from": {
+        "target": {
+          "role": "button",
+          "name": "Add element: CRC Card"
+        }
+      },
+      "to": {
+        "target": {
+          "role": "button",
+          "name": "Element Catalog — Enter to select, arrows to nudge, Delete to remove"
+        },
+        "at": {
+          "x": 0.5,
+          "y": 1
+        },
+        "offset": {
+          "x": 0,
+          "y": 60
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\ncard Cart @pos(40, 40) {\n  responsibility: Know selected products\n  collaborator: Catalog\n}\ncard Catalog @pos(40, 300) {\n  responsibility: Provide current prices\n}\ncard Card @pos(320, 516) {\n}\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Drop on the canvas to place a CRC Card. Esc to cancel."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"CRC Card — Card\":\n  - heading \"CRC Card — Card\" [level=2]\n  - button \"✕ Delete\"\n  - text: Class name\n  - textbox \"Class name\": Card\n  - text: Responsibilities (one per line)\n  - textbox \"Responsibilities (one per line)\"\n  - text: Collaborators (one per line)\n  - textbox \"Collaborators (one per line)\"\n  - paragraph: Each collaborator names an object this class needs help from. The two lists are independent; their rows do not imply pairs.",
+    "draft": null,
+    "selection": [
+      "Card"
+    ],
+    "focus": {
+      "tag": "button",
+      "id": "",
+      "role": "button",
+      "name": "Add element: CRC Card",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\ncard Cart @pos(40, 40) {\n  responsibility: Know selected products\n  collaborator: Catalog\n}\ncard Catalog @pos(40, 300) {\n  responsibility: Provide current prices\n}\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"CRC Card — Card\":\n  - heading \"CRC Card — Card\" [level=2]\n  - button \"✕ Delete\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\ncard Cart @pos(40, 40) {\n  responsibility: Know selected products\n  collaborator: Catalog\n}\ncard Catalog @pos(40, 300) {\n  responsibility: Provide current prices\n}\ncard Card @pos(320, 516) {\n}\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"CRC Card — Card\":\n  - heading \"CRC Card — Card\" [level=2]\n  - button \"✕ Delete\"\n  - text: Class name\n  - textbox \"Class name\": Card\n  - text: Responsibilities (one per line)\n  - textbox \"Responsibilities (one per line)\"\n  - text: Collaborators (one per line)\n  - textbox \"Collaborators (one per line)\"\n  - paragraph: Each collaborator names an object this class needs help from. The two lists are independent; their rows do not imply pairs.",
+    "draft": null,
+    "selection": [
+      "Card"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Card — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Card"
+    }
+  },
+  "operations": [
+    {
+      "type": "crc",
+      "before": "@startuml\ncard Cart @pos(40, 40) {\n  responsibility: Know selected products\n  collaborator: Catalog\n}\ncard Catalog @pos(40, 300) {\n  responsibility: Provide current prices\n}\n@enduml",
+      "operation": {
+        "op": "element.add",
+        "revision": "r98313515:181",
+        "tool": "card",
+        "name": null,
+        "into": null,
+        "anchor": null,
+        "placed": "dropped",
+        "facts": {
+          "at": {
+            "x": 320,
+            "y": 516.3125
+          },
+          "positions": {
+            "Cart": {
+              "x": 40,
+              "y": 40
+            },
+            "Catalog": {
+              "x": 40,
+              "y": 300
+            }
+          }
+        },
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\ncard Cart @pos(40, 40) {\n  responsibility: Know selected products\n  collaborator: Catalog\n}\ncard Catalog @pos(40, 300) {\n  responsibility: Provide current prices\n}\ncard Card @pos(320, 516) {\n}\n@enduml"
+    }
+  ]
+}

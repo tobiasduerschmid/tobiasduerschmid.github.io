@@ -1,0 +1,181 @@
+{
+  "id": "deployment-callout-edited-by-enter-on-the-drawn-callout",
+  "family": "source",
+  "type": "deployment",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout right of element Server : Explains this notation\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Edit callout: Explains this notation"
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "fill",
+      "target": {
+        "label": "Explanation"
+      },
+      "value": "Explains this notation in more detail"
+    },
+    {
+      "do": "select",
+      "target": {
+        "label": "Preferred position"
+      },
+      "value": "left"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Save callout"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout left of element Server : Explains this notation in more detail\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Callout saved."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout left of element Server : Explains this notation in more detail\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "button",
+      "id": "uml-pg-callout-submit",
+      "role": "button",
+      "name": "Save callout",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout right of element Server : Explains this notation\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout right of element Server : Explains this notation\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout left of element Server : Explains this notation in more detail\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout left of element Server : Explains this notation in more detail\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "deployment",
+      "before": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout right of element Server : Explains this notation\n@enduml",
+      "operation": {
+        "op": "source.replace",
+        "revision": "rc076bbfc:120",
+        "text": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout left of element Server : Explains this notation in more detail\n@enduml",
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout left of element Server : Explains this notation in more detail\n@enduml"
+    }
+  ]
+}

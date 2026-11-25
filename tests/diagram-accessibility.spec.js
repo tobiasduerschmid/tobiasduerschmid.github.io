@@ -1,6 +1,7 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 const { execFileSync } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 
 const repoRoot = path.resolve(__dirname, '..');
@@ -21,6 +22,10 @@ function contrastRatio(foreground, background) {
   return (Math.max(foregroundLuminance, backgroundLuminance) + 0.05)
     / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05);
 }
+
+// One view of the shared C4 model, embedded as the c4-view.html include writes it.
+const C4_CONTAINER_VIEW = 'view: containers of registration\n'
+  + fs.readFileSync(path.join(repoRoot, '_includes/c4-models/course-registration.yml'), 'utf8');
 
 test.describe('diagram accessibility text alternatives', () => {
   test('ArchUML bundle exposes an accessible SVG fallback hook', async ({ page }) => {
@@ -151,6 +156,10 @@ class Customer {
       classDiagram: {
         type: 'class',
         spec: '@startuml\nclass Customer {\n  +id\n}\n@enduml'
+      },
+      c4Diagram: {
+        type: 'c4',
+        spec: C4_CONTAINER_VIEW
       }
     };
 
@@ -165,6 +174,13 @@ class Customer {
     expect(result.classDiagram.brief).toContain('Customer');
     expect(result.classDiagram.verbose.summary).toContain('UML class diagram');
     expect(result.classDiagram.verbose.sections.length).toBeGreaterThan(0);
+
+    expect(result.c4Diagram.brief)
+      .toBe('Container view of Course Registration: 3 containers, 1 person, 1 external system, 4 relationships.');
+    expect(result.c4Diagram.verbose.summary).toBe(result.c4Diagram.brief);
+    const c4Sections = Object.fromEntries(result.c4Diagram.verbose.sections.map(section => [section.heading, section.items]));
+    expect(c4Sections.Containers).toContain('Registration API (Container: Python, FastAPI): Decides eligibility and enrolls students atomically.');
+    expect(c4Sections.Relationships).toContain('Student plans a schedule and enrolls using Planner Web App.');
   });
 
   test('build-time UML renderer supports static page diagram types', async ({ page }) => {
@@ -184,6 +200,10 @@ class Customer {
       erDiagram: {
         type: 'er',
         text: '@startuml\nentity User {\n  id key\n}\n@enduml'
+      },
+      c4Diagram: {
+        type: 'c4',
+        text: C4_CONTAINER_VIEW
       }
     };
 
@@ -197,6 +217,13 @@ class Customer {
     for (const [name, svg] of Object.entries(result)) {
       expect(svg.trim().startsWith('<svg'), `${name} should render to SVG`).toBe(true);
     }
+
+    const c4Elements = await page.evaluate((svgMarkup) => {
+      const documentNode = new DOMParser().parseFromString(svgMarkup, 'image/svg+xml');
+      return Array.from(documentNode.querySelectorAll('[data-layout-id]')).map(node => node.getAttribute('data-layout-id')).sort();
+    }, result.c4Diagram);
+    expect(c4Elements, 'the C4 container view draws its people, containers, and external system')
+      .toEqual(['api', 'billing', 'db', 'student', 'web']);
 
     const annotationFill = await page.evaluate((svgMarkup) => {
       const documentNode = new DOMParser().parseFromString(svgMarkup, 'image/svg+xml');

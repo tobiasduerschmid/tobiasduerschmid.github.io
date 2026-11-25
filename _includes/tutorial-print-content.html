@@ -41,7 +41,7 @@
   </div>
 
   <div class="step-instructions">
-    {% capture rendered_step_instructions %}{% include tutorial-step-instructions.html tutorial=tutorial_data step=step challenge=false %}{% endcapture %}
+    {% capture rendered_step_instructions %}{% include tutorial-step-instructions.html tutorial=tutorial_data step=step challenge=false review=false %}{% endcapture %}
     {{ rendered_step_instructions | replace: ' id="', ' data-print-id="' }}
   </div>
 
@@ -98,6 +98,10 @@
 
   {% if step.diagram_challenge %}
   {% include tutorial-diagram-challenge-print.html tutorial=tutorial_data tutorial_key=tutorial_key step=step index=forloop.index0 instructor_mode=instructor_mode %}
+  {% endif %}
+
+  {% if step.design_review %}
+  {% include tutorial-design-review-print.html step=step index=forloop.index0 instructor_mode=instructor_mode %}
   {% endif %}
 
   {% if step.solution %}

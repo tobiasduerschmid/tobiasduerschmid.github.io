@@ -356,6 +356,77 @@ html:not(.dark-mode) .tvm-uml-editor-tutorial #uml-pg-download:hover {
   font-family: inherit;
 }
 
+/* The diagram editor's presentation (the hit layer, handles, guides, marquee, in-place editors, the
+   relation chooser, and the context menu) is js/ArchUML/css/diagram-editor.css, which the module's
+   loader links before its scripts. It reads each colour, width, and dash through a --uml-edit-*
+   custom property whose fallback is this editor's light palette, so light mode maps nothing.
+   Dark mode maps below. Print maps nothing: the print controller takes dark-mode off the page, so
+   print draws the light palette, and diagram-editor.css hides the in-place editors and the menu.
+   The bend numbers (--uml-edit-bend-number-*) map their light values in dark mode: css/uml-diagram.css
+   inverts the editor's drawing there, its edit layer included, so diagram-editor.css's dark defaults
+   would be inverted back to light ones. The light values show inverted as dark ones (a number on its
+   disc: 12.3:1 in light mode, 13.3:1 inverted). The "⋯" button (--uml-edit-action-button-*) maps its light values
+   for the same reason; light mode and print take the module's light fallbacks. */
+html.dark-mode #uml-playground-wrap {
+  --uml-edit-action-button-fill: #fff;
+  --uml-edit-action-button-stroke: #2774AE;
+  --uml-edit-action-button-dot: #1a3656;
+  --uml-edit-action-button-hover-fill: #e8f1fa;
+  --uml-edit-action-button-focus-stroke: #1a3656;
+  --uml-edit-bend-number-fill: #fff;
+  --uml-edit-bend-number-stroke: #2774AE;
+  --uml-edit-bend-number-text: #1a3656;
+  --uml-edit-marquee-border: #6fb0e8;
+  --uml-edit-marquee-fill: rgba(111, 176, 232, 0.18);
+  --uml-edit-inline-border: #7cc4ff;
+  --uml-edit-inline-bg: #1f2c3c;
+  --uml-edit-inline-text: #e3eef9;
+  --uml-edit-inline-shadow: rgba(124, 196, 255, 0.5);
+  --uml-edit-guide-stroke: #ffd34d;
+  --uml-edit-menu-bg: #18242f;
+  --uml-edit-menu-border: #5a7392;
+  --uml-edit-menu-shadow: rgba(0, 0, 0, 0.6);
+  --uml-edit-menu-item-bg: #243347;
+  --uml-edit-menu-item-text: #e3eef9;
+  --uml-edit-menu-item-active-bg: #2c3f57;
+  --uml-edit-menu-item-active-border: #7cc4ff;
+  --uml-edit-menu-rule: #3a4a60;
+  --uml-edit-menu-danger-text: #ffd6d1;
+  --uml-edit-menu-danger-focus-bg: #2c3f57;
+  --uml-edit-menu-danger-focus-border: #7cc4ff;
+  --uml-edit-menu-danger-hover-bg: #4a1d20;
+  --uml-edit-menu-danger-hover-border: #ff8a85;
+  --uml-edit-menu-key-text: #abc0db;
+  --uml-edit-extend-handle-fill: #7cc4ff;
+  --uml-edit-extend-handle-stroke: #18242f;
+  --uml-edit-extend-plus-fill: #18242f;
+  --uml-edit-extend-line-stroke: #7cc4ff;
+  --uml-edit-drop-indicator-stroke: #7cc4ff;
+  --uml-edit-activation-fill: rgba(124, 196, 255, 0.10);
+  --uml-edit-activation-stroke: rgba(124, 196, 255, 0.6);
+  --uml-edit-activation-hover-fill: rgba(124, 196, 255, 0.2);
+  --uml-edit-activation-hover-stroke: rgba(124, 196, 255, 0.95);
+  --uml-edit-activation-selected-fill: rgba(124, 196, 255, 0.26);
+  --uml-edit-activation-selected-stroke: #7cc4ff;
+  --uml-edit-activation-handle-fill: #7cc4ff;
+  --uml-edit-activation-handle-stroke: #18242f;
+  --uml-edit-activation-guide-stroke: #7cc4ff;
+  --uml-edit-chooser-bg: #18242f;
+  --uml-edit-chooser-border: #5a7392;
+  --uml-edit-chooser-shadow: rgba(0, 0, 0, 0.5);
+  --uml-edit-chooser-title-text: #e3eef9;
+  --uml-edit-chooser-title-sides: #3a4a60;
+  --uml-edit-chooser-title-rule: #3a4a60;
+  --uml-edit-chooser-item-bg: #243347;
+  --uml-edit-chooser-item-text: #e3eef9;
+  --uml-edit-chooser-item-active-bg: #2c3f57;
+  --uml-edit-chooser-item-active-border: #7cc4ff;
+  --uml-edit-chooser-focus: #FFD100;
+  --uml-edit-chooser-glyph: #7cc4ff;
+  --uml-edit-edge-active-stroke: rgba(124, 196, 255, 0.32);
+  --uml-edit-edge-selected-stroke: rgba(124, 196, 255, 0.55);
+}
+
 .uml-pg-sr-only {
   position: absolute !important;
   width: 1px;
@@ -730,51 +801,18 @@ html.dark-mode .uml-pg-zoom-group > button:focus-visible {
   cursor: default;
 }
 
+/* Pan and zoom scale the drawing from its top-left corner; the editor sets the
+   transform itself. The same in dark mode and print. */
+#uml-pg-output > svg {
+  transform-origin: 0 0;
+}
+
 #uml-pg-output svg.uml-pg-editing:not(.uml-pg-tool-place):not(.uml-pg-tool-connect) {
   cursor: grab;
 }
 
 #uml-pg-output svg.uml-pg-panning {
   cursor: grabbing !important;
-}
-
-/* Marquee selection rectangle — drawn as a top-level overlay so the canvas
-   pan/zoom transform doesn't distort it. Shift+drag on empty canvas. */
-.uml-pg-marquee-box {
-  position: fixed;
-  z-index: 10000;
-  border: 1px dashed #2774AE;
-  background: rgba(39, 116, 174, 0.12);
-  pointer-events: none;
-  /* Pure overlay decoration — not focusable, not announced. */
-}
-
-html.dark-mode .uml-pg-marquee-box {
-  border-color: #6fb0e8;
-  background: rgba(111, 176, 232, 0.18);
-}
-
-/* Inline rename overlay */
-.uml-pg-inline-input {
-  position: fixed;
-  z-index: 10000;
-  font: inherit;
-  font-size: 1em;
-  padding: 4px 8px;
-  border: 2px solid #2774AE;
-  border-radius: 3px;
-  background: #fff;
-  color: #1a1a2e;
-  box-shadow: 0 2px 8px rgba(39, 116, 174, 0.4);
-  outline: none;
-  box-sizing: border-box;
-}
-
-html.dark-mode .uml-pg-inline-input {
-  border-color: #7cc4ff;
-  background: #1f2c3c;
-  color: #e3eef9;
-  box-shadow: 0 2px 8px rgba(124, 196, 255, 0.5);
 }
 
 #uml-pg-fullscreen:hover,
@@ -1234,8 +1272,6 @@ html.dark-mode .uml-pg-member-error { color: #ffb9b0; }
 
 @media print {
   .uml-pg-class-actions { display: none; }
-  .uml-pg-context-menu,
-  .uml-pg-inline-input { display: none !important; }
   #uml-playground-wrap::backdrop { background: #fff; }
   #uml-pg-fullscreen-bar { display: none; }
   .tvm-uml-editor-workspace #uml-playground-wrap { overflow: visible; }
@@ -1442,282 +1478,6 @@ html.dark-mode .uml-pg-modal-actions button:hover {
   user-select: none;
 }
 
-.uml-pg-edit-hitbox {
-  fill: rgba(39, 116, 174, 0.04);
-  stroke: rgba(39, 116, 174, 0.72);
-  stroke-width: 1.5;
-  stroke-dasharray: 5 4;
-  vector-effect: non-scaling-stroke;
-  cursor: move;
-  transition: fill 0.12s ease-out, stroke 0.12s ease-out, stroke-width 0.12s ease-out;
-}
-
-.uml-pg-edit-a11y-target {
-  fill: transparent;
-  stroke: transparent;
-  stroke-width: 1;
-  pointer-events: all;
-  cursor: move;
-}
-
-.uml-pg-edit-a11y-target:focus-visible {
-  fill: rgba(39, 116, 174, 0.10);
-  stroke: #2774AE;
-  stroke-width: 2;
-  stroke-dasharray: none;
-  outline: none;
-}
-
-.uml-pg-edit-hitbox:hover {
-  fill: rgba(39, 116, 174, 0.10);
-  stroke: rgba(39, 116, 174, 0.95);
-}
-
-/* Smart-guide alignment lines shown while dragging — drawn in the edit layer
-   when the dragged element aligns with another's centre or edge. */
-.uml-pg-guide-line {
-  stroke: #ff6f00;
-  stroke-width: 1.5;
-  stroke-dasharray: 3 3;
-  vector-effect: non-scaling-stroke;
-  pointer-events: none;
-  opacity: 0.85;
-}
-
-html.dark-mode .uml-pg-guide-line {
-  stroke: #ffd34d;
-}
-
-/* Right-click context menu — uses the existing chooser look so users see one
-   consistent floating-menu pattern across the editor. */
-.uml-pg-context-menu {
-  position: fixed;
-  z-index: 10000;
-  background: #fff;
-  border: 1px solid #97afca;
-  border-radius: 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-  padding: 4px;
-  min-width: 180px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.uml-pg-context-menu button {
-  font: inherit;
-  font-size: 1em;
-  padding: 6px 10px;
-  text-align: left;
-  background: #fff;
-  color: #1a3656;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.uml-pg-context-menu button:hover,
-.uml-pg-context-menu button:focus-visible {
-  background: #eef4fb;
-  border-color: #2774AE;
-  outline: none;
-}
-
-.uml-pg-context-menu hr {
-  border: none;
-  border-top: 1px solid #d7e0ec;
-  margin: 4px 6px;
-}
-
-.uml-pg-context-menu button.is-danger {
-  color: #842622;
-}
-
-.uml-pg-context-menu button.is-danger:hover,
-.uml-pg-context-menu button.is-danger:focus-visible {
-  background: #fbe9e7;
-  border-color: #842622;
-}
-
-.uml-pg-context-menu .uml-pg-context-key {
-  margin-left: auto;
-  color: #596b84;
-  font-size: 0.9em;
-  font-family: 'Cascadia Code', 'Fira Mono', 'Menlo', 'Consolas', monospace;
-}
-
-html.dark-mode .uml-pg-context-menu {
-  background: #18242f;
-  border-color: #5a7392;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-}
-
-html.dark-mode .uml-pg-context-menu button {
-  background: #243347;
-  color: #e3eef9;
-}
-
-html.dark-mode .uml-pg-context-menu button:hover,
-html.dark-mode .uml-pg-context-menu button:focus-visible {
-  background: #2c3f57;
-  border-color: #7cc4ff;
-}
-
-html.dark-mode .uml-pg-context-menu hr {
-  border-top-color: #3a4a60;
-}
-
-html.dark-mode .uml-pg-context-menu button.is-danger {
-  color: #ffd6d1;
-}
-
-html.dark-mode .uml-pg-context-menu button.is-danger:hover {
-  background: #4a1d20;
-  border-color: #ff8a85;
-}
-
-html.dark-mode .uml-pg-context-menu .uml-pg-context-key {
-  color: #abc0db;
-}
-
-.uml-pg-edit-hitbox.is-selected {
-  fill: rgba(39, 116, 174, 0.10);
-  stroke: #2774AE;
-  stroke-width: 2;
-  stroke-dasharray: none;
-}
-
-.uml-pg-edit-hitbox.is-port {
-  fill: rgba(39, 174, 96, 0.08);
-  stroke: rgba(39, 174, 96, 0.78);
-}
-
-.uml-pg-edit-hitbox.is-port.is-selected {
-  fill: rgba(39, 174, 96, 0.16);
-  stroke: #27ae60;
-}
-
-.uml-pg-edit-hitbox.is-label {
-  fill: rgba(243, 156, 18, 0.08);
-  stroke: rgba(210, 126, 8, 0.78);
-}
-
-.uml-pg-edit-hitbox.is-label.is-selected {
-  fill: rgba(243, 156, 18, 0.16);
-  stroke: #d27e08;
-}
-
-/* "+" extend handle on hover */
-.uml-pg-extend-handle {
-  fill: #2774AE;
-  stroke: #fff;
-  stroke-width: 2;
-  cursor: crosshair;
-  opacity: 0;
-  pointer-events: all;
-  transition: opacity 0.12s;
-}
-
-.uml-pg-extend-handle.is-visible,
-.uml-pg-edit-hitbox:hover ~ .uml-pg-extend-handle,
-.uml-pg-edit-hitbox:focus ~ .uml-pg-extend-handle {
-  opacity: 1;
-}
-
-.uml-pg-extend-handle-plus {
-  fill: #fff;
-  pointer-events: none;
-  font-size: 16px;
-  font-weight: 700;
-  text-anchor: middle;
-  dominant-baseline: middle;
-}
-
-.uml-pg-extend-line {
-  stroke: #2774AE;
-  stroke-width: 2;
-  stroke-dasharray: 6 4;
-  fill: none;
-  pointer-events: none;
-}
-
-html.dark-mode .uml-pg-extend-handle {
-  fill: #7cc4ff;
-  stroke: #18242f;
-}
-
-html.dark-mode .uml-pg-extend-handle-plus {
-  fill: #18242f;
-}
-
-html.dark-mode .uml-pg-extend-line {
-  stroke: #7cc4ff;
-}
-
-/* Drop-position indicator shown while dragging a fragment to a new vertical
-   slot. Drawn the full width of the SVG viewport. */
-.uml-pg-frag-drop-indicator {
-  stroke: #2774AE;
-  stroke-width: 3;
-  stroke-dasharray: 6 4;
-  pointer-events: none;
-}
-
-html.dark-mode .uml-pg-frag-drop-indicator {
-  stroke: #7cc4ff;
-}
-
-/* Activation bars (sequence execution specifications). The body hitbox drags
-   the whole bar; the top/bottom grips change when the object becomes / stops
-   being active. Shares the blue editing accent but adds resize grips so the
-   adjust-when-active affordance reads clearly. */
-.uml-pg-activation-hitbox {
-  fill: rgba(39, 116, 174, 0.06);
-  stroke: rgba(39, 116, 174, 0.6);
-  stroke-width: 1.5;
-  stroke-dasharray: 4 3;
-  vector-effect: non-scaling-stroke;
-  cursor: move;
-  transition: fill 0.12s ease-out, stroke 0.12s ease-out;
-}
-
-.uml-pg-activation-hitbox:hover {
-  fill: rgba(39, 116, 174, 0.14);
-  stroke: rgba(39, 116, 174, 0.95);
-}
-
-.uml-pg-activation-hitbox.is-selected {
-  fill: rgba(39, 116, 174, 0.18);
-  stroke: #2774AE;
-  stroke-width: 2;
-  stroke-dasharray: none;
-}
-
-/* Top / bottom resize grips. Faintly visible at rest so the resize affordance
-   is discoverable; full strength on hover or when the bar is selected. */
-.uml-pg-activation-handle {
-  fill: #2774AE;
-  stroke: #fff;
-  stroke-width: 1.5;
-  rx: 2;
-  ry: 2;
-  cursor: ns-resize;
-  opacity: 0.5;
-  pointer-events: all;
-  vector-effect: non-scaling-stroke;
-  transition: opacity 0.12s ease-out;
-}
-
-.uml-pg-activation-handle:hover,
-.uml-pg-activation-handle.is-selected,
-.uml-pg-activation-hitbox:hover ~ .uml-pg-activation-handle,
-.uml-pg-activation-hitbox.is-selected ~ .uml-pg-activation-handle {
-  opacity: 1;
-}
-
 /* Row of "Earlier / Later" buttons in the activation properties panel. */
 .uml-pg-prop-btn-row {
   display: flex;
@@ -1727,178 +1487,6 @@ html.dark-mode .uml-pg-frag-drop-indicator {
 
 .uml-pg-prop-btn-row .uml-pg-add-member {
   flex: 1 1 auto;
-}
-
-/* Full-width snap guide shown while dragging an edge or sweeping a new bar. */
-.uml-pg-activation-guide {
-  stroke: #2774AE;
-  stroke-width: 2;
-  stroke-dasharray: 4 4;
-  pointer-events: none;
-  opacity: 0.9;
-}
-
-html.dark-mode .uml-pg-activation-hitbox {
-  fill: rgba(124, 196, 255, 0.10);
-  stroke: rgba(124, 196, 255, 0.6);
-}
-
-html.dark-mode .uml-pg-activation-hitbox:hover {
-  fill: rgba(124, 196, 255, 0.2);
-  stroke: rgba(124, 196, 255, 0.95);
-}
-
-html.dark-mode .uml-pg-activation-hitbox.is-selected {
-  fill: rgba(124, 196, 255, 0.26);
-  stroke: #7cc4ff;
-}
-
-html.dark-mode .uml-pg-activation-handle {
-  fill: #7cc4ff;
-  stroke: #18242f;
-}
-
-html.dark-mode .uml-pg-activation-guide {
-  stroke: #7cc4ff;
-}
-
-/* Honour reduced-motion: the affordance fades are decorative. */
-@media (prefers-reduced-motion: reduce) {
-  .uml-pg-activation-hitbox,
-  .uml-pg-activation-handle {
-    transition: none;
-  }
-}
-
-/* Relation chooser popup */
-.uml-pg-relation-chooser {
-  position: fixed;
-  z-index: 10000;
-  background: #fff;
-  border: 1px solid #97afca;
-  border-radius: 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 180px;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.uml-pg-relation-chooser-title {
-  font-size: 1em;
-  font-weight: 700;
-  color: #1a3656;
-  padding: 4px 8px 6px;
-  border-bottom: 1px solid #d7e0ec;
-  margin-bottom: 4px;
-}
-
-.uml-pg-relation-chooser button {
-  font: inherit;
-  font-size: 1em;
-  text-align: left;
-  padding: 6px 10px;
-  background: #fff;
-  color: #1a3656;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.uml-pg-relation-chooser button:hover,
-.uml-pg-relation-chooser button:focus-visible {
-  background: #eef4fb;
-  border-color: #2774AE;
-  outline: none;
-}
-
-.uml-pg-relation-chooser button:focus-visible {
-  outline: 2px solid #2774AE;
-  outline-offset: 1px;
-}
-
-/* Accent glyph (element/relation symbol) shown before each menu-item label.
-   Blue accent in light mode; the dark override below flips to the same
-   lighter blue the chooser uses for its hover border, so the glyph stays
-   legible against the dark button surface. min-width keeps the labels
-   aligned in a column regardless of glyph width. */
-.uml-pg-relation-chooser button .uml-pg-chooser-glyph {
-  color: #2774AE;
-  font-weight: 700;
-  min-width: 1.4em;
-}
-
-html.dark-mode .uml-pg-relation-chooser {
-  background: #18242f;
-  border-color: #5a7392;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-}
-
-html.dark-mode .uml-pg-relation-chooser-title {
-  color: #e3eef9;
-  border-color: #3a4a60;
-}
-
-html.dark-mode .uml-pg-relation-chooser button {
-  background: #243347;
-  color: #e3eef9;
-}
-
-html.dark-mode .uml-pg-relation-chooser button:hover,
-html.dark-mode .uml-pg-relation-chooser button:focus-visible {
-  background: #2c3f57;
-  border-color: #7cc4ff;
-}
-
-html.dark-mode .uml-pg-relation-chooser button:focus-visible {
-  outline-color: #FFD100;
-}
-
-html.dark-mode .uml-pg-relation-chooser button .uml-pg-chooser-glyph {
-  color: #7cc4ff;
-}
-
-/* Edge hitbox overlay: a thick click/drag target on each editable route
- * segment. It stays transparent by default so the underlying transition
- * stroke is visually clean — otherwise on state diagrams the translucent
- * blue bars read as UML fork/join synchronisation bars and clutter the
- * canvas. Hover / focus reveal a subtle highlight as an affordance, and
- * selection paints the segment a moderate blue so the picked edge is
- * obvious without dominating the diagram. */
-.uml-pg-edge-hitbox {
-  fill: none;
-  stroke: transparent;
-  stroke-width: 11;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-  cursor: grab;
-  pointer-events: stroke;
-  transition: stroke 120ms ease;
-}
-
-.uml-pg-edge-hitbox:hover,
-.uml-pg-edge-hitbox:focus-visible {
-  stroke: rgba(39, 116, 174, 0.32);
-}
-
-.uml-pg-edge-hitbox.is-selected {
-  stroke: rgba(39, 116, 174, 0.6);
-}
-
-html.dark-mode .uml-pg-edge-hitbox:hover,
-html.dark-mode .uml-pg-edge-hitbox:focus-visible {
-  stroke: rgba(124, 196, 255, 0.32);
-}
-
-html.dark-mode .uml-pg-edge-hitbox.is-selected {
-  stroke: rgba(124, 196, 255, 0.55);
 }
 
 #uml-pg-error {
@@ -2252,6 +1840,12 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
   border-color: #144767;
 }
 
+/* A palette button dragged towards the canvas dims until the drop or Escape;
+   the status line says what the drop does. The same in dark mode and print. */
+.uml-pg-tool-btn.is-dragging {
+  opacity: 0.6;
+}
+
 .uml-pg-tool-glyph {
   display: inline-block;
   font-weight: 700;
@@ -2469,14 +2063,6 @@ html.dark-mode .uml-pg-tool-icon {
   margin: 0;
   color: #46627e;
   font-style: italic;
-}
-
-/* Highlight pending source element when relation tool is mid-pick */
-.uml-pg-edit-hitbox.is-relation-source {
-  fill: rgba(155, 89, 182, 0.18);
-  stroke: #6b3a8c;
-  stroke-width: 2.5;
-  stroke-dasharray: none;
 }
 
 #uml-pg-output svg.uml-pg-tool-place {
@@ -2967,6 +2553,9 @@ html.dark-mode .uml-pg-add-member:hover {
   border-color: #7cc4ff;
 }
 
+/* The pending source of a relation tool in dark mode. This rule stays a rule, not a mapping of
+   --uml-edit-relation-source-*: it outranks the port's and the label's selected colours, as it did before
+   the hit layer's rules moved to js/ArchUML/css/diagram-editor.css, where a mapping would not. */
 html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
   fill: rgba(195, 132, 230, 0.20);
   stroke: #c684e8;

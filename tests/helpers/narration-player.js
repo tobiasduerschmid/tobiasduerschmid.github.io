@@ -11,4 +11,33 @@ async function openPlayerSettings(player) {
   await expect(player.getByRole('region', { name: 'Player settings' })).toBeVisible();
 }
 
-module.exports = { openPlayerSettings };
+// Moves `player`'s narration to `time` seconds the way a viewer does, with the
+// position slider, and waits until the audio is there.
+async function seekNarration(player, time) {
+  await player.getByRole('slider', { name: 'Narration position' }).fill(String(Number(time.toFixed(2))));
+  await expect.poll(() => player.locator('audio').evaluate(audio => audio.currentTime)).toBeCloseTo(time, 1);
+}
+
+// Sets the site's light or dark mode with its toggle, then waits for the
+// colors' cross-fade to settle, so contrast is measured on final colors.
+async function setSiteTheme(page, dark) {
+  const toggle = page.getByRole('checkbox', { name: 'Toggle dark mode' });
+  if (await toggle.isChecked() !== dark) await toggle.press('Space');
+  await page.waitForFunction(() => document.getAnimations().every(animation => !(animation instanceof CSSTransition) || animation.playState !== 'running'));
+}
+
+// WEBrick may answer a conditional MP3 range request with 304 instead of the
+// bytes Chromium needs after seeking; drops the validators from range
+// requests for the lesson's audio at `audioPath`.
+async function serveAudioRanges(page, audioPath) {
+  await page.route(`**${audioPath}`, route => {
+    const headers = { ...route.request().headers() };
+    if (headers.range) {
+      delete headers['if-none-match'];
+      delete headers['if-modified-since'];
+    }
+    return route.continue({ headers });
+  });
+}
+
+module.exports = { openPlayerSettings, seekNarration, setSiteTheme, serveAudioRanges };

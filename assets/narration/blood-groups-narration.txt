@@ -1,0 +1,89 @@
+It's nine fifty-six, and your lecture starts at ten, across campus. You grab a scooter, unlock it with your phone, and zip downhill. You stop outside the lecture hall, tap End ride, and the app says: No parking here.
+
+Behind that message, the app does three kinds of work. It applies rules: where you may park, and what a ride costs, with a student discount. It talks to technology: a map service, a payment service, the scooter's Bluetooth lock. And it does plain math, like checking whether a point lies inside a zone.
+
+The app comes from Glide, a student startup, and you've just joined its dev team. Week one brings bad news: the map service raises its prices tenfold, so the team must switch providers. How hard can that be? You open the function that ends a ride.
+
+Here's end ride. First, it asks the map provider's S D K where the scooter is. Then it checks the parking rule, using the S D K's own zone check. Then it prices the ride: unlock fee, minutes, student discount. Finally, it charges the card through the payment A P I and locks the scooter over Bluetooth.
+
+Let's tag each line as rule or technology. The tags alternate down the function: the two are braided together. So predict: to switch map providers, which lines of end ride must you touch? Only the lines that call the map, or more?
+
+More. The parking rule is written in the old S D K's terms, so the rule changes too. And end ride isn't alone. Search the codebase for the S D K: forty-seven hits in twelve files, from start ride to the trip history. One provider switch ripples through the whole app.
+
+It's not only the map. When finals week brings a new rule, ten free minutes for students, you edit those same tangled lines, and you can't test them without the S D K. When the campus bike-share asks for your pricing rules, they come welded to scooter locks and payment calls.
+
+The fix starts with one habit: before you write a line, ask what the code knows. The answers sort all code into four groups, named like blood groups: A, T, A T, and zero. Let's meet the groups, see how they mix, design with them, and then test the design against change.
+
+Ask two questions about any code. Does it know the application domain, the business's own words, like ride, rider, parking zone, and price? And does it know a technology, a concrete A P I like the map S D K, the payment A P I, Bluetooth, or a database? Knowing means depending: if that changed, this code would change too.
+
+Two yes-or-no answers give four groups. Code that knows neither is group zero. Only the domain, group A, for application. Only a technology, group T. Both at once, group A T. Like a blood group, every piece of code has exactly one, and its group decides where it can go later.
+
+Group A knows the domain and no technology. Pull the rule lines out of end ride, and that's what you get: a dollar to unlock, thirty cents a minute, twenty percent off for students, and rides end only inside a parking zone. No S D K, no A P I, just rules in the business's own words.
+
+This is the code the business is paid for. Riders don't care which map service you use; they care that the price is right and the rules are fair. Code in group A changes when the business changes, like a new discount, and stays put when the technology changes.
+
+Where can group A go? Anywhere the same rules apply, on any technology. The campus bike-share locks bikes in docking stations instead of Bluetooth, but it prices rides the same way. It could reuse Glide's ride rules as they are.
+
+Now pull out the technology lines, and you get group T: code that knows a technology and nothing about the domain. A payment client charges any amount to any card; it has never heard of a ride. A lock driver locks and unlocks a device. A map client finds where a device is.
+
+You can't avoid group T: no app runs in thin air. But T code is reusable too, anywhere the same technology runs. The campus food-truck app takes cards through the same payment service, so it could reuse Glide's payment client without changing a line.
+
+One job in end ride needs neither: the math behind the zone check. Is this point inside this polygon? Pulled out, that code knows no rides and no S D K, just coordinates. That's group zero. Zero code implements an abstract idea, like a sorted list, a dictionary, or a state machine.
+
+Zero is the universal donor: a delivery app, a campus tour, a game, any of them can reuse it. But alone, zero code does nothing useful. It needs group A or T to give it a job. In Glide, the parking rule asks it whether a scooter stands inside a zone.
+
+Put all those lines back into one function, and you have end ride as it stands: rules and technology braided together. That's group A T. To be fair, A T code is easy to write: one function, everything within reach, done by lunch. That's why every codebase has some.
+
+Now finish the reuse chart. Group A goes wherever the same rules apply, group T wherever the same technology runs. Group A T needs both at once: only a scooter app with Glide's exact rules and the same three providers. Everywhere else, it's welded in place.
+
+And A T code changes whenever the business or the technology changes, so it changes most often and is the hardest to maintain. Here's the rule of thumb: the larger a design's share of A T code, the lower its quality. A T is the group to shrink.
+
+Here's why they're called blood groups: they combine the way blood types are inherited. Put code from two groups into one module, and the module gets every letter either part had. A plus A stays A. T plus T stays T. Zero adds no letter, so it mixes into any group without changing it.
+
+Now a riskier mix. Glide's ride rules are clean group A. A teammate in a hurry adds one line to the price function: charge the card through the payment A P I, right there. So predict: what group is the price function now?
+
+Group A T. One line of technology, and the whole function now knows the payment A P I. A plus T gives A T, just as inheriting A from one parent and B from the other gives blood type A B. Now the rules can't move to the bike-share without dragging the payment provider along.
+
+And A T absorbs everything. Add more rules, more helpers, more zero code: it stays A T. It never turns back into A or T by itself, so you can't dilute it. The only cure is to separate the parts again, and that's what the design rules are for.
+
+Mixing can also sneak in through an interface. Say the map client is clean group T, but its locate method returns the S D K's own location object. Every rule that reads that object now depends on the S D K. The technology leaks through the interface, and the rules turn A T.
+
+Plug the leak with neutral words. Let locate return a plain point, just latitude and longitude: a zero type any code may know. Now the parking rule depends on a point, not on the S D K, and stays group A. Errors count too: translate the provider's errors into the app's own.
+
+Learn the warning signs in a signature: S D K objects, S Q L strings, H T T P status codes, a provider's error types. A method that takes raw S Q L from the rules is the classic leak. It hands the database's language to the domain, and every caller becomes A T.
+
+Here's design rule one. Minimize A T modules, maximize zero modules. Assumptions about a technology limit reuse to software that uses it; assumptions about the domain limit reuse to that domain. So separate technological concerns from application concerns: rules in A modules, technology in T modules, general ideas in zero.
+
+Then keep each module to one concern. Each T module talks to one technology: the map client never charges cards. Each A module covers one topic: pricing rules live apart from rider accounts. It's the single responsibility principle, sharpened: one reason to change, of one kind.
+
+Here's design rule two. Avoid dependencies from large, complex A modules to T modules. If the ride rules call the payment client directly, they know the payment A P I exists, and its quirks creep in. So invert the dependency: the rules declare what they need, in their own words.
+
+The rules say what they need, never how. Charge this rider an amount. Find this scooter's position. Lock this scooter. Those needs become interfaces the A side owns: Payments, Locator, and Locks. They mention riders and scooters, never cards, S D Ks, or Bluetooth.
+
+Then each technology plugs in through a small adapter, like a dongle between your laptop and a new monitor. The payment adapter turns charge this rider into the payment A P I's call. It's the only code that knows both sides, so it's A T. But it's thin, boring, and easy to replace.
+
+Thin means it translates but never decides: a rider into a card, dollars into cents, a zone into a map overlay. Translation like this is the one A T worth keeping. It even has its own letter, R, for representation; in blood terms, a positive Rhesus factor. It's schematic enough that tools can often generate it.
+
+Frameworks pull you into A T through inheritance. Say Glide's Ride class extends the web framework's database model class. Now every ride is also a framework object, and the rules inside it are married to that framework: you can't reuse them, or even test them easily, without it.
+
+For a large, complex domain class, put an adapter in between. A thin Ride Record extends the framework's model and copies fields to and from a plain Ride class, which keeps every rule and knows no framework. For a tiny app, inheriting directly can be fine. Size decides.
+
+Time to test the new design the way an architect would: replay real changes and count what each one touches. Remember the three that hit the tangled end ride: a new map provider, ten free minutes in finals week, and the bike-share's request for your pricing rules.
+
+Start with the price hike that began this story. Glide switches map providers once more. So predict: in the separated design, which modules must change, and which stay exactly as they are?
+
+Only the map's T module and its thin adapter. The rules still ask the locator for a point and never notice. The finals-week rule touches only the A rules, which you can test with no S D K at all. And the bike-share reuses the rules, plugging its docks in through its own adapter.
+
+That's the goal in one line: a technology change touches only group T, a rule change only group A, and a change in how data is stored or shown only the thin translators. When each change lands in one small place, the design is ready for change, and for reuse.
+
+Don't overdo it. Hiding Python's own strings behind an interface protects nothing: zero code like strings, lists, or geometry doesn't change when your business or your technology does. Use it directly, and wrap what actually varies: the providers and frameworks you might swap.
+
+Separation pays off where change and reuse are likely: big rule sets, and technology that keeps changing. For a weekend script, a little A T is fine. Too little design gives you a tangle; too much gives you layers nobody can follow. Aim for the top of the curve.
+
+And at runtime? One extra call through an interface costs next to nothing, except in the tightest embedded code. The real price is design time, paid once. The payoff arrives every time the business or the technology changes, and over time, both will.
+
+Let's recap. Ask what each piece of code knows: the domain, a technology, both, or neither. That gives its group: A, T, A T, or zero. Zero goes everywhere. Group A goes wherever its rules apply, group T wherever its technology runs, and group A T almost nowhere.
+
+Groups combine like blood types: zero adds nothing, A plus T makes A T, and A T never dilutes. So minimize A T and maximize zero. Let the rules own their interfaces, plug technology in through thin adapters that translate but never decide, and keep frameworks at arm's length.
+
+Then test your design: replay a technology change, a rule change, and a reuse request. If each lands in one small place, you've designed for change. Next time you write a function, ask the two questions before line one.

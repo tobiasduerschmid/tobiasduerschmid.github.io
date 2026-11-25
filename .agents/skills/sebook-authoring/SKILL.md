@@ -203,7 +203,21 @@ class Context {
 @enduml'></div>
 ```
 
-`data-uml-type` is `class` | `sequence` | `state`. See the [`diagrams`](../diagrams/SKILL.md) skill for picking the right type and [`good-diagrams`](../good-diagrams/SKILL.md) for whether the diagram earns its place at all.
+`data-uml-type` takes any ArchUML type key: `class` | `sequence` | `state` | `component` | `deployment` | `usecase` | `activity` | `freeform` | `gitgraph` | `folder-tree` | `venn` | `er` | `crc` | `c4` (the `RENDERERS` table of `UMLShared.renderAll` in `js/ArchUML/uml-bundle.js`). Fenced blocks (` ```uml-class `, ` ```crc `, ` ```c4 `, …) render the same way and are usually easier to read in Markdown. See the [`diagrams`](../diagrams/SKILL.md) skill for picking the right type and [`good-diagrams`](../good-diagrams/SKILL.md) for whether the diagram earns its place at all.
+
+**C4 model figures and the C4 editor** — a C4 figure is a view of one YAML design model (`schema: c4-design/1`), not a drawing. The chapter `SEBook/architecture/c4.md` shows every form:
+
+- **A view of a shared model:** keep the model in `_includes/c4-models/<name>.yml` (it never declares `view:`) and embed one view of it:
+
+  ```liquid
+  {% include c4-view.html model="course-registration" view="containers of registration" caption="…" %}
+  ```
+
+  Parameters: `model` (file name without `.yml`), `view` (a selector such as `context of <system>`, `containers of <system>`, `components of <container>`, `code of <component>`, `dynamic <scenario>`, `deployment <environment>`, `interfaces of <element>`, `interface <id>`), `caption`, an optional authored `description` (replaces the generated text alternative; give one for deliberately flawed find-the-flaw figures), and `panels="syntax"` (an interface card's syntactic view only). Every C4 figure on an SEBook page gets an "Open in the C4 editor" link (`js/c4-editor-link.js`), except a figure that withholds an answer: one with `panels="syntax"`, one with an authored `description` (a find-the-flaw figure), and any figure inside a quiz, because the editor shows the whole card and lists a flawed model's problems.
+- **A one-off model:** a ` ```c4 ` fence. Optional comment lines come first, in this order: `# caption: …` (the first non-empty line), `# description: …`, `# diagnostics: true`, `# panels: syntax`; then `view: <selector>`; then the model. Syntax: [REFERENCE.md §C4 Model Diagrams](../../../js/ArchUML/REFERENCE.md#c4-model-diagrams).
+- **The editor:** `{% include c4-editor.html model="campus-booking-starter" view="…" task="…" %}` (parameters documented at the top of `_includes/c4-editor.html`; `model="blank"` starts empty). Chapter embeds keep edits in memory only; `standalone="true"` is reserved for `/SEBook/tools/c4-editor`.
+- **Front matter:** `c4: true` loads the C4 scripts with the page (without it the first figure loads them on demand); add `c4_editor: true` when the page embeds the editor; `static_uml: true` prerenders the figures and their text alternatives in local builds too (production builds always prerender).
+- **In a tutorial**, ` ```c4 ` fences in step instructions render in the step pane, the instructions popout, and the print view; see `tutorial-authoring` §4.6 "C4 model".
 
 **Compact layout in chapters.** Production builds pre-render chapter diagrams in a wide headless page (`_plugins/uml_static.rb`, `js/ArchUML/uml_to_svg.js`), so a bare `layout compact` would be laid out for that 1264×696 page, not for the reader's column. Write the sized form, `layout compact 1110x876` (the figure width and fit height at a 1440×900 viewport), right after `@startuml`, replacing any `layout landscape` / `portrait` / `square` line. Add it only when it clearly helps: the smallest text grows by at least 10 % in that box with no added crossings, bends, overlaps or detached labels, and the result still reads as before (parents above children, flows in order, before/after pairs alike, no prose that names positions). Check the before/after drawings; sequence diagrams with several teaching callouts usually come out crowded. On the UML chapter pages (`SEBook/uml.md`, `SEBook/uml_*.md`), diagrams with three or more callouts stay non-compact.
 

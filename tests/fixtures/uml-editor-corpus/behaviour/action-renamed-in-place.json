@@ -1,0 +1,177 @@
+{
+  "id": "action-renamed-in-place",
+  "family": "behaviour",
+  "type": "activity",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+  "steps": [
+    {
+      "do": "pointerDblclick",
+      "point": {
+        "target": {
+          "role": "button",
+          "name": "Element Ship Order — Enter to select, arrows to nudge, Delete to remove"
+        }
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "role": "textbox",
+        "name": "Rename Ship Order"
+      },
+      "value": "Dispatch Order"
+    },
+    {
+      "do": "press",
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Dispatch Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Dispatch Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Renamed action to \"Dispatch Order\"."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Action — Ship Order\":\n  - heading \"Action — Ship Order\" [level=2]\n  - button \"✕ Delete\"\n  - text: Action text\n  - textbox \"Action text\": Ship Order\n  - paragraph: This action is defined wherever its quoted text appears in the activity flow.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Action — Ship Order\":\n  - heading \"Action — Ship Order\" [level=2]\n  - button \"✕ Delete\"\n  - text: Action text\n  - textbox \"Action text\": Ship Order\n  - paragraph: This action is defined wherever its quoted text appears in the activity flow.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Ship Order"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Ship Order — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Ship Order"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Dispatch Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Dispatch Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Action — Ship Order\":\n  - heading \"Action — Ship Order\" [level=2]\n  - button \"✕ Delete\"\n  - text: Action text\n  - textbox \"Action text\": Ship Order\n  - paragraph: This action is defined wherever its quoted text appears in the activity flow.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "activity",
+      "before": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+      "operation": {
+        "op": "element.rename",
+        "revision": "r9f1a8800:204",
+        "ref": "Ship Order",
+        "text": "Dispatch Order",
+        "part": "action",
+        "facts": {},
+        "undo": {
+          "key": "activity-rename:Ship Order"
+        }
+      },
+      "after": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Dispatch Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Dispatch Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml"
+    }
+  ]
+}

@@ -1,0 +1,220 @@
+{
+  "version": 1,
+  "presentation": {
+    "animation": {
+      "page": "/assets/video-narration/blood_groups.html",
+      "theme": "drafting-room",
+      "sheet_title": "BLOOD GROUPS",
+      "sheet_subtitle": "A · T · AT · 0",
+      "styles": [
+        "/css/song-video-drafting-room.css",
+        "/css/video-narration-wall-kit.css",
+        "/css/video-narration-blood-groups.css"
+      ],
+      "scripts": [
+        "/js/song-video/drafting-room.js",
+        "/js/video-narration/wall-kit.js",
+        "/js/video-narration/blood-groups-kit.js",
+        "/js/video-narration/blood-groups.js"
+      ]
+    }
+  },
+  "resources": {},
+  "scenes": {
+    "intro": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "late": {},
+        "jobs": {},
+        "price_hike": {}
+      }
+    },
+    "tangle": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "braided": {},
+        "predict_switch": {},
+        "ripple": {},
+        "three_pains": {},
+        "preview": {}
+      }
+    },
+    "two_questions": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "questions": {},
+        "grid": {}
+      }
+    },
+    "group_a": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "rules": {},
+        "paid_for": {},
+        "a_reuse": {}
+      }
+    },
+    "group_t": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "drivers": {},
+        "t_reuse": {}
+      }
+    },
+    "group_zero": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "geometry": {},
+        "donor": {}
+      }
+    },
+    "group_at": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "both": {},
+        "at_chart": {},
+        "at_cost": {}
+      }
+    },
+    "mixing": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "rules": {},
+        "predict_mix": {},
+        "a_plus_t": {},
+        "absorb": {}
+      }
+    },
+    "leaks": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "leak": {},
+        "plug": {},
+        "signs": {}
+      }
+    },
+    "separate": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "rule_one": {},
+        "one_concern": {}
+      }
+    },
+    "invert": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "flip": {},
+        "sockets": {},
+        "dongles": {},
+        "rhesus": {}
+      }
+    },
+    "frameworks": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "married": {},
+        "divorce": {}
+      }
+    },
+    "change_test": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "replay": {},
+        "predict_replay": {},
+        "results": {},
+        "x_changes": {}
+      }
+    },
+    "balance": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "overkill": {},
+        "curve": {},
+        "cost": {}
+      }
+    },
+    "summary": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "recap_groups": {},
+        "recap_rules": {},
+        "recap_test": {}
+      }
+    }
+  }
+}

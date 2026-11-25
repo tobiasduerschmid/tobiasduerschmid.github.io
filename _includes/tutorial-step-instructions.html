@@ -8,6 +8,10 @@
 {%- if include.step.diagram_challenge and include.challenge != false -%}
   {% include tutorial-diagram-challenge.html tutorial=include.tutorial step=include.step index=include.index %}
 {%- endif -%}
+{%- comment -%}The print view renders its own review block too (review=false).{%- endcomment -%}
+{%- if include.step.design_review and include.review != false -%}
+  {% include tutorial-design-review.html tutorial=include.tutorial step=include.step index=include.index %}
+{%- endif -%}
 {%- if include.tutorial.instructions_footer_include -%}
   {% include {{ include.tutorial.instructions_footer_include }} %}
 {%- endif -%}

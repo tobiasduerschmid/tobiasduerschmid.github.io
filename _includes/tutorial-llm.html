@@ -1,7 +1,7 @@
 <template id="tutorial-llm-template">
   <section class="tutorial-llm" aria-labelledby="tutorial-llm-heading">
     <header class="tutorial-llm-heading">
-      <h3 id="tutorial-llm-heading">Specification assistant</h3>
+      <h3 id="tutorial-llm-heading" data-field="title">Specification assistant</h3>
       <span class="tutorial-llm-badge" data-field="model-state">Optional · on your device</span>
     </header>
     <div data-field="exercise" hidden>
@@ -49,7 +49,7 @@
     </details>
     <details class="tutorial-llm-settings" data-field="settings">
       <summary>Model &amp; storage</summary>
-      <p>Qwen2.5-Coder runs locally. Your specification and code stay on this device.</p>
+      <p>Qwen2.5-Coder runs locally. What you write and your code stay on this device.</p>
       <label for="tutorial-llm-model">Model size</label>
       <select id="tutorial-llm-model" data-field="model" aria-describedby="tutorial-llm-model-note tutorial-llm-selection-note">
         <option value="3b">3B — lower-memory default</option>

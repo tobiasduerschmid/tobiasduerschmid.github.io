@@ -111,7 +111,7 @@
   function ensureEngines(cards) {
     var content = cards.map(function (card) { return contentText(card.data); }).join('\n');
     var pending = [];
-    if (/data-uml-|language-uml-|uml-[\w-]+-diagram-container|(?:language-|diagram-|```)(?:freeform|gitgraph|folder-tree|venn|er|crc)\b|```uml-/i.test(content)) {
+    if (/data-uml-|language-uml-|uml-[\w-]+-diagram-container|(?:language-|diagram-|```)(?:freeform|gitgraph|folder-tree|venn|er|crc|c4)\b|```uml-/i.test(content)) {
       pending.push(loadEngine('uml'));
     }
     if (/\\\(|\\\[|\$\$|\$[^$\n]+\$/.test(content)) pending.push(loadEngine('mathjax'));

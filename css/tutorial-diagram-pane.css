@@ -103,6 +103,11 @@
   white-space: nowrap;
 }
 
+/* A codeless step (design review) hides "Code beside diagram". */
+.tutorial-diagram-pane__tool[hidden] {
+  display: none;
+}
+
 .tutorial-diagram-pane__tool-icon {
   flex: 0 0 auto;
   width: 1.1em;

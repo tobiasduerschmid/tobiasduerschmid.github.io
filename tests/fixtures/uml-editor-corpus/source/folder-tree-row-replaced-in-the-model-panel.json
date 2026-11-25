@@ -1,0 +1,199 @@
+{
+  "id": "folder-tree-row-replaced-in-the-model-panel",
+  "family": "source",
+  "type": "folder-tree",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nproject/\n  src/\n    main.js\n  README.md\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "text": "Folder tree model (",
+        "exact": false
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "label": "File row 3"
+      },
+      "value": "    app.js"
+    },
+    {
+      "do": "press",
+      "target": {
+        "label": "File row 3"
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nproject/\n  src/\n    app.js\n  README.md\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No movable elements detected for this diagram yet."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nproject/\n  src/\n    app.js\n  README.md\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nproject/\n  src/\n    main.js\n  README.md\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No movable elements detected for this diagram yet."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nproject/\n  src/\n    main.js\n  README.md\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nproject/\n  src/\n    app.js\n  README.md\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No movable elements detected for this diagram yet."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nproject/\n  src/\n    app.js\n  README.md\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "folder-tree",
+      "before": "@startuml\nproject/\n  src/\n    app.js\n  README.md\n@enduml",
+      "operation": {
+        "op": "source.replaceLines",
+        "revision": "r7810794a:56",
+        "range": {
+          "start": 3,
+          "end": 3
+        },
+        "lines": [
+          "    app.js"
+        ],
+        "facts": {},
+        "undo": {
+          "key": "model-row:3"
+        }
+      },
+      "after": "@startuml\nproject/\n  src/\n    app.js\n  README.md\n@enduml"
+    },
+    {
+      "type": "folder-tree",
+      "before": "@startuml\nproject/\n  src/\n    main.js\n  README.md\n@enduml",
+      "operation": {
+        "op": "source.replaceLines",
+        "revision": "r3fb4e7c8:57",
+        "range": {
+          "start": 3,
+          "end": 3
+        },
+        "lines": [
+          "    app.js"
+        ],
+        "facts": {},
+        "undo": {
+          "key": "model-row:3"
+        }
+      },
+      "after": "@startuml\nproject/\n  src/\n    app.js\n  README.md\n@enduml"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+@startuml
+node "Client Device" as client {
+  component "Planner Web App" as web
+}
+node "Application Server" as app {
+  component "Registration API" as api
+  component "Worker" as worker
+}
+node "Database Server" as dbs {
+  component "Registration DB" as db
+  component "Message Queue" as mq
+}
+node "Billing Provider" as billing
+web --> api : HTTPS/JSON
+api --> db : SQL
+api --> mq : AMQP
+worker --> mq : AMQP
+worker --> billing : HTTPS
+web ..> billing : redirect
+@enduml

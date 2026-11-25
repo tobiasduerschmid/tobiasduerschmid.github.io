@@ -1,0 +1,183 @@
+{
+  "id": "sequence-inner-fragment-moved-earlier-inside-its-parent",
+  "family": "sequence",
+  "type": "sequence",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nactor user\nparticipant app\nloop [each item]\n  user -> app: add\n  opt [in stock]\n    app --> user: added\n  end\nend\n@enduml",
+  "steps": [
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "role": "button",
+          "name": "Fragment frag:5 —",
+          "exact": false
+        },
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Move earlier",
+        "within": {
+          "css": "#uml-pg-props-pane"
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nactor user\nparticipant app\nloop [each item]\n  opt [in stock]\n    app --> user: added\n  end\n  user -> app: add\nend\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Moved fragment earlier."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Fragment — opt\":\n  - heading \"Fragment — opt\" [level=2]\n  - button \"✕ Delete\"\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"alt — alternative\"\n    - option \"opt — optional\" [selected]\n    - option \"loop — iterative\"\n    - option \"par — parallel\"\n    - option \"break — early exit\"\n    - option \"critical — atomic section\"\n    - option \"ref — reference to another interaction\"\n    - option \"neg — forbidden trace\"\n  - text: Condition\n  - textbox \"Condition\": in stock\n  - group \"Fragment order\":\n    - text: Fragment order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - button \"Remove fragment (keep inner messages)\"\n  - paragraph: Double-click [condition] / [otherwise] on the canvas to edit in place. Click a message inside to edit its source, target, or branch. Press Delete to remove the entire fragment block.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "frag:4"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nactor user\nparticipant app\nloop [each item]\n  user -> app: add\n  opt [in stock]\n    app --> user: added\n  end\nend\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Fragment\":\n  - heading \"Fragment\" [level=2]\n  - button \"✕ Delete\"\n  - paragraph: This fragment is no longer in the source.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nactor user\nparticipant app\nloop [each item]\n  opt [in stock]\n    app --> user: added\n  end\n  user -> app: add\nend\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Fragment — opt\":\n  - heading \"Fragment — opt\" [level=2]\n  - button \"✕ Delete\"\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"alt — alternative\"\n    - option \"opt — optional\" [selected]\n    - option \"loop — iterative\"\n    - option \"par — parallel\"\n    - option \"break — early exit\"\n    - option \"critical — atomic section\"\n    - option \"ref — reference to another interaction\"\n    - option \"neg — forbidden trace\"\n  - text: Condition\n  - textbox \"Condition\": in stock\n  - group \"Fragment order\":\n    - text: Fragment order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - button \"Remove fragment (keep inner messages)\"\n  - paragraph: Double-click [condition] / [otherwise] on the canvas to edit in place. Click a message inside to edit its source, target, or branch. Press Delete to remove the entire fragment block.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "frag:4"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Fragment frag:4 — Enter to select, Delete to remove the fragment",
+      "layoutId": "frag:4"
+    }
+  },
+  "operations": [
+    {
+      "type": "sequence",
+      "before": "@startuml\nactor user\nparticipant app\nloop [each item]\n  user -> app: add\n  opt [in stock]\n    app --> user: added\n  end\nend\n@enduml",
+      "operation": {
+        "op": "fragment.move",
+        "revision": "r29acbd54:131",
+        "ref": "frag:5",
+        "at": {
+          "step": -1
+        },
+        "facts": {},
+        "undo": {
+          "key": "frag-move-up:frag:5"
+        }
+      },
+      "after": "@startuml\nactor user\nparticipant app\nloop [each item]\n  opt [in stock]\n    app --> user: added\n  end\n  user -> app: add\nend\n@enduml"
+    }
+  ]
+}

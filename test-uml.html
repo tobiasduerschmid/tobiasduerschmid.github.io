@@ -2554,6 +2554,30 @@ Course "M" == Takes
 @enduml
   </code></pre>
 
+  <h2>94. C4 Container View from a Shared Model</h2>
+  {%- comment -%}
+    This page does not preload the C4 scripts, so this figure exercises the lazy path. The include emits a
+    Markdown fence, which this HTML page turns into the `pre > code.language-c4` block the bundle renders.
+  {%- endcomment -%}
+  {% capture c4_registration_containers %}{% include c4-view.html model="course-registration" view="containers of registration" caption="Container view of the course registration system" %}{% endcapture %}
+  {{ c4_registration_containers | markdownify }}
+
+  <h2>95. C4 Interface Description Card</h2>
+  {% capture c4_enrollment_card %}{% include c4-view.html model="course-registration" view="interface enrollment-api" caption="Interface description of the Enrollment API" %}{% endcapture %}
+  {{ c4_enrollment_card | markdownify }}
+
+  <h2>96. C4 Interface Description Card, Syntactic View Only</h2>
+  {% capture c4_enrollment_syntax %}{% include c4-view.html model="course-registration" view="interface enrollment-api" panels="syntax" caption="Syntactic view of the Enrollment API" %}{% endcapture %}
+  {{ c4_enrollment_syntax | markdownify }}
+
+  <h2>97. C4 Interfaces View of a Container</h2>
+  {% capture c4_api_interfaces %}{% include c4-view.html model="course-registration" view="interfaces of api" caption="Interfaces view of the Registration API" %}{% endcapture %}
+  {{ c4_api_interfaces | markdownify }}
+
+  <h2>98. C4 Interfaces View of a Component That Handles a Delegated Interface</h2>
+  {% capture c4_coordinator_interfaces %}{% include c4-view.html model="course-registration" view="interfaces of coordinator" caption="Interfaces view of the Registration Coordinator" %}{% endcapture %}
+  {{ c4_coordinator_interfaces | markdownify }}
+
   </main>
   <script src="/js/git-graph.js" defer></script>
   <script src="/js/ArchUML/uml-bundle.js" defer></script>

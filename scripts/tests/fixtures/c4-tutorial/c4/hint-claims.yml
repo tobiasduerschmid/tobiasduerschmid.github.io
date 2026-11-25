@@ -1,0 +1,571 @@
+# What each conditional hint of the C4 tutorial states about the learner's model: the hint-truth audit of
+# scripts/tests/c4-tutorial-content.test.js. A hint shows when its test fails and its condition holds; each claim
+# below must then be true of the model: its §8 predicate passes (holds) or fails (fails), evaluated as the tests are,
+# with the step's checks configuration and its authored starter as seedModel. `says` quotes or paraphrases the
+# statement the claim checks. A hint that asserts nothing about the model (advice, or a statement hedged by "if") has
+# `states_nothing` with the reason. Unconditional hints may be documented too; conditional ones must be.
+#
+# The §8 forms have no negation, so a statement that something is wrong ("a relationship has no description") is a
+# `fails` claim on the predicate that would hold if it were right.
+
+# ---- Step 2: Zooming In to Confirm ---------------------------------------------------------------------------------
+- step: 2
+  test: 1
+  hint: The Policy Is Gone
+  claims:
+    - says: The Enrollment Policy is no longer in the model
+      holds: {absent: {element: {name_any: [policy]}}}
+- step: 2
+  test: 1
+  hint: A View That Stops Too Early
+  claims:
+    - says: Your saved view draws the Registration API as a single box
+      holds: {view: {view: who-decides, shows: [api], hides: [{type: component}]}}
+- step: 2
+  test: 1
+  hint: Level and Scope Together
+  claims:
+    - says: you found the part that decides inside a container
+      holds: {exists: {element: {type: component, name_any: [policy], parent: {type: container}}}}
+
+# ---- Step 3: Context View Repair -----------------------------------------------------------------------------------
+- step: 3
+  test: 1
+  hint: Name and Connection
+  claims:
+    - says: your new person (a second person exists)
+      holds: {count: {element: {type: person}}, at_least: 2}
+- step: 3
+  test: 1
+  hint: The Name Readers Expect
+  claims:
+    - says: Your second person (a second person exists)
+      holds: {count: {element: {type: person}}, at_least: 2}
+    - says: Your second person has a relationship (people have at least two relationships of their own)
+      holds: {count: {relationship: {from: {type: person}, derived: exclude}}, at_least: 2}
+- step: 3
+  test: 2
+  hint: Two Goals, Two People
+  claims:
+    - says: The student’s name now covers the adviser’s role too
+      holds: {exists: {element: {id: student, name_any: [adviser, advisor, counselor, counsellor]}}}
+- step: 3
+  test: 2
+  hint: Give the Student Back Its Name
+  claims:
+    - says: Another person exists
+      holds: {count: {element: {type: person}}, at_least: 2}
+    - says: the student’s name still names the adviser’s role
+      holds: {exists: {element: {id: student, name_any: [adviser, advisor, counselor, counsellor]}}}
+- step: 3
+  test: 3
+  hint: An Arrow With No Words
+  claims:
+    - says: One relationship has no description at all
+      fails: {checks: {max_warnings: 0, rules: [rdd/no-reason]}}
+    - says: One relationship (not several)
+      holds: {checks: {max_warnings: 1, rules: [rdd/no-reason]}}
+- step: 3
+  test: 3
+  hint: Words That Fit Any Arrow
+  claims:
+    - says: a description would fit any arrow in the diagram
+      fails: {checks: {max_warnings: 0, rules: [c4/vague-relationship]}}
+- step: 3
+  test: 4
+  hint: Restore the Request
+  claims:
+    - says: Nothing sends anything to the Billing System any more
+      holds: {absent: {relationship: {to: billing}}}
+    - says: the Billing System is still in the model
+      holds: {exists: {element: {id: billing}}}
+- step: 3
+  test: 4
+  hint: From the Right Sender
+  claims:
+    - says: Something reaches the Billing System
+      holds: {exists: {relationship: {to: billing}}}
+- step: 3
+  test: 5
+  hint: Name It After Its Job
+  claims:
+    - says: the generically named box (a box has a generic name)
+      fails: {checks: {max_warnings: 0, rules: [c4/generic-name]}}
+    - says: the generically named box’s responsibilities (the Backend container has responsibilities to read)
+      holds: {exists: {element: {id: backend, responsibilities_at_least: 1}}}
+- step: 3
+  test: 5
+  hint: Change the Name, Keep the Id
+  states_nothing: Advice on how to rename the box the failed check names, keeping its id; it states no fact about the model.
+- step: 3
+  test: 6
+  hint: One Level Down
+  claims:
+    - says: Both problems the Problems panel flagged are fixed
+      holds: {checks: {max_warnings: 0, rules: [c4/generic-name, rdd/no-reason]}}
+    - says: and the old box goes (the old Enrollment Records box is still there)
+      holds: {exists: {element: {id: records}}}
+- step: 3
+  test: 6
+  hint: External Means Another Owner
+  claims:
+    - says: a box other than the Billing System is marked external
+      holds: {count: {element: {type: system, external: true}}, at_least: 2}
+- step: 3
+  test: 6
+  hint: Now Remove the Old Box
+  claims:
+    - says: The data store now exists inside Course Registration
+      holds: {exists: {element: {type: container, kind: database, in: registration}}}
+    - says: then delete the old box (a third system is still there)
+      holds: {count: {element: {type: system}}, at_least: 3}
+- step: 3
+  test: 7
+  hint: Shape and Type Text
+  claims:
+    - says: A new container exists inside Course Registration
+      holds: {count: {element: {type: container, in: registration}}, at_least: 3}
+    - says: nothing marks it as a data store yet
+      holds: {absent: {element: {type: container, kind: database, in: registration}}}
+- step: 3
+  test: 7
+  hint: Inside the Right System
+  claims:
+    - says: A data store exists
+      holds: {exists: {element: {type: container, kind: database}}}
+    - says: but inside another system
+      holds: {absent: {element: {type: container, kind: database, in: registration}}}
+- step: 3
+  test: 8
+  hint: The Billing System Dropped Out
+  claims:
+    - says: The Billing System still exists
+      holds: {exists: {element: {id: billing}}}
+    - says: no container of Course Registration has a relationship to it
+      holds: {absent: {relationship: {from: {type: container, in: registration}, to: billing}}}
+    - says: so the container view leaves it out
+      holds: {view: {view: containers of registration, hides: [billing]}}
+- step: 3
+  test: 8
+  hint: The Student Dropped Out
+  claims:
+    - says: The student still exists
+      holds: {exists: {element: {id: student}}}
+    - says: the student’s relationship to a container is gone
+      holds: {absent: {relationship: {from: student, to: {type: container, in: registration}}}}
+    - says: no longer appears
+      holds: {view: {view: containers of registration, hides: [student]}}
+
+# ---- Step 4: Responsibilities from Requirements --------------------------------------------------------------------
+- step: 4
+  test: 1
+  hint: Traces Need the Map Form
+  states_nothing: Hedged ("If a responsibility is written as one plain string"); it states the map-form rule only.
+- step: 4
+  test: 1
+  hint: The Failure Case Counts Too
+  states_nothing: Hedged ("If the Problems panel still names FR-23"); it then explains what FR-23 asks.
+- step: 4
+  test: 2
+  hint: Knowing Is Not Deciding
+  claims:
+    - says: the learner wrote a KNOW, which the hint contrasts with a DECIDE
+      holds: {exists: {responsibility: {of: registration, kind: know}}}
+- step: 4
+  test: 2
+  hint: Write the Judgment
+  states_nothing: Advice on how to write the missing DECIDE, which the failed check reports.
+- step: 4
+  test: 3
+  hint: Find the Flagged Statement
+  claims:
+    - says: The Problems panel marks which responsibility reads like a field, a method, or a screen step
+      fails: {checks: {max_warnings: 0, rules: [rdd/not-an-obligation]}}
+- step: 4
+  test: 3
+  hint: A Rewriting Pattern
+  states_nothing: States the DO, KNOW, and DECIDE patterns and one example rewrite; nothing about the model.
+- step: 4
+  test: 4
+  hint: Split Across Two Systems
+  claims:
+    - says: Some responsibilities sit on the Billing System
+      holds: {exists: {responsibility: {of: billing}}}
+    - says: split (others sit on Course Registration)
+      holds: {exists: {responsibility: {of: registration}}}
+- step: 4
+  test: 4
+  hint: All on the Wrong Box
+  claims:
+    - says: Every responsibility sits on the Billing System (none on Course Registration)
+      holds: {absent: {responsibility: {of: registration}}}
+    - says: Every responsibility sits on the Billing System (some do)
+      holds: {exists: {responsibility: {of: billing}}}
+
+# ---- Step 5: Allocation to Containers ------------------------------------------------------------------------------
+- step: 5
+  test: 1
+  hint: A Link, Not a Lookalike
+  claims:
+    - says: One with the same words and no link (a server container has a DECIDE)
+      holds: {exists: {responsibility: {of: {type: container, kind: application}, kind: decide}}}
+- step: 5
+  test: 1
+  hint: Let the Tray Write the Link
+  states_nothing: Explains how the tray and the Refine into… menu write a refines link; nothing about the model.
+- step: 5
+  test: 2
+  hint: A Link, Not a Lookalike
+  claims:
+    - says: One with the same words and no link (a server container has a DO)
+      holds: {exists: {responsibility: {of: {type: container, kind: application}, kind: do}}}
+- step: 5
+  test: 2
+  hint: Let the Tray Write the Link
+  states_nothing: Explains how the tray and the Refine into… menu write a refines link; nothing about the model.
+- step: 5
+  test: 3
+  hint: A Link, Not a Lookalike
+  claims:
+    - says: One with the same words and no link (a server container has a KNOW besides the worked example)
+      holds: {count: {responsibility: {of: {type: container, kind: application}, kind: know}}, at_least: 2}
+- step: 5
+  test: 3
+  hint: Let the Tray Write the Link
+  states_nothing: Explains how the tray and the Refine into… menu write a refines link; nothing about the model.
+- step: 5
+  test: 4
+  hint: Waiting for the Server
+  claims:
+    - says: A container that runs on the server (the learner put the drafts promise on the Registration API)
+      holds: {exists: {responsibility: {of: api, refines: sys-drafts}}}
+- step: 5
+  test: 4
+  hint: Where It Runs
+  claims:
+    - says: The Planner Web App’s kind no longer says it runs in the browser
+      holds: {absent: {element: {id: web, kind: browser_app}}}
+    - says: The Planner Web App (still in the model)
+      holds: {exists: {element: {id: web}}}
+- step: 5
+  test: 4
+  hint: A Link, Not a Lookalike
+  claims:
+    - says: One with the same words (the browser app has a DO about rearranging drafts)
+      holds: {exists: {responsibility: {of: {type: container, kind: browser_app}, kind: do, text_any: [rearrange, round trip, without waiting]}}}
+    - says: and no link
+      holds: {absent: {responsibility: {of: {type: container, kind: browser_app}, refines: sys-drafts}}}
+- step: 5
+  test: 5
+  hint: Check the Link
+  claims:
+    - says: The Registration API still has the worked example, its KNOW of how many seats are open
+      holds: {exists: {responsibility: {of: api, kind: know, text_any: [how many, number of, count of, seat count, still open, still available]}}}
+    - says: the tray counts no refinement of open seats
+      holds: {absent: {responsibility: {of: {type: container}, refines: sys-open-seats}}}
+- step: 5
+  test: 5
+  hint: Restore It
+  claims:
+    - says: The Registration API no longer has the worked example
+      holds: {absent: {responsibility: {of: api, kind: know, text_any: [how many, number of, count of, seat count, still open, still available]}}}
+- step: 5
+  test: 6
+  hint: Two Owners for One Decision
+  claims:
+    - says: A server-side container now refines the enrollment decision
+      holds: {exists: {responsibility: {of: {type: container, kind: application}, kind: decide, refines: sys-eligibility}}}
+    - says: the browser’s DECIDE
+      holds: {exists: {responsibility: {of: web, kind: decide}}}
+- step: 5
+  test: 6
+  hint: Flagging Is Not Deciding
+  claims:
+    - says: The Planner Web App now refines the system’s decision
+      holds: {exists: {responsibility: {of: web, kind: decide, refines: sys-eligibility}}}
+- step: 5
+  test: 7
+  hint: Data Stores Too
+  claims:
+    - says: The server application names its technology
+      holds: {every: {type: container, in: registration, kind: application}, satisfies: {technology: present}}
+    - says: A database container also names one (one does not yet)
+      holds: {exists: {element: {type: container, in: registration, kind: database, technology: absent}}}
+- step: 5
+  test: 7
+  hint: Undecided Is Allowed
+  states_nothing: Hedged ("If the team has not chosen a container’s technology yet"); it explains TBD.
+- step: 5
+  test: 8
+  hint: Applications Name Their Language
+  claims:
+    - says: a server application names the machine or container image that runs it
+      holds: {exists: {element: {type: container, kind: application, technology_any: [docker, kubernetes, container image, virtual machine]}}}
+- step: 5
+  test: 8
+  hint: Databases Name Their Product
+  claims:
+    - says: a database container names the server or container image that hosts it
+      holds: {exists: {element: {type: container, kind: database, technology_any: [docker, kubernetes, container image, virtual machine]}}}
+- step: 5
+  test: 9
+  hint: How It Travels
+  claims:
+    - says: The relationship crosses from the student’s browser to a server
+      holds: {exists: {relationship: {from: web, to: api, derived: exclude}}}
+    - says: so it names how it travels (it does not yet)
+      holds: {absent: {relationship: {from: web, to: api, derived: exclude, technology: present}}}
+- step: 5
+  test: 9
+  hint: Read It From the Sender
+  claims:
+    - says: The new relationship starts at the Registration API
+      holds: {exists: {relationship: {from: api, to: web, derived: exclude}}}
+- step: 5
+  test: 10
+  hint: A Verb and a Preposition
+  claims:
+    - says: what the Planner Web App asks the Registration API (that relationship exists)
+      holds: {exists: {relationship: {from: web, to: api, derived: exclude}}}
+
+# ---- Step 6: Inside the Registration API ---------------------------------------------------------------------------
+- step: 6
+  test: 1
+  hint: The Request Already Exists
+  claims:
+    - says: The coordinator already asks another component for an eligibility decision
+      holds: {exists: {relationship: {from: coordinator, to: {type: component}, requests: policy-eligibility}}}
+    - says: If it also makes that decision (it has a DECIDE that refines it)
+      holds: {exists: {responsibility: {of: coordinator, kind: decide, refines: api-eligibility}}}
+- step: 6
+  test: 1
+  hint: Asking Is Not Refining
+  claims:
+    - says: The coordinator gained a responsibility that refines the eligibility decision
+      holds: {exists: {responsibility: {of: coordinator, refines: api-eligibility}}}
+- step: 6
+  test: 2
+  hint: The Policy Is Gone
+  claims:
+    - says: the policy is gone
+      holds: {absent: {element: {name_any: [policy]}}}
+    - says: The coordinator still asks the Enrollment Policy (a request names an element that no longer exists)
+      fails: {checks: {max_errors: 0, rules: [model/unknown-reference]}}
+- step: 6
+  test: 2
+  hint: Link It Upward
+  claims:
+    - says: The Enrollment Policy decides something
+      holds: {exists: {responsibility: {of: policy, kind: decide}}}
+    - says: no component refines the API’s eligibility decision yet
+      holds: {absent: {responsibility: {of: {type: component}, refines: api-eligibility}}}
+- step: 6
+  test: 2
+  hint: One Decision, One Owner
+  claims:
+    - says: More than one component refines the API’s eligibility decision with a DECIDE
+      holds: {count: {responsibility: {of: {type: component}, kind: decide, refines: api-eligibility}}, at_least: 2}
+- step: 6
+  test: 3
+  hint: Only One Writer
+  claims:
+    - says: Two components now claim to be the only writer
+      holds: {count: {element: {type: component, in: api, owns_any: [seat hold, held seat, seat reservation, reserved seat]}}, at_least: 2}
+- step: 6
+  test: 3
+  hint: The Same Fact at Both Levels
+  claims:
+    - says: A component now writes to the database
+      holds: {exists: {relationship: {from: {type: component, in: api}, to: db}}}
+    - says: The API alone writes seat holds
+      holds: {exists: {element: {id: api, owns_any: [seat hold]}}}
+- step: 6
+  test: 4
+  hint: A Claim Without a Write
+  claims:
+    - says: A component records that it alone writes seat holds
+      holds: {exists: {element: {type: component, in: api, owns_any: [seat hold, held seat, seat reservation, reserved seat]}}}
+    - says: but it has no relationship to the Registration Database
+      holds: {absent: {relationship: {from: {type: component, in: api, owns_any: [seat hold, held seat, seat reservation, reserved seat]}, to: db}}}
+- step: 6
+  test: 4
+  hint: Claim and Relationship Together
+  claims:
+    - says: A component writes to the Registration Database
+      holds: {exists: {relationship: {from: {type: component, in: api}, to: db}}}
+    - says: no component that writes there names seat holds in its owns
+      holds: {absent: {relationship: {from: {type: component, in: api, owns_any: [seat hold, held seat, seat reservation, reserved seat]}, to: db}}}
+- step: 6
+  test: 5
+  hint: What Else Must It Know?
+  claims:
+    - says: The Seat Gateway holds seats
+      holds: {exists: {responsibility: {of: seats, kind: do}}}
+    - says: at least one of the API’s KNOW responsibilities has no component KNOW refining it yet
+      holds: {exists: {responsibility: {of: api, kind: know, leaf: true}}}
+- step: 6
+  test: 5
+  hint: Knowledge Needs a Link Too
+  claims:
+    - says: The Seat Gateway knows something
+      holds: {exists: {responsibility: {of: seats, kind: know}}}
+    - says: an API KNOW is still unrefined
+      holds: {exists: {responsibility: {of: api, kind: know, leaf: true}}}
+- step: 6
+  test: 6
+  hint: The Id Must Match
+  states_nothing: States the rule a request's id must meet and asks the learner to check each request; the failure itself is what the test reports.
+- step: 6
+  test: 6
+  hint: On the Target, Not a Sibling
+  claims:
+    - says: Every id the requests name exists
+      holds: {checks: {max_errors: 0, rules: [model/unknown-reference]}}
+    - says: at least one sits on a component the request does not target
+      fails: {checks: {max_errors: 0, rules: [model/responsibility-owner]}}
+
+# ---- Step 7: Change Impact Across Control Styles -------------------------------------------------------------------
+- step: 7
+  test: 1
+  hint: The Policy Is Gone
+  claims:
+    - says: The Enrollment Policy is gone
+      holds: {absent: {element: {name_any: [policy]}}}
+- step: 7
+  test: 1
+  hint: Design A’s Shape
+  claims:
+    - says: You gave the coordinator an eligibility decision
+      holds: {exists: {responsibility: {of: coordinator, kind: decide, refines: api-eligibility}}}
+- step: 7
+  test: 1
+  hint: Knowing Is Not Applying
+  claims:
+    - says: Knowing a cap (the policy gained a KNOW)
+      holds: {count: {responsibility: {of: policy, kind: know}}, at_least: 2}
+- step: 7
+  test: 1
+  hint: Link the New Rule
+  claims:
+    - says: The policy has a second DECIDE
+      holds: {count: {responsibility: {of: policy, kind: decide}}, at_least: 2}
+    - says: it does not refine the API’s eligibility decision yet
+      holds: {count: {responsibility: {of: policy, kind: decide, refines: api-eligibility}}, at_most: 1}
+- step: 7
+  test: 2
+  hint: Ask, Do Not Decide
+  claims:
+    - says: The coordinator already asks the policy for an eligibility decision
+      holds: {exists: {relationship: {from: coordinator, to: policy, requests: policy-eligibility}}}
+    - says: a rule in the coordinator (a DECIDE that refines the eligibility decision)
+      holds: {exists: {responsibility: {of: coordinator, kind: decide, refines: api-eligibility}}}
+- step: 7
+  test: 2
+  hint: A New Request
+  claims:
+    - says: The coordinator gained a request (it had three)
+      holds: {count: {relationship: {from: coordinator, derived: exclude}}, at_least: 4}
+- step: 7
+  test: 3
+  hint: Same Interface, Same Place
+  claims:
+    - says: The Enrollment API is no longer offered by the Registration API
+      holds: {absent: {interface: {id: enrollment-api, of: api}}}
+- step: 7
+  test: 3
+  hint: A Change Every Client Reads
+  claims:
+    - says: The Enrollment API is where it was
+      holds: {exists: {interface: {id: enrollment-api, of: api}}}
+    - says: but its description changed
+      fails: {same_as_seed: {interface: {id: enrollment-api}}}
+
+# ---- Step 8: A Failed Seat Hold ------------------------------------------------------------------------------------
+- step: 8
+  test: 1
+  hint: Neither Relationship Nor Request
+  claims:
+    - says: The step from the Seat Gateway to the Planner Web App
+      holds: {exists: {step: {scenario: enroll, from: seats, to: web}}}
+    - says: no relationship joins them (from the gateway)
+      holds: {absent: {relationship: {from: seats, to: web}}}
+    - says: no relationship joins them (from the web app)
+      holds: {absent: {relationship: {from: web, to: seats}}}
+    - says: the web app sent the gateway no request
+      holds: {absent: {step: {scenario: enroll, from: web, to: seats}}}
+- step: 8
+  test: 1
+  hint: The Shape of a Reply
+  claims:
+    - says: Which request did the Planner Web App send (it sent one)
+      holds: {exists: {step: {scenario: enroll, from: web}}}
+- step: 8
+  test: 2
+  hint: Find the Missing Participant
+  claims:
+    - says: the dynamic view still shows the web app and the coordinator, the scenario's opening participants
+      holds: {view: {view: dynamic enroll, shows: [web, coordinator]}}
+- step: 8
+  test: 2
+  hint: Fragments Hold Steps
+  claims:
+    - says: A step that happens only in one case ... restructuring keeps it (the billing step left the scenario)
+      holds: {view: {view: dynamic enroll, hides: [billing-gateway]}}
+- step: 8
+  test: 3
+  hint: A Shortcut Is Not a Repair
+  claims:
+    - says: A relationship from the Seat Gateway to the Planner Web App
+      holds: {exists: {relationship: {from: seats, to: web}}}
+- step: 8
+  test: 3
+  hint: Only When a Section Is Full
+  claims:
+    - says: A report from the coordinator reaches the Planner Web App
+      holds: {exists: {step: {scenario: enroll, from: coordinator, to: web}}}
+    - says: but not yet as a reply inside a branch of an alt
+      holds: {absent: {step: {scenario: enroll, from: coordinator, to: web, in_fragment: alt, reply: true}}}
+- step: 8
+  test: 3
+  hint: Answer the Request
+  claims:
+    - says: The coordinator now knows which section was full (the Seat Gateway reports to it)
+      holds: {exists: {step: {scenario: enroll, from: seats, to: coordinator}}}
+- step: 8
+  test: 4
+  hint: Move It Into a Branch
+  claims:
+    - says: Your scenario has an alt
+      holds: {exists: {step: {scenario: enroll, in_fragment: alt}}}
+    - says: the billing step
+      holds: {exists: {step: {scenario: enroll, from: coordinator, to: billing-gateway}}}
+    - says: is not inside any of its branches
+      holds: {absent: {step: {scenario: enroll, from: coordinator, to: billing-gateway, in_fragment: alt}}}
+- step: 8
+  test: 4
+  hint: Keep the Billing Step
+  claims:
+    - says: The billing step is gone
+      holds: {absent: {step: {scenario: enroll, to: billing-gateway}}}
+
+# ---- Step 9: Transfer: Makerspace Equipment Loans ------------------------------------------------------------------
+- step: 9
+  test: 1
+  hint: Refinement Points Up
+  claims:
+    - says: Every error left names a refines
+      holds: {checks: {max_errors: 0, disable: [model/refines-not-ancestor]}}
+- step: 9
+  test: 1
+  hint: A Saved View Names Nothing
+  claims:
+    - says: Every error left is about a saved view whose selector names an element the model does not have
+      holds: {checks: {max_errors: 0, disable: [view/unknown-selector]}}
+- step: 9
+  test: 2
+  hint: Map Form Carries Traces
+  states_nothing: Hedged ("If a responsibility is written as one plain string"); it states the map-form rule and where to look next.
+- step: 9
+  test: 2
+  hint: Every Part Needs a Trace
+  states_nothing: Asks the learner to read the requirements the failed check names, part by part, and states how traces may split; nothing else about the model.

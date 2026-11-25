@@ -1,0 +1,185 @@
+{
+  "id": "dependency-added-by-a-connect-drag-with-the-selected-relation-tool",
+  "family": "class",
+  "type": "class",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Add relation: Dependency"
+      }
+    },
+    {
+      "do": "drag",
+      "from": {
+        "target": {
+          "role": "button",
+          "name": "Extend a relation from Order"
+        }
+      },
+      "to": {
+        "target": {
+          "role": "button",
+          "name": "Element Invoice — Enter to select, arrows to nudge, Delete to remove"
+        },
+        "at": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\nOrder ..> Invoice\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": ""
+      },
+      "uml-pg-tool-status": {
+        "text": "Connected \"Order\" to \"Invoice\" with Dependency. Tool stays active - add another relation or press Esc."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — Order → Invoice\":\n  - heading \"Relation — Order → Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Generalization\"\n    - option \"Realization\"\n    - option \"Composition\"\n    - option \"Aggregation\"\n    - option \"Association\"\n    - option \"Bidirectional\"\n    - option \"Plain Assoc.\"\n    - option \"Dependency\" [selected]\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Order\" [selected]\n    - option \"Customer\"\n    - option \"Invoice\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Order\"\n    - option \"Customer\"\n    - option \"Invoice\" [selected]\n  - text: Label\n  - textbox \"Label\"\n  - text: Stereotype\n  - textbox \"Stereotype\"\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "rel:4"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": ""
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Generalization\" [selected]\n    - option \"Realization\"\n    - option \"Composition\"\n    - option \"Aggregation\"\n    - option \"Association\"\n    - option \"Bidirectional\"\n    - option \"Plain Assoc.\"\n    - option \"Dependency\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Order\" [selected]\n    - option \"Customer\"\n    - option \"Invoice\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Order\" [selected]\n    - option \"Customer\"\n    - option \"Invoice\"\n  - text: Label\n  - textbox \"Label\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\nOrder ..> Invoice\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": ""
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — Order → Invoice\":\n  - heading \"Relation — Order → Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Generalization\"\n    - option \"Realization\"\n    - option \"Composition\"\n    - option \"Aggregation\"\n    - option \"Association\"\n    - option \"Bidirectional\"\n    - option \"Plain Assoc.\"\n    - option \"Dependency\" [selected]\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Order\" [selected]\n    - option \"Customer\"\n    - option \"Invoice\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Order\"\n    - option \"Customer\"\n    - option \"Invoice\" [selected]\n  - text: Label\n  - textbox \"Label\"\n  - text: Stereotype\n  - textbox \"Stereotype\"\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "rel:4"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "class",
+      "before": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+      "operation": {
+        "op": "relation.add",
+        "revision": "r89762cab:144",
+        "tool": "depend",
+        "from": "Order",
+        "to": "Invoice",
+        "label": null,
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\nOrder ..> Invoice\n@enduml"
+    }
+  ]
+}

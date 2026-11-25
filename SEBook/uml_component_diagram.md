@@ -254,6 +254,8 @@ Students sometimes confuse when to use which diagram. Here is a comparison:
 | 4 | **Mixing deployment nodes with components** | Components live on nodes; they are not the same thing. Use a deployment diagram when you want to show *where* things run. |
 | 5 | **Too many components on one diagram** | Apply the 7±2 rule of working memory {% cite Miller1956 %}, discussed in *UML Distilled* as a diagram-readability heuristic {% cite Fowler2003 %}. If you need more than ~9 components, split into multiple diagrams by subsystem. Architecture diagrams are for overview — not exhaustive cataloguing. |
 
+> **Terminology note:** In the [C4 model](/SEBook/architecture/c4#abstractions), a separately deployed component such as a service or a database is a *container*, and a C4 *component* is a part of one container that is never deployed on its own.
+
 ---
 
 ## 6. Dependencies Between Components

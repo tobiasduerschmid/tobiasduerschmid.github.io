@@ -3,7 +3,7 @@ name: video-narration
 description: >-
   Authoring guide for video narrations in the SEBook: narrated lessons played like a video, whose
   every cue is a scene on an animated vector stage built with the song-video engine (the Scrum
-  narration, and any new one). USE THIS SKILL EVERY TIME you create, extend, restructure, or review
+  and Module Blood Groups narrations, and any new one). USE THIS SKILL EVERY TIME you create, extend, restructure, or review
   a video narration: `_data/narrations/<topic>.yml` and `_data/narration_visuals/<topic>.json`,
   `<topic>_quizzes.yml`, shared narration compilation, `_includes/video-narration*.html`,
   `_layouts/video-narration-stage.html`, `js/video-narration*.js`, `js/video-narration/<topic>.js`
@@ -128,6 +128,11 @@ from building.
   seconds, put something on screen for them.
 - Stage text is at least 20px in the picture's artwork (18px on the 960x540 stage after the body's 91% scale), and decorative uppercase
   labels at least 17px; prefer fewer, larger words.
+- Build on the shared wall kit (`js/video-narration/wall-kit.js`,
+  `window.WallKit`, styled by `css/video-narration-wall-kit.css`): cards,
+  notes, badges, stickers, labels, arrows, checklists, list cards. A topic
+  kit (`scrum-kit.js`, `blood-groups-kit.js`) adds only the topic's own
+  objects and loads after the wall kit.
 - Paper pieces (`card`, `note`, `speech`, `checklist`) are as wide as `w`
   plus padding; `listCard` is exactly `w`. Leave room for a raised, lit card.
 - Stamps do not shake the stage, and nothing large changes brightness quickly
@@ -162,7 +167,7 @@ Place every element so it neither touches nor hides another:
 - Every word stays inside the stage at every resting pose; long stickers are
   the usual culprits, so keep them short.
 - `tests/<topic>-narration.spec.js` poses every cue and checks placement
-  twice: the overlap test fails on text over text, text covered by a later
+  twice, with the shared checks in `tests/helpers/video-narration-stage.js`: the overlap test fails on text over text, text covered by a later
   piece (even one letter: a sticker clipping the "g" of "Sprint Backlog"
   counts), or text off the stage; the gap test fails on painted boxes closer
   than the gap without one containing the other. List an intended overlap in
@@ -191,7 +196,11 @@ the viewer switches theme mid-video. Three rules produce that reliably:
    `js/song-video/rounded-surfaces.js` does this for Firefox's rounded-border
    fix, which runs only in Firefox, so a stale color there never shows in
    Chrome. Mixed themes on screen (dark cards on the light wall, or white
-   cards with pale text) mean a frozen color or a stale stylesheet.
+   cards with pale text) mean a frozen color or a stale stylesheet. The
+   repaint follows class changes only, so a piece whose paint changes during
+   the video (a pill turning from A to AT) changes it with a state class,
+   never a data attribute or inline style; a Blood Groups pill kept its first
+   color in Firefox until its group became a class.
 3. **Version every asset URL.** The frame loads its own CSS and scripts;
    each URL in the player, the frame layout, and the chapter carries
    `?v={{ site.asset_version }}`. Bump `asset_version` in `_config.yml`
@@ -201,7 +210,11 @@ the viewer switches theme mid-video. Three rules produce that reliably:
 Verify with tests and eyes, every time, in both modes:
 
 - `every cue's text keeps 4.5:1 contrast in light/dark mode` poses every cue
-  in each theme and measures each text against the fills behind it.
+  in each theme and measures each text against the fills behind it. It reads
+  CSS fills only: text drawn over SVG artwork (a letter inside a drop) gets
+  the art's fill as its own CSS background, or the test measures it against
+  the wall. The matching fill also keeps its contrast where the art is not
+  drawn.
 - `switching from light to dark (and back) while watching any cue paints it
   like a fresh video` switches theme at every cue, with Firefox's repaint
   forced on, and compares every element's painted colors with a stage loaded

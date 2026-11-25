@@ -1,0 +1,181 @@
+WEBVTT
+
+intro-1
+00:00:00.000 --> 00:00:14.470
+It's nine fifty-six, and your lecture starts at ten, across campus. You grab a scooter, unlock it with your phone, and zip downhill. You stop outside the lecture hall, tap End ride, and the app says: No parking here.
+
+intro-2
+00:00:14.470 --> 00:00:34.180
+Behind that message, the app does three kinds of work. It applies rules: where you may park, and what a ride costs, with a student discount. It talks to technology: a map service, a payment service, the scooter's Bluetooth lock. And it does plain math, like checking whether a point lies inside a zone.
+
+intro-3
+00:00:34.180 --> 00:00:50.770
+The app comes from Glide, a student startup, and you've just joined its dev team. Week one brings bad news: the map service raises its prices tenfold, so the team must switch providers. How hard can that be? You open the function that ends a ride.
+
+tangle-1
+00:00:50.770 --> 00:01:11.240
+Here's end_ride. First, it asks the map provider's SDK where the scooter is. Then it checks the parking rule, using the SDK's own zone check. Then it prices the ride: unlock fee, minutes, student discount. Finally, it charges the card through the payment API and locks the scooter over Bluetooth.
+
+tangle-2
+00:01:11.240 --> 00:01:30.560
+Let's tag each line as rule or technology. The tags alternate down the function: the two are braided together. So predict: to switch map providers, which lines of end_ride must you touch? Only the lines that call the map, or more?
+
+tangle-3
+00:01:30.560 --> 00:01:49.650
+More. The parking rule is written in the old SDK's terms, so the rule changes too. And end_ride isn't alone. Search the codebase for the SDK: forty-seven hits in twelve files, from start_ride to the trip history. One provider switch ripples through the whole app.
+
+tangle-4
+00:01:49.650 --> 00:02:07.180
+It's not only the map. When finals week brings a new rule, ten free minutes for students, you edit those same tangled lines, and you can't test them without the SDK. When the campus bike-share asks for your pricing rules, they come welded to scooter locks and payment calls.
+
+tangle-5
+00:02:07.180 --> 00:02:27.470
+The fix starts with one habit: before you write a line, ask what the code knows. The answers sort all code into four groups, named like blood groups: A, T, AT, and zero. Let's meet the groups, see how they mix, design with them, and then test the design against change.
+
+two_questions-1
+00:02:27.470 --> 00:02:50.760
+Ask two questions about any code. Does it know the application domain, the business's own words, like ride, rider, parking zone, and price? And does it know a technology, a concrete API like the map SDK, the payment API, Bluetooth, or a database? Knowing means depending: if that changed, this code would change too.
+
+two_questions-2
+00:02:50.760 --> 00:03:13.180
+Two yes-or-no answers give four groups. Code that knows neither is group zero. Only the domain, group A, for application. Only a technology, group T. Both at once, group AT. Like a blood group, every piece of code has exactly one, and its group decides where it can go later.
+
+group_a-1
+00:03:13.180 --> 00:03:33.130
+Group A knows the domain and no technology. Pull the rule lines out of end_ride, and that's what you get: a dollar to unlock, thirty cents a minute, twenty percent off for students, and rides end only inside a parking zone. No SDK, no API, just rules in the business's own words.
+
+group_a-2
+00:03:33.130 --> 00:03:49.460
+This is the code the business is paid for. Riders don't care which map service you use; they care that the price is right and the rules are fair. Code in group A changes when the business changes, like a new discount, and stays put when the technology changes.
+
+group_a-3
+00:03:49.460 --> 00:04:06.340
+Where can group A go? Anywhere the same rules apply, on any technology. The campus bike-share locks bikes in docking stations instead of Bluetooth, but it prices rides the same way. It could reuse Glide's ride rules as they are.
+
+group_t-1
+00:04:06.340 --> 00:04:24.770
+Now pull out the technology lines, and you get group T: code that knows a technology and nothing about the domain. A payment client charges any amount to any card; it has never heard of a ride. A lock driver locks and unlocks a device. A map client finds where a device is.
+
+group_t-2
+00:04:24.770 --> 00:04:43.330
+You can't avoid group T: no app runs in thin air. But T code is reusable too, anywhere the same technology runs. The campus food-truck app takes cards through the same payment service, so it could reuse Glide's payment client without changing a line.
+
+group_zero-1
+00:04:43.330 --> 00:05:04.420
+One job in end_ride needs neither: the math behind the zone check. Is this point inside this polygon? Pulled out, that code knows no rides and no SDK, just coordinates. That's group zero. Zero code implements an abstract idea, like a sorted list, a dictionary, or a state machine.
+
+group_zero-2
+00:05:04.420 --> 00:05:25.100
+Zero is the universal donor: a delivery app, a campus tour, a game, any of them can reuse it. But alone, zero code does nothing useful. It needs group A or T to give it a job. In Glide, the parking rule asks it whether a scooter stands inside a zone.
+
+group_at-1
+00:05:25.100 --> 00:05:44.350
+Put all those lines back into one function, and you have end_ride as it stands: rules and technology braided together. That's group AT. To be fair, AT code is easy to write: one function, everything within reach, done by lunch. That's why every codebase has some.
+
+group_at-2
+00:05:44.350 --> 00:06:02.520
+Now finish the reuse chart. Group A goes wherever the same rules apply, group T wherever the same technology runs. Group AT needs both at once: only a scooter app with Glide's exact rules and the same three providers. Everywhere else, it's welded in place.
+
+group_at-3
+00:06:02.520 --> 00:06:20.740
+And AT code changes whenever the business or the technology changes, so it changes most often and is the hardest to maintain. Here's the rule of thumb: the larger a design's share of AT code, the lower its quality. AT is the group to shrink.
+
+mixing-1
+00:06:20.740 --> 00:06:40.910
+Here's why they're called blood groups: they combine the way blood types are inherited. Put code from two groups into one module, and the module gets every letter either part had. A plus A stays A. T plus T stays T. Zero adds no letter, so it mixes into any group without changing it.
+
+mixing-2
+00:06:40.910 --> 00:06:59.670
+Now a riskier mix. Glide's ride rules are clean group A. A teammate in a hurry adds one line to the price function: charge the card through the payment API, right there. So predict: what group is the price function now?
+
+mixing-3
+00:06:59.670 --> 00:07:18.900
+Group AT. One line of technology, and the whole function now knows the payment API. A plus T gives AT, just as inheriting A from one parent and B from the other gives blood type AB. Now the rules can't move to the bike-share without dragging the payment provider along.
+
+mixing-4
+00:07:18.900 --> 00:07:39.160
+And AT absorbs everything. Add more rules, more helpers, more zero code: it stays AT. It never turns back into A or T by itself, so you can't dilute it. The only cure is to separate the parts again, and that's what the design rules are for.
+
+leaks-1
+00:07:39.160 --> 00:07:57.710
+Mixing can also sneak in through an interface. Say the map client is clean group T, but its locate method returns the SDK's own location object. Every rule that reads that object now depends on the SDK. The technology leaks through the interface, and the rules turn AT.
+
+leaks-2
+00:07:57.710 --> 00:08:17.880
+Plug the leak with neutral words. Let locate return a plain point, just latitude and longitude: a zero type any code may know. Now the parking rule depends on a point, not on the SDK, and stays group A. Errors count too: translate the provider's errors into the app's own.
+
+leaks-3
+00:08:17.880 --> 00:08:39.720
+Learn the warning signs in a signature: SDK objects, SQL strings, HTTP status codes, a provider's error types. A method that takes raw SQL from the rules is the classic leak. It hands the database's language to the domain, and every caller becomes AT.
+
+separate-1
+00:08:39.720 --> 00:09:04.070
+Here's design rule one. Minimize AT modules, maximize zero modules. Assumptions about a technology limit reuse to software that uses it; assumptions about the domain limit reuse to that domain. So separate technological concerns from application concerns: rules in A modules, technology in T modules, general ideas in zero.
+
+separate-2
+00:09:04.070 --> 00:09:25.910
+Then keep each module to one concern. Each T module talks to one technology: the map client never charges cards. Each A module covers one topic: pricing rules live apart from rider accounts. It's the single responsibility principle, sharpened: one reason to change, of one kind.
+
+invert-1
+00:09:25.910 --> 00:09:45.700
+Here's design rule two. Avoid dependencies from large, complex A modules to T modules. If the ride rules call the payment client directly, they know the payment API exists, and its quirks creep in. So invert the dependency: the rules declare what they need, in their own words.
+
+invert-2
+00:09:45.700 --> 00:10:05.250
+The rules say what they need, never how. Charge this rider an amount. Find this scooter's position. Lock this scooter. Those needs become interfaces the A side owns: Payments, Locator, and Locks. They mention riders and scooters, never cards, SDKs, or Bluetooth.
+
+invert-3
+00:10:05.250 --> 00:10:24.360
+Then each technology plugs in through a small adapter, like a dongle between your laptop and a new monitor. The payment adapter turns charge this rider into the payment API's call. It's the only code that knows both sides, so it's AT. But it's thin, boring, and easy to replace.
+
+invert-4
+00:10:24.360 --> 00:10:49.240
+Thin means it translates but never decides: a rider into a card, dollars into cents, a zone into a map overlay. Translation like this is the one AT worth keeping. It even has its own letter, R, for representation; in blood terms, a positive Rhesus factor. It's schematic enough that tools can often generate it.
+
+frameworks-1
+00:10:49.240 --> 00:11:07.370
+Frameworks pull you into AT through inheritance. Say Glide's Ride class extends the web framework's database model class. Now every ride is also a framework object, and the rules inside it are married to that framework: you can't reuse them, or even test them easily, without it.
+
+frameworks-2
+00:11:07.370 --> 00:11:28.590
+For a large, complex domain class, put an adapter in between. A thin RideRecord extends the framework's model and copies fields to and from a plain Ride class, which keeps every rule and knows no framework. For a tiny app, inheriting directly can be fine. Size decides.
+
+change_test-1
+00:11:28.590 --> 00:11:45.340
+Time to test the new design the way an architect would: replay real changes and count what each one touches. Remember the three that hit the tangled end_ride: a new map provider, ten free minutes in finals week, and the bike-share's request for your pricing rules.
+
+change_test-2
+00:11:45.340 --> 00:12:01.320
+Start with the price hike that began this story. Glide switches map providers once more. So predict: in the separated design, which modules must change, and which stay exactly as they are?
+
+change_test-3
+00:12:01.320 --> 00:12:19.450
+Only the map's T module and its thin adapter. The rules still ask the locator for a point and never notice. The finals-week rule touches only the A rules, which you can test with no SDK at all. And the bike-share reuses the rules, plugging its docks in through its own adapter.
+
+change_test-4
+00:12:19.450 --> 00:12:40.450
+That's the goal in one line: a technology change touches only group T, a rule change only group A, and a change in how data is stored or shown only the thin translators. When each change lands in one small place, the design is ready for change, and for reuse.
+
+balance-1
+00:12:40.450 --> 00:12:59.340
+Don't overdo it. Hiding Python's own strings behind an interface protects nothing: zero code like strings, lists, or geometry doesn't change when your business or your technology does. Use it directly, and wrap what actually varies: the providers and frameworks you might swap.
+
+balance-2
+00:12:59.340 --> 00:13:17.430
+Separation pays off where change and reuse are likely: big rule sets, and technology that keeps changing. For a weekend script, a little AT is fine. Too little design gives you a tangle; too much gives you layers nobody can follow. Aim for the top of the curve.
+
+balance-3
+00:13:17.430 --> 00:13:36.490
+And at runtime? One extra call through an interface costs next to nothing, except in the tightest embedded code. The real price is design time, paid once. The payoff arrives every time the business or the technology changes, and over time, both will.
+
+summary-1
+00:13:36.490 --> 00:13:58.080
+Let's recap. Ask what each piece of code knows: the domain, a technology, both, or neither. That gives its group: A, T, AT, or zero. Zero goes everywhere. Group A goes wherever its rules apply, group T wherever its technology runs, and group AT almost nowhere.
+
+summary-2
+00:13:58.080 --> 00:14:19.850
+Groups combine like blood types: zero adds nothing, A plus T makes AT, and AT never dilutes. So minimize AT and maximize zero. Let the rules own their interfaces, plug technology in through thin adapters that translate but never decide, and keep frameworks at arm's length.
+
+summary-3
+00:14:19.850 --> 00:14:37.190
+Then test your design: replay a technology change, a rule change, and a reuse request. If each lands in one small place, you've designed for change. Next time you write a function, ask the two questions before line one.

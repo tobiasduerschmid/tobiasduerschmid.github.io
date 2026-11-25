@@ -107,13 +107,13 @@
       if (layout === markerLayout) return;
       markerLayout = layout;
       const focused = menuTrigger || (markers.contains(document.activeElement) ? document.activeElement : null);
-      const focusedScene = focused ? Number(focused.dataset.scene) : null;
+      const focusedScene = focused ? Number(focused.dataset.checkSceneIndex) : null;
       closeMenu(false);
       markers.replaceChildren(...groups.map(({ x, indices }) => {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'vn-timeline-check';
-        button.dataset.scene = String(indices[0]);
+        button.dataset.checkSceneIndex = String(indices[0]);
         button.style.left = `${x - 12}px`;
         const title = indices.length === 1 ? `Knowledge check: ${label(indices[0])}` : `${indices.length} knowledge checks: ${indices.map(label).join(', ')}`;
         button.setAttribute('aria-label', title);

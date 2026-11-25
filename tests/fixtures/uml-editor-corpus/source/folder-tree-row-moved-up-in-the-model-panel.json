@@ -1,0 +1,167 @@
+{
+  "id": "folder-tree-row-moved-up-in-the-model-panel",
+  "family": "source",
+  "type": "folder-tree",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nproject/\n  src/\n    main.js\n  README.md\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "text": "Folder tree model (",
+        "exact": false
+      }
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Move file row 4 up"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nproject/\n  src/\n  README.md\n    main.js\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No movable elements detected for this diagram yet."
+      },
+      "uml-pg-tool-status": {
+        "text": "Moved model row."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nproject/\n  src/\n  README.md\n    main.js\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nproject/\n  src/\n    main.js\n  README.md\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No movable elements detected for this diagram yet."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nproject/\n  src/\n    main.js\n  README.md\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nproject/\n  src/\n  README.md\n    main.js\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No movable elements detected for this diagram yet."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nproject/\n  src/\n  README.md\n    main.js\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "folder-tree",
+      "before": "@startuml\nproject/\n  src/\n    main.js\n  README.md\n@enduml",
+      "operation": {
+        "op": "source.moveLines",
+        "revision": "r3fb4e7c8:57",
+        "line": 4,
+        "swapWith": 3,
+        "facts": {},
+        "undo": {
+          "key": "model-row-move"
+        }
+      },
+      "after": "@startuml\nproject/\n  src/\n  README.md\n    main.js\n@enduml"
+    }
+  ]
+}

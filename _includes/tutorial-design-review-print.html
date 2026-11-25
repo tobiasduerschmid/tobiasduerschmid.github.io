@@ -1,0 +1,78 @@
+{%- comment -%}
+  Print view of a step's design review (`design_review`), placed between the
+  step's files and its solution by tutorial-print-content.html. Params:
+  step, index (zero-based), instructor_mode.
+
+  Students get the case (request, story, acceptance criteria, the agent's
+  reply, Given), each of the agent's diagrams as an ArchUML code block (drawn
+  by UMLShared.renderAll, or at build time in production), and a writing
+  area. The expert review, the annotated and fixed diagrams, and the answer
+  key sit in an instructor-only .step-solution block, shown with
+  ?instructor-mode=true.
+{%- endcomment -%}
+{%- assign tdrp = include.step.design_review -%}
+{%- assign tdrp_id = 'design-review-print-' | append: include.index -%}
+<section class="tutorial-design-review-print" aria-labelledby="{{ tdrp_id }}-title">
+  <h3 class="tutorial-design-review-print__title" id="{{ tdrp_id }}-title">Design review</h3>
+  <h4 class="tutorial-design-review-print__heading">You asked the agent</h4>
+  {{ tdrp.request | markdownify }}
+  <h4 class="tutorial-design-review-print__heading">User story</h4>
+  {{ tdrp.story | markdownify }}
+  {%- if tdrp.acceptance_criteria %}
+  <h5>Acceptance criteria</h5>
+  <ul>
+    {%- for tdrp_criterion in tdrp.acceptance_criteria %}
+    <li>{{ tdrp_criterion | markdownify | remove: '<p>' | remove: '</p>' | strip }}</li>
+    {%- endfor %}
+  </ul>
+  {%- endif %}
+  <h4 class="tutorial-design-review-print__heading">The agent&rsquo;s reply</h4>
+  {{ tdrp.reply | markdownify }}
+  {%- for tdrp_diagram in tdrp.diagrams %}
+  <div class="tutorial-design-review-print__diagram">
+    {%- if tdrp_diagram.label %}<p><strong>{{ tdrp_diagram.label | escape }}</strong></p>{% endif %}
+    <pre><code class="language-uml-{{ tdrp_diagram.type | default: 'class' | downcase }}">{{ tdrp_diagram.source | xml_escape }}</code></pre>
+  </div>
+  {%- endfor %}
+  <h4 class="tutorial-design-review-print__heading">Given</h4>
+  {{ tdrp.given | markdownify }}
+  <h4 class="tutorial-design-review-print__heading">Your review comment</h4>
+  {%- if tdrp.task %}{{ tdrp.task | markdownify }}{% else %}
+  <p>Find the flaw. Name the element that is wrong, trace what goes wrong in the Given scenario, and propose a fix that removes the cause.</p>
+  {%- endif %}
+  {%- if tdrp.scaffold %}
+  <p>Start from this comment and complete it:</p>
+  <pre class="tutorial-design-review-print__scaffold">{{ tdrp.scaffold | escape }}</pre>
+  {%- endif %}
+  <div class="tutorial-design-review-print__writing" aria-hidden="true"></div>
+
+  <div class="step-solution{% unless include.instructor_mode %} is-hidden{% endunless %}">
+    <div class="step-solution-header">
+      <span class="step-solution-icon"><i class="fa fa-key" aria-hidden="true"></i></span>
+      <h4 class="step-solution-title">Expert review</h4>
+    </div>
+    {%- assign tdrp_lesson = tdrp.lesson %}
+    <p><strong>Lesson learned: {{ tdrp_lesson.principle | escape }}</strong></p>
+    {{ tdrp_lesson.definition | markdownify }}
+    {%- if tdrp_lesson.ask %}{{ tdrp_lesson.ask | markdownify }}{% endif %}
+    <h5>The flaw</h5>
+    {{ tdrp_lesson.flaw | markdownify }}
+    <h5>The fix</h5>
+    {{ tdrp_lesson.fix | markdownify }}
+    {%- if tdrp_lesson.more %}{{ tdrp_lesson.more | markdownify }}{% endif %}
+    {%- if tdrp.annotated %}
+    <p><strong>{{ tdrp.annotated.label | default: 'The flaw, annotated' | escape }}</strong></p>
+    <pre><code class="language-uml-{{ tdrp.annotated.type | default: 'class' | downcase }}">{{ tdrp.annotated.source | xml_escape }}</code></pre>
+    {%- endif %}
+    {%- if tdrp.fixed %}
+    <p><strong>{{ tdrp.fixed.label | default: 'The fixed design' | escape }}</strong></p>
+    <pre><code class="language-uml-{{ tdrp.fixed.type | default: 'class' | downcase }}">{{ tdrp.fixed.source | xml_escape }}</code></pre>
+    {%- endif %}
+    <h5>Answer key the local model compares with</h5>
+    <ul>
+      <li><strong>Flaw:</strong> {{ tdrp.key.flaw | escape }}</li>
+      <li><strong>What goes wrong:</strong> {{ tdrp.key.consequence | escape }}</li>
+      <li><strong>Fix:</strong> {{ tdrp.key.fix | escape }}</li>
+    </ul>
+  </div>
+</section>

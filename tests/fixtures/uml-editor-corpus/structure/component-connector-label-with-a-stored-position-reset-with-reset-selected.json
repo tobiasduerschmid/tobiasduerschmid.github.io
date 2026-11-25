@@ -1,0 +1,193 @@
+{
+  "id": "component-connector-label-with-a-stored-position-reset-with-reset-selected",
+  "family": "structure",
+  "type": "component",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"label:edge-0\" x=220 y=70\nnode \"Frontend.f_out\" x=187 y=129\nnode \"Backend.b_in\" x=286 y=129\n@endlayout\ncomponent Frontend @pos(57, 84) {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend @pos(286, 84) {\n  portin \"httpIn\" as b_in\n}\nf_out --> b_in : REST\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Label REST",
+        "exact": false
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Reset Selected"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"Frontend.f_out\" x=160 y=75\nnode \"Backend.b_in\" x=259 y=75\n@endlayout\ncomponent Frontend @pos(30, 30) {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend @pos(259, 30) {\n  portin \"httpIn\" as b_in\n}\nf_out --> b_in : REST\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"label:edge-0\" x=220 y=70\nnode \"Frontend.f_out\" x=187 y=129\nnode \"Backend.b_in\" x=286 y=129\n@endlayout\ncomponent Frontend @pos(57, 84) {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend @pos(286, 84) {\n  portin \"httpIn\" as b_in\n}\nf_out --> b_in : REST\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"Frontend.f_out\" x=160 y=75\nnode \"Backend.b_in\" x=259 y=75\n@endlayout\ncomponent Frontend @pos(30, 30) {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend @pos(259, 30) {\n  portin \"httpIn\" as b_in\n}\nf_out --> b_in : REST\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "component",
+      "before": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"label:edge-0\" x=220 y=70\nnode \"Frontend.f_out\" x=187 y=129\nnode \"Backend.b_in\" x=286 y=129\n@endlayout\ncomponent Frontend @pos(57, 84) {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend @pos(286, 84) {\n  portin \"httpIn\" as b_in\n}\nf_out --> b_in : REST\n@enduml",
+      "operation": {
+        "op": "layout.reset",
+        "revision": "ra3d6b022:324",
+        "target": {
+          "label": "label:edge-0"
+        },
+        "facts": {
+          "positions": {
+            "Frontend": {
+              "x": 30.0000057220459,
+              "y": 29.999967575073242
+            },
+            "Frontend.f_out": {
+              "x": 160.00000762939453,
+              "y": 74.9999885559082
+            },
+            "Backend": {
+              "x": 259.0000305175781,
+              "y": 29.999967575073242
+            },
+            "Backend.b_in": {
+              "x": 259.00000762939453,
+              "y": 74.9999885559082
+            },
+            "label:edge-0": {
+              "x": 220.00283813476562,
+              "y": 70.23497772216797
+            }
+          }
+        },
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"Frontend.f_out\" x=160 y=75\nnode \"Backend.b_in\" x=259 y=75\n@endlayout\ncomponent Frontend @pos(30, 30) {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend @pos(259, 30) {\n  portin \"httpIn\" as b_in\n}\nf_out --> b_in : REST\n@enduml"
+    }
+  ]
+}

@@ -1,0 +1,204 @@
+{
+  "id": "component-port-position-reset-with-reset-selected",
+  "family": "structure",
+  "type": "component",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"Frontend.f_out\" x=187 y=129\nnode \"Backend.b_in\" x=294 y=174\nnode \"Backend.b_dbout\" x=430 y=129\nnode \"Database.db_in\" x=521 y=129\n@endlayout\ncomponent Frontend @pos(57, 84) {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend @pos(286, 84) {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database @pos(521, 84) {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Port httpIn — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Reset Selected"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"Frontend.f_out\" x=160 y=75\nnode \"Backend.b_in\" x=286 y=129\nnode \"Backend.b_dbout\" x=403 y=75\nnode \"Database.db_in\" x=494 y=75\n@endlayout\ncomponent Frontend @pos(30, 30) {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend @pos(259, 30) {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database @pos(494, 30) {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"Frontend.f_out\" x=187 y=129\nnode \"Backend.b_in\" x=294 y=174\nnode \"Backend.b_dbout\" x=430 y=129\nnode \"Database.db_in\" x=521 y=129\n@endlayout\ncomponent Frontend @pos(57, 84) {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend @pos(286, 84) {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database @pos(521, 84) {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"Frontend.f_out\" x=160 y=75\nnode \"Backend.b_in\" x=286 y=129\nnode \"Backend.b_dbout\" x=403 y=75\nnode \"Database.db_in\" x=494 y=75\n@endlayout\ncomponent Frontend @pos(30, 30) {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend @pos(259, 30) {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database @pos(494, 30) {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "component",
+      "before": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"Frontend.f_out\" x=187 y=129\nnode \"Backend.b_in\" x=294 y=174\nnode \"Backend.b_dbout\" x=430 y=129\nnode \"Database.db_in\" x=521 y=129\n@endlayout\ncomponent Frontend @pos(57, 84) {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend @pos(286, 84) {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database @pos(521, 84) {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+      "operation": {
+        "op": "layout.reset",
+        "revision": "r7833a713:477",
+        "target": {
+          "element": "Backend.b_in"
+        },
+        "facts": {
+          "positions": {
+            "Frontend": {
+              "x": 30.0000057220459,
+              "y": 29.999967575073242
+            },
+            "Frontend.f_out": {
+              "x": 160.00000762939453,
+              "y": 74.9999885559082
+            },
+            "Backend": {
+              "x": 259.0000305175781,
+              "y": 29.999967575073242
+            },
+            "Backend.b_in": {
+              "x": 267,
+              "y": 120.0000114440918
+            },
+            "Backend.b_dbout": {
+              "x": 403,
+              "y": 74.9999885559082
+            },
+            "Database": {
+              "x": 494.0000305175781,
+              "y": 29.999967575073242
+            },
+            "Database.db_in": {
+              "x": 494.0000457763672,
+              "y": 74.9999885559082
+            }
+          },
+          "automatic": {
+            "x": 286.017822265625,
+            "y": 129
+          }
+        },
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"Frontend.f_out\" x=160 y=75\nnode \"Backend.b_in\" x=286 y=129\nnode \"Backend.b_dbout\" x=403 y=75\nnode \"Database.db_in\" x=494 y=75\n@endlayout\ncomponent Frontend @pos(30, 30) {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend @pos(259, 30) {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database @pos(494, 30) {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml"
+    }
+  ]
+}

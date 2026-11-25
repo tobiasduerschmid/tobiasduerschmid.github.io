@@ -107,5 +107,5 @@
     </ol>
   </section>
   {% endif %}
-  {% if lesson.animation %}<div class="vn-notes-master"><div class="stage" id="stage" aria-hidden="true" data-topic="{{ include.topic }}" data-theme="{{ lesson.animation.theme | default: 'studio' }}"></div></div>{% endif %}
+  {% if lesson.animation %}<div class="vn-notes-master">{% include video-narration-stage-element.html topic=include.topic %}</div>{% endif %}
 </main>

@@ -1,0 +1,31 @@
+# WRONG BUT UNREACHABLE (reviewer counter-model s4-E: requirements emptied, one untraced DECIDE): passes T1-T4; locked_fields: [requirements] binds the YAML surface too (spec §11), so the runtime reverts this edit.
+schema: c4-design/1
+name: Course Registration
+description: Students plan a term schedule and enroll in every section of it, or in none.
+
+requirements: {}
+
+people:
+  student:
+    name: Student
+    description: Plans and confirms one term schedule.
+    collaborators:
+      registration: plans a schedule and enrolls using
+  adviser:
+    name: Academic Adviser
+    description: Reviews students' planned schedules before they enroll.
+    collaborators:
+      registration: reviews a student's planned schedule using
+
+systems:
+  registration:
+    name: Course Registration
+    description: Plans term schedules and enrolls students in their sections.
+    responsibilities:
+      - decide: whether a student may enroll in a section
+    collaborators:
+      billing: requests tuition charges from
+  billing:
+    name: Billing System
+    description: Charges tuition and fees for the university.
+    external: true

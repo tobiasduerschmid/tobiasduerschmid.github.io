@@ -9,6 +9,7 @@ export class ModelView {
     this.buttons = Object.fromEntries([...this.element.querySelectorAll('[data-action]')].map(el=>[el.dataset.action,el]));
   }
   status(text) { this.fields.status.textContent = text; }
+  title(text) { this.fields.title.textContent = text; }
   selection() {
     return {model:this.fields.model.value,memoryConfirmed:this.fields.memory.value === '16'};
   }
@@ -64,10 +65,11 @@ export class ModelView {
     if (before) host.prepend(this.element);
     else host.append(this.element);
   }
-  controls({busy=false,ready=false,cached=false,prepared=false,suggestion=false,exercise=false,chat=false,specificationOnly=false,deleting=false,comparable=false,operation}) {
+  controls({busy=false,ready=false,cached=false,prepared=false,suggestion=false,exercise=false,chat=false,review=false,specificationOnly=false,deleting=false,comparable=false,operation}) {
     const usable = ready || cached;
+    const needsModel = exercise || chat || review;
     this.fields['model-state'].textContent = ready ? 'Ready · on your device' : operation === 'download' ? 'Setting up…' : cached ? 'Downloaded · on your device' : 'Optional · on your device';
-    this.fields.setup.hidden = usable || !(exercise || chat);
+    this.fields.setup.hidden = usable || !needsModel;
     this.fields['check-hint'].hidden = !exercise;
     this.fields['check-hint'].textContent = specificationOnly
       ? 'Generates and checks an implementation from your prose. You only work on the specification.'
@@ -75,7 +77,7 @@ export class ModelView {
     this.fields.engine.disabled = busy;
     this.fields.model.disabled = busy;
     this.fields.memory.disabled = busy;
-    this.buttons.download.hidden = usable || !(exercise || chat);
+    this.buttons.download.hidden = usable || !needsModel;
     this.buttons.download.disabled = busy || ready || !prepared;
     this.buttons.unload.disabled = busy || !ready;
     this.buttons.generate.hidden = !usable || !exercise || specificationOnly;

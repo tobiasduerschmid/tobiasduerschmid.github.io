@@ -1,0 +1,21 @@
+{%- comment -%}
+  Loads the C4 editor and its site host adapter on pages with front matter `c4_editor: true` (and on combined course
+  pages that hold such a page). Include it after c4-scripts.html and uml-bundle.js: the editor parts read the core
+  (ArchUMLC4) as they load, and js/c4-editor-site.js mounts the editors as soon as it runs.
+
+  The editor files and their order come from js/ArchUML/c4/manifest.json (`editor`, via
+  _data/archuml_c4_manifest.json), as c4-scripts.html takes the core and renderer lists from it.
+  Monaco comes from the page's UML code-lab scripts when the page has them, so it is never loaded twice.
+  The diagram editor's core group (js/ArchUML/diagram-editor/, with its stylesheet) comes first, deferred like the
+  editor scripts, so the editor finds it when it edits a UML-notation view (code, deployment, dynamic, interfaces).
+  A page that also holds the UML editor loads the core group twice; the second load replaces nothing.
+{%- endcomment -%}
+{% include diagram-editor-scripts.html groups="core" defer="true" %}
+{%- for file in site.data.archuml_c4_manifest.editor %}
+<script src="{{ '/js/ArchUML/' | append: file | relative_url }}" defer></script>
+{%- endfor %}
+{%- unless page.uml_code_labs or combined_has_uml_code_labs %}
+<script src="{{ '/js/monaco-loader.js' | relative_url }}" defer></script>
+<script src="{{ '/js/monaco-focus-exit.js' | relative_url }}" defer></script>
+{%- endunless %}
+<script src="{{ '/js/c4-editor-site.js' | relative_url }}" defer></script>

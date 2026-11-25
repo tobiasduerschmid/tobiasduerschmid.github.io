@@ -1,0 +1,24 @@
+@startuml
+component WebApp {
+  portout "api" as wa_out
+}
+component APIGateway {
+  portin "http" as gw_in
+  portout "auth" as gw_auth
+  portout "data" as gw_data
+}
+component AuthService {
+  portin "verify" as auth_in
+}
+component DataService {
+  portin "query" as ds_in
+  portout "db" as ds_out
+}
+component Database {
+  portin "sql" as db_in
+}
+wa_out --> gw_in : HTTPS
+gw_auth --> auth_in : gRPC
+gw_data --> ds_in : gRPC
+ds_out --> db_in : SQL
+@enduml

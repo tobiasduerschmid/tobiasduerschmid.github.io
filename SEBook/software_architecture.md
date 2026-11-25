@@ -55,6 +55,8 @@ No single diagram can answer every architectural question. Different views expos
 
 The module view and the component-and-connector view are especially easy to confuse. A **module** is a design-time unit of code. A **component** in software architecture is an independently deployable runtime unit: something that can execute for a prolonged period, such as a process, service, worker, or broker. A shared C++ library might appear once in the module view and be compiled into both a client executable and a server executable in the runtime view. That means the two views are related, but they are not the same view.
 
+> **Terminology note:** The [C4 model](/SEBook/architecture/c4#abstractions) calls this independently deployable runtime unit a *container* and uses *component* for a part of one container that is never deployed on its own.
+
 This distinction matters because each view supports only some claims. A layered module view can justify claims about modifiability or portability because it shows dependency direction. It cannot, by itself, justify claims about availability because modules do not fail independently at runtime. Availability has to be reasoned about from runtime components, deployment, faults, recovery behavior, and monitoring.
 
 ## The Dichotomy of Architecture

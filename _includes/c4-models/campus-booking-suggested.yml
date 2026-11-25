@@ -1,0 +1,167 @@
+schema: c4-design/1
+name: Campus Room Booking
+description: Students and staff find free rooms on campus and book them for meetings and study.
+status: proposed
+enterprise: UCLA
+
+requirements:
+  RB-01: A student can find a room that is free at a chosen time and fits the group.
+  RB-02: Two bookings never overlap in the same room.
+  RB-03: A booking that nobody checks into within 15 minutes is released for others.
+  RB-04: Only staff can book lecture halls.
+
+people:
+  student:
+    name: Student
+    description: Books study and meeting rooms for small groups.
+    collaborators:
+      app: finds, books, and checks into rooms using
+  facilities-staff:
+    name: Facilities Staff
+    description: Keeps the list of rooms, capacities, and opening hours current.
+    collaborators:
+      app: maintains rooms and opening hours using
+
+systems:
+  booking:
+    name: Room Booking
+    description: Finds free rooms and books them without overlaps.
+    responsibilities:
+      - know: which rooms exist, their capacity, and their opening hours
+        id: rb-rooms
+        requirements: [RB-01]
+      - know: which rooms are free at a requested time
+        id: rb-free
+        requirements: [RB-01]
+      - do: record a booking so that no two bookings overlap in one room
+        id: rb-record
+        requirements: [RB-02]
+      - do: release a booking that nobody checked into within 15 minutes
+        id: rb-release
+        requirements: [RB-03]
+      - decide: whether a person may book a given room type
+        id: rb-permission
+        requirements: [RB-04]
+    containers:
+      app:
+        name: Booking Web App
+        kind: browser_app
+        technology: TypeScript, React
+        description: Lets people search for free rooms, book one, check in, and edit room details.
+        responsibilities:
+          - do: let people search for free rooms, book one, and check in
+          - do: let facilities staff edit rooms and opening hours
+        collaborators:
+          identity: {description: signs people in through, technology: OpenID Connect}
+          coordinator: {description: submits booking requests and check-ins to, technology: JSON/HTTPS}
+          finder: {description: asks for free rooms that fit a group from, technology: JSON/HTTPS}
+          catalog: {description: sends changes to rooms and opening hours to, technology: JSON/HTTPS}
+          api:
+            description: sends searches, bookings, check-ins, and room changes to
+            technology: JSON/HTTPS
+      api:
+        name: Booking API
+        technology: Java 21, Spring Boot
+        description: Finds free rooms, decides permissions, and records bookings without overlaps.
+        responsibilities:
+          - know: which rooms exist, their capacity, and their opening hours
+            id: api-rooms
+            refines: rb-rooms
+          - know: which rooms are free at a requested time
+            id: api-free
+            refines: rb-free
+          - do: record a booking so that no two bookings overlap in one room
+            id: api-record
+            refines: rb-record
+          - do: release a booking that nobody checked into within 15 minutes
+            id: api-release
+            refines: rb-release
+          - decide: whether a person may book a given room type
+            id: api-permission
+            refines: rb-permission
+        collaborators:
+          db:
+            description: reads and writes rooms, bookings, and check-ins in
+            technology: SQL/TCP
+        components:
+          coordinator:
+            name: Booking Coordinator
+            technology: Spring service
+            stereotypes: [coordinator]
+            responsibilities:
+              - do: sequence one booking request or check-in from permission check to confirmation
+            collaborators:
+              permissions: asks for a booking permission decision from
+              ledger: records bookings and check-ins through
+              calendar-gateway: asks to add each confirmed booking to the person's calendar through
+          permissions:
+            name: Booking Permission Policy
+            technology: Spring service
+            stereotypes: [service_provider]
+            responsibilities:
+              - decide: whether a person may book a given room type
+                refines: api-permission
+            collaborators:
+              catalog: asks for the type of a room from
+          finder:
+            name: Room Finder
+            technology: Spring service
+            stereotypes: [service_provider]
+            responsibilities:
+              - know: which rooms are free at a requested time
+                refines: api-free
+            collaborators:
+              catalog: asks for open rooms that fit the group from
+              ledger: asks for existing bookings in a time range from
+          catalog:
+            name: Room Catalog
+            technology: Spring service
+            stereotypes: [information_holder]
+            owns: [rooms, opening hours]
+            responsibilities:
+              - know: which rooms exist, their capacity, their type, and their opening hours
+                refines: api-rooms
+            collaborators:
+              db: {description: reads and writes rooms and opening hours in, technology: SQL/TCP}
+          ledger:
+            name: Booking Ledger
+            technology: Spring service
+            stereotypes: [information_holder]
+            owns: [bookings, check-ins]
+            responsibilities:
+              - know: which bookings and check-ins exist for each room
+              - do: record a booking so that no two bookings overlap in one room
+                refines: api-record
+              - do: release every booking that nobody checked into within 15 minutes
+                refines: api-release
+            collaborators:
+              db: {description: reads and writes bookings and check-ins in, technology: SQL/TCP}
+            invariants: [no two bookings of one room overlap in time]
+          calendar-gateway:
+            name: Calendar Gateway
+            technology: Spring service
+            stereotypes: [interfacer]
+            responsibilities:
+              - do: add each confirmed booking to the calendar of the person who booked it
+            collaborators:
+              calendar: {description: adds confirmed bookings to personal calendars through, technology: HTTPS}
+      db:
+        name: Booking Database
+        kind: database
+        technology: PostgreSQL 16
+        description: Stores rooms, opening hours, bookings, and check-ins.
+        responsibilities:
+          - do: durably store rooms, opening hours, bookings, and check-ins
+        choices:
+          technology:
+            chosen: PostgreSQL 16
+            alternatives: [MySQL 8]
+            because: an exclusion constraint lets the database reject a booking whose time range overlaps another booking of the same room, the mechanism the Booking Ledger relies on for RB-02
+  identity:
+    name: Campus Single Sign-On
+    external: true
+    description: Signs in students and staff and reports each person's campus role.
+  calendar:
+    name: Campus Calendar
+    external: true
+    description: Hosts the personal calendars of students and staff.

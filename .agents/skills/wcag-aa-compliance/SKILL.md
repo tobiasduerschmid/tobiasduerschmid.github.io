@@ -89,7 +89,7 @@ The complete list of all 55 success criteria you must satisfy. The format is `<i
 - **2.5.2** A — *Pointer Cancellation.* Down-events don't trigger destructive actions. Use `click` (not `mousedown`/`pointerdown`) for activation, so the user can drag away to cancel.
 - **2.5.3** A — *Label in Name.* The accessible name (what the screen reader announces) contains the visible text. If a button shows "Save", its `aria-label` cannot be "Submit form". Voice-control users say what they see.
 - **2.5.4** A — *Motion Actuation.* If a feature is triggered by device motion (shake, tilt), there is also a UI-control alternative, and motion can be disabled.
-- **2.5.7** AA — *Dragging Movements.* (NEW in 2.2) Anything operable by dragging (reorderable lists, sliders, drag-and-drop graders) has a single-pointer alternative — buttons, keyboard handlers, or text-input. Pure-drag interactions are forbidden.
+- **2.5.7** AA — *Dragging Movements.* (NEW in 2.2) Anything operable by dragging (reorderable lists, sliders, drag-and-drop graders) has a single-pointer path that needs no dragging: a click, a tap, a button, or a menu (for example "Move…" and then a click on the place). Pure-drag interactions are forbidden. A keyboard path is required too, by 2.1.1, but it does not meet 2.5.7 on its own: arrow keys or other key handlers are not a single-pointer path.
 - **2.5.8** AA — *Target Size (Minimum).* (NEW in 2.2) Pointer targets are at least 24×24 CSS pixels, **or** spaced so a 24-pixel circle around each target does not overlap. Watch dense icon rows, table cell controls, footnote markers.
 
 ### 3 — Understandable
@@ -122,7 +122,7 @@ WCAG 2.2 added six criteria over 2.1. Old code, old guides, and many automated t
 | Criterion | Level | Watch for |
 |---|---|---|
 | 2.4.11 *Focus Not Obscured (Minimum)* | AA | Sticky headers/footers covering the focused element when tabbing through. |
-| 2.5.7 *Dragging Movements* | AA | Drag-and-drop reorder lists, sliders, drag-to-trash. Always provide a button/keyboard fallback. |
+| 2.5.7 *Dragging Movements* | AA | Drag-and-drop reorder lists, sliders, drag-to-trash. Always provide a single-pointer path without dragging (a click, a tap, a button, or a menu). A keyboard path is required too (2.1.1), but it does not meet 2.5.7 alone. |
 | 2.5.8 *Target Size (Minimum)* | AA | Dense icon rows, footnote markers, table cell buttons under 24×24 px. |
 | 3.2.6 *Consistent Help* | A | Contact / help links must keep the same relative position across pages that include them. |
 | 3.3.7 *Redundant Entry* | A | Don't re-ask for the same data twice in one flow. |
@@ -225,7 +225,7 @@ When surfacing, include: which criterion is violated, where (file + line), what 
 - **Tab order mismatch** — using `position: absolute` or CSS `order:` to visually reshuffle without updating the DOM (1.3.2, 2.4.3). Match DOM order to reading order.
 - **`aria-label` that contradicts visible text** — fails 2.5.3. Voice-control users say what they see; the accessible name must contain the visible label.
 - **Hardcoded heading levels that skip** — going `<h2>` → `<h4>` because `<h3>` "looks too big" (1.3.1, 2.4.6). Use the right level and restyle with CSS.
-- **Drag-only interactions** (NEW concern in 2.2) — every drag-to-reorder, drag-to-resize, drag-to-trash must have a button/keyboard alternative (2.5.7).
+- **Drag-only interactions** (NEW concern in 2.2) — every drag-to-reorder, drag-to-resize, drag-to-trash must have a single-pointer path without dragging, such as a click, a tap, a button, or a menu (2.5.7). Arrow keys alone do not meet 2.5.7: the keyboard path is required too, by 2.1.1, but it is a second path, not the single-pointer one.
 - **24px target sizes ignored** (NEW concern in 2.2) — dense rows of small icon buttons, footnote markers, X-close buttons that are 16×16. Either enlarge or space them so a 24-px circle doesn't overlap (2.5.8).
 
 ## Quick decision guide
@@ -258,7 +258,7 @@ and print; verify destructive work happens only after explicit confirmation.
 | Adding a form | Real `<label>` for every control. Errors in text, not just color. Use `autocomplete` for common fields. Don't use placeholder as label. |
 | Adding a modal / dialog | Trap focus inside while open, restore focus to trigger on close. Esc closes. `role="dialog"` + `aria-labelledby`. |
 | Adding a tooltip / popover | Trigger on focus, not just hover. Dismissible with Esc, persistent, hoverable (1.4.13). |
-| Adding a drag interaction | Provide a non-drag alternative (buttons, keyboard arrow keys, text input) (2.5.7). |
+| Adding a drag interaction | Provide a single-pointer path without dragging: a click, a tap, a button, or a menu (2.5.7). Also provide a keyboard path (2.1.1); keyboard handlers or arrow keys alone do not meet 2.5.7. |
 | Adding a status update / toast | `role="status"` or `aria-live="polite"`; don't move focus to it (4.1.3). |
 | Adding a sticky header / footer | Verify focused elements are not hidden behind it when tabbing (2.4.11). |
 | Editing content (alt text, headings, labels) | Yes, this counts. Verify alt text is meaningful, headings don't skip levels, labels match the visible text. |

@@ -617,6 +617,40 @@ test('keyboard audit checks the visible focus track of a transparent native swit
   ]));
 });
 
+// A WAI-ARIA tree: the treeitem contains its own row, a description, an
+// actions button, and its open branch of child treeitems.
+const TREE_FIXTURE = `<style>
+    .item:focus-visible { outline: none; }
+    .item:focus-visible > .row { outline: 3px solid blue; }
+  </style><main><ul role="tree" aria-label="Model">
+    <li id="people" class="item" role="treeitem" tabindex="0" aria-expanded="true"
+      aria-labelledby="people-label" aria-describedby="people-detail">
+      <div class="row"><span id="people-label">People</span> <span id="people-detail">1 item</span>
+        <button type="button" tabindex="-1" aria-label="Actions for People">⋯</button></div>
+      <ul role="group"><li class="item" role="treeitem" tabindex="-1" aria-labelledby="student-label">
+        <div class="row"><span id="student-label">Student</span></div></li></ul>
+    </li>
+    <li id="misnamed" class="item" role="treeitem" tabindex="0" aria-label="Actors">
+      <div class="row"><span>People</span></div></li>
+  </ul></main>`;
+
+test('keyboard audit accepts a treeitem focus ring drawn on its own row', async ({ page }) => {
+  await page.setContent(TREE_FIXTURE);
+  expect((await runFocusAudit(page)).findings.filter((finding) => finding.criterion === '2.4.7')).toEqual([]);
+
+  await page.addStyleTag({ content: '.item:focus-visible > .row { outline: none; }' });
+  expect((await runFocusAudit(page)).findings).toEqual(expect.arrayContaining([
+    expect.objectContaining({ criterion: '2.4.7', message: expect.stringContaining('#people') }),
+  ]));
+});
+
+test('label-in-name audit reads a treeitem label from its own row, not its branch or description', async ({ page }) => {
+  await page.setContent(TREE_FIXTURE);
+  const labelFindings = (await page.evaluate(runDomAudit)).findings.filter((finding) => finding.criterion === '2.5.3');
+  expect(labelFindings.some((finding) => finding.message.includes('#people'))).toBe(false);
+  expect(labelFindings.some((finding) => finding.message.includes('#misnamed'))).toBe(true);
+});
+
 test('keyboard audit detects a child clipped by its frame host', async ({ page }) => {
   await focusAuditFrame(page, '<style>body { margin: 0; } button { position: fixed; left: 100px; top: 60px; } button:focus { outline: 3px solid blue; }</style><button id="clipped">Clipped child</button>',
     '#frame-host { overflow: hidden; width: 30px; height: 30px; } iframe { width: 300px; height: 150px; border: 0; }');
@@ -691,15 +725,22 @@ function focusedControlSnapshot({ restoreIndex } = {}) {
   // The tutorial switch keeps its native input transparent and draws its
   // keyboard focus ring on the adjacent track. Treat that track as the visual
   // focus target only while it actually has a visible focus indicator.
+  // A treeitem (WAI-ARIA tree pattern) contains its open branch, so it may
+  // draw its ring on its own row (its direct child other than the nested
+  // group) instead of around the whole branch; treat that row the same way.
   const track = active.matches('input.tvm-toggle-input:focus-visible')
     && active.nextElementSibling?.matches('.tvm-dark-toggle-track')
     ? active.nextElementSibling : null;
-  const trackStyle = track && view.getComputedStyle(track);
-  const trackHasFocusIndicator = trackStyle && (
-    (trackStyle.outlineStyle !== 'none' && parseFloat(trackStyle.outlineWidth) > 0)
-    || trackStyle.boxShadow !== 'none'
-  );
-  const visualTarget = trackHasFocusIndicator ? track : active;
+  const ownRow = active.getAttribute('role') === 'treeitem'
+    ? [...active.children].find((child) => child.getAttribute('role') !== 'group') || null : null;
+  const hasFocusIndicator = (element) => {
+    const style = element && view.getComputedStyle(element);
+    return Boolean(style) && (
+      (style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0)
+      || style.boxShadow !== 'none'
+    );
+  };
+  const visualTarget = [track, ownRow].find(hasFocusIndicator) || active;
   const rect = visualTarget.getBoundingClientRect();
   const parents = [...frames].reverse();
   const pointInParent = (frame, x, y) => {
@@ -1296,9 +1337,9 @@ function runDomAudit() {
     if (el.getAttribute('aria-hidden') === 'true') {
       findings.push({ criterion: '4.1.2', severity: 'fail', message: `Focusable interactive element is aria-hidden: ${shortNode(el)}` });
     }
-    const labelText = visibleText(el);
+    const labelText = visibleLabelText(el);
     if (hasAuthorName(el) && name && isWordsLabel(labelText) && !name.toLowerCase().includes(labelText.trim().toLowerCase())) {
-      findings.push({ criterion: '2.5.3', severity: 'review', message: `Accessible name may not include visible label "${visibleText(el).trim()}": ${shortNode(el)}` });
+      findings.push({ criterion: '2.5.3', severity: 'review', message: `Accessible name may not include visible label "${labelText.trim()}": ${shortNode(el)}` });
     }
     if (el.matches('a[href]') && name) {
       const normalized = name.toLowerCase().replace(/[\s.,!?…]+$/g, '').trim();
@@ -1504,6 +1545,21 @@ function runDomAudit() {
     if (!(clone instanceof HTMLElement)) return '';
     clone.querySelectorAll('[aria-hidden="true"], .sr-only, .visually-hidden, script, style').forEach((node) => node.remove());
     return normalize(clone.textContent || '');
+  }
+
+  // The visible label of an interactive element, for 2.5.3. A treeitem
+  // (WAI-ARIA tree pattern) contains its open branch, its own controls, and
+  // its description, so only the rest of its own row is its label: nested
+  // [role="group"] items, nested controls, and aria-describedby targets each
+  // carry their own name or are description rather than label.
+  function visibleLabelText(el) {
+    if (el.getAttribute('role') !== 'treeitem') return visibleText(el);
+    const clone = el.cloneNode(true);
+    if (!(clone instanceof HTMLElement)) return '';
+    const describedBy = (el.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+    clone.querySelectorAll('[role="group"], a[href], button, input, select, textarea, [role="treeitem"]').forEach((node) => node.remove());
+    describedBy.forEach((id) => clone.querySelector(`[id="${CSS.escape(id)}"]`)?.remove());
+    return visibleText(clone);
   }
 
   function textExcludingImages(el) {

@@ -1,0 +1,200 @@
+{
+  "id": "sequence-participant-placed-from-the-palette-by-a-canvas-click",
+  "family": "sequence",
+  "type": "sequence",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nactor user\nparticipant app\nuser -> app: login\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Add element: Participant"
+      }
+    },
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "role": "button",
+          "name": "Element app —",
+          "exact": false
+        },
+        "at": {
+          "x": 1,
+          "y": 0.5
+        },
+        "offset": {
+          "x": 90,
+          "y": 0
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nactor user\nparticipant app\nuser -> app: login\nparticipant p: Participant @pos(349, 57)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": ""
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Participant — p\":\n  - heading \"Participant — p\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": p\n  - text: Display label\n  - textbox \"Display label\": Participant\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Lifeline\":\n    - text: Lifeline\n    - button \"Add an activate p bar\": + activate\n    - button \"Add a deactivate p marker\": + deactivate\n    - button \"Mark p as destroyed (X)\": + destroy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "p"
+    ],
+    "focus": {
+      "tag": "div",
+      "id": "uml-pg-output",
+      "role": "region",
+      "name": "UML sequence diagram",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nactor user\nparticipant app\nuser -> app: login\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Element — p\":\n  - heading \"Element — p\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": p\n  - group \"Lifeline\":\n    - text: Lifeline\n    - button \"Add an activate p bar\": + activate\n    - button \"Add a deactivate p marker\": + deactivate\n    - button \"Mark p as destroyed (X)\": + destroy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nactor user\nparticipant app\nuser -> app: login\nparticipant p: Participant @pos(349, 57)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Participant — p\":\n  - heading \"Participant — p\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": p\n  - text: Display label\n  - textbox \"Display label\": Participant\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Lifeline\":\n    - text: Lifeline\n    - button \"Add an activate p bar\": + activate\n    - button \"Add a deactivate p marker\": + deactivate\n    - button \"Mark p as destroyed (X)\": + destroy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "p"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element p: Participant — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "p"
+    }
+  },
+  "operations": [
+    {
+      "type": "sequence",
+      "before": "@startuml\nactor user\nparticipant app\nuser -> app: login\n@enduml",
+      "operation": {
+        "op": "element.add",
+        "revision": "r2f380bd6:63",
+        "tool": "participant",
+        "name": null,
+        "into": null,
+        "anchor": null,
+        "placed": "dropped",
+        "facts": {
+          "at": {
+            "x": 349.32570882704374,
+            "y": 57.00002077792553
+          },
+          "positions": {
+            "user": {
+              "x": 69.99999618530273,
+              "y": 64.23497009277344
+            },
+            "app": {
+              "x": 229.99998474121094,
+              "y": 20.00000762939453
+            }
+          }
+        },
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nactor user\nparticipant app\nuser -> app: login\nparticipant p: Participant @pos(349, 57)\n@enduml"
+    }
+  ]
+}
