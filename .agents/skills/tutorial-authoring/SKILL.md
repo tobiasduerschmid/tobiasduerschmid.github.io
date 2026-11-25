@@ -228,11 +228,12 @@ chapter.
 - `tdd.yml` uses themed step-title prefixes
   `Cycle N — RED: <…>` / `Cycle N — GREEN: <…>` / `Cycle N — REFACTOR: <…>`.
   The RED/GREEN/REFACTOR rhythm is the pedagogy — keep as-is.
-- `agent-design-reviews.yml` titles name the reviewed system
-  (`Review N: <System>`), never the concept: in a design review the concept
-  is the answer, which the step's lesson reveals after the comparison. Its
-  "Why this matters" and 🎯 lines describe the review skill for the same
-  reason.
+- `agent-design-reviews.yml` titles name the CS 35L concept, then the
+  reviewed system (`Review N: <Concept> — <System>`). Each review practices
+  one named concept: the opener motivates it, the 🎯 line applies it to the
+  diagram, a `**Review question:**` line gives the lecture's question, and
+  the task asks for the comment in the concept's terms. Telling concepts
+  apart is practiced in the mixed knowledge checks.
 
 **2. Pedagogy comment above the step.** Every step gets a
 `# Pedagogy:` YAML comment immediately above the `- title:` line naming
@@ -2089,9 +2090,12 @@ model's ratings never gate.
   `reviewDesign({spec, review, onCriterion})`.
 - **Authoring:** one objective flaw per design, tied to a course concept and
   a Given scenario that breaks a stated story or acceptance criterion; the
-  rest of the design is sound and realistic. Titles name the system, not
-  the concept. Coach rungs orient, diagnose, then scaffold, and must not add
-  up to the answer. Validate keys, signals, and anchors with
+  rest of the design is sound and realistic. Name the concept up front (title,
+  opener, review question, task), and keep the case short: the agent's reply
+  lists only the claims that bear on the concept (the one hiding the flaw and
+  a plausible protection that does not help), at most 190 words of case text.
+  Coach rungs orient, diagnose, then scaffold, and must not add up to the
+  answer. Validate keys, signals, and anchors with
   `scripts/tests/agent-design-reviews-content.test.js`; render-check every
   diagram (straight arrows, no crossings).
 

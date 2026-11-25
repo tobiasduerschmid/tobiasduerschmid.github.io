@@ -209,10 +209,15 @@ through the real model before release (§10).
 ## 8. Content
 
 See §9 for the scenario table. Every step follows: Why this matters → 🎯 →
-(review card from the widget) → knowledge check. Pedagogy: the first step is
-a worked example with a partially written comment to complete (fading), the
-middle steps interleave topics so students must discriminate which concept
-applies, the capstone shows two views and no coaching ladder.
+(review card from the widget) → knowledge check. Every step names its
+CS 35L concept in the title, the opener, and the task, and gives the
+lecture's review question before the student writes, so the practice is
+applying that concept. Telling concepts apart is left to the knowledge
+checks, which mix in earlier topics. The case keeps only the claims that bear
+on the concept (at most 190 words: request, story, criteria, reply, Given).
+Pedagogy: the first step is a worked example with a partially written comment
+to complete (fading), steps 2 and 3 give sentence starters in the concept's
+terms, and the capstone shows two views with a shorter coaching ladder.
 
 ## 9. Scenarios
 
@@ -224,12 +229,12 @@ visible. The tutorial YAML holds the final wording, keys, and quizzes.
 | 1 | Late-night food-truck pre-orders | class | Information hiding: Stripe types leak through `PaymentGateway` (Hide What Is Likely to Change) | worked example, flaw sentence given |
 | 2 | CS 35L midterm scores | sequence | Stateless HTTP and sessions: one server-wide `currentStudent` (Every Request Must Identify Its User) | sentence starters |
 | 3 | Dorm laundry alerts | sequence | Test doubles: a stub cannot observe an indirect output (Verify Indirect Outputs With a Spy or Mock) | sentence starters |
-| 4 | UCLA Radio weekly top 10 | component | Shell pipelines: warnings on stdout are counted as plays (Keep Diagnostics Out of the Data Stream) | default task |
-| 5 | Powell study-room booking | sequence | Database isolation: check-then-insert race (Let the Database Serialize Competing Writes) | default task |
-| 6 | Rate My Dining Hall | component | Security: stored XSS past a client-side editor (Never Render Another User's Text as Code) | default task |
-| 7 | Rose Bowl mobile tickets | class | Reuse: a 16-bit counter from a 600-seat theater (Check a Reused Part's Assumptions in the New Context) | default task |
-| 8 | Nightly game-jam release bot | sequence | Git: a bot squashes and force-pushes shared `main` (Never Rewrite Shared History) | default task |
-| 9 | Dorm-lounge karaoke machine | sequence | C memory: one buffer with two owners, use after free and double free (Give Every Allocation Exactly One Owner) | default task |
+| 4 | UCLA Radio weekly top 10 | component | Shell pipelines: warnings on stdout are counted as plays (Keep Diagnostics Out of the Data Stream) | concept-named task |
+| 5 | Powell study-room booking | sequence | Database isolation: check-then-insert race (Let the Database Serialize Competing Writes) | concept-named task |
+| 6 | Rate My Dining Hall | component | Security: stored XSS past a client-side editor (Never Render Another User's Text as Code) | concept-named task |
+| 7 | Rose Bowl mobile tickets | class | Reuse: a 16-bit counter from a 600-seat theater (Check a Reused Part's Assumptions in the New Context) | concept-named task |
+| 8 | Nightly game-jam release bot | sequence | Git: a bot squashes and force-pushes shared `main` (Never Rewrite Shared History) | concept-named task |
+| 9 | Dorm-lounge karaoke machine | sequence | C memory: one buffer with two owners, use after free and double free (Give Every Allocation Exactly One Owner) | concept-named task |
 | 10 | Bruin Monopoly on the lounge TV | class + sequence | Separation of concerns and Observer: game rules call React views (Separate the Domain Logic From the UI) | learner picks the view |
 
 Each knowledge check has four questions: the step's concept, a transfer item
