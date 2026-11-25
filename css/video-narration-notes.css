@@ -151,6 +151,11 @@ html body.vn-notes-page {
   .vn-note-still .sw-pool,
   .vn-note-still .sw-lamp-glow,
   .vn-note-still .sw-vignette { display: none; }
+  /* The blueprint prints as its whiteprint: flat paper and its linework. */
+  .vn-note-still .dr-base { background-image: linear-gradient(180deg, #f7fafd 0%, #eef4fa 55%, #e0eaf6 100%) !important; }
+  .vn-note-still .dr-light,
+  .vn-note-still .dr-dust,
+  .vn-note-still .dr-vignette { display: none; }
   .vn-note-still .sk-ball { background: #7c3aed !important; }
   .vn-note-still .us-card-pin { background: #e11d48 !important; }
   /* Transparent gradient strokes also rasterize. Borders preserve the
