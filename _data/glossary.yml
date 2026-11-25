@@ -63,6 +63,11 @@
   description: A tree representation of source code structure used by compilers, interpreters, linters, refactoring tools, and code-analysis systems.
   related: [CST, EBNF]
 
+- term: AT
+  definition: Application and Technology
+  description: In module blood groups (software categories), code that knows both the application domain and a concrete technology, as opposed to A (application only), T (technology only), and 0 (neither). AT code changes whenever either one changes and can rarely be reused, so designs keep it small; its harmless, translate-only form is called R.
+  related: [API, SDK]
+
 - term: C4 model
   definition: Context, Containers, Components, and Code model
   description: "Simon Brown's way to describe a software architecture at four zoom levels: the system context, its containers (applications and data stores), the components inside a container, and their code. Every diagram is a view of one model."
