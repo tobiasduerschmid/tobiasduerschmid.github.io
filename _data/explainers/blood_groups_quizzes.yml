@@ -1,140 +1,173 @@
-# One knowledge check per section, about module blood groups rather than the
-# scooter example: each question puts a taught idea to work on a new system.
+# One knowledge check per section, from the intro on: each question puts the
+# section's central idea to work on a new system, not the scooter example, and
+# its distractors are the wrong reasoning a partial understanding produces,
+# phrased in the lesson's own words so the key never stands out by vocabulary.
 # Every key, and every reason to reject a distractor, is said in the narration
-# before its check. The intro and the tangle have no check. The summary lists
-# several questions, about one new system, under `questions`.
+# before its check. Keys sit in varied positions because the print and notes
+# views keep this order. The summary lists several questions, about one new
+# system, under `questions`.
+intro:
+  question: A campus parking app also applies rules, talks to technology, and does plain math. Which of these jobs is plain math?
+  options:
+    - Price parking at $2 an hour, half off for students
+    - Compute a lot's area from its corner points
+    - Ask the map service how far a car is from a lot
+  correct_index: 1
+  explanation: Computing an area from corner points is geometry. It holds no parking rule and talks to no service, like Glide's check whether a point lies inside a zone.
+  option_feedback:
+    0: This job does arithmetic, but the rate and the student discount are the parking business's own decisions. That makes it a rule, like what a Glide ride costs.
+    2: The distance comes from talking to the map service, so this job is technology work, like Glide asking the map service where a scooter is.
+tangle:
+  question: "A dining hall's swipe function tangles meal-plan rules and card-reader API calls, line by line. Dining services adds a rule: one free guest meal a week. What does the tangle mean for this change?"
+  options:
+    - Little; only a card-reader switch would spread through the code
+    - Only the reader calls need retesting; the new rule can be tested on its own
+    - The rule goes among reader calls; testing it needs a reader
+  correct_index: 2
+  explanation: When rules and technology share the same lines, a rule change lands among the technology calls. The new rule is edited in between the card-reader calls, and it can't be tested without the reader.
+  option_feedback:
+    0: Tangled code hurts every kind of change. A new rule has to be written into the lines that call the card reader, just as a new map provider reached Glide's parking rule.
+    1: The new rule sits between card-reader calls, so it can't be tested on its own. Any test of it runs the card reader too, as Glide's rules couldn't be tested without the SDK.
 two_questions:
-  question: A function converts any distance from miles to kilometers. It uses no business words and calls no external API. Which group is it?
+  question: In a campus fitness app, one function averages any list of numbers. The workout rules call it to set weekly goals, and the heart-rate sensor's driver calls it to smooth readings. Which group is the function?
   options:
-    - Group zero, since it knows neither
-    - Group T, because unit conversion is technical
-    - Group A, because the app shows the distances
+    - Group zero
+    - Group A
+    - Group T
+    - Group AT
   correct_index: 0
-  explanation: The function knows no domain words and no concrete technology, so it is group zero. A group depends on what the code knows, not on who calls it or how technical it sounds.
+  explanation: Averaging numbers knows no workout rules and no sensor; if either one changed, this function would stay the same. What code knows depends on what it uses, not on who calls it.
   option_feedback:
-    1: Group T means knowing a concrete technology, such as a database or a payment API. Converting units is math that knows no API.
-    2: A group describes what the code itself knows. Being called by an app does not give a function the app's domain knowledge.
+    1: The workout rules depend on the average, not the other way around. If the goal rules changed, the averaging function would not change, so it knows no domain.
+    2: The sensor driver depends on the average, not the other way around. If the sensor's API changed, the averaging function would not change, so it knows no technology.
+    3: Callers don't lend their knowledge to the code they call. The function would survive a change of rules and a change of sensor, so it knows neither.
 group_a:
-  question: A library system has a module that computes late fees from due dates and the library's fee rules. It never touches the database or the screen. Which group is it, and where can it be reused?
+  question: A library's late-fee module knows the library's fee rules and no technology. Which system can reuse it as it is?
   options:
-    - Group zero, reusable anywhere, since it calls no API
-    - Group A, reusable wherever the same fee rules apply
-    - Group A, reusable only where the same database runs
-  correct_index: 1
-  explanation: The module knows the library's fee rules and no technology, so it is group A. It can move to any system that needs the same rules, whatever technology that system uses.
+    - Neither; reuse needs the same rules and the same database
+    - "The bookstore's rentals: same database, their own late fees"
+    - A branch library with the same fee rules but another database
+  correct_index: 2
+  explanation: Code in group A goes wherever the same rules apply, on any technology. The branch library charges the same fees, and the module never touches its database.
   option_feedback:
-    0: Calling no API rules out group T, but the module knows the library's fee rules, which is domain knowledge. Group zero knows neither.
-    2: The module never touches the database, so no database limits where it can go. Group A is limited by the rules it knows, not by technology.
+    0: Only the rules have to match. The module knows no database, so a branch library with the same fees can use it on its own database.
+    1: Sharing a database doesn't help code that never touches one. The module carries the library's fee rules, and the bookstore's rentals follow late-fee rules of their own.
 group_t:
-  question: A module sends any text message to any phone number through an SMS provider's API. It knows nothing about the apps that call it. Which group is it?
+  question: A gym app's SMS client sends any text to any phone number through an SMS provider's API. The gym's rules hand it texts like “Your class starts in 10 minutes.” Can the campus library, which uses the same provider, reuse the client as it is?
   options:
-    - Group A, since texting is one of the app's features
-    - Group AT, since it talks to an outside service
-    - Group T, reusable by any app using that SMS provider
-  correct_index: 2
-  explanation: The module knows one concrete technology, the SMS provider's API, and no domain, so it is group T. Any application that uses the same provider can reuse it.
+    - No; it sends class reminders, so it knows the gym's domain
+    - Yes; it knows the SMS provider and nothing about the gym
+    - Yes, but only if the library follows the gym's rules
+  correct_index: 1
+  explanation: The client knows one technology, the SMS provider's API, and no domain, so it is group T. Any application that uses the same provider can reuse it.
   option_feedback:
-    0: Group A means knowing the domain's own words and rules. This module sends any text for any app, so it knows no domain.
-    1: Talking to a technology makes code group T. Group AT also needs domain knowledge, and this module has none.
+    0: The gym's rules write the reminders; the client only passes the text along. It would send a library notice just the same, so it knows no domain.
+    2: Matching rules is what group A needs. A group T client only needs the same technology, and the library texts through the same provider.
 group_zero:
-  question: Which of these functions belongs to group zero?
+  question: In a campus delivery app, a function takes two latitude-longitude points and returns the distance between them in meters. Which software could reuse it as it is?
   options:
-    - One that decides whether a rider may still cancel a ride
-    - One that finds the overlap of two time ranges
-    - One that reads the phone's location from the operating system
+    - Only delivery apps with the same fee rules
+    - Any app that measures distances between map points
+    - Only apps that read positions from the same phone GPS
+    - None as it is; zero code does nothing useful alone
   correct_index: 1
-  explanation: Overlapping two time ranges is an abstract idea that knows no domain and no technology, so any application can reuse it.
+  explanation: The function knows no deliveries and no device, just coordinates, so it is group zero, the universal donor. Any app that needs distances can reuse it, as long as A or T code gives it a job.
   option_feedback:
-    0: Deciding whether a rider may cancel applies a rental business's rule, so that function knows the domain and belongs to group A.
-    2: Reading the location through the operating system means knowing a concrete technology, so that function belongs to group T.
+    0: Fee rules are domain knowledge, and this function has none. Only group A code is limited to places where the same rules apply.
+    2: The function receives its points; it never reads a GPS. Only group T code is limited to places where the same technology runs.
+    3: Useless alone means zero code needs a caller to give it a job, such as a delivery app's fee rules. Any app with such a job can still reuse it as it is.
 group_at:
-  question: A food-delivery app has a function that computes a delivery fee from the distance and then saves the fee with an SQL INSERT statement. Which group is the function?
+  question: Two teams build the same campus food app. Half of Team Red's code is AT; almost none of Team Blue's is. Over a year, the menu rules change every month and the payment provider changes once. Which design is cheaper to maintain?
   options:
-    - Group A, because computing the fee is its main job
-    - Group T, since any code that writes to a database is T
-    - Group AT; it knows the fee rules and a database API
-  correct_index: 2
-  explanation: The function knows the delivery business's fee rules and a concrete database technology at once, so it is group AT, and it can be reused almost nowhere.
+    - "Blue's: each change touches less code"
+    - Blue's, but only when the provider changes
+    - "Red's: AT code is the quickest to write"
+    - "Red's: with fewer modules, each change has fewer places to look"
+  correct_index: 0
+  explanation: AT code changes whenever the rules or the technology change, so Red's large share of AT code is edited and retested with every change. The larger a design's share of AT code, the lower its quality.
   option_feedback:
-    0: A group depends on everything the code knows, not on its main job. Writing SQL is knowledge of a technology, so the function is not pure A.
-    1: Writing to a database is technology knowledge, but the function also knows the fee rules. Knowing both makes it AT.
+    1: The menu changes cost more in Red's design too. They land in Red's AT code, among the payment calls, just like the provider switch.
+    2: AT code is quick to write, but slow to maintain. Every menu change and the provider switch land in Red's AT code.
+    3: Fewer modules didn't help Glide, where one map switch hit forty-seven places in twelve files. Every change still reaches all the AT code that knows both the rules and the provider.
 mixing:
-  question: An email module in group T gains a function that decides which customers have earned a loyalty coupon. Separately, a coupon-rules module in group A starts using a group zero library that sorts lists. What are the two modules' groups now?
+  question: A bookstore's checkout module holds discount rules (group A), a sorting helper (group zero), and calls to a payment API (group T). The team wants the module in group A. What must it do?
   options:
-    - "Email: AT. Coupon rules: still A"
-    - "Email: still T. Coupon rules: AT"
-    - Both keep their groups; one function changes nothing
-  correct_index: 0
-  explanation: Deciding who earns a coupon is domain knowledge, so the email module now knows both and becomes AT. Zero code adds no letter, so the coupon rules stay A.
+    - Nothing; its A and zero parts outnumber its T part
+    - Move the payment calls into a module of their own
+    - Move the sorting helper out, since zero code blocks group A
+    - Add discount rules until they outweigh the payment calls
+  correct_index: 1
+  explanation: A module has every letter its parts have. Zero adds none, and the payment calls add T, however much A sits beside them. Moving the payment calls out is the only way back to A.
   option_feedback:
-    1: It's the other way around. Zero code adds no letter, so the coupon rules stay A, while the loyalty decision adds domain knowledge to the email module.
-    2: One function's knowledge is enough, because a module has every letter its parts have. The loyalty decision puts domain knowledge into the email module.
+    0: Groups don't go by majority. One part that knows the payment API is enough for the whole module to know it, so the module is AT.
+    2: Zero adds no letter, so the sorting helper can stay. What keeps the module from group A is its T part, the payment calls.
+    3: AT absorbs everything added to it. More rules leave the payment calls in place, so the module stays AT until they move out.
 leaks:
-  question: 'A loyalty-points module in group A calls `members.find("SELECT * FROM members WHERE id = 7")` on a database module. What happened, and what fixes it?'
+  question: A library app's catalog client returns the catalog service's HTTP status code. The hold rules check for 404, meaning “not in the catalog,” and then offer an interlibrary loan. What happened, and what fixes it?
   options:
-    - It stays A, because the query runs in the database module
-    - It became T; move the loyalty rules into the database module
-    - It became AT; give the database module find_member(id)
+    - Nothing; the rules only compare an integer, which is zero code
+    - The client became AT; move the loan rule into the client
+    - The rules became AT; return a found or not-found answer
   correct_index: 2
-  explanation: The caller writes SQL, so it knows the database's language and becomes AT. A method in domain words, such as find_member(id), keeps the SQL inside the database module.
+  explanation: A 404 means something only in HTTP, so rules that test for it depend on the catalog service's protocol and turn AT. A neutral answer, found or not found, keeps HTTP inside the client, as a plain point kept the map SDK inside Glide's map client.
   option_feedback:
-    0: Where the query runs doesn't matter. The caller writes the SQL, so it depends on the database's language.
-    1: The module still knows the loyalty rules. Moving those rules into the database module would make that module AT instead.
+    0: The type is a plain integer, but its meaning comes from HTTP. If the catalog service moved off HTTP, the rule would break, so the rules know the technology.
+    1: The client still knows only the catalog's API; the leak lands in the code that reads 404. Moving the loan rule into the client would make the client AT instead.
 separate:
-  question: A campus dining module holds the meal-swipe rules and also prints receipts on a thermal printer through the printer's API. Which redesign follows the first design rule?
+  question: A campus dining module holds the meal-swipe rules, prints receipts through a thermal printer's API, and charges cards through a payment API. Which redesign minimizes AT?
   options:
-    - Keep one module, with comments marking rule and printer lines
-    - Split it into an A module for the rules and a T module for printing
-    - Move the meal-swipe rules into the printer module
-  correct_index: 1
-  explanation: The module knows the dining rules and a printer technology, so it is AT. Splitting it gives an A module that any dining system can reuse and a T module that any app with that printer can reuse.
+    - Rules in one module; printer and payments in a module each
+    - One module, with the printer and payment calls in private helpers
+    - Printer and payment modules, each holding the swipe rules it needs
+  correct_index: 0
+  explanation: Separating technology from application concerns leaves no AT module. The rules go in an A module that any dining system with the same rules could reuse, and each technology gets a T module of its own.
   option_feedback:
-    0: Comments don't change what the module knows. It still depends on both the rules and the printer, so it is still AT.
-    2: A module that holds the rules and calls the printer API is AT wherever it lives. Moving code doesn't separate what it knows.
+    1: Private helpers still live in the module that holds the rules. A module knows everything its parts know, so it still knows the printer and the payment API and stays AT.
+    2: Splitting along the technologies spreads the rules into both modules, so each one knows a technology and the rules. That makes two AT modules instead of one.
 invert:
-  question: A pet-adoption app's adoption rules must send a confirmation email. Following design rule two, which design fits?
+  question: A pet-adoption app has large adoption rules that change often. They confirm each adoption by email, and the shelter may later text adopters instead. Which design keeps that switch smallest?
   options:
-    - The rules own a Notifier interface; a thin adapter uses the SDK
-    - The rules call the email provider's SDK directly
-    - The rules take the SDK's message objects as parameters
-  correct_index: 0
-  explanation: The rules declare what they need in their own words, a Notifier, and a thin adapter translates that into the email provider's SDK. The rules stay A and never learn which provider sends the email.
-  option_feedback:
-    1: A direct call means the rules know the email SDK, which makes them AT. Design rule two rules out that dependency for large A modules.
-    2: SDK objects in the rules' signatures leak the technology into the domain, so the rules become AT.
-frameworks:
-  question: A chess app's Board class holds all the move rules and extends a GUI toolkit's Widget class to draw itself. The team wants the same rules in a command-line version. What blocks them, and what helps?
-  options:
-    - Nothing; inheritance lets any subclass reuse Board's rules
-    - Nothing; chess move rules are group zero, so they fit anywhere
-    - Board is married to the GUI toolkit; move the rules to a plain class
-  correct_index: 2
-  explanation: Extending Widget makes Board both chess rules and GUI toolkit, so it is AT and cannot move without the toolkit. A plain Board class keeps the rules in group A, and a thin widget adapter draws it.
-  option_feedback:
-    0: Any subclass inherits the GUI toolkit dependency too, so a command-line version would still need the toolkit.
-    1: Move rules are chess rules, the application's domain, so they are group A. Extending Widget also makes Board AT.
-change_test:
-  question: A well-separated campus food app moves from one database product to another, and its tables stay the same. Which code should change?
-  options:
-    - The order rules too, since orders are saved in the database
-    - Only the T module that talks to the database
-    - Every module that saves data, since each one calls the database
+    - An email adapter offers send(EmailMessage); the rules build the message
+    - The rules own a confirm(adopter, pet) interface; an adapter calls the email SDK
+    - The rules own a confirm(adopter, pet) interface; the adapter also picks who gets an email
   correct_index: 1
-  explanation: A technology change should touch only group T. With the same tables, the translators stay as they are, and the order rules never knew which database sat behind their interface.
+  explanation: The rules declare what they need in their own words, so a text adapter can replace the email adapter without touching them. An adapter that translates but never decides is all that changes, and every adoption rule stays in group A.
   option_feedback:
-    0: In a separated design, the order rules save through an interface in domain words, so they don't know which database is behind it.
-    2: Only the T module calls the database. The other modules depend on interfaces, so they don't change when the database product does.
-balance:
-  question: A teammate wants to wrap Python's built-in list behind a custom interface, in case the team ever switches list implementations. What do you answer?
+    0: This interface belongs to the adapter and speaks in email terms. The rules build an email message, so they know the email technology, and switching to texts would change the rules themselves.
+    2: Choosing who gets a confirmation is a rule. Kept in the adapter, it would have to be rebuilt in the text adapter; a thin adapter translates but never decides.
+frameworks:
+  question: A chess app's Board class holds hundreds of lines of move rules and extends a GUI toolkit's Widget class to draw itself. The team wants the same rules in a command-line version. What should it do?
   options:
-    - Skip it; zero code like a list doesn't need a wrapper
-    - Good idea; every dependency should go through an interface
-    - Only if the list holds rides, since then it belongs to group A
-  correct_index: 0
-  explanation: Wrapping pays off for what varies, such as providers and frameworks. A list knows no domain and no technology, so business and technology changes never reach it.
+    - Keep Board as it is; the command-line version never calls draw()
+    - Copy the move rules into a second Board for the command line
+    - Give the rules their own Board class, and let a widget class draw it
+  correct_index: 2
+  explanation: Extending Widget marries Board's rules to the GUI toolkit, so Board is AT. A Board class that extends nothing keeps the rules in group A, and a thin widget class adapts it to the toolkit.
   option_feedback:
-    1: Interfaces pay off where change is likely. Wrapping code that never varies adds layers without protecting anything.
-    2: The list type knows nothing about rides, whatever it holds, so it stays group zero.
+    0: Not calling draw() doesn't cut the tie. Board still extends Widget, so the command-line version, and every test of the rules, still need the GUI toolkit.
+    1: Two copies of the rules drift apart, and every rule fix must be made twice. Separating the rules from the toolkit lets both versions share one copy.
+change_test:
+  question: In a well-separated campus food app, which change should touch only the thin translators?
+  options:
+    - "Receipts show times as 21:30 instead of 9:30 pm"
+    - Delivery becomes free for orders after 9 pm
+    - The app moves to a new payment provider
+  correct_index: 0
+  explanation: A change in how data is shown lands only in the thin translators between the rules and the technology. The rules keep their times, and the printer still prints whatever text it gets.
+  option_feedback:
+    1: Free delivery is a rule, so it lands in the A rules alone. The payment adapter charges whatever amount the rules ask for, so it doesn't change.
+    2: A new provider means a new T module for payments, plus a thin adapter to plug it in, not only a translator.
+balance:
+  question: A campus events app's team has one week for redesign. Where does separating pay off most?
+  options:
+    - Wrapping the app's own date-math helpers, in case they change
+    - Keeping the ticket rules apart from a provider the team may switch
+    - Nowhere, since each extra interface slows the app at runtime
+  correct_index: 1
+  explanation: Separation pays off where change and reuse are likely, such as rules next to a provider the team may swap. Date math is zero code that business and technology changes never reach, and an extra call through an interface costs next to nothing.
+  option_feedback:
+    0: Date math is zero code; it doesn't change when the business or the technology does. Wrapping it adds layers that protect nothing.
+    2: One extra call through an interface costs next to nothing, except in the tightest embedded code. The real price is design time, which pays back with every change.
 summary:
   questions:
     - question: In a campus laundry app, a module decides whether a student may reserve a third washer this week. It calls no API. Which group is it?
@@ -147,27 +180,27 @@ summary:
       option_feedback:
         0: The module calls no machine's API. It only applies the reservation rule, which is domain knowledge.
         2: It compares numbers against the laundry room's reservation rule, and knowing that rule is domain knowledge.
-    - question: The laundry app's status module calls the washer vendor's API and also decides when a student's ten-minute pickup window has expired. What should the team do?
+    - question: The laundry app will run in every dorm for years. Its status module calls the washer vendor's API and also decides when a student's ten-minute pickup window has expired. What should the team do?
       options:
-        - Keep it; status code is mostly technology, so it's group T
-        - Keep it, as long as the file stays short
-        - "Split it: a T module for the vendor API, an A module for the pickup rule"
+        - Keep it; the status module is mostly technology, so it's T
+        - Move the pickup-window rule into the washer vendor's module
+        - Split the vendor calls from the pickup-window rule
       correct_index: 2
-      explanation: The module knows both a technology and a domain rule, so it is AT. Splitting it lets each part change, and be reused, on its own.
+      explanation: The module knows both a technology and a domain rule, so it is AT. Splitting it into a T module for the vendor API and an A module for the pickup rule lets each part change, and be reused, on its own.
       option_feedback:
         0: The pickup window is a domain rule, so the module knows both and is AT, not T.
-        1: Size doesn't change what code knows. Even a short AT module changes with both the washer vendor and the rules.
-    - question: The team switches washer vendors, and the new machines speak a different API. In a well-separated design, what changes?
+        1: A module that holds the pickup rule and calls the vendor's API is AT wherever it lives. Moving the rule doesn't separate what the code knows.
+    - question: A dorm in another city keeps the same laundry rules but buys another vendor's washers. In a well-separated design, what can it reuse as it is?
       options:
-        - Only the T module for the washers and its thin adapter
-        - The reservation rules, since they are about washers
-        - Every module that shows a washer's status
+        - The reservation rules, and zero code such as date math
+        - The washer T module and its adapter
+        - Nothing, since its washers speak another API
       correct_index: 0
-      explanation: A technology change should land in one small place, the T module for the washers and the adapter that plugs it in.
+      explanation: Group A goes wherever the same rules apply, and zero code goes everywhere. The new dorm plugs its own washers in through a new T module and adapter.
       option_feedback:
-        1: The rules speak about reservations in domain words; they never knew which vendor's API sits behind the interface.
-        2: Screens and rules depend on interfaces in domain words, not on the vendor's API.
-    - question: Which interface keeps the laundry app's reservation rules in group A?
+        1: The T module and its adapter know the old vendor's API, so they move only where the same washers run.
+        2: In a well-separated design, the rules never knew the vendor's API, so they stay reusable; only the T module and its adapter are replaced.
+    - question: The reservation rules ask an interface about a washer before booking it. Which interface keeps the rules in group A?
       options:
         - status(washer) returning the vendor's DeviceReport
         - status(washer) returning Free or Busy

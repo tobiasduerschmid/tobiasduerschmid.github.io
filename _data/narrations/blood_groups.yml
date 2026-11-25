@@ -464,8 +464,8 @@ scenes:
           and must not run through the application core.
         visual: >-
           The signature changes to locate(device) returning Point, and Point gets a 0 drop. The
-          drip stops, and the Ride rules drop turns back to A. A small card shows MapSdkError
-          becoming ScooterNotFound, with the sticker Translate errors too.
+          drip stops, and the Ride rules drop turns back to A. A small card, map_adapter.py,
+          shows MapSdkError becoming ScooterNotFound, with the sticker Translate errors too.
       - id: signs
         say: >-
           Learn the warning signs in a signature: SDK objects, SQL strings, HTTP status codes, a

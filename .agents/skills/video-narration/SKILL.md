@@ -75,9 +75,14 @@ If you only remember eleven things:
     [`quiz-format`](../quiz-format/SKILL.md): application questions on new
     situations, distractors from real confusions (the Scrum Master as a
     boss), and a summary quiz on a new team. User-story actors are always real
-    users, never "the system". Before every check, including the summary quiz,
-    finish the speech and hold the completed picture for a short viewing pause:
-    set the section's last cue to `pause_after: 2.5` or longer (see section 1).
+    users, never "the system". Distractors use the lesson's vocabulary as much
+    as the key does; the key is never the lone option of its kind (the only
+    "Yes", the only action); stems state what a rule says, not its number.
+    Before shipping, have a reviewer who sees only the script solve the checks
+    without keys: ambiguous items and guessable keys show up at once. Before
+    every check, including the summary quiz, finish the speech and hold the
+    completed picture for a short viewing pause: set the section's last cue to
+    `pause_after: 2.5` or longer (see section 1).
 11. **Every narration ships editable, printable notes.** The shared links
     under the video open an editable handout or the PDF print dialog: each
     cue's picture at rest, concise key points, space to type or handwrite,

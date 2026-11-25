@@ -29,11 +29,17 @@ wall kit, styled by `css/video-narration-blood-groups.css`, on the
   group the price function has after one payment call; which modules change
   in the separated design. Each pauses four seconds and is answered by the
   next cue.
-- **Checks.** Twelve section checks and a four-question summary about a new
-  system (a campus laundry app). Each applies a taught idea to a new
-  situation; distractors come from confusions the narration addresses (a
-  module that sounds technical is T; the group follows a module's main job;
-  where code runs decides what it knows; wrapping everything is good design).
+- **Checks.** Every section ends in a check, from the intro on: fourteen
+  section checks and a four-question summary about a new system (a campus
+  laundry app). Each puts its section's central idea to work in a new
+  system, and each distractor is a confusion the narration answers before
+  the check, such as: arithmetic in a pricing rule is plain math; code knows
+  what its callers know; "useless alone" means zero code can't be reused; a
+  module's majority decides its group; a plain integer is neutral whatever
+  it means; private helpers separate concerns; an adapter may decide; extra
+  interfaces slow the app down. Distractors use the lesson's vocabulary as
+  much as the key does, and stems state a rule's content, not its number.
+  Each check was solved blind, from the script alone, before it shipped.
 - **Speech.** No authors, books, or dates are spoken. Letters are written in
   contexts that force the letter reading ("group A", "an A module"); `AT` and
   `AB` are spelled out for the voice by pronunciation entries.

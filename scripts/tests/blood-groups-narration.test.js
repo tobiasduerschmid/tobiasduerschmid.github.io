@@ -47,8 +47,8 @@ test('three predictions each leave time to think before the next cue answers the
   assert.equal(cues.filter(cue => cue.prediction).length, 3);
 });
 
-test('every section after the problem ends in a valid check, and the last is a summary quiz on a new system', () => {
-  assert.deepEqual(Object.keys(quizzes), story.scenes.slice(2).map(scene => scene.id));
+test('every section, from the intro on, ends in a valid check, and the last is a summary quiz on a new system', () => {
+  assert.deepEqual(Object.keys(quizzes), story.scenes.map(scene => scene.id));
   const summary = quizzes[story.scenes.at(-1).id];
   assert.ok(summary.questions.length >= 4, 'the summary covers groups, mixing, design, and change');
   for (const question of summary.questions) assert.match(question.question, /laundry|washer/, 'a new system, not the example');
