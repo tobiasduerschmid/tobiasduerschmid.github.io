@@ -386,6 +386,7 @@ html.has-viewport-fullscreen .narrated-explainer .vn-video.is-viewport-fullscree
 .narrated-explainer :is(.np-quiz, .case-quiz) .correct-label-badge { padding: 0.2em 0.5em; border: 1px solid var(--nja-green); border-radius: 4px; color: var(--nja-green); background: var(--nja-success-bg); font: inherit; }
 .narrated-explainer :is(.np-quiz, .case-quiz) :is(.score-display, .score-summary, .tvm-quiz-threshold) { color: var(--nja-text); font: inherit; margin: 0.8em 0; }
 .narrated-explainer :is(.np-quiz, .case-quiz) .results-actions { display: flex; flex-wrap: wrap; gap: 0.8em; }
+.narrated-explainer .narration-quiz-actions { display: flex; flex-wrap: wrap; gap: 0.8em; }
 .narrated-explainer :is(.np-quiz, .case-quiz) :is(.hidden, .is-hidden) { display: none !important; }
 
 /* Shared lesson actions stay next to the player, before its supplemental links. */

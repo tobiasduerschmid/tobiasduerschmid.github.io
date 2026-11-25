@@ -394,6 +394,7 @@
       play,
       currentScene: () => currentScene,
     };
+    window.NarrationQuiz.bindReplay(root, { player: api, checkScenes: options.checkScenes });
     bindPlayerControls(root, api);
     return api;
   }

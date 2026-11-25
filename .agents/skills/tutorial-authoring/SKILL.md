@@ -3414,6 +3414,12 @@ channel.
   lines; number keys move matching lines, `Space` moves the focused line, and
   `Enter` / `Return` checks the order before focus moves to the next-question
   button.
+  Both `mount` and `attach` accept an optional `onAnswer({ card, isCorrect })`
+  callback, called once per graded answer after feedback is visible. It observes
+  the existing single/multiple/Parsons grading result without changing scores or
+  advancing the quiz. Narrations use it to offer segment replay after mistakes.
+  Focused feedback buttons retain native Enter activation; the next-question
+  shortcut must not intercept another action such as Re-listen to segment.
   Parsons answers are graded by `window.ParsonsGrading`
   (`js/parsons-grading.js`), which accepts the authored order plus every
   order allowed by the question's `interchangeable` groups. The same module
