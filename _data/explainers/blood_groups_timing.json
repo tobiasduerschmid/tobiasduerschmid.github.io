@@ -1,8 +1,8 @@
 {
-  "duration": 877.19,
+  "duration": 881.09,
   "voice": "drama3-female6",
   "speed": 1,
-  "speech_sha256": "81e4951ce6f1bf156df556a00a159e6b9da8feb8ce0743e4976763c8048bacca",
+  "speech_sha256": "7fe4589c20b3ded7e7ec10963cfde2403f789b938557bbd36fbf8b16d4ad5d6a",
   "scenes": [
     {
       "id": "intro",
@@ -23,361 +23,361 @@
         {
           "id": "price_hike",
           "start": 34.18,
-          "end": 50.77,
+          "end": 52.72,
           "speech_end": 50.22
         }
       ],
-      "end": 50.77
+      "end": 52.72
     },
     {
       "id": "tangle",
-      "start": 50.77,
+      "start": 52.72,
       "cues": [
         {
           "id": "braided",
-          "start": 50.77,
-          "end": 71.24,
-          "speech_end": 70.69
+          "start": 52.72,
+          "end": 73.19,
+          "speech_end": 72.64
         },
         {
           "id": "predict_switch",
-          "start": 71.24,
-          "end": 90.56,
-          "speech_end": 86.56
+          "start": 73.19,
+          "end": 92.51,
+          "speech_end": 88.51
         },
         {
           "id": "ripple",
-          "start": 90.56,
-          "end": 109.65,
-          "speech_end": 109.1
+          "start": 92.51,
+          "end": 111.6,
+          "speech_end": 111.05
         },
         {
           "id": "three_pains",
-          "start": 109.65,
-          "end": 127.18,
-          "speech_end": 126.63
+          "start": 111.6,
+          "end": 129.13,
+          "speech_end": 128.58
         },
         {
           "id": "preview",
-          "start": 127.18,
-          "end": 147.47,
-          "speech_end": 146.92
+          "start": 129.13,
+          "end": 151.37,
+          "speech_end": 148.87
         }
       ],
-      "end": 147.47
+      "end": 151.37
     },
     {
       "id": "two_questions",
-      "start": 147.47,
+      "start": 151.37,
       "cues": [
         {
           "id": "questions",
-          "start": 147.47,
-          "end": 170.76,
-          "speech_end": 170.21
+          "start": 151.37,
+          "end": 174.66,
+          "speech_end": 174.11
         },
         {
           "id": "grid",
-          "start": 170.76,
-          "end": 193.18,
-          "speech_end": 190.68
+          "start": 174.66,
+          "end": 197.08,
+          "speech_end": 194.58
         }
       ],
-      "end": 193.18
+      "end": 197.08
     },
     {
       "id": "group_a",
-      "start": 193.18,
+      "start": 197.08,
       "cues": [
         {
           "id": "rules",
-          "start": 193.18,
-          "end": 213.13,
-          "speech_end": 212.58
+          "start": 197.08,
+          "end": 217.03,
+          "speech_end": 216.48
         },
         {
           "id": "paid_for",
-          "start": 213.13,
-          "end": 229.46,
-          "speech_end": 228.91
+          "start": 217.03,
+          "end": 233.36,
+          "speech_end": 232.81
         },
         {
           "id": "a_reuse",
-          "start": 229.46,
-          "end": 246.34,
-          "speech_end": 243.84
+          "start": 233.36,
+          "end": 250.24,
+          "speech_end": 247.74
         }
       ],
-      "end": 246.34
+      "end": 250.24
     },
     {
       "id": "group_t",
-      "start": 246.34,
+      "start": 250.24,
       "cues": [
         {
           "id": "drivers",
-          "start": 246.34,
-          "end": 264.77,
-          "speech_end": 264.22
+          "start": 250.24,
+          "end": 268.67,
+          "speech_end": 268.12
         },
         {
           "id": "t_reuse",
-          "start": 264.77,
-          "end": 283.33,
-          "speech_end": 280.83
+          "start": 268.67,
+          "end": 287.23,
+          "speech_end": 284.73
         }
       ],
-      "end": 283.33
+      "end": 287.23
     },
     {
       "id": "group_zero",
-      "start": 283.33,
+      "start": 287.23,
       "cues": [
         {
           "id": "geometry",
-          "start": 283.33,
-          "end": 304.42,
-          "speech_end": 303.87
+          "start": 287.23,
+          "end": 308.32,
+          "speech_end": 307.77
         },
         {
           "id": "donor",
-          "start": 304.42,
-          "end": 325.1,
-          "speech_end": 322.6
+          "start": 308.32,
+          "end": 329.0,
+          "speech_end": 326.5
         }
       ],
-      "end": 325.1
+      "end": 329.0
     },
     {
       "id": "group_at",
-      "start": 325.1,
+      "start": 329.0,
       "cues": [
         {
           "id": "both",
-          "start": 325.1,
-          "end": 344.35,
-          "speech_end": 343.8
+          "start": 329.0,
+          "end": 348.25,
+          "speech_end": 347.7
         },
         {
           "id": "at_chart",
-          "start": 344.35,
-          "end": 362.52,
-          "speech_end": 361.97
+          "start": 348.25,
+          "end": 366.42,
+          "speech_end": 365.87
         },
         {
           "id": "at_cost",
-          "start": 362.52,
-          "end": 380.74,
-          "speech_end": 378.24
+          "start": 366.42,
+          "end": 384.64,
+          "speech_end": 382.14
         }
       ],
-      "end": 380.74
+      "end": 384.64
     },
     {
       "id": "mixing",
-      "start": 380.74,
+      "start": 384.64,
       "cues": [
         {
           "id": "rules",
-          "start": 380.74,
-          "end": 400.91,
-          "speech_end": 400.36
+          "start": 384.64,
+          "end": 404.81,
+          "speech_end": 404.26
         },
         {
           "id": "predict_mix",
-          "start": 400.91,
-          "end": 419.67,
-          "speech_end": 415.67
+          "start": 404.81,
+          "end": 423.57,
+          "speech_end": 419.57
         },
         {
           "id": "a_plus_t",
-          "start": 419.67,
-          "end": 438.9,
-          "speech_end": 438.35
+          "start": 423.57,
+          "end": 442.8,
+          "speech_end": 442.25
         },
         {
           "id": "absorb",
-          "start": 438.9,
-          "end": 459.16,
-          "speech_end": 456.66
+          "start": 442.8,
+          "end": 463.06,
+          "speech_end": 460.56
         }
       ],
-      "end": 459.16
+      "end": 463.06
     },
     {
       "id": "leaks",
-      "start": 459.16,
+      "start": 463.06,
       "cues": [
         {
           "id": "leak",
-          "start": 459.16,
-          "end": 477.71,
-          "speech_end": 477.16
+          "start": 463.06,
+          "end": 481.61,
+          "speech_end": 481.06
         },
         {
           "id": "plug",
-          "start": 477.71,
-          "end": 497.88,
-          "speech_end": 497.33
+          "start": 481.61,
+          "end": 501.78,
+          "speech_end": 501.23
         },
         {
           "id": "signs",
-          "start": 497.88,
-          "end": 519.72,
-          "speech_end": 517.22
+          "start": 501.78,
+          "end": 523.62,
+          "speech_end": 521.12
         }
       ],
-      "end": 519.72
+      "end": 523.62
     },
     {
       "id": "separate",
-      "start": 519.72,
+      "start": 523.62,
       "cues": [
         {
           "id": "rule_one",
-          "start": 519.72,
-          "end": 544.07,
-          "speech_end": 543.52
+          "start": 523.62,
+          "end": 547.97,
+          "speech_end": 547.42
         },
         {
           "id": "one_concern",
-          "start": 544.07,
-          "end": 565.91,
-          "speech_end": 563.41
+          "start": 547.97,
+          "end": 569.81,
+          "speech_end": 567.31
         }
       ],
-      "end": 565.91
+      "end": 569.81
     },
     {
       "id": "invert",
-      "start": 565.91,
+      "start": 569.81,
       "cues": [
         {
           "id": "flip",
-          "start": 565.91,
-          "end": 585.7,
-          "speech_end": 585.15
+          "start": 569.81,
+          "end": 589.6,
+          "speech_end": 589.05
         },
         {
           "id": "sockets",
-          "start": 585.7,
-          "end": 605.25,
-          "speech_end": 604.7
+          "start": 589.6,
+          "end": 609.15,
+          "speech_end": 608.6
         },
         {
           "id": "dongles",
-          "start": 605.25,
-          "end": 624.36,
-          "speech_end": 623.81
+          "start": 609.15,
+          "end": 628.26,
+          "speech_end": 627.71
         },
         {
           "id": "rhesus",
-          "start": 624.36,
-          "end": 649.24,
-          "speech_end": 646.74
+          "start": 628.26,
+          "end": 653.14,
+          "speech_end": 650.64
         }
       ],
-      "end": 649.24
+      "end": 653.14
     },
     {
       "id": "frameworks",
-      "start": 649.24,
+      "start": 653.14,
       "cues": [
         {
           "id": "married",
-          "start": 649.24,
-          "end": 667.37,
-          "speech_end": 666.82
+          "start": 653.14,
+          "end": 671.27,
+          "speech_end": 670.72
         },
         {
           "id": "divorce",
-          "start": 667.37,
-          "end": 688.59,
-          "speech_end": 686.09
+          "start": 671.27,
+          "end": 692.49,
+          "speech_end": 689.99
         }
       ],
-      "end": 688.59
+      "end": 692.49
     },
     {
       "id": "change_test",
-      "start": 688.59,
+      "start": 692.49,
       "cues": [
         {
           "id": "replay",
-          "start": 688.59,
-          "end": 705.34,
-          "speech_end": 704.79
+          "start": 692.49,
+          "end": 709.24,
+          "speech_end": 708.69
         },
         {
           "id": "predict_replay",
-          "start": 705.34,
-          "end": 721.32,
-          "speech_end": 717.32
+          "start": 709.24,
+          "end": 725.22,
+          "speech_end": 721.22
         },
         {
           "id": "results",
-          "start": 721.32,
-          "end": 739.45,
-          "speech_end": 738.9
+          "start": 725.22,
+          "end": 743.35,
+          "speech_end": 742.8
         },
         {
           "id": "x_changes",
-          "start": 739.45,
-          "end": 760.45,
-          "speech_end": 757.95
+          "start": 743.35,
+          "end": 764.35,
+          "speech_end": 761.85
         }
       ],
-      "end": 760.45
+      "end": 764.35
     },
     {
       "id": "balance",
-      "start": 760.45,
+      "start": 764.35,
       "cues": [
         {
           "id": "overkill",
-          "start": 760.45,
-          "end": 779.34,
-          "speech_end": 778.79
+          "start": 764.35,
+          "end": 783.24,
+          "speech_end": 782.69
         },
         {
           "id": "curve",
-          "start": 779.34,
-          "end": 797.43,
-          "speech_end": 796.88
+          "start": 783.24,
+          "end": 801.33,
+          "speech_end": 800.78
         },
         {
           "id": "cost",
-          "start": 797.43,
-          "end": 816.49,
-          "speech_end": 813.99
+          "start": 801.33,
+          "end": 820.39,
+          "speech_end": 817.89
         }
       ],
-      "end": 816.49
+      "end": 820.39
     },
     {
       "id": "summary",
-      "start": 816.49,
+      "start": 820.39,
       "cues": [
         {
           "id": "recap_groups",
-          "start": 816.49,
-          "end": 838.08,
-          "speech_end": 837.53
+          "start": 820.39,
+          "end": 841.98,
+          "speech_end": 841.43
         },
         {
           "id": "recap_rules",
-          "start": 838.08,
-          "end": 859.85,
-          "speech_end": 859.3
+          "start": 841.98,
+          "end": 863.75,
+          "speech_end": 863.2
         },
         {
           "id": "recap_test",
-          "start": 859.85,
-          "end": 877.19,
-          "speech_end": 874.69
+          "start": 863.75,
+          "end": 881.09,
+          "speech_end": 878.59
         }
       ],
-      "end": 877.19
+      "end": 881.09
     }
   ]
 }

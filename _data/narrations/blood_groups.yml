@@ -44,8 +44,8 @@ scenes:
     title: Nine fifty-six, lecture at ten
     purpose: Meet the app this lesson takes apart, and the change that hurts it.
     takeaway: >-
-      Glide's code mixes ride rules with technology, so one technology change ripples through
-      the whole app.
+      Glide's code does three kinds of work: it applies rules, talks to technology, and does
+      plain math.
     cues:
       - id: late
         say: >-
@@ -76,6 +76,7 @@ scenes:
           The app comes from Glide, a student startup, and you've just joined its dev team. Week
           one brings bad news: the map service raises its prices tenfold, so the team must switch
           providers. How hard can that be? You open the function that ends a ride.
+        pause_after: 2.5
         step: A forced technology change
         note: Switching map providers should be a small job.
         visual: >-
@@ -150,6 +151,7 @@ scenes:
           answers sort all code into four groups, named like blood groups: A, T, AT, and zero.
           Let's meet the groups, see how they mix, design with them, and then test the design
           against change.
+        pause_after: 2.5
         step: Ask what the code knows
         note: Four groups, named like blood groups.
         visual: >-
