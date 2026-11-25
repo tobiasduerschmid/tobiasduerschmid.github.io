@@ -1,0 +1,165 @@
+# CS 35L bookmarks in lecture order. Keep the thematic book navigation separate.
+topics:
+  - name: "09/28: Introduction & User Stories"
+    url: /SEBook/userstories.html
+    subtopics:
+      - name: User Stories
+        url: /SEBook/userstories.html
+  - name: "09/30: Files & Shell Scripting"
+    url: /SEBook/tools/shell.html
+    subtopics:
+      - name: Tools
+        url: /SEBook/tools/index.html
+      - name: Shell Scripting
+        url: /SEBook/tools/shell.html
+      - name: Interactive Shell Scripting Tutorial
+        url: /SEBook/tools/shell-tutorial.html
+      - name: Regular Expressions
+        url: /SEBook/tools/regex.html
+      - name: Python RegEx Simulator & Debugger
+        url: /SEBook/tools/regex-simulator.html
+      - name: "RegEx Tutorial: Basics"
+        url: /SEBook/tools/regex-tutorial.html
+      - name: "RegEx Tutorial: Advanced"
+        url: /SEBook/tools/regex-tutorial-advanced.html
+  - name: "10/05: Python Scripting"
+    url: /SEBook/tools/python.html
+    subtopics:
+      - name: Python
+        url: /SEBook/tools/python.html
+      - name: Python Tutorial
+        url: /SEBook/tools/python-tutorial.html
+      - name: Regex in Python
+        url: /SEBook/tools/regex-python-tutorial
+  - name: "10/07: Version Control & Git"
+    url: /SEBook/tools/git.html
+    subtopics:
+      - name: Git
+        url: /SEBook/tools/git.html
+      - name: Git Tutorial
+        url: /SEBook/tools/git-tutorial.html
+  - name: "10/12: Client Server & Node.js"
+    url: /SEBook/tools/networking.html
+    subtopics:
+      - name: Systems
+        url: /SEBook/systems/index.html
+      - name: Networking
+        url: /SEBook/tools/networking.html
+      - name: Node.js
+        url: /SEBook/tools/nodejs.html
+      - name: Node.js Tutorial
+        url: /SEBook/tools/nodejs-tutorial.html
+  - name: "10/14: UI Development & React"
+    url: /SEBook/tools/react.html
+    subtopics:
+      - name: React
+        url: /SEBook/tools/react.html
+      - name: React Tutorial
+        url: /SEBook/tools/react-tutorial.html
+  - name: "10/19: Software Design Principles"
+    url: /SEBook/designprinciples/index.html
+    subtopics:
+      - name: Design Principles
+        url: /SEBook/designprinciples/index.html
+      - name: SOLID
+        url: /SEBook/designprinciples/solid.html
+      - name: UML
+        url: /SEBook/uml.html
+      - name: UML Editor
+        url: /SEBook/tools/uml-editor.html
+      - name: Class Diagrams
+        url: /SEBook/uml_class_diagram.html
+      - name: UML Class Diagram Tutorial (Python)
+        url: /SEBook/tools/uml-class-diagram-python.html
+      - name: Sequence Diagrams
+        url: /SEBook/uml_sequence_diagram.html
+      - name: UML Sequence Diagram Tutorial (Python)
+        url: /SEBook/tools/uml-sequence-diagram-python.html
+      - name: State Machine Diagrams
+        url: /SEBook/uml_state_diagram.html
+      - name: Component Diagrams
+        url: /SEBook/uml_component_diagram.html
+  - name: "10/21: Data Management"
+    url: /SEBook/systems/data_management.html
+    subtopics:
+      - name: Data Management
+        url: /SEBook/systems/data_management.html
+  - name: "10/26: Testing, Test-Driven Development & Refactoring"
+    url: /SEBook/testing.html
+    subtopics:
+      - name: Testing
+        url: /SEBook/testing.html
+      - name: Testing Foundations Tutorial
+        url: /SEBook/testing/testing-foundations-tutorial.html
+      - name: Test-Driven Development (TDD)
+        url: /SEBook/testing/tdd.html
+      - name: TDD Tutorial
+        url: /SEBook/testing/tdd-tutorial.html
+      - name: Test Doubles
+        url: /SEBook/testing/testdoubles.html
+      - name: Test Doubles Tutorial
+        url: /SEBook/testing/test-doubles-tutorial.html
+      - name: Playwright Tutorial
+        url: /SEBook/tools/playwright-tutorial
+      - name: Refactoring
+        url: /SEBook/development_practices/refactoring.html
+  - name: "10/28: Advanced Git & Debugging"
+    url: /SEBook/development_practices/debugging.html
+    subtopics:
+      - name: Advanced Git Tutorial
+        url: /SEBook/tools/git-advanced-tutorial.html
+      - name: Development Practices
+        url: /SEBook/development_practices/index.html
+      - name: Debugging
+        url: /SEBook/development_practices/debugging.html
+      - name: Python Debugging Tutorial
+        url: /SEBook/tools/python-debugging.html
+  - name: "11/02: Security & Authentication"
+    url: /SEBook/systems/security.html
+    subtopics:
+      - name: Security and Authentication
+        url: /SEBook/systems/security.html
+  - name: "11/09: C Programming, Build Tools & Makefiles"
+    url: /SEBook/tools/c.html
+    subtopics:
+      - name: C Programming
+        url: /SEBook/tools/c.html
+      - name: C for C++ Programmers Tutorial
+        url: /SEBook/tools/c-tutorial.html
+      - name: Make
+        url: /SEBook/tools/make.html
+      - name: Make Tutorial
+        url: /SEBook/tools/makefile-tutorial.html
+  - name: "11/16: Design with Reuse"
+    url: /SEBook/designprinciples/reuse.html
+    subtopics:
+      - name: Design with Reuse
+        url: /SEBook/designprinciples/reuse.html
+      - name: Design Patterns
+        url: /SEBook/designpatterns.html
+      - name: Observer
+        url: /SEBook/designpatterns/observer.html
+      - name: State
+        url: /SEBook/designpatterns/state.html
+      - name: Model-View-Controller (MVC)
+        url: /SEBook/designpatterns/mvc.html
+  - name: "11/18: Managing Complexity"
+    url: /SEBook/designprinciples/informationhiding.html
+    subtopics:
+      - name: Information Hiding
+        url: /SEBook/designprinciples/informationhiding.html
+      - name: Information Hiding Tutorial
+        url: /SEBook/designprinciples/information-hiding-tutorial
+  - name: "11/23: AI Coding"
+    url: /SEBook/development_practices/genAI.html
+  - name: "11/25: Code Comprehension & API Design"
+    url: /SEBook/development_practices/code_comprehension.html
+  - name: "11/30: People & Processes"
+    url: /SEBook/process/people-and-processes.html
+    subtopics:
+      - name: People and Processes
+        url: /SEBook/process/people-and-processes.html
+      - name: Software Process
+        url: /SEBook/process.html
+      - name: Scrum
+        url: /SEBook/process/scrum.html

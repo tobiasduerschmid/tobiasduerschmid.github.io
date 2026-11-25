@@ -17,6 +17,13 @@ browser — no install required — and saves your progress locally.
     via `tutorial: <key>` front matter and uses `layout: tutorial`. Pages with
     `layout: print-tutorial` also reference the same key — we exclude them so
     each tutorial appears once.
+
+    Rows sort by title, except that a follow-up tutorial whose page sets
+    `index_after: <parent key>` sorts right after that parent: its sort key
+    is the parent's title, the separator, then "~" (which sorts after every
+    other printable ASCII character) and its own title. Because that key
+    contains the separator, each row is read from its end (`reverse`):
+    key, url, description, title.
   {% endcomment %}
   {% assign tutorial_pages = site.html_pages | where: "layout", "tutorial" %}
   {% assign rows = "" | split: "" %}
@@ -26,7 +33,14 @@ browser — no install required — and saves your progress locally.
     {% unless data.exclude_from_index %}
       {% assign page_match = tutorial_pages | where: "tutorial", key | first %}
       {% if page_match %}
-        {% capture row %}{{ data.title }}|||{{ data.description }}|||{{ page_match.url }}|||{{ key }}{% endcapture %}
+        {% assign sort_key = data.title %}
+        {% if page_match.index_after %}
+          {% assign followed = site.data.tutorials[page_match.index_after] %}
+          {% if followed %}
+            {% capture sort_key %}{{ followed.title }}|||~{{ data.title }}{% endcapture %}
+          {% endif %}
+        {% endif %}
+        {% capture row %}{{ sort_key }}|||{{ data.title }}|||{{ data.description }}|||{{ page_match.url }}|||{{ key }}{% endcapture %}
         {% assign rows = rows | push: row %}
       {% endif %}
     {% endunless %}
@@ -35,13 +49,13 @@ browser — no install required — and saves your progress locally.
 
   <ul class="tutorials-index-list">
     {% for row in rows %}
-      {% assign parts = row | split: "|||" %}
+      {% assign parts = row | split: "|||" | reverse %}
       <li class="tutorial-card">
         <h2 class="tutorial-card-title">
-          <a href="{{ parts[2] | relative_url }}">{{ parts[0] }}</a>
+          <a href="{{ parts[1] | relative_url }}">{{ parts[3] }}</a>
         </h2>
-        {% if parts[1] and parts[1] != "" %}
-          <p class="tutorial-card-desc">{{ parts[1] }}</p>
+        {% if parts[2] and parts[2] != "" %}
+          <p class="tutorial-card-desc">{{ parts[2] }}</p>
         {% endif %}
       </li>
     {% endfor %}

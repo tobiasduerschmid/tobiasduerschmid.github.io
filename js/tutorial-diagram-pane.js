@@ -5,12 +5,14 @@
  * Adds a Diagram view that shows authored ArchUML diagrams beside the code
  * editor, which stays visible:
  *
- *   showAuthoredDiagrams([{id, label, type, source, links}], {layout, open})
+ *   showAuthoredDiagrams([{id, label, type, source, links}], {layout, open, codeless})
  *       render and switch to the Diagram view. layout 'split' (default) keeps
  *       the editor beside the pane; 'maximized' gives the pane the whole
  *       workspace until the learner needs code again (a file opens, Run,
  *       project search), which returns to split. open: false loads the
- *       diagrams and enables the view without switching to it.
+ *       diagrams and enables the view without switching to it. codeless:
+ *       the step has no code (a design review), so the diagram keeps the
+ *       whole workspace: no Editor view and no "Code beside diagram".
  *
  * Workspace arrangement while the Diagram view is shown:
  *   maximized  the editor is hidden, the Files sidebar too (wide screens),
@@ -1237,6 +1239,18 @@
     signal.addEventListener('abort', function () { exitPaneFullscreen(state); });
   }
 
+  /**
+   * A codeless step has nothing for the Editor view or "Code beside diagram"
+   * to show, so both controls are hidden while its diagrams are shown.
+   */
+  function setCodeless(tutorial, state, codeless) {
+    state.codeless = codeless;
+    state.layoutButton.hidden = codeless;
+    var editorButton = tutorial.root.querySelector('.tvm-view-toggle [data-view="editor"]');
+    if (editorButton) editorButton.hidden = codeless;
+    tutorial._refreshViewToggle();
+  }
+
   /** Create the pane, its divider, and the Diagram view button once. */
   proto._ensureAuthoredDiagramPane = function () {
     if (this._authoredDiagram) return this._authoredDiagram;
@@ -1280,6 +1294,7 @@
       layoutButton: pane.querySelector('[data-diagram-layout]'),
       workspace: workspace,
       layout: 'split',
+      codeless: false,
       needsRender: false,
       status: pane.querySelector('.tutorial-diagram-pane__status'),
       panel: pane.querySelector('.tutorial-diagram-pane__panel'),
@@ -1335,8 +1350,9 @@
     state.diagrams = normalizeDiagrams(diagrams);
     state.active = 0;
     this.setDiagramPaneAvailable(true);
+    setCodeless(this, state, options.codeless === true);
     renderTabs(state);
-    this._setAuthoredDiagramLayout(options.layout === 'maximized' ? 'maximized' : 'split');
+    this._setAuthoredDiagramLayout(options.layout === 'maximized' || state.codeless ? 'maximized' : 'split');
     if (options.open === false && this._currentView !== 'diagram') {
       // ArchUML measures its container: draw when the view is first shown.
       state.needsRender = true;
@@ -1355,7 +1371,7 @@
   proto._setAuthoredDiagramLayout = function (layout) {
     var state = this._authoredDiagram;
     if (!state) return;
-    state.layout = layout === 'maximized' ? 'maximized' : 'split';
+    state.layout = layout === 'maximized' || state.codeless ? 'maximized' : 'split';
     state.layoutButton.setAttribute('aria-pressed', state.layout === 'split' ? 'true' : 'false');
     syncWorkspaceLayout(this, state);
   };
@@ -1375,6 +1391,7 @@
     var state = this._authoredDiagram;
     if (!state) return;
     exitPaneFullscreen(state);
+    setCodeless(this, state, false);
     if (this._currentView === 'diagram') this._setView('editor');
     state.diagrams = [];
     state.active = 0;

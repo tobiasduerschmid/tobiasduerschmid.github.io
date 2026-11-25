@@ -1,0 +1,10 @@
+@startuml
+layout vertical
+component "Planner Web App" as e1 <<Container: TypeScript, React>> {
+  require "Enrollment endpoint" as r1
+}
+component "Registration API" as e2 <<Container: Python, FastAPI>> {
+  provide "Enrollment endpoint" as p1
+}
+p1 --> r1 : POST /v1/enrollments
+@enduml

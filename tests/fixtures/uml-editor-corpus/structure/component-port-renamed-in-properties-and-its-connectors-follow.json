@@ -1,0 +1,186 @@
+{
+  "id": "component-port-renamed-in-properties-and-its-connectors-follow",
+  "family": "structure",
+  "type": "component",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+  "steps": [
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "css": ".uml-pg-edit-hitbox[data-layout-id=\"Backend.b_in\"]"
+        }
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "label": "Identifier",
+        "within": {
+          "css": "#uml-pg-props-pane"
+        }
+      },
+      "value": "Backend.b_api"
+    },
+    {
+      "do": "press",
+      "target": {
+        "label": "Identifier",
+        "within": {
+          "css": "#uml-pg-props-pane"
+        }
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\nportin \"httpIn\" as b_api\nportout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_api : REST\nb_dbout --> db_in : SQL\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Element — Backend.b_in\":\n  - heading \"Element — Backend.b_in\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Backend.b_api\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Backend.b_api"
+    ],
+    "focus": {
+      "tag": "input",
+      "id": "uml-pg-prop-<random>",
+      "role": "textbox",
+      "name": "Identifier",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Element — Backend.b_api\":\n  - heading \"Element — Backend.b_api\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Backend.b_api\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\nportin \"httpIn\" as b_api\nportout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_api : REST\nb_dbout --> db_in : SQL\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Element — Backend.b_api\":\n  - heading \"Element — Backend.b_api\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Backend.b_api\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Backend.b_api"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Port httpIn — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Backend.b_api"
+    }
+  },
+  "operations": [
+    {
+      "type": "component",
+      "before": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+      "operation": {
+        "op": "element.rename",
+        "revision": "r6dc6b1f2:240",
+        "ref": "Backend.b_in",
+        "text": "Backend.b_api",
+        "part": "identifier",
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\nportin \"httpIn\" as b_api\nportout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_api : REST\nb_dbout --> db_in : SQL\n@enduml"
+    }
+  ]
+}

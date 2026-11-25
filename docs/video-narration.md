@@ -8,7 +8,9 @@ design-pattern lessons. The screen can also show a structured-text slide, an
 ArchUML diagram, or code, for lessons whose storyboard defines `slides`,
 `diagrams`, or `languages`; a lesson that animates should draw its structured
 text and diagrams on the stage too, so the whole video keeps one style. The
-first lesson is Scrum (`SEBook/process/scrum.md`), animated in all 49 cues.
+first lesson is Scrum (`SEBook/process/scrum.md`), animated in all 49 cues on
+the story wall; Module Blood Groups (`SEBook/designprinciples/blood-groups.md`)
+is animated on an architectural blueprint.
 
 Use a video narration for a topic that is explained with pictures and
 structured text rather than one evolving code example (processes,
@@ -39,7 +41,9 @@ The versioned authoring contract and a complete minimal example are in
 | `js/video-narration-stage.js` | Inside the frame: turns cues into song lines, builds the choreography, `seek(time)`. |
 | `js/narration-player.js` | Shared by every kind: playback lifecycle, section checks, replay, continuation, and roadmap/step navigation. Visuals come from `VideoNarrationVisuals.createRenderer`; diagram copies use `NarrationDiagram`. |
 | `css/video-narration.css` | The screen, panels, and slide layouts, in both themes and print. |
-| `js/video-narration/<topic>.js`, `<topic>-kit.js`, `css/video-narration-<topic>.css` | The topic's choreography and artwork, loaded only in its frame. |
+| `js/video-narration/wall-kit.js`, `css/video-narration-wall-kit.css` | The materials every animated lesson draws with (`WallKit`): paper cards, notes, badges, speech bubbles, checklists, list cards, frames, arrows, slots, balances, and each picture's heading strip (`topicTag`) over its scaled body. Class names keep the `sk-` prefix. |
+| `js/video-narration/<topic>.js`, `<topic>-kit.js`, `css/video-narration-<topic>.css` | The topic's choreography and its own objects, loaded only in its frame after the wall kit. |
+| `_includes/video-narration-stage-element.html` | The stage element, shared by the stage frame and the notes: topic, theme, and the sheet lettering a theme may print. |
 | `_data/explainers/<topic>_notes.yml` | Key points per cue for the printable notes. |
 | `_layouts/narration-notes.html`, `_includes/narration-notes.html`, `css/video-narration-notes.css`, `js/narration-notes.js` | Shared editable handout for every narration kind: settles visuals, saves student writing locally, and prints. |
 | `_includes/narration-note-visual.html`, `_includes/narration-note-editor.html` | Reuse each kind's visuals and provide labeled rich-text fields with semantic print content. |
@@ -160,10 +164,16 @@ in proportion to the characters and pauses before it within the cue's speech.
 A repeated word is keyed `word2`, `word3`, and so on.
 
 The choreography registers `window.SongChoreographies[<topic>]` and draws only
-for cues that show the animation. It uses the song kits (`kit.scene`,
+for cues that show the animation. It may name cues by their stable script ids
+(`scene/cue`) by reading the storyboard, as the blood-groups choreography does,
+so reordering the script never misplaces a picture. It uses the song kits (`kit.scene`,
 `kit.sticker`, `kit.stamp`, `kit.confetti`, `StoryKit.card`) plus its own kit;
 every pose is a function of narration time. The visual package’s `presentation.animation` lists the
-stage theme and the styles and scripts the frame loads.
+stage theme and the styles and scripts the frame loads. Two themes have
+narration palettes for both modes in `css/video-narration-stage.css`: the
+`story-wall` (Scrum) and the `drafting-room` blueprint, a cyanotype sheet by
+night and a whiteprint by day. The blueprint's title block prints the
+optional `sheet_title` and `sheet_subtitle` of `presentation.animation`.
 
 The stage follows the site's light or dark mode: `js/video-narration-stage.js`
 mirrors the embedding page's `dark-mode` class onto the frame and keeps

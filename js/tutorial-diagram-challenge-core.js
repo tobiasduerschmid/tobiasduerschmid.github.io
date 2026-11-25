@@ -42,6 +42,7 @@
 
   var RECORD_VERSION = 1;
   var STATES = ['exploring', 'locked', 'follow-up', 'done'];
+  var MODES = ['code-first', 'plan-first', 'diagram-first'];
   var CONFIDENCE_LEVELS = ['guessing', 'fairly-sure', 'sure'];
   var VIEW_CHOICES = ['class', 'component', 'sequence'];
   var DEFAULT_MIN_SCORE = 0.8;
@@ -157,8 +158,9 @@
 
   function normalizeSpec(raw) {
     raw = isObject(raw) ? raw : {};
-    var mode = raw.mode === 'plan-first' ? 'plan-first' : 'code-first';
-    var attempt = isObject(raw.attempt) ? raw.attempt : {};
+    var mode = MODES.indexOf(raw.mode) !== -1 ? raw.mode : 'code-first';
+    // A diagram-first step has no attempt from the code, so nothing to require.
+    var attempt = mode !== 'diagram-first' && isObject(raw.attempt) ? raw.attempt : {};
     var reply = isObject(raw.reply) ? raw.reply : {};
     var contrast = isObject(reply.contrast) ? reply.contrast : null;
     var evidenceCheck = isObject(raw.evidence_check) ? raw.evidence_check : {};
@@ -190,6 +192,8 @@
       evidence: list(reply.evidence).map(parseEvidence).filter(Boolean),
       followUp: list(raw.follow_up).map(normalizeQuestion).filter(Boolean),
       evidenceQuestions: [evidenceCheck.claim_question, evidenceCheck.question].map(normalizeQuestion).filter(Boolean),
+      // `graded: false` keeps the check as practice: asked, never scored.
+      evidenceGraded: evidenceCheck.graded !== false,
       mechanism: normalizeQuestion(debrief.mechanism_question),
       consolidation: hasText(debrief.consolidation_prompt),
     };
@@ -302,9 +306,14 @@
   // Session state and records
   // ---------------------------------------------------------------------------
 
-  function emptyState() {
+  /** A diagram-first challenge starts where the others are after lock-in. */
+  function firstState(challenge) {
+    return challenge.mode === 'diagram-first' ? 'locked' : 'exploring';
+  }
+
+  function emptyState(challenge) {
     return {
-      state: 'exploring',
+      state: firstState(challenge),
       passed: false,
       hideTimes: false,
       a: { answers: {}, confidence: null, view: null, plan: {}, hypothesis: '', evidence: [], viewWish: '' },
@@ -357,7 +366,7 @@
 
   /** Validate a stored record; anything unusable starts a fresh attempt. */
   function restore(challenge, viewChoices, record) {
-    var state = emptyState();
+    var state = emptyState(challenge);
     var seconds = { a: 0, b: 0, f: 0 };
     if (!isObject(record) || record.v !== RECORD_VERSION || STATES.indexOf(record.state) === -1) {
       return { state: state, seconds: seconds };
@@ -367,7 +376,8 @@
     var d = isObject(record.d) ? record.d : {};
     var contrastQuestions = challenge.contrast && challenge.contrast.question ? [challenge.contrast.question] : [];
     var mechanism = challenge.mechanism ? [challenge.mechanism] : [];
-    state.state = record.state;
+    // A record from before a step became diagram-first may still be exploring.
+    state.state = record.state === 'exploring' ? firstState(challenge) : record.state;
     state.passed = record.passed === true;
     state.hideTimes = record.hideTimes === true;
     state.a = {
@@ -660,7 +670,8 @@
     if (s.state === 'locked') return this.mainVisible() && hasRightAnswer(challenge.questions, s.b.checked);
     if (s.state === 'follow-up') {
       return (challenge.followUp.length === 0 || hasRightAnswer(challenge.followUp, s.f.checked)) &&
-        (challenge.evidenceQuestions.length === 0 || hasRightAnswer(challenge.evidenceQuestions, s.e.checked));
+        (challenge.evidenceQuestions.length === 0 || !challenge.evidenceGraded ||
+          hasRightAnswer(challenge.evidenceQuestions, s.e.checked));
     }
     return false;
   };
@@ -717,7 +728,7 @@
     var groups = [
       [challenge.questions, s.b.checked],
       [challenge.followUp, s.f.checked],
-      [challenge.evidenceQuestions, s.e.checked],
+      [challenge.evidenceGraded ? challenge.evidenceQuestions : [], s.e.checked],
       [challenge.mechanism ? [challenge.mechanism] : [], s.d.checked],
     ];
     var total = 0;
@@ -849,8 +860,9 @@
   }
 
   /**
-   * One results-card row: correctness and times of Part A, Part B's first
-   * attempt, and the follow-up's first attempt (null when not reached).
+   * One results-card row: correctness and times of Part A (null for a
+   * diagram-first challenge, which has none), Part B's first attempt, and
+   * the follow-up's first attempt (null when not reached).
    */
   function summarize(rawSpec, record) {
     if (!isObject(record) || record.v !== RECORD_VERSION) return null;
@@ -862,7 +874,7 @@
     return {
       state: s.state,
       passed: s.passed,
-      a: {
+      a: challenge.mode === 'diagram-first' ? null : {
         correct: !lockedIn ? null : planFirst ? countCorrect(challenge.plan, s.a.plan) : countCorrect(challenge.questions, s.a.answers),
         total: planFirst ? challenge.plan.length : challenge.questions.length,
         seconds: session.elapsedSeconds('a'),

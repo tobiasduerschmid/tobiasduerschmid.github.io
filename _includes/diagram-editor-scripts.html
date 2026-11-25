@@ -1,0 +1,21 @@
+{%- comment -%}
+  Loads the diagram editor (js/ArchUML/diagram-editor/): one script tag per file of the groups a page asks for, in
+  the order of js/ArchUML/diagram-editor/manifest.json (via _data/archuml_diagram_editor_manifest.json).
+  Parameters:
+  - groups: a comma-separated list of the manifest's groups, default "core,text". The C4 editor needs only "core".
+  - defer: "true" adds `defer` to every tag. The UML editor's inline script uses the module while it runs, so the
+    UML editor include loads it without; the C4 editor scripts are deferred.
+  A page may load a group twice (the combined course page holds both editors); the second load replaces nothing.
+  Before the scripts it links the module's stylesheet, js/ArchUML/css/diagram-editor.css (the hit layer, handles,
+  guides, marquee, in-place editors, choosers, and menus). The stylesheet reads each colour, width, and dash through a
+  --uml-edit-* custom property with a fallback and declares none, so the host's mapping wins wherever the link sits in
+  the cascade, and a second link on one page changes no computed style.
+{%- endcomment %}
+<link rel="stylesheet" href="{{ '/js/ArchUML/css/diagram-editor.css' | relative_url }}">
+{%- assign diagram_editor_groups = include.groups | default: "core,text" | split: "," -%}
+{%- for diagram_editor_group_raw in diagram_editor_groups -%}
+  {%- assign diagram_editor_group = diagram_editor_group_raw | strip -%}
+  {%- for diagram_editor_file in site.data.archuml_diagram_editor_manifest[diagram_editor_group] %}
+<script src="{{ '/js/ArchUML/' | append: diagram_editor_file | relative_url }}"{% if include.defer == true or include.defer == "true" %} defer{% endif %}></script>
+  {%- endfor -%}
+{%- endfor %}

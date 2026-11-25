@@ -1,0 +1,155 @@
+title: "C4 Model Flashcards"
+description: "C4 elements and their look-alikes, KNOW/DO/DECIDE responsibilities, relationship sentences, choosing views, what automated checks can establish, and interface descriptions."
+active: true
+cards:
+  # objective: 1
+  - id: c4-five-elements
+    difficulty: basic
+    question: "Name the five kinds of C4 element and say how they nest."
+    answer: "**Person**, **software system**, **container**, **component**, and **code element**. A system contains containers, a container contains components, and code elements implement a component. People stand outside the nesting and use a system."
+    explanation: "The four zoom levels are context, containers, components, and code. Each is a zoom step for one system's static structure, not a mandatory diagram. The C4 element definitions are adapted from [c4model.com](https://c4model.com/abstractions) by Simon Brown, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)."
+
+  # objective: 1
+  - id: c4-container-instances
+    difficulty: intermediate
+    question: "A teammate says: 'The Registration API runs as three instances in production, so our C4 model container view needs three Registration API boxes.' What is wrong with that?"
+    hint: >-
+      Would the container view change if the team ran ten instances during enrollment week?
+    answer: "A **C4 container** is an application or data store that must be running for the system to work, and the container view draws it **once**, however many instances run it. The instance count is a **deployment** fact: the deployment view shows the Registration API once, with ×3. A Docker container is one way to run an instance, not a C4 container."
+    explanation: "The container view shows which applications and data stores make up the system and what each is responsible for, and three instances share one set of responsibilities. Scaling to ten instances changes the deployment view, not the container view. The C4 element definitions are adapted from [c4model.com](https://c4model.com/abstractions) by Simon Brown, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)."
+
+  # objective: 1
+  - id: c4-component-code-library
+    difficulty: intermediate
+    question: "In a C4 model of a food-delivery system, the Order API's Pricing Engine computes each order's total behind one interface. Five classes implement it, and it calls a currency-formatting library that the Order API loads as a JAR. What is each of the three in C4: the Pricing Engine, its five classes, and the library?"
+    hint: >-
+      For each of the three, ask whether it could run on its own, and whether the rest of the Order API reaches it through one interface.
+    answer: "The Pricing Engine is a **component**: related functionality behind one interface inside the Order API container, deployed with it. The five classes are **code elements** that implement it; they belong in a code view, not as five component boxes. The library is **not a container**, because it runs only inside the Order API; if it is worth showing, draw it as a component inside each container that uses it."
+    explanation: "A component is defined by its job and its interface, not by how many classes implement it or how its code is packaged. A container must be running for the system to work; a library runs only when a container loads it. The C4 element definitions are adapted from [c4model.com](https://c4model.com/abstractions) by Simon Brown, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)."
+
+  # objective: 1
+  - id: c4-external-system
+    difficulty: intermediate
+    question: "In a C4 model of Course Registration, the Billing System belongs to the same university but is built and run by another team. Is it external on the registration team's system context view?"
+    hint: >-
+      Ask: outside of what?
+    answer: "Yes. **External** means outside the system being described, not necessarily outside the organization. The registration team does not build or run billing, so it is an external software system for this model."
+    explanation: "Whether an element is external depends on who draws the model. In the billing team's own model, the Billing System is the system in focus and not external at all, and in both models it is inside the university's enterprise boundary. Being inside the enterprise is a separate question from being inside the system."
+
+  # objective: 2
+  - id: c4-know-do-decide
+    difficulty: basic
+    question: "In Responsibility-Driven Design as used with the C4 model, what are the three kinds of responsibility, and what does each promise? Give one example of each for a course-registration system."
+    answer: "**KNOW**: information the element can provide (which seats are held for each enrollment attempt). **DO**: work or an effect it carries out (hold a seat in every section of a plan, or in none). **DECIDE**: a judgment that determines an outcome (whether prerequisites and unit caps allow an enrollment)."
+    explanation: "A responsibility is a promise in plain language, not a field, a method, or a screen. Sorting each obligation into one of three kinds makes vague statements such as 'manage enrollment' visible."
+
+  # objective: 2
+  - id: c4-responsibility-rewrite
+    difficulty: intermediate
+    question: "A C4 model of a concert-ticketing system has a Seat Inventory, an Order Coordinator, and a Refund Policy. The draft lists `remainingSeats` for the Seat Inventory and 'checks refund eligibility' for the Order Coordinator. Rewrite each as a Responsibility-Driven Design responsibility, name its kind, and say which element should own the second."
+    hint: >-
+      For the first, ask which promise the field serves. For the second, ask whether it carries out work or reaches a judgment.
+    answer: "`remainingSeats` becomes **KNOW** how many seats remain for each performance. 'Checks refund eligibility' becomes **DECIDE** whether an order may be refunded, owned by the **Refund Policy**: the Order Coordinator asks for the decision instead of making it."
+    explanation: "A field name is not an obligation. A coordinator that collects decisions drifts toward a centralized control style, where one element decides nearly everything while its collaborators hold data."
+
+  # objective: 2
+  - id: c4-knows-not-stores
+    difficulty: intermediate
+    question: "In a C4 model of course registration, the Registration Database stores seat holds, yet the Seat Gateway is said to *own* them. Why is the database not the owner, and what is the ownership rule?"
+    hint: >-
+      Suppose the database and the Seat Gateway disagreed about a seat hold after a failed write. Which record would you trust, and what makes it the trusted one?
+    answer: "A fact's **owner** is its single source of truth and its only writer, which is what the `owns` slot records. The Seat Gateway is that writer; the database's storing of the holds is a DO, custody without authority. The rule: **one authoritative owner for each fact and one decision-maker for each decision**. Other elements may still know a fact by asking its owner."
+    explanation: "KNOW means the element can *provide* the information: it may hold it, derive it, or ask a collaborator. With two writers of seat holds, the records would disagree after the first partial failure and nobody could say which was right."
+
+  # objective: 2
+  - id: c4-refines
+    difficulty: advanced
+    question: "In a C4 `design.yml` model, how does a component's responsibility show that it carries out part of a system's responsibility, and what does that make checkable?"
+    answer: "Give the parent responsibility an `id` and point to it from the lower level with `refines`, so a chain runs from system to container to component. A reviewer can then check that **every system responsibility is refined somewhere below it** and follow any obligation down to the element that carries it out."
+    explanation: "Zooming in divides the parent's obligations among the children and adds the coordination and supporting knowledge they need. Every parent responsibility must be refined somewhere below it; a new child responsibility should exist to serve one of them. A system responsibility with no refinement has not been allocated to any container."
+
+  # objective: 3
+  - id: c4-relationship-sentence
+    difficulty: intermediate
+    question: "In a C4 model container view of a food-delivery system, the arrow from the Order API to the Order Database is labeled 'data'. Rewrite the label, and name what a good relationship label gives the reader."
+    hint: >-
+      Read the label aloud between its source and its target. What would a reader still have to ask the author?
+    answer: "For example, 'writes orders to' with the technology *[SQL/TCP]*. A good label reads as a sentence from source to target and gives **direction** (the arrow points from the element that asks), **intent** (what is asked or sent), and, where the arrow crosses a container boundary, the **technology**."
+    explanation: "'Data' is a noun and 'uses' is true of almost any pair of boxes. A label that could sit on any arrow in the diagram explains none of them."
+
+  # objective: 3
+  - id: c4-technology-and-async
+    difficulty: intermediate
+    question: "In C4 model views drawn on this site, where the legend explains line styles, at which levels do relationship labels name a technology, and how does an arrow show that the sender does not wait for a reply?"
+    answer: "Context views omit the technology and state each interaction's purpose in business terms. Container views add a technology where an arrow between containers, or between a container and another system, crosses a container boundary; arrows from people may omit it. Component views add it only where an arrow leaves the container. An **asynchronous** relationship, such as a message to billing, is drawn with a dashed arrow."
+    explanation: "The protocol becomes a design decision at a container boundary, so that is where the reader needs it. A dashed arrow tells readers the sender does not wait; whether a billing outage delays an enrollment depends on the queue, a design decision the model records in `choices`. Other notations use dashed lines differently, which is why the legend matters."
+
+  # objective: 4
+  - id: c4-levels-optional
+    difficulty: intermediate
+    question: "Which C4 model views should every system have, which are optional, and why?"
+    hint: >-
+      Compare how often each level's content changes and who reads it. What happens to a drawn view of fast-changing code?
+    answer: "Draw a **system context** view and a **container** view for every system. Draw **component** views only for containers with interesting internals, and **code** views only for a key mechanism or pattern, or generate them on demand."
+    explanation: "Every drawn view is a maintenance commitment that grows as you zoom in, and a stale view is worse than none. Leaving a level out is justified by a reason such as 'its internals change weekly, so we generate the view', never by 'we ran out of time'."
+
+  # objective: 4
+  - id: c4-pick-view
+    difficulty: advanced
+    question: "A food-delivery system is documented with the C4 model. An operations engineer asks how many copies of the Dispatch API run in each region. A product owner asks in what order an order is paid for, assigned to a courier, and confirmed. Which view answers each, and why does the container view answer neither?"
+    answer: "The **deployment view** of each region shows the instances and the infrastructure around them. A **dynamic view** of the ordering scenario shows the order of steps. The container view is static structure: it stays the same whether one instance runs or thirty, and it cannot show order."
+    explanation: "The container is the Dispatch API; instances are a deployment fact. Order is a behavior fact. Each question needs the view whose notation was built for it."
+
+  # objective: 5
+  - id: c4-database-as-system
+    difficulty: intermediate
+    question: "A C4 model system context view of a concert-ticketing system shows the team's own Search Index as a separate software system next to Ticketing, though the ticketing team builds and runs it. What is wrong, and how do you repair it?"
+    hint: >-
+      Ask who builds and runs the search index, and what the box claims about it.
+    answer: "A data store the team builds and runs for its system is a **container inside** Ticketing, so it belongs one level down, in the container view. Drawn as a system, the box claims the index is a peer with its own purpose and users. Only a search service that another team owned and ran would appear on the context view, as an external system."
+    explanation: "Mixing levels is a common error on a context view. An automated check cannot catch it: a team can legitimately own several software systems, so nothing in the model's structure shows that this one is really part of Ticketing. Telling a part from a separate system is a boundary judgment for a reviewer."
+
+  # objective: 5
+  - id: c4-review-checklist
+    difficulty: intermediate
+    question: "A C4 model container view of a food-delivery system is titled 'Overview', has three green boxes and one orange box, arrows labeled 'JSON', 'orders', and 'talks to', and no legend. Name four review-checklist failures."
+    hint: >-
+      Go through the checklist in the order scope, elements, relationships, presentation. Ask what a reader who never met the author would still not know.
+    answer: "(1) The title names neither the view type nor the system. (2) Orange carries a meaning that nobody explains, so color carries meaning alone. (3) No label reads as a sentence: 'JSON' is a technology without a purpose, 'orders' a noun, and 'talks to' a verb without an object. (4) With no legend, the shapes, colors, and line styles go unexplained."
+    explanation: "The checklist exists so that a view explains itself without its author. The same questions apply to a whiteboard sketch and to a generated diagram."
+
+  # objective: 6
+  - id: c4-checks-limits
+    difficulty: advanced
+    question: "A C4 `design.yml` model passes every automated check with no errors or warnings. What does that establish, and what does it leave open?"
+    hint: >-
+      Ask what a tool could confirm by reading only the YAML file.
+    answer: "It establishes **consistency and completeness** rules: every collaborator exists, every `refines` points to a real parent, no fact is declared owned by two elements outside one containment chain (a container and its own component may both list it), every arrow between containers names a technology. It leaves **adequacy** open: whether the boundaries and owners are right, whether a recorded target such as 2 s enrollment is met by the running system, whether the code matches the model, and whether the domain rules are correct."
+    explanation: "A checker can flag a vague name only as a suggestion for a person to judge. A model that passes every check is consistent; whether it is a good design remains a judgment for the author and the reviewer."
+
+  # objective: 7
+  - id: c4-interface-field-unit
+    difficulty: intermediate
+    question: "In a C4 model `design.yml` interface description, a response field `units_enrolled` has type `number`. Where does its unit go, and why not only in the field's meaning?"
+    hint: >-
+      Imagine a tool that must warn about every number that has no unit. What would it need to find, and where would it look?
+    answer: "In the field's own **`unit`** key (`unit: quarter units`), beside its type. A separate unit can be checked for presence (a number without one is flagged), appears in its own column next to the type on the description card, and gives an integration test something exact to compare a value with. A unit mentioned somewhere in a meaning sentence is easy to leave out and easy to overlook."
+    explanation: "Two independently built systems can both accept a number and still read it in different units, the failure behind the Mars Climate Orbiter. The meaning says what a number measures; the unit says what a value of 1 means. Both belong in the description, each in its own place."
+
+  # objective: 7
+  - id: c4-uses-realizes
+    difficulty: advanced
+    question: "In a C4 model `design.yml` with interface descriptions, what do `uses` and `realizes` connect, and which responsibilities may an operation realize?"
+    hint: >-
+      Follow one request from the element that asks to the obligation it relies on, and note which end of that chain each key is written on.
+    answer: "**`uses`**, on a relationship, names the interface or operation the asking element calls (`uses: enrollment-api.submit-plan`). **`realizes`**, on an operation, names the provider's responsibilities a client relies on when it calls the operation. An operation may realize the provider's own responsibilities, or a responsibility of one of its parts that refines one of them; a part's private obligation, or another element's responsibility, may not."
+    explanation: "Together the two keys trace a request from the client through the operation to the obligation it fulfills, so a change to an operation shows which clients and which responsibilities it affects. An interface advertises what the provider promises, not how its parts divide the work, so a part's private obligation stays out of the contract."
+
+  # objective: 7
+  - id: c4-interface-placement
+    difficulty: intermediate
+    question: "In a C4 model, a container's HTTP API is handled by one of its components. Do you declare the API's interface on the container or on that component? When is the component the right place?"
+    hint: >-
+      Write down the URL a client in another container calls. Which C4 element does that address belong to?
+    answer: "On the **container**, the element clients address over the network, even when one component handles the calls; a view of that component shows the interface as delegated from its container. The **component** is right when it exposes its own remote endpoint, such as a controller with its own route. A component's in-process operations are reachable only from other components of its own container."
+    explanation: "A C4 component is not deployed on its own, so a client in another container can reach it only through an interface offered over the network. Declare each interface on the element that a client actually addresses."

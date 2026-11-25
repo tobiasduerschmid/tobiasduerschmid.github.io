@@ -1,0 +1,184 @@
+{
+  "id": "flow-added-with-the-flow-tool",
+  "family": "behaviour",
+  "type": "activity",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Add relation: Flow"
+      }
+    },
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "role": "button",
+          "name": "Element Back Order — Enter to select, arrows to nudge, Delete to remove"
+        }
+      }
+    },
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "role": "button",
+          "name": "Element Check Stock — Enter to select, arrows to nudge, Delete to remove"
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n\"Back Order\" --> \"Check Stock\"\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Connected \"Back Order\" to \"Check Stock\". Edit the selected relation in Properties."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — Back Order → Check Stock\":\n  - heading \"Relation — Back Order → Check Stock\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Flow\" [selected]\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"__initial__ - Initial pseudostate\"\n    - option \"Receive Order\"\n    - option \"Check Stock\"\n    - option \"decision_1 - In stock?\"\n    - option \"Ship Order\"\n    - option \"Back Order\" [selected]\n    - option \"__final__1 - Final pseudostate\"\n    - option \"__final__2 - Final pseudostate\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"__initial__ - Initial pseudostate\"\n    - option \"Receive Order\"\n    - option \"Check Stock\" [selected]\n    - option \"decision_1 - In stock?\"\n    - option \"Ship Order\"\n    - option \"Back Order\"\n    - option \"__final__1 - Final pseudostate\"\n    - option \"__final__2 - Final pseudostate\"\n  - text: Label\n  - textbox \"Label\"\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "rel:10"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Flow\" [selected]\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"__initial__ - Initial pseudostate\" [selected]\n    - option \"Receive Order\"\n    - option \"Check Stock\"\n    - option \"decision_1 - In stock?\"\n    - option \"Ship Order\"\n    - option \"Back Order\"\n    - option \"__final__1 - Final pseudostate\"\n    - option \"__final__2 - Final pseudostate\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"__initial__ - Initial pseudostate\" [selected]\n    - option \"Receive Order\"\n    - option \"Check Stock\"\n    - option \"decision_1 - In stock?\"\n    - option \"Ship Order\"\n    - option \"Back Order\"\n    - option \"__final__1 - Final pseudostate\"\n    - option \"__final__2 - Final pseudostate\"\n  - text: Label\n  - textbox \"Label\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n\"Back Order\" --> \"Check Stock\"\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — Back Order → Check Stock\":\n  - heading \"Relation — Back Order → Check Stock\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Flow\" [selected]\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"__initial__ - Initial pseudostate\"\n    - option \"Receive Order\"\n    - option \"Check Stock\"\n    - option \"decision_1 - In stock?\"\n    - option \"Ship Order\"\n    - option \"Back Order\" [selected]\n    - option \"__final__1 - Final pseudostate\"\n    - option \"__final__2 - Final pseudostate\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"__initial__ - Initial pseudostate\"\n    - option \"Receive Order\"\n    - option \"Check Stock\" [selected]\n    - option \"decision_1 - In stock?\"\n    - option \"Ship Order\"\n    - option \"Back Order\"\n    - option \"__final__1 - Final pseudostate\"\n    - option \"__final__2 - Final pseudostate\"\n  - text: Label\n  - textbox \"Label\"\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "rel:10"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "activity",
+      "before": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+      "operation": {
+        "op": "relation.add",
+        "revision": "r9f1a8800:204",
+        "tool": "flow",
+        "from": "Back Order",
+        "to": "Check Stock",
+        "label": null,
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n\"Back Order\" --> \"Check Stock\"\n@enduml"
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+{
+  "id": "action-a-decision-branch-continues-into-removed-with-the-delete-key",
+  "family": "behaviour",
+  "type": "activity",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Back Order — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "Delete"
+    }
+  ],
+  "after": {
+    "text": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\nendif\n\"Ship Order\" --> (*)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Deleted 1 item."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\nendif\n\"Ship Order\" --> (*)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "activity",
+      "before": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+      "operation": {
+        "op": "selection.remove",
+        "revision": "r9f1a8800:204",
+        "elements": [
+          "Back Order"
+        ],
+        "relations": [],
+        "fragments": [],
+        "activations": [],
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\nendif\n\"Ship Order\" --> (*)\n@enduml"
+    }
+  ]
+}

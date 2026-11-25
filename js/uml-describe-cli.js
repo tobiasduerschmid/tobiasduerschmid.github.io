@@ -6,6 +6,9 @@ const fs = require('fs');
 const path = require('path');
 
 global.window = global.window || {};
+// The describer reads the C4 core from `window` at call time, as on pages that
+// preload it (spec §3.2).
+global.window.ArchUMLC4 = require('./ArchUML/c4/c4-core.js');
 const src = fs.readFileSync(path.join(__dirname, 'uml-auto-describe.js'), 'utf8');
 // eslint-disable-next-line no-eval -- intentional: load the browser file so it
 // registers window.UMLAutoDescribe for the production build path.

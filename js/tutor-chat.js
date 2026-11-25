@@ -50,9 +50,19 @@
     var backend = (tutorial.config && tutorial.config.backend) || tutorial.backend || '';
     var output = (tutorial.outputPre && tutorial.outputPre.textContent) || '';
     var studentCode = _getStudentCode(tutorial, step);
+    // A backend that reports unchecked tests (`null`, shown as ?) with one card of its own, such as C4's
+    // "Fix the YAML errors first", replaces their authored and generated hints with that card, shown once.
+    const replacesUnchecked = typeof tutorial._hintForUncheckedTests === 'function';
+    let uncheckedShown = false;
     const groups = [];
     tests.forEach(function (test, index) {
       if (results[index] === true) return;
+      if (replacesUnchecked && results[index] === null) {
+        const card = uncheckedShown ? null : _normalizeHintRecord(tutorial._hintForUncheckedTests(), test.description || 'Hint');
+        uncheckedShown = true;
+        if (card) groups.push({ testIndex: index, description: test.description || 'Check ' + (index + 1), hints: [card] });
+        return;
+      }
       let hints = _toArray(test.hints)
         .filter(function (hint) {
           return _evaluateHintCondition(hint.condition, studentCode, backend, output, tutorial);
@@ -219,9 +229,20 @@
    * Regex patterns may be written bare ("\\bvar\\b") or slash-delimited with
    * flags ("/\\bvar\\b/i"). Invalid patterns fall through and return true so
    * the hint still surfaces rather than silently hide.
+   *
+   * A structured condition belongs to the backend that defines it:
+   *   {c4: <predicate>}         → the C4 adapter's verdict on the last test run's
+   *                               snapshot; false without the adapter, when the
+   *                               design could not be read, or when the predicate
+   *                               names something the model lacks
+   * Any other structured condition is false.
    */
   function _evaluateHintCondition(condition, studentCode, backend, output, tutorial) {
     if (!condition) return true;
+    if (typeof condition === 'object') {
+      return Boolean(condition.c4) && typeof tutorial._evaluateC4Hint === 'function'
+        && tutorial._evaluateC4Hint(condition.c4) === true;
+    }
     if (/^pipeline_(matches|state):/.test(condition)) {
       return backend === 'shell-pipeline' && !!tutorial._evaluateShellPipelineHint &&
         tutorial._evaluateShellPipelineHint(condition, studentCode);

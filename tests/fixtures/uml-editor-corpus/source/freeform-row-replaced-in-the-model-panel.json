@@ -1,0 +1,199 @@
+{
+  "id": "freeform-row-replaced-in-the-model-panel",
+  "family": "source",
+  "type": "freeform",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nbox \"Draft\" as draft\nbox round \"Review\" as review\ndraft --> review : submit\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "text": "Advanced source rows (",
+        "exact": false
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "label": "Model row row 1"
+      },
+      "value": "box \"First draft\" as draft"
+    },
+    {
+      "do": "press",
+      "target": {
+        "label": "Model row row 1"
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nbox \"First draft\" as draft\nbox round \"Review\" as review\ndraft --> review : submit\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nbox \"Draft\" as draft\nbox round \"Review\" as review\ndraft --> review : submit\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nbox \"First draft\" as draft\nbox round \"Review\" as review\ndraft --> review : submit\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "freeform",
+      "before": "@startuml\nbox \"First draft\" as draft\nbox round \"Review\" as review\ndraft --> review : submit\n@enduml",
+      "operation": {
+        "op": "source.replaceLines",
+        "revision": "rc85846e1:99",
+        "range": {
+          "start": 1,
+          "end": 1
+        },
+        "lines": [
+          "box \"First draft\" as draft"
+        ],
+        "facts": {},
+        "undo": {
+          "key": "model-row:1"
+        }
+      },
+      "after": "@startuml\nbox \"First draft\" as draft\nbox round \"Review\" as review\ndraft --> review : submit\n@enduml"
+    },
+    {
+      "type": "freeform",
+      "before": "@startuml\nbox \"Draft\" as draft\nbox round \"Review\" as review\ndraft --> review : submit\n@enduml",
+      "operation": {
+        "op": "source.replaceLines",
+        "revision": "r18849aeb:93",
+        "range": {
+          "start": 1,
+          "end": 1
+        },
+        "lines": [
+          "box \"First draft\" as draft"
+        ],
+        "facts": {},
+        "undo": {
+          "key": "model-row:1"
+        }
+      },
+      "after": "@startuml\nbox \"First draft\" as draft\nbox round \"Review\" as review\ndraft --> review : submit\n@enduml"
+    }
+  ]
+}

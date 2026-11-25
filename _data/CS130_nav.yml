@@ -57,6 +57,8 @@ topics:
     subtopics:
       - name: Information Hiding
         url: /SEBook/designprinciples/informationhiding.html
+      - name: Module Blood Groups
+        url: /SEBook/designprinciples/blood-groups.html
 
 
   - name: Software Process

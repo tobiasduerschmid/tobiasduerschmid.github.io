@@ -1,0 +1,174 @@
+{
+  "id": "git-graph-commit-added-to-the-end-of-the-first-branch",
+  "family": "source",
+  "type": "gitgraph",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nbranch main:\n  A \"Initial commit\"\n  B \"Add README\"\nbranch feature from A:\n  C \"Start feature\"\nhead main\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "text": "Git graph model (",
+        "exact": false
+      }
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "+ Commit"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nbranch main:\n  A \"Initial commit\"\n  B \"Add README\"\n  C2 \"Commit message\"\nbranch feature from A:\n  C \"Start feature\"\nhead main\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Added commit \"C2\" to main."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nbranch main:\n  A \"Initial commit\"\n  B \"Add README\"\n  C2 \"Commit message\"\nbranch feature from A:\n  C \"Start feature\"\nhead main\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nbranch main:\n  A \"Initial commit\"\n  B \"Add README\"\nbranch feature from A:\n  C \"Start feature\"\nhead main\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Element — C2\":\n  - heading \"Element — C2\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": C2\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.",
+    "draft": "@startuml\nbranch main:\n  A \"Initial commit\"\n  B \"Add README\"\nbranch feature from A:\n  C \"Start feature\"\nhead main\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nbranch main:\n  A \"Initial commit\"\n  B \"Add README\"\n  C2 \"Commit message\"\nbranch feature from A:\n  C \"Start feature\"\nhead main\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Element — C2\":\n  - heading \"Element — C2\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": C2\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.",
+    "draft": "@startuml\nbranch main:\n  A \"Initial commit\"\n  B \"Add README\"\n  C2 \"Commit message\"\nbranch feature from A:\n  C \"Start feature\"\nhead main\n@enduml",
+    "selection": [
+      "C2"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element C2 — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "C2"
+    }
+  },
+  "operations": [
+    {
+      "type": "gitgraph",
+      "before": "@startuml\nbranch main:\n  A \"Initial commit\"\n  B \"Add README\"\nbranch feature from A:\n  C \"Start feature\"\nhead main\n@enduml",
+      "operation": {
+        "op": "source.insertLines",
+        "revision": "r12d4c8ff:121",
+        "lines": [
+          "  C2 \"Commit message\""
+        ],
+        "at": {
+          "beforeLine": 4
+        },
+        "frame": true,
+        "facts": {},
+        "undo": {
+          "key": "gitgraph-add-commit"
+        }
+      },
+      "after": "@startuml\nbranch main:\n  A \"Initial commit\"\n  B \"Add README\"\n  C2 \"Commit message\"\nbranch feature from A:\n  C \"Start feature\"\nhead main\n@enduml"
+    }
+  ]
+}

@@ -50,13 +50,17 @@
     return g;
   }
 
-  /** The title block in the bottom right corner, ruled into cells. */
-  function titleBlock(parent) {
+  /**
+   * The title block in the bottom right corner, ruled into cells. A stage
+   * may name its sheet (data-sheet-title, data-sheet-subtitle); "Draw It
+   * Out" is the sheet the theme was drawn for.
+   */
+  function titleBlock(parent, { title = 'DRAW IT OUT', subtitle = 'UML · PLAN' } = {}) {
     const g = svg('g', { class: 'dr-title-block', transform: `translate(${W - 268} ${H - 92})` }, parent);
     svg('rect', { class: 'dr-line', x: 0, y: 0, width: 250, height: 74 }, g);
     svg('path', { class: 'dr-line-fine', d: 'M0 30 H250 M0 52 H250 M150 30 V74 M200 52 V74' }, g);
-    letters(g, 'DRAW IT OUT', { x: 12, y: 22, class: 'dr-lettering dr-lettering--title' });
-    letters(g, 'UML · PLAN', { x: 12, y: 46 });
+    letters(g, title, { x: 12, y: 22, class: 'dr-lettering dr-lettering--title' });
+    letters(g, subtitle, { x: 12, y: 46 });
     letters(g, 'A-1', { x: 162, y: 46 });
     letters(g, '1:50', { x: 12, y: 68 });
     letters(g, 'SHEET 1', { x: 152, y: 68 });
@@ -203,7 +207,7 @@
     planFragment(art);
     heightChain(art);
     markers(art);
-    titleBlock(art);
+    titleBlock(art, { title: stage.dataset.sheetTitle, subtitle: stage.dataset.sheetSubtitle });
     setSquare(art);
     compass(art);
     roll(art);

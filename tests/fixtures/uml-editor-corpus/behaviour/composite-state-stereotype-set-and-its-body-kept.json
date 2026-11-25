@@ -1,0 +1,201 @@
+{
+  "id": "composite-state-stereotype-set-and-its-body-kept",
+  "family": "behaviour",
+  "type": "state",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nstate Active {\n  state Waiting\n  state Working {\n    state Step1\n    state Step2\n    Step1 --> Step2 : next\n  }\n  [*] --> Waiting\n  Waiting --> Working : go\n}\n[*] --> Active\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Active — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "fill",
+      "target": {
+        "label": "Stereotype (e.g. <<service>>)",
+        "within": {
+          "css": "#uml-pg-props-content"
+        }
+      },
+      "value": "busy"
+    },
+    {
+      "do": "press",
+      "target": {
+        "label": "Stereotype (e.g. <<service>>)",
+        "within": {
+          "css": "#uml-pg-props-content"
+        }
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nstate Active <<busy>> {\nstate Waiting\n  state Working {\n    state Step1\n    state Step2\n    Step1 --> Step2 : next\n  }\n  [*] --> Waiting\n  Waiting --> Working : go\n}\n[*] --> Active\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"State — Active\":\n  - heading \"State — Active\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Active\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"State\" [selected]\n    - option \"Choice\"\n    - option \"Junction\"\n    - option \"Shallow history (H)\"\n    - option \"Deep history (H*)\"\n    - option \"Fork\"\n    - option \"Join\"\n    - option \"Terminate\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\": busy\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - group \"Sub-states\":\n    - text: Sub-states\n    - textbox \"Sub-state 1 name\":\n      - /placeholder: Sub-state name\n      - text: Waiting\n    - button \"Remove sub-state 1\": ✕\n    - button \"+ Add sub-state\"\n    - button \"+ Initial state\"\n    - button \"+ Final state\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Active"
+    ],
+    "focus": {
+      "tag": "input",
+      "id": "uml-pg-prop-<random>",
+      "role": "textbox",
+      "name": "Stereotype (e.g. <<service>>)",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nstate Active {\n  state Waiting\n  state Working {\n    state Step1\n    state Step2\n    Step1 --> Step2 : next\n  }\n  [*] --> Waiting\n  Waiting --> Working : go\n}\n[*] --> Active\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"State — Active\":\n  - heading \"State — Active\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Active\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"State\" [selected]\n    - option \"Choice\"\n    - option \"Junction\"\n    - option \"Shallow history (H)\"\n    - option \"Deep history (H*)\"\n    - option \"Fork\"\n    - option \"Join\"\n    - option \"Terminate\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - group \"Sub-states\":\n    - text: Sub-states\n    - textbox \"Sub-state 1 name\":\n      - /placeholder: Sub-state name\n      - text: Waiting\n    - button \"Remove sub-state 1\": ✕\n    - button \"+ Add sub-state\"\n    - button \"+ Initial state\"\n    - button \"+ Final state\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Active"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Active — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Active"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nstate Active <<busy>> {\nstate Waiting\n  state Working {\n    state Step1\n    state Step2\n    Step1 --> Step2 : next\n  }\n  [*] --> Waiting\n  Waiting --> Working : go\n}\n[*] --> Active\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"State — Active\":\n  - heading \"State — Active\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Active\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"State\" [selected]\n    - option \"Choice\"\n    - option \"Junction\"\n    - option \"Shallow history (H)\"\n    - option \"Deep history (H*)\"\n    - option \"Fork\"\n    - option \"Join\"\n    - option \"Terminate\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\": <<busy>>\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - group \"Sub-states\":\n    - text: Sub-states\n    - textbox \"Sub-state 1 name\":\n      - /placeholder: Sub-state name\n      - text: Waiting\n    - button \"Remove sub-state 1\": ✕\n    - button \"+ Add sub-state\"\n    - button \"+ Initial state\"\n    - button \"+ Final state\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Active"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Active — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Active"
+    }
+  },
+  "operations": [
+    {
+      "type": "state",
+      "before": "@startuml\nstate Active {\n  state Waiting\n  state Working {\n    state Step1\n    state Step2\n    Step1 --> Step2 : next\n  }\n  [*] --> Waiting\n  Waiting --> Working : go\n}\n[*] --> Active\n@enduml",
+      "operation": {
+        "op": "element.update",
+        "revision": "r7cfa9a9b:191",
+        "ref": "Active",
+        "changes": {
+          "declaration": {
+            "tool": "state",
+            "name": "Active",
+            "label": "Active",
+            "stereotype": "<<busy>>",
+            "highlight": "",
+            "texture": "",
+            "dashed": false
+          }
+        },
+        "facts": {},
+        "undo": {
+          "key": "edit:Active"
+        }
+      },
+      "after": "@startuml\nstate Active <<busy>> {\nstate Waiting\n  state Working {\n    state Step1\n    state Step2\n    Step1 --> Step2 : next\n  }\n  [*] --> Waiting\n  Waiting --> Working : go\n}\n[*] --> Active\n@enduml"
+    }
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: focus stays in the editor after a menu or chooser item (origin/master 71fbaeca); a state's Behaviour fields and its region's initial and final states (origin/master 71fbaeca); a state's Kind field, which hides the sub-state list of a pseudostate (origin/master 71fbaeca); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
+}

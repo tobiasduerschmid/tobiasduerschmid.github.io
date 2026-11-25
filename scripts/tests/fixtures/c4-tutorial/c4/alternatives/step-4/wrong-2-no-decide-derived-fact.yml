@@ -1,0 +1,45 @@
+# WRONG (no DECIDE: only the derived prerequisite fact is recorded): must fail T2.
+schema: c4-design/1
+name: Course Registration
+description: Students plan a term schedule and enroll in every section of it, or in none.
+
+requirements:
+  FR-21: A student can enroll in a section only after passing the section's prerequisite courses.
+  FR-22: A student can see how many seats are still open in each section of a plan.
+  FR-23: If a section fills up while a student is enrolling in a plan, the student keeps no seat from that plan and learns which section was full.
+
+people:
+  student:
+    name: Student
+    description: Plans and confirms one term schedule.
+    collaborators:
+      registration: plans a schedule and enrolls using
+  adviser:
+    name: Academic Adviser
+    description: Reviews students' planned schedules before they enroll.
+    collaborators:
+      registration: reviews a student's planned schedule using
+
+systems:
+  registration:
+    name: Course Registration
+    description: Plans term schedules and enrolls students in their sections.
+    responsibilities:
+      - know: whether a student has passed every prerequisite of a section
+        id: sys-eligibility
+        requirements: [FR-21]
+      - know: how many seats are still open in each section
+        id: sys-open-seats
+        requirements: [FR-22]
+      - do: hold a seat in every section of a plan, or in none
+        id: sys-holds
+        requirements: [FR-23]
+      - know: which section was full when an enrollment attempt fails
+        id: sys-full-section
+        requirements: [FR-23]
+    collaborators:
+      billing: requests tuition charges from
+  billing:
+    name: Billing System
+    description: Charges tuition and fees for the university.
+    external: true

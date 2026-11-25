@@ -1,0 +1,119 @@
+{
+  "fps": 30,
+  "frameCount": 20698,
+  "duration": 689.9333333333333,
+  "holds": [
+    {
+      "section": "intro",
+      "outputStart": 0,
+      "outputEnd": 45.63333333333333,
+      "songTime": 0,
+      "pictureTime": 2.3333333333333335
+    },
+    {
+      "section": "verse-1",
+      "outputStart": 57.8,
+      "outputEnd": 86.33333333333333,
+      "songTime": 12.166666666666666,
+      "pictureTime": 12.866666666666667
+    },
+    {
+      "section": "verse-2",
+      "outputStart": 103.06666666666666,
+      "outputEnd": 132.13333333333333,
+      "songTime": 28.9,
+      "pictureTime": 29.566666666666666
+    },
+    {
+      "section": "pre-chorus",
+      "outputStart": 157.56666666666666,
+      "outputEnd": 170.53333333333333,
+      "songTime": 54.333333333333336,
+      "pictureTime": 55
+    },
+    {
+      "section": "chorus-1",
+      "outputStart": 179.56666666666666,
+      "outputEnd": 217.46666666666667,
+      "songTime": 63.36666666666667,
+      "pictureTime": 64.03333333333333
+    },
+    {
+      "section": "verse-3",
+      "outputStart": 235.5,
+      "outputEnd": 262.56666666666666,
+      "songTime": 81.4,
+      "pictureTime": 82.06666666666666
+    },
+    {
+      "section": "verse-4",
+      "outputStart": 288.06666666666666,
+      "outputEnd": 321.3,
+      "songTime": 106.9,
+      "pictureTime": 107.56666666666666
+    },
+    {
+      "section": "chorus-2",
+      "outputStart": 365.73333333333335,
+      "outputEnd": 370.23333333333335,
+      "songTime": 151.33333333333334,
+      "pictureTime": 152.03333333333333
+    },
+    {
+      "section": "verse-5",
+      "outputStart": 387.06666666666666,
+      "outputEnd": 407.1666666666667,
+      "songTime": 168.16666666666666,
+      "pictureTime": 168.83333333333334
+    },
+    {
+      "section": "verse-6",
+      "outputStart": 423.8333333333333,
+      "outputEnd": 448.93333333333334,
+      "songTime": 184.83333333333334,
+      "pictureTime": 185.5
+    },
+    {
+      "section": "chorus-3",
+      "outputStart": 474.06666666666666,
+      "outputEnd": 476.96666666666664,
+      "songTime": 209.96666666666667,
+      "pictureTime": 210.63333333333333
+    },
+    {
+      "section": "verse-7",
+      "outputStart": 494.1,
+      "outputEnd": 518.1333333333333,
+      "songTime": 227.1,
+      "pictureTime": 227.76666666666668
+    },
+    {
+      "section": "bridge",
+      "outputStart": 555.3666666666667,
+      "outputEnd": 577.7333333333333,
+      "songTime": 264.3333333333333,
+      "pictureTime": 265
+    },
+    {
+      "section": "quiz",
+      "outputStart": 604.8333333333334,
+      "outputEnd": 619.5,
+      "songTime": 291.43333333333334,
+      "pictureTime": 292.1
+    },
+    {
+      "section": "final-chorus",
+      "outputStart": 646.9333333333333,
+      "outputEnd": 652.4,
+      "songTime": 318.8666666666667,
+      "pictureTime": 319.56666666666666
+    },
+    {
+      "section": "outro",
+      "outputStart": 670.7333333333333,
+      "outputEnd": 679.5333333333333,
+      "songTime": 337.2,
+      "pictureTime": 337.8666666666667
+    }
+  ]
+}

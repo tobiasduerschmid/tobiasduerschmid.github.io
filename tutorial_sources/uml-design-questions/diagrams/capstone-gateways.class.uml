@@ -72,18 +72,4 @@ defines itself.
 Dashed arrow named raises: the class
 raises that exception.
 end note
-@layout
-SupplierGateway @pos(390, 0)
-SupplierUnavailable @pos(720, 55)
-BoxOfficeGateway @pos(0, 250)
-LodgingGateway @pos(260, 250)
-ShuttleGateway @pos(520, 250)
-ExperienceGateway @pos(780, 250)
-GlampingCoGateway @pos(264, 520)
-VipShuttleGateway @pos(531, 520)
-MeetAndGreetGateway @pos(774, 520)
-ManualCancellationRequired @pos(120, 680)
-note:59 @pos(1040, 30)
-note:65 @pos(1040, 200)
-@endlayout
 @enduml

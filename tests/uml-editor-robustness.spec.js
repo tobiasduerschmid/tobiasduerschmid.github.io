@@ -482,6 +482,21 @@ test.describe('state diagram modelling', () => {
     await expect(relations(page)).toHaveCount(1);
   });
 
+  test('after one state\'s action is edited, editing another state\'s keeps that state selected, so Delete removes it', async ({ page }) => {
+    await openDiagram(page, 'state', '[*] --> Idle\nstate Idle\nstate Busy\nIdle --> Busy : start');
+    await select(element(page, 'Idle'));
+    await commit(page.getByRole('textbox', { name: 'Entry action', exact: true }), 'start()');
+    await expect(renderedText(page, 'entry / start()')).toBeVisible();
+    await select(element(page, 'Busy'));
+    await commit(page.getByRole('textbox', { name: 'Entry action', exact: true }), 'work()');
+    await expect(renderedText(page, 'entry / work()')).toBeVisible();
+
+    await page.getByRole('region', { name: 'State — Busy', exact: true }).getByRole('button', { name: '✕ Delete', exact: true }).click();
+
+    await expect(element(page, 'Busy')).toHaveCount(0);
+    await expect(element(page, 'Idle')).toBeVisible();
+  });
+
   test('an action replaces the one written on a named row', async ({ page }) => {
     await openDiagram(page, 'state', 'state A\nA : entry / old()');
     await select(element(page, 'A'));

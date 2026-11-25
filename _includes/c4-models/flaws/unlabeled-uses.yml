@@ -1,0 +1,55 @@
+schema: c4-design/1
+name: Course Registration
+description: Students plan a term schedule and enroll in every section of it, or in none.
+status: proposed
+enterprise: UCLA
+
+people:
+  student:
+    name: Student
+    description: Plans and confirms one term schedule.
+    collaborators:
+      web: plans a schedule and enrolls using
+
+systems:
+  registration:
+    name: Course Registration
+    description: Plans term schedules and enrolls students in their sections.
+    responsibilities:
+      - decide: whether a student may enroll in a section
+        id: sys-eligibility
+      - do: hold a seat in every section of a plan, or in none
+        id: sys-holds
+    containers:
+      web:
+        name: Planner Web App
+        kind: browser_app
+        technology: TypeScript, React
+        description: Lets students compare draft schedules in the browser.
+        responsibilities:
+          - do: let students compare draft schedules
+        collaborators:
+          api: uses
+      api:
+        name: Registration API
+        technology: Python, FastAPI
+        description: Decides eligibility and enrolls students atomically.
+        responsibilities:
+          - decide: whether a student may enroll in a section
+            refines: sys-eligibility
+          - do: hold a seat in every section of a plan, or in none
+            refines: sys-holds
+        collaborators:
+          db: {description: writes seat holds to, technology: SQL/TCP}
+          billing: uses
+      db:
+        name: Registration Database
+        kind: database
+        technology: PostgreSQL 16
+        description: Durably stores plans, enrollment attempts, and seat holds.
+        responsibilities:
+          - do: durably store plans, enrollment attempts, and seat holds
+  billing:
+    name: Billing System
+    external: true
+    description: Charges tuition and fees for the university.

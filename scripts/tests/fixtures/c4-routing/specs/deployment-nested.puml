@@ -1,0 +1,16 @@
+@startuml
+node "Production" #lightgreen {
+  node WebServer #lightblue striped
+  node AppServer #FFEB3B grid
+}
+node "Staging" #FFEB3B hatched {
+  node StagingServer dotted
+}
+node "Database Cluster" #lightcoral crosshatch {
+  node Primary #99FF99
+  node Replica dotted
+}
+WebServer --> AppServer
+AppServer --> Primary
+Primary --> Replica
+@enduml

@@ -228,6 +228,12 @@ chapter.
 - `tdd.yml` uses themed step-title prefixes
   `Cycle N — RED: <…>` / `Cycle N — GREEN: <…>` / `Cycle N — REFACTOR: <…>`.
   The RED/GREEN/REFACTOR rhythm is the pedagogy — keep as-is.
+- `agent-design-reviews.yml` titles name the CS 35L concept, then the
+  reviewed system (`Review N: <Concept> — <System>`). Each review practices
+  one named concept: the opener motivates it, the 🎯 line applies it to the
+  diagram, a `**Review question:**` line gives the lecture's question, and
+  the task asks for the comment in the concept's terms. Telling concepts
+  apart is practiced in the mixed knowledge checks.
 
 **2. Pedagogy comment above the step.** Every step gets a
 `# Pedagogy:` YAML comment immediately above the `- title:` line naming
@@ -586,7 +592,8 @@ applicable advice and duplicates from the current results and source.
 
 Keep presentation in `css/tutor-chat.css`. Condition changes and failed-check
 coverage are verified by `tests/tutor-hints.spec.js`; authored source profiles
-are covered by `scripts/tests/haskell-hint-conditions.test.js`.
+are covered by `scripts/tests/haskell-hint-conditions.test.js`, and C4 model
+conditions by `scripts/tests/c4-hint-conditions.test.js`.
 
 ### Visuals — create when they earn their place
 
@@ -615,6 +622,23 @@ pane, so a bare `layout compact` (right after `@startuml`, replacing any
 instructions popout. Do not give it a size here. Use it when the drawing would
 otherwise be scaled down noticeably in the pane, and check the before/after
 pictures as described in `sebook-authoring` ("Compact layout in chapters").
+
+Diagrams shown in the Diagram pane (diagram challenges, `x-diagrams` in the
+UML design questions tutorial) also take a bare `layout compact`, laid out
+for the pane. An `@layout … @endlayout` block of authored `@pos` positions
+switches compact off for that diagram (authored positions win), so add one
+only when compact cannot meet the bar: with the block removed, render the
+diagram at 1100×800 and 700×800 and in the real pane, and keep the block only
+if compact shows layout issues, smaller text than the authored drawing, or
+more crossings or bends than it. A hub component fanning out through ports
+to a column of consumers (event-consumers) now lays out well without one;
+component diagrams with several ball-and-socket assemblies between the same
+two components, and class diagrams whose look depends on subclasses sitting
+under their parents across packages or on a radial arrangement around shared
+modules, still need it. When you keep a block, leave no empty bands wider
+than the labels and lanes need. A `note:N @pos` line names the note that
+starts on source line N, so adding or removing lines above that note
+unpins it.
 
 ### Length, pacing, and step granularity
 
@@ -670,6 +694,11 @@ students are confused" reports.
 
 ### YAML & content
 
+- [ ] Design review steps (`design_review`) use `backend: none` (no files) and
+      optional `llm: true`. Each has one objective, concept-backed flaw with a
+      Given that breaks the story, a `key` within the length caps, `signals`,
+      `anchors`, three-rung `coach` ladders, a `lesson`, and render-checked
+      diagrams; run `scripts/tests/agent-design-reviews-content.test.js`.
 - [ ] Optional local specification assistants use top-level `llm: true` only with a single `backend: pyodide`. Each participating step has `llm.file`, public `llm.interface`, starting `llm.specification`, and conceptual `llm.checks`. Keep hidden commands out of ordinary `tests`, prompts, and printed content. Verify manual checking, generation/apply, cancellation, and model deletion; see `docs/browser-llm.md`.
 
 
@@ -756,6 +785,21 @@ students are confused" reports.
       stepping, source highlights matching the displayed state through loops/calls,
       errors and completion, edited-code tracing, cleanup on step changes, the
       instructions popout, and the print transcript. Lab exploration does not award exercise credit.
+- [ ] **`backend: c4` tutorials** (see §4.6 "C4 model"):
+      - every `tests[].c4` and `{c4: …}` hint condition is a valid spec §8
+        predicate, and every `c4:` block uses only the documented keys;
+      - each graded step has an unconditional orienting hint and conditional
+        diagnosing hints per test, every conditional hint documented in
+        `hint-claims.yml`; a test with one orienting hint by design (a guard,
+        or a faded repeat) says why in a YAML comment beside it and is listed
+        with that reason in `singleHintTests` of
+        `scripts/tests/c4-tutorial-content.test.js`;
+      - guard tests are marked `guard` in `expectations.md` and named by a
+        `wrong-*` model;
+      - at least two correct and several plausible wrong alternatives per
+        graded step;
+      - every step says what its checks cannot judge;
+      - `node --test scripts/tests/c4-tutorial-content.test.js` passes.
 
 ### Page wiring (the page-pair convention)
 
@@ -801,6 +845,11 @@ remove entries by hand. Things to know:
 - Adding a new tutorial automatically lists it once both the YAML *and* a
   page with `layout: tutorial` + matching `tutorial:` key exist.
 - Renaming a tutorial's `title` re-sorts it.
+- A follow-up tutorial can be listed right after the tutorial it builds on:
+  set `index_after: <parent key>` in the front matter of its
+  `layout: tutorial` page (not in the YAML). Example:
+  `SEBook/architecture/c4-interfaces-tutorial.md` sets `index_after: c4`.
+  Several follow-ups of one parent sort by their own titles.
 
 ### Verification
 
@@ -884,7 +933,7 @@ exclude_from_index: boolean            # If true, /SEBook/tutorials hides
                                        # and any non-student-facing tutorial.
 
 # === Backend selection ===
-backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smalltalk | compiler | shell-pipeline | tla | aadl | uml-editor | multiple
+backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smalltalk | compiler | shell-pipeline | tla | aadl | c4 | uml-editor | none | multiple
                                        # default: v86
 
 # v86           — full Linux VM (shell, gcc, git, etc.). Most tutorials.
@@ -920,6 +969,12 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smallta
 #                 qualified system implementation. Automatic validation after
 #                 edits is distinct from explicit analysis and exercise checks.
 #                 See §4.6 and docs/aadl/ for evidence and limitations.
+# c4            — The C4 editor (ArchUMLC4Editor) as the visual surface of one
+#                 ordinary YAML tutorial file (c4.file, default design.yml).
+#                 Single-backend only; no Run, no output panel. Test My Work
+#                 grades tests[].c4 predicates through ArchUMLC4.query. See
+#                 §4.6 "C4 model" and the spec in
+#                 docs/superpowers/specs/2026-11-08-c4-model-design.md §8, §11.
 # webcontainer  — Node.js + npm + dev server (StackBlitz). Needs COOP/COEP.
 # react         — React + Vite + live preview iframe + Playwright-compat.
 # prolog        — Single-backend Tau Prolog 0.3.4 worker, locally pinned under
@@ -953,6 +1008,12 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smallta
 #                 includes a confirmed "Remove All Elements" action that clears
 #                 the active step's diagram draft while leaving other diagram
 #                 types saved.
+# none          — No runtime: nothing boots, there is no Run, OUTPUT, or
+#                 setup_commands (rejected). For steps that show authored
+#                 diagrams or read-only files, such as design reviews
+#                 (`design_review`). Single-backend only. `llm: true` mounts
+#                 the local model add-on here too (review checks; Python
+#                 specification exercises stay pyodide-only).
 #
 # multiple      — explicit marker for a mixed-backend tutorial. Every step
 #                 must set `steps[].backend`.
@@ -961,7 +1022,7 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smallta
 # tutorial-level default per step. Mixed mode supports `v86`, `cpp`, `pyodide`,
 # `react`, `webcontainer`, and `browser` steps, with `browser` serving as the
 # in-page Node fallback if WebContainers cannot boot. Keep `haskell`,
-# `uml-editor`, `shell-pipeline`, `tla`, `aadl`, SQL, Prolog, Java, and debugger tutorials single-backend until
+# `uml-editor`, `shell-pipeline`, `tla`, `aadl`, `c4`, SQL, Prolog, Java, and debugger tutorials single-backend until
 # the runtime explicitly supports those combinations.
 # Mixed tutorials with multiple worker backends (such as cpp and pyodide)
 # replace the active worker lazily when switching languages, restoring the
@@ -1356,7 +1417,12 @@ steps:
                                              # from the code, then with an authored
                                              # agent diagram. See "Diagram
                                              # challenges" below this block.
-      mode: code-first                       # code-first (default) | plan-first
+      mode: code-first                       # code-first (default) | plan-first |
+                                             # diagram-first: the reply, its diagram,
+                                             # and the questions from the start; no
+                                             # attempt from the code, no lock-in
+                                             # (`attempt`, `budget_minutes`, and
+                                             # `predict_view` do not apply).
       budget_minutes: 7                      # Soft nudge in Part A; never a limit.
       min_score: 0.8                         # Default 0.8; see §4.8.
       predict_view: false                    # code-first: Part A also asks which
@@ -1411,6 +1477,10 @@ steps:
         label: "Prepared in advance by an AI coding agent ..."
       follow_up: [questions]                 # New questions, timed separately.
       evidence_check:                        # Optional, graded, after follow_up:
+        graded: false                        #   practice: asked, not scored, and
+                                             #   not needed to leave the stage. Use
+                                             #   it where the code is optional
+                                             #   (diagram-first steps).
         claim_question: {...}                #   capstone only
         prompt: "..."                        #   what to check in the code
         question: {...}
@@ -1420,6 +1490,48 @@ steps:
         view_shows: "..."
         consolidation_prompt: "..."          # A required sentence before Finish.
         mechanism_question: {...}            # Graded single choice.
+
+    design_review:                           # Optional review of an AI agent's
+                                             # design. See "Design reviews" below.
+      min_words: 25                          # Own words before Compare (default 20);
+                                             # a scaffold's words do not count.
+      request: "..."                         # Markdown: the prompt to the agent.
+      story: "..."                           # Markdown user story (L01 format).
+      acceptance_criteria: ["Given …, when …, then …"]
+      reply: "..."                           # Markdown: the agent's own summary.
+      given: "..."                           # Markdown: the scenario to trace.
+      task: "..."                            # Optional Markdown prompt above the
+                                             # comment box (default: find the flaw,
+                                             # trace the Given, propose a fix).
+      scaffold: "..."                        # Optional text prefilled into an empty
+                                             # comment (worked example with fading).
+      diagrams: [{id, type, label, source}]  # The agent's ArchUML diagrams; tabs.
+      key:                                   # Sent to the local model; plain text.
+        flaw: "..."                          # Each ≤ 320 characters.
+        consequence: "..."
+        fix: "..."
+        accept_fixes: ["..."]                # Optional; joined with "; " ≤ 220 chars.
+      signals:                               # Per criterion: case-insensitive JS
+        flaw: ["regex", ...]                 # regexes; a comment with none of them
+        consequence: [...]                   # gets NO for that criterion, whatever
+        fix: [...]                           # the model says. Keep them broad.
+      anchors: [{label, pattern}]            # Diagram elements tied to the flaw;
+                                             # naming one is needed for "Convincing".
+      coach:                                 # Authored coaching per criterion, one
+        flaw: ["orient", "diagnose", "scaffold"]  # rung per check (last repeats).
+        consequence: [...]
+        fix: [...]
+      wrong_claims: [{patterns: [regex], note}]  # Shown while the flaw is unmet.
+      lesson:                                # Shown after Compare (Markdown).
+        principle: "..."                     # "Lesson learned: <principle>"
+        definition: "..."
+        ask: "**Ask:** ..."
+        flaw: "..."
+        fix: "..."
+        more: "..."                          # Optional.
+      annotated: {label, type, source}       # Optional diagram with callouts,
+      fixed: {label, type, source}           # and the corrected design; both
+                                             # become tabs after Compare.
 
     # Smalltalk uses api.normalizeProgram in js/smalltalk/fresh-runner.js.
     # Ordered files load with run_file last once when a live/fresh image starts;
@@ -1565,6 +1677,16 @@ steps:
       root: Rover_Budget::Loop.budget         # and step. Step overrides tutorial.
                                              # Complete workspace is submitted;
                                              # run_file is not the analysis root.
+    c4:                                      # c4 backend only; optional at root
+      file: design.yml                       # and step. The step's c4 merges over
+      view: containers of registration       # the tutorial's key by key; scaffolds
+      profile: novice                        # and checks merge by sub-key. Keys:
+      scaffolds: {sentenceFrames: false}     # file, view, profile, scaffolds,
+      checks: {display: on-request}          # checks, locked_fields, reveal,
+      locked_fields: [requirements]          # read_only. Scaffold and check keys
+      reveal: on-request                     # are the editor's camelCase option
+      read_only: false                       # keys; any unknown key stops the
+                                             # tutorial with an author error.
     default_query: string                    # prolog only. Authored goal used by
                                              # Run and Debug, independent of the
                                              # Terminal prompt and history.
@@ -1656,6 +1778,14 @@ steps:
           fixture: rover-budget-v1            # Fixed resolved-model exercise contract.
           criterion: complete-budget         # connected-flow | complete-budget |
                                              # tight-bound. See §4.6; not regex grading.
+        c4:                                  # c4 backend only; instead of command.
+          exists:                            # Exactly one spec §8 predicate: one
+            relationship: {from: web, to: api, uses: enrollment-api.submit-plan}
+                                             # assertion (exists | absent | count |
+                                             # every+satisfies | checks | view |
+                                             # same_as_seed) over one query. Full
+                                             # vocabulary and the guard pattern:
+                                             # §4.6 "C4 model".
         signature:                           # Haskell only; optional explicit
           name: canAffordPizza                # top-level declaration in run_file.
           type: "Double -> Double -> Bool"    # Compiler-resolved exact monomorphic type.
@@ -1810,7 +1940,10 @@ steps:
 #### Diagram challenges
 
 `diagram_challenge` steps run in four states, all reached through the
-widget in the step's instructions: **exploring** (Part A from the code, or
+widget in the step's instructions (a `diagram-first` step starts in
+**locked**: the diagram opens with the step, the stepper has no first
+phase, Part B is the only pass through the questions, and the last stage is
+"Review your answers", not a comparison): **exploring** (Part A from the code, or
 the plan in `plan-first`) → **locked** (the confirmed lock-in shows the reply
 card and opens its diagram maximized in the Diagram pane; Part B repeats the
 questions, prefilled from Part A in code-first) → **follow-up** (new
@@ -1915,6 +2048,57 @@ of `docs/superpowers/specs/2026-11-20-uml-design-questions-tutorial-design.md`.
   `option_feedback`, no position references, no telegraphed keys).
   `_data/tutorials/diagram-challenge-demo.yml` exercises every field.
 
+#### Design reviews
+
+A `design_review` step practices the L14 design review: the learner reads an
+AI agent's design (its diagrams open maximized in the Diagram pane; with no
+step files the pane is `codeless`, so there is no Editor view or "Code
+beside diagram"), writes a review comment, may **Check my review** with the
+local model, and **Compare with the expert review** once the comment has
+`min_words` words of its own. Comparing completes the step (the gate under
+`require_tests`, like a passed diagram challenge), reveals the lesson, adds
+the `annotated` and `fixed` diagrams as tabs, and offers a self-check. The
+model's ratings never gate.
+
+- **Files:** `_includes/tutorial-design-review.html` renders the case
+  (request, story, criteria, reply, Given) as HTML, the lesson into inert
+  templates, and the spec as escaped JSON; `js/tutorial-design-review.js`
+  (`DesignReview.initFrom/destroyWithin/showExpertReviewsWithin`) owns the DOM;
+  `js/tutorial-design-review-core.js` (`DesignReviewCore`) the rules (word
+  counts, records, coaching ladders, wrong-claim notes, rating labels);
+  `js/browser-llm/design-review-judge.mjs` the model reading;
+  `css/tutorial-design-review.css` both themes and print;
+  `_includes/tutorial-design-review-print.html` the print block (case,
+  diagrams, writing area; expert review and key in the instructor block).
+- **The model only classifies.** For the flaw, its consequence, and the fix
+  it is shown the key's point and answers with a quote from the comment and
+  `VERDICT: YES|PARTLY|NO` (evidence first; paraphrases count). The prompt
+  wording comes from trials with the real model (docs/browser-llm.md): do not
+  change it without re-running a labeled comment set. The quote is located in
+  the comment (`locateQuote`: exact words, or the comment's sentences that
+  share most of a miscopied quote's content words); a verdict that points at
+  nothing in the comment becomes NO, and so does any credit for a comment
+  that matches none of the criterion's `signals`. Correctness: correct (flaw
+  and fix YES), close, not yet. Convincingness: convincing (consequence YES
+  and an `anchors` element named), partly, not yet. All wording shown is
+  authored (`coach`, `wrong_claims`, rating labels); the only model-chosen
+  text is the learner's own located words. Each prompt fits the ONNX
+  768-token input limit (comment ≤ 900 characters).
+- **Model add-on:** `llm: true` on `backend: none` mounts the panel (titled
+  "Review assistant" on review steps). It dispatches `tvm:llm-state` on the
+  tutorial root (`reviewState()`: usable, busy, unavailable) and exposes
+  `reviewDesign({spec, review, onCriterion})`.
+- **Authoring:** one objective flaw per design, tied to a course concept and
+  a Given scenario that breaks a stated story or acceptance criterion; the
+  rest of the design is sound and realistic. Name the concept up front (title,
+  opener, review question, task), and keep the case short: the agent's reply
+  lists only the claims that bear on the concept (the one hiding the flaw and
+  a plausible protection that does not help), at most 190 words of case text.
+  Coach rungs orient, diagnose, then scaffold, and must not add up to the
+  answer. Validate keys, signals, and anchors with
+  `scripts/tests/agent-design-reviews-content.test.js`; render-check every
+  diagram (straight arrows, no crossings).
+
 ### 3.3 Hint conditions
 
 `condition:` syntax (evaluated against the student's current code or last
@@ -1936,6 +2120,13 @@ test output):
   select optional advice only; they never gate or grade solutions.
 - `output_contains: <substring>` — fires when the captured output contains it.
 - `output_missing: <substring>` — fires when the output does **not** contain it.
+- `{c4: <predicate>}` — `c4` backend only; a YAML map, not a string. Fires when
+  the §8 predicate holds on the snapshot of the last Test My Work run
+  (`_evaluateC4Hint`). It is false when the design could not be read, when the
+  predicate names an id, view, or scenario the model lacks (silently; never an
+  author error), and on any page without the C4 adapter. An invalid predicate
+  (unknown key, malformed selector) is false and logs an author error. Use it
+  to diagnose structure; it never grades. Any other map condition is false.
 
 Combine multiple hints with different conditions to form a **graduated
 help ladder** that responds to the student's actual mistake.
@@ -2564,13 +2755,19 @@ filename of `_data/tutorials/<key>.yml` (without `.yml`). The directory
 form for `print.md` is required so the print view sits at a clean URL
 (`.../foo-tutorial/print`).
 
+A follow-up tutorial gets its own pair in the same section, with its own
+`tutorial:` key. For example, `SEBook/architecture/c4-interfaces-tutorial.md`
+and `c4-interfaces-tutorial/print.md` (key `c4-interfaces`) sit beside the C4
+tutorial's pair. The live page adds `index_after: c4` (see §4.3).
+
 ### 4.3 The `/SEBook/tutorials` auto-index
 
 Source: `SEBook/tutorials.md` (`permalink: /SEBook/tutorials`,
 `layout: sebook`). The page iterates `site.data.tutorials`, joins each
 entry to a page in `site.html_pages` with matching `tutorial:` and
 `layout: tutorial`, drops anything where the YAML has
-`exclude_from_index: true`, sorts alphabetically by title, and renders a
+`exclude_from_index: true`, sorts alphabetically by title (a page with
+`index_after: <parent key>` front matter sorts right after that parent), and renders a
 card grid. **No manual list to maintain.** New tutorial → new YAML + new
 page-pair → automatic listing.
 
@@ -3354,6 +3551,23 @@ channel.
   `links: *l_<name>` next to `source: *d_<name>`
   (`scripts/tests/test_uml_design_questions_links.py` holds each link to its
   drawing and to the code).
+- **`js/tutorial-design-review.js`**, **`js/tutorial-design-review-core.js`**
+  and **`js/browser-llm/design-review-judge.mjs`** — the design review
+  (§3.2 "Design reviews"). The layout loads the first two, and
+  `css/tutorial-design-review.css` before `print-light.css`, only when a step
+  has `design_review`; the print layout loads the stylesheet, and the
+  instructions popout loads all three and mounts the review read-only
+  (`DesignReview.initFrom(root, {readOnly: true, records})`, re-rendered when
+  `reviewRecords` change). `TutorialCode` owns the records
+  (`_designReviewRecords`, `_storeDesignReviewRecord`, `_resetDesignReview`)
+  and mounts the widget with the step (`_mountDesignReviews`, part of the
+  readiness barrier); `destroyWithin` saves a pending draft and hides the
+  Diagram pane. The judge is pure and unit tested
+  (`scripts/tests/design-review-judge.test.js`); so are the rules
+  (`scripts/tests/design-review-core.test.js`) and the gate
+  (`scripts/tests/tutorial-design-review-gate.test.js`). The browser flow is
+  `tests/agent-design-reviews.spec.js`, with the model stubbed at
+  `runtime.generate`.
 - **`js/tutorial-diagram-challenge-core.js`** and
   **`js/tutorial-diagram-challenge.js`** — the diagram challenge (§3.2).
   The layout loads both, and `css/tutorial-diagram-challenge.css` before
@@ -3585,11 +3799,12 @@ channel.
   `@startuml` as it is typed, because ids such as `rel:N`, `seqmsg:N` and
   `frag:N` are source line numbers: never trim or reflow the text between the
   textarea and the renderer. Edits that remove or move lines go through
-  `rewriteSourceLines`, which carries line-keyed layout to the surviving lines;
-  resolve every line-based id before the first removal. Fragments and
-  activation bars are selected as kinds `fragment` and `activation`, whatever
-  hitbox was used. Run a visual edit that may turn out to be refused inside
-  `runAsOneUndoStep` so it records one undo step only when the source changed.
+  `rewriteSourceLines` (in `js/ArchUML/diagram-editor/text/te-read.js`), which
+  carries line-keyed layout to the surviving lines; resolve every line-based id
+  before the first removal. Fragments and activation bars are selected as kinds
+  `fragment` and `activation`, whatever hitbox was used. Every visual edit is
+  one operation through the text adapter, and one undo step: a refused
+  operation writes nothing, so it leaves undo and redo as they were.
   Property and advanced-sequence field commits preserve the native Tab/click
   destination. Retained controls must refresh their models and committed-value
   baselines after renames, endpoint edits, or source-line shifts; container
@@ -3625,6 +3840,61 @@ channel.
   autosave, and export paths. Removing a callout leaves its source line blank
   to preserve line-based layout identities. Callout controls are hidden in print;
   ArchUML's callout stylesheet owns the printed diagram's light palette.
+  The drawing interaction is the **diagram editor module** in the ArchUML
+  submodule, `js/ArchUML/diagram-editor/` (manifest `manifest.json`, groups
+  `core` and `text`; `_includes/diagram-editor-scripts.html` loads them and
+  links `js/ArchUML/css/diagram-editor.css` before them). The include mounts it:
+  `ArchUMLDiagramEditor.mount({ root, canvas, adapter, host, env, elements })`
+  makes the session (`de-mount.js`) with the classic surface
+  (`de-surface-classic.js`: hit layer, palette, empty-canvas actions, keys,
+  pointer driver), and `ArchUMLDiagramEditor.createTextAdapter` makes the
+  **text adapter** (`text/te-*.js`), the only code that rewrites ArchUML text;
+  every canvas edit is one of its operations and reaches the textarea through the
+  host's `setDocument`. The include keeps only the host: page markup, the
+  type and layout selects, the textarea, undo/redo, autosave, export, full
+  screen, and the forms (Properties pane, class editing bar, sequence and
+  line-model panels, callouts wiring), which read `session.selection()` and change
+  the document only through the text adapter's operations. Module presentation
+  reads `--uml-edit-*` custom properties with light fallbacks;
+  `css/tutorial-uml-editor.css` maps their dark values under
+  `#uml-playground-wrap` (no `@import`). `window.UMLEditor.observeOperations(listener)`
+  returns `stop` and calls `listener(operation, { type, before, after })` after
+  each write (the gesture corpus records these); production code has no other
+  test hook.
+  The module's contract with every host is `tests/diagram-editor-contract.spec.js`
+  (two sessions on one page built with `setContent`, a recording fake adapter and
+  host): sessions share no selection, tool, key, or id (generated ids start with
+  the session's `idPrefix`); the module touches no storage, cookie, network,
+  clipboard, or global beyond `ArchUMLDiagramEditor` and
+  `ArchUMLDiagramEditorParts`; every change reaches the document as an adapter
+  operation; and `session.destroy()` cancels the session's pending `env.schedule`
+  timers and removes its listeners, hit layer, palette buttons, and status text.
+  The **gesture corpus** (`tests/uml-editor-corpus.spec.js`) stays as the UML
+  editor's characterization suite after the refactor. It runs in the `chromium`
+  project on the platform that recorded it (each fixture's `platform` names the
+  operating system and the browser version, because drawn coordinates depend on
+  fonts) and is skipped elsewhere with that reason. A fixture is recorded again
+  only for a behaviour change the user approved, one gesture at a time, with
+  `rerecorded: { date, reason }` in it and the seal renewed in the same change;
+  never to make a refactor pass.
+  **Moves without a drag** (WCAG 2.5.7; stage A1, `tests/uml-editor-non-drag-moves.spec.js`):
+  an element's menu offers **Move…** (after Edit properties), and a line's menu
+  **Add a bend**, **Move bend n…**, **Remove bend n**, and **Straighten** (after
+  Edit relation; never on a sequence message, whose drag moves or retargets it).
+  A menu opens by right-click, by the **⋯** button beside the one selected element
+  or line (`role="button"`, "Actions for ‹label›", not a tab stop, 26 CSS px at
+  every zoom, placed clear of every hit target by `geometry.actionButtonPlace`),
+  or by Shift+F10 or the Menu key on a focused diagram item; while a menu is open a
+  `contextmenu` event aimed at its item or at it opens nothing. While a move runs,
+  the tool status line gives the instruction and Cancel shows; the pointer moves
+  the preview and a click places it; arrow keys step it (10 px, Shift 1 px, exact,
+  never snapped) and Enter places it, taken before the item's own nudge; Escape,
+  Cancel, or a press outside the canvas cancels; a new drawing (typing, Undo, a
+  type switch) ends it with "The drawing changed, so the move was cancelled."
+  The include mounts the session with `bendNumbers: true`, so the selected line's
+  bends show their numbers. The moves reuse the drag's own session
+  (`session.startPlacing`, Task 25b), so they write exactly what the drag writes;
+  every existing drag, nudge, menu item, and the tab order stay as they were.
 - **UML editor reference edits** — renaming either classifier preserves its
   relationship endpoints. Reference edits share the properties panel's tokenizer,
   including namespace separators (`::`) and both multiplicity quote styles.
@@ -3926,21 +4196,22 @@ snapshot-input, or checksum drift.
 
 ### 4.6 Backends — what each supports
 
-| Feature                | v86 | cpp | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor | compiler | shell-pipeline | tla | aadl | java |
-|------------------------|-----|-----|---------|--------------|---------|-------|--------|---------|------------|----------|----------------|-----|------| ------ |
-| Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         | ❌ | ❌ | ❌ | ❌ | Java 8 |
-| `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Debugger / recorded history | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | State traces | ❌ | ✅ |
-| Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ |
-| UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `pytest`               | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Linter                 | ✅  | ❌  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | OSATE validation | Eclipse compiler diagnostics |
-| Regex / EBNF / AST checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Separate Bash command box / fixture checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| TLA+ model checking / behavior exploration | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
-| Resolved architecture / flow-latency analysis | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Feature                | v86 | cpp | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor | compiler | shell-pipeline | tla | aadl | c4 | java | none |
+|------------------------|-----|-----|---------|--------------|---------|-------|--------|---------|------------|----------|----------------|-----|------|----|------|------|
+| Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | Java 8 | ❌ |
+| `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Debugger / recorded history | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | State traces | ❌ | ❌ | ✅ | ❌ |
+| Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| C4 model predicates (`tests[].c4`) | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| `pytest`               | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Linter                 | ✅  | ❌  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | OSATE validation | C4 consistency checks (Problems panel) | Eclipse compiler diagnostics | ❌ |
+| Regex / EBNF / AST checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Separate Bash command box / fixture checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| TLA+ model checking / behavior exploration | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Resolved architecture / flow-latency analysis | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
 
 Mixed-backend tutorials support `v86`, `cpp`, `pyodide`, `react`, `webcontainer`,
 and `browser`. They are for author-controlled backend switches between steps,
@@ -4070,6 +4341,301 @@ browser tests restore normal Chromium background scheduling, which Playwright
 otherwise disables. Timeout/runtime errors remain unassessed. Exercise and renderer unit
 tests use recorded official results; actual engine tests are separately needed
 to validate the browser transport, model isolation, and current source revisions.
+
+#### C4 model
+
+`c4` is single-backend. `js/tutorial-c4.js` (`TutorialC4.install`) mounts the
+C4 editor on each step visit with the step's effective `c4` configuration and
+binds it to the Monaco model of `c4.file`, an ordinary tutorial file
+(`language: yaml`), so autosave, Reset, `solution.files`, `reseed`, progress
+keys, popouts, and print need nothing new and no storage key is added. The
+editor runs with `sourceEditor: false` and host undo: its splices land in the
+model through `pushEditOperations` under a `writing` guard (one undo step each,
+no echo), and canvas Undo/Redo call the model's `undo`/`redo`. Splices that do
+not give the editor's text are logged as a console error and replaced by the one
+splice that does; the adapter never calls `setValue`, which would clear the
+learner's undo history. Programmatic
+model text (restore, Reset, Show Solution) reaches the editor as
+`setText(text, {reason: 'external'})`; YAML typed on the YAML surface reaches
+it after a 250 ms pause. A visible switch labelled **Visual** / **YAML** above
+the editor chooses the surface (`aria-pressed`). The tutorial loads the C4
+core, renderer, and editor scripts, `css/c4-editor-theme.css`, and
+`css/tutorial-c4.css` only when `backend: c4`. The editor mounts with
+`size: 'fill'`, so its canvas takes the workspace pane's height below the
+toolbar (the inspector and panels follow in the editor's own scroll), and with
+`outline: 'collapsed'` when the workspace column is narrower than 60em, so the
+drawing gets the column's width (`_c4OutlineStart`; `docs/c4-editor.md`,
+"Layout by width"). Up to 900px of viewport width the workspace uses document
+flow, and `css/tutorial-c4.css` gives the canvas its regular height.
+
+- **Configuration** (`c4:` at tutorial and step level, §3.2): `read_only` maps
+  to the editor's `readOnly` and also makes the YAML surface read-only;
+  `locked_fields` (dotted paths, `*` = one key or index) maps to `lockedFields`.
+  A YAML-surface edit that changes a locked part (the editor's
+  `touchesLockedPath` rule, compared with the last readable text) is undone,
+  and a status line names the path in the editor's `lockedSentence` wording
+  ("Locked: requirements.FR-22 or a part of it is given by the task, so your
+  change was undone here."). Only the locked node (`lockedNodeOf`) is put back,
+  so other edits typed in the same pause stay. When the locked node was removed
+  or reshaped and cannot be put back alone, the text returns to the last
+  readable text and the message names the other edits undone with it. The
+  status line clears on the next accepted edit and on a surface switch.
+- **Display modes** (`checks.display`): `live`, `on-request` (the editor's
+  Check now), `after-submit`. Test My Work and Ctrl/Cmd+Enter (anywhere in the
+  editor, or on the YAML surface) run the step's tests in every mode, never
+  Check now. The editor routes Ctrl/Cmd+Enter and Ctrl/Cmd+S through its host
+  contract (`onRequestCheck`, `onRequestSave`; `docs/c4-editor.md`), so the
+  adapter has no key listener of its own. Under `after-submit` the step controls
+  show **Submit for review** beside Test My Work, which stays disabled with a
+  visible reason until Submit for review (the tutorial's button, the popout's,
+  or the editor's own Problems-panel button, which reaches the adapter as
+  `onSubmitForReview`) has run in this step visit; `_runTests` refuses the run
+  as well. After that the shared controls follow (`_testControlsHTML`), so the
+  failed-run cooldown and its "I'm sure" button apply as on every other step.
+- **UML-notation views are editable** (spec
+  `docs/superpowers/specs/2026-11-12-c4-uml-view-editing.md` §8). Wherever the
+  editor is editable, its code (`code of …`), dynamic (`dynamic …`), deployment
+  (`deployment …`), and interfaces (`interfaces of …`) views are edited on the
+  canvas, as C4-notation views are. Each canvas edit is one `design.yml`
+  splice under host undo, so `js/tutorial-c4.js` is unchanged, and **no YAML
+  key was added**: a step that opens `dynamic enroll` or `code of policy` gets
+  an editable canvas.
+  - `read_only: true` still shows the listbox and navigation only.
+  - **Locks bind the canvas** as they bind the forms. A canvas edit that would
+    change a locked part is refused, and the refusal names the drawn thing
+    (the editor's `lockedSentence`). `locked_fields: [layout]` fixes a drawing.
+  - **Display modes bind the canvas too.** While a step withholds its checks
+    (`on-request` before Check now, `after-submit` before Submit for review),
+    the canvas marks which ends a step can have, as the scenario form's pickers
+    do. It refuses the others with the general sentence only
+    (`step/not-available`), with no reason and no offer. After the checks are
+    released, a refusal gives its own code and sentence (`step/no-relationship`,
+    for example); the novice profile still gets no "declare a relationship"
+    offer.
+  - **Predicates are unchanged.** No predicate reads `layout`, and none was
+    added. `scripts/tests/c4-tutorial-layout-metamorphic.test.js` asserts that
+    adding layout entries to every graded model changes no result. The content
+    test and the hint-claim audit also run on models made on the canvas (for
+    step 8, `alternatives/step-8/correct-3-canvas-two-replies.yml`).
+  - The canvas cannot write what the model cannot hold, such as an invalid
+    step from a pasted draft. A step that asks the learner to paste such text
+    sends them to the YAML surface, as step 8 does.
+- **Grading**: `_runTestsC4` freezes the file text, loads it once, and evaluates
+  each `tests[].c4` with `ArchUMLC4.query.evaluate(design, predicate,
+  {seedModel, checksConfig})`; `seedModel` is parsed from the step's authored
+  starter for `c4.file`, so `same_as_seed` has the same baseline after reload,
+  Reset, and Show Solution. Unreadable YAML gives `?` results with "Fix the
+  YAML errors first". A selector or id naming a view, scenario, or element the
+  learner's model lacks is a learner failure (`false` with the core's message,
+  "No view named who-decides yet"), never an author error. Only those
+  missing-selector messages (a view, scenario, or environment not named yet, or
+  a saved view whose selector names nothing) reach the learner as a detail
+  line; every other core message stays hidden, because it can serialise the
+  predicate or name the target, so a check shows its description and mark. An invalid predicate
+  (unknown key, malformed selector) fails only its own check with a plain
+  learner line and logs the author message to the console; a check that throws
+  fails alone too. A run whose design text changed before its results were
+  shown is discarded with a visible notice ("The design changed while it was
+  being checked…"); one from an earlier step load is dropped silently
+  (`_discardStaleC4Run`).
+- **Hints**: `condition: {c4: <predicate>}` (§3.3) goes from
+  `js/tutor-chat.js` to `_evaluateC4Hint(predicate)`, which reads the last
+  run's snapshot; a run clears the previous snapshot first, so a run that
+  fails before freezing the design leaves every `c4` condition false. Tests
+  whose result is `null` (`?`) get no authored or fallback hints: TutorChat
+  asks the backend's `_hintForUncheckedTests()` for one card instead, shown
+  once, which for C4 is "Fix the YAML errors first" while the design cannot be
+  read (and nothing after a run that could not check at all). Backends without
+  that hook, such as AADL, keep their hints for `?` results.
+  `_renderTestResults` calls TutorChat through `_showFailureHints`, which logs
+  a hint failure and continues, so credit, the popout's results, and the
+  cooldown still follow.
+- **Instruction figures**: ```` ```c4 ```` fences render in the step pane, in the
+  instructions popout, and in the print view (which preloads the C4 scripts for
+  `backend: c4`, describes the C4 figures the bundle draws before the describer
+  loads, and awaits the drawing before `autoprint=1` prints). The popout loads
+  the ArchUML bundle and `uml-auto-describe.js` only when a step has an ArchUML
+  block, and the C4 core and renderer before them only when the snapshot's
+  `backend` is `c4`; fences wait without their class while the scripts load,
+  so `UMLShared.renderAll()` (wrapped by the describer) draws them with their
+  description. It draws every ArchUML fence type, not only C4 (spec §16).
+- Tests: `scripts/tests/c4-tutorial-adapter.test.js` (adapter, vm),
+  `scripts/tests/c4-hint-conditions.test.js` (hint conditions with the real
+  core, adapter, and TutorChat), the C4 cases of `tests/tutor-hints.spec.js`,
+  `tests/c4-tutorial.spec.js` (built page), and
+  `tests/c4-tutorial-uml-editing.spec.js` (step 8 edited on the canvas of its
+  dynamic view, built page); content:
+  `scripts/tests/c4-tutorial-content.test.js`.
+- **Hint truth**: a hint must never state what is false of the learner's
+  model. The content test audits this. Every conditional hint needs an entry
+  in `scripts/tests/fixtures/c4-tutorial/<slug>/hint-claims.yml`:
+  - `claims` lists what the text states about the model, each as a §8
+    predicate that `holds` or `fails`;
+  - `states_nothing` instead gives the reason for advice-only or "if"-hedged
+    text.
+
+  Each claim must be true on every graded model on which the hint shows
+  (its test fails and its condition holds). The "Hints shown" column of
+  `expectations.md` must list exactly the hints shown for each failing test.
+  When you edit a hint, update both files. A condition that holds more widely
+  than the text's claim fails the audit. To say "only this kind of finding is
+  left", use `checks: {max_errors: 0, disable: [<rule>]}`.
+
+##### C4 predicate vocabulary (`tests[].c4` and `{c4: …}` conditions)
+
+Spec §8 of `docs/superpowers/specs/2026-11-08-c4-model-design.md` is
+normative; the key tables live in `js/ArchUML/c4/c4-query.js`
+(`ASSERTIONS`, `QUERIES`, `FILTERS`). Every map is strict: an unknown key is
+an author error with a "did you mean" suggestion.
+
+- **Assertions** (exactly one per predicate):
+  - `exists: <query>`, `absent: <query>`;
+  - `count: <query>` with one of `equals`, `at_least`, `at_most`;
+  - `every: <element filter>` with `satisfies: <element filter>`;
+  - `checks: {max_errors, max_warnings, rules, categories, disable}`;
+  - `view: {view: <selector>, shows, hides, max_elements}` (`shows` and `hides`
+    take ids or element filters);
+  - `same_as_seed: <element filter>`, or
+    `same_as_seed: {interface: <interface filter>, part: all | syntax}`.
+- **Queries** (exactly one): `element`, `relationship`, `responsibility`,
+  `step`, `requirement`, `interface`, `operation`.
+  - `step: {scenario, from, to, in_fragment, reply}` matches one step of a
+    scenario. `scenario` is required. `in_fragment` is
+    `alt | par | opt | loop | break` at any depth. `reply: true` uses the
+    reply classification that `xlevel/scenario-step` uses. The C4 tutorial's
+    step 8 grades the `alt` branch with it.
+  - `requirement: {id, kind, text_any}` matches entries of `requirements:`.
+    Use it to guard a requirement count, so an emptied `requirements:`
+    section cannot make `rdd/uncovered-requirement` pass vacuously.
+- **Filters**:
+  - *Element*: `id`, `type`, `kind`, `name`, `name_any`, `in`, `parent`,
+    `external`, `technology` (`present | absent`), `technology_any`,
+    `stereotype`, `pattern`, `pattern_role`, `style`, `owns_any`,
+    `has_responsibility`, `responsibilities_at_least`, `provides_interface`.
+  - *Relationship*: `from`, `to`, `description_any`, `technology`,
+    `technology_any`, `connector`, `derived` (`include | exclude | only`),
+    `in_view`, `uses`, `uses_interface` (`present | absent | whole`),
+    `requests`.
+  - *Responsibility*: `of`, `id`, `kind` (`know | do | decide`), `text_any`,
+    `refines`, `leaf`.
+  - *Interface*: `id`, `of`, `in`, `name_any`, `style`, `has_operation`,
+    `used_by`.
+  - *Operation*: `id`, `of`, `syntax_any`, `purpose`, `side_effects`,
+    `restrictions`, `errors_at_least`, `examples_at_least`, `realizes`,
+    `realizes_any`, `realizes_at_least`, `input_has_field`,
+    `output_has_field`. `restrictions` and `errors_at_least` count the
+    interface's entries too.
+  - *Field*: `name_any`, `type`, `type_any`, `meaning`, `unit`, `format`,
+    `constraints`, `values` (`present | absent | meaningful`), `unit_any`.
+- **Interface predicates**:
+  - `uses: enrollment-api.submit-plan` matches a use of that operation;
+    `uses: enrollment-api` matches any use of the interface.
+  - `uses_interface: whole` finds a relationship that names a whole interface
+    instead of one operation.
+  - `realizes: <id>` holds when the operation realizes the responsibility
+    directly, or covers every direct refinement of it.
+  - `realizes_any` matches only the ids written in `realizes`, so use it in
+    hint conditions.
+  - `same_as_seed: {interface: {id: …}, part: syntax}` compares only the
+    syntactic view: style, technology, version, each operation's id, syntax,
+    input, and output, and each type's fields with their type, required flag,
+    allowed values (without meanings), and constraints. Meanings stay
+    editable.
+- **Text matching**: `name_any`, `owns_any`, `text_any`, `description_any`,
+  `technology_any`, `syntax_any`, and `unit_any` are case-insensitive
+  substring matches after folding whitespace and hyphens. Use them for name
+  lookups with a documented synonym set and in hint conditions. Grade
+  allocation, refinement, and interface semantics structurally: seeded ids,
+  `refines`, `of`, element types, relationships, presence and counts, and
+  `checks:` over named rules. The one exception is `unit_any` for a fixed
+  domain unit whose accepted spellings the step documents.
+- **No vacuous passes**:
+  - Every referenced id must resolve, or the predicate fails ("unknown element
+    policy").
+  - `every` over an empty set fails.
+  - A `checks:` predicate applies the step's `c4.checks` configuration first
+    (severity overrides, `disable`), then its own filters. The content test
+    rejects one whose selected rules have none at the asserted severity.
+  - Problems-panel diagnostics never award credit on their own; only a
+    `checks:` test does.
+  - A `checks.ignore` entry in `design.yml` cannot pass a `checks:` test,
+    because the tutorials set `checks.honorFileIgnores: false`.
+
+##### Writing C4 steps: tests, hint ladders, and guards
+
+- **One reason to fail per test.** Write a description that names the
+  criterion, not the answer. For example, write "Relationships: every
+  relationship says what it asks for", not the description the learner should
+  write. Group related tests with a short label prefix ("Kept parts:",
+  "Names:").
+- **A hint ladder on every test.** Hints belong to their test (`tests[].hints`),
+  so a learner only sees advice about the checks that failed.
+  - The first hint is unconditional and orients: where to look and what to
+    compare.
+  - Later hints are conditional (`condition: {c4: <predicate>}`) and diagnose
+    the structure that is wrong ("Your relationship names the whole
+    Enrollment API…"). They may also scaffold the next decision.
+  - A test may keep one orienting hint by design: a guard whose one hint says
+    what to undo, or a check that repeats, later in the step, a decision the
+    learner just made with a full ladder (fading). Say why in a YAML comment
+    beside the test and list it with the reason in `singleHintTests` of the
+    content test, which fails on any other test without a conditional hint.
+  - Keep the conditions of one ladder mutually exclusive where their advice
+    would contradict.
+  - Never give the target text. Never use the word "misconception". Write
+    "C4 model" in lowercase in learner-facing text.
+- **Reachability and truth.** The content test requires every conditional
+  hint to show on at least one graded model whose test fails (or to be
+  allow-listed with a reason in `unreachableHints`). The claim audit
+  ("Hint truth", above) checks that it is true wherever it shows. A hint that
+  names a missing id is silently false, never an author error.
+- **Guard tests** protect a part the step supplies, so they pass on the seed
+  by design. The content test exempts them from "the seed fails" and instead
+  requires a `wrong-*` model whose header names the guard as failing. Mark the
+  test `guard` in `expectations.md`. Three patterns:
+  - A *kept-part check* that a seeded element or relationship survives, for
+    example `exists: {relationship: {from: registration, to: billing}}`.
+  - A *seed comparison*: `same_as_seed: {id: coordinator}`, or, for a given
+    syntactic view whose meanings the learner completes,
+    `same_as_seed: {interface: {id: enrollment-api}, part: syntax}`. The
+    baseline is the step's authored starter, not anything stored, so it is
+    the same after reload, Reset, and Show Solution. Locks
+    (`locked_fields`) are a convenience; grading never relies on them.
+  - A *`checks:` guard* that passes vacuously on a seed with no findings of
+    the selected rules, and fails as soon as the learner's own addition
+    raises one. An example is "no `rdd/no-reason` or `c4/vague-relationship`
+    warning" in the C4 tutorial's step 5. Pair it with a targeted test of the
+    step, since the guard alone would pass on an untouched seed.
+- **Graded models.** The content test grades each step's solution, seed,
+  `alternatives/step-N/*.yml` (at least two correct alternatives with renamed
+  ids, synonyms, or relationships declared one level deeper; and plausible
+  wrong models: keyword-stuffed text on the wrong element, a deleted target, a
+  DECIDE moved to the coordinator), and `models/step-N-reference-*.yml`.
+  - Each alternative's first line states its expected results
+    (`# WRONG (why): must fail T2 (reason)`, or `# CORRECT (…): must pass T1`).
+  - `expectations.md` is the oracle table: each test's role, the results
+    model by model, and the hints shown.
+  - Every `locked_fields` path must name a part of the seed, and the solution
+    and correct alternatives must leave it unchanged.
+- **What the checks cannot judge.** Every step says it in its instructions
+  (for example whether a purpose is true, or whether an error list is
+  complete) and has one reasoning check: a knowledge-check item or an Explain
+  prompt.
+
+##### The C4 tutorials and their page pairs
+
+| Tutorial | YAML | Live page | Print view |
+|---|---|---|---|
+| The C4 Model in Practice (9 steps, about 91 minutes) | `_data/tutorials/c4.yml` | `SEBook/architecture/c4-tutorial.md` | `SEBook/architecture/c4-tutorial/print.md` |
+| Describe an interface (4 steps, about 30 minutes; learning objective 7) | `_data/tutorials/c4-interfaces.yml` | `SEBook/architecture/c4-interfaces-tutorial.md` | `SEBook/architecture/c4-interfaces-tutorial/print.md` |
+
+Both pages follow §4.2. The interface tutorial's page sets
+`index_after: c4`, so `/SEBook/tutorials` lists it right after the C4
+tutorial. Its step 2 shows the guard pattern: the given syntactic view of the
+Enrollment API is locked syntax leaf by syntax leaf in `locked_fields`, and
+graded by `same_as_seed` with `part: syntax`. Steps 1 and 4 are quiz-only
+steps (`min_score: 0.8`) with a `read_only` editor. Both tutorials share the
+fixtures layout under `scripts/tests/fixtures/c4-tutorial/<slug>/`.
 
 #### TLA+ and PlusCal
 
@@ -4673,6 +5239,16 @@ lesson, so the fallback lesson never opens with another exercise's code. Reset s
 its setup completes, preserving other drafts. Delete clears remembered drafts too.
 Smalltalk continues using its native accepted-source/draft owner.
 
+Design review records live in `designReviews` within this same progress
+record, keyed like diagram challenge records (`key:<step.key>` or
+`index:<n>`), omitted while empty:
+`{v: 1, draft, checks: [{verdicts: {flaw, consequence, fix}, ratings:
+{correctness, convincingness}, anchors}], passed, revealedDraft,
+selfCheck: {flaw, consequence, fix}}`. At most the latest 12 checks are kept;
+no model text except the authored-anchor labels is stored. Reset Current
+Step (after its confirmation) and deleting saved progress clear them; they
+travel in instructions snapshots and nav-state as `reviewRecords`.
+
 Diagram challenge records live in `diagramChallenges` within this same
 progress record, keyed by `key:<step.key>` (or `index:<n>`); the field is
 omitted while no record exists. No new storage key is introduced:
@@ -5064,6 +5640,12 @@ Code-test success records `stepsPassed` independently from navigation access.
 required quiz remains. Required quizzes unlock it through `_completeQuiz` and
 `_advanceAfterQuiz`; popout navigation uses the same host state. Existing saved
 visits and explicit step deep links retain their established access behavior.
+
+A design review is a step exercise like a diagram challenge:
+`_stepExercisesPassed(index)` requires both kinds when a step has them, and
+`_recordExercisePass` records a passed review exactly as a passed challenge.
+The review's lock label is "Write your review and compare it with the expert
+review to continue".
 
 `_stepGateSatisfied(index, {quiz})` is the one completion gate: under
 `require_tests` a step's tests must pass and its diagram challenge must be

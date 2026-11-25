@@ -66,8 +66,12 @@
   // `<<A, B>>` and `<<A>> <<B>>` both apply stereotypes A and B; the
   // renderers show them as one «A, B» pair, spelled as written.
 
+  // A list with a colon is one keyword whose text has commas, such as a C4
+  // type line (`<<Container: TypeScript, React>>`); the renderer draws it as
+  // written either way.
   function addStereotypeNames(names, list) {
-    String(list || '').split(',').forEach(function (part) {
+    var text = String(list || '');
+    (text.indexOf(':') !== -1 ? [text] : text.split(',')).forEach(function (part) {
       var name = part.trim();
       var lower = name.toLowerCase();
       if (name && !names.some(function (known) { return known.toLowerCase() === lower; })) names.push(name);
@@ -246,7 +250,8 @@
       'folder-tree': 'Folder tree diagram',
       'venn': 'Venn diagram',
       'er': 'Entity-relationship diagram',
-      'crc': 'Class-responsibility-collaborator cards'
+      'crc': 'Class-responsibility-collaborator cards',
+      'c4': 'C4 model diagram'
     };
     return map[String(type || '').toLowerCase()] || 'ArchUML diagram';
   }
@@ -688,6 +693,16 @@
   var INLINE_PORT = /(portin|portout|port|provide|require)\s+(?:"([^"]+)"|(\w+))(?:\s+as\s+(\w+))?/g;
   var COMPONENT_CONNECTION = /^(?:\[([^\]]+)\]|(\S+))\s+(-->|\.\.>|--)\s+(?:\[([^\]]+)\]|(\S+))(?:\s+(dashed))?\s*(?::\s*(.*))?$/;
   var PORT_GROUPS = { portin: 'in', portout: 'out', port: 'ports', provide: 'provides', require: 'requires' };
+  // The renderer's stripComponentDashedStyle: a trailing `dashed`, in any case,
+  // is the port's line style, unless it is the port's whole name (`port dashed`).
+  var TRAILING_DASHED = /\s+dashed\s*$/i;
+  var PORT_KEYWORD_ONLY = /^(?:portin|portout|port|provide|require)$/i;
+
+  function matchPortStatement(line) {
+    var style = line.match(TRAILING_DASHED);
+    var head = style ? line.slice(0, style.index) : line;
+    return (style && !PORT_KEYWORD_ONLY.test(head.trim()) ? head : line).match(PORT_STATEMENT);
+  }
 
   // A component declaration as the renderer reads it: a final `dashed`, a
   // `#color [texture]` before or after the stereotypes, then the name, its
@@ -760,7 +775,7 @@
       var m;
       if (current) {
         if (line === '}') current = null;
-        else if ((m = line.match(PORT_STATEMENT))) addPort(current, m[1], m[2] || m[3], m[4]);
+        else if ((m = matchPortStatement(line))) addPort(current, m[1], m[2] || m[3], m[4]);
         return;
       }
       var declaration = parseComponentDeclaration(line);
@@ -781,7 +796,7 @@
         }
         return;
       }
-      if ((m = line.match(PORT_STATEMENT))) {
+      if ((m = matchPortStatement(line))) {
         standalonePorts[m[4] || m[2] || m[3]] = m[2] || m[3];
         return;
       }
@@ -793,6 +808,16 @@
       }
     });
 
+    // As in the renderer, a connector end that names no component or port
+    // draws a component of its own.
+    connections.forEach(function (c) {
+      [c.from, c.to].forEach(function (end) {
+        var owner = end.indexOf('.') > 0 ? end.slice(0, end.indexOf('.')) : null;
+        if (byId[end] || portOwner[end] || standalonePorts[end] !== undefined || (owner && byId[owner])) return;
+        byId[end] = { id: end, label: end, stereotypes: [] };
+        components.push(byId[end]);
+      });
+    });
     connections.forEach(function (c) { c.from = labelOf(c.from); c.to = labelOf(c.to); });
     return {
       components: components, ports: ports, connections: connections,
@@ -910,7 +935,10 @@
       .replace(/^\s*@layout\b[^\n]*\n[\s\S]*?^\s*@endlayout[^\n]*$/gim, '')
       .replace(/\s+@pos\([^)]*\)/g, '');
     var elements = [], links = [], byId = Object.create(null);
-    var parent = null, pendingParent = null, text = '', quoted = false, escaped = false;
+    // Every '{' pushes its owner (or the enclosing node for an anonymous
+    // block) so a '}' returns to the enclosing node, not the top level.
+    var parents = [], pendingParent = null, text = '', quoted = false, escaped = false;
+    function currentParent() { return parents.length ? parents[parents.length - 1] : null; }
     function unquote(value) { return String(value || '').replace(/^"|"$/g, '').replace(/\\(["\\])/g, '$1'); }
     function addStatement(statement) {
       var line = statement.trim();
@@ -918,7 +946,7 @@
       var match = line.match(/^(node|component|artifact)\s+("(?:\\.|[^"\\])*"|[^\s{}]+)(?:\s+as\s+("(?:\\.|[^"\\])*"|[^\s{}]+))?(?:\s+<<([^>]+)>>)?/i);
       if (match) {
         var id = unquote(match[3] || match[2]);
-        var element = { id: id, label: unquote(match[2]), kind: match[1].toLowerCase(), parentId: parent, stereotype: match[4] || '' };
+        var element = { id: id, label: unquote(match[2]), kind: match[1].toLowerCase(), parentId: currentParent(), stereotype: match[4] || '' };
         if (!byId[id]) { byId[id] = element; elements.push(element); }
         pendingParent = element.kind === 'node' ? id : null;
         return;
@@ -933,8 +961,8 @@
       if (ch === '"') { quoted = !quoted; text += ch; continue; }
       if (!quoted && /[{};\n]/.test(ch)) {
         addStatement(text); text = '';
-        if (ch === '{') { parent = pendingParent; pendingParent = null; }
-        else if (ch === '}') { parent = null; pendingParent = null; }
+        if (ch === '{') { parents.push(pendingParent || currentParent()); pendingParent = null; }
+        else if (ch === '}') { parents.pop(); pendingParent = null; }
       } else text += ch;
     }
     addStatement(text);
@@ -1329,7 +1357,6 @@
     if (model.connections.length) {
       sections.push({ heading: 'Connections', items: model.connections.map(componentConnectionSentence) });
     }
-
     return { summary: summary, sections: sections };
   }
 
@@ -1399,7 +1426,13 @@
     ['node', 'artifact', 'component'].forEach(function(kind) {
       var items = parsed.elements.filter(function(element) { return element.kind === kind; }).map(function(element) {
         var description = element.label + (element.stereotype ? ' (' + element.stereotype + ')' : '');
-        if (element.parentId && parsed.byId[element.parentId]) description += ' inside ' + parsed.byId[element.parentId].label;
+        // Name every enclosing level, innermost first; a cycle cannot occur in
+        // parsed source, but a seen-set keeps a malformed model finite.
+        var seen = Object.create(null);
+        for (var parentId = element.parentId; parentId && parsed.byId[parentId] && !seen[parentId]; parentId = parsed.byId[parentId].parentId) {
+          seen[parentId] = true;
+          description += ' inside ' + parsed.byId[parentId].label;
+        }
         var children = parsed.elements.filter(function(child) { return child.parentId === element.id; });
         if (children.length) description += ' contains ' + children.map(function(child) { return child.kind + ' ' + child.label; }).join(' and ');
         return description;
@@ -1559,8 +1592,38 @@
     return { source, explanations };
   }
 
+  // C4 embeds are YAML that only the C4 core reads, so callout lines are not
+  // notation there and the text reaches the core untouched (spec §3.3).
+  function splitNotationExplanations(type, spec) {
+    if (String(type || '').toLowerCase() === 'c4') return { source: String(spec || ''), explanations: [] };
+    return extractNotationExplanations(spec);
+  }
+
+  // An embed's `# description: …` comment line (column 0, as the C4 renderer
+  // reads its directives) is the author's verbose text alternative, for
+  // example for a find-the-flaw figure whose generated text would give the
+  // answer away.
+  function authoredC4Description(spec) {
+    var match = /^#[ \t]*description[ \t]*:[ \t]*(.*?)[ \t]*$/im.exec(String(spec || ''));
+    return match && match[1] ? match[1] : null;
+  }
+
+  // The C4 core describes its own views (spec §6.5). Pages may load it lazily
+  // after this script, so it is looked up at call time. The brief label is
+  // always the core's; an authored description replaces only the verbose text.
+  function describeC4Verbose(spec) {
+    var core = window.ArchUMLC4;
+    if (!core) return { summary: fallbackCaption('c4') + '.', sections: [] };
+    var design = core.load(spec);
+    var selector = core.extractEmbed(spec).selector || core.defaultView(design);
+    var description = core.describe(core.project(design, selector));
+    var authored = authoredC4Description(spec);
+    var sections = authored ? [{ heading: 'Description', items: [authored] }] : description.sections;
+    return { summary: description.brief, sections: sections };
+  }
+
   function describe(type, spec) {
-    const annotations = extractNotationExplanations(spec);
+    const annotations = splitNotationExplanations(type, spec);
     const summary = describeModel(type, annotations.source);
     const warnings = inferenceWarnings(type, spec);
     return summary + (warnings.length ? ' ' + warnings.join(' ') : '') +
@@ -1589,6 +1652,7 @@
         case 'gitgraph':    return describeGitgraphDiagram(s);
         case 'folder-tree': return describeFolderTreeDiagram(s);
         case 'crc':         return describeCRCCardsVerbose(spec).summary;
+        case 'c4':          return describeC4Verbose(spec).summary;
         default:            return fallbackCaption(type) + '.';
       }
     } catch (e) {
@@ -1601,7 +1665,7 @@
   // Note: verbose describers do NOT pre-strip decorations because they want
   // to walk the raw spec themselves (class bodies in particular).
   function describeVerbose(type, spec) {
-    const annotations = extractNotationExplanations(spec);
+    const annotations = splitNotationExplanations(type, spec);
     const verbose = describeModelVerbose(type, annotations.source);
     const warnings = inferenceWarnings(type, spec);
     if (warnings.length) {
@@ -1627,6 +1691,7 @@
         case 'gitgraph':    return describeGitgraphDiagramVerbose(s);
         case 'folder-tree': return describeFolderTreeDiagramVerbose(s);
         case 'crc':         return describeCRCCardsVerbose(s);
+        case 'c4':          return describeC4Verbose(s);
         default:            return { summary: fallbackCaption(type) + '.', sections: [] };
       }
     } catch (e) {
@@ -1701,9 +1766,17 @@
     if (node) host.appendChild(node);
   }
 
+  // A C4 interface card is semantic HTML that is its own text (spec §6.6):
+  // it gets no image label and no detailed description repeating it.
+  var CARD_SELECTOR = '[data-c4-notation="interface-card"]';
+
+  function isInterfaceCard(el) {
+    return Boolean(el && el.matches && el.matches(CARD_SELECTOR));
+  }
+
   // Apply description to a container element (and any inner SVG it contains).
   function applyDescription(el, type, spec) {
-    if (!el) return;
+    if (!el || isInterfaceCard(el)) return;
     var desc = describe(type, spec);
     if (!desc) return;
     var svg = el.tagName && el.tagName.toLowerCase() === 'svg' ? el : (el.querySelector && el.querySelector('svg'));
@@ -1770,7 +1843,8 @@
     'folder-tree': 'pre > code.diagram-folder-tree, pre > code.language-folder-tree',
     'venn':        'pre > code.diagram-venn, pre > code.language-venn',
     'er':          'pre > code.diagram-er, pre > code.language-er',
-    'crc':         'pre > code.diagram-crc, pre > code.language-crc'
+    'crc':         'pre > code.diagram-crc, pre > code.language-crc',
+    'c4':          'pre > code.diagram-c4, pre > code.language-c4'
   };
 
   // Snapshot every diagram about to be rendered. Tracks parent + child index
@@ -1835,6 +1909,10 @@
 
   // Name one bundle-drawn <figure> by its description.
   function describeFigure(figure, type, spec) {
+    // A C4 figure that is still loading or shows an error or empty state is
+    // labelled by that state; the stub describes it once it is drawn. An
+    // interface card is its own text.
+    if (figure.querySelector('[data-c4-state]') || figure.querySelector(CARD_SELECTOR)) return;
     var desc = describe(type, spec);
     if (!desc) return;
 

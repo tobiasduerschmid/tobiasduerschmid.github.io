@@ -1,0 +1,89 @@
+# WRONG (the relationship is drawn from the API to the web app): must fail T9, pass T10.
+schema: c4-design/1
+name: Course Registration
+description: Students plan a term schedule and enroll in every section of it, or in none.
+
+requirements:
+  FR-21: A student can enroll in a section only after passing the section's prerequisite courses.
+  FR-22: A student can see how many seats are still open in each section of a plan.
+  FR-23: If a section fills up while a student is enrolling in a plan, the student keeps no seat from that plan and learns which section was full.
+  FR-24: A student can rearrange a draft schedule without waiting for the server.
+
+people:
+  student:
+    name: Student
+    description: Plans and confirms one term schedule.
+    collaborators:
+      web: plans a schedule and enrolls using
+  adviser:
+    name: Academic Adviser
+    description: Reviews students' planned schedules before they enroll.
+    collaborators:
+      web: reviews a student's planned schedule using
+
+systems:
+  registration:
+    name: Course Registration
+    description: Plans term schedules and enrolls students in their sections.
+    responsibilities:
+      - decide: whether a student may enroll in a section
+        id: sys-eligibility
+        requirements: [FR-21]
+      - know: how many seats are still open in each section
+        id: sys-open-seats
+        requirements: [FR-22]
+      - do: hold a seat in every section of a plan, or in none
+        id: sys-holds
+        requirements: [FR-23]
+      - know: which section was full when an enrollment attempt fails
+        id: sys-full-section
+        requirements: [FR-23]
+      - do: let a student rearrange a draft schedule without waiting for the server
+        id: sys-drafts
+        requirements: [FR-24]
+    containers:
+      web:
+        name: Planner Web App
+        description: Lets students and advisers compare draft schedules, and flags missing prerequisites while a student plans.
+        kind: browser_app
+        technology: TypeScript, React
+        responsibilities:
+          - do: let students and advisers compare draft schedules
+          - do: let a student rearrange a draft schedule in the browser, with no server round trip
+            refines: sys-drafts
+          - do: show a student the API's answer about missing prerequisites while they plan
+      api:
+        name: Registration API
+        description: Checks each enrollment attempt and holds the seats it needs.
+        technology: Python, FastAPI
+        responsibilities:
+          - decide: whether a student may enroll in a section
+            id: api-eligibility
+            refines: sys-eligibility
+          - know: how many seats are still open in each section
+            id: api-open-seats
+            refines: sys-open-seats
+          - do: hold a seat in every section of a plan, or in none
+            id: api-holds
+            refines: sys-holds
+          - know: which section was full when an enrollment attempt fails
+            id: api-full-section
+            refines: sys-full-section
+        collaborators:
+          web: {description: receives plans from, technology: JSON/HTTPS}
+          db: {description: reads and writes seat holds in, technology: SQL/TCP}
+          billing:
+            description: requests tuition charges from
+            technology: AMQP
+            connector: message
+      db:
+        name: Registration Database
+        description: Durably stores plans, enrollment attempts, and seat holds.
+        kind: database
+        technology: PostgreSQL 16
+        responsibilities:
+          - do: durably store plans, enrollment attempts, and seat holds
+  billing:
+    name: Billing System
+    description: Charges tuition and fees for the university.
+    external: true

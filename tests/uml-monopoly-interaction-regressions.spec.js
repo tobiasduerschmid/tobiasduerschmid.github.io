@@ -308,7 +308,8 @@ test('renaming a class keeps updated self-references when the next member is edi
   const identifier = page.getByRole('textbox', { name: 'Name (id)', exact: true });
   await identifier.fill('Participant');
   await identifier.press('Tab');
-  await expect(page.getByRole('combobox', { name: 'Kind', exact: true })).toBeFocused();
+  // The next stop after the identifier is the class's Display label field.
+  await expect(page.getByRole('textbox', { name: 'Display label', exact: true })).toBeFocused();
   const reference = page.getByRole('textbox', { name: 'Member text (member 1)', exact: true });
   await expect(source(page)).toHaveValue(/next: Participant/);
   await expect(reference).toHaveValue('next: Participant');

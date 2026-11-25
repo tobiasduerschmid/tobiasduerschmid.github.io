@@ -1,0 +1,213 @@
+{
+  "id": "transition-labelled-in-properties",
+  "family": "behaviour",
+  "type": "state",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+  "steps": [
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "role": "button",
+          "name": "Relation segment 1 of edge-2 — Enter to select, Delete to remove"
+        }
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "label": "Label",
+        "within": {
+          "css": "#uml-pg-props-content"
+        }
+      },
+      "value": "complete"
+    },
+    {
+      "do": "press",
+      "target": {
+        "label": "Label",
+        "within": {
+          "css": "#uml-pg-props-content"
+        }
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : complete\nDone --> [*]\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Relation — Busy → Done\":\n  - heading \"Relation — Busy → Done\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Transition\" [selected]\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"__initial__0 - Initial pseudostate\"\n    - option \"Idle\"\n    - option \"Busy\" [selected]\n    - option \"Done\"\n    - option \"__final__0 - Final pseudostate\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"__initial__0 - Initial pseudostate\"\n    - option \"Idle\"\n    - option \"Busy\"\n    - option \"Done\" [selected]\n    - option \"__final__0 - Final pseudostate\"\n  - text: Label\n  - textbox \"Label\": complete\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : complete\nDone --> [*]\n@enduml",
+    "selection": [
+      "edge-2"
+    ],
+    "focus": {
+      "tag": "input",
+      "id": "uml-pg-prop-<random>",
+      "role": "textbox",
+      "name": "Label",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Relation — Busy → Done\":\n  - heading \"Relation — Busy → Done\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Transition\" [selected]\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"__initial__0 - Initial pseudostate\"\n    - option \"Idle\"\n    - option \"Busy\" [selected]\n    - option \"Done\"\n    - option \"__final__0 - Final pseudostate\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"__initial__0 - Initial pseudostate\"\n    - option \"Idle\"\n    - option \"Busy\"\n    - option \"Done\" [selected]\n    - option \"__final__0 - Final pseudostate\"\n  - text: Label\n  - textbox \"Label\": finish\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+    "selection": [
+      "edge-2"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : complete\nDone --> [*]\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Relation — Busy → Done\":\n  - heading \"Relation — Busy → Done\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Transition\" [selected]\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"__initial__0 - Initial pseudostate\"\n    - option \"Idle\"\n    - option \"Busy\" [selected]\n    - option \"Done\"\n    - option \"__final__0 - Final pseudostate\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"__initial__0 - Initial pseudostate\"\n    - option \"Idle\"\n    - option \"Busy\"\n    - option \"Done\" [selected]\n    - option \"__final__0 - Final pseudostate\"\n  - text: Label\n  - textbox \"Label\": complete\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : complete\nDone --> [*]\n@enduml",
+    "selection": [
+      "edge-2"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "state",
+      "before": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+      "operation": {
+        "op": "relation.update",
+        "revision": "rd8d825cb:88",
+        "ref": {
+          "routeId": "edge-2",
+          "line": 3,
+          "candidates": [
+            3
+          ]
+        },
+        "changes": {
+          "relation": {
+            "kind": "transition",
+            "source": "Busy",
+            "target": "Done",
+            "label": "complete",
+            "sourceMult": "",
+            "targetMult": "",
+            "navigability": "navigable",
+            "sourceNavigability": "",
+            "targetNavigability": "navigable",
+            "stereotype": "",
+            "dashed": false,
+            "op": "-->"
+          }
+        },
+        "facts": {},
+        "undo": {
+          "key": "rel:3"
+        }
+      },
+      "after": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : complete\nDone --> [*]\n@enduml"
+    }
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: relation edits carry the line style and dashing they keep (origin/master 71fbaeca)."
+  }
+}

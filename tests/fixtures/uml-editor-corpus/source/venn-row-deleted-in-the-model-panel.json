@@ -1,0 +1,169 @@
+{
+  "id": "venn-row-deleted-in-the-model-panel",
+  "family": "source",
+  "type": "venn",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\ntitle Web\nset Frontend\nset Backend\nFrontend : React\nFrontend & Backend : Next.js\noutside : Docker\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "text": "Venn model (",
+        "exact": false
+      }
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Delete outside row 6"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\ntitle Web\nset Frontend\nset Backend\nFrontend : React\nFrontend & Backend : Next.js\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Deleted model row."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\ntitle Web\nset Frontend\nset Backend\nFrontend : React\nFrontend & Backend : Next.js\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\ntitle Web\nset Frontend\nset Backend\nFrontend : React\nFrontend & Backend : Next.js\noutside : Docker\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\ntitle Web\nset Frontend\nset Backend\nFrontend : React\nFrontend & Backend : Next.js\noutside : Docker\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\ntitle Web\nset Frontend\nset Backend\nFrontend : React\nFrontend & Backend : Next.js\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\ntitle Web\nset Frontend\nset Backend\nFrontend : React\nFrontend & Backend : Next.js\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "venn",
+      "before": "@startuml\ntitle Web\nset Frontend\nset Backend\nFrontend : React\nFrontend & Backend : Next.js\noutside : Docker\n@enduml",
+      "operation": {
+        "op": "source.removeLines",
+        "revision": "r2c6fc7fa:115",
+        "range": {
+          "start": 6,
+          "end": 6
+        },
+        "facts": {},
+        "undo": {
+          "key": "model-row-delete"
+        }
+      },
+      "after": "@startuml\ntitle Web\nset Frontend\nset Backend\nFrontend : React\nFrontend & Backend : Next.js\n@enduml"
+    }
+  ]
+}

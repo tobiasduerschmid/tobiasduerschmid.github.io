@@ -76,29 +76,4 @@ copies each event whose routing key
 matches the binding into the
 consumer's queue, named on its port.
 end note
-@layout
-OPC @pos(0, 470)
-trips @pos(330, 470)
-note:45 @pos(0, 106)
-Notifications @pos(1000, 0)
-Loyalty @pos(1000, 185)
-WarehouseETL @pos(1000, 370)
-AffiliateRelay @pos(1000, 555)
-SupportConsole @pos(1000, 740)
-ShuttlePlanner @pos(1000, 925)
-MailRelay @pos(1430, 0)
-AffiliatePartners @pos(1430, 555)
-OPC.opc_publish @pos(220, 530)
-trips.trips_publish @pos(330, 530)
-Notifications.notifications_queue @pos(1000, 70)
-Notifications.notifications_smtp @pos(1220, 50)
-MailRelay.mail_smtp @pos(1430, 50)
-Loyalty.loyalty_queue @pos(1000, 255)
-WarehouseETL.warehouse_queue @pos(1000, 440)
-AffiliateRelay.affiliates_queue @pos(1000, 625)
-AffiliateRelay.affiliates_webhook @pos(1220, 605)
-AffiliatePartners.partners_webhook @pos(1430, 605)
-SupportConsole.support_queue @pos(1000, 810)
-ShuttlePlanner.shuttle_queue @pos(1000, 995)
-@endlayout
 @enduml

@@ -98,7 +98,7 @@ authoring data, never student code exercises.
 ## Interaction contract
 
 - **Next step** and **Previous step** pause audio and move one cue at a time.
-  At the last cue, **Choose next action** opens that scene's decision. The
+  At the last cue, **Knowledge check** opens that scene's decision. The
   next scene stays hidden until explicit continuation or review navigation.
 - During playback, each checkpoint pauses the media clock. An incorrect answer
   shows its own feedback and the explanation. The existing quiz supports retry,
@@ -106,9 +106,9 @@ authoring data, never student code exercises.
   narration only if playback opened the checkpoint; silent study stays silent.
 - Scene selection, the seek slider, and previous/next scene controls remain
   available for review. This is guided practice, not a locked assessment.
-- **Review this scene** returns to the evidence without discarding the current
-  answer feedback. No new custom key bindings are added; the shared quiz's
-  documented keys work only while it has focus.
+- In text-only lessons, **Review this scene** returns to the evidence without
+  discarding the current answer feedback. No new custom key bindings are added;
+  the shared quiz's documented keys work only while it has focus.
 - **Read at my own pace** pauses audio and opens the full transcript. It warns
   that later findings appear there. Answers require opening a native details
   element. Without JavaScript, the full reading version (and, for a narrated

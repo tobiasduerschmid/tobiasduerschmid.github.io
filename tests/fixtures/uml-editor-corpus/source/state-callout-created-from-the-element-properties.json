@@ -1,0 +1,191 @@
+{
+  "id": "state-callout-created-from-the-element-properties",
+  "family": "source",
+  "type": "state",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Idle — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Add teaching callout"
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "label": "Explanation"
+      },
+      "value": "Why Idle matters"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Add callout"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\ncallout right of element Idle : Why Idle matters\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Callout saved."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"State — Idle\":\n  - heading \"State — Idle\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Idle\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"State\" [selected]\n    - option \"Choice\"\n    - option \"Junction\"\n    - option \"Shallow history (H)\"\n    - option \"Deep history (H*)\"\n    - option \"Fork\"\n    - option \"Join\"\n    - option \"Terminate\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - group \"Sub-states\":\n    - text: Sub-states\n    - button \"+ Add sub-state\"\n    - button \"+ Initial state\" [disabled]\n    - button \"+ Final state\" [disabled]\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\ncallout right of element Idle : Why Idle matters\n@enduml",
+    "selection": [
+      "Idle"
+    ],
+    "focus": {
+      "tag": "button",
+      "id": "uml-pg-callout-submit",
+      "role": "button",
+      "name": "Save callout",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"State — Idle\":\n  - heading \"State — Idle\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Idle\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"State\" [selected]\n    - option \"Choice\"\n    - option \"Junction\"\n    - option \"Shallow history (H)\"\n    - option \"Deep history (H*)\"\n    - option \"Fork\"\n    - option \"Join\"\n    - option \"Terminate\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - group \"Sub-states\":\n    - text: Sub-states\n    - button \"+ Add sub-state\"\n    - button \"+ Initial state\" [disabled]\n    - button \"+ Final state\" [disabled]\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\n@enduml",
+    "selection": [
+      "Idle"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Idle — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Idle"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\ncallout right of element Idle : Why Idle matters\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"State — Idle\":\n  - heading \"State — Idle\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Idle\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"State\" [selected]\n    - option \"Choice\"\n    - option \"Junction\"\n    - option \"Shallow history (H)\"\n    - option \"Deep history (H*)\"\n    - option \"Fork\"\n    - option \"Join\"\n    - option \"Terminate\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - group \"Sub-states\":\n    - text: Sub-states\n    - button \"+ Add sub-state\"\n    - button \"+ Initial state\" [disabled]\n    - button \"+ Final state\" [disabled]\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\ncallout right of element Idle : Why Idle matters\n@enduml",
+    "selection": [
+      "Idle"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Idle — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Idle"
+    }
+  },
+  "operations": [
+    {
+      "type": "state",
+      "before": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\n@enduml",
+      "operation": {
+        "op": "source.replace",
+        "revision": "rb788e37a:67",
+        "text": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\ncallout right of element Idle : Why Idle matters\n@enduml",
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\ncallout right of element Idle : Why Idle matters\n@enduml"
+    }
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: a state's Behaviour fields and its region's initial and final states (origin/master 71fbaeca); a state's Kind field, which hides the sub-state list of a pseudostate (origin/master 71fbaeca); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
+}

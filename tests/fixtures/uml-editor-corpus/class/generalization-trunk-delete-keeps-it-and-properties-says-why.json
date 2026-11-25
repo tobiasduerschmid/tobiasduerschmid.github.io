@@ -1,0 +1,167 @@
+{
+  "id": "generalization-trunk-delete-keeps-it-and-properties-says-why",
+  "family": "class",
+  "type": "class",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nabstract class Animal @pos(160, 40)\nclass Dog @pos(40, 240)\nclass Cat @pos(280, 240)\nDog --|> Animal\nCat --|> Animal\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Relation segment 1 of edge-0 — Enter to select, Delete to remove"
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Relation segment 1 of edge-0 — Enter to select, Delete to remove"
+      },
+      "key": "Delete"
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Relation segment 1 of edge-0 — Enter to select, Delete to remove"
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nabstract class Animal @pos(160, 40)\nclass Dog @pos(40, 240)\nclass Cat @pos(280, 240)\nDog --|> Animal\nCat --|> Animal\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Kept 1 connection that could not be matched to one line of the source."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - paragraph: This connection could not be matched to one line of the source, so it cannot be edited here.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "edge-0"
+    ],
+    "focus": {
+      "tag": "line",
+      "id": "",
+      "role": "button",
+      "name": "Relation segment 1 of edge-0 — Enter to select, Delete to remove",
+      "layoutId": "edge-0"
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nabstract class Animal @pos(160, 40)\nclass Dog @pos(40, 240)\nclass Cat @pos(280, 240)\nDog --|> Animal\nCat --|> Animal\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - paragraph: This connection could not be matched to one line of the source, so it cannot be edited here.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "edge-0"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nabstract class Animal @pos(160, 40)\nclass Dog @pos(40, 240)\nclass Cat @pos(280, 240)\nDog --|> Animal\nCat --|> Animal\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - paragraph: This connection could not be matched to one line of the source, so it cannot be edited here.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "edge-0"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": []
+}

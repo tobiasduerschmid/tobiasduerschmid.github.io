@@ -1,0 +1,215 @@
+{
+  "id": "use-case-dragged",
+  "family": "behaviour",
+  "type": "usecase",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+  "steps": [
+    {
+      "do": "drag",
+      "from": {
+        "target": {
+          "role": "button",
+          "name": "Element Track Order — Enter to select, arrows to nudge, Delete to remove"
+        }
+      },
+      "to": {
+        "target": {
+          "role": "button",
+          "name": "Element Track Order — Enter to select, arrows to nudge, Delete to remove"
+        },
+        "offset": {
+          "x": 0,
+          "y": 90
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nactor Customer @pos(23, 152)\nactor Member @pos(28, 269)\nusecase \"Place Order\" as UC1 @pos(179, 124)\nusecase \"Track Order\" as UC2 @pos(179, 320)\nusecase \"Pay\" as UC3 @pos(386, 124)\nusecase \"Cancel Order\" as UC4 @pos(174, 360)\nrectangle \"Online Shop\" @pos(139, 60) {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Use Case — UC2\":\n  - heading \"Use Case — UC2\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": UC2\n  - text: Display label\n  - textbox \"Display label\": Track Order\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "UC2"
+    ],
+    "focus": {
+      "tag": "div",
+      "id": "uml-pg-output",
+      "role": "region",
+      "name": "UML use case diagram",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Use Case — UC2\":\n  - heading \"Use Case — UC2\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": UC2\n  - text: Display label\n  - textbox \"Display label\": Track Order\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "UC2"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Track Order — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "UC2"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nactor Customer @pos(23, 152)\nactor Member @pos(28, 269)\nusecase \"Place Order\" as UC1 @pos(179, 124)\nusecase \"Track Order\" as UC2 @pos(179, 320)\nusecase \"Pay\" as UC3 @pos(386, 124)\nusecase \"Cancel Order\" as UC4 @pos(174, 360)\nrectangle \"Online Shop\" @pos(139, 60) {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Use Case — UC2\":\n  - heading \"Use Case — UC2\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": UC2\n  - text: Display label\n  - textbox \"Display label\": Track Order\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "UC2"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Track Order — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "UC2"
+    }
+  },
+  "operations": [
+    {
+      "type": "usecase",
+      "before": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+      "operation": {
+        "op": "layout.set",
+        "revision": "r86c8f9cb:236",
+        "positions": {
+          "UC2": {
+            "x": 178.5,
+            "y": 320
+          }
+        },
+        "routes": [],
+        "facts": {
+          "positions": {
+            "Customer": {
+              "x": 22.714614868164062,
+              "y": 152.32337951660156
+            },
+            "Member": {
+              "x": 27.726634979248047,
+              "y": 269.3233947753906
+            },
+            "UC1": {
+              "x": 178.5,
+              "y": 123.99996185302734
+            },
+            "UC2": {
+              "x": 178.5,
+              "y": 241.9999542236328
+            },
+            "UC3": {
+              "x": 385.5,
+              "y": 123.99996185302734
+            },
+            "UC4": {
+              "x": 174.00003051757812,
+              "y": 359.9999694824219
+            },
+            "Online Shop": {
+              "x": 138.50001525878906,
+              "y": 60.0000114440918
+            }
+          },
+          "shiftedRoutes": {}
+        },
+        "undo": {
+          "key": "drag:elt:UC2"
+        }
+      },
+      "after": "@startuml\nactor Customer @pos(23, 152)\nactor Member @pos(28, 269)\nusecase \"Place Order\" as UC1 @pos(179, 124)\nusecase \"Track Order\" as UC2 @pos(179, 320)\nusecase \"Pay\" as UC3 @pos(386, 124)\nusecase \"Cancel Order\" as UC4 @pos(174, 360)\nrectangle \"Online Shop\" @pos(139, 60) {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml"
+    }
+  ]
+}

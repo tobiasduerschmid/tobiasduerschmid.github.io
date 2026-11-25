@@ -1,0 +1,145 @@
+{
+  "id": "source-that-fails-to-render-then-undo",
+  "family": "behaviour",
+  "type": "state",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+  "steps": [
+    {
+      "do": "fill",
+      "target": {
+        "role": "textbox",
+        "name": "ArchUML diagram source"
+      },
+      "value": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\ncallout right of Idle : waits for input\n@enduml"
+    }
+  ],
+  "after": {
+    "text": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\ncallout right of Idle : waits for input\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": ""
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": "Error: Invalid callout at line 6. See the teaching-callout syntax reference. Press Cmd+Z to revert the last edit."
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Invalid callout at line 6. See the teaching-callout syntax reference."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\ncallout right of Idle : waits for input\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "textarea",
+      "id": "uml-pg-input",
+      "role": "textbox",
+      "name": "ArchUML diagram source",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": "Error: Invalid callout at line 6. See the teaching-callout syntax reference. Press Cmd+Z to revert the last edit."
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\ncallout right of Idle : waits for input\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": ""
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": "Error: Invalid callout at line 6. See the teaching-callout syntax reference. Press Cmd+Z to revert the last edit."
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Invalid callout at line 6. See the teaching-callout syntax reference."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": []
+}

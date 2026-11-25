@@ -1,0 +1,192 @@
+{
+  "id": "deployment-nested-node-renamed-in-place-and-its-connectors-follow",
+  "family": "structure",
+  "type": "deployment",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+  "steps": [
+    {
+      "do": "pointerDblclick",
+      "point": {
+        "target": {
+          "css": ".uml-pg-edit-hitbox[data-layout-id=\"WebServer\"]"
+        },
+        "at": {
+          "x": 0.5,
+          "y": 0
+        },
+        "offset": {
+          "x": 0,
+          "y": 8
+        }
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "label": "Rename WebServer"
+      },
+      "value": "AppHost"
+    },
+    {
+      "do": "press",
+      "target": {
+        "label": "Rename WebServer"
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nnode Cluster {\n  node AppHost {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> AppHost : HTTPS\nAppHost --> DBServer : JDBC\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Node — AppHost\":\n  - heading \"Node — AppHost\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": AppHost\n  - text: Display label\n  - textbox \"Display label\": AppHost\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - combobox \"Deployment child kind\":\n      - option \"Component\" [selected]\n      - option \"Artifact\"\n    - textbox \"Deployment child 1 name\":\n      - /placeholder: Child name\n      - text: AppServer\n    - button \"Remove deployment child 1\": ✕\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "AppHost"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element AppHost — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "AppHost"
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Element — AppHost\":\n  - heading \"Element — AppHost\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": AppHost\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nnode Cluster {\n  node AppHost {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> AppHost : HTTPS\nAppHost --> DBServer : JDBC\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Node — AppHost\":\n  - heading \"Node — AppHost\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": AppHost\n  - text: Display label\n  - textbox \"Display label\": AppHost\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - combobox \"Deployment child kind\":\n      - option \"Component\" [selected]\n      - option \"Artifact\"\n    - textbox \"Deployment child 1 name\":\n      - /placeholder: Child name\n      - text: AppServer\n    - button \"Remove deployment child 1\": ✕\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "AppHost"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element AppHost — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "AppHost"
+    }
+  },
+  "operations": [
+    {
+      "type": "deployment",
+      "before": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+      "operation": {
+        "op": "element.rename",
+        "revision": "r31c27202:241",
+        "ref": "WebServer",
+        "text": "AppHost",
+        "part": "identifier",
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nnode Cluster {\n  node AppHost {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> AppHost : HTTPS\nAppHost --> DBServer : JDBC\n@enduml"
+    }
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: the Display label field in Properties (origin/master 5f9541e2); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
+}

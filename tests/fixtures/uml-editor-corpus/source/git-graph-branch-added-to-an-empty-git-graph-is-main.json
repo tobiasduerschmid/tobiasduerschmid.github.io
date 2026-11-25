@@ -1,0 +1,170 @@
+{
+  "id": "git-graph-branch-added-to-an-empty-git-graph-is-main",
+  "family": "source",
+  "type": "gitgraph",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "text": "Git graph model (",
+        "exact": false
+      }
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "+ Branch"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nbranch main:\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No diagram produced."
+      },
+      "uml-pg-tool-status": {
+        "text": "Added branch \"main\"."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No diagram produced."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nbranch main:\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No diagram produced."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "gitgraph",
+      "before": "@startuml\n@enduml",
+      "operation": {
+        "op": "source.insertLines",
+        "revision": "r4985792e:17",
+        "lines": [
+          "branch main:"
+        ],
+        "at": "end",
+        "frame": true,
+        "facts": {},
+        "undo": {
+          "key": "gitgraph-add-branch"
+        }
+      },
+      "after": "@startuml\nbranch main:\n@enduml"
+    }
+  ]
+}

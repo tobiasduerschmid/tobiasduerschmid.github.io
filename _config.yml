@@ -132,6 +132,9 @@ exclude:
   - scripts/sebook-teaser
   - scripts/song-video
   - scripts/video-tools
+  # Offline layout and routing tools (A/B comparison, view rendering) are not
+  # site content.
+  - scripts/tools
   - chrome-extension
   # Sources that scripts/uml_design_questions/build_yaml.py copies into
   # _data/tutorials/uml-design-questions.yml; the tutorial page shows them.

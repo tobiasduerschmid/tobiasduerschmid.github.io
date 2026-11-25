@@ -1,0 +1,182 @@
+{
+  "id": "include-inverted-in-properties",
+  "family": "behaviour",
+  "type": "usecase",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Relation segment 1 of usecase:1 — Enter to select, Delete to remove"
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Invert direction",
+        "within": {
+          "css": "#uml-pg-props-content"
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC3 ..> UC1 : <<include>>\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Inverted relation direction."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — UC3 → UC1\":\n  - heading \"Relation — UC3 → UC1\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Association\"\n    - option \"Directed\"\n    - option \"include\" [selected]\n    - option \"extend\"\n    - option \"Generalize\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Customer\"\n    - option \"Member\"\n    - option \"UC1 - Place Order\"\n    - option \"UC2 - Track Order\"\n    - option \"UC3 - Pay\" [selected]\n    - option \"UC4 - Cancel Order\"\n    - option \"Online Shop\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Customer\"\n    - option \"Member\"\n    - option \"UC1 - Place Order\" [selected]\n    - option \"UC2 - Track Order\"\n    - option \"UC3 - Pay\"\n    - option \"UC4 - Cancel Order\"\n    - option \"Online Shop\"\n  - text: Label\n  - textbox \"Label\"\n  - text: Stereotype\n  - textbox \"Stereotype\": <<include>>\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "usecase:1"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — UC1 → UC3\":\n  - heading \"Relation — UC1 → UC3\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Association\"\n    - option \"Directed\"\n    - option \"include\" [selected]\n    - option \"extend\"\n    - option \"Generalize\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Customer\"\n    - option \"Member\"\n    - option \"UC1 - Place Order\" [selected]\n    - option \"UC2 - Track Order\"\n    - option \"UC3 - Pay\"\n    - option \"UC4 - Cancel Order\"\n    - option \"Online Shop\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Customer\"\n    - option \"Member\"\n    - option \"UC1 - Place Order\"\n    - option \"UC2 - Track Order\"\n    - option \"UC3 - Pay\" [selected]\n    - option \"UC4 - Cancel Order\"\n    - option \"Online Shop\"\n  - text: Label\n  - textbox \"Label\"\n  - text: Stereotype\n  - textbox \"Stereotype\": <<include>>\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "usecase:1"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC3 ..> UC1 : <<include>>\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — UC3 → UC1\":\n  - heading \"Relation — UC3 → UC1\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Association\"\n    - option \"Directed\"\n    - option \"include\" [selected]\n    - option \"extend\"\n    - option \"Generalize\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Customer\"\n    - option \"Member\"\n    - option \"UC1 - Place Order\"\n    - option \"UC2 - Track Order\"\n    - option \"UC3 - Pay\" [selected]\n    - option \"UC4 - Cancel Order\"\n    - option \"Online Shop\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Customer\"\n    - option \"Member\"\n    - option \"UC1 - Place Order\" [selected]\n    - option \"UC2 - Track Order\"\n    - option \"UC3 - Pay\"\n    - option \"UC4 - Cancel Order\"\n    - option \"Online Shop\"\n  - text: Label\n  - textbox \"Label\"\n  - text: Stereotype\n  - textbox \"Stereotype\": <<include>>\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "usecase:1"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "usecase",
+      "before": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+      "operation": {
+        "op": "relation.invert",
+        "revision": "r86c8f9cb:236",
+        "ref": {
+          "routeId": "usecase:1",
+          "line": 12,
+          "candidates": [
+            12
+          ]
+        },
+        "facts": {},
+        "undo": {
+          "key": "rel-invert:12"
+        }
+      },
+      "after": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC3 ..> UC1 : <<include>>\n@enduml"
+    }
+  ]
+}

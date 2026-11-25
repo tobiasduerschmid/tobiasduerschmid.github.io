@@ -19,7 +19,7 @@
 <body class="is-fit">
   <main class="vn-stage-page">
     <h1 class="vn-stage-title">{{ lesson.name | escape }} animation for the narrated lesson at {{ lesson.chapter | relative_url }}</h1>
-    <div class="stage" id="stage" aria-hidden="true" data-topic="{{ page.topic }}" data-theme="{{ lesson.animation.theme | default: 'studio' }}"></div>
+    {% include video-narration-stage-element.html topic=page.topic %}
     <div class="vn-stage-print-summary">
       <p>This animation accompanies the <a href="{{ lesson.chapter | relative_url }}">{{ lesson.name | escape }} narrated lesson</a>.</p>
       <p>Use the <a href="{{ lesson.notes_url | relative_url }}">{{ lesson.name | escape }} lesson notes</a> for printable pictures, visual descriptions, key points, and space for your own notes.</p>

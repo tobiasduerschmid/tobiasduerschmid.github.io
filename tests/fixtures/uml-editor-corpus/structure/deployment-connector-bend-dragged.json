@@ -1,0 +1,239 @@
+{
+  "id": "deployment-connector-bend-dragged",
+  "family": "structure",
+  "type": "deployment",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+  "steps": [
+    {
+      "do": "drag",
+      "from": {
+        "target": {
+          "role": "button",
+          "name": "Relation segment 2 of rel:13 — Enter to select, Delete to remove"
+        }
+      },
+      "to": {
+        "target": {
+          "role": "button",
+          "name": "Relation segment 2 of rel:13 — Enter to select, Delete to remove"
+        },
+        "offset": {
+          "x": -30,
+          "y": 0
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nedge \"rel:13\" points=\"0,164.16000366210938 -80,164.16000366210938 -80,369.239990234375 -6,369.239990234375\"\n@endlayout\nnode Cluster @pos(-42, 271) {\n  node WebServer @pos(-6, 339) {\n    component AppServer @pos(14, 395)\n  }\n  node DBServer @pos(-6, 549) {\n    component PostgreSQL @pos(14, 605)\n  }\n}\nnode Laptop @pos(0, 0) {\n  component Browser @pos(20, 56)\n  artifact app_ui @pos(20, 118)\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — Laptop → WebServer\":\n  - heading \"Relation — Laptop → WebServer\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Connector\" [selected]\n    - option \"Plain Line\"\n    - option \"Dependency\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Cluster\"\n    - option \"WebServer\"\n    - option \"AppServer\"\n    - option \"DBServer\"\n    - option \"PostgreSQL\"\n    - option \"Laptop\" [selected]\n    - option \"Browser\"\n    - option \"app_ui\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Cluster\"\n    - option \"WebServer\" [selected]\n    - option \"AppServer\"\n    - option \"DBServer\"\n    - option \"PostgreSQL\"\n    - option \"Laptop\"\n    - option \"Browser\"\n    - option \"app_ui\"\n  - text: Label\n  - textbox \"Label\": HTTPS\n  - checkbox \"Dashed connector\"\n  - text: Dashed connector\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "rel:13"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — Laptop → WebServer\":\n  - heading \"Relation — Laptop → WebServer\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Connector\" [selected]\n    - option \"Plain Line\"\n    - option \"Dependency\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Cluster\"\n    - option \"WebServer\"\n    - option \"AppServer\"\n    - option \"DBServer\"\n    - option \"PostgreSQL\"\n    - option \"Laptop\" [selected]\n    - option \"Browser\"\n    - option \"app_ui\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Cluster\"\n    - option \"WebServer\" [selected]\n    - option \"AppServer\"\n    - option \"DBServer\"\n    - option \"PostgreSQL\"\n    - option \"Laptop\"\n    - option \"Browser\"\n    - option \"app_ui\"\n  - text: Label\n  - textbox \"Label\": HTTPS\n  - checkbox \"Dashed connector\"\n  - text: Dashed connector\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "rel:13"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nedge \"rel:13\" points=\"0,164.16000366210938 -80,164.16000366210938 -80,369.239990234375 -6,369.239990234375\"\n@endlayout\nnode Cluster @pos(-42, 271) {\n  node WebServer @pos(-6, 339) {\n    component AppServer @pos(14, 395)\n  }\n  node DBServer @pos(-6, 549) {\n    component PostgreSQL @pos(14, 605)\n  }\n}\nnode Laptop @pos(0, 0) {\n  component Browser @pos(20, 56)\n  artifact app_ui @pos(20, 118)\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — Laptop → WebServer\":\n  - heading \"Relation — Laptop → WebServer\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Connector\" [selected]\n    - option \"Plain Line\"\n    - option \"Dependency\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Cluster\"\n    - option \"WebServer\"\n    - option \"AppServer\"\n    - option \"DBServer\"\n    - option \"PostgreSQL\"\n    - option \"Laptop\" [selected]\n    - option \"Browser\"\n    - option \"app_ui\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Cluster\"\n    - option \"WebServer\" [selected]\n    - option \"AppServer\"\n    - option \"DBServer\"\n    - option \"PostgreSQL\"\n    - option \"Laptop\"\n    - option \"Browser\"\n    - option \"app_ui\"\n  - text: Label\n  - textbox \"Label\": HTTPS\n  - checkbox \"Dashed connector\"\n  - text: Dashed connector\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "rel:13"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "deployment",
+      "before": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+      "operation": {
+        "op": "layout.set",
+        "revision": "r31c27202:241",
+        "positions": {},
+        "routes": [
+          {
+            "id": "rel:13",
+            "index": 0,
+            "points": [
+              {
+                "x": 0,
+                "y": 164.16000366210938
+              },
+              {
+                "x": -80,
+                "y": 164.16000366210938
+              },
+              {
+                "x": -80,
+                "y": 369.239990234375
+              },
+              {
+                "x": -6,
+                "y": 369.239990234375
+              }
+            ]
+          }
+        ],
+        "facts": {
+          "positions": {
+            "Cluster": {
+              "x": -42,
+              "y": 271
+            },
+            "WebServer": {
+              "x": -6,
+              "y": 339
+            },
+            "AppServer": {
+              "x": 14,
+              "y": 395
+            },
+            "DBServer": {
+              "x": -6,
+              "y": 549
+            },
+            "PostgreSQL": {
+              "x": 14,
+              "y": 605
+            },
+            "Laptop": {
+              "x": 0,
+              "y": 0
+            },
+            "Browser": {
+              "x": 20,
+              "y": 56
+            },
+            "app_ui": {
+              "x": 20,
+              "y": 118
+            }
+          },
+          "shiftedRoutes": {},
+          "nesting": [],
+          "carried": {}
+        },
+        "undo": {
+          "key": "drag:route:rel:13"
+        }
+      },
+      "after": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nedge \"rel:13\" points=\"0,164.16000366210938 -80,164.16000366210938 -80,369.239990234375 -6,369.239990234375\"\n@endlayout\nnode Cluster @pos(-42, 271) {\n  node WebServer @pos(-6, 339) {\n    component AppServer @pos(14, 395)\n  }\n  node DBServer @pos(-6, 549) {\n    component PostgreSQL @pos(14, 605)\n  }\n}\nnode Laptop @pos(0, 0) {\n  component Browser @pos(20, 56)\n  artifact app_ui @pos(20, 118)\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml"
+    }
+  ]
+}

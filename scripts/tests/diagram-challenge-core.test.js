@@ -455,3 +455,92 @@ test('a diagram without links has an empty list', () => {
   const challenge = Core.normalizeSpec(spec());
   assert.deepEqual(challenge.diagrams[0].links, []);
 });
+
+// ----- Diagram-first: the diagram and its questions from the start ------------
+
+const UNGRADED_CHECK = Object.assign({}, spec().evidence_check, { graded: false });
+
+test('a diagram-first challenge starts with the reply: nothing to attempt or lock, and the questions take answers at once', () => {
+  const session = Core.createSession(spec({ mode: 'diagram-first', attempt: ATTEMPT, predict_view: true }));
+  session.resume(0);
+
+  assert.equal(session.state, 'locked');
+  assert.deepEqual(session.missing(), []);
+  assert.equal(session.canLock(), false);
+  assert.equal(session.mainVisible(), true);
+  assert.equal(session.challenge.predictView, false);
+  assert.equal(session.setHypothesis('a guess'), false);
+  assert.equal(session.addEvidence({ path: 'a.py', line: 1 }), false);
+
+  assert.equal(session.answer('receivers', [0, 1, 2]), true);
+  assert.equal(session.answer('source', 0), true);
+  assert.deepEqual(session.checkMain(30_000).map(result => result.correct), [true, true]);
+  assert.equal(session.elapsedSeconds('a', 30_000), 0, 'no time counts as time from the code');
+  assert.equal(session.elapsedSeconds('b', 30_000), 30);
+});
+
+test('a diagram-first comparison has no answers from the code, and its summary no code part', () => {
+  const session = Core.createSession(spec({ mode: 'diagram-first' }));
+  session.resume(0);
+  session.answer('receivers', [0, 1, 2]);
+  session.answer('source', 1);
+  session.checkMain(10_000);
+
+  const comparison = session.comparison();
+  assert.deepEqual(comparison.questions.map(row => row.partA), [null, null]);
+  assert.deepEqual(comparison.questions.map(row => row.partB.correct), [true, false]);
+  assert.equal(comparison.confidence, null);
+
+  const summary = Core.summarize(spec({ mode: 'diagram-first' }), session.serialize(10_000));
+  assert.equal(summary.a, null);
+  assert.deepEqual(summary.b, { correct: 1, total: 2, seconds: 10 });
+});
+
+test('a record saved while a step was still code-first continues with the diagram when the step becomes diagram-first', () => {
+  const exploring = Core.createSession(spec());
+  exploring.resume(0);
+  exploring.answer('receivers', [0]);
+  const record = exploring.serialize(5_000);
+  assert.equal(record.state, 'exploring');
+
+  const session = Core.createSession(spec({ mode: 'diagram-first' }), record);
+  assert.equal(session.state, 'locked');
+  assert.equal(session.answer('source', 0), true);
+});
+
+test('an ungraded evidence check is asked but neither scored nor needed to move on', () => {
+  const session = Core.createSession(spec({ mode: 'diagram-first', evidence_check: UNGRADED_CHECK }));
+  session.resume(0);
+  session.answer('receivers', [0, 1, 2]);
+  session.answer('source', 0);
+  session.checkMain(1_000);
+  session.advance(2_000);
+  session.answerFollowUp('cancelled', [1, 2]);
+  session.checkFollowUp(3_000);
+
+  assert.equal(session.evidenceVisible(), true);
+  assert.equal(session.canAdvance(), true, 'the stage can be left without checking the code');
+  session.answerEvidenceCheck('verified', 1);
+  assert.deepEqual(session.checkEvidence(4_000).map(result => result.correct), [false]);
+  session.advance(5_000);
+  session.setConsolidation('The view put the bindings side by side.');
+  session.answerMechanism('mechanism', 0);
+  const outcome = session.finish(6_000);
+  assert.equal(outcome.score, 1, 'a wrong ungraded check does not lower the score');
+  assert.equal(outcome.passed, true);
+});
+
+test('a graded evidence check still counts, in any mode', () => {
+  const session = Core.createSession(spec({ mode: 'diagram-first' }));
+  session.resume(0);
+  session.answer('receivers', [0, 1, 2]);
+  session.answer('source', 0);
+  session.checkMain(1_000);
+  session.advance(2_000);
+  session.answerFollowUp('cancelled', [1, 2]);
+  session.checkFollowUp(3_000);
+  assert.equal(session.canAdvance(), false, 'a graded check must be checked before moving on');
+  session.answerEvidenceCheck('verified', 1);
+  session.checkEvidence(4_000);
+  assert.equal(session.score(), 3 / 5);
+});

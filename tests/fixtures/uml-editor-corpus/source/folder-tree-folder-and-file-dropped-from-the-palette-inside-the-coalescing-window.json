@@ -1,0 +1,222 @@
+{
+  "id": "folder-tree-folder-and-file-dropped-from-the-palette-inside-the-coalescing-window",
+  "family": "source",
+  "type": "folder-tree",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nproject/\n  src/\n    main.js\n  README.md\n@enduml",
+  "steps": [
+    {
+      "do": "drag",
+      "from": {
+        "target": {
+          "role": "button",
+          "name": "Add element: Folder"
+        }
+      },
+      "to": {
+        "target": {
+          "css": "#uml-pg-output svg"
+        },
+        "at": {
+          "x": 0.9,
+          "y": 0.9
+        }
+      }
+    },
+    {
+      "do": "drag",
+      "from": {
+        "target": {
+          "role": "button",
+          "name": "Add element: File"
+        }
+      },
+      "to": {
+        "target": {
+          "css": "#uml-pg-output svg"
+        },
+        "at": {
+          "x": 0.8,
+          "y": 0.9
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nproject/\n  src/\n    main.js\n  README.md\nfolder/\nfile\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No movable elements detected for this diagram yet."
+      },
+      "uml-pg-tool-status": {
+        "text": "Drop on the canvas to place a File. Esc to cancel."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "button",
+      "id": "",
+      "role": "button",
+      "name": "Add element: File",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nproject/\n  src/\n    main.js\n  README.md\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No movable elements detected for this diagram yet."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nproject/\n  src/\n    main.js\n  README.md\nfolder/\nfile\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No movable elements detected for this diagram yet."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "folder-tree",
+      "before": "@startuml\nproject/\n  src/\n    main.js\n  README.md\n@enduml",
+      "operation": {
+        "op": "element.add",
+        "revision": "r3fb4e7c8:57",
+        "tool": "folder",
+        "name": null,
+        "into": null,
+        "anchor": null,
+        "placed": "dropped",
+        "facts": {
+          "at": {
+            "x": 143.10088393293796,
+            "y": 106.8090941081842
+          },
+          "positions": {}
+        },
+        "undo": {
+          "key": "folder-tree-add"
+        }
+      },
+      "after": "@startuml\nproject/\n  src/\n    main.js\n  README.md\nfolder/\n@enduml"
+    },
+    {
+      "type": "folder-tree",
+      "before": "@startuml\nproject/\n  src/\n    main.js\n  README.md\nfolder/\n@enduml",
+      "operation": {
+        "op": "element.add",
+        "revision": "r7bd312cf:65",
+        "tool": "file",
+        "name": null,
+        "into": null,
+        "anchor": null,
+        "placed": "dropped",
+        "facts": {
+          "at": {
+            "x": 127.20079130337592,
+            "y": 136.8000050270934
+          },
+          "positions": {}
+        },
+        "undo": {
+          "key": "folder-tree-add"
+        }
+      },
+      "after": "@startuml\nproject/\n  src/\n    main.js\n  README.md\nfolder/\nfile\n@enduml"
+    }
+  ]
+}

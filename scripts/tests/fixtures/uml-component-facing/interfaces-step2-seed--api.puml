@@ -1,0 +1,11 @@
+@startuml
+layout vertical
+component "Registration API" as e1 <<Container: Python, FastAPI>> {
+  provide "Enrollment API" as p1
+  require "Tuition Charges" as r1
+}
+component "Billing System" as e2 <<Software System, external>> {
+  provide "Tuition Charges" as p2
+}
+p2 --> r1 : send ChargeRequested to the queue billing.charges
+@enduml

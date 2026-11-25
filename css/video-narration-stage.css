@@ -126,3 +126,44 @@
 :is(html:not(.dark-mode), html.print-light-mode) .sw-card-line { stroke: rgba(70, 100, 160, 0.22); }
 :is(html:not(.dark-mode), html.print-light-mode) .sw-tape-strip { fill: rgba(200, 185, 140, 0.36); }
 :is(html:not(.dark-mode), html.print-light-mode) .sw-vignette { background: radial-gradient(ellipse at 50% 45%, transparent 60%, rgba(90, 80, 60, 0.14) 100%); }
+
+/* The blueprint (theme drafting-room, js/song-video/drafting-room.js) as a
+   narration stage. By night it is the song's cyanotype sheet; the wall token
+   is the paper's lightest tone under the lamp, so text measured against it
+   keeps its contrast anywhere on the sheet, and muted text turns near-white
+   as the song's subtitles do. By day the sheet becomes a whiteprint: pale
+   paper with blue linework and lettering, faint enough that the light
+   palette's dark text keeps at least 4.5:1 over it. */
+.theme-drafting-room {
+  --bg: #2f6da3;
+  --muted: #e3edff;
+}
+/* The wall kit's words set straight on the sheet sit on a label, so colored
+   ink keeps its contrast over the blueprint in both modes. */
+.theme-drafting-room .sk-slot { background: var(--vn-label-bg); }
+.theme-drafting-room .sk-label { padding: 2px 10px; border-radius: 8px; background: var(--vn-label-bg); }
+:is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room { --bg: #dbe6f4; background: #eef4fb; }
+:is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-room::after { background: transparent; }
+:is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-base {
+  background:
+    radial-gradient(ellipse 30% 26% at 18% 30%, rgba(30, 79, 156, 0.03), transparent 70%),
+    radial-gradient(ellipse 34% 28% at 62% 78%, rgba(30, 79, 156, 0.04), transparent 70%),
+    radial-gradient(ellipse 80% 75% at 50% 46%, #f7fafd 0%, #eef4fa 55%, #e0eaf6 100%);
+}
+:is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-folds { opacity: 0.3; }
+:is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-grid {
+  background-image:
+    linear-gradient(rgba(30, 79, 156, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 79, 156, 0.12) 1px, transparent 1px),
+    linear-gradient(rgba(30, 79, 156, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 79, 156, 0.05) 1px, transparent 1px);
+}
+:is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-light { background: radial-gradient(ellipse 34% 42% at 22% 18%, rgba(255, 214, 140, 0.12), transparent 70%); }
+:is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room :is(.dr-border-outer, .dr-border-inner, .dr-line, .dr-line-fine, .dr-tool-tick, .dr-tool-leg, .dr-tool-arc, .dr-roll-end, .dr-lamp-arm, .dr-lamp-spring) { stroke: rgba(30, 79, 156, 0.3); }
+:is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room :is(.dr-tool-body, .dr-roll-body) { fill: rgba(30, 79, 156, 0.04); stroke: rgba(30, 79, 156, 0.3); }
+:is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room :is(.dr-north, .dr-lamp-joint) { fill: rgba(30, 79, 156, 0.3); }
+:is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-lamp-shade { fill: rgba(30, 79, 156, 0.08); stroke: rgba(30, 79, 156, 0.34); }
+:is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-lamp-rim { stroke: rgba(168, 118, 0, 0.45); }
+:is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-lettering { fill: rgba(30, 79, 156, 0.4); }
+:is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-mote { background: rgba(30, 79, 156, 0.3); }
+:is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-vignette { background: radial-gradient(ellipse at 50% 45%, transparent 60%, rgba(30, 60, 110, 0.1) 100%); }

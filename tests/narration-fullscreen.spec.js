@@ -27,6 +27,7 @@ const narrations = [
   { url: '/SEBook/uml_component_diagram.html', id: 'uml_component_diagram-animation', title: 'UML component diagrams in a seat-alert app',
     diagramScene: sceneNumber('uml_component_diagram', 'interfaces') },
   { url: '/SEBook/process/scrum.html', id: 'scrum-video', title: 'Scrum in one sprint' },
+  { url: '/SEBook/designprinciples/blood-groups.html', id: 'blood_groups-video', title: 'What does your code know?' },
 ];
 const lessonOf = (page, narration) => page.getByRole('region', { name: narration.title, exact: true });
 // Accessibility checkpoints audit `.nja-player`, the element that fills the screen.

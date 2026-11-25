@@ -1,0 +1,193 @@
+{
+  "id": "deployment-callout-created-from-the-element-context-menu",
+  "family": "source",
+  "type": "deployment",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nnode Server\nnode Database\nServer --> Database\n@enduml",
+  "steps": [
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "role": "button",
+          "name": "Element Server — Enter to select, arrows to nudge, Delete to remove"
+        }
+      },
+      "button": "right"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "menuitem",
+        "name": "Add callout"
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "label": "Explanation"
+      },
+      "value": "Why Server matters"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Add callout"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout right of element Server : Why Server matters\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Callout saved."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Node — Server\":\n  - heading \"Node — Server\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Server\n  - text: Display label\n  - textbox \"Display label\": Server\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout right of element Server : Why Server matters\n@enduml",
+    "selection": [
+      "Server"
+    ],
+    "focus": {
+      "tag": "button",
+      "id": "uml-pg-callout-submit",
+      "role": "button",
+      "name": "Save callout",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nnode Server\nnode Database\nServer --> Database\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Node — Server\":\n  - heading \"Node — Server\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Server\n  - text: Display label\n  - textbox \"Display label\": Server\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nnode Server\nnode Database\nServer --> Database\n@enduml",
+    "selection": [
+      "Server"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Server — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Server"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout right of element Server : Why Server matters\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Node — Server\":\n  - heading \"Node — Server\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Server\n  - text: Display label\n  - textbox \"Display label\": Server\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout right of element Server : Why Server matters\n@enduml",
+    "selection": [
+      "Server"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Server — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Server"
+    }
+  },
+  "operations": [
+    {
+      "type": "deployment",
+      "before": "@startuml\nnode Server\nnode Database\nServer --> Database\n@enduml",
+      "operation": {
+        "op": "source.replace",
+        "revision": "rf13f3e8a:63",
+        "text": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout right of element Server : Why Server matters\n@enduml",
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout right of element Server : Why Server matters\n@enduml"
+    }
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: the Display label field in Properties (origin/master 5f9541e2); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
+}

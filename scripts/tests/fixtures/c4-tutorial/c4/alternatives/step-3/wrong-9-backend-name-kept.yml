@@ -1,0 +1,64 @@
+# WRONG (partial repair: every other problem fixed, but the generic name "Backend" kept): must fail T5 only; reaches "Name It After Its Job" and "Change the Name, Keep the Id".
+schema: c4-design/1
+name: Course Registration
+description: Students plan a term schedule and enroll in every section of it, or in none.
+
+requirements:
+  FR-12: An academic adviser can review a student's planned schedule before the student enrolls.
+
+people:
+  student:
+    name: Student
+    description: Plans and confirms one term schedule.
+    collaborators:
+      web: plans a schedule and enrolls using
+  adviser:
+    name: Academic Adviser
+    description: Reviews students' planned schedules before they enroll.
+    collaborators:
+      web: reviews a student's planned schedule using
+
+systems:
+  registration:
+    name: Course Registration
+    description: Plans term schedules and enrolls students in their sections.
+    responsibilities:
+      - decide: whether a student may enroll in a section
+        id: sys-eligibility
+      - do: hold a seat in every section of a plan, or in none
+        id: sys-holds
+    containers:
+      web:
+        name: Planner Web App
+        description: Lets students and advisers compare draft schedules in the browser.
+        kind: browser_app
+        technology: TypeScript, React
+        responsibilities:
+          - do: let students compare draft schedules
+          - do: let advisers review a student's planned schedule
+            requirements: [FR-12]
+        collaborators:
+          backend: {description: submits plans to and loads students' plans from, technology: JSON/HTTPS}
+      backend:
+        name: Backend
+        description: Checks each enrollment attempt and holds the seats it needs.
+        technology: Python, FastAPI
+        responsibilities:
+          - decide: whether a student may enroll in a section
+            refines: sys-eligibility
+          - do: hold a seat in every section of a plan, or in none
+            refines: sys-holds
+        collaborators:
+          enrollment-records: {description: reads and writes attempts and seat holds in, technology: SQL/TCP}
+          billing: {description: requests tuition charges from, technology: AMQP, connector: message}
+      enrollment-records:
+        name: Enrollment Records
+        description: Keeps each submitted plan, the seats it held, and how the attempt ended.
+        kind: database
+        technology: PostgreSQL 16
+        responsibilities:
+          - do: durably keep every plan, seat hold, and attempt outcome
+  billing:
+    name: Billing System
+    description: Charges tuition and fees for the university.
+    external: true

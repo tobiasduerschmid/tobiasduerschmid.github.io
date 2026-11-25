@@ -1,0 +1,193 @@
+{
+  "id": "component-renamed-in-place",
+  "family": "structure",
+  "type": "component",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+  "steps": [
+    {
+      "do": "pointerDblclick",
+      "point": {
+        "target": {
+          "css": ".uml-pg-edit-hitbox[data-layout-id=\"Database\"]"
+        },
+        "at": {
+          "x": 0.5,
+          "y": 0
+        },
+        "offset": {
+          "x": 0,
+          "y": 8
+        }
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "label": "Rename Database"
+      },
+      "value": "Store"
+    },
+    {
+      "do": "press",
+      "target": {
+        "label": "Rename Database"
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent \"Store\" as Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Component — Database\":\n  - heading \"Component — Database\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Database\n  - text: Display label\n  - textbox \"Display label\": Store\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - checkbox \"Dashed outline\"\n  - text: Dashed outline Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Ports & Interfaces\":\n    - text: Ports & Interfaces\n    - combobox \"Port / interface kind\":\n      - option \"→ port-in\" [selected]\n      - option \"port-out →\"\n      - option \"port (standalone)\"\n      - option \"○ provide (ball)\"\n      - option \"⊃ require (socket)\"\n    - textbox \"Port 1 name\":\n      - /placeholder: Port name\n      - text: dbIn\n    - button \"Remove port 1\": ✕\n    - checkbox \"dashed\"\n    - text: dashed\n    - button \"+ Add port-in\"\n    - button \"+ Add port-out\"\n    - button \"Add provided interface (ball)\": + Provided I/F\n    - button \"Add required interface (socket)\": + Required I/F\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Database"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Store — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Database"
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Component — Database\":\n  - heading \"Component — Database\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Database\n  - text: Display label\n  - textbox \"Display label\": Database\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - checkbox \"Dashed outline\"\n  - text: Dashed outline Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Ports & Interfaces\":\n    - text: Ports & Interfaces\n    - combobox \"Port / interface kind\":\n      - option \"→ port-in\" [selected]\n      - option \"port-out →\"\n      - option \"port (standalone)\"\n      - option \"○ provide (ball)\"\n      - option \"⊃ require (socket)\"\n    - textbox \"Port 1 name\":\n      - /placeholder: Port name\n      - text: dbIn\n    - button \"Remove port 1\": ✕\n    - checkbox \"dashed\"\n    - text: dashed\n    - button \"+ Add port-in\"\n    - button \"+ Add port-out\"\n    - button \"Add provided interface (ball)\": + Provided I/F\n    - button \"Add required interface (socket)\": + Required I/F\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Database"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Database — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Database"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent \"Store\" as Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Component — Database\":\n  - heading \"Component — Database\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Database\n  - text: Display label\n  - textbox \"Display label\": Store\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - checkbox \"Dashed outline\"\n  - text: Dashed outline Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Ports & Interfaces\":\n    - text: Ports & Interfaces\n    - combobox \"Port / interface kind\":\n      - option \"→ port-in\" [selected]\n      - option \"port-out →\"\n      - option \"port (standalone)\"\n      - option \"○ provide (ball)\"\n      - option \"⊃ require (socket)\"\n    - textbox \"Port 1 name\":\n      - /placeholder: Port name\n      - text: dbIn\n    - button \"Remove port 1\": ✕\n    - checkbox \"dashed\"\n    - text: dashed\n    - button \"+ Add port-in\"\n    - button \"+ Add port-out\"\n    - button \"Add provided interface (ball)\": + Provided I/F\n    - button \"Add required interface (socket)\": + Required I/F\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Database"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Store — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Database"
+    }
+  },
+  "operations": [
+    {
+      "type": "component",
+      "before": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+      "operation": {
+        "op": "source.replaceDeclaration",
+        "revision": "r6dc6b1f2:240",
+        "ref": "Database",
+        "text": "component \"Store\" as Database {\n  portin \"dbIn\" as db_in\n}",
+        "facts": {},
+        "undo": {
+          "key": "edit:Database"
+        }
+      },
+      "after": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent \"Store\" as Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml"
+    }
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: the Display label field in Properties (origin/master 5f9541e2); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
+}

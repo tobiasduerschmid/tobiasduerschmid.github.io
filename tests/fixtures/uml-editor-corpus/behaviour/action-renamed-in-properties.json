@@ -1,0 +1,185 @@
+{
+  "id": "action-renamed-in-properties",
+  "family": "behaviour",
+  "type": "activity",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+  "steps": [
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "role": "button",
+          "name": "Element Check Stock — Enter to select, arrows to nudge, Delete to remove"
+        }
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "label": "Action text",
+        "within": {
+          "css": "#uml-pg-props-content"
+        }
+      },
+      "value": "Verify Stock"
+    },
+    {
+      "do": "press",
+      "target": {
+        "label": "Action text",
+        "within": {
+          "css": "#uml-pg-props-content"
+        }
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Verify Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Renamed action to \"Verify Stock\"."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Action — Check Stock\":\n  - heading \"Action — Check Stock\" [level=2]\n  - button \"✕ Delete\"\n  - text: Action text\n  - textbox \"Action text\": Verify Stock\n  - paragraph: This action is defined wherever its quoted text appears in the activity flow.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Verify Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "input",
+      "id": "uml-pg-prop-<random>",
+      "role": "textbox",
+      "name": "Action text",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Action — Check Stock\":\n  - heading \"Action — Check Stock\" [level=2]\n  - button \"✕ Delete\"\n  - text: Action text\n  - textbox \"Action text\": Check Stock\n  - paragraph: This action is defined wherever its quoted text appears in the activity flow.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+    "selection": [
+      "Check Stock"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Check Stock — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Check Stock"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Verify Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Action — Check Stock\":\n  - heading \"Action — Check Stock\" [level=2]\n  - button \"✕ Delete\"\n  - text: Action text\n  - textbox \"Action text\": Check Stock\n  - paragraph: This action is defined wherever its quoted text appears in the activity flow.\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Verify Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "activity",
+      "before": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml",
+      "operation": {
+        "op": "element.rename",
+        "revision": "r9f1a8800:204",
+        "ref": "Check Stock",
+        "text": "Verify Stock",
+        "part": "action",
+        "facts": {},
+        "undo": {
+          "key": "activity-rename:Check Stock"
+        }
+      },
+      "after": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Verify Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml"
+    }
+  ]
+}

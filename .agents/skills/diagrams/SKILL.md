@@ -15,7 +15,7 @@ This rule exists because the project ships a custom renderer (`js/ArchUML/uml-bu
 
 ## Pick a type
 
-All ArchUML types are invoked with `<pre><code class="<class-name>">…@startuml…@enduml…</code></pre>`. The reference with full syntax and worked examples is [REFERENCE.md](../../../js/ArchUML/REFERENCE.md). Read **only the section you need** — don't pull in the whole file.
+All ArchUML types except C4 are invoked with `<pre><code class="<class-name>">…@startuml…@enduml…</code></pre>`; a C4 figure is a YAML design model plus a view selector (see "C4 model views" below). The reference with full syntax and worked examples is [REFERENCE.md](../../../js/ArchUML/REFERENCE.md). Read **only the section you need** — don't pull in the whole file.
 
 | You want to draw… | Class name | Syntax reference |
 |---|---|---|
@@ -33,12 +33,27 @@ All ArchUML types are invoked with `<pre><code class="<class-name>">…@startuml
 | **Set membership / overlaps** (2–5 sets, classifications, taxonomies) | `diagram-venn` | [REFERENCE.md §Venn Diagrams (L1904)](../../../js/ArchUML/REFERENCE.md) |
 | **Entity-Relationship schemas** (Chen notation — entities, attributes, relationships, cardinalities) | `diagram-er` | [REFERENCE.md §ER Diagrams (L2154)](../../../js/ArchUML/REFERENCE.md) |
 | **Directory / folder tree** (filesystem layouts) | `diagram-folder-tree` | See below — not in REFERENCE.md |
+| **Software architecture at C4 zoom levels** — system context, containers, components, code, dynamic and deployment views, interface descriptions, all as views of one model | `language-c4` (Markdown fence: `c4`; SEBook include: `c4-view.html`) | [REFERENCE.md §C4 Model Diagrams](../../../js/ArchUML/REFERENCE.md#c4-model-diagrams); see "C4 model views" below |
 
 ### Notes and annotations on any diagram
 Almost every type supports `note left/right/top/bottom of <id> : …` and multi-line notes. See [REFERENCE.md §Notes & Annotations (L2324)](../../../js/ArchUML/REFERENCE.md). Venn supports notes targeting set intersections (e.g. `note right of SetA & SetB : …`); ER supports notes on entities and relationships. CRC cards do not support notes, arrows, or highlighting.
 
 ### Quick reference card
 For a one-page cheat sheet of arrows and operators, see [REFERENCE.md §Quick Reference Card (L2670)](../../../js/ArchUML/REFERENCE.md).
+
+## C4 model views
+
+Use C4 when the question is architectural: who uses the system and what it depends on (context), which applications and data stores it is built from (containers), what is inside one container (components), or how a scenario runs across them (dynamic). Do not hand-draw these with `diagram-freeform` or `language-uml-component`; the C4 renderer derives every view from one model, so the views of one system cannot contradict each other.
+
+- **Source:** one YAML design model (`schema: c4-design/1`) and a `view:` selector: `landscape`, `context of <system>`, `containers of <system>`, `components of <container>`, `code of <component>`, `dynamic <scenario>`, `deployment <environment>`, `interfaces of <element>`, `interface <id>`. Selectors use YAML ids, not display names. `with interfaces` (or `patterns`, `styles`, `tactics`) annotates a view.
+- **Embedding in SEBook:** keep a shared model in `_includes/c4-models/<name>.yml` and embed each view with `{% include c4-view.html model="…" view="…" caption="…" %}`; use a ` ```c4 ` fence for a one-off model. The page sets `c4: true`. The interactive editor is `_includes/c4-editor.html` (`c4_editor: true`). The `sebook-authoring` skill lists the parameters.
+- **Notation is generated:** box text (name, `[Container: technology]`, description or the first responsibilities), shapes for databases, queues, browser and mobile apps, dashed scope boundaries, sentence labels with `[technology]` on arrows, a title, and a legend inside the SVG listing only the encodings used. Code, dynamic, and deployment views and the interfaces view are drawn in UML notation (class, sequence, deployment, component) from the same model.
+- **Size:** a C4 figure takes its column's width only while its smallest label stays at paragraph size; otherwise it keeps that size and scrolls sideways, as a keyboard stop. The figure container declares this with `data-uml-fit="readable"` (the bundle's figure wrapper sets it, and `_plugins/uml_static.rb` for prerendered figures), so it never gets the shared "Fit diagram to screen" control. Code and interfaces views without stored positions are drawn in compact layout (`COMPACT_FIGURE` in `c4-render.js`). Do not add page CSS that shrinks a C4 figure.
+- **Colours** come from a fixed palette in `c4-render.js`, never from page CSS, so the dark-mode invert filter and print get the same baked fills. Do not restyle C4 figures with page CSS. The one exception is built in: on screen in dark mode, `css/uml-diagram.css` gives the relationship-label backdrop (`data-c4-label-backdrop`) the colour the invert filter turns into the page, so labels do not sit on black patches.
+- **Accessibility:** the describer writes the text alternative from the model. Give an authored `description` only where the figure is deliberately wrong (a find-the-flaw exercise), so screen-reader users meet the same flaws.
+- **Model checks:** `# diagnostics: true` lists the model's problems under the figure. A clean check run does not mean the architecture is adequate.
+
+Edit the model, not the picture: a new relationship or responsibility goes into the YAML once and appears in every view that should show it. This holds in the interactive editor too. Its four UML-notation views (code, dynamic, deployment, interfaces) are editable on the canvas, like its C4-notation views, but every canvas edit is written into the design model and redrawn from it. An edit the model cannot hold (a composition line, an activation bar, a note on the diagram, an artifact on a node) is refused with a visible reason. Do not work around a refusal with a separate `language-uml-*` diagram of the same view: change the model, or say in prose what the model does not record. The `good-diagrams` skill has the C4 design rules (one decomposed scope per view, distinct context neighbours, type text plus a small legend).
 
 ## CRC cards
 
@@ -180,7 +195,7 @@ When you're drawing a **UML** diagram (class, sequence, state machine, component
 
 **Availability is not guaranteed.** The `uml-diagramming` skill is installed via a plugin and may or may not be present. If it's listed in your available skills, invoke it. If it isn't, just proceed with this skill alone — don't block on it and don't mention its absence to the user.
 
-**Do not** invoke `uml-diagramming` for the non-UML types: `diagram-freeform`, `diagram-gitgraph`, `diagram-folder-tree`, `diagram-crc`, or the interactive command-lab widgets. Those aren't UML and the advisor's guidance doesn't apply.
+**Do not** invoke `uml-diagramming` for the non-UML types: `diagram-freeform`, `diagram-gitgraph`, `diagram-folder-tree`, `diagram-crc`, C4 context, container, and component views, or the interactive command-lab widgets. For C4 views, use the `c4-model` skill if it is available. Those aren't UML and the advisor's guidance doesn't apply.
 
 ## Mermaid — REQUIRED: load `SebookMermaid`, never call `mermaid.initialize` directly
 
@@ -190,7 +205,7 @@ ArchUML is the default for everything in the table above. **Mermaid is the only 
 - You're embedding a diagram authored in another mermaid-using context (lecture slides, an external doc) and want it to render in-place without re-typing.
 - The diagram is simple enough that mermaid's text syntax is genuinely faster than ArchUML's, *and* the visual result will sit alongside ArchUML diagrams without a style mismatch.
 
-Anything that *is* in the ArchUML catalog (class, CRC cards, sequence, state, component, deployment, use case, activity, freeform, gitgraph, folder-tree, venn, ER) — use ArchUML. Don't introduce a parallel mermaid version of an ArchUML-supported type; readers experience the page as one figure set and the inconsistency is jarring.
+Anything that *is* in the ArchUML catalog (class, CRC cards, sequence, state, component, deployment, use case, activity, freeform, gitgraph, folder-tree, venn, ER, C4) — use ArchUML. In particular, do not use Mermaid's `C4Context` syntax; use the `c4` type. Don't introduce a parallel mermaid version of an ArchUML-supported type; readers experience the page as one figure set and the inconsistency is jarring.
 
 ### Required: load and use SebookMermaid
 

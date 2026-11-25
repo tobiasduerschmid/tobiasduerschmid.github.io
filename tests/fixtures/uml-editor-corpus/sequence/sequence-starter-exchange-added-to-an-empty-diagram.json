@@ -1,0 +1,164 @@
+{
+  "id": "sequence-starter-exchange-added-to-an-empty-diagram",
+  "family": "sequence",
+  "type": "sequence",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": null,
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "+ Starter exchange"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nactor user: User\nparticipant p: Service\nuser -> p : request()\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Started a sequence with an actor, a participant, and a request message."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Participant — p\":\n  - heading \"Participant — p\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": p\n  - text: Display label\n  - textbox \"Display label\": Service\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Lifeline\":\n    - text: Lifeline\n    - button \"Add an activate p bar\": + activate\n    - button \"Add a deactivate p marker\": + deactivate\n    - button \"Mark p as destroyed (X)\": + destroy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "p"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Add an actor or participant to start the sequence diagram."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Participant — p\":\n  - heading \"Participant — p\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": p\n  - text: Display label\n  - textbox \"Display label\": Service\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Lifeline\":\n    - text: Lifeline\n    - button \"Add an activate p bar\": + activate\n    - button \"Add a deactivate p marker\": + deactivate\n    - button \"Mark p as destroyed (X)\": + destroy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nactor user: User\nparticipant p: Service\nuser -> p : request()\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Participant — p\":\n  - heading \"Participant — p\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": p\n  - text: Display label\n  - textbox \"Display label\": Service\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Lifeline\":\n    - text: Lifeline\n    - button \"Add an activate p bar\": + activate\n    - button \"Add a deactivate p marker\": + deactivate\n    - button \"Mark p as destroyed (X)\": + destroy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "p"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element p: Service — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "p"
+    }
+  },
+  "operations": [
+    {
+      "type": "sequence",
+      "before": "@startuml\n@enduml",
+      "operation": {
+        "op": "lifeline.add",
+        "revision": "r4985792e:17",
+        "tool": "starter",
+        "name": null,
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nactor user: User\nparticipant p: Service\nuser -> p : request()\n@enduml"
+    }
+  ]
+}

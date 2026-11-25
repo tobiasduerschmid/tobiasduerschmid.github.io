@@ -224,8 +224,10 @@
       {% endif %}
     {% endfor %}
     {% assign tutorial_llm_enabled = false %}
-    {% if tutorial_data.llm and tutorial_backend == 'pyodide' and tutorial_mixed_backend == false %}
-      {% assign tutorial_llm_enabled = true %}
+    {% if tutorial_data.llm and tutorial_mixed_backend == false %}
+      {% if tutorial_backend == 'pyodide' or tutorial_backend == 'none' %}
+        {% assign tutorial_llm_enabled = true %}
+      {% endif %}
     {% endif %}
     {% if tutorial_backend == 'uml-editor' %}
       <div id="tutorial-container" class="tvm-root tvm-uml-editor-tutorial">
@@ -277,7 +279,8 @@
   <script src="{{ '/js/mermaid-theme.js' | relative_url }}"></script>
 
   <!-- Custom UML diagram renderers -->
-  <!-- Bundled UML diagram renderer -->
+  <!-- Bundled UML diagram renderer; C4 tutorials preload the C4 toolkit so their figures render synchronously (spec §3.2) -->
+  {% if tutorial_backend == 'c4' %}{% include c4-scripts.html %}{% endif %}
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
   <!-- Verbal aria-label generator (parses live tutorial diagrams as the user types) -->
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
@@ -294,6 +297,11 @@
   {% endif %}
   {% if tutorial_backend == 'compiler' %}
   <link rel="stylesheet" href="{{ '/css/compiler-lab.css' | relative_url }}">
+  {% endif %}
+  {% if tutorial_backend == 'c4' %}
+  <link rel="stylesheet" href="{{ '/js/ArchUML/css/c4-editor.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/c4-editor-theme.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/tutorial-c4.css' | relative_url }}">
   {% endif %}
   <link rel="stylesheet" href="{{ '/css/refactoring-dialogs.css' | relative_url }}">
   {% if tutorial_backend == 'shell-pipeline' %}
@@ -312,6 +320,10 @@
   {% assign tutorial_challenge_steps = tutorial_data.steps | where_exp: "step", "step.diagram_challenge" %}
   {% if tutorial_challenge_steps.size > 0 %}
   <link rel="stylesheet" href="{{ '/css/tutorial-diagram-challenge.css' | relative_url }}">
+  {% endif %}
+  {% assign tutorial_review_steps = tutorial_data.steps | where_exp: "step", "step.design_review" %}
+  {% if tutorial_review_steps.size > 0 %}
+  <link rel="stylesheet" href="{{ '/css/tutorial-design-review.css' | relative_url }}">
   {% endif %}
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 
@@ -353,6 +365,10 @@
   <script src="{{ '/js/tutorial-diagram-challenge-core.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-diagram-challenge.js' | relative_url }}"></script>
   {% endif %}
+  {% if tutorial_review_steps.size > 0 %}
+  <script src="{{ '/js/tutorial-design-review-core.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-design-review.js' | relative_url }}"></script>
+  {% endif %}
   {% if tutorial_llm_enabled %}
   <script src="{{ '/js/tutorial-llm.js' | relative_url }}"></script>
   {% endif %}
@@ -362,6 +378,15 @@
   {% endif %}
   {% if tutorial_backend == 'aadl' %}
   <script src="{{ '/js/tutorial-aadl.js' | relative_url }}"></script>
+  {% endif %}
+  {% if tutorial_backend == 'c4' %}
+  {%- comment -%} The C4 editor parts read the core (preloaded with defer above) as they load, so they defer too. The
+    diagram editor's core group, which edits the UML-notation views, comes before them, deferred as well. {%- endcomment -%}
+  {% include diagram-editor-scripts.html groups="core" defer="true" %}
+  {%- for file in site.data.archuml_c4_manifest.editor %}
+  <script src="{{ '/js/ArchUML/' | append: file | relative_url }}" defer></script>
+  {%- endfor %}
+  <script src="{{ '/js/tutorial-c4.js' | relative_url }}"></script>
   {% endif %}
   {% if tutorial_backend == 'shell-pipeline' %}
   <script src="{{ '/js/tutorial-shell-command.js' | relative_url }}"></script>
@@ -471,6 +496,7 @@
         backend:      '{{ tutorial_backend }}',
         tla: config.tla || {},
         aadl: config.aadl || {},
+        c4: config.c4 || {},
         {% if tutorial_backend == 'shell-pipeline' %}shellManuals: {{ site.data.shell_command_manuals | jsonify | replace: '</script', '<\/script' }},{% endif %}
         tutorialId:   '{{ page.tutorial }}',
         steps:        config.steps,
@@ -585,7 +611,9 @@
             title: 'Reset the current step?',
             message: tutorial.currentStepHasDiagramChallenge && tutorial.currentStepHasDiagramChallenge()
               ? 'This will discard your edits and your diagram challenge answers and times in this step, and restore the starter files.'
-              : 'This will discard your edits in this step and restore the starter files.',
+              : tutorial.currentStepHasDesignReview && tutorial.currentStepHasDesignReview()
+                ? 'This will discard your review comment, its checks, and your comparison with the expert review in this step.'
+                : 'This will discard your edits in this step and restore the starter files.',
             confirmLabel: 'Reset step',
             trigger: resetBtn
           }).then(function (confirmed) {

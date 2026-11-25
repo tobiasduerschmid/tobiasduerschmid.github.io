@@ -1,0 +1,383 @@
+{
+  "duration": 881.09,
+  "voice": "drama3-female6",
+  "speed": 1,
+  "speech_sha256": "7fe4589c20b3ded7e7ec10963cfde2403f789b938557bbd36fbf8b16d4ad5d6a",
+  "scenes": [
+    {
+      "id": "intro",
+      "start": 0.0,
+      "cues": [
+        {
+          "id": "late",
+          "start": 0.0,
+          "end": 14.47,
+          "speech_end": 13.92
+        },
+        {
+          "id": "jobs",
+          "start": 14.47,
+          "end": 34.18,
+          "speech_end": 33.63
+        },
+        {
+          "id": "price_hike",
+          "start": 34.18,
+          "end": 52.72,
+          "speech_end": 50.22
+        }
+      ],
+      "end": 52.72
+    },
+    {
+      "id": "tangle",
+      "start": 52.72,
+      "cues": [
+        {
+          "id": "braided",
+          "start": 52.72,
+          "end": 73.19,
+          "speech_end": 72.64
+        },
+        {
+          "id": "predict_switch",
+          "start": 73.19,
+          "end": 92.51,
+          "speech_end": 88.51
+        },
+        {
+          "id": "ripple",
+          "start": 92.51,
+          "end": 111.6,
+          "speech_end": 111.05
+        },
+        {
+          "id": "three_pains",
+          "start": 111.6,
+          "end": 129.13,
+          "speech_end": 128.58
+        },
+        {
+          "id": "preview",
+          "start": 129.13,
+          "end": 151.37,
+          "speech_end": 148.87
+        }
+      ],
+      "end": 151.37
+    },
+    {
+      "id": "two_questions",
+      "start": 151.37,
+      "cues": [
+        {
+          "id": "questions",
+          "start": 151.37,
+          "end": 174.66,
+          "speech_end": 174.11
+        },
+        {
+          "id": "grid",
+          "start": 174.66,
+          "end": 197.08,
+          "speech_end": 194.58
+        }
+      ],
+      "end": 197.08
+    },
+    {
+      "id": "group_a",
+      "start": 197.08,
+      "cues": [
+        {
+          "id": "rules",
+          "start": 197.08,
+          "end": 217.03,
+          "speech_end": 216.48
+        },
+        {
+          "id": "paid_for",
+          "start": 217.03,
+          "end": 233.36,
+          "speech_end": 232.81
+        },
+        {
+          "id": "a_reuse",
+          "start": 233.36,
+          "end": 250.24,
+          "speech_end": 247.74
+        }
+      ],
+      "end": 250.24
+    },
+    {
+      "id": "group_t",
+      "start": 250.24,
+      "cues": [
+        {
+          "id": "drivers",
+          "start": 250.24,
+          "end": 268.67,
+          "speech_end": 268.12
+        },
+        {
+          "id": "t_reuse",
+          "start": 268.67,
+          "end": 287.23,
+          "speech_end": 284.73
+        }
+      ],
+      "end": 287.23
+    },
+    {
+      "id": "group_zero",
+      "start": 287.23,
+      "cues": [
+        {
+          "id": "geometry",
+          "start": 287.23,
+          "end": 308.32,
+          "speech_end": 307.77
+        },
+        {
+          "id": "donor",
+          "start": 308.32,
+          "end": 329.0,
+          "speech_end": 326.5
+        }
+      ],
+      "end": 329.0
+    },
+    {
+      "id": "group_at",
+      "start": 329.0,
+      "cues": [
+        {
+          "id": "both",
+          "start": 329.0,
+          "end": 348.25,
+          "speech_end": 347.7
+        },
+        {
+          "id": "at_chart",
+          "start": 348.25,
+          "end": 366.42,
+          "speech_end": 365.87
+        },
+        {
+          "id": "at_cost",
+          "start": 366.42,
+          "end": 384.64,
+          "speech_end": 382.14
+        }
+      ],
+      "end": 384.64
+    },
+    {
+      "id": "mixing",
+      "start": 384.64,
+      "cues": [
+        {
+          "id": "rules",
+          "start": 384.64,
+          "end": 404.81,
+          "speech_end": 404.26
+        },
+        {
+          "id": "predict_mix",
+          "start": 404.81,
+          "end": 423.57,
+          "speech_end": 419.57
+        },
+        {
+          "id": "a_plus_t",
+          "start": 423.57,
+          "end": 442.8,
+          "speech_end": 442.25
+        },
+        {
+          "id": "absorb",
+          "start": 442.8,
+          "end": 463.06,
+          "speech_end": 460.56
+        }
+      ],
+      "end": 463.06
+    },
+    {
+      "id": "leaks",
+      "start": 463.06,
+      "cues": [
+        {
+          "id": "leak",
+          "start": 463.06,
+          "end": 481.61,
+          "speech_end": 481.06
+        },
+        {
+          "id": "plug",
+          "start": 481.61,
+          "end": 501.78,
+          "speech_end": 501.23
+        },
+        {
+          "id": "signs",
+          "start": 501.78,
+          "end": 523.62,
+          "speech_end": 521.12
+        }
+      ],
+      "end": 523.62
+    },
+    {
+      "id": "separate",
+      "start": 523.62,
+      "cues": [
+        {
+          "id": "rule_one",
+          "start": 523.62,
+          "end": 547.97,
+          "speech_end": 547.42
+        },
+        {
+          "id": "one_concern",
+          "start": 547.97,
+          "end": 569.81,
+          "speech_end": 567.31
+        }
+      ],
+      "end": 569.81
+    },
+    {
+      "id": "invert",
+      "start": 569.81,
+      "cues": [
+        {
+          "id": "flip",
+          "start": 569.81,
+          "end": 589.6,
+          "speech_end": 589.05
+        },
+        {
+          "id": "sockets",
+          "start": 589.6,
+          "end": 609.15,
+          "speech_end": 608.6
+        },
+        {
+          "id": "dongles",
+          "start": 609.15,
+          "end": 628.26,
+          "speech_end": 627.71
+        },
+        {
+          "id": "rhesus",
+          "start": 628.26,
+          "end": 653.14,
+          "speech_end": 650.64
+        }
+      ],
+      "end": 653.14
+    },
+    {
+      "id": "frameworks",
+      "start": 653.14,
+      "cues": [
+        {
+          "id": "married",
+          "start": 653.14,
+          "end": 671.27,
+          "speech_end": 670.72
+        },
+        {
+          "id": "divorce",
+          "start": 671.27,
+          "end": 692.49,
+          "speech_end": 689.99
+        }
+      ],
+      "end": 692.49
+    },
+    {
+      "id": "change_test",
+      "start": 692.49,
+      "cues": [
+        {
+          "id": "replay",
+          "start": 692.49,
+          "end": 709.24,
+          "speech_end": 708.69
+        },
+        {
+          "id": "predict_replay",
+          "start": 709.24,
+          "end": 725.22,
+          "speech_end": 721.22
+        },
+        {
+          "id": "results",
+          "start": 725.22,
+          "end": 743.35,
+          "speech_end": 742.8
+        },
+        {
+          "id": "x_changes",
+          "start": 743.35,
+          "end": 764.35,
+          "speech_end": 761.85
+        }
+      ],
+      "end": 764.35
+    },
+    {
+      "id": "balance",
+      "start": 764.35,
+      "cues": [
+        {
+          "id": "overkill",
+          "start": 764.35,
+          "end": 783.24,
+          "speech_end": 782.69
+        },
+        {
+          "id": "curve",
+          "start": 783.24,
+          "end": 801.33,
+          "speech_end": 800.78
+        },
+        {
+          "id": "cost",
+          "start": 801.33,
+          "end": 820.39,
+          "speech_end": 817.89
+        }
+      ],
+      "end": 820.39
+    },
+    {
+      "id": "summary",
+      "start": 820.39,
+      "cues": [
+        {
+          "id": "recap_groups",
+          "start": 820.39,
+          "end": 841.98,
+          "speech_end": 841.43
+        },
+        {
+          "id": "recap_rules",
+          "start": 841.98,
+          "end": 863.75,
+          "speech_end": 863.2
+        },
+        {
+          "id": "recap_test",
+          "start": 863.75,
+          "end": 881.09,
+          "speech_end": 878.59
+        }
+      ],
+      "end": 881.09
+    }
+  ]
+}

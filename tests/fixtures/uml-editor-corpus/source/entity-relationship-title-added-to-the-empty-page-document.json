@@ -1,0 +1,170 @@
+{
+  "id": "entity-relationship-title-added-to-the-empty-page-document",
+  "family": "source",
+  "type": "er",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": null,
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "text": "Advanced source rows (",
+        "exact": false
+      }
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "+ Title"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\ntitle Entity relationship diagram\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Add an element to start this diagram."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Add an element to start this diagram."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\ntitle Entity relationship diagram\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Add an element to start this diagram."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "er",
+      "before": "@startuml\n@enduml",
+      "operation": {
+        "op": "source.insertLines",
+        "revision": "r4985792e:17",
+        "lines": [
+          "title Entity relationship diagram"
+        ],
+        "at": "end",
+        "frame": true,
+        "facts": {},
+        "undo": {
+          "key": "model-row-add"
+        }
+      },
+      "after": "@startuml\ntitle Entity relationship diagram\n@enduml"
+    }
+  ]
+}

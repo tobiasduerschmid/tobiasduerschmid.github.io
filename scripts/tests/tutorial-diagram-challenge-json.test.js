@@ -46,13 +46,20 @@ test('the challenge reaches the widget unchanged, whatever markup its text conta
 });
 
 test('the results-card rows reach the widget unchanged, whatever markup their text contains', () => {
-  const tutorial = { steps: [{ key: 'markup', title: MARKUP, diagram_challenge: challenge }] };
+  // A row carries what grades a saved record, and the mode: a diagram-first
+  // step has no answers from the code to report.
+  const tutorial = { steps: [
+    { key: 'markup', title: MARKUP, diagram_challenge: challenge },
+    { key: 'diagram', title: 'Diagram first', diagram_challenge: { ...challenge, mode: 'diagram-first' } },
+    { key: 'plan', title: 'Plan first', diagram_challenge: { ...challenge, mode: 'plan-first' } },
+  ] };
   const html = render('{% include tutorial-diagram-challenge-results-data.html tutorial=tutorial %}', { tutorial });
   const text = scriptText(html, 'data-diagram-challenge-results');
   const rows = JSON.parse(text).filter(Boolean);
 
   assert.doesNotMatch(text, /[<>&]/, '<, >, and & travel escaped');
-  assert.equal(rows.length, 1);
+  assert.deepEqual(rows.map(row => row.key), ['key:markup', 'key:diagram'], 'a plan-first step has no row');
   assert.equal(rows[0].title, MARKUP);
-  assert.deepEqual(rows[0].spec, challenge);
+  assert.deepEqual(rows[0].spec, { mode: 'code-first', ...challenge });
+  assert.deepEqual(rows[1].spec, { mode: 'diagram-first', ...challenge });
 });

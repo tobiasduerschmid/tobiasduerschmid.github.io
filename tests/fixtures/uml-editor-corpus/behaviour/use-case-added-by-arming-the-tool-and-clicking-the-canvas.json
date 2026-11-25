@@ -1,0 +1,214 @@
+{
+  "id": "use-case-added-by-arming-the-tool-and-clicking-the-canvas",
+  "family": "behaviour",
+  "type": "usecase",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Add element: Use Case"
+      }
+    },
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "css": "#uml-pg-preview-pane"
+        },
+        "at": {
+          "x": 0.85,
+          "y": 0.2
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\nusecase \"UC\" as UC @pos(349, 4)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": ""
+      },
+      "uml-pg-tool-status": {
+        "text": "Click on the diagram to add a Use Case. Press Esc to cancel."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Use Case — UC\":\n  - heading \"Use Case — UC\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": UC\n  - text: Display label\n  - textbox \"Display label\": UC\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "UC"
+    ],
+    "focus": {
+      "tag": "div",
+      "id": "uml-pg-output",
+      "role": "region",
+      "name": "UML use case diagram",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": ""
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Element — UC\":\n  - heading \"Element — UC\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": UC\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\nusecase \"UC\" as UC @pos(349, 4)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": ""
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Use Case — UC\":\n  - heading \"Use Case — UC\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": UC\n  - text: Display label\n  - textbox \"Display label\": UC\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "UC"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element UC — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "UC"
+    }
+  },
+  "operations": [
+    {
+      "type": "usecase",
+      "before": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+      "operation": {
+        "op": "element.add",
+        "revision": "r86c8f9cb:236",
+        "tool": "usecase",
+        "name": null,
+        "into": null,
+        "anchor": null,
+        "placed": "dropped",
+        "facts": {
+          "at": {
+            "x": 349.4320193016554,
+            "y": 4.4705046478122625
+          },
+          "positions": {
+            "Customer": {
+              "x": 22.714614868164062,
+              "y": 152.3233184814453
+            },
+            "Member": {
+              "x": 27.726634979248047,
+              "y": 269.3233642578125
+            },
+            "UC1": {
+              "x": 178.5,
+              "y": 123.99999237060547
+            },
+            "UC2": {
+              "x": 178.5,
+              "y": 242.00001525878906
+            },
+            "UC3": {
+              "x": 385.5,
+              "y": 123.99999237060547
+            },
+            "UC4": {
+              "x": 174.00003051757812,
+              "y": 360
+            },
+            "Online Shop": {
+              "x": 138.50001525878906,
+              "y": 59.999996185302734
+            }
+          }
+        },
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\nusecase \"UC\" as UC @pos(349, 4)\n@enduml"
+    }
+  ]
+}
