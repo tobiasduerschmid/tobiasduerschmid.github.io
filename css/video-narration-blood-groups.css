@@ -1,0 +1,487 @@
+/*
+ * The Module Blood Groups narration's own objects on its animated stage
+ * (js/video-narration/blood-groups-kit.js), loaded only inside its frame after
+ * the shared wall kit (css/video-narration-wall-kit.css).
+ *
+ * The four groups are paper colors with dark ink, the same in both modes, so
+ * a drop, pill, tag, or chip keeps its contrast on the dark wall and on the
+ * daylight plaster: A blue, T amber, 0 plain paper, AT split half and half,
+ * and R violet. Every group is also written as its letter. Dark editor pieces
+ * (code cards, the search panel) stay dark in both modes and use their own
+ * light inks; panels on the wall use the stage's --vn-* tokens. Readable text
+ * is at least 20px on the 960x540 stage; uppercase micro-labels at least 17px.
+ */
+
+.stage {
+  --bg-ink: #0b0f1a;
+  --bg-paper: #fdfbf3;
+  --bg-a: #a9cdff;
+  --bg-a-edge: #1e4f9c;
+  --bg-t: #ffd27a;
+  --bg-t-edge: #9a5b00;
+  --bg-zero: #fdfbf3;
+  --bg-zero-edge: #4a5578;
+  --bg-r: #e7c6ff;
+  --bg-r-edge: #6b2f8a;
+  --bg-at: linear-gradient(90deg, var(--bg-a) 50%, var(--bg-t) 50%);
+  --bg-editor: linear-gradient(155deg, #172039, #080d1e 72%);
+  --bg-editor-text: #e6edf7;
+  --bg-editor-muted: #b8c4d9;
+}
+
+/* Each topic tag's kind, named in words beside its color. */
+.sk-topic--example,
+.sk-topic--change { --sk-topic: var(--gold); }
+.sk-topic--problem { --sk-topic: var(--pink); }
+.sk-topic--groups,
+.sk-topic--group { --sk-topic: var(--cyan); }
+.sk-topic--mixing,
+.sk-topic--recap { --sk-topic: var(--violet); }
+.sk-topic--design { --sk-topic: var(--green); }
+
+/* This lesson's notes break their lines evenly, never leaving one word alone. */
+.sk-note { text-wrap: balance; }
+
+/* A group as a blood drop: two halves painted by the group, an ink outline,
+   and the letter. --drop is the drop's width; the letter scales with it. */
+.bg-drop { position: absolute; width: var(--drop); height: calc(var(--drop) * 1.18); }
+.bg-drop-art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.bg-drop-half { fill: var(--bg-zero); }
+.bg-drop-outline { fill: none; stroke: var(--bg-ink); stroke-width: 6; stroke-linejoin: round; }
+.bg-drop.bg-group--a .bg-drop-half { fill: var(--bg-a); }
+.bg-drop.bg-group--t .bg-drop-half { fill: var(--bg-t); }
+.bg-drop.bg-group--r .bg-drop-half { fill: var(--bg-r); }
+.bg-drop.bg-group--at .bg-drop-half--left { fill: var(--bg-a); }
+.bg-drop.bg-group--at .bg-drop-half--right { fill: var(--bg-t); }
+.bg-drop.bg-group--unknown .bg-drop-half { fill: var(--bg-paper); }
+.bg-drop.bg-group--unknown .bg-drop-outline { stroke-dasharray: 12 9; }
+/* The letter carries its group's paint too, centered on the drop's axis so
+   an AT letter's halves meet where the drop's do: the letter keeps its
+   contrast on any wall, whether or not the drop's artwork is drawn. */
+.bg-drop-letter {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--drop) * 0.5);
+  width: fit-content;
+  margin-inline: auto;
+  background: var(--bg-zero);
+  color: var(--bg-ink);
+  font-size: calc(var(--drop) * 0.42);
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+}
+.bg-drop.bg-group--a .bg-drop-letter { background: var(--bg-a); }
+.bg-drop.bg-group--t .bg-drop-letter { background: var(--bg-t); }
+.bg-drop.bg-group--r .bg-drop-letter { background: var(--bg-r); }
+.bg-drop.bg-group--unknown .bg-drop-letter { background: var(--bg-paper); }
+.bg-drop.bg-group--at .bg-drop-letter { background: var(--bg-at); font-size: calc(var(--drop) * 0.37); letter-spacing: -0.02em; }
+
+/* A group as a pill, for equations, charts, and tags: the same paint and letter. */
+.bg-pill {
+  position: absolute;
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  min-width: 46px;
+  height: 42px;
+  padding: 0 10px;
+  border: 3px solid var(--bg-ink);
+  border-radius: 999px;
+  background: var(--bg-zero);
+  color: var(--bg-ink);
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+}
+.bg-pill.bg-group--a { background: var(--bg-a); }
+.bg-pill.bg-group--t { background: var(--bg-t); }
+.bg-pill.bg-group--at { background: var(--bg-at); }
+.bg-pill.bg-group--r { background: var(--bg-r); }
+.bg-pill--static,
+.bg-equation .bg-pill,
+.bg-chart-group .bg-pill,
+.bg-flask-tag .bg-pill { position: static; }
+
+/* A module on paper, its drop in the top-right corner. */
+.bg-module {
+  position: absolute;
+  box-sizing: border-box;
+  min-height: 84px;
+  padding: 12px 16px 14px;
+  border-radius: 12px;
+  background: var(--bg-paper);
+  color: var(--bg-ink);
+  box-shadow: var(--vn-paper-shadow);
+}
+.bg-module-title { margin: 6px 0 0; padding-right: 60px; font-size: 25px; font-weight: 900; line-height: 1.15; text-wrap: balance; }
+.bg-module--plain .bg-module-title { padding-right: 0; }
+.bg-module-line { margin: 8px 0 0; font-size: 20px; font-weight: 700; line-height: 1.25; text-wrap: balance; }
+.bg-snippet { margin-top: 10px; padding: 8px 12px; border-radius: 8px; background: #111a33; }
+.bg-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.bg-chip {
+  padding: 2px 12px;
+  border: 2px solid var(--bg-t-edge);
+  border-radius: 999px;
+  background: var(--bg-t);
+  color: var(--bg-ink);
+  font-size: 20px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.bg-chip--a { border-color: var(--bg-a-edge); background: var(--bg-a); }
+.bg-chip--zero { border-color: var(--bg-zero-edge); background: var(--bg-zero); }
+
+/* Code: a dark editor card, the same in both modes, with its own inks. */
+.bg-code { box-sizing: border-box; }
+.bg-code .bg-code-title { padding: 6px 16px; color: var(--bg-editor-muted); font-size: 20px; }
+.bg-code-body { position: relative; padding: 8px 14px 10px 0; }
+.bg-code--plain .bg-code-body { padding: 8px 16px 10px; }
+.bg-code-text,
+.bg-snippet .code-line { padding: 0; color: var(--bg-editor-text); font-size: 20px; line-height: 30px; }
+.bg-code-row { display: flex; align-items: center; min-height: 32px; border-radius: 6px; }
+.bg-code-row.is-lit { background: rgba(255, 209, 102, 0.16); box-shadow: inset 5px 0 0 #ffd166; }
+.bg-code-text--plain,
+.bg-snippet .bg-code-text { margin: 0 -10px; padding: 0 10px; border-radius: 6px; }
+.bg-code-text.is-lit { background: rgba(255, 107, 125, 0.2); box-shadow: inset 5px 0 0 #ff8a99; }
+.bg-code-gutter { display: flex; flex: none; align-items: center; box-sizing: border-box; width: 178px; padding-left: 36px; }
+.bg-tag {
+  padding: 0 8px;
+  border-radius: 6px;
+  color: var(--bg-ink);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 26px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.bg-tag--rule { background: var(--bg-a); }
+.bg-tag--tech { background: var(--bg-t); }
+.bg-tag--both { background: var(--bg-at); }
+.bg-braid { position: absolute; left: 6px; top: 8px; overflow: visible; }
+.bg-braid-strand { fill: none; stroke-width: 4; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.bg-braid-strand--rule { stroke: var(--bg-a); }
+.bg-braid-strand--tech { stroke: var(--bg-t); }
+
+/* An editor's search across the codebase. */
+.bg-search {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--bg-editor);
+  color: var(--bg-editor-text);
+  box-shadow: var(--vn-paper-shadow);
+}
+.bg-search-bar { display: flex; align-items: center; gap: 10px; padding: 4px 12px; border: 2px solid #4b5a86; border-radius: 8px; background: #0b1124; font-family: var(--font-mono); font-size: 22px; }
+.bg-search-bar svg { width: 24px; height: 24px; color: var(--bg-editor-muted); }
+.bg-search-summary { margin: 10px 0 4px; color: #ffd166; font-size: 22px; font-weight: 800; }
+.bg-search-row { display: flex; align-items: center; gap: 12px; padding: 4px 0; font-size: 20px; }
+.bg-search-file { flex: 1; font-family: var(--font-mono); white-space: nowrap; }
+.bg-search-hits { color: var(--bg-editor-muted); font-weight: 700; white-space: nowrap; }
+.bg-search-mark { padding: 1px 10px; border-radius: 999px; background: #ffd6dc; color: #8a1c2b; font-size: 20px; font-weight: 900; white-space: nowrap; }
+
+/* A change on a card, its kind in words under a band of its color. */
+.bg-change {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 8px 14px 12px;
+  border-top: 10px solid var(--bg-change, #c7cfdf);
+  border-radius: 10px;
+  background: var(--bg-paper);
+  color: var(--bg-ink);
+  box-shadow: var(--vn-paper-shadow);
+}
+.bg-change--tech { --bg-change: var(--bg-t); }
+.bg-change--rule { --bg-change: var(--bg-a); }
+.bg-change--reuse { --bg-change: #9be7b4; }
+.bg-change--format { --bg-change: var(--bg-r); }
+.bg-change-kind { display: flex; align-items: center; gap: 8px; margin: 0; color: #3a4660; font-size: 17px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; }
+.bg-change-kind svg { width: 22px; height: 22px; flex: none; }
+.bg-change-text { margin: 4px 0 0; font-size: 21px; font-weight: 800; line-height: 1.2; text-wrap: balance; }
+
+/* Where code can be reused: places across the top, Yes or No per group. */
+.bg-chart {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 8px 14px 10px;
+  border: 3px solid var(--vn-panel-line);
+  border-radius: 14px;
+  background: var(--vn-panel);
+  color: var(--text);
+}
+.bg-chart-row { display: grid; grid-template-columns: 96px repeat(4, 1fr); align-items: center; gap: 8px; min-height: 52px; }
+.bg-chart-row + .bg-chart-row { border-top: 2px solid var(--vn-panel-line); }
+.bg-chart-row--head { padding-bottom: 6px; }
+.bg-chart-corner { color: var(--muted); font-size: 17px; font-weight: 900; letter-spacing: 0.06em; line-height: 1.15; text-transform: uppercase; }
+.bg-chart-place { display: grid; justify-items: center; gap: 2px; text-align: center; }
+.bg-chart-place svg { width: 26px; height: 26px; color: var(--vn-cyan-ink); }
+.bg-chart-place b { font-size: 20px; font-weight: 900; line-height: 1.1; white-space: nowrap; }
+.bg-chart-place small { color: var(--muted); font-size: 20px; font-weight: 700; line-height: 1.1; }
+.bg-chart-group { display: grid; place-items: center start; }
+.bg-chart-cell { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 21px; font-weight: 900; }
+.bg-chart-cell svg { width: 24px; height: 24px; flex: none; }
+.bg-chart-cell--yes { color: var(--vn-green-ink); }
+.bg-chart-cell--no { color: var(--vn-red-ink); }
+
+/* A place where code can be reused. */
+.bg-place {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  padding: 8px 14px;
+  border: 3px solid var(--vn-panel-line);
+  border-radius: 12px;
+  background: var(--vn-panel);
+  color: var(--text);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+.bg-place-icon { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--vn-chip); color: var(--vn-gold-ink); }
+.bg-place-icon svg { width: 26px; height: 26px; }
+
+/* A flask, its liquid painted like a drop, and a tag that names the result. */
+.bg-flask { position: absolute; width: 160px; height: 262px; }
+.bg-flask-art { display: block; width: 160px; height: 200px; overflow: visible; }
+.bg-flask-glass { fill: none; stroke: var(--vn-line); stroke-width: 6; stroke-linejoin: round; stroke-linecap: round; }
+.bg-flask-half { fill: var(--bg-zero); }
+.bg-flask-liquid.bg-group--a .bg-flask-half { fill: var(--bg-a); }
+.bg-flask-liquid.bg-group--t .bg-flask-half { fill: var(--bg-t); }
+.bg-flask-liquid.bg-group--at .bg-flask-half--left { fill: var(--bg-a); }
+.bg-flask-liquid.bg-group--at .bg-flask-half--right { fill: var(--bg-t); }
+.bg-flask-tag {
+  position: absolute;
+  left: 0;
+  top: 210px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: var(--bg-paper);
+  color: var(--bg-ink);
+  box-shadow: var(--vn-paper-shadow);
+}
+.bg-flask-tag-word { font-size: 17px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; }
+.bg-flask-hidden { display: none; }
+
+/* An equation on paper, built from pills. */
+.bg-equation {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--bg-paper);
+  color: var(--bg-ink);
+  box-shadow: var(--vn-paper-shadow);
+  white-space: nowrap;
+}
+.bg-equation-op { font-size: 28px; font-weight: 900; }
+.bg-equation-word { font-size: 22px; font-weight: 800; }
+
+/* A socket the A side owns: its interface in its own words, on A paper. */
+.bg-socket {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 3px dashed var(--bg-a-edge);
+  border-radius: 12px;
+  background: var(--bg-a);
+  color: var(--bg-ink);
+}
+.bg-socket-plug { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--bg-paper); color: var(--bg-a-edge); }
+.bg-socket-plug svg { width: 22px; height: 22px; }
+.bg-socket-text { font-family: var(--font-mono); font-size: 20px; font-weight: 700; line-height: 1.25; }
+.bg-socket-text .code-tok { color: var(--bg-ink); }
+.bg-socket-text .code-tok--call { color: #0b3d91; }
+
+/* A dongle: a thin adapter, a dark device in both modes with its own ink. */
+.bg-adapter {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  box-sizing: border-box;
+  min-height: 56px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: #39425e;
+  color: #f5f7fb;
+  box-shadow: var(--vn-paper-shadow);
+}
+.bg-adapter-pin { position: absolute; top: 50%; width: 10px; height: 24px; margin-top: -12px; border-radius: 3px; background: #9aa3b8; }
+.bg-adapter-pin--left { left: -9px; }
+.bg-adapter-pin--right { right: -9px; }
+.bg-adapter-title { font-size: 20px; font-weight: 800; line-height: 1.15; }
+.bg-adapter-tags { display: flex; gap: 6px; }
+.bg-adapter-tags .bg-pill { height: 34px; min-width: 40px; padding: 0 8px; font-size: 20px; }
+
+/* A UML generalization (hollow triangle) and a crossed-out dependency. */
+.bg-inherit { position: absolute; overflow: visible; }
+.bg-inherit-line { stroke: var(--vn-line); stroke-width: 4; }
+.bg-inherit-head { fill: none; stroke: var(--vn-line); stroke-width: 4; stroke-linejoin: round; }
+.bg-cross { position: absolute; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--bg-paper); color: #b42318; box-shadow: var(--vn-paper-shadow); }
+.bg-cross svg { width: 30px; height: 30px; stroke-width: 3; }
+
+/* The campus map: paper in both modes, with dark ink. */
+.bg-map { position: absolute; overflow: hidden; border-radius: 16px; background: #eef3e2; box-shadow: var(--vn-paper-shadow); }
+.bg-map-art { position: absolute; inset: 0; width: 100%; height: 100%; }
+.bg-map-road { fill: none; stroke: #d9c9a3; stroke-width: 24; stroke-linecap: round; }
+.bg-map-building { fill: #d5dbe8; stroke: #6b7894; stroke-width: 3; }
+.bg-map-zone { fill: rgba(29, 122, 70, 0.12); stroke: #1d7a46; stroke-width: 4; stroke-dasharray: 10 7; }
+.bg-map-p { position: absolute; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 8px; background: #1d7a46; color: #fff; font-size: 24px; font-weight: 900; translate: -50% -50%; }
+.bg-map-name { position: absolute; color: var(--bg-ink); font-size: 20px; font-weight: 900; white-space: nowrap; translate: -50% -50%; }
+
+/* The scooter, and Glide on a phone (devices, the same in both modes). */
+.bg-scooter { position: absolute; width: 64px; height: 48px; }
+.bg-scooter-art { display: block; width: 64px; height: 48px; overflow: visible; }
+.bg-scooter-frame { fill: none; stroke: #0b4a7a; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.bg-scooter-wheel { fill: var(--bg-paper); stroke: var(--bg-ink); stroke-width: 4; }
+.bg-phone {
+  position: absolute;
+  box-sizing: border-box;
+  width: 250px;
+  height: 400px;
+  padding: 18px 16px;
+  border: 6px solid #2b3557;
+  border-radius: 34px;
+  background: #f7f8fc;
+  color: var(--bg-ink);
+  box-shadow: 0 14px 0 rgba(0, 0, 0, 0.3);
+}
+.bg-phone-title { margin: 6px 0 14px; color: #0b4a7a; font-size: 28px; font-weight: 900; }
+.bg-phone-ride { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: #e6ebf6; font-size: 20px; font-weight: 800; }
+.bg-phone-scooter svg { display: block; width: 48px; height: 36px; }
+.bg-phone-button { margin: 18px 0 0; padding: 12px; border-radius: 12px; background: #0b4a7a; color: #fff; font-size: 22px; font-weight: 900; text-align: center; }
+.bg-phone-toast { display: flex; align-items: center; gap: 8px; margin: 16px 0 0; padding: 12px; border-radius: 12px; background: #b42318; color: #fff; font-size: 22px; font-weight: 900; line-height: 1.15; }
+.bg-phone-toast svg { width: 26px; height: 26px; flex: none; }
+
+/* A bill on paper: one line per month, the new price in red. */
+.bg-invoice {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 12px 18px 14px;
+  border-radius: 10px;
+  background: var(--bg-paper);
+  color: var(--bg-ink);
+  box-shadow: var(--vn-paper-shadow);
+}
+.bg-invoice-title { margin: 0 0 8px; font-size: 24px; font-weight: 900; }
+.bg-invoice-row { display: flex; justify-content: space-between; gap: 20px; margin: 4px 0 0; font-size: 21px; font-weight: 700; }
+.bg-invoice-row b { font-family: var(--font-mono); }
+.bg-invoice-row--new b { color: #b42318; }
+
+/* Is a point inside a zone? A shaded polygon with a dot and a verdict. */
+.bg-zone-check { position: absolute; }
+.bg-zone-check-art { display: block; overflow: visible; }
+.bg-zone-shape { fill: rgba(29, 122, 70, 0.14); stroke: var(--vn-green-ink); stroke-width: 4; stroke-dasharray: 10 7; }
+.bg-zone-dot { fill: var(--vn-lit); stroke: var(--vn-panel); stroke-width: 3; }
+.bg-zone-verdict { position: absolute; padding: 2px 8px; border-radius: 6px; background: var(--vn-label-bg); color: var(--vn-green-ink); font-size: 21px; font-weight: 900; white-space: nowrap; }
+.bg-zone-check-art { width: 220px; height: 150px; }
+
+/* A list card on the wall, edged in a group's color. */
+.sk-list.bg-tray--a { border-top: 10px solid var(--bg-a); }
+.sk-list.bg-tray--t { border-top: 10px solid var(--bg-t); }
+.sk-list.bg-tray--zero { border-top: 10px solid var(--bg-zero-edge); }
+
+/* Share of AT code against quality: two bars swinging in opposite directions. */
+.bg-tradeoff {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 10px 16px 14px;
+  border: 3px solid var(--vn-panel-line);
+  border-radius: 14px;
+  background: var(--vn-panel);
+  color: var(--text);
+}
+.bg-tradeoff-label { margin: 8px 0 4px; font-size: 20px; font-weight: 800; }
+.bg-tradeoff-bar { display: block; height: 24px; overflow: hidden; border: 3px solid var(--vn-line); border-radius: 8px; background: var(--vn-inset); }
+.bg-tradeoff-fill { display: block; width: 0; height: 100%; }
+.bg-tradeoff-fill--at { background: repeating-linear-gradient(135deg, var(--bg-a) 0 12px, var(--bg-t) 12px 24px); }
+.bg-tradeoff-fill--quality { background: #4ade80; }
+
+/* Code quality against engineering effort, with a dot that travels the arch. */
+.bg-curve { position: absolute; }
+.bg-curve-art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.bg-curve-axes { fill: none; stroke: var(--vn-line); stroke-width: 4; stroke-linecap: round; }
+.bg-curve-line { fill: none; stroke: var(--vn-cyan-ink); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.bg-curve-axis { position: absolute; padding: 2px 8px; border-radius: 6px; background: var(--vn-label-bg); color: var(--muted); font-size: 20px; font-weight: 800; white-space: nowrap; }
+.bg-curve-axis--y { left: 54px; }
+.bg-curve-axis--x { right: 16px; }
+.bg-curve-mark {
+  position: absolute;
+  padding: 4px 10px;
+  border: 2px solid var(--vn-panel-line);
+  border-radius: 8px;
+  background: var(--vn-label-bg);
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.bg-curve-mark--above { translate: -50% calc(-100% - 22px); }
+.bg-curve-mark--below { translate: -50% 26px; }
+.bg-curve-dot { position: absolute; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; background: var(--vn-lit); box-shadow: 0 0 0 5px var(--vn-ring); }
+
+/* A value wrapped in boxes inside boxes. */
+.bg-wraps { position: absolute; }
+.bg-wrap { position: relative; padding: 36px 14px 14px; border: 3px dashed var(--vn-dashed); border-radius: 12px; }
+.bg-wraps > .bg-wrap { background: var(--vn-column); }
+.bg-wrap-name { position: absolute; left: 12px; top: 4px; color: var(--vn-gold-ink); font-family: var(--font-mono); font-size: 20px; font-weight: 800; white-space: nowrap; }
+.bg-wrap-core { display: inline-block; padding: 6px 14px; border-radius: 8px; background: var(--bg-paper); color: var(--bg-ink); font-family: var(--font-mono); font-size: 24px; font-weight: 800; }
+
+/* Print and the notes page: the stage is always light there
+   (css/print-light.css); paper and devices keep their own colors. */
+
+/* A standalone chip, a two-question cell, and a list of groups. */
+.bg-chip--free { position: absolute; }
+.bg-cell {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 10px 14px 10px 110px;
+  border: 3px solid var(--vn-panel-line);
+  border-radius: 14px;
+  background: var(--vn-panel);
+  color: var(--text);
+}
+.bg-cell-words b { display: block; font-size: 26px; font-weight: 900; line-height: 1.15; }
+.bg-cell-words span { display: block; margin-top: 4px; color: var(--muted); font-size: 21px; font-weight: 700; line-height: 1.2; }
+.bg-group-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; font-size: 21px; font-weight: 800; line-height: 1.2; }
+.bg-group-row .bg-pill { position: static; flex: none; }
+.stage .bg-center { text-align: center; }
+
+/* Technology leaking along a dependency: small amber drops. */
+.bg-drip { position: absolute; width: 18px; height: 22px; border: 3px solid var(--bg-ink); border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: var(--bg-t); }
+
+/* A socket's interface name over its operation. */
+.bg-socket-words { display: grid; gap: 2px; }
+.bg-socket-name { font-size: 20px; font-weight: 900; line-height: 1.15; }
+
+/* A narrow card names its group with a pill under the title. */
+.bg-module-mark { margin-top: 8px; }
+.bg-module-mark .bg-pill { position: static; }
+
+/* A stacked cell: the drop above the group's name and what it knows. */
+.bg-cell--stacked { flex-direction: column; justify-content: flex-end; padding: 10px 10px 12px; text-align: center; }
+
+/* A slot whose question is longer than a word or two. */
+.stage .sk-slot.bg-slot-small { font-size: 26px; text-align: center; }
+
+/* A wire from a module's edge to a socket it owns. */
+.bg-wire { position: absolute; height: 8px; border-radius: 4px; background: var(--bg-a-edge); }
+.bg-module--compact { min-height: 0; padding: 8px 14px 10px; }
+.bg-module--compact .bg-module-title { margin-top: 0; }
+.bg-module--compact .bg-module-mark { margin-top: 4px; }
