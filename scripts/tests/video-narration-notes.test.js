@@ -33,7 +33,10 @@ const NOTES_SHARE = 0.5;
 for (const [topic, lesson] of Object.entries(lessons)) {
   const story = loadStory(topic);
   const notes = yaml.load(read(`_data/explainers/${topic}_notes.yml`));
-  const cues = story.scenes.flatMap(scene => scene.cues.map((cue, index) => ({ id: `${scene.id}-${index + 1}`, cue })));
+  // Notes are keyed <scene id>-<cue id>; only Scrum's keep the legacy
+  // <scene id>-<cue number> (docs/narration-format.md).
+  const keyOf = (scene, cue, index) => topic === 'scrum' ? `${scene.id}-${index + 1}` : `${scene.id}-${cue.id}`;
+  const cues = story.scenes.flatMap(scene => scene.cues.map((cue, index) => ({ id: keyOf(scene, cue, index), cue })));
 
   test(`${topic}: every cue has a few short key points, and nothing else does`, () => {
     assert.deepEqual(Object.keys(notes).sort(), cues.map(({ id }) => id).sort());
@@ -58,10 +61,16 @@ for (const [topic, lesson] of Object.entries(lessons)) {
     assert.ok(noteWords <= NOTES_SHARE * speechWords, `${noteWords} words of notes for ${speechWords} of narration`);
   });
 
+  // _plugins/narrations.rb generates the page at this URL unless a retained
+  // page already serves it.
   test(`${topic}: the notes page sits beside the reading and print views`, () => {
-    const frontMatter = yaml.load(read(`${lesson.views}/notes.html`).split('---')[1]);
-    assert.equal(frontMatter.layout, 'video-narration-notes');
-    assert.equal(frontMatter.topic, topic);
-    assert.equal(frontMatter.permalink, `${lesson.views}/notes/`);
+    assert.equal(lesson.notes_url, `${lesson.views}/notes/`);
   });
 }
+
+test('Scrum keeps its retained notes page at its lesson notes URL', () => {
+  const frontMatter = yaml.load(read(`${lessons.scrum.views}/notes.html`).split('---')[1]);
+  assert.equal(frontMatter.layout, 'video-narration-notes');
+  assert.equal(frontMatter.topic, 'scrum');
+  assert.equal(frontMatter.permalink, lessons.scrum.notes_url);
+});
