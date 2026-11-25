@@ -4,7 +4,7 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 const patterns = loadRegistry('pattern');
 const videos = loadRegistry('video');
 
-for (const topic of ['scrum', 'observer', 'state', 'strategy', 'mvc', 'uml_class_diagram', 'uml_sequence_diagram', 'uml_state_diagram', 'uml_component_diagram']) {
+for (const topic of ['scrum', 'blood_groups', 'observer', 'state', 'strategy', 'mvc', 'uml_class_diagram', 'uml_sequence_diagram', 'uml_state_diagram', 'uml_component_diagram']) {
   const lesson = videos[topic] || patterns[topic];
   const story = loadStory(topic);
   const parts = lesson.parts || ['Context', 'Problem', 'Solution', 'Consequences'];
@@ -24,7 +24,7 @@ for (const topic of ['scrum', 'observer', 'state', 'strategy', 'mvc', 'uml_class
       await expect(nav.getByRole('list', { name: `Scenes in ${parts[0]}`, exact: true }).getByRole('button'))
         .toHaveText(initialScenes.map(label));
       if (mobile) await player.getByRole('button', { name: 'Enter full screen', exact: true }).click();
-      await a11yCheckpoint(page, `${topic} opening roadmap`, { include: `#${topic}-${topic === 'scrum' ? 'video' : 'animation'} .np-navigation`, feature: 'narration-navigation' });
+      await a11yCheckpoint(page, `${topic} opening roadmap`, { include: `#${topic}-${videos[topic] ? 'video' : 'animation'} .np-navigation`, feature: 'narration-navigation' });
 
       for (const part of parts) {
         const sectionButton = strip.getByRole('button', { name: `${part}: jump to its start`, exact: true });

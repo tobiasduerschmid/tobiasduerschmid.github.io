@@ -7,7 +7,8 @@ const { ROOT, lessonIds, loadLesson } = require('../scripts/narration/source');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
 const readData = name => yaml.load(readFileSync(path.join(ROOT, '_data/explainers', name), 'utf8'));
-const plain = text => text.replace(/\*\*/g, '').replace(/’/g, "'").replace(/[“”]/g, '"').replace(/…/g, '...').replace(/\s+/g, ' ').trim();
+// Points are Markdown: bold and inline code render without their markers.
+const plain = text => text.replace(/\*\*|`/g, '').replace(/’/g, "'").replace(/[“”]/g, '"').replace(/…/g, '...').replace(/\s+/g, ' ').trim();
 const ready = page => expect(page.locator('[data-notes-status]')).toHaveText('The pictures are ready.', { timeout: 60000 });
 
 function handout(topic) {
@@ -97,9 +98,9 @@ test('a missing animation file still exports the descriptions and editable notes
   expect(await page.evaluate(() => window.printRequests)).toBe(2);
 });
 
-// Each renderer family has a real PDF check. These structural assertions support
+// Each renderer family, and the blueprint stage theme, has a real PDF check. These structural assertions support
 // accessibility review; they do not establish complete WCAG/PDF conformance.
-for (const topic of ['scrum', 'mvc', 'nodejs', 'react', 'therac25']) {
+for (const topic of ['scrum', 'blood_groups', 'mvc', 'nodejs', 'react', 'therac25']) {
   const { lesson, cues } = handout(topic);
   test(`${topic}: printed notes keep light, unclipped content and PDF reading semantics`, async ({ page }) => {
     test.setTimeout(120000);
