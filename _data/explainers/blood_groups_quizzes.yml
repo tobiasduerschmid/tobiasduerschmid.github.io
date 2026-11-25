@@ -1,0 +1,179 @@
+# One knowledge check per section, about module blood groups rather than the
+# scooter example: each question puts a taught idea to work on a new system.
+# Every key, and every reason to reject a distractor, is said in the narration
+# before its check. The intro and the tangle have no check. The summary lists
+# several questions, about one new system, under `questions`.
+two_questions:
+  question: A function converts any distance from miles to kilometers. It uses no business words and calls no external API. Which group is it?
+  options:
+    - Group zero, since it knows neither
+    - Group T, because unit conversion is technical
+    - Group A, because the app shows the distances
+  correct_index: 0
+  explanation: The function knows no domain words and no concrete technology, so it is group zero. A group depends on what the code knows, not on who calls it or how technical it sounds.
+  option_feedback:
+    1: Group T means knowing a concrete technology, such as a database or a payment API. Converting units is math that knows no API.
+    2: A group describes what the code itself knows. Being called by an app does not give a function the app's domain knowledge.
+group_a:
+  question: A library system has a module that computes late fees from due dates and the library's fee rules. It never touches the database or the screen. Which group is it, and where can it be reused?
+  options:
+    - Group zero, reusable anywhere, since it calls no API
+    - Group A, reusable wherever the same fee rules apply
+    - Group A, reusable only where the same database runs
+  correct_index: 1
+  explanation: The module knows the library's fee rules and no technology, so it is group A. It can move to any system that needs the same rules, whatever technology that system uses.
+  option_feedback:
+    0: Calling no API rules out group T, but the module knows the library's fee rules, which is domain knowledge. Group zero knows neither.
+    2: The module never touches the database, so no database limits where it can go. Group A is limited by the rules it knows, not by technology.
+group_t:
+  question: A module sends any text message to any phone number through an SMS provider's API. It knows nothing about the apps that call it. Which group is it?
+  options:
+    - Group A, since texting is one of the app's features
+    - Group AT, since it talks to an outside service
+    - Group T, reusable by any app using that SMS provider
+  correct_index: 2
+  explanation: The module knows one concrete technology, the SMS provider's API, and no domain, so it is group T. Any application that uses the same provider can reuse it.
+  option_feedback:
+    0: Group A means knowing the domain's own words and rules. This module sends any text for any app, so it knows no domain.
+    1: Talking to a technology makes code group T. Group AT also needs domain knowledge, and this module has none.
+group_zero:
+  question: Which of these functions belongs to group zero?
+  options:
+    - One that decides whether a rider may still cancel a ride
+    - One that finds the overlap of two time ranges
+    - One that reads the phone's location from the operating system
+  correct_index: 1
+  explanation: Overlapping two time ranges is an abstract idea that knows no domain and no technology, so any application can reuse it.
+  option_feedback:
+    0: Deciding whether a rider may cancel applies a rental business's rule, so that function knows the domain and belongs to group A.
+    2: Reading the location through the operating system means knowing a concrete technology, so that function belongs to group T.
+group_at:
+  question: A food-delivery app has a function that computes a delivery fee from the distance and then saves the fee with an SQL INSERT statement. Which group is the function?
+  options:
+    - Group A, because computing the fee is its main job
+    - Group T, since any code that writes to a database is T
+    - Group AT; it knows the fee rules and a database API
+  correct_index: 2
+  explanation: The function knows the delivery business's fee rules and a concrete database technology at once, so it is group AT, and it can be reused almost nowhere.
+  option_feedback:
+    0: A group depends on everything the code knows, not on its main job. Writing SQL is knowledge of a technology, so the function is not pure A.
+    1: Writing to a database is technology knowledge, but the function also knows the fee rules. Knowing both makes it AT.
+mixing:
+  question: An email module in group T gains a function that decides which customers have earned a loyalty coupon. Separately, a coupon-rules module in group A starts using a group zero library that sorts lists. What are the two modules' groups now?
+  options:
+    - "Email: AT. Coupon rules: still A"
+    - "Email: still T. Coupon rules: AT"
+    - Both keep their groups; one function changes nothing
+  correct_index: 0
+  explanation: Deciding who earns a coupon is domain knowledge, so the email module now knows both and becomes AT. Zero code adds no letter, so the coupon rules stay A.
+  option_feedback:
+    1: It's the other way around. Zero code adds no letter, so the coupon rules stay A, while the loyalty decision adds domain knowledge to the email module.
+    2: One function's knowledge is enough, because a module has every letter its parts have. The loyalty decision puts domain knowledge into the email module.
+leaks:
+  question: 'A loyalty-points module in group A calls `members.find("SELECT * FROM members WHERE id = 7")` on a database module. What happened, and what fixes it?'
+  options:
+    - It stays A, because the query runs in the database module
+    - It became T; move the loyalty rules into the database module
+    - It became AT; give the database module find_member(id)
+  correct_index: 2
+  explanation: The caller writes SQL, so it knows the database's language and becomes AT. A method in domain words, such as find_member(id), keeps the SQL inside the database module.
+  option_feedback:
+    0: Where the query runs doesn't matter. The caller writes the SQL, so it depends on the database's language.
+    1: The module still knows the loyalty rules. Moving those rules into the database module would make that module AT instead.
+separate:
+  question: A campus dining module holds the meal-swipe rules and also prints receipts on a thermal printer through the printer's API. Which redesign follows the first design rule?
+  options:
+    - Keep one module, with comments marking rule and printer lines
+    - Split it into an A module for the rules and a T module for printing
+    - Move the meal-swipe rules into the printer module
+  correct_index: 1
+  explanation: The module knows the dining rules and a printer technology, so it is AT. Splitting it gives an A module that any dining system can reuse and a T module that any app with that printer can reuse.
+  option_feedback:
+    0: Comments don't change what the module knows. It still depends on both the rules and the printer, so it is still AT.
+    2: A module that holds the rules and calls the printer API is AT wherever it lives. Moving code doesn't separate what it knows.
+invert:
+  question: A pet-adoption app's adoption rules must send a confirmation email. Following design rule two, which design fits?
+  options:
+    - The rules own a Notifier interface; a thin adapter uses the SDK
+    - The rules call the email provider's SDK directly
+    - The rules take the SDK's message objects as parameters
+  correct_index: 0
+  explanation: The rules declare what they need in their own words, a Notifier, and a thin adapter translates that into the email provider's SDK. The rules stay A and never learn which provider sends the email.
+  option_feedback:
+    1: A direct call means the rules know the email SDK, which makes them AT. Design rule two rules out that dependency for large A modules.
+    2: SDK objects in the rules' signatures leak the technology into the domain, so the rules become AT.
+frameworks:
+  question: A chess app's Board class holds all the move rules and extends a GUI toolkit's Widget class to draw itself. The team wants the same rules in a command-line version. What blocks them, and what helps?
+  options:
+    - Nothing; inheritance lets any subclass reuse Board's rules
+    - Nothing; chess move rules are group zero, so they fit anywhere
+    - Board is married to the GUI toolkit; move the rules to a plain class
+  correct_index: 2
+  explanation: Extending Widget makes Board both chess rules and GUI toolkit, so it is AT and cannot move without the toolkit. A plain Board class keeps the rules in group A, and a thin widget adapter draws it.
+  option_feedback:
+    0: Any subclass inherits the GUI toolkit dependency too, so a command-line version would still need the toolkit.
+    1: Move rules are chess rules, the application's domain, so they are group A. Extending Widget also makes Board AT.
+change_test:
+  question: A well-separated campus food app moves from one database product to another, and its tables stay the same. Which code should change?
+  options:
+    - The order rules too, since orders are saved in the database
+    - Only the T module that talks to the database
+    - Every module that saves data, since each one calls the database
+  correct_index: 1
+  explanation: A technology change should touch only group T. With the same tables, the translators stay as they are, and the order rules never knew which database sat behind their interface.
+  option_feedback:
+    0: In a separated design, the order rules save through an interface in domain words, so they don't know which database is behind it.
+    2: Only the T module calls the database. The other modules depend on interfaces, so they don't change when the database product does.
+balance:
+  question: A teammate wants to wrap Python's built-in list behind a custom interface, in case the team ever switches list implementations. What do you answer?
+  options:
+    - Skip it; zero code like a list doesn't need a wrapper
+    - Good idea; every dependency should go through an interface
+    - Only if the list holds rides, since then it belongs to group A
+  correct_index: 0
+  explanation: Wrapping pays off for what varies, such as providers and frameworks. A list knows no domain and no technology, so business and technology changes never reach it.
+  option_feedback:
+    1: Interfaces pay off where change is likely. Wrapping code that never varies adds layers without protecting anything.
+    2: The list type knows nothing about rides, whatever it holds, so it stays group zero.
+summary:
+  questions:
+    - question: In a campus laundry app, a module decides whether a student may reserve a third washer this week. It calls no API. Which group is it?
+      options:
+        - Group T, since the washers are machines
+        - Group A, since it applies the laundry room's rules
+        - Group zero, since it only compares numbers
+      correct_index: 1
+      explanation: The module knows the laundry room's reservation rule and no technology, so it is group A.
+      option_feedback:
+        0: The module calls no machine's API. It only applies the reservation rule, which is domain knowledge.
+        2: It compares numbers against the laundry room's reservation rule, and knowing that rule is domain knowledge.
+    - question: The laundry app's status module calls the washer vendor's API and also decides when a student's ten-minute pickup window has expired. What should the team do?
+      options:
+        - Keep it; status code is mostly technology, so it's group T
+        - Keep it, as long as the file stays short
+        - "Split it: a T module for the vendor API, an A module for the pickup rule"
+      correct_index: 2
+      explanation: The module knows both a technology and a domain rule, so it is AT. Splitting it lets each part change, and be reused, on its own.
+      option_feedback:
+        0: The pickup window is a domain rule, so the module knows both and is AT, not T.
+        1: Size doesn't change what code knows. Even a short AT module changes with both the washer vendor and the rules.
+    - question: The team switches washer vendors, and the new machines speak a different API. In a well-separated design, what changes?
+      options:
+        - Only the T module for the washers and its thin adapter
+        - The reservation rules, since they are about washers
+        - Every module that shows a washer's status
+      correct_index: 0
+      explanation: A technology change should land in one small place, the T module for the washers and the adapter that plugs it in.
+      option_feedback:
+        1: The rules speak about reservations in domain words; they never knew which vendor's API sits behind the interface.
+        2: Screens and rules depend on interfaces in domain words, not on the vendor's API.
+    - question: Which interface keeps the laundry app's reservation rules in group A?
+      options:
+        - status(washer) returning the vendor's DeviceReport
+        - status(washer) returning Free or Busy
+        - query(sql) returning table rows
+      correct_index: 1
+      explanation: An interface in neutral or domain words, such as Free or Busy, lets the rules depend on what they need without knowing any technology.
+      option_feedback:
+        0: Returning the vendor's own type leaks the technology into the rules, so they become AT.
+        2: Passing SQL hands the database's language to the rules, so every caller becomes AT.

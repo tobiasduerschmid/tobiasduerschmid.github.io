@@ -1,0 +1,143 @@
+# Key points for the printable notes of the Module Blood Groups video narration
+# (docs/narration-format.md, "Editable lesson notes and PDF export"). One entry
+# per cue, keyed by <scene id>-<cue id>: one to four short bullets in note form,
+# with **bold** key terms. They live apart from the script, so editing a bullet
+# never changes the narration's audio fingerprint.
+intro-late:
+  - "**Example:** Glide, a campus scooter-rental app"
+  - "Ending a ride outside a parking zone shows “No parking here”"
+intro-jobs:
+  - "Three kinds of work: **rules** (parking, price, student discount)"
+  - "**Technology** (map, payments, Bluetooth lock) and **plain math** (point in zone)"
+intro-price_hike:
+  - "The map service raises prices tenfold, so Glide must **switch providers**"
+  - "Switching one provider should be a small job"
+tangle-braided:
+  - "`end_ride()`: map lookup, parking rule, price, payment call, Bluetooth lock"
+  - "Rule lines and technology calls sit side by side"
+tangle-predict_switch:
+  - "Tag each line **rule** or **technology**: the tags alternate"
+  - "**Predict:** which lines change when the map provider changes?"
+tangle-ripple:
+  - "The parking rule uses SDK terms, so the rule changes too"
+  - "SDK calls spread over 12 files: one switch **ripples** everywhere"
+tangle-three_pains:
+  - "Rule change (finals week): same tangled lines, untestable without the SDK"
+  - "Reuse request (bike-share): rules come welded to locks and payments"
+tangle-preview:
+  - "The habit: ask **what the code knows**"
+  - "Four **blood groups**: A, T, AT, and 0"
+two_questions-questions:
+  - "Q1: does it know the **application domain** (ride, rider, zone, price)?"
+  - "Q2: any **technology** knowledge? A concrete API, such as a map SDK or database"
+  - "**Knows** = depends on: it changes when that thing changes"
+two_questions-grid:
+  - "Neither → **0**; domain only → **A**; technology only → **T**; both → **AT**"
+  - "Each piece of code has exactly one group, which limits where it can go"
+group_a-rules:
+  - "**Group A:** domain knowledge only, no technology"
+  - "Glide: unlock fee, per-minute price, student discount, parking zones"
+group_a-paid_for:
+  - "Group A holds the rules the business is **paid for**"
+  - "Changes with the business (new discount), not with the technology"
+group_a-a_reuse:
+  - "Reusable wherever the **same rules** apply, on any technology"
+  - "A bike-share with docking stations could reuse Glide's ride rules"
+group_t-drivers:
+  - "**Group T:** technology knowledge only, no domain"
+  - "Payment client, lock driver, map client: none has heard of a ride"
+group_t-t_reuse:
+  - "T is unavoidable: no app runs in thin air"
+  - "Reusable wherever the **same technology** runs (food truck, same payment service)"
+group_zero-geometry:
+  - "**Group 0:** knows neither domain nor technology"
+  - "Implements an abstract idea: point in polygon, sorted list, dictionary, state machine"
+group_zero-donor:
+  - "**Universal donor:** any app can reuse it"
+  - "Useless alone: needs A or T code to give it a job"
+group_at-both:
+  - "**Group AT:** knows domain and technology at once, like `end_ride()`"
+  - "Easy to write, so every codebase has some"
+group_at-at_chart:
+  - "Reuse chart: 0 everywhere, A where rules match, T where technology matches"
+  - "AT only where **both** match: welded in place"
+group_at-at_cost:
+  - "AT changes with business **and** technology changes: hardest to maintain"
+  - "More AT code means lower design quality, so shrink AT"
+mixing-rules:
+  - "Groups combine like inherited blood types: a module gets **every letter** of its parts"
+  - "A+A=A, T+T=T, A+0=A, T+0=T"
+mixing-predict_mix:
+  - "A clean group A price function gains one payment API call"
+  - "**Predict:** which group is the function now?"
+mixing-a_plus_t:
+  - "**A + T = AT**, like inheriting A and B giving blood type AB"
+  - "The rules now drag the payment provider wherever they go"
+mixing-absorb:
+  - "**AT + anything = AT:** it never dilutes back to A or T"
+  - "The cure: split the parts apart again"
+leaks-leak:
+  - "**Leak:** a T interface returns a technology type (`SdkLocation`)"
+  - "Callers now depend on the SDK, so they become AT"
+leaks-plug:
+  - "Use neutral or domain types: `locate()` returns a plain `Point` (group 0)"
+  - "Map the provider's errors to the app's own error types"
+leaks-signs:
+  - "Warning signs: SDK objects, SQL strings, HTTP status codes, provider error types"
+  - "Classic leak: a method that accepts raw SQL from the rules"
+separate-rule_one:
+  - "**Design rule 1:** minimize AT modules, maximize 0 modules"
+  - "Technology assumptions and domain assumptions each limit reuse"
+  - "Keep technological and application concerns apart"
+separate-one_concern:
+  - "One technology per T module; one topic per A module"
+  - "**Sharpened single responsibility:** one kind of reason to change"
+invert-flip:
+  - "**Design rule 2:** large, complex A modules must not depend on T modules"
+  - "**Invert** the dependency: the rules declare their needs"
+invert-sockets:
+  - "Interfaces **owned by A**, in domain words: Payments, Locator, Locks"
+  - "Say **what**, never **how**: no cards, SDKs, or Bluetooth"
+invert-dongles:
+  - "Each technology plugs in through a thin **adapter**, like a dongle"
+  - "Adapters are the only AT left: thin and easy to replace"
+invert-rhesus:
+  - "Thin adapters **translate, never decide** (rider → card, dollars → cents)"
+  - "**R** (representation): the one AT worth keeping, often generated"
+  - "In blood-group terms: the positive Rhesus factor"
+frameworks-married:
+  - "Domain class extends a framework class: **married to the framework** (AT)"
+  - "Its rules can't be reused, or easily tested, without the framework"
+frameworks-divorce:
+  - "Large, complex domain class: a thin record class adapts the framework"
+  - "The plain domain class keeps the rules (A); tiny apps may inherit directly"
+change_test-replay:
+  - "Evaluate a design: **replay likely changes** and count what each touches"
+  - "Map provider switch, finals-week rule, bike-share reuse"
+change_test-predict_replay:
+  - "Glide switches map providers again"
+  - "**Predict:** which modules change in the separated design?"
+change_test-results:
+  - "Map switch: only the map T module and its adapter"
+  - "Finals-week rule: only A, testable without the SDK; bike-share: A plus a dock adapter"
+change_test-x_changes:
+  - "Technology change → **T**; rule change → **A**; storage or display change → **R** translators"
+  - "Each change lands in one small place: ready for change and reuse"
+balance-overkill:
+  - "Don't wrap 0 code (strings, lists, geometry): it doesn't vary"
+  - "Wrap what varies: providers and frameworks you might swap"
+balance-curve:
+  - "Worth it where change or reuse is likely: big rule sets, churning technology"
+  - "Weekend script: a little AT is fine; aim for the top of the curve"
+balance-cost:
+  - "Runtime cost of one extra interface call: negligible, except tight embedded code"
+  - "Design time is paid once and repaid with every change"
+summary-recap_groups:
+  - "Two questions give the group: A, T, AT, or 0"
+  - "0 anywhere; A where rules match; T where technology matches; AT almost nowhere"
+summary-recap_rules:
+  - "0 adds nothing; A + T = AT; AT never dilutes"
+  - "Minimize AT; A owns interfaces; thin adapters; frameworks at arm's length"
+summary-recap_test:
+  - "Replay technology, rule, and reuse changes against the design"
+  - "Ask the two questions before line one"
