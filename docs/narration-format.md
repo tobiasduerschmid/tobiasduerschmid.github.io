@@ -452,6 +452,13 @@ and verification screenshots outside the repository.
   `narration="<narration-root-id>"` on `song-video.html`, the final action is
   **Continue to song**. Unpaired lessons finish normally; intermediate checks
   continue the narration.
+  Its shared **Re-listen to segment** action appears after incorrect answers
+  and on multi-question results with mistakes. Audio transports register via
+  `NarrationQuiz.bindReplay`; the adapter uses the quiz engine's `onAnswer`
+  callback, not a second grading implementation. Replay starts immediately
+  after the previous authored knowledge check (or at the beginning), preserves
+  answers, and returns to the same check. The behavior covers every audio
+  narration; text-only case studies retain their evidence-review action.
 - `js/narration-song.js` owns the paired media session. It pauses narration,
   hides its surface without destroying its DOM or clock, and loads a song iframe
   inside the same `[data-vn-video]` container. `SongPlayerEmbeds.register(frame)`

@@ -12,7 +12,8 @@
  *     with key "<deckId>:<questionId|hash(questionHTML)>".
  *   SebookQuiz.attach(opts)          → attach behaviour to a host already
  *                                      containing the quiz HTML.
- *     opts: { hostEl, controlsEl, stepIndex, minScore, onPass, allowSkip?, onSkip? }
+ *     opts: { hostEl, controlsEl, stepIndex, minScore, onPass, allowSkip?, onSkip?, onAnswer? }
+ *     onAnswer({ card, isCorrect }) observes each graded answer after feedback appears.
  *   SebookQuiz.mount(opts)           → buildHTML + setInnerHTML + attach
  *     opts: same as buildHTML + attach combined.
  *
@@ -328,6 +329,8 @@
       if (!e || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return false;
       if (isEditableShortcutTarget(e.target)) return false;
       if ((e.key || '') !== 'Enter') return false;
+      // Other feedback actions keep their native button activation.
+      if (e.target.closest('button') && !e.target.closest('.next-btn')) return false;
       if (!card || !card.querySelector('.quiz-explanation:not(.hidden)')) return false;
       var next = card.querySelector('.next-btn');
       if (!next) return false;
@@ -432,10 +435,18 @@
       var fb = card.querySelector('.option-feedback[data-for-index="' + idx + '"]');
       if (fb) fb.classList.remove('is-hidden');
     }
+    function showAnswerFeedback(card, isCorrect) {
+      recordPerf(card, isCorrect);
+      setShortcutHintVisible(card, false);
+      var correctAnswers = card.querySelector('.quiz-correct-answers');
+      var explanation = card.querySelector('.quiz-explanation');
+      if (correctAnswers) correctAnswers.style.display = 'flex';
+      if (explanation) explanation.classList.remove('hidden');
+      if (opts.onAnswer) opts.onAnswer({ card: card, isCorrect: isCorrect });
+      focusNextQuestionButton(card);
+    }
     function validateSingle(opt, card) {
       var optionsEls = card.querySelectorAll('.quiz-option');
-      var exp = card.querySelector('.quiz-explanation');
-      var ca = card.querySelector('.quiz-correct-answers');
       var ok = opt.dataset.correct === opt.dataset.index;
       optionsEls.forEach(function (o) { o.setAttribute('disabled', 'true'); });
       if (ok) { opt.classList.add('correct'); score++; if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(opt); }
@@ -448,11 +459,7 @@
         if (correct) correct.classList.add('correct');
         revealOptionFeedback(card, opt.dataset.index);
       }
-      recordPerf(card, ok);
-      setShortcutHintVisible(card, false);
-      if (ca) ca.style.display = 'flex';
-      if (exp) exp.classList.remove('hidden');
-      focusNextQuestionButton(card);
+      showAnswerFeedback(card, ok);
     }
     function handleOption(e) {
       var opt = e.currentTarget;
@@ -473,8 +480,6 @@
       var card = e.currentTarget.closest('.quiz-question-card');
       var optionsEls = card.querySelectorAll('.quiz-option');
       var sel = card.querySelectorAll('.quiz-option.selected');
-      var exp = card.querySelector('.quiz-explanation');
-      var ca = card.querySelector('.quiz-correct-answers');
       var selI = Array.prototype.map.call(sel, function (o) { return o.dataset.index; }).sort();
       var first = card.querySelector('.quiz-option');
       var corI = parseIndexList(first.dataset.correctIndices);
@@ -504,11 +509,7 @@
           }
         });
       }
-      recordPerf(card, multiCorrect);
-      setShortcutHintVisible(card, false);
-      if (ca) ca.style.display = 'flex';
-      if (exp) exp.classList.remove('hidden');
-      focusNextQuestionButton(card);
+      showAnswerFeedback(card, multiCorrect);
     }
     function nextQ() { currentQ++; if (currentQ < total) showQ(currentQ); else finishQuiz(); }
     function finishQuiz() {
@@ -533,7 +534,7 @@
         if (st) st.textContent = isFinalQuiz && !allowSkip ? '✓ Tutorial Complete' : '✓ Passed';
         if (resultHint) {
           if (contBtn) {
-            resultHint.innerHTML = 'Shortcut: <kbd>' + enterKeyLabel() + '</kbd> continues.';
+            resultHint.innerHTML = 'Shortcut: <kbd>' + enterKeyLabel() + '</kbd> activates the focused button.';
             resultHint.classList.remove('hidden');
           } else {
             resultHint.textContent = '';
@@ -552,8 +553,7 @@
         if (restBtn) restBtn.classList.remove('hidden');
         if (st) st.textContent = '✗ ' + score + '/' + total;
         if (resultHint) {
-          resultHint.innerHTML = 'Shortcut: <kbd>' + enterKeyLabel() + '</kbd> '
-            + (allowSkip && contBtn ? 'continues.' : 'tries again.');
+          resultHint.innerHTML = 'Shortcut: <kbd>' + enterKeyLabel() + '</kbd> activates the focused button.';
           resultHint.classList.remove('hidden');
         }
         focusBtn = allowSkip && contBtn ? contBtn : restBtn;
@@ -711,12 +711,7 @@
           score++;
           if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(card);
         }
-        recordPerf(card, isCorrect);
-        var ca = card.querySelector('.quiz-correct-answers');
-        var exp = card.querySelector('.quiz-explanation');
-        if (ca) ca.style.display = 'flex';
-        if (exp) exp.classList.remove('hidden');
-        focusNextQuestionButton(card);
+        showAnswerFeedback(card, isCorrect);
       });
     });
     container.querySelectorAll('.parsons-reset-btn').forEach(function (btn) {
@@ -779,6 +774,7 @@
       onPass: opts.onPass,
       allowSkip: opts.allowSkip,
       onSkip: opts.onSkip,
+      onAnswer: opts.onAnswer,
     });
     _mountQuizAvatar(hostEl);
   }

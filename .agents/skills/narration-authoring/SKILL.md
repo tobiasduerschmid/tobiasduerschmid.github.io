@@ -116,6 +116,13 @@ transport. Close markers share a dot that opens a named choice list, retaining
 24px targets and one row at phone widths. `js/narration-quiz.js` adapts the shared quiz next action:
 one-question feedback leads directly to Continue narration (or the final
 action), for correct and incorrect answers; multi-question checks keep results.
+The same adapter owns **Re-listen to segment** after a wrong answer and on
+multi-question results containing mistakes. The audio transport registers its
+player and ordered `checkScenes` once through `NarrationQuiz.bindReplay`.
+Replay starts after the previous authored check, or at scene zero for the first
+check, including any intervening unchecked scenes. It preserves answers and
+returns to the same check at the segment boundary. Text-only case studies keep
+their evidence-review action; do not duplicate replay logic in lesson adapters.
 
 `narration-data.html` and `NarratedExplainer.readData` define one browser data
 boundary. `NarratedExplainer.enhance` owns audio time, seeking, captions, motion,
