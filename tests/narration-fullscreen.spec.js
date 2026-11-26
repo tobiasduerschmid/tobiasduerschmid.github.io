@@ -28,6 +28,9 @@ const narrations = [
     diagramScene: sceneNumber('uml_component_diagram', 'interfaces') },
   { url: '/SEBook/process/scrum.html', id: 'scrum-video', title: 'Scrum in one sprint' },
   { url: '/SEBook/designprinciples/blood-groups.html', id: 'blood_groups-video', title: 'What does your code know?' },
+  { url: '/SEBook/architectural_styles/pubsub.html', id: 'publish_subscribe-video', title: 'Who is listening?' },
+  { url: '/SEBook/architectural_styles/layers.html', id: 'layered_style-video', title: 'One floor down' },
+  { url: '/SEBook/architectural_styles/pipes_and_filters.html', id: 'pipes_and_filters-video', title: 'Do one thing, pass it on' },
 ];
 const lessonOf = (page, narration) => page.getByRole('region', { name: narration.title, exact: true });
 // Accessibility checkpoints audit `.nja-player`, the element that fills the screen.

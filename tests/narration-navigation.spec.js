@@ -4,7 +4,7 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 const patterns = loadRegistry('pattern');
 const videos = loadRegistry('video');
 
-for (const topic of ['scrum', 'blood_groups', 'observer', 'state', 'strategy', 'mvc', 'uml_class_diagram', 'uml_sequence_diagram', 'uml_state_diagram', 'uml_component_diagram']) {
+for (const topic of ['scrum', 'blood_groups', 'publish_subscribe', 'layered_style', 'pipes_and_filters', 'observer', 'state', 'strategy', 'mvc', 'uml_class_diagram', 'uml_sequence_diagram', 'uml_state_diagram', 'uml_component_diagram']) {
   const lesson = videos[topic] || patterns[topic];
   const story = loadStory(topic);
   const parts = lesson.parts || ['Context', 'Problem', 'Solution', 'Consequences'];
@@ -19,7 +19,9 @@ for (const topic of ['scrum', 'blood_groups', 'observer', 'state', 'strategy', '
       const nav = player.getByRole('navigation', { name: 'Lesson sections', exact: true });
       const strip = nav.getByRole('list', { name: partsLabel, exact: true });
       await expect(strip.getByRole('button')).toHaveText(parts);
-      await expect(nav.locator('[aria-current="step"]')).toHaveCount(0);
+      // An opening overview marks nothing current; an opening scene inside a part marks that part and scene.
+      const opening = story.scenes[0];
+      await expect(nav.locator('[aria-current="step"]')).toHaveText(opening.part ? [opening.part, label(opening)] : []);
       const initialScenes = story.scenes.filter(scene => scene.part === parts[0]);
       await expect(nav.getByRole('list', { name: `Scenes in ${parts[0]}`, exact: true }).getByRole('button'))
         .toHaveText(initialScenes.map(label));

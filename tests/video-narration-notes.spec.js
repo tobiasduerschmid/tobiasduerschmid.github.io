@@ -50,7 +50,8 @@ for (const [topic, lesson] of Object.entries(loadRegistry('video'))) {
   const quizzes = data(`explainers/${topic}_quizzes.yml`);
   const cues = story.scenes.flatMap((scene, sceneIndex) => scene.cues.map((cue, cueIndex) => ({
     cue,
-    points: notes[`${scene.id}-${cueIndex + 1}`],
+    // Notes are keyed by <scene id>-<cue id>, or by the cue's number in older lessons, as the notes page reads them.
+    points: notes[`${scene.id}-${cue.id}`] || notes[`${scene.id}-${cueIndex + 1}`],
     heading: `${sceneIndex + 1}.${cueIndex + 1} ${cue.step}`,
     rest: timing.scenes[sceneIndex].cues[cueIndex].end - REST_LEAD,
   })));
