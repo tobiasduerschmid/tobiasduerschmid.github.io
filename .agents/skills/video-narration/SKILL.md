@@ -387,18 +387,19 @@ undo/redo and Tab navigation. Student writing autosaves under
 `sebook-narration-notes-<topic>` and prints with its safe semantic formatting.
 Follow the shared version 2 storage contract and literal migration of old
 plain-text notes. The inventory provides per-lesson and bulk deletion; update the
-storage skill and disclosures when changing persistence. Blank animated-stage
-handouts keep three rows per Letter page. Rows containing student writing
-grow across pages instead of clipping text. Other narration kinds use their
-content height; never apply the stage's fixed row height to code or diagrams.
+storage skill and disclosures when changing persistence. Each cue starts on
+its own printed page, with a full-width picture above its key points and
+nearly two inches of ruled writing space. Animated stages print 7.2 inches
+wide on Letter and A4. Code, diagrams, and student writing use their content
+height and can continue across pages instead of clipping or shrinking.
 The code-language select, when present, affects this handout only.
 
 `tests/video-narration-notes.spec.js` checks every row's picture (its
 description as its accessible name) and bullets as written; that every
 picture shows the paused video's words in the same places; that each check
 follows its section and the answers match; that print shows only the lesson
-with no row clipped and three blank rows to a Letter page; that Chromium's
-blank saved PDF preserves that pagination; and that export opens the notes
+with no content clipped, large pictures, and writing space below; that Chromium's
+blank saved PDFs preserve one slide per Letter or A4 page; and that export opens the notes
 and print dialog. `scripts/tests/video-narration-notes.test.js` checks Scrum's
 terms and bullets. Also run the all-kind `scripts/tests/narration-notes.test.js`
 and `tests/narration-notes.spec.js`, including saved writing and deletion.

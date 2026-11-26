@@ -360,11 +360,13 @@ Cmd/Ctrl+Shift+7 and 8 toggle numbered and bulleted lists. Preserve native
 undo/redo and let Tab leave the field. Document shortcuts in `/shortcuts/`.
 Only supported semantic markup is accepted from pasted or stored content;
 discard executable content, attributes, and arbitrary styling. The print
-mirror preserves that safe formatting and real list structure. Blank animated-stage
-handouts retain three rows per Letter page. Non-video rows use their content
-height, and rows with student writing can expand across pages rather than
-clip text or shrink it to meet a row count. Ruled blank space remains for
-handwriting. The handout uses the light palette, including from a dark-mode
+mirror preserves that safe formatting and real list structure. Each cue starts
+on its own printed page, with a full-width visual above its key points and
+nearly two inches of ruled handwriting space. Animated-stage pictures print
+7.2 inches wide on both Letter and A4. Code, diagrams, and student writing use
+their content height and can continue across pages rather than clip or shrink.
+Knowledge checks follow their section; answers remain at the end.
+The handout uses the light palette, including from a dark-mode
 page, and print omits editing controls, navigation, and the site footer.
 
 Export begins with accessible HTML and uses the browser's PDF support;

@@ -11,12 +11,14 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 const data = file => yaml.load(readFileSync(require.resolve(`../_data/${file}`), 'utf8'));
 // Rendered text: emphasis markers gone, typographic apostrophes and quotes plain.
 const plain = text => text.replace(/\*\*/g, '').replace(/[’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').trim();
-// A Letter page inside the notes' print margins, at CSS's 96 pixels per inch.
+// Printable paper inside the notes' margins, at CSS's 96 pixels per inch.
 const INCH = 96;
-const LETTER = { width: (8.5 - 2 * 0.5) * INCH, height: (11 - 0.4 - 0.55) * INCH };
+const PAPERS = [
+  { format: 'Letter', width: (8.5 - 1) * INCH, height: (11 - 0.95) * INCH },
+  { format: 'A4', width: (210 / 25.4 - 1) * INCH, height: (297 / 25.4 - 0.95) * INCH },
+];
 // The picture a row shows: its cue at rest, just before the cue ends.
 const REST_LEAD = 0.3;
-const ROWS_PER_PAGE = 3;
 const picturesReady = page => expect(page.locator('[data-notes-status]')).toHaveText('The pictures are ready.', { timeout: 60000 });
 
 // The words a stage shows and where, in stage pixels.
@@ -57,7 +59,7 @@ for (const [topic, lesson] of Object.entries(loadRegistry('video'))) {
   const questions = story.scenes.flatMap(scene => (quizzes[scene.id] ? quizzes[scene.id].questions || [quizzes[scene.id]] : []));
   const notesUrl = `${lesson.views}/notes/`;
 
-  test(`${topic} notes: every cue's picture beside its key points`, async ({ page }) => {
+  test(`${topic} notes: every cue's picture and key points`, async ({ page }) => {
     await page.goto(notesUrl);
     await expect(page.getByRole('heading', { level: 1, name: story.title })).toBeVisible();
     await picturesReady(page);
@@ -105,52 +107,71 @@ for (const [topic, lesson] of Object.entries(loadRegistry('video'))) {
     }
   });
 
-  test(`${topic} notes: print keeps only the lesson, three whole rows a page`, async ({ page }) => {
-    await page.setViewportSize({ width: LETTER.width, height: 1000 });
-    await page.goto(notesUrl);
-    await picturesReady(page);
-    await page.emulateMedia({ media: 'print' });
-    const printed = await page.evaluate(() => {
-      const title = document.querySelector('h1');
-      const rows = [...document.querySelectorAll('h3')].map(heading => heading.closest('section')).filter(section => !section.matches('[aria-labelledby$="-answers"]'));
-      const answers = document.querySelector('h2[id$="-answers"]').closest('section');
-      // The lesson is its title (with the line above it), its rows, and the answers.
-      const lesson = [title, title.previousElementSibling, ...rows, answers];
-      const strays = [];
-      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-      while (walker.nextNode()) {
-        const range = document.createRange();
-        range.selectNodeContents(walker.currentNode);
-        const shown = walker.currentNode.textContent.trim() && range.getClientRects().length > 0;
-        if (shown && !lesson.some(part => part.contains(walker.currentNode))) strays.push(walker.currentNode.textContent.trim().slice(0, 40));
+  for (const paper of PAPERS) {
+    test(`${topic} notes: ${paper.format} print gives each slide the page width and writing space below`, async ({ page }) => {
+      await page.setViewportSize({ width: Math.floor(paper.width), height: 1100 });
+      await page.goto(notesUrl);
+      await picturesReady(page);
+      await page.emulateMedia({ media: 'print' });
+      const printed = await page.evaluate(() => {
+        const title = document.querySelector('h1');
+        const rows = [...document.querySelectorAll('h3')].map(heading => heading.closest('section')).filter(section => !section.matches('[aria-labelledby$="-answers"]'));
+        const answers = document.querySelector('h2[id$="-answers"]').closest('section');
+        // The lesson is its title (with the line above it), its rows, and the answers.
+        const lesson = [title, title.previousElementSibling, ...rows, answers];
+        const strays = [];
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        while (walker.nextNode()) {
+          const range = document.createRange();
+          range.selectNodeContents(walker.currentNode);
+          const shown = walker.currentNode.textContent.trim() && range.getClientRects().length > 0;
+          if (shown && !lesson.some(part => part.contains(walker.currentNode))) strays.push(walker.currentNode.textContent.trim().slice(0, 40));
+        }
+        const clipped = rows.filter((row) => {
+          const bottom = row.getBoundingClientRect().bottom;
+          return [...row.querySelectorAll('h2, h3, p, li, [role="img"]')].some(part => part.getBoundingClientRect().bottom > bottom + 0.5);
+        }).map(row => row.querySelector('h3').textContent);
+        // The first slide shares its sheet with the title; later slides have
+        // their own sheet. Check sizes as well as pagination, so a tiny picture
+        // on an otherwise empty page cannot satisfy the print contract.
+        const top = element => element.getBoundingClientRect().top;
+        const bottom = element => element.getBoundingClientRect().bottom;
+        const pictures = rows.flatMap(row => [...row.querySelectorAll('[role="img"]')].map(picture => ({
+          width: picture.getBoundingClientRect().width,
+          artworkWidth: picture.querySelector('.stage').getBoundingClientRect().width,
+          right: picture.getBoundingClientRect().right,
+          pointsBelow: top(row.querySelector('.vn-note-points')) >= bottom(picture),
+          writingHeight: row.querySelector('.vn-note-lines').getBoundingClientRect().height,
+        })));
+        return { strays, clipped, pictures, firstPage: bottom(rows[0]) - top(title.parentElement), page: Math.max(...rows.map(row => bottom(row) - top(row))) };
+      });
+      expect(printed.strays, 'text outside the lesson prints').toEqual([]);
+      expect(printed.clipped, 'rows whose content runs past their edge').toEqual([]);
+      expect(printed.firstPage).toBeLessThanOrEqual(paper.height);
+      expect(printed.page).toBeLessThanOrEqual(paper.height);
+      expect(printed.pictures).toHaveLength(cues.length);
+      for (const picture of printed.pictures) {
+        expect(picture.width, 'slide uses nearly the full paper width').toBeGreaterThanOrEqual(7 * INCH);
+        expect(picture.artworkWidth, 'slide content is enlarged along with its frame').toBeGreaterThanOrEqual(7 * INCH);
+        expect(picture.artworkWidth, 'slide content is not cropped by its frame').toBeLessThanOrEqual(picture.width);
+        expect(picture.right, 'slide fits inside the printable width').toBeLessThanOrEqual(paper.width);
+        expect(picture.pointsBelow, 'key points follow the slide').toBe(true);
+        expect(picture.writingHeight, 'at least 1.9 inches of handwriting space').toBeGreaterThanOrEqual(1.9 * INCH);
       }
-      const clipped = rows.filter((row) => {
-        const bottom = row.getBoundingClientRect().bottom;
-        return [...row.querySelectorAll('h2, h3, p, li, [role="img"]')].some(part => part.getBoundingClientRect().bottom > bottom + 0.5);
-      }).map(row => row.querySelector('h3').textContent);
-      // The height a page must hold: the title and the first three rows, and
-      // any three rows in a row (a margin at a page break is dropped).
-      const top = element => element.getBoundingClientRect().top;
-      const bottom = element => element.getBoundingClientRect().bottom;
-      const spans = rows.slice(2).map((row, index) => bottom(row) - top(rows[index]));
-      return { strays, clipped, firstPage: bottom(rows[2]) - top(title.parentElement), page: Math.max(...spans) };
     });
-    expect(printed.strays, 'text outside the lesson prints').toEqual([]);
-    expect(printed.clipped, 'rows whose content runs past their edge').toEqual([]);
-    expect(printed.firstPage).toBeLessThanOrEqual(LETTER.height);
-    expect(printed.page).toBeLessThanOrEqual(LETTER.height);
-  });
 
-  test(`${topic} notes: saved as a PDF, the rows fill Letter pages three at a time`, async ({ page }) => {
-    await page.goto(notesUrl);
-    await picturesReady(page);
-    // Without the answers, the pages hold only rows, so a printout that
-    // shrank its pages, or split a row, shows in the page count.
-    await page.getByRole('region', { name: 'Answers' }).evaluate(answers => answers.remove());
-    const pdf = await page.pdf({ format: 'Letter', preferCSSPageSize: true });
-    const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length;
-    expect(pages).toBe(Math.ceil((cues.length + questions.length) / ROWS_PER_PAGE));
-  });
+    test(`${topic} notes: the ${paper.format} PDF gives each slide its own page`, async ({ page }) => {
+      await page.goto(notesUrl);
+      await picturesReady(page);
+      // Isolate the slides so a split slide, a stray title page, or two slides
+      // squeezed onto a sheet changes the PDF's page count.
+      await page.getByRole('region', { name: 'Answers' }).evaluate(answers => answers.remove());
+      await page.getByRole('region', { name: /^Question \d+ / }).evaluateAll(checks => checks.forEach(check => check.remove()));
+      const pdf = await page.pdf({ format: paper.format, preferCSSPageSize: true });
+      const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length;
+      expect(pages).toBe(cues.length);
+    });
+  }
 
   test(`${topic} notes: every printed picture remains vector graphics`, async ({ page }) => {
     await page.goto(notesUrl);
