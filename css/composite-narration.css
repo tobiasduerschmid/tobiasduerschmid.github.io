@@ -1,0 +1,79 @@
+/* Composite lesson: the illustrated music library. Rows are indented by level;
+   marks, trace states, and flags always carry a text tag as well as an outline,
+   so color is never the only cue. Colors come from the shared --nja-* tokens,
+   which already switch for dark mode and print. */
+.composite-animation .composite-library { border: 2px solid var(--nja-line); border-radius: 6px; overflow: hidden; min-width: 0; }
+.composite-animation .composite-library .nja-window-bar { display: block; }
+.composite-animation .composite-library-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(13em, 1fr)); gap: 0.8em 1em; padding: 0.9em; color: var(--nja-text); }
+
+/* The library: one row per item; deeper rows hang under a guide line. */
+.composite-animation .composite-rows { display: grid; gap: 0.3em; margin: 0; padding: 0; list-style: none; min-width: 0; }
+.composite-animation .composite-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2em 0.45em; min-height: 2.2em; margin: 0; padding: 0.2em 0.4em; border: 2px solid transparent; border-radius: 4px; overflow-wrap: break-word; hyphens: auto; }
+.composite-animation .composite-row--depth-1 { margin-left: 1.2em; }
+.composite-animation .composite-row--depth-2 { margin-left: 2.4em; }
+.composite-animation .composite-row--depth-1,
+.composite-animation .composite-row--depth-2 { box-shadow: inset 3px 0 0 var(--nja-line); padding-left: 0.6em; }
+.composite-animation .composite-row--playlist > .composite-name { font-weight: 700; }
+.composite-animation .composite-name { min-width: 0; }
+.composite-animation .composite-kind { padding: 0 0.45em; border: 1px solid var(--nja-line); border-radius: 999px; color: var(--nja-muted); background: var(--nja-input); font-size: 0.85em; }
+.composite-animation .composite-length { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* The decorative Play chip of the static picture; the live library uses real buttons. */
+.composite-animation .composite-play-chip,
+.composite-animation .composite-play { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 1.7em; height: 1.7em; border: 2px solid var(--nja-line); border-radius: 50%; color: var(--nja-text); background: var(--nja-input); }
+.composite-animation .composite-play-chip svg,
+.composite-animation .composite-play svg { width: 0.9em; height: 0.9em; fill: currentColor; }
+
+/* Tags name every state in words. */
+.composite-animation .composite-tag { display: inline-block; padding: 0 0.5em; border: 1px solid currentColor; border-radius: 999px; font-size: 0.85em; font-weight: 700; }
+.composite-animation .composite-tag--mark { color: var(--nja-accent); background: var(--nja-panel); }
+.composite-animation .composite-tag--current { color: var(--nja-text); background: var(--nja-highlight); }
+.composite-animation .composite-tag--visited { color: var(--nja-green); background: var(--nja-success-bg); }
+.composite-animation .composite-tag--flag { color: var(--nja-coral); background: var(--nja-warning-bg); border-style: dashed; }
+.composite-animation .composite-row.is-marked { border-color: var(--nja-accent); background: var(--nja-panel); }
+.composite-animation .composite-row.is-current { border-color: var(--nja-accent); border-width: 3px; background: var(--nja-highlight); }
+.composite-animation .composite-row.is-visited { background: var(--nja-success-bg); }
+.composite-animation .composite-row.is-flagged { border-color: var(--nja-coral); border-style: dashed; }
+
+.composite-animation .composite-library-body p { margin: 0; overflow-wrap: break-word; }
+.composite-animation .composite-pending { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3em 0.45em; grid-column: 1 / -1; padding: 0.4em 0.6em; border: 2px dashed var(--nja-line); border-radius: 4px; }
+
+/* The queue that one press of Play filled, in play order. */
+.composite-animation .composite-queue { min-width: 0; padding: 0.6em 0.8em; border: 1px solid var(--nja-line); border-radius: 4px; background: var(--nja-input); }
+.composite-animation .composite-library-body p.composite-queue-title { margin-bottom: 0.4em; font-weight: 700; }
+.composite-animation .composite-queue-list { margin: 0; padding-left: 1.6em; }
+.composite-animation .composite-queue-list li { padding: 0.1em 0; overflow-wrap: break-word; }
+.composite-animation .composite-queue-list li.is-new { font-weight: 700; }
+.composite-animation .composite-queue-empty { color: var(--nja-muted); }
+.composite-animation .composite-library-body p.composite-library-note { grid-column: 1 / -1; padding: 0.6em 0.8em; border-left: 4px solid var(--nja-accent); background: var(--nja-note-bg); }
+
+/* The live library in the player (js/composite-library.js). */
+.composite-animation .composite-play { padding: 0; font: inherit; cursor: pointer; }
+.composite-animation .composite-play:hover { background: var(--nja-hover); }
+.composite-animation .composite-play:focus-visible,
+.composite-animation .composite-reset:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
+.composite-animation .composite-library-controls { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.6em; align-items: center; }
+.composite-animation .composite-reset { min-height: 2.4em; padding: 0.3em 0.8em; font: inherit; color: var(--nja-text); background: var(--nja-chrome); border: 2px solid var(--nja-line); border-radius: 4px; cursor: pointer; }
+.composite-animation .composite-reset:hover { background: var(--nja-hover); }
+.composite-animation .composite-library-body p.composite-library-status { grid-column: 1 / -1; }
+.composite-animation .composite-library-body p.composite-library-status:empty { display: none; }
+.composite-animation .composite-row.is-current,
+.composite-animation .composite-queue-list li.is-new { animation: composite-arrive 0.45s ease-out; }
+@keyframes composite-arrive {
+  from { box-shadow: 0 0 0 4px var(--nja-accent); }
+  to { box-shadow: 0 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .composite-animation .composite-row.is-current,
+  .composite-animation .composite-queue-list li.is-new { animation: none; }
+}
+
+@media print {
+  .composite-animation .composite-library,
+  .composite-animation .composite-row.is-flagged,
+  .composite-animation .composite-queue { border-color: #555; }
+  .composite-animation .composite-row.is-current,
+  .composite-animation .composite-row.is-marked { border-color: #000; }
+  .composite-animation .composite-row--depth-1,
+  .composite-animation .composite-row--depth-2 { box-shadow: inset 3px 0 0 #555; }
+}
