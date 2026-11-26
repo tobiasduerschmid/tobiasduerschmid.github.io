@@ -14,11 +14,10 @@
 {%- if panel.episode == 'pending' -%}{%- assign pending = library.episode | first -%}{%- endif -%}
 {%- if panel.design == 'first' -%}{%- assign design_label = 'first design' -%}{%- else -%}{%- assign design_label = 'composite design' -%}{%- endif -%}
 {%- assign played_name = '' -%}
-{%- assign current_name = '' -%}
 {%- for row in rows -%}
 {%- if row.id == panel.played -%}{%- assign played_name = row.name -%}{%- endif -%}
-{%- if row.id == panel.current -%}{%- assign current_name = row.name -%}{%- endif -%}
 {%- endfor -%}
+{%- assign composite_row_labels = '' -%}
 {%- capture composite_rows -%}
 {%- for row in rows -%}
 {%- assign row_next = forloop.index -%}
@@ -41,15 +40,15 @@
 {%- if row.id == panel.current -%}{%- assign row_classes = row_classes | append: ' is-current' -%}{%- elsif panel.visited contains row.id -%}{%- assign row_classes = row_classes | append: ' is-visited' -%}{%- endif -%}
 {%- if row_flag -%}{%- assign row_classes = row_classes | append: ' is-flagged' -%}{%- endif -%}
 <li class="{{ row_classes }}" data-row="{{ row.id }}" data-length="{{ row_length }}"><span class="composite-play-chip"><svg viewBox="0 0 10 10" focusable="false"><polygon points="3,2 8,5 3,8"/></svg></span><span class="composite-name">{{ row_title }}</span> <span class="composite-kind">{{ row.kind }}</span> <span class="composite-length">{{ row_length }}</span>{% if panel.marked contains row.id %} <span class="composite-tag composite-tag--mark">{{ panel.mark }}</span>{% endif %}{% if row.id == panel.current %} <span class="composite-tag composite-tag--current">playing</span>{% elsif panel.visited contains row.id %} <span class="composite-tag composite-tag--visited">visited</span>{% endif %}{% if row_flag %} <span class="composite-tag composite-tag--flag">{{ row_flag }}</span>{% endif %}</li>
+{%- capture row_tags -%}{% if panel.marked contains row.id %}, tagged {{ panel.mark }}{% endif %}{% if row.id == panel.current %}, tagged playing{% elsif panel.visited contains row.id %}, tagged visited{% endif %}{% if row_flag %}, tagged {{ row_flag }}{% endif %}{%- endcapture -%}
+{%- capture row_label %} level {{ row.depth | plus: 1 }}, {{ row_title }}, {{ row.kind }}, {{ row_length }}{{ row_tags }}{% if forloop.last %}.{% else %};{% endif %}{%- endcapture -%}
+{%- assign composite_row_labels = composite_row_labels | append: row_label -%}
 {%- endfor -%}
 {%- endcapture -%}
 {%- capture composite_label -%}
-{{ library.app }}, drawn by the {{ design_label }}, one row per item, indented by level:
-{%- for row in rows %} level {{ row.depth | plus: 1 }}, {% if row.kind == 'episode' %}{{ row.show }}: {% endif %}{{ row.name }}, {{ row.kind }}{% assign row_flag = panel.flags[row.id] %}{% if row_flag %}, {{ row_flag }}{% endif %}{% if panel.marked contains row.id %}, marked {{ panel.mark }}{% endif %}{% if forloop.last %}.{% else %};{% endif %}{% endfor %}
+{{ library.app }}, drawn by the {{ design_label }}, one row per item, indented by level:{{ composite_row_labels }}
 {%- if pending %} Waiting to be added: {{ pending.show }}: {{ pending.name }}, episode.{% endif %}
-{%- if current_name != '' %} Play is now running in {{ current_name }}.{% endif %}
-{%- if panel.played %} Queue after Play on {{ played_name }}: {% if panel.queue.size > 0 %}{{ panel.queue | join: ', ' }}{% else %}empty so far{% endif %}.{% else %} Nothing has been played yet.{% endif %}
-{{ panel.note }}
+{%- if panel.played %} Queue after Play on {{ played_name }}: {% if panel.queue.size > 0 %}{{ panel.queue | join: ', ' }}{% else %}empty so far{% endif %}.{% else %} Nothing has been played yet.{% endif %} {{ panel.note }}
 {%- endcapture -%}
 {%- capture composite_cue -%}{"design": {{ panel.design | jsonify }}, "episode": {{ panel.episode | default: "" | jsonify }}, "played": {{ panel.played | default: "" | jsonify }}, "queue": {{ panel.queue | jsonify }}, "visited": {{ panel.visited | jsonify }}, "current": {{ panel.current | default: "" | jsonify }}, "marked": {{ panel.marked | jsonify }}, "mark": {{ panel.mark | default: "" | jsonify }}, "flags": {{ panel.flags | jsonify }}, "note": {{ panel.note | jsonify }}}{%- endcapture -%}
 <div class="composite-library" data-composite-cue="{{ composite_cue | escape }}" data-composite-rows="{{ library.rows | concat: library.episode | jsonify | escape }}" role="img" aria-label="{{ composite_label | strip_newlines | strip | escape }}">

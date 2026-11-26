@@ -45,7 +45,7 @@ panels:
     played: road_trip
     queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit]
     marked: [sunroof, throwbacks]
-    mark: asked alike
+    mark: same requests
     note: A song and a playlist both show a length and both answer Play.
   first_start:
     design: first
