@@ -393,7 +393,7 @@
 
       const granularity = 'leaks/granularity';
       const b = picture(granularity);
-      ls.building(b, { x: 40, y: 100, w: 240, h: 84, gap: 12, at: at(granularity, 'few'), step: 0.1, floors: [{ name: 'Game rules' }, { name: 'Engine and platform', tone: 'wide' }] });
+      ls.building(b, { x: 40, y: 100, w: 260, h: 84, gap: 12, at: at(granularity, 'few'), step: 0.1, floors: [{ name: 'Game rules' }, { name: 'Engine and platform', tone: 'wide' }] });
       arch.tag(b, { x: 40, y: 20, text: 'Too few', tone: 'red', at: at(granularity, 'few') });
       ls.building(b, {
         x: 360, y: 100, w: 240, h: 34, gap: 6, at: at(granularity, 'many2'), step: 0.06,

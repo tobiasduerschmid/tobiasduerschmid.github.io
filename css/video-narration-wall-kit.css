@@ -367,11 +367,14 @@
   display: grid;
   place-items: center;
   box-sizing: border-box;
+  /* Room inside the dash, so a question that wraps never touches it. */
+  padding: 0 12px;
   border: 4px dashed var(--vn-dashed);
   border-radius: 10px;
   color: var(--vn-gold-ink);
   font-size: 32px;
   font-weight: 900;
+  text-align: center;
 }
 
 /* A story's progress: a label over a bar. */

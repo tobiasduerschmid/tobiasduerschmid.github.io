@@ -271,14 +271,14 @@
       program(a, 'camera', { x: 24, y: 34, w: 248, at: t0 });
       arch.topic(a, { x: 300, y: 48, w: 636, name: '/camera/image', at: t0 + 0.1 });
       arch.wire(a, { from: [276, 70], to: [296, 70], at: t0 + 0.3 });
-      program(a, 'detector', { x: 300, y: 126, w: 270, at: when('detector') });
-      arch.wire(a, { from: [434, 92], to: [434, 122], tone: 'cyan', at: when('subscribes') });
-      [['logger', 'Logger', 594], ['dashboard', 'Dashboard', 768]].forEach(([key, title, x]) => {
-        program(a, key, { x, y: 126, w: 168, title, at: t0 + 0.4 });
-        arch.wire(a, { from: [x + 84, 92], to: [x + 84, 122], tone: 'cyan', at: t0 + 0.6 });
+      program(a, 'detector', { x: 300, y: 126, w: 232, at: when('detector') });
+      arch.wire(a, { from: [416, 92], to: [416, 122], tone: 'cyan', at: when('subscribes') });
+      [['logger', 'Logger', 546, 168], ['dashboard', 'Dashboard', 728, 208]].forEach(([key, title, x, w]) => {
+        program(a, key, { x, y: 126, w, title, at: t0 + 0.4 });
+        arch.wire(a, { from: [x + w / 2, 92], to: [x + w / 2, 122], tone: 'cyan', at: t0 + 0.6 });
       });
       arch.topic(a, { x: 300, y: 262, w: 636, name: '/obstacles', tab: 'right', at: when('obstacles') });
-      arch.wire(a, { from: [434, 194], to: [434, 258], at: when('publishes') });
+      arch.wire(a, { from: [416, 194], to: [416, 258], at: when('publishes') });
       program(a, 'planner', { x: 300, y: 336, w: 220, at: when('planner') });
       arch.wire(a, { from: [410, 306], to: [410, 332], tone: 'cyan', at: when('subscribes2') });
       arch.topic(a, { x: 300, y: 470, w: 636, name: '/cmd_vel', tab: 'right', at: when('commands') });
@@ -466,14 +466,14 @@
       arch.readout(a, { x: 660, y: 86, w: 128, label: 'Build', at: at(rename, 'compiles'), values: [{ at: -1, text: 'Compiles', state: 'ok' }] });
       arch.readout(a, { x: 800, y: 86, w: 136, label: 'Launch', at: at(rename, 'starts'), values: [{ at: -1, text: 'Starts', state: 'ok' }] });
       program(a, 'detector', {
-        x: 24, y: 182, w: 280, at: at(rename, 'detector'),
+        x: 24, y: 182, w: 340, at: at(rename, 'detector'),
         states: [{ at: at(predict, 'spots'), state: 'busy', sub: 'Found: skateboard' }],
       });
       arch.topic(a, { x: 24, y: 310, w: 420, name: '/obstacles', tab: 'right', states: [{ at: at(rename, 'obstacles'), state: 'lit' }], at: at(rename, 'obstacles') });
       arch.wire(a, { from: [164, 252], to: [164, 306], at: at(rename, 'publishes') });
       arch.topic(a, { x: 496, y: 310, w: 440, name: '/obstacle_list', tab: 'right', states: [{ at: at(rename, 'still'), state: 'empty' }], at: at(rename, 'list') });
       program(a, 'planner', {
-        x: 560, y: 170, w: 300, at: at(rename, 'planner'),
+        x: 576, y: 170, w: 360, at: at(rename, 'planner'),
         states: [{ at: at(rename, 'still'), state: 'idle', sub: 'Subscribes: /obstacle_list' }, { at: at(silent, 'nothing'), state: 'idle', sub: 'Hears nothing: go straight' }],
       });
       arch.wire(a, { from: [600, 306], to: [600, 258], tone: 'cyan', at: at(rename, 'still') + 0.2 });
@@ -483,8 +483,8 @@
         stops: [{ at: -1, x: 30 }, { at: at(silent, 'safety') - 1.6, x: 30 }, { at: at(silent, 'safety'), x: 300, glide: true }],
         props: [{ kind: 'skater', x: 400, at: at(predict, 'skateboarder') }],
       });
-      wall.slot(a, { x: 616, y: 430, w: 150, h: 64, text: 'Planner?', at: at(predict, 'planner'), until: begin(silent) + 0.2 });
-      wall.slot(a, { x: 786, y: 430, w: 150, h: 64, text: 'Errors?', at: at(predict, 'error'), until: begin(silent) + 0.2 });
+      wall.slot(a, { x: 596, y: 430, w: 172, h: 64, text: 'Planner?', at: at(predict, 'planner'), until: begin(silent) + 0.2 });
+      wall.slot(a, { x: 780, y: 430, w: 156, h: 64, text: 'Errors?', at: at(predict, 'error'), until: begin(silent) + 0.2 });
       sticker(a, 'Nobody’s listening', { x: 120, y: 364, at: at(silent, 'nobody'), variant: 'red', iconName: 'warning' });
       arch.readout(a, { x: 616, y: 430, w: 150, label: 'Error log', at: at(silent, 'error'), values: [{ at: -1, text: '0 errors', state: 'warn' }] });
       arch.readout(a, { x: 786, y: 430, w: 150, label: 'Bumper', at: at(silent, 'safety'), values: [{ at: -1, text: 'Stop!', state: 'bad' }] });
@@ -639,7 +639,7 @@
         ],
         tilts: [],
       });
-      wall.banner(c, { x: 24, y: 458, w: 380, title: 'Choose per message', text: 'Facts: publish. Requests needing an answer: call.', at: at(costs, 'publish') });
+      wall.banner(c, { x: 584, y: 404, w: 352, title: 'Choose per message', text: 'Facts: publish. Requests needing an answer: call.', at: at(costs, 'publish') });
       sticker(c, 'Who’s listening, and do you need to know?', { x: 380, y: 20, at: at(costs, 'listening'), variant: 'gold', iconName: 'question' });
     }
 

@@ -100,7 +100,7 @@
       const steps = 'intro/steps';
       const b = picture(steps);
       [['Noisy', 'every'], ['Denoised', 'noise'], ['Brightened', 'brighten'], ['Cropped', 'crop'], ['Faces blurred', 'blur'], ['Watermarked', 'stamp']].forEach(([caption, word], i) => {
-        pf.photo(b, { x: 24 + i * 154, y: 70, w: 140, look: LOOKS[i], caption, at: at(steps, word) });
+        pf.photo(b, { x: 24 + i * 153, y: 70, w: 145, look: LOOKS[i], caption, at: at(steps, word) });
       });
       arch.card(b, { x: 330, y: 300, w: 300, title: 'Published', sub: 'On the website', iconName: 'globe', at: at(steps, 'publish') });
       wall.badge(b, { x: 80, y: 330, w: 170, role: 'You', iconName: 'user', at: at(steps, 'youre') });
@@ -142,7 +142,7 @@
         rows: stepsOf.map((label, i) => ({ label, at: at(midnight, 'every') + i * 0.55, duration: 0.5 })),
       });
       arch.tag(b, { x: 300, y: 40, text: '20 minutes per step, all photos', at: at(predict, 'twenty') });
-      wall.slot(b, { x: 620, y: 110, w: 316, h: 110, text: 'First photo online: when?', at: at(predict, 'predict'), until: begin(midnight) + 0.2 });
+      wall.slot(b, { x: 600, y: 110, w: 336, h: 110, text: 'First photo online: when?', at: at(predict, 'predict'), until: begin(midnight) + 0.2 });
       pf.gallery(b, { x: 620, y: 110, w: 316, title: 'Website at midnight', at: at(midnight, 'midnight'), items: [{ at: at(midnight, 'midnight') + 0.3, look: LOOKS[5] }] });
       arch.readout(b, { x: 24, y: 420, w: 560, label: 'Touchdown catch, 2nd quarter', iconName: 'image', at: at(midnight, 'catch'), values: [{ at: -1, text: 'Waits behind 3,000 others', state: 'warn' }] });
       arch.readout(b, { x: 620, y: 330, w: 316, label: 'In-between files', iconName: 'folder', at: at(midnight, 'folders'), values: [{ at: -1, text: '5 folders · 15,000', state: 'warn' }] });
@@ -232,7 +232,7 @@
       });
       flowAll(a, row, { from: at(incremental, 'passes'), to: end(seconds), every: 1.0 });
       arch.readout(a, { x: 676, y: 14, w: 260, label: 'Scoreboard', iconName: 'timer', at: at(predict, 'game'), values: [{ at: -1, text: '2nd quarter · 9:12' }] });
-      pf.photo(a, { x: 24, y: 360, w: 180, look: LOOKS[0], caption: 'Touchdown catch', at: at(predict, 'catch') });
+      pf.photo(a, { x: 24, y: 360, w: 196, look: LOOKS[0], caption: 'Touchdown catch', at: at(predict, 'catch') });
       wall.slot(a, { x: 640, y: 350, w: 296, h: 120, text: 'Online when?', at: at(predict, 'predict'), until: begin(seconds) + 0.2 });
       // The catch hops pipe by pipe, half a second in each filter.
       const hop = at(seconds, 'slides');
