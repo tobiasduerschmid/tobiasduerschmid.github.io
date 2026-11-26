@@ -128,9 +128,9 @@ companion dog that follows, fetches, and naps (State); a group-expense app that 
 equally, by percentage, or as a birthday treat, refactored from a method-checking calculation
 the way Kerievsky refactors a loan's capital calculation (Strategy); a screen-time visualizer
 whose table, bar chart, and pie chart share one dataset, live and editable in the player
-(Model-View-Controller); a music library whose playlists hold songs and whole playlists,
-refactored from separate song and playlist lists the way Kerievsky replaces a one/many
-distinction, with a live Play button on every row (Composite).
+(Model-View-Controller); a phone-story photo collage whose splits hold photos and other
+splits, refactored from photo-or-split type checks, with a live Share button on every tile
+(Composite).
 
 Ground the whole lesson in those sources, not only the example: follow GoF's applicability,
 participants, collaborations, consequences, and implementation issues, use Kerievsky's
@@ -380,10 +380,12 @@ the editable handout automatically from the lesson metadata (section 9).
   student action (not for narrated changes), and no motion under `prefers-reduced-motion`.
   Mark which parts reacted with text as well as motion, and never move focus during narration.
 - The site inverts every SVG inside chapter content in dark mode
-  (`html.dark-mode .post-content svg` in `css/portfolio.css`). An illustration whose inline SVG
-  already takes the theme's colors (icons in `currentColor`, charts with dark-mode palettes) must
-  opt out with `filter: none`, or dark mode draws it dark on dark; automated audits do not catch
-  an icon inside a button, so look at the illustration in dark mode.
+  (`html.dark-mode .post-content svg` and `img[src$=".svg"]` in `css/portfolio.css`). An
+  illustration whose inline SVG already takes the theme's colors (icons in `currentColor`, charts
+  with dark-mode palettes), or SVG artwork that keeps its colors in every theme as a photo does,
+  must opt out with `filter: none` in a selector that outranks the site's rule, or dark mode draws
+  it inverted; automated audits do not catch an icon inside a button, so look at the illustration
+  in dark mode.
 - Liquid cannot nest bracket lookups: `a[b[c]]` silently renders empty. Assign the inner
   value to a variable first. An illustration that shows zeros or blanks usually hit this.
 - Tables beside code get a narrow column. Use `overflow-wrap: break-word` with
