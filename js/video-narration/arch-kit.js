@@ -254,6 +254,17 @@
     }
     return points[points.length - 1];
   }
+  /**
+   * Path data for shapes that share one path, so a detailed illustration can
+   * draw one element per paint instead of one per shape.
+   */
+  const round = (v) => +v.toFixed(2);
+  const shape = {
+    round,
+    circle: (cx, cy, r) => `M${round(cx - r)} ${round(cy)} a${round(r)} ${round(r)} 0 1 0 ${round(2 * r)} 0 a${round(r)} ${round(r)} 0 1 0 ${round(-2 * r)} 0`,
+    box: (x, y, w, h) => `M${round(x)} ${round(y)} h${round(w)} v${round(h)} h${round(-w)} Z`,
+  };
+
   const pathLength = (points) => points.slice(1).reduce((sum, [x, y], i) => sum + Math.hypot(x - points[i][0], y - points[i][1]), 0);
 
   /**
@@ -360,6 +371,6 @@
 
   window.ArchKit = {
     latest, show, track, card, queue, codeLine, code, rule, quality, wire, tag,
-    along, pathLength, token, stream, readout, cross, topic, search,
+    along, pathLength, shape, token, stream, readout, cross, topic, search,
   };
 })();

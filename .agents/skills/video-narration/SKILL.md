@@ -149,6 +149,13 @@ from building.
 - The song kit draws confetti behind a picture's content. For a celebration
   that belongs on top, pass `sk.overlay(picture)` as its parent, start it on
   the word it celebrates, and keep the picture up long enough to see it.
+- The running example's objects (a photo, a robot, a game screen, a map)
+  are finished illustrations, never placeholder shapes: correct
+  construction, light from one direction, flat fills with ink, and people
+  with real proportions. The notes page copies the whole stage once per
+  cue, so keep them light: merge every shape of one paint into one path
+  (`ArchKit.shape`), and give tiny copies, such as tokens in a pipe, a flat
+  silhouette tier. Count the stage's elements per cue before and after.
 
 ## 3. No overlaps, no occlusion, visible gaps
 
