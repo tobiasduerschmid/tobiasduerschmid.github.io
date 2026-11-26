@@ -3,6 +3,7 @@ const { execFileSync } = require('node:child_process');
 const { readFileSync } = require('node:fs');
 const path = require('node:path');
 const { loadLesson } = require('../scripts/narration/source');
+const { openPlayerSettings } = require('./helpers/narration-player');
 
 // Exercise authored combinations not yet present in the book: a case study
 // awaiting speech and an illustrated explainer with a knowledge check. Render
@@ -116,4 +117,21 @@ test('an illustrated explainer can replay a wrong check without changing another
   await check.getByRole('button', { name: 'Continue narration', exact: true }).click();
   await expect(player.getByRole('region', { name: 'Narration', exact: true })).toHaveText(explainer.story.scenes[1].cues[0].text);
   await expect(checkPanel(other)).toBeVisible();
+});
+
+test('the final-check setting is shared with text-only players and retains their last check before an unchecked scene', async ({ page }) => {
+  const player = textPlayer(page);
+  const other = audioPlayer(page);
+  const option = 'Only pause for the final knowledge check';
+  await openPlayerSettings(other);
+  await other.getByRole('checkbox', { name: option, exact: true }).check();
+  await other.getByRole('button', { name: 'Close settings', exact: true }).click();
+  await openPlayerSettings(player);
+  await expect(player.getByRole('checkbox', { name: option, exact: true })).toBeChecked();
+  await player.getByRole('checkbox', { name: 'Pause and predict', exact: true }).uncheck();
+  await player.getByRole('button', { name: 'Close settings', exact: true }).click();
+  await finishSteps(player, investigation.story.scenes[0]);
+  await player.getByRole('button', { name: 'Knowledge check', exact: true }).click();
+  await expect(checkPanel(player)).toBeVisible();
+  await expect(player.locator('audio')).toHaveCount(0);
 });

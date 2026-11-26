@@ -96,7 +96,22 @@ the player's own scripts. `js/narration-player-controls.js` gives every
 player the song player's keys, auto-hiding full-screen controls, captions,
 mute and volume, settings, and landscape surface;
 `tests/narration-player-controls.spec.js` checks every lesson's bar against
-that order. A checkpoint replaces the picture and the
+that order. `js/narration-preferences.js` owns the one-year, site-wide
+`sebook-narration-preferences` cookie (`captions`, `speed`, `finalCheckOnly`) used
+by the control bar and `/settings/`. Defaults are captions on, 1x, and all checks; every narration offers
+0.5x, 0.75x, 1x, 1.25x, 1.5x, and 2x via
+`narration-playback-speeds.html`. Choices synchronize players on the page and
+refresh on returning to a tab; blocked cookies still permit changes for that
+page. Keep these preferences out of individual renderers and the song player's
+separate preferences. `tests/narration-preferences.spec.js` covers all lessons,
+cross-kind persistence, settings, and deletion. **Only pause for the final
+knowledge check** skips intermediate checks during audio and step-mode
+continuation. Keep the last authored check, even if unchecked scenes follow;
+no checks means no new pause. Manual review buttons and timeline markers
+remain available, and Pause and predict is independent. The shared player
+supplies `shouldCheck(index)` to the transport so skipped boundaries never
+pause/restart audio. `tests/narration-check-preferences.spec.js` verifies these
+transitions and restoring all checks. A checkpoint replaces the picture and the
 bar steps aside until it is answered or skipped. Full screen fills the screen
 with the video: the stage (or checkpoint) scrolls inside, and captions and
 the bar overlay its lower edge. Mark scrolling panels
@@ -140,8 +155,9 @@ it never creates a transport, binds navigation, or mounts a quiz.
 
 `NarrationTransport.mount` supplies audio or text-only cue navigation behind
 one session contract. Audio sessions additionally expose `play` and `seekTo`.
-The transport owns the clock, captions, motion, speed, fullscreen, and transcript
-printing. Audio pauses at checks and enabled prediction gates; other cues play
+The transport owns the clock, cue text, motion, fullscreen, and transcript
+printing; the shared control bar applies saved captions and playback speed.
+Audio pauses at enabled checks and prediction gates; other cues play
 continuously. Keep every player paused until explicit playback. Step-mode continuation
 stays silent; check labels and single-question completion follow the same UI
 for every kind. Shared controls, timeline, and song modules keep their existing

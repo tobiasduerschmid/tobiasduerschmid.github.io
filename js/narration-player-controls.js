@@ -138,9 +138,7 @@
       feedbackTimer = setTimeout(() => { feedback.hidden = true; }, 700);
     }
     function toggleCaptions() {
-      const on = cc.getAttribute('aria-pressed') !== 'true';
-      cc.setAttribute('aria-pressed', String(on));
-      video.classList.toggle('are-captions-off', !on);
+      window.NarrationPreferences.set({ captions: cc.getAttribute('aria-pressed') !== 'true' });
     }
 
     window.SongKeyboard.bind({
@@ -154,7 +152,23 @@
     root.querySelectorAll('[data-vn-skip]').forEach(button => listen(button, 'click', () => skip(Math.sign(Number(button.dataset.vnSkip)))));
     if (cc) listen(cc, 'click', toggleCaptions);
     listen(root.querySelector('.vn-caption-size'), 'change', event => video.style.setProperty('--vn-caption-scale', event.target.value));
-    if (audio) bindSound(root, audio, listen);
+    const speed = root.querySelector('[data-setting="speed"]');
+    const finalCheckOnly = root.querySelector('[data-setting="final-check-only"]');
+    window.NarrationPreferences.subscribe(preferences => {
+      finalCheckOnly.checked = preferences.finalCheckOnly;
+      if (audio) {
+        cc.setAttribute('aria-pressed', String(preferences.captions));
+        video.classList.toggle('are-captions-off', !preferences.captions);
+        speed.value = String(preferences.speed);
+        audio.defaultPlaybackRate = preferences.speed;
+        audio.playbackRate = preferences.speed;
+      }
+    });
+    listen(finalCheckOnly, 'change', () => window.NarrationPreferences.set({ finalCheckOnly: finalCheckOnly.checked }));
+    if (audio) {
+      listen(speed, 'change', () => window.NarrationPreferences.set({ speed: Number(speed.value) }));
+      bindSound(root, audio, listen);
+    }
     const picture = root.querySelector('.vn-picture-control');
     if (picture && audio) {
       const syncPicture = () => picture.setAttribute('aria-label', audio.paused ? 'Play video' : 'Pause video');
