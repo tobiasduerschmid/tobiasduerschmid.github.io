@@ -1,0 +1,119 @@
+# Printable handout key points. Keys preserve scene and cue identities.
+intro-road-trip:
+  - "**Example:** Road Trip = Sunroof Down, then the Throwbacks playlist, then Last Exit"
+  - "One Play press queues all four songs in that order: 14:00"
+intro-try-it:
+  - "Songs and playlists both show a length and offer Play"
+  - "Try Play on a song, on Throwbacks, and on Road Trip"
+intro-pattern-parts:
+  - "**Roles:** a shared interface, standalone single items, groups holding items"
+  - "**Pattern description:** context, problem, solution, consequences"
+context-part-whole:
+  - "**Part-whole hierarchy:** wholes built from parts; some parts are wholes too"
+  - "Playlists contain songs and playlists, nested to any depth"
+context-alike:
+  - "Clients want to ignore single-versus-group differences"
+  - "A song answers alone; a playlist answers for its contents"
+context-trees:
+  - "Examples: file folders, grouped drawing shapes, submenus, nested page boxes"
+  - "**Leaf:** nothing inside · **Composite:** a group"
+problem-two-lists:
+  - "First design: Song holds title and seconds"
+  - "Playlist stores songs and nested playlists in separate lists, each with its own add"
+problem-two-loops:
+  - "duration and play each loop over both lists"
+  - "Each new operation needs another pair of loops"
+problem-lost-order:
+  - "Queue becomes Sunroof Down, Last Exit, Mixtape Summer, Cassette Heart"
+  - "Separate lists forget insertion order, so the closing song plays second"
+problem-client-check:
+  - "The Play button must test: song or playlist?"
+  - "Length displays repeat it: songs store seconds; playlists compute duration"
+problem-predict-episodes:
+  - "**Predict:** Episodes join playlists. Which code changes? What if one change is missed?"
+problem-every-change:
+  - "Episodes need another list, add method, loop per operation, client branch"
+  - "Missing the duration loop silently omits every episode from totals"
+problem-demands:
+  - "**Problem:** code separates single items from groups; listeners do not"
+  - "**Demands:** any item, any depth, chosen order, new kinds without loop edits"
+playable_role-shared-type:
+  - "One ordered list needs one shared type: **Playable**"
+  - "Playable declares duration() and play(queue) for every item"
+playable_role-queue:
+  - "play(queue) appends titles, in order, to the queue it receives"
+  - "One queue travels down; no per-level list building or joining"
+song_role-direct:
+  - "**Song** implements Playable using only its own data"
+  - "duration() returns its seconds; play() appends its title"
+song_role-shared:
+  - "Songs are unchangeable and unaware of their playlists"
+  - "So one Song object can appear in several playlists"
+playlist_role-one-list:
+  - "**Playlist** implements Playable and keeps one ordered list of Playables"
+  - "add() accepts any Playable without asking its kind"
+playlist_role-duration:
+  - "duration() sums each item's duration"
+  - "Nested playlists repeat this: requests go down, sums come up"
+playlist_role-play:
+  - "play() gives every item, in turn, the one shared queue"
+  - "Road Trip: first song, all of Throwbacks, then the closing song"
+playlist_role-safe-add:
+  - "**Safe:** add() only in Playlist; adders must know they hold a playlist"
+  - "**Transparent:** add() in Playable too; songs must reject it at runtime"
+collaborations-press:
+  - "Each Play button holds one Playable, never checking its kind"
+  - "press() starts a fresh queue, then asks Road Trip to play into it"
+collaborations-first-song:
+  - "Road Trip forwards play to Sunroof Down, which appends itself"
+  - "**Predict:** What reaches Throwbacks next, and what happens inside it?"
+collaborations-recursion:
+  - "Throwbacks receives the identical play message and forwards it to each song"
+  - "Requests descend level by level until songs answer"
+collaborations-loop:
+  - "Four titles return in the chosen order"
+  - "**Loop:** leaves answer; composites forward; the client never checks kinds"
+solution-component:
+  - "Four roles remain after removing the music details"
+  - "**Component** (Playable): operations shared by single objects and groups"
+solution-leaf:
+  - "**Leaf** (Song): no children; performs each operation itself"
+  - "One role, potentially played by many classes"
+solution-composite:
+  - "**Composite** (Playlist): stores children and forwards operations, maybe with extra work"
+  - "Hollow diamond with star: holds any number of components"
+solution-client:
+  - "**Client** (Play button): depends only on Component"
+  - "Composite is a Component and holds Components, enabling unlimited nesting"
+consequences-simple-clients:
+  - "**Benefit:** clients need no type checks"
+  - "Groups nest at any depth without additional code"
+consequences-new-kinds:
+  - "**Benefit:** new Playable classes fit existing playlists and clients unchanged"
+  - "The combining loop lives once, in Playlist"
+consequences-overly-general:
+  - "**Liability:** add() accepts any Playable, so types cannot restrict children"
+  - "Songs-only albums need runtime checks"
+consequences-safety:
+  - "**Liability:** safe add exposes the composite to adding code"
+  - "Transparent add makes every object uniform but leaves reject add at runtime"
+applicability-fit:
+  - "Use Composite for real nesting where clients ignore single-versus-group differences"
+  - "No nesting: a plain list is simpler"
+applicability-one-class:
+  - "Identical data everywhere: one class with optional children suffices"
+  - "Composite pays off when kinds behave differently and keep multiplying"
+applicability-neighbors:
+  - "Composites appear as nested views in MVC and as macro commands"
+  - "**Decorator** wraps one object to add behavior; Composite groups many"
+transfer-plan:
+  - "**Task:** Episodes (show, title, length) join playlists beside songs"
+  - "**Predict:** Which class is new? Which existing lines change?"
+transfer-episode:
+  - "**Episode** implements Playable as a new leaf"
+  - "Playable, Song, Playlist, and Play button stay untouched"
+summary-recap:
+  - "**Context:** nesting part-whole hierarchy; clients treat one object and groups alike"
+  - "**Problem:** separate handling repeats loops, loses order, breaks with new kinds"
+  - "**Solution:** Component interface; Leaves answer directly; Composites forward to children"
+  - "**Consequences:** simple clients, easy extension; overly general, safety-versus-transparency choice"

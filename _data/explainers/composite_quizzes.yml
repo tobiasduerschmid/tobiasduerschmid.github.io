@@ -1,0 +1,185 @@
+# One knowledge check per section, about the Composite pattern rather than the
+# music library. The summary section lists several questions under `questions`.
+intro:
+  question: Which parts make up a design pattern's description, such as the Composite pattern's?
+  options:
+    - A class library, its public API, and examples of its usage
+    - A UML class diagram, a unit test suite, and a code template
+    - A context, a recurring problem, a solution, and its consequences
+  correct_index: 2
+  explanation: A pattern describes a problem that recurs in a context, a solution expressed as roles and collaborations, and the consequences of applying it.
+  option_feedback:
+    0: A library is reusable code. A pattern is a reusable design idea that you adapt to each situation.
+    1: Diagrams and code illustrate a pattern, but without its context, problem, and consequences you cannot tell when to apply it.
+context:
+  question: Which situation is the context for the Composite pattern?
+  options:
+    - Objects nest in part-whole trees, and clients treat one object and a group alike
+    - One task has several interchangeable algorithms, and clients choose among them
+    - Several objects must be notified whenever one object changes
+  correct_index: 0
+  explanation: The Composite pattern applies to part-whole hierarchies in which some parts are wholes themselves, and whose clients want to ignore the difference between a single object and a group.
+  option_feedback:
+    1: Choosing among interchangeable algorithms is the context of the Strategy pattern. Composite's context is a structure of parts that nests.
+    2: Notifying dependents of a change is the context of the Observer pattern. Composite's context is a structure of parts that nests.
+problem:
+  question: In the Composite pattern's problem, code keeps single items and groups in separate lists. What happens when a new kind of item must join the groups?
+  options:
+    - Only a class for the new kind is added; the existing loops already handle it
+    - Every operation and client check needs a new branch; a missed one fails silently
+    - Nothing in the code has to change, but every operation runs more slowly
+  correct_index: 1
+  explanation: Each kind has its own list, its own loop in every operation, and its own branch in every client check, so a new kind edits all of them, and a forgotten loop quietly leaves the new items out.
+  option_feedback:
+    0: The loops only cover the kinds they name. A new kind needs its own list, a loop in every operation, and a branch in every client check.
+    2: The problem is how much code must change, not speed. Every list, loop, and client check has to learn about the new kind.
+playable_role:
+  question: In the Composite pattern, what does one shared interface for single items and groups make possible?
+  options:
+    - Each item can keep a reference to every group that holds it
+    - One ordered list holds both kinds, and both answer the same requests
+    - Each group can create new items without knowing their concrete classes
+  correct_index: 1
+  explanation: With one shared type, a group keeps all its items, of any kind, in one ordered list, and any client can ask any item for the same operations.
+  option_feedback:
+    0: The shared interface declares requests every item answers, such as duration and play. It does not connect an item to the groups that hold it.
+    2: Creating objects is a separate concern. The shared interface is about what every item can be asked to do.
+song_role:
+  question: In the Composite pattern, how does a single item with nothing inside it answer a request such as duration?
+  options:
+    - It forwards the request upward to the group that holds it
+    - It asks each item stored inside it and adds up their answers
+    - It answers directly from its own data, asking no other object
+  correct_index: 2
+  explanation: A single item has no children, so it handles every request itself, as a song returns its own length and adds its own title.
+  option_feedback:
+    0: Requests travel down from groups to their items, never up. A single item needs no help from the group that holds it.
+    1: Asking each item inside and combining the answers is what a group does. A single item has nothing inside to ask.
+playlist_role:
+  question: In the Composite pattern, add is declared only in the composite class, not in the shared interface. What does that choice give up?
+  options:
+    - Transparency, because code must know it holds a composite before adding
+    - Safety, because a single item could be asked to add a child at runtime
+    - Order, because the composite can no longer keep children in the order added
+  correct_index: 0
+  explanation: Declaring add only in the composite is the safe choice; the price is that items no longer all look alike, so code that adds must know it holds a composite.
+  option_feedback:
+    1: That is the cost of the transparent choice. With add only in the composite, a single item has no add at all, so it cannot be asked to add a child.
+    2: Where add is declared does not affect order. The composite's one list keeps its children in the order they were added.
+collaborations:
+  question: In the Composite pattern, a client calls an operation on the root of a tree. What happens next?
+  options:
+    - The client walks the tree itself and calls each leaf directly
+    - The root calls every leaf in the tree directly, skipping inner groups
+    - Each composite forwards the call to its children, down to the leaves
+  correct_index: 2
+  explanation: The root forwards the call to each of its children; a child that is a composite does the same, so the request travels down level by level until it reaches leaves, which answer directly.
+  option_feedback:
+    0: The client makes a single call on the root and never asks which kind of object it holds. The structure does the traversal.
+    1: The root knows only its own children. Inner groups receive the same call and forward it to their own children.
+solution:
+  question: In the Composite pattern's class diagram, what lets groups contain groups to any depth?
+  options:
+    - The Composite implements Component and also holds Components
+    - The Leaf holds a list of Components as its own children
+    - The Client keeps a list of every Leaf and every Composite
+  correct_index: 0
+  explanation: Because a Composite is a Component and holds Components, any of its children may be another Composite, which closes the loop in the diagram.
+  option_feedback:
+    1: A Leaf has no children. Only the Composite stores child components.
+    2: The Client talks only to the Component interface. The structure itself, not the Client, keeps track of children.
+consequences:
+  question: Which is a liability of the Composite pattern?
+  options:
+    - Clients must check whether they hold a leaf or a composite
+    - It is hard to restrict which kinds of children a composite accepts
+    - A new kind of leaf requires changes in every composite class
+  correct_index: 1
+  explanation: A composite's add accepts any component, so the type system cannot keep the wrong kinds of children out; such restrictions need checks at runtime.
+  option_feedback:
+    0: Removing those checks is the pattern's main benefit. Clients talk only to the shared interface.
+    2: A new leaf implements the shared interface, and existing composites accept it unchanged. That is a benefit of the pattern.
+applicability:
+  question: Every item in a tree has the same data, and some items simply have children. What does the Composite pattern's applicability suggest?
+  options:
+    - Use separate lists for items with children and items without
+    - One class with an optional list of children may be enough
+    - Create a separate leaf class for every item without children
+  correct_index: 1
+  explanation: Separate leaf and composite classes pay off when single items and groups behave differently and new kinds keep arriving. With the same data everywhere, one class with optional children is simpler.
+  option_feedback:
+    0: Separate lists are the design the pattern replaces. Every operation would loop twice and lose the order of the items.
+    2: Extra leaf classes add nothing when every item has the same data and behavior. Composite pays off when the kinds behave differently.
+transfer:
+  question: In a Composite design, a new kind of leaf is added. Which code typically changes?
+  options:
+    - Every composite class, which needs a branch for the new kind
+    - A new leaf class, plus the code that creates its objects
+    - The shared interface and every existing leaf class
+  correct_index: 1
+  explanation: The new leaf implements the existing interface, so composites and clients handle it unchanged. Only the code that creates its objects knows the new class.
+  option_feedback:
+    0: Composites forward requests to whatever items they hold through the shared interface, so they need no branch.
+    2: The interface changes only when every item needs a new operation. A new leaf implements the existing one.
+summary:
+  questions:
+    - question: A study planner has tasks and projects. A project holds tasks and other projects, and students ask how many hours remain for one task or a whole project. Which part of the Composite pattern does this description match?
+      options:
+        - 'Its context: parts nest into wholes, and clients treat both alike'
+        - 'Its solution: a Component interface with leaves and composites'
+        - 'Its consequences: simple clients and an overly general structure'
+      correct_index: 0
+      explanation: The description states a situation, not a design or its costs. Tasks and projects nest, and students ask the same question of one task or a whole project; that is the Composite pattern's context.
+      option_feedback:
+        1: The description says nothing about how the code is organized. A Component interface with leaves and composites would be the solution.
+        2: Costs and benefits follow from applying the solution. The description only states the situation the planner is in.
+    - question: The planner's first Project class keeps tasks and subprojects in two lists, and remainingHours() loops over each. In Composite pattern terms, what is the problem?
+      options:
+        - The two loops make each request slower than one call through an interface
+        - Projects cannot be placed inside other projects at all
+        - Every operation repeats the task-or-project split, so new kinds edit them all
+      correct_index: 2
+      explanation: Each operation handles tasks and projects separately, so every new operation needs two loops and every new kind of item edits every loop, the problem Composite addresses.
+      option_feedback:
+        0: The problem is how much code must change, not speed.
+        1: The two-list design can nest projects, because each subproject loops over its own lists. The trouble is the repeated split between tasks and projects.
+    - question: In a Composite design for the planner, which class plays the Composite role?
+      options:
+        - Task, which answers remainingHours() from its own estimate
+        - Project, which holds tasks and projects and forwards requests
+        - PlannerItem, the interface that tasks and projects both implement
+      correct_index: 1
+      explanation: Project stores child items, which may be tasks or other projects, and answers each request by forwarding it to its children.
+      option_feedback:
+        0: A task has no children and answers from its own data. It plays the Leaf role.
+        2: The shared interface plays the Component role. The Composite implements it and also holds children.
+    - question: A student asks a semester project for its remaining hours. In a Composite design, how is the answer computed?
+      options:
+        - The project asks each child, inner projects ask theirs, and the sums return
+        - The student's screen collects every task in the tree and adds their estimates
+        - Each task reports its hours upward to the project that holds it, in advance
+      correct_index: 0
+      explanation: "The request travels down: each project forwards it to its children and adds up their answers, and each task answers from its own estimate."
+      option_feedback:
+        1: The client makes one call on the project and never walks the tree itself. The structure does the traversal.
+        2: Requests travel down from groups to their items. A task answers when its project asks; it does not report upward.
+    - question: The planner wants exam projects that may contain only tasks, never other projects. What do the Composite pattern's consequences say about this rule?
+      options:
+        - The type system enforces it once tasks and projects share an interface
+        - Composite forbids composites that restrict their children
+        - The shared add accepts any item, so the rule needs a check at runtime
+      correct_index: 2
+      explanation: Because add accepts any component, the type system cannot keep projects out of an exam project. The exam project has to check each item while the program runs.
+      option_feedback:
+        0: The shared interface is what lets any item be added. It makes this restriction harder to enforce, not easier.
+        1: The pattern allows such restrictions; it just cannot enforce them through the type system, so they become runtime checks.
+    - question: A shopping list holds only items, never grouped into sublists, and every item has the same data. Should it use the Composite pattern?
+      options:
+        - Yes, because any collection of objects should be a composite
+        - No, because nothing nests, so a plain list of items is simpler
+        - Yes, because each item on a list is a part of a whole
+      correct_index: 1
+      explanation: Composite pays off when items nest inside groups and groups inside groups. Without nesting, a plain list is simpler.
+      option_feedback:
+        0: A collection alone is not a part-whole hierarchy that nests. Without nesting, a composite adds classes without benefit.
+        2: The pattern's context needs parts that are wholes themselves. A flat list has no group inside a group.
