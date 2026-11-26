@@ -1,104 +1,201 @@
-# The illustrated music library and the specification both code designs
-# implement. `rows` list the library in tree order: each row belongs to the
-# closest earlier row one level shallower. The node test rebuilds this library
-# in every language, runs both designs, and compares them with `expected`.
-app: Music library
+# The Composite lesson's photo collage: the specification that the lesson's
+# code, its static panel, and its live script all implement.
+#
+# `rows` list the story's tiles in tree order: each row belongs to the closest
+# earlier split one level up. Every split divides its area equally among its
+# tiles, side by side or stacked, in list order. `captioned_rows` is the same
+# story after the caption change, where `left` (beach above the caption)
+# replaces beach. The node test rebuilds both trees in every language and
+# compares the drawn lines with `expected`.
+app: Summer story
+canvas: {width: 1080, height: 1920, columns: 4, rows: 4}   # one cell is 270 × 480
 rows:
-  - {id: road_trip, kind: playlist, name: Road Trip, depth: 0}
-  - {id: sunroof, kind: song, name: Sunroof Down, seconds: 180, depth: 1}
-  - {id: throwbacks, kind: playlist, name: Throwbacks, depth: 1}
-  - {id: mixtape, kind: song, name: Mixtape Summer, seconds: 240, depth: 2}
-  - {id: cassette, kind: song, name: Cassette Heart, seconds: 210, depth: 2}
-  - {id: last_exit, kind: song, name: Last Exit, seconds: 210, depth: 1}
-# The transfer task appends this podcast episode to Road Trip. An episode
-# queues as "show: name".
-episode:
-  - {id: almost_there, kind: episode, show: Road Stories, name: Almost There, seconds: 900, depth: 1}
+  - {id: story, kind: split, direction: side by side, depth: 0}
+  - {id: beach, kind: photo, art: beach.svg, depth: 1}
+  - {id: right, kind: split, direction: stacked, depth: 1}
+  - {id: cat, kind: photo, art: cat.svg, depth: 2}
+  - {id: bottom, kind: split, direction: side by side, depth: 2}
+  - {id: gig, kind: photo, art: gig.svg, depth: 3}
+  - {id: taco, kind: photo, art: taco.svg, depth: 3}
+captioned_rows:
+  - {id: story, kind: split, direction: side by side, depth: 0}
+  - {id: left, kind: split, direction: stacked, depth: 1}
+  - {id: beach, kind: photo, art: beach.svg, depth: 2}
+  - {id: caption, kind: caption, text: core memories, depth: 2}
+  - {id: right, kind: split, direction: stacked, depth: 1}
+  - {id: cat, kind: photo, art: cat.svg, depth: 2}
+  - {id: bottom, kind: split, direction: side by side, depth: 2}
+  - {id: gig, kind: photo, art: gig.svg, depth: 3}
+  - {id: taco, kind: photo, art: taco.svg, depth: 3}
+# Where an area sits, in words, keyed by "column,row,columns wide,rows tall" in
+# grid cells. It covers every area that Share on any tile of either tree draws.
+positions:
+  "0,0,4,4": the whole story
+  "0,0,2,4": left half
+  "2,0,2,4": right half
+  "0,0,4,2": top half
+  "0,2,4,2": bottom half
+  "0,0,2,2": top left quarter
+  "2,0,2,2": top right quarter
+  "0,2,2,2": bottom left quarter
+  "2,2,2,2": bottom right quarter
+  "2,2,1,2": left half of the bottom right quarter
+  "3,2,1,2": right half of the bottom right quarter
+# Pictures of the pattern's neighbors, outside the story's tree: a carousel
+# post is a flat list of photos, and a polaroid frame wraps one tile.
+neighbors: {carousel: [beach, cat, gig], frame: cat}
+# What Share on the story draws, in drawing order. An area is
+# [x, y, width, height] in story pixels.
 expected:
-  road_trip: {seconds: 840, queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit]}
-  throwbacks: {seconds: 450, queue: [Mixtape Summer, Cassette Heart]}
-  sunroof: {seconds: 180, queue: [Sunroof Down]}
-  # The first design queues a playlist's own songs before its nested playlists.
-  first_design_road_trip: [Sunroof Down, Last Exit, Mixtape Summer, Cassette Heart]
-  with_episode: {seconds: 1740, queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit, "Road Stories: Almost There"]}
-# One panel per illustrated state. `design` is the code that draws it: the
-# first design (two lists) or the composite. `episode` is pending (waiting to
-# be added), added, or uncounted (added, but a forgotten loop leaves it out of
-# every length). `played` names the row whose Play button filled the queue;
-# trace panels mark the rows that play has `visited` so far and the row it is
-# `current`ly in. In the player, students can press Play on any row.
+  start:
+    photos: 4
+    drawn:
+      - {tile: beach, area: [0, 0, 540, 1920]}
+      - {tile: cat, area: [540, 0, 540, 960]}
+      - {tile: gig, area: [540, 960, 270, 960]}
+      - {tile: taco, area: [810, 960, 270, 960]}
+  caption:
+    photos: 4
+    drawn:
+      - {tile: beach, area: [0, 0, 540, 960]}
+      - {tile: caption, area: [0, 960, 540, 960]}
+      - {tile: cat, area: [540, 0, 540, 960]}
+      - {tile: gig, area: [540, 960, 270, 960]}
+      - {tile: taco, area: [810, 960, 270, 960]}
+  # The first design's Split.draw has no branch for captions: the caption's
+  # area stays blank, and nothing reports an error.
+  first_design_caption:
+    photos: 4
+    drawn:
+      - {tile: beach, area: [0, 0, 540, 960]}
+      - {tile: cat, area: [540, 0, 540, 960]}
+      - {tile: gig, area: [540, 960, 270, 960]}
+      - {tile: taco, area: [810, 960, 270, 960]}
+# One panel per narrated picture. `design` is the code that draws it.
+# `caption` is pending (waiting under the beach) or added (in the tree).
+# `marked` tiles carry the `mark` tag; `share_mark` tags every Share button;
+# `flags` tag single tiles. `cuts` outlines every split's area. A trace lists
+# the leaves `drawn` so far and the split whose area is `current`ly being cut.
+# `neighbors` adds the carousel and the polaroid frame. In the player,
+# learners can press Share on any tile.
 panels:
   start:
     design: composite
-    played: road_trip
-    queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit]
-    note: Play on Road Trip queues its four songs in the order you added them.
+    note: Share on the story draws its four photos, each into the area its split hands it.
   wholes:
     design: composite
-    played: road_trip
-    queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit]
-    marked: [road_trip, throwbacks]
+    marked: [story, right, bottom]
     mark: whole
-    note: Road Trip and Throwbacks are wholes, and Throwbacks is also a part of Road Trip.
+    note: The story, right, and bottom are wholes; right and bottom are also parts of larger wholes.
   alike:
     design: composite
-    played: road_trip
-    queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit]
-    marked: [sunroof, throwbacks]
+    marked: [beach, bottom]
     mark: same requests
-    note: A song and a playlist both show a length and both answer Play.
+    note: The beach photo and the bottom split both show a photo count and a Share button.
+  first_areas:
+    design: first
+    cuts: true
+    note: Each split cuts its area into equal parts, side by side or stacked, one part per item.
   first_start:
     design: first
-    note: The first design draws the same library. Nothing has been played yet.
-  first_order:
+    note: The first design draws the same story. Its splits hold items that are photos or splits.
+  first_caption_pending:
     design: first
-    played: road_trip
-    queue: [Sunroof Down, Last Exit, Mixtape Summer, Cassette Heart]
-    flags: {last_exit: out of order}
-    note: The first design queues Road Trip's own songs first, so Last Exit plays second.
-  first_missing:
+    caption: pending
+    note: "New: the caption core memories waits to go under the beach photo."
+  first_caption_blank:
     design: first
-    episode: uncounted
-    played: road_trip
-    queue: [Sunroof Down, Last Exit, Mixtape Summer, Cassette Heart, "Road Stories: Almost There"]
-    flags: {almost_there: not counted, last_exit: out of order}
-    note: A loop missing from duration leaves the episode out, so Road Trip still reads 14 minutes.
-  trace_root:
+    caption: added
+    flags: {caption: not drawn}
+    note: Split.draw has no branch for captions, so the caption's area stays blank, and nothing reports an error.
+  tiles:
     design: composite
-    played: road_trip
-    current: road_trip
-    visited: [road_trip]
-    queue: []
-    note: The Play button calls play on Road Trip with an empty queue.
-  trace_leaf:
+    marked: [story, beach, right, cat, bottom, gig, taco]
+    mark: Tile
+    note: Every tile in the tree can draw itself and count its photos.
+  photos:
     design: composite
-    played: road_trip
-    current: road_trip
-    visited: [road_trip, sunroof]
-    queue: [Sunroof Down]
-    note: Sunroof Down added its own title. Road Trip's next item is Throwbacks.
-  trace_nested:
+    marked: [beach, cat, gig, taco]
+    mark: Photo
+    note: Each photo answers draw and photo count from its own name, with nothing inside.
+  photo_shared:
     design: composite
-    played: road_trip
-    current: throwbacks
-    visited: [road_trip, sunroof, throwbacks, mixtape, cassette]
-    queue: [Sunroof Down, Mixtape Summer, Cassette Heart]
-    note: Throwbacks forwarded play to each of its two songs.
+    marked: [beach, cat, gig, taco]
+    mark: Photo
+    flags: {beach: also in another story}
+    note: A photo never changes and knows no parent, so this beach photo can appear in another story too.
+  splits:
+    design: composite
+    marked: [story, right, bottom]
+    mark: Split
+    cuts: true
+    note: Each split holds one ordered list of tiles and cuts its area into one part per tile.
+  trace_press:
+    design: composite
+    drawn: []
+    current: story
+    note: Share calls draw on the story with the whole story's area and an empty canvas.
+  trace_drawn:
+    design: composite
+    drawn: [beach, cat, gig, taco]
+    note: "Each split cut its area and forwarded the parts in order: beach, cat, gig, then taco."
   trace_done:
     design: composite
-    played: road_trip
-    visited: [road_trip, sunroof, throwbacks, mixtape, cassette, last_exit]
-    queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit]
-    note: The call returns to the button with four titles, in the order you chose.
-  episode_request:
+    drawn: [beach, cat, gig, taco]
+    note: "The call returns to the button with the full canvas: four photos, in reading order."
+  role_component:
     design: composite
-    episode: pending
-    played: road_trip
-    queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit]
-    note: "New: the podcast episode Almost There waits to be added to Road Trip."
-  episode:
+    marked: [story, beach, right, cat, bottom, gig, taco]
+    mark: Component
+    note: "Component: Tile declares the requests that every tile answers, photo or split."
+  role_leaf:
     design: composite
-    episode: added
-    played: road_trip
-    queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit, "Road Stories: Almost There"]
-    note: Road Trip now lasts 29 minutes, and its queue ends with the episode.
+    marked: [beach, cat, gig, taco]
+    mark: Leaf
+    note: "Leaf: each photo answers requests itself and has no children."
+  role_composite:
+    design: composite
+    marked: [story, right, bottom]
+    mark: Composite
+    note: "Composite: each split holds Tiles and answers by forwarding to them."
+  role_client:
+    design: composite
+    share_mark: Client
+    note: "Client: every Share button uses only the Tile interface, whatever it shares."
+  no_checks:
+    design: composite
+    share_mark: no checks
+    note: Every Share button works on any tile, with no type checks.
+  new_kinds:
+    design: composite
+    note: A new kind of tile is one new class that implements Tile; existing classes stay unchanged.
+  overly_general:
+    design: composite
+    note: A photo-booth strip that may hold only photos would still accept any tile through add.
+  safety:
+    design: composite
+    note: add is declared only in Split, so adding a tile to a photo fails before the program runs.
+  fit:
+    design: composite
+    note: Splits nest inside splits, and Share treats one photo and a whole split alike.
+  carousel:
+    design: composite
+    neighbors: [carousel]
+    note: A carousel post is a flat list of photos. Nothing nests, so a plain list is enough.
+  frame:
+    design: composite
+    neighbors: [carousel, frame]
+    note: "A polaroid frame wraps one tile and adds drawing: that is a Decorator, not a Composite."
+  caption_pending:
+    design: composite
+    caption: pending
+    note: "New: the caption core memories waits to go under the beach photo."
+  caption:
+    design: composite
+    caption: added
+    flags: {caption: new}
+    note: The caption is one new class that implements Tile. No existing class changed.
+  final:
+    design: composite
+    caption: added
+    note: Every tile answers draw and photo count; each split forwards both to its tiles.
