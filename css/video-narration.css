@@ -143,7 +143,7 @@
   .video-narration .vn-reading-panels[data-vn-count="2"] { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
 }
 .video-narration .vn-animation-description { padding: 0.7em 1em; background: var(--nja-note-bg); border-left: 4px solid var(--nja-accent); }
-.video-narration .vn-animation-description p { margin: 0; color: var(--nja-text); }
+.video-narration .vn-animation-description p { margin: 0; color: var(--nja-text); overflow-wrap: anywhere; }
 
 /* Right under the player: the link that opens the printable notes and their
    print dialog (_includes/video-narration-notes.html), drawn as a button. */

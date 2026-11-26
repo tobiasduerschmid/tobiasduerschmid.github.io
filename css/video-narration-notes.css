@@ -48,7 +48,7 @@ html body.vn-notes-page {
 .vn-note-number { margin-right: 0.25em; color: var(--vn-notes-muted); font-variant-numeric: tabular-nums; }
 .vn-note-points { grid-area: points; display: flex; flex-direction: column; min-height: 0; }
 .vn-note-points ul { margin: 0; padding-left: 1.2em; }
-.vn-note-points li { margin: 0 0 0.35em; }
+.vn-note-points li { margin: 0 0 0.35em; overflow-wrap: anywhere; }
 
 /* The picture: a copy of the 960x540 stage, scaled to the slot's width
    (js/narration-notes.js sets the scale on screen). Before it is drawn,
