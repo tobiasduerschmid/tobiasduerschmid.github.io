@@ -1,6 +1,6 @@
 # Composite narrated lesson
 
-The Composite chapter opens with an approximately 13-minute narration built on
+The Composite chapter opens with a 12-minute narration built on
 the shared player in `docs/narrated-pattern.md`. Its example is a music
 library: a Road Trip playlist holds a song, the whole Throwbacks playlist, and
 another song, and every row, song or playlist, has a length and a Play button.
@@ -76,10 +76,13 @@ Solution, Consequences):
 4. to 6. The concrete redesign, one class per scene: `Playable` (one shared
    type; `play` collects titles in a queue passed down), `Song` (answers
    directly; never changes, so it can be shared), and `Playlist` (one ordered
-   list; duration sums, play forwards in order; `add` only here, the safe
-   choice, versus the transparent one).
+   list; duration sums, play forwards in order; `add` only here is the safe
+   choice, checked before the program runs, and a separate cue gives the
+   transparent one).
 7. Collaborations: one press of Play traced on a sequence diagram and in the
-   live library, with a prediction before the nested call.
+   live library, with a prediction before the nested call. The code panel
+   shows `Playlist.play` and `PlayButton.press` together: the `playlist` block
+   holds both classes, so the trace can mark either.
 8. The abstraction: Component, Leaf, Composite, and Client on a role diagram,
    each mapped to the class that played it, ending on the loop that lets
    composites contain composites.
@@ -106,6 +109,9 @@ Solution, Consequences):
 - `_includes/composite-library-panel.html` and `css/composite-narration.css`:
   the static library (reader, print, notes), drawn from the panels; a
   playlist's length is the sum of the songs and episodes inside it.
+- The site inverts article SVGs in dark mode (`html.dark-mode .post-content svg`).
+  The library's Play icons take the theme's colors, so they opt out with
+  `filter: none`, as the player's own control icons do.
 - `js/composite-library.js`: the live library in the player, built with the
   pattern it teaches. Each cue's state comes from the static panel's
   `data-composite-cue`; a trace that continues the previous cue's trace steps

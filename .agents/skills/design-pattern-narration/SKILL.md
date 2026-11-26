@@ -358,6 +358,11 @@ the editable handout automatically from the lesson metadata (section 9).
 - Live illustrations need labeled controls, keyboard access, a polite status message for each
   student action (not for narrated changes), and no motion under `prefers-reduced-motion`.
   Mark which parts reacted with text as well as motion, and never move focus during narration.
+- The site inverts every SVG inside chapter content in dark mode
+  (`html.dark-mode .post-content svg` in `css/portfolio.css`). An illustration whose inline SVG
+  already takes the theme's colors (icons in `currentColor`, charts with dark-mode palettes) must
+  opt out with `filter: none`, or dark mode draws it dark on dark; automated audits do not catch
+  an icon inside a button, so look at the illustration in dark mode.
 - Liquid cannot nest bracket lookups: `a[b[c]]` silently renders empty. Assign the inner
   value to a variable first. An illustration that shows zeros or blanks usually hit this.
 - Tables beside code get a narrow column. Use `overflow-wrap: break-word` with
