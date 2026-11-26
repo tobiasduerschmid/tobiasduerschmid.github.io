@@ -345,3 +345,168 @@ test('live tiles sit where their areas say, every illustration loads, and narrow
     }
   }
 });
+
+// ---------------------------------------------------------------------------
+// The player: code marks, parts, diagrams, checks, themes, and the reader link.
+const examples = yaml.load(readFileSync(require.resolve('../_data/explainers/composite_code.yml'), 'utf8'));
+
+test('code marks follow every cue in all four languages', async ({ page }) => {
+  test.setTimeout(120000);
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto(url);
+  const animation = player(page);
+  for (const scene of story.scenes.filter(candidate => candidate.code)) {
+    for (const cue of scene.cues) {
+      await seek(page, scene.id, cue.id);
+      for (const language of story.languages) {
+        await animation.getByRole('combobox', { name: 'Code language' }).selectOption(language);
+        await expect(animation.getByRole('region', { name: 'Narration', exact: true })).toHaveText(cue.text);
+        const code = animation.locator('.nja-stage pre:visible');
+        await expect(code).toHaveAttribute('aria-label', `${examples[language].filename} code`);
+        const marked = await code.locator('[aria-current="true"]').evaluateAll(lines => lines.map(line => Number(line.dataset.line)));
+        expect(marked, `${language}/${scene.id}/${cue.id}`).toEqual(examples[language].blocks[scene.code].focus[cue.focus] || []);
+      }
+    }
+  }
+  expect(errors).toEqual([]);
+});
+
+test('each scene names its part of the pattern description', async ({ page }) => {
+  await page.goto(url);
+  const animation = player(page);
+  for (const [index, scene] of story.scenes.entries()) {
+    await seekNarration(animation, timing.scenes[index].start + 0.5);
+    const parts = animation.locator('.nja-scene:visible').getByRole('list', { name: 'Part of the pattern description' });
+    await expect(parts.getByRole('listitem')).toHaveText(['Context', 'Problem', 'Solution', 'Consequences']);
+    await expect(parts.locator('[aria-current="step"]')).toHaveText(scene.part ? [scene.part] : []);
+  }
+});
+
+// The message labels of the first `count` sequence steps, in diagram order.
+const messages = (diagram, count) => diagram.steps.slice(0, count)
+  .flatMap(step => [...step.matchAll(/-> \w+: (.+)$/gm)].map(match => match[1]));
+
+test('diagrams highlight the cue\'s class, role, or lifeline, and the trace reveals its messages as the narration reaches them', async ({ page }) => {
+  await page.goto(url);
+  const animation = player(page);
+  for (const scene of story.scenes) {
+    if (!scene.diagram) continue;
+    for (const cue of scene.cues) {
+      const source = story.diagrams[cue.diagram || scene.diagram];
+      const diagram = animation.getByRole('region', { name: source.label });
+      await seek(page, scene.id, cue.id);
+      await expect(diagram.locator('svg')).toBeVisible();
+      if (cue.diagram_focus) {
+        const label = diagram.locator('svg text').filter({ hasText: new RegExp(`^${cue.diagram_focus}(:|$)`) }).first();
+        await expect(label).toBeVisible();
+        // The texture must cover the discussed element's label, not just exist elsewhere.
+        expect(await label.evaluate(node => {
+          const box = node.getBBox();
+          const x = box.x + box.width / 2;
+          const y = box.y + box.height / 2;
+          return [...node.closest('svg').querySelectorAll('[fill^="url("]')].some(shape => {
+            const area = shape.getBBox();
+            return x >= area.x && x <= area.x + area.width && y >= area.y && y <= area.y + area.height;
+          });
+        }), `${scene.id}/${cue.id}: ${cue.diagram_focus} is highlighted`).toBe(true);
+      }
+      if (cue.diagram_steps) {
+        const labels = [...new Set(messages(source, source.steps.length))];
+        const shown = await diagram.locator('svg text').evaluateAll((nodes, wanted) => nodes
+          .map(node => node.textContent.trim()).filter(text => wanted.includes(text)), labels);
+        expect(shown.sort(), `${scene.id}/${cue.id}`).toEqual(messages(source, cue.diagram_steps).sort());
+      }
+    }
+  }
+});
+
+test('narration stops inside the silence before each check and resumes only when asked', async ({ page }) => {
+  test.setTimeout(180000);
+  await serveAudioRanges(page, story.audio);
+  // Record where playback first stops; the player then re-pauses after moving
+  // to the end of the finished section, which must not overwrite it.
+  await page.addInitScript(() => {
+    const pause = HTMLMediaElement.prototype.pause;
+    HTMLMediaElement.prototype.pause = function recordPause() {
+      if (window.pausedAt === null) window.pausedAt = this.currentTime;
+      return pause.call(this);
+    };
+  });
+  await page.goto(url);
+  const animation = player(page);
+  for (const [index, scene] of story.scenes.entries()) {
+    const end = timing.scenes[index].end;
+    const speechEnd = timing.scenes[index].cues.at(-1).speech_end ?? end - scene.cues.at(-1).pause_after;
+    await seekNarration(animation, end - 0.9);
+    await page.evaluate(() => { window.pausedAt = null; });
+    await animation.getByRole('button', { name: 'Play narration' }).click();
+    const questions = questionsOf(scene.id);
+    const kind = questions.length > 1 ? 'Summary quiz' : 'Knowledge check';
+    const quiz = animation.getByRole('region', { name: `${index + 1}. ${scene.label} — ${kind}`, exact: true });
+    await expect(quiz).toBeVisible();
+    const pausedAt = await page.evaluate(() => window.pausedAt);
+    expect(pausedAt, `${scene.id}: stops before the next section's speech`).toBeLessThan(end - 0.1);
+    expect(pausedAt - speechEnd, `${scene.id}: at least two seconds to inspect the finished picture`).toBeGreaterThanOrEqual(2);
+    expect(await animation.locator('audio').evaluate(audio => audio.paused)).toBe(true);
+    for (const question of questions) {
+      await expect(quiz.getByText(question.question, { exact: true })).toBeVisible();
+      await quiz.getByRole('radio').filter({ hasText: question.options[question.correct_index] }).click();
+      await expect(quiz.getByText(question.explanation, { exact: true })).toBeVisible();
+      if (question !== questions.at(-1)) await quiz.getByRole('button', { name: /^Next/ }).click();
+    }
+    if (questions.length > 1) await quiz.getByRole('button', { name: 'See Results' }).click();
+    await quiz.getByRole('button', { name: index + 1 < story.scenes.length ? 'Continue narration' : 'Finish review' }).click();
+    await expect(quiz).toBeHidden();
+    if (index + 1 < story.scenes.length) {
+      await animation.getByRole('button', { name: 'Pause narration' }).click();
+      await expect(animation.getByRole('button', { name: 'Play narration' })).toBeEnabled();
+      await expect(animation.getByRole('heading', { name: story.scenes[index + 1].title, exact: true })).toBeVisible();
+    }
+  }
+});
+
+// These checkpoints audit the player's states. The collapsed transcript repeats
+// every step's code in four languages; the reader test and the page audit cover it.
+for (const dark of [false, true]) {
+  test(`player, live collage, and quiz are readable and accessible in ${dark ? 'dark' : 'light'} mode, including mobile`, async ({ page }, testInfo) => {
+    test.setTimeout(180000);
+    await page.setViewportSize({ width: 1500, height: 1000 });
+    await page.goto(url);
+    await setSiteTheme(page, dark);
+    const animation = player(page);
+    for (const [id, cue] of [['intro', 'try-it'], ['problem', 'every-change'], ['split_role', 'safe-add'], ['collaborations', 'recursion'], ['solution', 'composite'], ['transfer', 'caption']]) {
+      await seek(page, id, cue);
+      await a11yCheckpoint(page, `${id} ${dark ? 'dark' : 'light'}`, { include: '#composite-animation .nja-player', feature: 'composite-narration' });
+      await animation.locator('.nja-player').screenshot({ path: testInfo.outputPath(`${id}.png`) });
+    }
+    await page.setViewportSize({ width: 320, height: 850 });
+    const mobile = [['problem', 'every-change'], ['collaborations', 'loop'], ['applicability', 'neighbors']];
+    for (const [id, cue] of mobile) {
+      await seek(page, id, cue);
+      await expect.poll(() => animation.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
+      await a11yCheckpoint(page, `mobile ${id}`, { include: '#composite-animation .nja-player', feature: 'composite-narration' });
+    }
+    await openPlayerSettings(animation);
+    await animation.getByRole('button', { name: 'Knowledge check', exact: true }).click();
+    // The Knowledge check button opens the check of the scene the player is on.
+    const question = questionsOf(mobile.at(-1)[0])[0];
+    const wrong = Number(Object.keys(question.option_feedback)[0]);
+    await animation.getByRole('region', { name: /— (Knowledge check|Summary quiz)$/ }).getByRole('radio').filter({ hasText: question.options[wrong] }).click();
+    await expect(animation.getByText(question.option_feedback[wrong], { exact: true })).toBeVisible();
+    await a11yCheckpoint(page, 'mobile incorrect answer', { include: '#composite-animation .nja-player', feature: 'composite-narration' });
+    await animation.locator('.nja-player').screenshot({ path: testInfo.outputPath('quiz-mobile.png') });
+  });
+}
+
+test('reading view keeps the chosen language and theme', async ({ page }) => {
+  await page.goto(url);
+  await player(page).getByRole('combobox', { name: 'Code language' }).selectOption('java');
+  await setSiteTheme(page, true);
+  await player(page).getByRole('link', { name: 'Read at my own pace', exact: true }).click();
+  await expect(page.getByRole('combobox', { name: 'Code language' })).toHaveValue('java');
+  await expect(page.locator('[data-transcript-language="python"]:visible')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Dark mode' })).toHaveAttribute('aria-pressed', 'true');
+  await page.setViewportSize({ width: 320, height: 850 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+});
