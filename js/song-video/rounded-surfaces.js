@@ -237,10 +237,14 @@
     return boxes;
   }
 
+  /** A subtree's HTML boxes: its root and every box inside it, but nothing inside an SVG. */
+  function boxesIn(subtree) {
+    return [subtree, ...subtree.querySelectorAll(':not(svg, svg *)')];
+  }
+
   /** The HTML boxes of a returning subtree whose state classes changed while it was away. */
   function changedWhileAway(subtree, states) {
-    return [subtree, ...subtree.querySelectorAll(':not(svg, svg *)')]
-      .filter((box) => states.get(box) !== stateOf(box));
+    return boxesIn(subtree).filter((box) => states.get(box) !== stateOf(box));
   }
 
   const observers = new WeakMap();
@@ -276,8 +280,10 @@
         if (record.type === 'childList') {
           record.addedNodes.forEach((node) => {
             if (!(node instanceof HTMLElement)) return;
+            // New content (including a picture culled before prepare) repaints
+            // every box in it, however many; the size limit is for state changes.
             if (away.delete(node)) changedWhileAway(node, states).forEach(collect);
-            else collect(node);
+            else boxesIn(node).forEach((box) => boxes.add(box));
           });
           record.removedNodes.forEach((node) => {
             if (node instanceof HTMLElement && !node.isConnected) away.add(node);

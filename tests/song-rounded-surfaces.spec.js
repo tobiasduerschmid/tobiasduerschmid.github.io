@@ -36,3 +36,28 @@ test('a picture back from outside the stage repaints a frame whose state changed
   expect(frames.after, 'the returning frame shows the state it gained while away').toContain('rgb(0, 255, 0)');
   expect(frames.after).not.toContain('rgb(255, 0, 0)');
 });
+
+test('a picture first added after prepare repaints every frame in it, however many boxes it holds', async ({ page }) => {
+  await page.setContent(`<style>
+      .stage { position: relative; width: 960px; height: 540px; }
+      .tag { position: absolute; width: 80px; height: 40px; border: 3px solid rgb(255, 0, 0); border-radius: 10px; background: rgb(0, 0, 0); }
+    </style>
+    <div class="stage" id="stage"><div class="layer"></div></div>`);
+  await page.addScriptTag({ path: path.join(root, 'js/song-video/rounded-surfaces.js') });
+  const tag = await page.evaluate(async () => {
+    const stage = document.getElementById('stage');
+    window.SongRoundedSurfaces.prepare(stage, { force: true });
+    // A picture culled before prepare arrives as new content; a stream of
+    // travelling tokens gives it far more boxes than a state change repaints.
+    const picture = document.createElement('div');
+    for (let i = 0; i < 1000; i += 1) picture.append(document.createElement('span'));
+    const frame = Object.assign(document.createElement('div'), { className: 'tag' });
+    picture.append(frame);
+    stage.querySelector('.layer').append(picture);
+    await new Promise((resolve) => setTimeout(resolve));
+    const style = getComputedStyle(frame);
+    return { image: style.backgroundImage, border: style.borderTopColor };
+  });
+  expect(tag.image, 'the frame is painted as a background layer').toContain('rgb(255, 0, 0)');
+  expect(tag.border, 'its border no longer paints the frame').toBe('rgba(0, 0, 0, 0)');
+});
