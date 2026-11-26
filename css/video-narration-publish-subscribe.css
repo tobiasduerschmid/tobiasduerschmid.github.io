@@ -11,13 +11,31 @@
 /* Mochi from the side. */
 .ps-robot { position: absolute; }
 .ps-robot-art { display: block; width: 100%; height: 100%; overflow: visible; }
-.ps-robot-body { fill: #fdfbf3; stroke: #0b0f1a; stroke-width: 4; }
-.ps-robot-lid { fill: none; stroke: #0b0f1a; stroke-width: 3; }
-.ps-robot-eye { fill: #1b2340; stroke: #0b0f1a; stroke-width: 2; }
+/* Painted like the real thing: a cream shell lit from above, dark rubber,
+   orange safety flag, cyan LED eyes. The same in both page themes. */
+.ps-robot-shadow { fill: rgba(11, 15, 26, 0.18); }
+.ps-robot-wheel-far { fill: #2a3044; }
+.ps-robot-rocker { fill: #3b4357; }
+.ps-robot-pole { fill: none; stroke: #3b4252; stroke-width: 1.6; stroke-linecap: round; }
+.ps-robot-pole-cap { fill: #ff8a3d; }
+.ps-robot-flag { fill: #ff8a3d; }
+.ps-robot-flag-fold { fill: #e5671e; }
+.ps-robot-body { fill: #f6f3ea; }
+.ps-robot-skirt { fill: #dcd6c8; }
+.ps-robot-lid { fill: #fbfaf6; }
+.ps-robot-lid-light { fill: #ffffff; }
+.ps-robot-stripe { fill: #25a59a; }
+.ps-robot-status { fill: #38d3f5; }
+.ps-robot-camera { fill: #182039; }
 .ps-robot-lens { fill: #38d3f5; }
-.ps-robot-wheel { fill: #1b2340; stroke: #0b0f1a; stroke-width: 3; }
-.ps-robot-pole { stroke: #0b0f1a; stroke-width: 3; stroke-linecap: round; }
-.ps-robot-flag { fill: #ff8a3d; stroke: #0b0f1a; stroke-width: 2; stroke-linejoin: round; }
+.ps-robot-face { fill: #182039; }
+.ps-robot-eye { fill: #5ee6ff; }
+.ps-robot-glint { fill: #ffffff; }
+.ps-robot-wheel { fill: #1b2032; }
+.ps-robot-hub { fill: #8a93a8; }
+.ps-robot-hub-cap { fill: #d5dae6; }
+.ps-robot-ink { fill: none; stroke: #0b0f1a; stroke-width: 2.2; stroke-linejoin: round; }
+.ps-robot-ink-fine { fill: none; stroke: #0b0f1a; stroke-width: 1.4; stroke-linejoin: round; }
 .ps-robot-name {
   position: absolute;
   left: 50%;
@@ -33,11 +51,31 @@
 }
 
 /* The campus as a paper map. */
-.ps-map { position: absolute; overflow: hidden; border-radius: 16px; background: #eef3e2; box-shadow: var(--vn-paper-shadow); }
+.ps-map { position: absolute; overflow: hidden; border-radius: 16px; background: #cfe3b6; box-shadow: var(--vn-paper-shadow); }
 .ps-map-art { position: absolute; inset: 0; width: 100%; height: 100%; }
-.ps-map-walk { fill: none; stroke: #d9c9a3; stroke-width: 34; stroke-linecap: round; }
-.ps-map-building { fill: #d5dbe8; stroke: #6b7894; stroke-width: 3; }
-.ps-map-scooter { fill: #0b4a7a; stroke: #0b4a7a; stroke-width: 3; stroke-linecap: round; }
+.ps-map-path-edge { fill: none; stroke: #d6c9a6; stroke-width: 18; stroke-linecap: round; }
+.ps-map-path { fill: none; stroke: #efe6cf; stroke-width: 13; stroke-linecap: round; }
+.ps-map-walk-edge { fill: none; stroke: #cdbd96; stroke-width: 40; stroke-linecap: round; }
+.ps-map-walk { fill: none; stroke: #f1e7cf; stroke-width: 33; stroke-linecap: round; }
+.ps-map-walk-line { fill: none; stroke: #e0d2b0; stroke-width: 1.5; stroke-dasharray: 8 9; }
+.ps-map-plaza { fill: #f1e7cf; stroke: #cdbd96; stroke-width: 3; }
+.ps-map-fountain { fill: #dfe6ee; stroke: #8f9cb3; stroke-width: 2.5; }
+.ps-map-water { fill: #8fcdf0; }
+.ps-map-shadow { fill: rgba(40, 70, 30, 0.22); }
+.ps-map-roof--tile { fill: #e2a283; }
+.ps-map-roof--concrete { fill: #d3dae6; }
+.ps-map-parapet { fill: none; stroke: #f0c3ab; stroke-width: 2.5; }
+.ps-map-unit { fill: #b7c0d0; stroke: #8a96ad; stroke-width: 1.5; }
+.ps-map-edge { fill: none; stroke: #6b7894; stroke-width: 2.5; }
+.ps-map-tree-shadow { fill: rgba(40, 70, 30, 0.2); }
+.ps-map-tree { fill: #7db662; stroke: #4f8a3c; stroke-width: 1.5; }
+.ps-map-tree-shade { fill: #64a04c; }
+.ps-map-scooter { stroke-linecap: round; }
+.ps-scooter-wheel { fill: #1b2032; }
+.ps-scooter-deck { fill: #2b3245; stroke: #0b0f1a; stroke-width: 1.2; }
+.ps-scooter-stripe { fill: #9be15d; }
+.ps-scooter-bar { fill: none; stroke: #2b3245; stroke-width: 2.6; }
+.ps-scooter-grip { fill: #0b0f1a; }
 .ps-map-name { position: absolute; color: #0b0f1a; font-size: 21px; font-weight: 900; white-space: nowrap; translate: -50% -50%; }
 .ps-map-name--walk { padding: 1px 8px; border-radius: 6px; background: #fdfbf3; translate: 0 -50%; }
 
@@ -53,16 +91,67 @@
   box-shadow: var(--vn-paper-shadow);
 }
 .ps-walk-name { display: block; color: #3a4660; font-size: 17px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; }
-.ps-walk-lane { position: absolute; left: 12px; right: 12px; bottom: 8px; height: 62px; border-radius: 10px; background: #d9c9a3; }
-.ps-walk-robot { position: absolute; bottom: 2px; width: 64px; height: 56px; }
-.ps-walk-prop { position: absolute; bottom: 4px; display: grid; place-items: center; width: 52px; height: 56px; color: #0b0f1a; }
-.ps-walk-prop svg { width: 46px; height: 46px; }
-.ps-walk-prop--tour { color: #0b4a7a; }
-.ps-skater-art { overflow: visible; }
-.ps-skater-art circle:first-child { fill: #0b0f1a; }
-.ps-skater-limbs { fill: none; stroke: #0b0f1a; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
-.ps-skater-board { stroke: #b42318; stroke-width: 5; stroke-linecap: round; }
-.ps-skater-wheel { fill: #0b0f1a; }
+.ps-walk-lane { position: absolute; left: 12px; right: 12px; bottom: 8px; height: 62px; overflow: hidden; border-radius: 10px; }
+.ps-lane-art { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ps-lane-sky { fill: #e4eed6; }
+.ps-lane-trunk { fill: #7a5a3c; }
+.ps-lane-tree { fill: #8cbf73; }
+.ps-lane-tree-shade { fill: #73a85e; }
+.ps-lane-hedge { fill: #a6c98c; }
+.ps-lane-pole { fill: none; stroke: #4a5266; stroke-width: 1.6; }
+.ps-lane-lamp { fill: #fff3c4; stroke: #4a5266; stroke-width: 1; stroke-linejoin: round; }
+.ps-lane-curb { fill: #cdbf9c; }
+.ps-lane-path { fill: #eadfc4; }
+.ps-lane-joint { fill: none; stroke: #d6c8a5; stroke-width: 1; }
+.ps-walk-robot { position: absolute; bottom: 2px; width: 50px; height: 44px; }
+.ps-walk-prop { position: absolute; bottom: 2px; width: 52px; height: 60px; }
+.ps-walk-prop--tour { width: 84px; }
+.ps-figure-art { display: block; width: 100%; height: 100%; overflow: visible; }
+
+/* People on the walkway, drawn with a small rig (publish-subscribe-kit.js,
+   person): every paint names its color and the darker one for the far arm
+   and leg, and each limb is a colored stroke over a wider ink stroke. */
+.ps-person-limb { fill: none; stroke: var(--paint); stroke-linecap: round; stroke-linejoin: round; }
+.ps-person-fill { fill: var(--paint); }
+.ps-person-ink { fill: none; stroke: #0b0f1a; stroke-linecap: round; stroke-linejoin: round; }
+.ps-person-outline { fill: none; stroke: #0b0f1a; stroke-width: 0.8; stroke-linejoin: round; }
+.ps-person-eye { fill: #1a120c; }
+.ps-limb-leg { stroke-width: 4.2; }
+.ps-person-ink.ps-limb-leg { stroke-width: 5.8; }
+.ps-limb-sleeve { stroke-width: 3.4; }
+.ps-person-ink.ps-limb-sleeve { stroke-width: 5; }
+.ps-limb-arm,
+.ps-limb-neck { stroke-width: 2.6; }
+.ps-person-ink.ps-limb-arm,
+.ps-person-ink.ps-limb-neck { stroke-width: 4.2; }
+.ps-limb-shoe { stroke-width: 3; }
+.ps-person-ink.ps-limb-shoe { stroke-width: 4.6; }
+.ps-limb-stick { stroke-width: 1.2; }
+.ps-person-ink.ps-limb-stick { stroke-width: 2.4; }
+.ps-skin-0 { --paint: #f1c7a0; --paint-shade: #d9aa80; }
+.ps-skin-1 { --paint: #dca777; --paint-shade: #c08e60; }
+.ps-skin-2 { --paint: #b97a4f; --paint-shade: #9c6640; }
+.ps-skin-3 { --paint: #8d5a3b; --paint-shade: #74492f; }
+.ps-hair-0 { --paint: #1f1611; }
+.ps-hair-1 { --paint: #3b2416; }
+.ps-hair-2 { --paint: #c9a063; }
+.ps-shirt-blue { --paint: #2f6fd6; --paint-shade: #2559b0; }
+.ps-shirt-gold { --paint: #f2b53a; --paint-shade: #d39a26; }
+.ps-shirt-coral { --paint: #f26d5b; --paint-shade: #d4553f; }
+.ps-shirt-green { --paint: #3aa76d; --paint-shade: #2e8a59; }
+.ps-pants-denim { --paint: #34548a; --paint-shade: #2a4570; }
+.ps-pants-dark { --paint: #2b3245; --paint-shade: #222838; }
+.ps-pants-khaki { --paint: #c8b48a; --paint-shade: #ad9a72; }
+.ps-shoe { --paint: #2a2f3d; --paint-shade: #1d212b; }
+.ps-pack-red { --paint: #d94841; }
+.ps-pack-teal { --paint: #1f9e8f; }
+.ps-helmet { --paint: #e5484d; }
+.ps-stick { --paint: #6b4a2b; }
+.ps-pennant { --paint: #f2b53a; }
+/* After the paints, so a far limb takes its paint's darker color. */
+.ps-shade { --paint: var(--paint-shade); }
+.ps-deck { fill: #b8743a; stroke: #0b0f1a; stroke-width: 0.9; stroke-linejoin: round; }
+.ps-deck-wheel { fill: #f2e6c8; stroke: #0b0f1a; stroke-width: 0.9; }
 
 /* The delivery app on a phone. */
 .ps-phone {
@@ -70,15 +159,29 @@
   box-sizing: border-box;
   width: 270px;
   height: 380px;
-  padding: 18px 16px;
+  padding: 34px 16px 18px;
   border: 8px solid #1b2340;
   border-radius: 34px;
   background: #fdfbf3;
   color: #0b0f1a;
   box-shadow: var(--vn-paper-shadow);
 }
+/* The app's tracking map, painted below the message card. */
+.ps-track-art { position: absolute; left: 16px; right: 16px; bottom: 26px; width: calc(100% - 32px); height: auto; }
+.ps-track-lawn { fill: #cfe3b6; }
+.ps-track-tree { fill: #7db662; }
+.ps-track-building { fill: #d3dae6; stroke: #6b7894; stroke-width: 2; }
+.ps-track-walk { fill: none; stroke: #f1e7cf; stroke-width: 14; stroke-linecap: round; }
+.ps-track-route { fill: none; stroke: #0b4a7a; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 2 7; }
+.ps-track-pin { fill: #0b4a7a; }
+.ps-track-pin-dot { fill: #fdfbf3; }
+/* The phone's camera notch and home indicator. */
+.ps-phone::before,
+.ps-phone::after { content: ''; position: absolute; left: 50%; border-radius: 999px; background: #1b2340; translate: -50% 0; }
+.ps-phone::before { top: 8px; width: 76px; height: 18px; }
+.ps-phone::after { bottom: 8px; width: 96px; height: 5px; }
 .ps-phone-app { margin: 4px 0 16px; color: #0b4a7a; font-size: 26px; font-weight: 900; }
-.ps-phone-card { position: absolute; left: 16px; right: 16px; top: 80px; display: flex; align-items: center; gap: 12px; padding: 14px 12px; border-radius: 14px; background: #e6ebf6; }
+.ps-phone-card { position: absolute; left: 16px; right: 16px; top: 96px; display: flex; align-items: center; gap: 12px; padding: 14px 12px; border-radius: 14px; background: #e6ebf6; }
 .ps-phone-icon { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%; background: #0b4a7a; color: #fff; }
 .ps-phone-icon svg { width: 26px; height: 26px; }
 .ps-phone-words { display: flex; flex-direction: column; font-size: 20px; font-weight: 700; line-height: 1.2; }

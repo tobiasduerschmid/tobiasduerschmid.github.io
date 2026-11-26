@@ -49,10 +49,11 @@ scenes:
         visual: >-
           A sticker reads 12:50, lab until 2:00. A paper campus map shows the Student union at the
           top left, the Engineering building at the bottom right, and the Main walkway between them,
-          with two scooters on it. Mochi, a cooler-sized robot on wheels with a camera eye and a
-          flag, leaves the union, follows the walkway past the scooters, and stops at the
-          engineering building. A phone app, Campus Eats, shows Order placed: Sandwich, then Mochi
-          is here: At your door.
+          with two scooters on it. Mochi, a cooler-sized robot on six wheels with a camera on its
+          lid, two glowing eyes on its face panel, and a safety flag, leaves the union, follows
+          the walkway past the scooters, and stops at the engineering building. A phone app, Campus
+          Eats, shows Order placed: Sandwich, then Mochi is here: At your door, above a small map
+          where Mochi drives to the pin at the door.
       - id: inside
         say: >-
           Inside Mochi, six programs work together. A camera driver grabs thirty frames a second. An

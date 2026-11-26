@@ -108,6 +108,7 @@
       ps.rideCampus(a, { mapX, mapY, at: at(lunch, 'robot'), drive: at(lunch, 'rolls'), duration: at(lunch, 'parks') - at(lunch, 'rolls') });
       ps.phone(a, {
         x: 656, y: 60, at: at(lunch, 'order'),
+        ride: { at: at(lunch, 'rolls'), duration: at(lunch, 'parks') - at(lunch, 'rolls') },
         screens: [
           { at: at(lunch, 'sandwich'), title: 'Order placed', text: 'Sandwich', iconName: 'cart' },
           { at: at(lunch, 'parks'), title: 'Mochi is here', text: 'At your door', iconName: 'pin' },
