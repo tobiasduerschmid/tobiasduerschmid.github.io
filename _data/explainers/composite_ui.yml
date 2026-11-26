@@ -1,0 +1,104 @@
+# The illustrated music library and the specification both code designs
+# implement. `rows` list the library in tree order: each row belongs to the
+# closest earlier row one level shallower. The node test rebuilds this library
+# in every language, runs both designs, and compares them with `expected`.
+app: Music library
+rows:
+  - {id: road_trip, kind: playlist, name: Road Trip, depth: 0}
+  - {id: sunroof, kind: song, name: Sunroof Down, seconds: 180, depth: 1}
+  - {id: throwbacks, kind: playlist, name: Throwbacks, depth: 1}
+  - {id: mixtape, kind: song, name: Mixtape Summer, seconds: 240, depth: 2}
+  - {id: cassette, kind: song, name: Cassette Heart, seconds: 210, depth: 2}
+  - {id: last_exit, kind: song, name: Last Exit, seconds: 210, depth: 1}
+# The transfer task appends this podcast episode to Road Trip. An episode
+# queues as "show: name".
+episode:
+  - {id: almost_there, kind: episode, show: Road Stories, name: Almost There, seconds: 900, depth: 1}
+expected:
+  road_trip: {seconds: 840, queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit]}
+  throwbacks: {seconds: 450, queue: [Mixtape Summer, Cassette Heart]}
+  sunroof: {seconds: 180, queue: [Sunroof Down]}
+  # The first design queues a playlist's own songs before its nested playlists.
+  first_design_road_trip: [Sunroof Down, Last Exit, Mixtape Summer, Cassette Heart]
+  with_episode: {seconds: 1740, queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit, "Road Stories: Almost There"]}
+# One panel per illustrated state. `design` is the code that draws it: the
+# first design (two lists) or the composite. `episode` is pending (waiting to
+# be added), added, or uncounted (added, but a forgotten loop leaves it out of
+# every length). `played` names the row whose Play button filled the queue;
+# trace panels mark the rows that play has `visited` so far and the row it is
+# `current`ly in. In the player, students can press Play on any row.
+panels:
+  start:
+    design: composite
+    played: road_trip
+    queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit]
+    note: Play on Road Trip queues its four songs in the order you added them.
+  wholes:
+    design: composite
+    played: road_trip
+    queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit]
+    marked: [road_trip, throwbacks]
+    mark: whole
+    note: Road Trip and Throwbacks are wholes, and Throwbacks is also a part of Road Trip.
+  alike:
+    design: composite
+    played: road_trip
+    queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit]
+    marked: [sunroof, throwbacks]
+    mark: asked alike
+    note: A song and a playlist both show a length and both answer Play.
+  first_start:
+    design: first
+    note: The first design draws the same library. Nothing has been played yet.
+  first_order:
+    design: first
+    played: road_trip
+    queue: [Sunroof Down, Last Exit, Mixtape Summer, Cassette Heart]
+    flags: {last_exit: out of order}
+    note: The first design queues Road Trip's own songs first, so Last Exit plays second.
+  first_missing:
+    design: first
+    episode: uncounted
+    played: road_trip
+    queue: [Sunroof Down, Last Exit, Mixtape Summer, Cassette Heart, "Road Stories: Almost There"]
+    flags: {almost_there: not counted, last_exit: out of order}
+    note: A loop missing from duration leaves the episode out, so Road Trip still reads 14 minutes.
+  trace_root:
+    design: composite
+    played: road_trip
+    current: road_trip
+    visited: [road_trip]
+    queue: []
+    note: The Play button calls play on Road Trip with an empty queue.
+  trace_leaf:
+    design: composite
+    played: road_trip
+    current: road_trip
+    visited: [road_trip, sunroof]
+    queue: [Sunroof Down]
+    note: Sunroof Down added its own title. Road Trip's next item is Throwbacks.
+  trace_nested:
+    design: composite
+    played: road_trip
+    current: throwbacks
+    visited: [road_trip, sunroof, throwbacks, mixtape, cassette]
+    queue: [Sunroof Down, Mixtape Summer, Cassette Heart]
+    note: Throwbacks forwarded play to each of its two songs.
+  trace_done:
+    design: composite
+    played: road_trip
+    visited: [road_trip, sunroof, throwbacks, mixtape, cassette, last_exit]
+    queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit]
+    note: The call returns to the button with four titles, in the order you chose.
+  episode_request:
+    design: composite
+    episode: pending
+    played: road_trip
+    queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit]
+    note: "New: the podcast episode Almost There waits to be added to Road Trip."
+  episode:
+    design: composite
+    episode: added
+    played: road_trip
+    queue: [Sunroof Down, Mixtape Summer, Cassette Heart, Last Exit, "Road Stories: Almost There"]
+    note: Road Trip now lasts 29 minutes, and its queue ends with the episode.

@@ -1,0 +1,183 @@
+{
+  "version": 1,
+  "presentation": {
+    "visuals": {
+      "ui": "composite-library-panel.html"
+    },
+    "scripts": [
+      "composite-library.js"
+    ],
+    "styles": [
+      "/css/composite-narration.css"
+    ]
+  },
+  "resources": {
+    "languages": [
+      "python",
+      "java",
+      "cpp",
+      "typescript"
+    ],
+    "default_language": "python",
+    "example_order": [
+      "playable",
+      "song",
+      "playlist",
+      "button",
+      "wire"
+    ],
+    "diagrams": {
+      "solution": {
+        "label": "Class diagram of the music library redesign",
+        "description": "Song and Playlist both implement the Playable interface, which declares duration() and play(queue). Song keeps a title and a length in seconds. Playlist keeps a name, offers add(item: Playable), and holds any number of Playable items, so its items may be songs or other playlists.",
+        "caption": "A dashed arrow with a hollow triangle means a class implements an interface. The arrow with a hollow diamond means a Playlist holds any number of Playables, which may be songs or other playlists.",
+        "source": "@startuml\nlayout portrait\ninterface Playable {\n  + duration(): int\n  + play(queue)\n}\nclass Song {\n  - title\n  - seconds\n  + duration(): int\n  + play(queue)\n}\nclass Playlist {\n  - name\n  + add(item: Playable)\n  + duration(): int\n  + play(queue)\n}\nSong ..|> Playable\nPlaylist ..|> Playable\nPlaylist o--> \"*\" Playable : items\n@enduml\n"
+      },
+      "trace": {
+        "type": "sequence",
+        "label": "Sequence of one press of Play on Road Trip",
+        "description": "The Play button, button, calls play(queue) on roadTrip. roadTrip calls play(queue) on throwbacks, which calls play(queue) on its song mixtape.",
+        "caption": "Lifelines are named like the variables in the main program. The trace follows one path down the tree: Road Trip's two songs and Cassette Heart receive play the same way and are left out. Messages appear as the narration reaches them.",
+        "source": "@startuml\nparticipant button: PlayButton\nparticipant roadTrip: Playlist\nparticipant throwbacks: Playlist\nparticipant mixtape: Song\n",
+        "steps": [
+          "activate button\nbutton -> roadTrip: play(queue)\nactivate roadTrip\n",
+          "roadTrip -> throwbacks: play(queue)\nactivate throwbacks\nthrowbacks -> mixtape: play(queue)\nactivate mixtape\ndeactivate mixtape\ndeactivate throwbacks\ndeactivate roadTrip\ndeactivate button\n"
+        ]
+      },
+      "roles": {
+        "label": "Composite pattern role diagram",
+        "description": "A Client uses the Component interface, which declares operation(). Leaf and Composite both implement Component. Composite also declares add(child: Component) and holds any number of Components as its children.",
+        "caption": "This is the safe arrangement, with add only in Composite; the transparent one also declares add in Component. Composite both implements Component and holds Components, so composites can contain composites.",
+        "source": "@startuml\nlayout portrait\nclass Client\ninterface Component {\n  + operation()\n}\nclass Leaf {\n  + operation()\n}\nclass Composite {\n  + add(child: Component)\n  + operation()\n}\nClient --> Component : uses\nLeaf ..|> Component\nComposite ..|> Component\nComposite o--> \"*\" Component : children\n@enduml\n"
+      }
+    }
+  },
+  "scenes": {
+    "intro": {
+      "state": {"ui": true},
+      "cues": {
+        "road-trip": {"ui_state": "start"},
+        "try-it": {"ui_state": "start"},
+        "pattern-parts": {"ui_state": "start"}
+      }
+    },
+    "context": {
+      "state": {"ui": true},
+      "cues": {
+        "part-whole": {"ui_state": "wholes"},
+        "alike": {"ui_state": "alike"},
+        "trees": {"ui_state": "start"}
+      }
+    },
+    "problem": {
+      "state": {"code": "problem", "ui": true},
+      "cues": {
+        "two-lists": {"focus": "lists", "ui_state": "first_start"},
+        "two-loops": {"focus": "loops", "ui_state": "first_start"},
+        "lost-order": {"focus": "order", "ui_state": "first_order"},
+        "client-check": {"focus": "client", "ui_state": "first_order"},
+        "predict-episodes": {"ui_state": "first_order"},
+        "every-change": {"focus": "changes", "ui_state": "first_missing"},
+        "demands": {"focus": "loops", "ui_state": "first_order"}
+      }
+    },
+    "playable_role": {
+      "state": {"code": "playable", "diagram": "solution"},
+      "cues": {
+        "shared-type": {"focus": "interface", "diagram_focus": "Playable"},
+        "queue": {"focus": "play", "diagram_focus": "Playable"}
+      }
+    },
+    "song_role": {
+      "state": {"code": "song", "diagram": "solution"},
+      "cues": {
+        "direct": {"focus": "requests", "diagram_focus": "Song"},
+        "shared": {"focus": "fields", "diagram_focus": "Song"}
+      }
+    },
+    "playlist_role": {
+      "state": {"code": "playlist", "diagram": "solution"},
+      "cues": {
+        "one-list": {"focus": "items", "diagram_focus": "Playlist"},
+        "duration": {"focus": "duration", "diagram_focus": "Playlist"},
+        "play": {"focus": "play", "diagram_focus": "Playlist"},
+        "safe-add": {"focus": "add", "diagram_focus": "Playlist"}
+      }
+    },
+    "collaborations": {
+      "state": {"code": "button", "diagram": "trace", "ui": true},
+      "cues": {
+        "press": {"focus": "press", "diagram_steps": 1, "diagram_focus": "roadTrip", "ui_state": "trace_root"},
+        "first-song": {"focus": "call", "diagram_steps": 1, "ui_state": "trace_leaf"},
+        "recursion": {"focus": "call", "diagram_steps": 2, "diagram_focus": "throwbacks", "ui_state": "trace_nested"},
+        "loop": {"focus": "result", "diagram_steps": 2, "ui_state": "trace_done"}
+      }
+    },
+    "solution": {
+      "state": {"diagram": "roles"},
+      "cues": {
+        "component": {"diagram_focus": "Component"},
+        "leaf": {"diagram_focus": "Leaf"},
+        "composite": {"diagram_focus": "Composite"},
+        "client": {"diagram_focus": "Client"}
+      }
+    },
+    "consequences": {
+      "state": {
+        "cards": [
+          {"title": "Benefit: simple clients", "text": "Clients treat one object and a group the same way, with no type checks, and groups nest to any depth."},
+          {"title": "Benefit: new kinds fit in", "text": "A new leaf or composite class works inside existing structures and with existing clients, unchanged."},
+          {"title": "Liability: overly general", "text": "The type system cannot restrict which children a composite accepts; restrictions need checks at runtime."},
+          {"title": "Liability: safety or transparency", "text": "Add only in the composite is safe but visible to clients; add in the component is uniform but leaves must refuse it."}
+        ]
+      },
+      "cues": {
+        "simple-clients": {},
+        "new-kinds": {},
+        "overly-general": {},
+        "safety": {}
+      }
+    },
+    "applicability": {
+      "state": {
+        "cards": [
+          {"title": "A good fit", "text": "Items nest inside groups, groups inside groups, and clients should not care which one they hold."},
+          {"title": "A simpler alternative", "text": "No nesting: a plain list. Same data in every item: one class with an optional list of children."},
+          {"title": "Neighbors", "text": "Nested views and macro commands are composites. A decorator wraps one object to add behavior; a composite holds many."}
+        ]
+      },
+      "cues": {
+        "fit": {},
+        "one-class": {},
+        "neighbors": {}
+      }
+    },
+    "transfer": {
+      "state": {
+        "ui": true,
+        "cards": [
+          {"title": "Podcast episodes", "text": "Listeners drop episodes into playlists, right next to songs."},
+          {"title": "An episode", "text": "It has a show, a title, and a length, and it queues as show: title."},
+          {"title": "Your task", "text": "Name the class you add and every existing line that changes."}
+        ]
+      },
+      "cues": {
+        "plan": {"ui_state": "episode_request"},
+        "episode": {"ui_state": "episode"}
+      }
+    },
+    "summary": {
+      "state": {
+        "cards": [
+          {"title": "Context", "text": "A part-whole hierarchy that nests, whose clients want to treat one object and a group alike."},
+          {"title": "Problem", "text": "Code that handles single objects and groups separately repeats its loops, loses order, and breaks as new kinds arrive."},
+          {"title": "Solution", "text": "A Component interface that Leaves implement directly and Composites implement by forwarding to their children."},
+          {"title": "Consequences", "text": "Simple clients and easy new kinds, at the cost of an overly general structure and a choice between safety and transparency."}
+        ]
+      },
+      "cues": {
+        "recap": {}
+      }
+    }
+  }
+}
