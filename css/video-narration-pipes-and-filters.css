@@ -14,20 +14,81 @@
 .pf-photo-frame { position: relative; overflow: hidden; aspect-ratio: 160 / 110; border-radius: 4px; background: #24305e; }
 .pf-photo-art { display: block; width: 100%; height: 100%; }
 .pf-photo-caption { display: block; margin-top: 4px; font-size: 20px; font-weight: 800; line-height: 1.2; text-align: center; white-space: nowrap; }
-.pf-stands { fill: #3b4670; }
-.pf-face { fill: #e8b98f; stroke: #2b1a0d; stroke-width: 1; }
-.pf-face-block { fill: #9aa3b8; stroke: #4a5578; stroke-width: 1; }
-.pf-field { fill: #2f7d4f; }
-.pf-field-line { stroke: #e6f4ea; stroke-width: 1.5; opacity: 0.7; }
-.pf-player-jersey { fill: #2d6cdf; stroke: #0b0f1a; stroke-width: 1.5; stroke-linejoin: round; }
-.pf-player-arm,
-.pf-player-leg { stroke: #c98d5c; stroke-width: 4; stroke-linecap: round; }
-.pf-player-leg { stroke: #fdfbf3; }
-.pf-player-head { fill: #fdfbf3; stroke: #0b0f1a; stroke-width: 1.5; }
-.pf-ball { fill: #8a4b1f; stroke: #fdfbf3; stroke-width: 1.2; }
-.pf-veil { fill: #050814; opacity: 0.5; }
-.pf-speck { fill: #e6edf7; }
-.pf-speck--dark { fill: #0b0f1a; }
+/* The picture (pipes-and-filters-kit.js, photoArt): a night game under
+   stadium lights, the same in both page themes. */
+.pf-stands { fill: #17204a; }
+.pf-tier { fill: #10183a; }
+.pf-wall { fill: #14245a; }
+.pf-wall-stripe { fill: #f2b53a; }
+.pf-field { fill: #2f7d4b; }
+.pf-field-band { fill: #2a7344; }
+.pf-field-shade { fill: #25663d; }
+.pf-yard-line { fill: #e3f1e6; }
+/* Fans: five skin tones, four hair colors, four shirts in the home colors. */
+.pf-skin-0 { fill: #f1c7a0; }
+.pf-skin-1 { fill: #dca777; }
+.pf-skin-2 { fill: #b97a4f; }
+.pf-skin-3 { fill: #8d5a3b; }
+.pf-skin-4 { fill: #5e3b26; }
+.pf-pixel-0 { fill: #d9ad86; }
+.pf-pixel-1 { fill: #c08e60; }
+.pf-pixel-2 { fill: #9c6640; }
+.pf-pixel-3 { fill: #74492f; }
+.pf-pixel-4 { fill: #4c2f1e; }
+.pf-hair-0 { fill: #1f1611; }
+.pf-hair-1 { fill: #4a2c17; }
+.pf-hair-2 { fill: #8a5a2b; }
+.pf-hair-3 { fill: #c9a063; }
+.pf-shirt-0 { fill: #2f5bd3; }
+.pf-shirt-1 { fill: #f2b53a; }
+.pf-shirt-2 { fill: #e8ecf5; }
+.pf-shirt-3 { fill: #1f3c88; }
+.pf-fan-arm { fill: none; stroke-width: 2.4; stroke-linecap: round; }
+.pf-sleeve-0 { stroke: #2f5bd3; }
+.pf-sleeve-1 { stroke: #f2b53a; }
+.pf-sleeve-2 { stroke: #e8ecf5; }
+.pf-sleeve-3 { stroke: #1f3c88; }
+.pf-fan-eyes { fill: none; stroke: #1a120c; stroke-width: 0.9; stroke-linecap: round; }
+.pf-fan-mouth { fill: #6b1f1f; }
+/* The receiver: home navy and gold, lit from above by the stadium lights. */
+.pf-r-shadow { fill: rgba(8, 30, 16, 0.5); }
+.pf-r-skin { fill: #8d5a3b; }
+.pf-r-skin-light { fill: #a8714c; }
+.pf-r-skin-shade { fill: #6e4329; }
+.pf-r-jersey { fill: #1f3c88; }
+.pf-r-jersey-light { fill: #2d50a8; }
+.pf-r-jersey-shade { fill: #162c66; }
+.pf-r-number { fill: none; stroke: #f6c445; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.pf-r-trim { fill: none; stroke: #f6c445; stroke-width: 0.9; stroke-linecap: round; }
+.pf-r-belt { fill: #12234f; }
+.pf-r-pants { fill: #e9b949; }
+.pf-r-pants-light { fill: #f4cf6f; }
+.pf-r-pants-shade { fill: #c99a30; }
+.pf-r-sock-stripe { fill: #f2b53a; }
+.pf-r-sole { fill: none; stroke: #e8ecf5; stroke-width: 0.9; stroke-linecap: round; }
+.pf-r-sock { fill: #1f3c88; }
+.pf-r-cleat { fill: #111827; }
+.pf-r-helmet { fill: #f2c14e; }
+.pf-r-helmet-light { fill: #f9dc8c; }
+.pf-r-helmet-shade { fill: #d9a634; }
+.pf-r-brows { fill: none; stroke: #1a120c; stroke-width: 0.45; stroke-linecap: round; }
+.pf-r-strap { fill: none; stroke: #e8ecf5; stroke-width: 0.5; stroke-linecap: round; }
+.pf-r-stripe { fill: #1f3c88; }
+.pf-r-eyes { fill: none; stroke: #1a120c; stroke-width: 0.8; stroke-linecap: round; }
+.pf-r-mask { fill: none; stroke: #9aa3b5; stroke-width: 0.85; stroke-linecap: round; }
+.pf-r-ball { fill: #7a3f1c; }
+.pf-r-ball-shade { fill: #5c2e13; }
+.pf-r-laces { fill: none; stroke: #fdfbf3; stroke-width: 0.6; stroke-linecap: round; }
+.pf-r-gleam { fill: #b5683a; }
+.pf-r-glove { fill: #f4f6fb; }
+.pf-r-finger { fill: none; stroke: #9aa3b5; stroke-width: 0.45; stroke-linecap: round; }
+.pf-r-ink { fill: none; stroke: #0b0f1a; stroke-width: 0.55; stroke-linejoin: round; }
+/* The filters' work: an underexposed veil, sensor grain, and encoding blocks. */
+.pf-veil { fill: #050b1f; opacity: 0.55; }
+.pf-grain-0 { fill: #e6ecff; opacity: 0.6; }
+.pf-grain-1 { fill: #000; opacity: 0.5; }
+.pf-grain-2 { fill: #ff5ab4; opacity: 0.4; }
+.pf-grain-3 { fill: #52ff9e; opacity: 0.35; }
 .pf-block { fill: #24305e; opacity: 0.16; }
 .pf-block--alt { fill: #fdfbf3; opacity: 0.14; }
 /* The paper's logo, stamped in the corner; cut in half when a crop comes after it. */

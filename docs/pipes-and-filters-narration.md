@@ -22,9 +22,12 @@ architecture kit (`js/video-narration/arch-kit.js`) and the wall kit, styled by
   consequence scenes reuse the denoise filter in a robot, insert and replace
   filters, and meet a live slider, re-encoding, a corrupted photo, a best-shot
   filter, and a caption filter that peeks at another filter's state.
-- **The photo.** Each filter's work is visible on the photo: noise speckles and
-  darkness, then brightness, a crop to the catch, fans' faces as blocks, and the
-  paper's logo. Photos slide through pipes and never across a filter's name.
+- **The photo.** A night game from the sideline: three tiers of fans behind
+  the wall, yard lines in perspective, and the receiver in the air with his
+  gloves on the ball. Each filter's work is visible on it: sensor grain and
+  darkness, then brightness, a crop to the catch, fans' faces pixelated, and
+  the paper's logo. A token in a pipe draws only the photo's flat silhouette.
+  Photos slide through pipes and never across a filter's name.
 - **Order.** Motivation (game night; the batch script; nothing until midnight;
   change requests); rules (filters, pipes, source and sink, enrich, refine,
   transform; independence and parameters; agnosticism; a common format;
