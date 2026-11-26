@@ -52,10 +52,21 @@
 .ls-scene-moon { fill: #f3ecd2; }
 .ls-scene-roofs { fill: #2c3a6b; stroke: #8fa4d8; stroke-width: 2; }
 .ls-scene-pearl { fill: #3b2416; stroke: #f0e0c8; stroke-width: 2.5; }
-.ls-squirrel-tail { fill: #c97a3d; stroke: #3b1e08; stroke-width: 2.5; stroke-linejoin: round; }
-.ls-squirrel-body { fill: #b5652d; stroke: #3b1e08; stroke-width: 2.5; stroke-linejoin: round; }
-.ls-squirrel-eye { fill: #0b0f1a; }
-.ls-squirrel-leg { stroke: #3b1e08; stroke-width: 4; stroke-linecap: round; }
+/* The squirrel: red-squirrel fur lit from the upper right, cream underneath,
+   dark-brown ink over the fills. Game art, the same in both page themes. */
+.ls-squirrel-tail { fill: #d0813f; }
+.ls-squirrel-tail-shade { fill: #b8692d; }
+.ls-squirrel-tail-light { fill: #eba864; }
+.ls-squirrel-fur { fill: #bf6a2e; }
+.ls-squirrel-light { fill: #d98a4a; }
+.ls-squirrel-cream { fill: #f5e0bd; }
+.ls-squirrel-far { fill: #8e4a1e; }
+.ls-squirrel-inner-ear { fill: #e9a07a; }
+.ls-squirrel-ink { fill: none; stroke: #2e1606; stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
+.ls-squirrel-strand { fill: none; stroke: rgba(46, 22, 6, 0.6); stroke-width: 1.1; stroke-linecap: round; }
+.ls-squirrel-eye { fill: #120a05; }
+.ls-squirrel-catchlight { fill: #fffaf0; }
+.ls-squirrel-nose { fill: #2e1606; }
 .ls-hud {
   position: absolute;
   left: 8px;

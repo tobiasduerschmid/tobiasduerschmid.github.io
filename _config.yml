@@ -4,7 +4,7 @@ plugins:
   - jekyll-scholar
 
 env: production
-asset_version: "20261126-blueprint-notes-print"
+asset_version: "20261126-pearl-dash-squirrel"
 
 # Feature flags
 personal_gym: true
