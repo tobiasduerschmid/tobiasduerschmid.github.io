@@ -40,4 +40,23 @@ async function serveAudioRanges(page, audioPath) {
   });
 }
 
-module.exports = { openPlayerSettings, seekNarration, setSiteTheme, serveAudioRanges };
+// The color the browser paints at the middle of `locator`, read back from a
+// screenshot of it, as [red, green, blue]. Unlike a computed style, this
+// includes filters such as the page's dark-mode inversion of article SVGs.
+async function paintedColor(page, locator) {
+  const png = (await locator.screenshot({ animations: 'disabled' })).toString('base64');
+  return page.evaluate(async data => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${data}`;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0);
+    const [red, green, blue] = context.getImageData(Math.floor(image.width / 2), Math.floor(image.height / 2), 1, 1).data;
+    return [red, green, blue];
+  }, png);
+}
+
+module.exports = { openPlayerSettings, seekNarration, setSiteTheme, serveAudioRanges, paintedColor };

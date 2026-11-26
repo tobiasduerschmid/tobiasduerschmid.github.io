@@ -97,16 +97,19 @@ test('chips on the narrowest tiles stay readable at 320 and 1280 px', async ({ p
           const fit = await label.evaluate(node => {
             const box = node.getBoundingClientRect();
             const frame = node.closest('.composite-cell').getBoundingClientRect();
+            const style = getComputedStyle(node);
             return {
-              size: parseFloat(getComputedStyle(node).fontSize),
+              size: parseFloat(style.fontSize),
               overflows: node.scrollWidth > node.clientWidth + 1,
               outside: box.left < frame.left - 1 || box.right > frame.right + 1,
+              lines: Math.round((box.height - 2) / parseFloat(style.lineHeight)),
             };
           });
           const where = `${sceneId} ${tile} at ${width} px`;
           expect(fit.size, `${where}: text size`).toBeGreaterThanOrEqual(0.9 * paragraph);
           expect(fit.overflows, `${where}: text overflows its chip`).toBe(false);
           expect(fit.outside, `${where}: chip sticks out of its tile`).toBe(false);
+          expect(fit.lines, `${where}: a one-word label breaks across lines`).toBe(1);
         }
       }
     }
@@ -148,5 +151,197 @@ test('the reader is accessible in light and dark mode', async ({ page }) => {
     if (await themeButton.getAttribute('aria-pressed') !== String(dark)) await themeButton.click();
     await expect(themeButton).toHaveAttribute('aria-pressed', String(dark));
     await a11yCheckpoint(page, `composite reader ${dark ? 'dark' : 'light'}`, { include: '#main-content', feature: 'composite-narration' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// The live collage in the player (js/composite-collage.js).
+const { openPlayerSettings, seekNarration, setSiteTheme, serveAudioRanges, paintedColor } = require('./helpers/narration-player');
+const timing = require('../_data/explainers/composite_timing.json');
+const url = '/SEBook/designpatterns/composite.html';
+const { panels } = collage;
+const player = page => page.getByRole('region', { name: story.title, exact: true });
+const sceneIndex = id => story.scenes.findIndex(scene => scene.id === id);
+const cueMiddle = (sceneId, cueId) => {
+  const scene = story.scenes[sceneIndex(sceneId)];
+  const cueTiming = timing.scenes[sceneIndex(sceneId)].cues[scene.cues.findIndex(cue => cue.id === cueId)];
+  return (cueTiming.start + cueTiming.end) / 2;
+};
+const seek = (page, sceneId, cueId) => seekNarration(player(page), cueMiddle(sceneId, cueId));
+// The live collage of the scene on screen, and its parts.
+const liveCollage = page => player(page).locator('.nja-scene:visible').getByRole('group', { name: /^Summer story/ });
+const canvasOf = live => live.getByRole('img', { name: /^Canvas/ });
+const treeRows = live => live.getByRole('list', { name: 'Layout tree' }).getByRole('listitem');
+const statusOf = live => live.getByRole('status');
+const shareButton = (live, id) => live.getByRole('button', { name: `Share ${id}`, exact: true });
+
+test('each cue moves the live picture to its narrated state', async ({ page }) => {
+  test.setTimeout(180000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(url);
+  for (const scene of story.scenes) {
+    for (const cue of scene.cues) {
+      await seek(page, scene.id, cue.id);
+      const at = `${scene.id}/${cue.id}`;
+      const panel = panels[cue.ui_state];
+      const rows = collageSpec.rowsFor(collage, panel);
+      const live = liveCollage(page);
+      await expect(canvasOf(live), at).toHaveAccessibleName(collageSpec.canvasDescription(collage, panel));
+      const items = treeRows(live);
+      await expect(items, at).toHaveCount(rows.length);
+      for (const [index, row] of rows.entries()) {
+        const item = items.nth(index);
+        await expect(shareButton(item, row.id), `${at}: ${row.id}`).toBeVisible();
+        await expect(item.locator('.composite-tag'), `${at}: ${row.id}`).toHaveText(collageSpec.rowTags(collage, panel, row));
+      }
+      await expect(live.getByText(panel.note, { exact: true }), at).toBeVisible();
+      const pending = live.getByText(/waits to go under beach/);
+      if (panel.caption === 'pending') await expect(pending, at).toBeVisible();
+      else await expect(pending, at).toBeHidden();
+      await expect(live.getByRole('img', { name: /^Carousel post/ }), at).toHaveCount((panel.neighbors || []).includes('carousel') ? 1 : 0);
+    }
+  }
+});
+
+test('learners press Share on any tile and see the design on screen draw it', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(url);
+  const pressed = async (panel, id, status) => {
+    await shareButton(liveCollage(page), id).click();
+    await expect(canvasOf(liveCollage(page)), `Share ${id}`).toHaveAccessibleName(collageSpec.pressDescription(collage, panel, id));
+    await expect(statusOf(liveCollage(page))).toHaveText(status);
+  };
+  await seek(page, 'intro', 'try-it');
+  await pressed(panels.start, 'bottom', 'Shared bottom: 2 photos.');
+  await pressed(panels.start, 'beach', 'Shared beach: 1 photo.');
+  await pressed(panels.start, 'story', 'Shared story: 4 photos.');
+
+  // A press replaces the narrated marks and note with its own result.
+  await seek(page, 'context', 'part-whole');
+  await pressed(panels.wholes, 'right', 'Shared right: 3 photos.');
+  await expect(treeRows(liveCollage(page)).locator('.composite-tag')).toHaveCount(0);
+  await expect(liveCollage(page).getByText(panels.wholes.note, { exact: true })).toBeHidden();
+
+  // The first design skips the caption in Split.draw, but its Share button draws one alone.
+  await seek(page, 'problem', 'every-change');
+  await pressed(panels.first_caption_blank, 'story', 'Shared story: 4 photos. The caption’s area stays blank: Split.draw has no branch for captions.');
+  await pressed(panels.first_caption_blank, 'caption', 'Shared caption: 0 photos.');
+  await liveCollage(page).getByRole('button', { name: 'Back to the narration’s picture', exact: true }).click();
+  await expect(canvasOf(liveCollage(page))).toHaveAccessibleName(collageSpec.canvasDescription(collage, panels.first_caption_blank));
+  await expect(statusOf(liveCollage(page))).toHaveText('The story is back to the narration’s picture.');
+
+  // In the composite design, the new leaf class is shared like any tile.
+  await seek(page, 'transfer', 'caption');
+  await pressed(panels.caption, 'left', 'Shared left: 1 photo.');
+});
+
+// The page clock is installed, so every step a press schedules runs only when
+// the test advances time, and nothing arrives late on its own.
+test('a second Share press replaces the first one\'s drawing', async ({ page }) => {
+  await page.clock.install();
+  await page.goto(url);
+  await seek(page, 'intro', 'try-it');
+  await page.clock.runFor(500);
+  const live = liveCollage(page);
+  await shareButton(live, 'story').click();
+  await page.clock.runFor(400);
+  await shareButton(live, 'beach').click();
+  await page.clock.runFor(5000);
+  await expect(canvasOf(live)).toHaveAccessibleName(collageSpec.pressDescription(collage, panels.start, 'beach'));
+  await expect(statusOf(live)).toHaveText('Shared beach: 1 photo.');
+});
+
+test('the narration\'s picture replaces a press that is still drawing', async ({ page }) => {
+  await page.clock.install();
+  await page.goto(url);
+  await seek(page, 'intro', 'try-it');
+  await page.clock.runFor(500);
+  await shareButton(liveCollage(page), 'story').click();
+  await page.clock.runFor(400);
+  await seek(page, 'intro', 'pattern-parts');
+  await page.clock.runFor(5000);
+  const live = liveCollage(page);
+  await expect(canvasOf(live)).toHaveAccessibleName(collageSpec.canvasDescription(collage, panels.start));
+  await expect(live.getByText(panels.start.note, { exact: true })).toBeVisible();
+  await expect(statusOf(live)).toHaveText('');
+});
+
+test('a focused Share button keeps focus when the caption joins the tree', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(url);
+  await seek(page, 'problem', 'client-check');
+  await shareButton(liveCollage(page), 'story').focus();
+  // The narration moves on by itself, as playback does; the slider would take focus.
+  await player(page).locator('audio').evaluate((audio, time) => { audio.currentTime = time; }, cueMiddle('problem', 'every-change'));
+  await expect(treeRows(liveCollage(page))).toHaveCount(collage.captioned_rows.length);
+  await expect(shareButton(liveCollage(page), 'story')).toBeFocused();
+});
+
+test('the illustrations and the Share icons keep their colors in dark mode, in the player and the reader', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const view of [url, viewUrl('read')]) {
+    const painted = {};
+    for (const dark of [false, true]) {
+      await page.goto(view);
+      if (view === url) {
+        await setSiteTheme(page, dark);
+      } else {
+        const themeButton = page.getByRole('button', { name: 'Dark mode' });
+        if (await themeButton.getAttribute('aria-pressed') !== String(dark)) await themeButton.click();
+        await expect(themeButton).toHaveAttribute('aria-pressed', String(dark));
+      }
+      const scope = view === url ? liveCollage(page) : page.locator('.composite-collage').first();
+      painted[dark] = await paintedColor(page, scope.locator('.composite-cell[data-tile="beach"] img.composite-art'));
+      // The Share icon is drawn in strokes of the theme's text color; it must not be inverted again.
+      const icon = view === url ? shareButton(scope, 'story').locator('svg') : scope.locator('.composite-share-chip svg').first();
+      expect(await icon.evaluate(svg => getComputedStyle(svg).filter), `${view} ${dark ? 'dark' : 'light'}: Share icon filter`).toBe('none');
+    }
+    painted[true].forEach((channel, index) => {
+      expect(Math.abs(channel - painted[false][index]), `${view}: the beach art paints ${painted[true]} in dark mode and ${painted[false]} in light`).toBeLessThanOrEqual(6);
+    });
+  }
+});
+
+test('live tiles sit where their areas say, every illustration loads, and narrow chips stay readable', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const { width: storyWidth, height: storyHeight } = collage.canvas;
+  for (const width of [1280, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(url);
+    await seek(page, 'intro', 'photo-dump');
+    const live = liveCollage(page);
+    const canvas = await live.locator('.composite-canvas').boundingBox();
+    for (const { tile, area: [x, y, w, h] } of collage.expected.start.drawn) {
+      const cell = await live.locator(`.composite-cell[data-tile="${tile}"]`).boundingBox();
+      const where = `${tile} at ${width} px`;
+      expect(Math.abs(cell.x - (canvas.x + canvas.width * x / storyWidth)), `${where}: left`).toBeLessThanOrEqual(4);
+      expect(Math.abs(cell.y - (canvas.y + canvas.height * y / storyHeight)), `${where}: top`).toBeLessThanOrEqual(4);
+      expect(Math.abs(cell.width - canvas.width * w / storyWidth), `${where}: width`).toBeLessThanOrEqual(4);
+      expect(Math.abs(cell.height - canvas.height * h / storyHeight), `${where}: height`).toBeLessThanOrEqual(4);
+    }
+    const art = live.locator('.composite-canvas img.composite-art');
+    await expect(art).toHaveCount(collage.expected.start.drawn.length);
+    const failed = await art.evaluateAll(images => Promise.all(images.map(image => image.decode().then(() => null, () => image.getAttribute('src')))));
+    expect(failed.filter(Boolean), 'illustrations that failed to load').toEqual([]);
+    const note = await player(page).locator('.nja-scene:visible .nja-note').evaluate(node => parseFloat(getComputedStyle(node).fontSize));
+    for (const tile of ['gig', 'taco']) {
+      for (const label of await live.locator(`.composite-cell[data-tile="${tile}"]`).locator('.composite-chip, .composite-tag, .composite-badge').all()) {
+        const fit = await label.evaluate(node => {
+          const box = node.getBoundingClientRect();
+          const frame = node.closest('.composite-cell').getBoundingClientRect();
+          const style = getComputedStyle(node);
+          return {
+            size: parseFloat(style.fontSize),
+            overflows: node.scrollWidth > node.clientWidth + 1,
+            outside: box.left < frame.left - 1 || box.right > frame.right + 1,
+            lines: Math.round((box.height - 2) / parseFloat(style.lineHeight)),
+          };
+        });
+        expect(fit.size, `${tile} at ${width} px: text size`).toBeGreaterThanOrEqual(0.9 * note);
+        expect(fit.overflows, `${tile} at ${width} px: text overflows its chip`).toBe(false);
+        expect(fit.outside, `${tile} at ${width} px: chip sticks out of its tile`).toBe(false);
+        expect(fit.lines, `${tile} at ${width} px: a one-word label breaks across lines`).toBe(1);
+      }
+    }
   }
 });

@@ -32,9 +32,10 @@
 
 .composite-animation .composite-cell { position: relative; min-width: 0; min-height: 0; overflow: hidden; border-radius: 3px; background: var(--nja-input); }
 .composite-animation .composite-art { display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-.composite-animation .composite-cell-labels { position: absolute; left: 0.25em; right: 0.25em; bottom: 0.25em; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.2em; }
+.composite-animation .composite-cell-labels { position: absolute; left: 0.2em; right: 0.2em; bottom: 0.2em; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.2em; }
+/* A name or an order is one word: it never breaks, even in the narrowest tile. */
 .composite-animation .composite-chip,
-.composite-animation .composite-badge { display: inline-block; max-width: 100%; padding: 0 0.3em; border: 1px solid var(--nja-line); border-radius: 4px; color: var(--nja-text); background: var(--nja-panel); font-size: 0.9em; font-weight: 700; line-height: 1.35; overflow-wrap: break-word; }
+.composite-animation .composite-badge { display: inline-block; max-width: 100%; padding: 0 0.25em; border: 1px solid var(--nja-line); border-radius: 4px; color: var(--nja-text); background: var(--nja-panel); font-size: 0.9em; font-weight: 700; line-height: 1.35; white-space: nowrap; }
 .composite-animation .composite-badge { background: var(--nja-highlight); }
 /* A caption is text, not a photo: it sits on a solid tile. */
 .composite-animation .composite-cell--caption { display: flex; align-items: center; justify-content: center; background: var(--nja-highlight); }
@@ -90,8 +91,34 @@
 .composite-animation .composite-thumb { position: static; width: 3em; height: 5.33em; border-radius: 4px; }
 .composite-animation .composite-collage-body p.composite-collage-note { flex: 1 1 100%; padding: 0.6em 0.8em; border-left: 4px solid var(--nja-accent); background: var(--nja-note-bg); }
 
+/* The live collage in the player (js/composite-collage.js): real Share
+   buttons, a reset, a polite status, and an outline on each newly drawn tile. */
+.composite-animation .composite-collage .composite-pending[hidden],
+.composite-animation .composite-collage .composite-carousel[hidden] { display: none; }
+.composite-animation .composite-share { padding: 0; font: inherit; cursor: pointer; }
+.composite-animation .composite-share:hover { background: var(--nja-hover); }
+.composite-animation .composite-share:focus-visible,
+.composite-animation .composite-reset:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
+.composite-animation .composite-collage-controls { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 0.6em; align-items: center; }
+.composite-animation .composite-reset { min-height: 2.4em; padding: 0.3em 0.8em; font: inherit; color: var(--nja-text); background: var(--nja-chrome); border: 2px solid var(--nja-line); border-radius: 4px; cursor: pointer; }
+.composite-animation .composite-reset:hover { background: var(--nja-hover); }
+.composite-animation .composite-collage-body p.composite-collage-status { flex: 1 1 12em; min-width: 0; }
+.composite-animation .composite-cell.is-new { animation: composite-arrive 0.45s ease-out; }
+@keyframes composite-arrive {
+  from { outline: 3px solid var(--nja-accent); outline-offset: -3px; }
+  to { outline: 3px solid transparent; outline-offset: -3px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .composite-animation .composite-cell.is-new { animation: none; }
+}
+
 /* With a diagram and the collage but no code (the abstract roles, the
    transfer), set the class diagram beside the tree of objects it describes. */
+/* On a phone, a slimmer frame leaves the canvas room for one-word labels. */
+@media (max-width: 30em) {
+  .composite-animation .composite-collage-body { padding: 0.6em; }
+}
+
 @media screen and (min-width: 60em) {
   .composite-animation .np-lesson:not(.np-code-with-diagram):not(.np-code-with-visual):has(> .np-diagram-column):has(> .np-visual) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 1.2em; align-items: start; }
 }

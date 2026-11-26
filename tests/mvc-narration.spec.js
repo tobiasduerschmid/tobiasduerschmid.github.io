@@ -1,7 +1,7 @@
 const { loadStory } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
-const { openPlayerSettings, setSiteTheme } = require('./helpers/narration-player');
+const { openPlayerSettings, setSiteTheme, paintedColor } = require('./helpers/narration-player');
 const { readFileSync } = require('node:fs');
 const yaml = require('js-yaml');
 
@@ -176,24 +176,6 @@ test('in the first design, a click on one bar redraws every view', async ({ page
   await expect(board.locator('.mvc-pane.is-redrawn')).toHaveCount(3);
   await expect(board.getByRole('status')).toHaveText(/redraws all three views/);
 });
-
-// The color the browser paints at the middle of `locator`, read back from a
-// screenshot of it, as [red, green, blue].
-async function paintedColor(page, locator) {
-  const png = (await locator.screenshot({ animations: 'disabled' })).toString('base64');
-  return page.evaluate(async data => {
-    const image = new Image();
-    image.src = `data:image/png;base64,${data}`;
-    await image.decode();
-    const canvas = document.createElement('canvas');
-    canvas.width = image.width;
-    canvas.height = image.height;
-    const context = canvas.getContext('2d');
-    context.drawImage(image, 0, 0);
-    const [red, green, blue] = context.getImageData(Math.floor(image.width / 2), Math.floor(image.height / 2), 1, 1).data;
-    return [red, green, blue];
-  }, png);
-}
 
 // The page inverts article SVGs in dark mode to flip light-themed diagrams.
 // The dashboard draws its own palette for each theme, so every bar must reach

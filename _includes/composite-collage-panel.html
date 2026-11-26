@@ -142,7 +142,7 @@
 {%- if show_carousel %} Carousel post: a flat list of {{ carousel_count }} photos, {{ carousel_list }}, showing 1 of {{ carousel.size }}.{% endif %} {{ panel.note }}
 {%- endcapture -%}
 {%- capture composite_rows -%}{"rows": {{ collage.rows | jsonify }}, "captioned_rows": {{ collage.captioned_rows | jsonify }}}{%- endcapture -%}
-<div class="composite-collage" data-composite-cue="{{ panel | jsonify | escape }}" data-composite-rows="{{ composite_rows | escape }}" data-composite-positions="{{ collage.positions | jsonify | escape }}" data-composite-neighbors="{{ collage.neighbors | jsonify | escape }}" data-composite-art="{{ art_base }}" role="img" aria-label="{{ composite_label | strip_newlines | strip | escape }}">
+<div class="composite-collage" data-composite-cue="{{ panel | jsonify | escape }}" data-composite-rows="{{ composite_rows | escape }}" data-composite-positions="{{ collage.positions | jsonify | escape }}" data-composite-neighbors="{{ collage.neighbors | jsonify | escape }}" data-composite-canvas="{{ collage.canvas | jsonify | escape }}" data-composite-art="{{ art_base }}" role="img" aria-label="{{ composite_label | strip_newlines | strip | escape }}">
   <div aria-hidden="true">
     <div class="nja-window-bar">{{ collage.app }} · illustrated, {{ panel.design }} design</div>
     <div class="composite-collage-body">
