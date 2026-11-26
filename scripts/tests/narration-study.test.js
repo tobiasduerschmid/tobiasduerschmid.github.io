@@ -46,8 +46,8 @@ for (const [name, edit, diagnostic] of [
   assert.throws(() => validateStudy(study, story, quizzes), diagnostic);
 });
 
-test('all eight UML and pattern lessons ship practice, comparisons, and complete question review', () => {
-  for (const topic of ['uml_class_diagram', 'uml_sequence_diagram', 'uml_state_diagram', 'uml_component_diagram', 'observer', 'state', 'strategy', 'mvc']) {
+test('all nine UML and pattern lessons ship practice, comparisons, and complete question review', () => {
+  for (const topic of ['uml_class_diagram', 'uml_sequence_diagram', 'uml_state_diagram', 'uml_component_diagram', 'observer', 'state', 'strategy', 'mvc', 'composite']) {
     const { study } = loadLesson(topic);
     assert.ok(study, `${topic} has study material`);
     assert.ok(study.exercises.length >= 2, `${topic} offers progressive practice`);

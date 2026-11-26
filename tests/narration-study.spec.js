@@ -157,7 +157,7 @@ test('paired designs keep consequences behind a deliberate reveal and retain the
   await a11yCheckpoint(page, 'narration-study-comparison', { include: '#observer-animation' });
 });
 
-for (const topic of ['uml_class_diagram', 'uml_sequence_diagram', 'uml_state_diagram', 'uml_component_diagram', 'observer', 'state', 'strategy', 'mvc']) {
+for (const topic of ['uml_class_diagram', 'uml_sequence_diagram', 'uml_state_diagram', 'uml_component_diagram', 'observer', 'state', 'strategy', 'mvc', 'composite']) {
   test(`${topic}: every exercise starter and solution draws in the real renderer`, async ({ page }) => {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
