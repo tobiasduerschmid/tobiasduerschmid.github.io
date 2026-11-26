@@ -4,7 +4,7 @@ plugins:
   - jekyll-scholar
 
 env: production
-asset_version: "20261125-shared-narration-player"
+asset_version: "20261126-architectural-style-narrations"
 
 # Feature flags
 personal_gym: true

@@ -10,7 +10,12 @@ ArchUML diagram, or code, for lessons whose storyboard defines `slides`,
 text and diagrams on the stage too, so the whole video keeps one style. The
 first lesson is Scrum (`SEBook/process/scrum.md`), animated in all 49 cues on
 the story wall; Module Blood Groups (`SEBook/designprinciples/blood-groups.md`)
-is animated on an architectural blueprint.
+is animated on an architectural blueprint, as are the three architectural
+styles in `SEBook/architectural_styles/`: Publish-Subscribe (`pubsub.md`),
+Layers (`layers.md`), and Pipes and Filters (`pipes_and_filters.md`). Each of
+those teaches its style as motivation, rules, and consequences; their teaching
+design and sources are in `docs/publish-subscribe-narration.md`,
+`docs/layered-style-narration.md`, and `docs/pipes-and-filters-narration.md`.
 
 Use a video narration for a topic that is explained with pictures and
 structured text rather than one evolving code example (processes,
@@ -42,7 +47,8 @@ The versioned authoring contract and a complete minimal example are in
 | `js/narration-player.js` | Shared by every kind: playback lifecycle, section checks, replay, continuation, and roadmap/step navigation. Visuals come from `VideoNarrationVisuals.createRenderer`; diagram copies use `NarrationDiagram`. |
 | `css/video-narration.css` | The screen, panels, and slide layouts, in both themes and print. |
 | `js/video-narration/wall-kit.js`, `css/video-narration-wall-kit.css` | The materials every animated lesson draws with (`WallKit`): paper cards, notes, badges, speech bubbles, checklists, list cards, frames, arrows, slots, balances, and each picture's heading strip (`topicTag`) over its scaled body. Class names keep the `sk-` prefix. |
-| `js/video-narration/<topic>.js`, `<topic>-kit.js`, `css/video-narration-<topic>.css` | The topic's choreography and its own objects, loaded only in its frame after the wall kit. |
+| `js/video-narration/arch-kit.js`, `css/video-narration-arch-kit.css` | The architecture lessons' shared materials (`ArchKit`), built on the wall kit: components as cards whose state (down, changed, new, same, busy, crashed) is a class plus an icon and words, wires, message queues, code cards with diff and gutter tags, numbered rule plaques, promoted and inhibited quality cards, tokens that travel along a path, readouts, topics, and a code-search result. |
+| `js/video-narration/<topic>.js`, `<topic>-kit.js`, `css/video-narration-<topic>.css` | The topic's choreography and its own objects, loaded only in its frame after the wall kit (and, for an architecture lesson, after the architecture kit). |
 | `_includes/video-narration-stage-element.html` | The stage element, shared by the stage frame and the notes: topic, theme, and the sheet lettering a theme may print. |
 | `_data/explainers/<topic>_notes.yml` | Key points per cue for the printable notes. |
 | `_layouts/narration-notes.html`, `_includes/narration-notes.html`, `css/video-narration-notes.css`, `js/narration-notes.js` | Shared editable handout for every narration kind: settles visuals, saves student writing locally, and prints. |
