@@ -1,7 +1,7 @@
 const { loadStory } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
-const { openPlayerSettings } = require('./helpers/narration-player');
+const { openPlayerSettings, setSiteTheme } = require('./helpers/narration-player');
 const { readFileSync } = require('node:fs');
 const yaml = require('js-yaml');
 
@@ -176,6 +176,57 @@ test('in the first design, a click on one bar redraws every view', async ({ page
   await expect(board.locator('.mvc-pane.is-redrawn')).toHaveCount(3);
   await expect(board.getByRole('status')).toHaveText(/redraws all three views/);
 });
+
+// The color the browser paints at the middle of `locator`, read back from a
+// screenshot of it, as [red, green, blue].
+async function paintedColor(page, locator) {
+  const png = (await locator.screenshot({ animations: 'disabled' })).toString('base64');
+  return page.evaluate(async data => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${data}`;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0);
+    const [red, green, blue] = context.getImageData(Math.floor(image.width / 2), Math.floor(image.height / 2), 1, 1).data;
+    return [red, green, blue];
+  }, png);
+}
+
+// The page inverts article SVGs in dark mode to flip light-themed diagrams.
+// The dashboard draws its own palette for each theme, so every bar must reach
+// the screen in the color its category's fill names.
+for (const dark of [false, true]) {
+  test(`each bar is painted in its category's color in ${dark ? 'dark' : 'light'} mode, in the player and the reader`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    for (const view of [url, '/SEBook/designpatterns/mvc/read/']) {
+      await page.goto(view);
+      if (view === url) {
+        await setSiteTheme(page, dark);
+      } else {
+        // The reader has its own theme button instead of the site's toggle.
+        const themeButton = page.getByRole('button', { name: 'Dark mode' });
+        if (await themeButton.getAttribute('aria-pressed') !== String(dark)) await themeButton.click();
+        await expect(themeButton).toHaveAttribute('aria-pressed', String(dark));
+      }
+      const chart = view === url
+        ? player(page).locator('.nja-scene:visible .mvc-dashboard').first()
+        : page.locator('.mvc-dashboard').first();
+      const bars = chart.locator('.mvc-bar-track rect');
+      await expect(bars).toHaveCount(dashboard.categories.length);
+      for (const [index, category] of dashboard.categories.entries()) {
+        const bar = bars.nth(index);
+        const fill = await bar.evaluate(rect => getComputedStyle(rect).fill.match(/\d+/g).slice(0, 3).map(Number));
+        const painted = await paintedColor(page, bar);
+        painted.forEach((channel, at) => {
+          expect(Math.abs(channel - fill[at]), `${view} ${category}: painted ${painted} for fill ${fill}`).toBeLessThanOrEqual(6);
+        });
+      }
+    }
+  });
+}
 
 for (const dark of [false, true]) {
   test(`player and quiz are readable and accessible in ${dark ? 'dark' : 'light'} mode, including mobile`, async ({ page }, testInfo) => {
