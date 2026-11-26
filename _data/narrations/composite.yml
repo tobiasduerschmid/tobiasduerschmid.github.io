@@ -33,6 +33,7 @@ speech:
   speed: 1.0
   pronunciations:
     UML: U M L
+    "Consequences: simple": "And the consequences: simple"
 media:
   audio: /assets/audio/composite-pattern.mp3
   captions: /assets/narration/composite-pattern.vtt
@@ -58,8 +59,8 @@ scenes:
       - id: try-it
         say: >-
           Notice what the app treats alike. A song and a playlist both show a length, and both have
-          a Play button. Try it: pause the narration, press Play on any row, a song or a playlist,
-          and watch which songs fill the queue.
+          a Play button. Try it: pause the narration, press Play on any song or playlist, and watch
+          which songs fill the queue.
         step: Try it
         note: Press Play on a song, on Throwbacks, or on Road Trip.
         visual: >-
@@ -67,15 +68,16 @@ scenes:
           queue still lists Road Trip's four songs.
       - id: pattern-parts
         say: >-
-          The Composite pattern organizes structures like this one. Its roles are one shared
-          interface, single items that stand alone, and groups that hold other items. We describe it
-          the way every pattern is described: its context, problem, solution, and consequences.
-          Choose a code language above; the design is the same in every language.
+          The Composite pattern organizes structures like this one. Its roles are a shared
+          interface, single items that stand alone, groups that hold other items, and the clients
+          that use them. We describe it the way every pattern is described: its context, problem,
+          solution, and consequences. Choose a code language above; the design is the same in every
+          language.
         source: >-
           Gamma et al., Design Patterns: Composite; Freeman et al., Head First Design Patterns: the
           Composite Pattern
         step: Context, problem, solution, consequences
-        note: One shared interface · single items · groups that hold items
+        note: A shared interface · single items · groups that hold items · clients that use them
         visual: The library and its queue stay on screen.
         pause_after: 2.5
   - id: context
@@ -100,11 +102,12 @@ scenes:
           Throwbacks holds two songs.
       - id: alike
         say: >-
-          The second sign: clients want to ignore the difference between a single object and a
-          group. You press Play on a song or on a playlist, and you ask either one how long it
-          lasts. A song answers for itself; a playlist answers for everything inside it.
+          The second sign: clients, the code that uses these objects, want to ignore the difference
+          between a single object and a group. The Play button and the screen that shows lengths ask
+          a song and a playlist the same questions. A song answers for itself; a playlist answers
+          for everything inside it.
         step: One item or a group, treated alike
-        note: The same requests reach a song and a playlist.
+        note: Clients are the code that uses the objects; they ask both kinds the same questions.
         visual: >-
           The song Sunroof Down and the playlist Throwbacks are marked. Each shows its length and
           has a Play button.
@@ -125,8 +128,8 @@ scenes:
     title: Songs and playlists, handled separately
     purpose: Find what breaks when code treats single items and groups differently.
     takeaway: >-
-      The problem: code that tells single items from groups repeats itself, loses the listener's
-      order, and breaks as new kinds of items arrive.
+      The problem: code that tells single items from groups repeats its loops and checks, and breaks
+      as new kinds of items arrive.
     cues:
       - id: two-lists
         say: >-
@@ -280,23 +283,33 @@ scenes:
       - id: play
         say: >-
           Play passes the same queue to each item, in order. Because one list keeps the order you
-          chose, Road Trip now plays its first song, then all of Throwbacks, then the song that ends
-          the trip.
+          chose, the queue matches the playlist exactly as you built it, unlike the first design,
+          which queued all of its own songs first.
         step: Play keeps the order
-        note: Sunroof Down → Mixtape Summer → Cassette Heart → Last Exit
+        note: One ordered list, so the queue follows the playlist as built.
         visual: Playlist's play method is marked. Playlist stays highlighted.
       - id: safe-add
         say: >-
-          Notice that add is declared only in Playlist. A song has no add at all: the safe choice,
-          although code that adds items must know it holds a playlist. The transparent choice also
-          declares add in Playable, so every item looks alike, but a song must refuse add while the
-          program runs.
+          Notice that add is declared only in Playlist. A song has no add method, so a compiler or
+          type checker rejects adding to a song before the program runs. That is the safe choice.
+          The price is that code adding an item must know it holds a playlist.
+        source: "Gamma et al., Design Patterns: Composite, Implementation"
+        step: "The safe choice: add only in Playlist"
+        note: Adding to a song is rejected before the program runs.
+        visual: Playlist's add method is marked. Playlist stays highlighted, and Playable declares no add.
+      - id: transparent-add
+        say: >-
+          The other choice is transparency: declare add in Playable as well. Then every item looks
+          alike, even to code that adds, but a song must reject a call to add while the program
+          runs. You trade early errors for uniform code.
         source: >-
           Gamma et al., Design Patterns: Composite, Implementation; Freeman et al., Head First
           Design Patterns: the Composite Pattern
-        step: Safe or transparent add
-        note: "add() only in Playlist: safe · add() in Playable too: transparent"
-        visual: Playlist's add method is marked. Playlist stays highlighted, and Playable declares no add.
+        step: "The transparent choice: add in Playable too"
+        note: Every item looks alike, but a song rejects add while the program runs.
+        visual: >-
+          Playlist's add method stays marked. Playable is highlighted: the transparent choice would
+          declare add there too.
         pause_after: 2.5
   - id: collaborations
     part: Solution
@@ -307,15 +320,15 @@ scenes:
     cues:
       - id: press
         say: >-
-          Now watch the objects work together on one request. Every row has a Play button that
-          holds one Playable and never asks which kind. Press the button for Road Trip: it creates
-          an empty queue and calls play on Road Trip.
+          Now watch the objects work together on one request. Each Play button holds one Playable
+          and never asks which kind. Press the button for Road Trip: it creates an empty queue and
+          calls play on Road Trip.
         source: "Gamma et al., Design Patterns: Composite, Collaborations"
         step: The button calls play once
         note: button.press() calls roadTrip.play(queue).
         visual: >-
-          The Play button's press method is marked. A UML sequence diagram shows button calling play
-          on roadTrip. In the library, Road Trip is marked as receiving play, and the queue is
+          PlayButton's press method is marked. A UML sequence diagram shows button calling play on
+          roadTrip. In the library, Road Trip is marked as receiving play, and the queue is
           empty.
       - id: first-song
         say: >-
@@ -325,8 +338,8 @@ scenes:
         step: Predict the next call
         note: Road Trip's next item is a playlist.
         visual: >-
-          The sequence diagram still shows only the first call. In the library, Sunroof Down is
-          marked as played, and the queue holds its title.
+          Playlist's play method is marked. The sequence diagram still shows only the first call. In
+          the library, Sunroof Down is marked as played, and the queue holds its title.
         prediction: true
         pause_after: 5
       - id: recursion
@@ -337,19 +350,20 @@ scenes:
         step: The same call, one level down
         note: Throwbacks forwards play to Mixtape Summer, then Cassette Heart.
         visual: >-
-          The sequence diagram adds play from roadTrip to throwbacks, and from throwbacks to its
-          song mixtape. In the library, Throwbacks and its two songs are marked, and the queue
-          holds three titles.
+          Playlist's play method stays marked. The sequence diagram adds play from roadTrip to
+          throwbacks, and from throwbacks to its song mixtape. In the library, Throwbacks and its
+          two songs are marked, and the queue holds three titles.
       - id: loop
         say: >-
           Then Road Trip plays its last song, and the call returns to the button with four titles,
-          in the order you chose. That is the whole loop: a song answers directly, a playlist
+          in the order you chose. That is the whole rule: a song answers directly, a playlist
           forwards to each item, and the button never asks which is which.
-        step: The whole loop
+        step: The whole rule
         note: Song answers · playlist forwards · the button never checks
         visual: >-
-          The whole sequence diagram stays on screen. In the library, every row is marked as
-          played, and the queue lists all four songs in order.
+          PlayButton's press returns the queue, which is marked. The whole sequence diagram stays on
+          screen. In the library, every row is marked as played, and the queue lists all four songs
+          in order.
         pause_after: 2.5
   - id: solution
     part: Solution
@@ -392,12 +406,12 @@ scenes:
       - id: client
         say: >-
           The Client, like our Play button, talks only to the Component interface. Now follow the
-          arrows around the Composite: it is a component, and it holds components. That loop in the
+          arrows around the Composite: it is a component, and it holds components. That cycle in the
           diagram is what lets groups contain groups, to any depth.
         step: Client, like the Play button
         note: A Composite is a Component and holds Components.
         visual: >-
-          Client is highlighted, with its arrow to Component. The loop from Composite back to
+          Client is highlighted, with its arrow to Component. The cycle from Composite back to
           Component stays visible.
         pause_after: 2.5
   - id: consequences
@@ -413,32 +427,35 @@ scenes:
         say: >-
           Now the consequences, starting with the benefits. Clients become simple: the Play button
           treats a song and a playlist of playlists the same way, so the type checks from the
-          problem are gone. And groups nest inside groups, to any depth, without new code.
+          problem are gone. And wherever code expects a single item, it can take a whole playlist
+          instead.
         source: "Gamma et al., Design Patterns: Composite, Consequences"
         step: "Benefit: simple clients"
-        note: No type checks; nesting to any depth.
+        note: No type checks; wherever one item fits, a group fits too.
         visual: The first card states the benefit of simple clients.
       - id: new-kinds
         say: >-
-          New kinds of items are easy to add. A new class that implements Playable works inside
-          existing playlists, and duration, play, and the Play button handle it without a change.
-          The loop that combines items is written once, in Playlist.
+          New kinds of items are easy to add. Any new leaf or group class that keeps the shared
+          interface works inside existing playlists, and existing clients handle it without a
+          change. The code that combines items is written once, in Playlist.
         step: "Benefit: new kinds fit in"
         note: New leaf or composite classes work with existing code.
         visual: The second card states the benefit that new kinds of items fit in.
       - id: overly-general
         say: >-
-          The liabilities. The design can become overly general. Suppose albums may hold only
-          songs. Add accepts any Playable, so the type system cannot keep an episode or a playlist
-          out of an album; the album has to check each item while the program runs.
+          The liabilities. The design can become overly general. Suppose albums, a kind of
+          playlist, may hold only songs. Album inherits add, which accepts any Playable, so the type
+          system cannot keep an episode out of an album; the album has to check each item while the
+          program runs.
         step: "Liability: hard to restrict children"
-        note: Restricting a group's children needs checks at runtime.
+        note: A group that inherits the general add needs runtime checks to restrict its children.
         visual: The third card states the liability of an overly general design.
       - id: safety
         say: >-
-          And the choice about add has a cost either way. Declared only in the composite, add is
-          safe, but code must know it holds a composite before adding. Declared in the component,
-          every object looks alike, but leaves must refuse add at runtime.
+          And the choice about add costs something either way. Declared only in the composite, add
+          is checked before the program runs, but code must know it holds a composite before
+          adding. Declared in the component, every object looks alike, but leaves must reject add
+          while the program runs.
         source: "Freeman et al., Head First Design Patterns: the Composite Pattern, transparency and safety"
         step: "Liability: safety or transparency"
         note: "Composite-only add: safe · add in Component: transparent"
@@ -461,15 +478,16 @@ scenes:
         visual: The first card describes a good fit for the Composite pattern.
       - id: one-class
         say: >-
-          Check the parts, too. If every item has the same data, and the only difference is that
-          some have children, one class with an optional list of children is enough. Composite pays
-          off when single items and groups behave differently and new kinds keep arriving.
+          Check the parts, too. If every item has the same data and only some have children, one
+          class with an optional list of children can play every role; separate leaf and group
+          classes would add nothing. They pay off when single items and groups behave differently
+          and new kinds keep arriving.
         source: "Gamma et al., Design Patterns: Composite, Known Uses"
         step: When one class is enough
-        note: Same data everywhere → one class with optional children
+        note: Same data everywhere → one class with optional children plays every role
         visual: >-
-          The second card describes the simpler alternative: one class with an optional list of
-          children.
+          The second card describes the simpler designs: a plain list, or one class with an optional
+          list of children.
       - id: neighbors
         say: >-
           Composite also hides inside other patterns. In Model-View-Controller, views nested inside
@@ -477,8 +495,8 @@ scenes:
           similar but differs in purpose: a decorator wraps one object to add behavior, while a
           composite holds many to treat them as one.
         source: >-
-          Gamma et al., Design Patterns: Composite, Related Patterns; Structural Patterns:
-          Composite versus Decorator versus Proxy
+          Gamma et al., Design Patterns: Composite, Known Uses; Structural Patterns: Composite
+          versus Decorator versus Proxy
         step: Composite among its neighbors
         note: Nested views · macro commands · a decorator wraps one; a composite holds many
         visual: The third card relates Composite to Model-View-Controller, Command, and Decorator.
@@ -491,9 +509,10 @@ scenes:
     cues:
       - id: plan
         say: >-
-          One last design check. Your app adds podcasts, and listeners drop episodes into
-          playlists, right next to songs. An episode has a show, a title, and a length. Which class
-          do you add, and which existing code changes? Explain your answer before continuing.
+          One last design check. Remember the podcast episodes that broke the first design? Plan the
+          same change for the composite: listeners drop episodes into playlists, right next to
+          songs, and an episode has a show, a title, and a length. Which class do you add, and which
+          existing code changes? Explain before continuing.
         step: Plan the change
         note: Name the new class and every existing line that changes.
         visual: >-
@@ -504,9 +523,9 @@ scenes:
       - id: episode
         say: >-
           Add an Episode class that implements Playable: a new leaf. Its duration returns its
-          length, and its play adds the show and the title to the queue. Playable, Song, Playlist,
-          and the Play button stay unchanged; only the code that creates episodes knows the new
-          class.
+          length, and its play adds the show and the title. Playable, Song, Playlist, and the Play
+          button stay unchanged; only code that creates episodes knows the new class. The first
+          design needed a new list, loop, and check everywhere.
         step: One new leaf class
         note: Episode implements Playable; nothing else changes.
         visual: >-
@@ -523,7 +542,7 @@ scenes:
         say: >-
           To finish, recall the whole pattern. Context: a part-whole hierarchy that nests, whose
           clients want to treat one object and a group alike. Problem: code that handles single
-          objects and groups separately repeats its loops, loses order, and breaks as new kinds
+          objects and groups separately repeats its loops and type checks, and breaks as new kinds
           arrive. Solution: a Component interface, which Leaves implement directly and Composites
           implement by forwarding to their children. Consequences: simple clients and easy new
           kinds, at the cost of an overly general structure and a choice between safety and

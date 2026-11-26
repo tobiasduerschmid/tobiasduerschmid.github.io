@@ -104,13 +104,8 @@ python:
             def play(self, queue: list[str]) -> None:
                 for item in self._items:
                     item.play(queue)
-      focus:
-        items: [4, 6, 7]
-        duration: [9, 10]
-        play: [12, 13, 14]
-        add: [6, 7]
-    button:
-      source: |
+
+
         class PlayButton:
             def __init__(self, item: Playable) -> None:
                 self.item = item
@@ -120,9 +115,12 @@ python:
                 self.item.play(queue)
                 return queue
       focus:
-        press: [3, 6, 7]
-        call: [7]
-        result: [7, 8]
+        items: [4, 6, 7]
+        duration: [9, 10]
+        play: [12, 13, 14]
+        add: [6, 7]
+        press: [19, 22, 23]
+        result: [23, 24]
     wire:
       source: |
         throwbacks = Playlist("Throwbacks")
@@ -256,13 +254,7 @@ java:
                 for (Playable item : items) item.play(queue);
             }
         }
-      focus:
-        items: [3, 13, 14]
-        duration: [18, 19]
-        play: [23, 24]
-        add: [13, 14, 15]
-    button:
-      source: |
+
         final class PlayButton {
             private final Playable item;
 
@@ -277,9 +269,12 @@ java:
             }
         }
       focus:
-        press: [2, 9, 10]
-        call: [10]
-        result: [10, 11]
+        items: [3, 13, 14]
+        duration: [18, 19]
+        play: [23, 24]
+        add: [13, 14, 15]
+        press: [29, 36, 37]
+        result: [37, 38]
     wire:
       source: |
         public class CompositeDemo {
@@ -428,13 +423,7 @@ cpp:
                 for (const auto& item : items_) item->play(queue);
             }
         };
-      focus:
-        items: [3, 9, 10, 11]
-        duration: [13, 14, 15, 16, 17]
-        play: [19, 20, 21]
-        add: [9, 10, 11]
-    button:
-      source: |
+
         class PlayButton {
             std::shared_ptr<const Playable> item_;
 
@@ -449,9 +438,12 @@ cpp:
             }
         };
       focus:
-        press: [2, 9, 10]
-        call: [10]
-        result: [10, 11]
+        items: [3, 9, 10, 11]
+        duration: [13, 14, 15, 16, 17]
+        play: [19, 20, 21]
+        add: [9, 10, 11]
+        press: [25, 32, 33]
+        result: [33, 34]
     wire:
       source: |
         int main() {
@@ -597,13 +589,7 @@ typescript:
             for (const item of this.items) item.play(queue);
           }
         }
-      focus:
-        items: [3, 9, 10, 11]
-        duration: [13, 14, 15]
-        play: [17, 18, 19]
-        add: [9, 10, 11]
-    button:
-      source: |
+
         class PlayButton {
           private readonly item: Playable;
 
@@ -618,9 +604,12 @@ typescript:
           }
         }
       focus:
-        press: [2, 9, 10]
-        call: [10]
-        result: [10, 11]
+        items: [3, 9, 10, 11]
+        duration: [13, 14, 15]
+        play: [17, 18, 19]
+        add: [9, 10, 11]
+        press: [23, 30, 31]
+        result: [31, 32]
     wire:
       source: |
         const throwbacks = new Playlist("Throwbacks");

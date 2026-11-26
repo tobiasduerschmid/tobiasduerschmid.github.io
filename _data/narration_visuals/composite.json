@@ -23,7 +23,6 @@
       "playable",
       "song",
       "playlist",
-      "button",
       "wire"
     ],
     "diagrams": {
@@ -54,81 +53,201 @@
   },
   "scenes": {
     "intro": {
-      "state": {"ui": true},
+      "state": {
+        "ui": true
+      },
       "cues": {
-        "road-trip": {"ui_state": "start"},
-        "try-it": {"ui_state": "start"},
-        "pattern-parts": {"ui_state": "start"}
+        "road-trip": {
+          "ui_state": "start"
+        },
+        "try-it": {
+          "ui_state": "start"
+        },
+        "pattern-parts": {
+          "ui_state": "start"
+        }
       }
     },
     "context": {
-      "state": {"ui": true},
+      "state": {
+        "ui": true
+      },
       "cues": {
-        "part-whole": {"ui_state": "wholes"},
-        "alike": {"ui_state": "alike"},
-        "trees": {"ui_state": "start"}
+        "part-whole": {
+          "ui_state": "wholes"
+        },
+        "alike": {
+          "ui_state": "alike"
+        },
+        "trees": {
+          "ui_state": "start"
+        }
       }
     },
     "problem": {
-      "state": {"code": "problem", "ui": true},
+      "state": {
+        "code": "problem",
+        "ui": true
+      },
       "cues": {
-        "two-lists": {"focus": "lists", "ui_state": "first_start"},
-        "two-loops": {"focus": "loops", "ui_state": "first_start"},
-        "lost-order": {"focus": "order", "ui_state": "first_order"},
-        "client-check": {"focus": "client", "ui_state": "first_order"},
-        "predict-episodes": {"ui_state": "first_order"},
-        "every-change": {"focus": "changes", "ui_state": "first_missing"},
-        "demands": {"focus": "loops", "ui_state": "first_order"}
+        "two-lists": {
+          "focus": "lists",
+          "ui_state": "first_start"
+        },
+        "two-loops": {
+          "focus": "loops",
+          "ui_state": "first_start"
+        },
+        "lost-order": {
+          "focus": "order",
+          "ui_state": "first_order"
+        },
+        "client-check": {
+          "focus": "client",
+          "ui_state": "first_order"
+        },
+        "predict-episodes": {
+          "ui_state": "first_order"
+        },
+        "every-change": {
+          "focus": "changes",
+          "ui_state": "first_missing"
+        },
+        "demands": {
+          "focus": "loops",
+          "ui_state": "first_order"
+        }
       }
     },
     "playable_role": {
-      "state": {"code": "playable", "diagram": "solution"},
+      "state": {
+        "code": "playable",
+        "diagram": "solution"
+      },
       "cues": {
-        "shared-type": {"focus": "interface", "diagram_focus": "Playable"},
-        "queue": {"focus": "play", "diagram_focus": "Playable"}
+        "shared-type": {
+          "focus": "interface",
+          "diagram_focus": "Playable"
+        },
+        "queue": {
+          "focus": "play",
+          "diagram_focus": "Playable"
+        }
       }
     },
     "song_role": {
-      "state": {"code": "song", "diagram": "solution"},
+      "state": {
+        "code": "song",
+        "diagram": "solution"
+      },
       "cues": {
-        "direct": {"focus": "requests", "diagram_focus": "Song"},
-        "shared": {"focus": "fields", "diagram_focus": "Song"}
+        "direct": {
+          "focus": "requests",
+          "diagram_focus": "Song"
+        },
+        "shared": {
+          "focus": "fields",
+          "diagram_focus": "Song"
+        }
       }
     },
     "playlist_role": {
-      "state": {"code": "playlist", "diagram": "solution"},
+      "state": {
+        "code": "playlist",
+        "diagram": "solution"
+      },
       "cues": {
-        "one-list": {"focus": "items", "diagram_focus": "Playlist"},
-        "duration": {"focus": "duration", "diagram_focus": "Playlist"},
-        "play": {"focus": "play", "diagram_focus": "Playlist"},
-        "safe-add": {"focus": "add", "diagram_focus": "Playlist"}
+        "one-list": {
+          "focus": "items",
+          "diagram_focus": "Playlist"
+        },
+        "duration": {
+          "focus": "duration",
+          "diagram_focus": "Playlist"
+        },
+        "play": {
+          "focus": "play",
+          "diagram_focus": "Playlist"
+        },
+        "safe-add": {
+          "focus": "add",
+          "diagram_focus": "Playlist"
+        },
+        "transparent-add": {
+          "focus": "add",
+          "diagram_focus": "Playable"
+        }
       }
     },
     "collaborations": {
-      "state": {"code": "button", "diagram": "trace", "ui": true},
+      "state": {
+        "code": "playlist",
+        "diagram": "trace",
+        "ui": true
+      },
       "cues": {
-        "press": {"focus": "press", "diagram_steps": 1, "diagram_focus": "roadTrip", "ui_state": "trace_root"},
-        "first-song": {"focus": "call", "diagram_steps": 1, "ui_state": "trace_leaf"},
-        "recursion": {"focus": "call", "diagram_steps": 2, "diagram_focus": "throwbacks", "ui_state": "trace_nested"},
-        "loop": {"focus": "result", "diagram_steps": 2, "ui_state": "trace_done"}
+        "press": {
+          "focus": "press",
+          "diagram_steps": 1,
+          "diagram_focus": "roadTrip",
+          "ui_state": "trace_root"
+        },
+        "first-song": {
+          "focus": "play",
+          "diagram_steps": 1,
+          "ui_state": "trace_leaf"
+        },
+        "recursion": {
+          "focus": "play",
+          "diagram_steps": 2,
+          "diagram_focus": "throwbacks",
+          "ui_state": "trace_nested"
+        },
+        "loop": {
+          "focus": "result",
+          "diagram_steps": 2,
+          "ui_state": "trace_done"
+        }
       }
     },
     "solution": {
-      "state": {"diagram": "roles"},
+      "state": {
+        "diagram": "roles"
+      },
       "cues": {
-        "component": {"diagram_focus": "Component"},
-        "leaf": {"diagram_focus": "Leaf"},
-        "composite": {"diagram_focus": "Composite"},
-        "client": {"diagram_focus": "Client"}
+        "component": {
+          "diagram_focus": "Component"
+        },
+        "leaf": {
+          "diagram_focus": "Leaf"
+        },
+        "composite": {
+          "diagram_focus": "Composite"
+        },
+        "client": {
+          "diagram_focus": "Client"
+        }
       }
     },
     "consequences": {
       "state": {
         "cards": [
-          {"title": "Benefit: simple clients", "text": "Clients treat one object and a group the same way, with no type checks, and groups nest to any depth."},
-          {"title": "Benefit: new kinds fit in", "text": "A new leaf or composite class works inside existing structures and with existing clients, unchanged."},
-          {"title": "Liability: overly general", "text": "The type system cannot restrict which children a composite accepts; restrictions need checks at runtime."},
-          {"title": "Liability: safety or transparency", "text": "Add only in the composite is safe but visible to clients; add in the component is uniform but leaves must refuse it."}
+          {
+            "title": "Benefit: simple clients",
+            "text": "Clients treat one object and a group the same way, with no type checks; wherever one item fits, a whole group fits too."
+          },
+          {
+            "title": "Benefit: new kinds fit in",
+            "text": "A new leaf or group class that keeps the shared interface works in existing structures and with existing clients, unchanged."
+          },
+          {
+            "title": "Liability: overly general",
+            "text": "A group that inherits the general add cannot use the type system to restrict its children; it needs checks at runtime."
+          },
+          {
+            "title": "Liability: safety or transparency",
+            "text": "Add only in the composite is checked early but visible to clients; add in the component is uniform, but leaves reject it at runtime."
+          }
         ]
       },
       "cues": {
@@ -141,9 +260,18 @@
     "applicability": {
       "state": {
         "cards": [
-          {"title": "A good fit", "text": "Items nest inside groups, groups inside groups, and clients should not care which one they hold."},
-          {"title": "A simpler alternative", "text": "No nesting: a plain list. Same data in every item: one class with an optional list of children."},
-          {"title": "Neighbors", "text": "Nested views and macro commands are composites. A decorator wraps one object to add behavior; a composite holds many."}
+          {
+            "title": "A good fit",
+            "text": "Items nest inside groups, groups inside groups, and clients should not care which one they hold."
+          },
+          {
+            "title": "Simpler designs",
+            "text": "No nesting: a plain list. Same data in every item: one class with an optional list of children plays every role."
+          },
+          {
+            "title": "Neighbors",
+            "text": "Nested views and macro commands are composites. A decorator wraps one object to add behavior; a composite holds many."
+          }
         ]
       },
       "cues": {
@@ -156,23 +284,48 @@
       "state": {
         "ui": true,
         "cards": [
-          {"title": "Podcast episodes", "text": "Listeners drop episodes into playlists, right next to songs."},
-          {"title": "An episode", "text": "It has a show, a title, and a length, and it queues as show: title."},
-          {"title": "Your task", "text": "Name the class you add and every existing line that changes."}
+          {
+            "title": "Podcast episodes",
+            "text": "Listeners drop episodes into playlists, right next to songs."
+          },
+          {
+            "title": "An episode",
+            "text": "It has a show, a title, and a length, and it queues as show: title."
+          },
+          {
+            "title": "Your task",
+            "text": "Name the class you add and every existing line that changes."
+          }
         ]
       },
       "cues": {
-        "plan": {"ui_state": "episode_request"},
-        "episode": {"ui_state": "episode"}
+        "plan": {
+          "ui_state": "episode_request"
+        },
+        "episode": {
+          "ui_state": "episode"
+        }
       }
     },
     "summary": {
       "state": {
         "cards": [
-          {"title": "Context", "text": "A part-whole hierarchy that nests, whose clients want to treat one object and a group alike."},
-          {"title": "Problem", "text": "Code that handles single objects and groups separately repeats its loops, loses order, and breaks as new kinds arrive."},
-          {"title": "Solution", "text": "A Component interface that Leaves implement directly and Composites implement by forwarding to their children."},
-          {"title": "Consequences", "text": "Simple clients and easy new kinds, at the cost of an overly general structure and a choice between safety and transparency."}
+          {
+            "title": "Context",
+            "text": "A part-whole hierarchy that nests, whose clients want to treat one object and a group alike."
+          },
+          {
+            "title": "Problem",
+            "text": "Code that handles single objects and groups separately repeats its loops and type checks, and breaks as new kinds arrive."
+          },
+          {
+            "title": "Solution",
+            "text": "A Component interface that Leaves implement directly and Composites implement by forwarding to their children."
+          },
+          {
+            "title": "Consequences",
+            "text": "Simple clients and easy new kinds, at the cost of an overly general structure and a choice between safety and transparency."
+          }
         ]
       },
       "cues": {
