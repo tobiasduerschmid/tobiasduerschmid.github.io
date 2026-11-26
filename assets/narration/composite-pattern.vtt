@@ -1,161 +1,161 @@
 WEBVTT
 
 intro-1
-00:00:00.000 --> 00:00:15.450
-Imagine your music app. You build a Road Trip playlist: one song to start, your whole Throwbacks playlist in the middle, and one song to end the trip. Press Play, and the queue fills in exactly that order: fourteen minutes of music.
+00:00:00.000 --> 00:00:16.270
+Picture your summer photo dump as one phone story. The beach photo fills the left half. On the right, the cat sits on top, and below it the gig and the taco share the space, side by side. Four photos in one story, arranged by splits.
 
 intro-2
-00:00:15.450 --> 00:00:29.640
-Notice what the app treats alike. A song and a playlist both show a length, and both have a Play button. Try it: pause the narration, press Play on any song or playlist, and watch which songs fill the queue.
+00:00:16.270 --> 00:00:33.040
+Notice what the app treats alike. A single photo and a whole split both show a photo count, and both have a Share button. Try it yourself. Pause the narration, press Share on any tile, a photo or a split, and watch it fill the whole story.
 
 intro-3
-00:00:29.640 --> 00:00:54.500
-The Composite pattern organizes structures like this one. Its roles are a shared interface, single items that stand alone, groups that hold other items, and the clients that use them. We describe it the way every pattern is described: its context, problem, solution, and consequences. Choose a code language above; the design is the same in every language.
+00:00:33.040 --> 00:00:54.820
+The Composite pattern organizes structures like this one. Its roles are a shared interface, single items, groups that hold other items, and the clients that use them. We describe it by its context, problem, solution, and consequences. Choose a code language above; the design is the same in each.
 
 context-1
-00:00:54.500 --> 00:01:11.250
-First, the context. The Composite pattern applies to part-whole hierarchies: wholes made of parts, where some parts are wholes themselves. A playlist is made of songs and other playlists, and those playlists are made of songs, nested as deep as you like.
+00:00:54.820 --> 00:01:13.690
+First, the context. The Composite pattern applies to part-whole hierarchies: wholes made of parts, where some parts are wholes themselves. The story is made of tiles. Its right half holds the cat and the bottom split, and the bottom holds two photos. Splits nest as deep as you like.
 
 context-2
-00:01:11.250 --> 00:01:30.480
-The second sign: clients, the code that uses these objects, want to ignore the difference between a single object and a group. The Play button and the screen that shows lengths ask a song and a playlist the same questions. A song answers for itself; a playlist answers for everything inside it.
+00:01:13.690 --> 00:01:32.160
+The second sign: clients, the code that uses these objects, want to ignore the difference between a single object and a group. The Share button and the layout tree ask a photo and a split the same questions. A photo answers for itself; a split answers for everything inside it.
 
 context-3
-00:01:30.480 --> 00:01:52.020
+00:01:32.160 --> 00:01:53.700
 Such structures are everywhere: folders that hold files and folders, drawings whose shapes are grouped into larger shapes, menus with submenus, and the boxes nested inside every web page. They form trees. An item with nothing inside is called a leaf, and a group is called a composite.
 
 problem-1
-00:01:52.020 --> 00:02:06.130
-Now the problem. Here is a direct implementation. Song stores a title and a length in seconds. Playlist keeps its songs in one list and its nested playlists in a second list, with a separate add method for each.
+00:01:53.700 --> 00:02:12.190
+Now the problem. First, a small helper every version uses. An area is a rectangle that cuts itself into equal parts, side by side or stacked. A split cuts its area into one part per item and hands each item its part of the area, in list order.
 
 problem-2
-00:02:06.130 --> 00:02:22.980
-Duration adds up the songs, then asks each nested playlist for its duration. Play does the same: it queues the songs, then each nested playlist. Every operation needs two loops, one per list, and every new operation will need two more.
+00:02:12.190 --> 00:02:28.120
+Here is a direct first design. A photo has a name. A split has a direction and one list of items, and each item is either a photo or a split. The two classes share no type, so the split holds two unrelated kinds of items.
 
 problem-3
-00:02:22.980 --> 00:02:37.890
-Now press Play on Road Trip. You added a song, then Throwbacks, then the song meant to end the trip. But play queues both songs first and Throwbacks after them. Two separate lists cannot remember the order in which you added things.
+00:02:28.120 --> 00:02:45.370
+So every operation asks which one it holds. The split's draw method draws a photo itself, or forwards the part to a nested split. Its photo count adds one for a photo, or asks the nested split for its count. Each operation repeats the same check.
 
 problem-4
-00:02:37.890 --> 00:02:53.280
-Clients suffer too. The Play button must check whether it holds a song or a playlist, because only Playlist has a play method. Every screen that shows a length repeats that check: a song stores its seconds, but a playlist computes its duration.
+00:02:45.370 --> 00:03:01.440
+The Share button asks too: is my selection a photo or a split? If it is a photo, the button draws the photo itself, into the whole story. So the knowledge of how to draw a photo is now written in two places, the split and the Share button.
 
 problem-5
-00:02:53.280 --> 00:03:13.760
-Your app now adds podcast episodes, and listeners want them in playlists, between songs. Before continuing, predict which code must change, and what happens if one change is forgotten. Pause here if you want more thinking time.
+00:03:01.440 --> 00:03:23.520
+Now a new kind of tile arrives: a caption. The caption, core memories, should go under the beach photo. Predict what must change in this design, and what happens if one of those changes is missed. Pause the narration and decide before you go on.
 
 problem-6
-00:03:13.760 --> 00:03:30.230
-A third list and a third add method, a third loop in every operation, and another branch in every client check. Forget the loop in duration, and every episode silently drops out of the total time. Each new kind of item multiplies the work.
+00:03:23.520 --> 00:03:40.830
+The item type must allow captions, and all three checks need a new branch: in the split's draw method, its photo count, and the Share button. Miss the one in draw, and the caption's area stays blank. Nothing reports an error, because that check has no else branch.
 
 problem-7
-00:03:30.230 --> 00:03:52.430
-That is the problem: the code treats single items and groups differently, though listeners treat them the same. So a good solution must meet four demands: one request that works on any item, nesting to any depth, the order the listener chose, and new kinds of items without editing every loop.
+00:03:40.830 --> 00:04:01.610
+So a solution must meet four demands. One shared type for photos and splits. A split that holds one ordered list of that type, so splits nest without checks. A Share button that works on any tile without checks. And new kinds of tile without edits to existing classes.
 
-playable_role-1
-00:03:52.430 --> 00:04:08.280
-Here is the fix, one class at a time. To keep songs and playlists in one ordered list, they need one shared type. Playable is that interface. It declares what listeners do with any item: ask for its duration, and play it.
+tile_role-1
+00:04:01.610 --> 00:04:21.280
+Solution, concretely. First, one shared type. Tile declares the two requests that every tile answers: draw yourself into this area, and tell me your photo count. Photo and Split both implement Tile, so code that holds a tile no longer needs to know which kind it holds.
 
-playable_role-2
-00:04:08.280 --> 00:04:23.560
-Play does not return a list. It receives the play queue and adds titles to it, in order. Passing one queue down through every playlist collects all the titles without building and joining a new list at each level.
+tile_role-2
+00:04:21.280 --> 00:04:38.900
+Look at draw's canvas parameter: a list that collects one line for each tile drawn. The same canvas is handed down the whole tree, so every tile adds its own line, and whoever called draw gets the finished picture back in one list.
 
-song_role-1
-00:04:23.560 --> 00:04:38.650
-Second, Song implements Playable. Its duration returns its own length, and its play adds its own title to the queue. A song has nothing inside it, so it answers every request directly, without asking any other object.
+photo_role-1
+00:04:38.900 --> 00:04:56.390
+Photo answers both requests from its own data. Its draw adds one line to the canvas: its name and the area it was given. Its photo count is simply one. A photo has nothing inside, which makes it a leaf of the tree, and it never asks anyone else.
 
-song_role-2
-00:04:38.650 --> 00:04:53.630
-A song stores only its own title and length. It never changes, and it knows nothing about the playlists that hold it. So one Song object can sit in Road Trip and in your gym playlist at the same time.
+photo_role-2
+00:04:56.390 --> 00:05:13.810
+A photo never changes after it is made, and it knows nothing about the split that holds it. So one photo object can appear in two stories at once: the beach photo in your summer dump and in a best-of-the-year story, both drawing the same picture.
 
-playlist_role-1
-00:04:53.630 --> 00:05:09.100
-Third, Playlist implements Playable too, and it keeps a single ordered list of items. Each item is a Playable, so it may be a song or another playlist, and Playlist never asks which. Add appends any Playable to the end.
+split_role-1
+00:05:13.810 --> 00:05:32.520
+Split keeps a direction and one ordered list of tiles. Because the list's type is Tile, not photo-or-split, a split can hold both kinds mixed, in any order, and splits nest inside splits without a single type check. The list's order is the reading order of the story.
 
-playlist_role-2
-00:05:09.100 --> 00:05:22.690
-Duration asks each item for its duration and adds up the answers. When an item is itself a playlist, it does the same with its own items. The question travels down to the songs, and the sums travel back up.
+split_role-2
+00:05:32.520 --> 00:05:47.490
+Its photo count asks each of its tiles for their count and adds up the answers. It never asks what kind of tile it is holding. A nested split answers the same way, so the question travels down the tree, and the sums come back up.
 
-playlist_role-3
-00:05:22.690 --> 00:05:36.920
-Play passes the same queue to each item, in order. Because one list keeps the order you chose, the queue matches the playlist exactly as you built it, unlike the first design, which queued all of its own songs first.
+split_role-3
+00:05:47.490 --> 00:06:05.440
+Its draw cuts its area into equal parts, one per tile, and forwards each part to its tile, in list order. So list order decides where each tile lands: the first tile gets the left or top part. A split draws nothing itself; it only arranges.
 
-playlist_role-4
-00:05:36.920 --> 00:05:54.170
-Notice that add is declared only in Playlist. A song has no add method, so a compiler or type checker rejects adding to a song before the program runs. That is the safe choice. The price is that code adding an item must know it holds a playlist.
+split_role-4
+00:06:05.440 --> 00:06:22.210
+Notice where the add method is declared: in Split, not in Tile. Code cannot add a tile to a photo; that mistake is caught before the program runs. That is the safe choice. The price is that code that adds tiles must know it holds a split.
 
-playlist_role-5
-00:05:54.170 --> 00:06:11.790
-The other choice is transparency: declare add in Playable as well. Then every item looks alike, even to code that adds, but a song must reject a call to add while the program runs. You trade early errors for uniform code.
+split_role-5
+00:06:22.210 --> 00:06:42.790
+The other choice declares the add method in Tile itself. Then every tile looks alike to clients, but a photo must refuse to add anything while the program runs. That is the transparent choice. This lesson's code makes the safe one; both are versions of the Composite pattern.
 
 collaborations-1
-00:06:11.790 --> 00:06:25.940
-Now watch the objects work together on one request. Each Play button holds one Playable and never asks which kind. Press the button for Road Trip: it creates an empty queue and calls play on Road Trip.
+00:06:42.790 --> 00:06:58.280
+Now trace one press of Share on the story. The Share button calls draw on the story, handing it the whole story's area and an empty canvas. The button neither knows nor cares that the story is a split; it only knows it holds a tile.
 
 collaborations-2
-00:06:25.940 --> 00:06:47.840
-Road Trip forwards play to its first item, the song Sunroof Down, which adds its own title. Its next item is the Throwbacks playlist. Predict: what does Road Trip send to Throwbacks, and what happens inside it? Pause here if you want more thinking time.
+00:06:58.280 --> 00:07:15.320
+The story is a split, side by side, holding the beach photo and then the right split. Now predict the order in which all four photos land on the canvas. Pause and decide before you go on.
 
 collaborations-3
-00:06:47.840 --> 00:07:02.450
-Road Trip sends Throwbacks the same play message it sent the song. Throwbacks forwards play to each of its own songs, and each one adds its title. The request travels down, one level at a time, until it reaches songs.
+00:07:15.320 --> 00:07:30.850
+The story cuts its area in two. Beach gets the left half and draws itself first. The right split gets the right half and does the same, cutting it into a top part and a bottom part. The cat is drawn second, then the gig, then the taco.
 
 collaborations-4
-00:07:02.450 --> 00:07:20.270
-Then Road Trip plays its last song, and the call returns to the button with four titles, in the order you chose. That is the whole rule: a song answers directly, a playlist forwards to each item, and the button never asks which is which.
+00:07:30.850 --> 00:07:48.170
+The call returns to the Share button with a canvas of four lines, in reading order. That is the loop of this pattern: a composite forwards each request to its children, and a leaf answers it directly. One call on the story reached every tile.
 
 solution-1
-00:07:20.270 --> 00:07:36.160
-Now step back. Remove the songs and playlists, and four roles remain: they are the Composite pattern. The Component, like our Playable, declares the operations that single objects and groups share, so clients can use either one.
+00:07:48.170 --> 00:08:06.960
+Solution, abstracted. Remove the photos and the story, and four roles remain. The Component, our Tile, declares the requests that every object in the structure answers, whether it is a single item or a group. Clients hold Components and never need to know which kind they hold.
 
 solution-2
-00:07:36.160 --> 00:07:49.070
-A Leaf, like our Song, has no children and implements every operation itself. The diagram draws the role once, but many classes can play it, each answering requests in its own way.
+00:08:06.960 --> 00:08:21.930
+A Leaf, our Photo, answers each request itself and has no children. A structure can have many kinds of leaves; each kind implements the Component in its own way, and nothing above it needs to know which kind it is.
 
 solution-3
-00:07:49.070 --> 00:08:05.760
-The Composite, like our Playlist, stores child components and implements each operation by forwarding it to its children, sometimes adding work before or after. The arrow with the hollow diamond and the star says that a composite holds any number of components.
+00:08:21.930 --> 00:08:39.245
+A Composite, our Split, holds children of the Component type and answers by forwarding to them, sometimes adding work of its own. Because a Composite is itself a Component, Composites can contain Composites: these four classes describe object trees of any depth.
 
 solution-4
-00:08:05.760 --> 00:08:23.260
-The Client, like our Play button, talks only to the Component interface. Now follow the arrows around the Composite: it is a component, and it holds components. That cycle in the diagram is what lets groups contain groups, to any depth.
+00:08:39.245 --> 00:08:56.485
+The Client, our Share button, uses only the Component interface. It never asks which kind it holds, so the same call works on one photo or on the whole story, and the client stays this simple however deep the tree grows.
 
 consequences-1
-00:08:23.260 --> 00:08:39.870
-Now the consequences, starting with the benefits. Clients become simple: the Play button treats a song and a playlist of playlists the same way, so the type checks from the problem are gone. And wherever code expects a single item, it can take a whole playlist instead.
+00:08:56.485 --> 00:09:14.275
+Now the consequences. The first benefit: simple clients. The Share button treats one photo and a whole split exactly the same way, with no type checks at all. Wherever a single tile fits, a whole split of tiles fits too, and the button's code never grows.
 
 consequences-2
-00:08:39.870 --> 00:08:55.080
-New kinds of items are easy to add. Any new leaf or group class that keeps the shared interface works inside existing playlists, and existing clients handle it without a change. The code that combines items is written once, in Playlist.
+00:09:14.275 --> 00:09:32.525
+The second benefit: new kinds fit in. A new kind of tile is one new class that implements Tile. Existing splits hold it and the Share button shares it, without editing any existing class. And a new kind that forgets draw is reported as an error, not left blank.
 
 consequences-3
-00:08:55.080 --> 00:09:14.270
-The liabilities. The design can become overly general. Suppose albums, a kind of playlist, may hold only songs. Album inherits add, which accepts any Playable, so the type system cannot keep an episode out of an album; the album has to check each item while the program runs.
+00:09:32.525 --> 00:09:51.555
+The first liability: the design can be overly general. Imagine a photo-booth strip, a kind of split that may hold only photos. It inherits the add method from Split, which accepts any tile, so the type system cannot keep splits out. The strip needs a check while the program runs.
 
 consequences-4
-00:09:14.270 --> 00:09:34.870
-And the choice about add costs something either way. Declared only in the composite, add is checked before the program runs, but code must know it holds a composite before adding. Declared in the component, every object looks alike, but leaves must reject add while the program runs.
+00:09:51.555 --> 00:10:12.635
+The second liability: safety or transparency. With the add method only in Split, misuse is caught before the program runs, but code that builds the tree must know it holds a split. Declared in Tile, it makes all tiles look alike, but leaves must reject it while the program runs.
 
 applicability-1
-00:09:34.870 --> 00:09:51.720
-With those trade-offs in mind, revisit the context. Use Composite when items really nest inside groups, and groups inside groups, and clients should not care whether they hold one item or a group. If groups never nest, a plain list of songs is simpler.
+00:10:12.635 --> 00:10:31.925
+Back to the context, and when to use the pattern. Composite fits when parts nest inside wholes, wholes nest inside wholes, and clients should not care whether they hold one item or a whole group. The summer story fits: splits sit inside splits, and one Share button serves every tile.
 
 applicability-2
-00:09:51.720 --> 00:10:10.070
-Check the parts, too. If every item has the same data and only some have children, one class with an optional list of children can play every role; separate leaf and group classes would add nothing. They pay off when single items and groups behave differently and new kinds keep arriving.
+00:10:31.925 --> 00:10:49.515
+Compare a carousel post: a flat list of photos you swipe through. Nothing nests, and nothing treats one photo and the whole carousel alike, so a plain list is better. With one kind of leaf and no others coming, one Tile class with optional children can be simpler too.
 
 applicability-3
-00:10:10.070 --> 00:10:33.290
-Composite also hides inside other patterns. In Model-View-Controller, views nested inside views form a composite, and a macro command made of commands is one too. Decorator looks similar but differs in purpose: a decorator wraps one object to add behavior, while a composite holds many to treat them as one.
+00:10:49.515 --> 00:11:11.355
+Now a polaroid frame around the cat. It has the tile interface and one child, and it adds drawing of its own: that is a Decorator. A split holds many tiles and arranges them. Composite also appears inside other patterns, like Model-View-Controller's view trees and commands that group other commands.
 
 transfer-1
-00:10:33.290 --> 00:10:59.510
-One last design check. Remember the podcast episodes that broke the first design? Plan the same change for the composite: listeners drop episodes into playlists, right next to songs, and an episode has a show, a title, and a length. Which class do you add, and which existing code changes? Explain before continuing.
+00:11:11.355 --> 00:11:35.915
+Your turn. Captions arrive in the Composite design. A caption draws its text into its area and has zero photos, and core memories must sit under the beach photo. Predict what you add, which existing classes change, and how the story puts the caption there. Pause and plan your answer.
 
 transfer-2
-00:10:59.510 --> 00:11:22.750
-Add an Episode class that implements Playable: a new leaf. Its duration returns its length, and its play adds the show and the title. Playable, Song, Playlist, and the Play button stay unchanged; only code that creates episodes knows the new class. The first design needed a new list, loop, and check everywhere.
+00:11:35.915 --> 00:11:57.895
+You add one class, Caption, which implements Tile: its draw adds its text and area, and its photo count returns zero. The story just gets one more Split object, stacked, holding the beach photo above the caption. No existing class changes; the first design needed three new branches.
 
 summary-1
-00:11:22.750 --> 00:12:04.390
-To finish, recall the whole pattern. Context: a part-whole hierarchy that nests, whose clients want to treat one object and a group alike. Problem: code that handles single objects and groups separately repeats its loops and type checks, and breaks as new kinds arrive. Solution: a Component interface, which Leaves implement directly and Composites implement by forwarding to their children. Consequences: simple clients and easy new kinds, at the cost of an overly general structure and a choice between safety and transparency. The summary quiz checks each part on a new example.
+00:11:57.895 --> 00:12:33.875
+To finish, recall the whole pattern. Context: parts nest into wholes, and clients treat one object and a group alike. Problem: code that asks every item for its type repeats its checks and silently misses new kinds. Solution: a Component interface that Leaves implement directly and Composites implement by forwarding to their children. Consequences: simple clients and easy new kinds, but an overly general structure and a choice between safety and transparency.

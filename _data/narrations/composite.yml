@@ -31,6 +31,11 @@ speech:
   voice: drama3-female6
   speed: 1.0
   pronunciations:
+    # Drama 3 drops a label that opens a sentence; these lead-ins keep it.
+    "Context: parts nest": "First, the context: parts nest"
+    "Problem: code that": "Then the problem: code that"
+    "Solution: a Component": "Then the solution: a Component"
+    "Solution, abstracted.": "Now the solution, abstracted."
     "Consequences: simple": "And the consequences: simple"
 media:
   audio: /assets/audio/composite-pattern.mp3

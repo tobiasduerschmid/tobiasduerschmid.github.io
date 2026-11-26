@@ -594,3 +594,30 @@ test('every section ends in a valid check, and the last one is a multi-question 
   }
   for (const index of [0, 1, 2]) assert.ok(keys.filter(key => key === index).length >= 4, `the key sits at index ${index} often enough`);
 });
+
+// ---------------------------------------------------------------------------
+// Speech: the rendered audio, captions, and timing match the storyboard.
+const { statSync } = require('node:fs');
+
+test('speech, captions, and timing are generated from the published storyboard', () => {
+  const timing = JSON.parse(readFileSync(path.join(root, '_data/explainers/composite_timing.json'), 'utf8'));
+  assert.equal(timing.speech_sha256, story.speech_sha256, 'Regenerate audio, captions, and timing after editing the storyboard.');
+  assert.equal(timing.scenes.length, story.scenes.length);
+  let end = 0;
+  timing.scenes.forEach((scene, index) => {
+    assert.equal(scene.id, story.scenes[index].id);
+    assert.equal(scene.cues.length, story.scenes[index].cues.length);
+    scene.cues.forEach(cue => { assert.equal(cue.start, end); assert.ok(cue.end > end); end = cue.end; });
+  });
+  assert.equal(timing.duration, end);
+  const cues = story.scenes.flatMap(scene => scene.cues);
+  const captions = readFileSync(path.join(root, story.captions), 'utf8');
+  assert.equal((captions.match(/ --> /g) || []).length, cues.length);
+  cues.forEach(cue => assert.ok(captions.includes(cue.text), `the captions include ${cue.text.slice(0, 40)}…`));
+  const spoken = cues.map(cue => Object.entries(story.pronunciations)
+    .sort(([left], [right]) => right.length - left.length)
+    .reduce((text, [written, pronunciation]) => text.split(written).join(pronunciation), cue.text));
+  assert.equal(readFileSync(path.join(root, story.script), 'utf8'), `${spoken.join('\n\n')}\n`);
+  const size = statSync(path.join(root, story.audio)).size;
+  assert.ok(size > 0 && size * 8 / timing.duration < 64000, 'the audio stays under 64 kbit/s');
+});

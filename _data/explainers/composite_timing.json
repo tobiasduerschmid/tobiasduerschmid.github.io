@@ -1,332 +1,332 @@
 {
-  "duration": 724.39,
+  "duration": 753.8748333333333,
   "voice": "drama3-female6",
   "speed": 1,
-  "speech_sha256": "6b588878ebbedaf362efa67987aee316c9463ec5c2aa372e899316599b1c2d7f",
+  "speech_sha256": "7eb6498496515a5bbce7388592c4033fd71f390d753f8bbfb615b635933868e9",
   "scenes": [
     {
       "id": "intro",
       "start": 0.0,
       "cues": [
         {
-          "id": "road-trip",
+          "id": "photo-dump",
           "start": 0.0,
-          "end": 15.45,
-          "speech_end": 14.9
+          "end": 16.27,
+          "speech_end": 15.72
         },
         {
           "id": "try-it",
-          "start": 15.45,
-          "end": 29.64,
-          "speech_end": 29.09
+          "start": 16.27,
+          "end": 33.04,
+          "speech_end": 32.49
         },
         {
           "id": "pattern-parts",
-          "start": 29.64,
-          "end": 54.5,
-          "speech_end": 52.0
+          "start": 33.04,
+          "end": 54.82,
+          "speech_end": 52.32
         }
       ],
-      "end": 54.5
+      "end": 54.82
     },
     {
       "id": "context",
-      "start": 54.5,
+      "start": 54.82,
       "cues": [
         {
           "id": "part-whole",
-          "start": 54.5,
-          "end": 71.25,
-          "speech_end": 70.7
+          "start": 54.82,
+          "end": 73.69,
+          "speech_end": 73.14
         },
         {
           "id": "alike",
-          "start": 71.25,
-          "end": 90.48,
-          "speech_end": 89.93
+          "start": 73.69,
+          "end": 92.16,
+          "speech_end": 91.61
         },
         {
           "id": "trees",
-          "start": 90.48,
-          "end": 112.02,
-          "speech_end": 109.52
+          "start": 92.16,
+          "end": 113.7,
+          "speech_end": 111.2
         }
       ],
-      "end": 112.02
+      "end": 113.7
     },
     {
       "id": "problem",
-      "start": 112.02,
+      "start": 113.7,
       "cues": [
         {
-          "id": "two-lists",
-          "start": 112.02,
-          "end": 126.13,
-          "speech_end": 125.58
+          "id": "area",
+          "start": 113.7,
+          "end": 132.19,
+          "speech_end": 131.64
         },
         {
-          "id": "two-loops",
-          "start": 126.13,
-          "end": 142.98,
-          "speech_end": 142.43
+          "id": "first-design",
+          "start": 132.19,
+          "end": 148.12,
+          "speech_end": 147.57
         },
         {
-          "id": "lost-order",
-          "start": 142.98,
-          "end": 157.89,
-          "speech_end": 157.34
+          "id": "branches",
+          "start": 148.12,
+          "end": 165.37,
+          "speech_end": 164.82
         },
         {
           "id": "client-check",
-          "start": 157.89,
-          "end": 173.28,
-          "speech_end": 172.73
+          "start": 165.37,
+          "end": 181.44,
+          "speech_end": 180.89
         },
         {
-          "id": "predict-episodes",
-          "start": 173.28,
-          "end": 193.76,
-          "speech_end": 187.76
+          "id": "predict-captions",
+          "start": 181.44,
+          "end": 203.52,
+          "speech_end": 197.52
         },
         {
           "id": "every-change",
-          "start": 193.76,
-          "end": 210.23,
-          "speech_end": 209.68
+          "start": 203.52,
+          "end": 220.83,
+          "speech_end": 220.28
         },
         {
           "id": "demands",
-          "start": 210.23,
-          "end": 232.43,
-          "speech_end": 229.43
+          "start": 220.83,
+          "end": 241.61,
+          "speech_end": 238.61
         }
       ],
-      "end": 232.43
+      "end": 241.61
     },
     {
-      "id": "playable_role",
-      "start": 232.43,
+      "id": "tile_role",
+      "start": 241.61,
       "cues": [
         {
           "id": "shared-type",
-          "start": 232.43,
-          "end": 248.28,
-          "speech_end": 247.73
+          "start": 241.61,
+          "end": 261.28,
+          "speech_end": 260.73
         },
         {
-          "id": "queue",
-          "start": 248.28,
-          "end": 263.56,
-          "speech_end": 261.06
+          "id": "canvas",
+          "start": 261.28,
+          "end": 278.9,
+          "speech_end": 276.4
         }
       ],
-      "end": 263.56
+      "end": 278.9
     },
     {
-      "id": "song_role",
-      "start": 263.56,
+      "id": "photo_role",
+      "start": 278.9,
       "cues": [
         {
           "id": "direct",
-          "start": 263.56,
-          "end": 278.65,
-          "speech_end": 278.1
+          "start": 278.9,
+          "end": 296.39,
+          "speech_end": 295.84
         },
         {
           "id": "shared",
-          "start": 278.65,
-          "end": 293.63,
-          "speech_end": 291.13
+          "start": 296.39,
+          "end": 313.81,
+          "speech_end": 311.31
         }
       ],
-      "end": 293.63
+      "end": 313.81
     },
     {
-      "id": "playlist_role",
-      "start": 293.63,
+      "id": "split_role",
+      "start": 313.81,
       "cues": [
         {
           "id": "one-list",
-          "start": 293.63,
-          "end": 309.1,
-          "speech_end": 308.55
+          "start": 313.81,
+          "end": 332.52,
+          "speech_end": 331.97
         },
         {
-          "id": "duration",
-          "start": 309.1,
-          "end": 322.69,
-          "speech_end": 322.14
+          "id": "count",
+          "start": 332.52,
+          "end": 347.49,
+          "speech_end": 346.94
         },
         {
-          "id": "play",
-          "start": 322.69,
-          "end": 336.92,
-          "speech_end": 336.37
+          "id": "draw",
+          "start": 347.49,
+          "end": 365.44,
+          "speech_end": 364.89
         },
         {
           "id": "safe-add",
-          "start": 336.92,
-          "end": 354.17,
-          "speech_end": 353.62
+          "start": 365.44,
+          "end": 382.21,
+          "speech_end": 381.66
         },
         {
           "id": "transparent-add",
-          "start": 354.17,
-          "end": 371.79,
-          "speech_end": 369.29
+          "start": 382.21,
+          "end": 402.79,
+          "speech_end": 400.29
         }
       ],
-      "end": 371.79
+      "end": 402.79
     },
     {
       "id": "collaborations",
-      "start": 371.79,
+      "start": 402.79,
       "cues": [
         {
           "id": "press",
-          "start": 371.79,
-          "end": 385.94,
-          "speech_end": 385.39
+          "start": 402.79,
+          "end": 418.28,
+          "speech_end": 417.73
         },
         {
-          "id": "first-song",
-          "start": 385.94,
-          "end": 407.84,
-          "speech_end": 402.84
+          "id": "first-tile",
+          "start": 418.28,
+          "end": 435.32,
+          "speech_end": 430.32
         },
         {
           "id": "recursion",
-          "start": 407.84,
-          "end": 422.45,
-          "speech_end": 421.9
+          "start": 435.32,
+          "end": 450.85,
+          "speech_end": 450.3
         },
         {
           "id": "loop",
-          "start": 422.45,
-          "end": 440.27,
-          "speech_end": 437.77
+          "start": 450.85,
+          "end": 468.17,
+          "speech_end": 465.67
         }
       ],
-      "end": 440.27
+      "end": 468.17
     },
     {
       "id": "solution",
-      "start": 440.27,
+      "start": 468.17,
       "cues": [
         {
           "id": "component",
-          "start": 440.27,
-          "end": 456.16,
-          "speech_end": 455.61
+          "start": 468.17,
+          "end": 486.96,
+          "speech_end": 486.41
         },
         {
           "id": "leaf",
-          "start": 456.16,
-          "end": 469.07,
-          "speech_end": 468.52
+          "start": 486.96,
+          "end": 501.93,
+          "speech_end": 501.38
         },
         {
           "id": "composite",
-          "start": 469.07,
-          "end": 485.76,
-          "speech_end": 485.21
+          "start": 501.93,
+          "end": 519.2448333333333,
+          "speech_end": 518.6948333333333
         },
         {
           "id": "client",
-          "start": 485.76,
-          "end": 503.26,
-          "speech_end": 500.76
+          "start": 519.2448333333333,
+          "end": 536.4848333333333,
+          "speech_end": 533.9848333333333
         }
       ],
-      "end": 503.26
+      "end": 536.4848333333333
     },
     {
       "id": "consequences",
-      "start": 503.26,
+      "start": 536.4848333333333,
       "cues": [
         {
           "id": "simple-clients",
-          "start": 503.26,
-          "end": 519.87,
-          "speech_end": 519.32
+          "start": 536.4848333333333,
+          "end": 554.2748333333333,
+          "speech_end": 553.7248333333333
         },
         {
           "id": "new-kinds",
-          "start": 519.87,
-          "end": 535.08,
-          "speech_end": 534.53
+          "start": 554.2748333333333,
+          "end": 572.5248333333333,
+          "speech_end": 571.9748333333333
         },
         {
           "id": "overly-general",
-          "start": 535.08,
-          "end": 554.27,
-          "speech_end": 553.72
+          "start": 572.5248333333333,
+          "end": 591.5548333333334,
+          "speech_end": 591.0048333333333
         },
         {
           "id": "safety",
-          "start": 554.27,
-          "end": 574.87,
-          "speech_end": 572.37
+          "start": 591.5548333333334,
+          "end": 612.6348333333333,
+          "speech_end": 610.1348333333333
         }
       ],
-      "end": 574.87
+      "end": 612.6348333333333
     },
     {
       "id": "applicability",
-      "start": 574.87,
+      "start": 612.6348333333333,
       "cues": [
         {
           "id": "fit",
-          "start": 574.87,
-          "end": 591.72,
-          "speech_end": 591.17
+          "start": 612.6348333333333,
+          "end": 631.9248333333334,
+          "speech_end": 631.3748333333333
         },
         {
-          "id": "one-class",
-          "start": 591.72,
-          "end": 610.07,
-          "speech_end": 609.52
+          "id": "plain-list",
+          "start": 631.9248333333334,
+          "end": 649.5148333333333,
+          "speech_end": 648.9648333333333
         },
         {
           "id": "neighbors",
-          "start": 610.07,
-          "end": 633.29,
-          "speech_end": 630.79
+          "start": 649.5148333333333,
+          "end": 671.3548333333333,
+          "speech_end": 668.8548333333333
         }
       ],
-      "end": 633.29
+      "end": 671.3548333333333
     },
     {
       "id": "transfer",
-      "start": 633.29,
+      "start": 671.3548333333333,
       "cues": [
         {
           "id": "plan",
-          "start": 633.29,
-          "end": 659.51,
-          "speech_end": 653.51
+          "start": 671.3548333333333,
+          "end": 695.9148333333334,
+          "speech_end": 689.9148333333334
         },
         {
-          "id": "episode",
-          "start": 659.51,
-          "end": 682.75,
-          "speech_end": 680.25
+          "id": "caption",
+          "start": 695.9148333333334,
+          "end": 717.8948333333333,
+          "speech_end": 715.3948333333333
         }
       ],
-      "end": 682.75
+      "end": 717.8948333333333
     },
     {
       "id": "summary",
-      "start": 682.75,
+      "start": 717.8948333333333,
       "cues": [
         {
           "id": "recap",
-          "start": 682.75,
-          "end": 724.39,
-          "speech_end": 721.89
+          "start": 717.8948333333333,
+          "end": 753.8748333333333,
+          "speech_end": 751.3748333333333
         }
       ],
-      "end": 724.39
+      "end": 753.8748333333333
     }
   ]
 }
