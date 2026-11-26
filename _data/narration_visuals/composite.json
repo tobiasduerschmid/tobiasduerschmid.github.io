@@ -20,9 +20,11 @@
     ],
     "default_language": "python",
     "example_order": [
-      "playable",
-      "song",
-      "playlist",
+      "area",
+      "tile",
+      "photo",
+      "split",
+      "caption",
       "wire"
     ],
     "diagrams": {
