@@ -2,37 +2,35 @@
 version: 1
 id: composite
 kind: pattern
-title: The Composite pattern in a music library
+title: The Composite pattern in a photo collage
 lesson:
   name: Composite
   summary: >-
-    Follow a music app from playlists that handle songs and nested playlists separately to
-    <strong>one interface for songs and playlists</strong>, so any playlist can hold anything
-    playable.
+    Follow a story-collage app from splits that ask “photo or split?” in every operation to
+    <strong>one Tile interface for photos and splits</strong>, so any split can hold any tile.
   prerequisites: Assumes familiarity with interfaces, polymorphism, and recursion.
   chapter: /SEBook/designpatterns/composite.html
   views: /SEBook/designpatterns/composite
   outline_labels:
     context: Wholes made of parts
-    problem: Two lists, two loops
-    playable_role: Playable
-    song_role: Song
-    playlist_role: Playlist
+    problem: Photo or split?
+    tile_role: Tile
+    photo_role: Photo
+    split_role: Split
     collaborations: One request, every level
     solution: Component, Leaf, Composite
     consequences: Benefits and liabilities
     applicability: When to use Composite
   complete_examples: >-
-    Lengths are whole seconds. A song never changes, so one Song object can sit in several
-    playlists; the C++ example shares items through shared_ptr. A playlist must not contain
-    itself, directly or through another playlist; add does not check this. Both designs give the
-    same durations, but the first design queues a playlist's own songs before its nested
-    playlists.
+    Areas are whole pixels, and every split divides its area equally among its tiles. A photo
+    never changes and knows no parent, so one Photo object can appear in two stories; the C++
+    example shares tiles through shared_ptr. A split must not contain itself, directly or through
+    another split; add does not check this. Both designs draw the photo story identically, but
+    with captions, the first design's Split.draw leaves the caption's area blank.
 speech:
   voice: drama3-female6
   speed: 1.0
   pronunciations:
-    UML: U M L
     "Consequences: simple": "And the consequences: simple"
 media:
   audio: /assets/audio/composite-pattern.mp3
@@ -41,44 +39,43 @@ media:
 scenes:
   - id: intro
     label: How a pattern is described
-    title: One Play button for everything
+    title: One Share button for every tile
     purpose: See the example working, then preview how every pattern is described.
     takeaway: A pattern pairs a problem that recurs in a context with a solution and its consequences.
     cues:
-      - id: road-trip
+      - id: photo-dump
         say: >-
-          Imagine your music app. You build a Road Trip playlist: one song to start, your whole
-          Throwbacks playlist in the middle, and one song to end the trip. Press Play, and the queue
-          fills in exactly that order: fourteen minutes of music.
-        step: A playlist inside a playlist
-        note: "Road Trip: Sunroof Down · Throwbacks (two songs) · Last Exit = 14:00"
+          Picture your summer photo dump as one phone story. The beach photo fills the left half.
+          On the right, the cat sits on top, and below it the gig and the taco share the space,
+          side by side. Four photos in one story, arranged by splits.
+        step: A story made of tiles
+        note: "Story: beach on the left; on the right, cat above gig and taco. Four photos."
         visual: >-
-          An illustrated music library shows the playlist Road Trip, 14 minutes long. It holds the
-          song Sunroof Down, the playlist Throwbacks with two songs, and the song Last Exit. Its
-          queue lists the four songs in that order.
+          The illustrated summer story shows the beach photo on the left half, the cat on the top
+          right, and the gig and taco photos side by side on the bottom right. Beside it, the layout
+          tree lists every tile with its kind, photo count, and Share button.
       - id: try-it
         say: >-
-          Notice what the app treats alike. A song and a playlist both show a length, and both have
-          a Play button. Try it: pause the narration, press Play on any song or playlist, and watch
-          which songs fill the queue.
+          Notice what the app treats alike. A single photo and a whole split both show a photo
+          count, and both have a Share button. Try it: pause the narration, press Share on any
+          tile, a photo or a split, and watch it fill the whole story.
         step: Try it
-        note: Press Play on a song, on Throwbacks, or on Road Trip.
+        note: Press Share on a photo, on bottom, or on the whole story.
         visual: >-
-          Every row of the library, song or playlist, shows a length and has a Play button. The
-          queue still lists Road Trip's four songs.
+          Every row of the layout tree, photo or split, shows a photo count and a Share button. The
+          story is drawn on the canvas.
       - id: pattern-parts
         say: >-
           The Composite pattern organizes structures like this one. Its roles are a shared
           interface, single items that stand alone, groups that hold other items, and the clients
-          that use them. We describe it the way every pattern is described: its context, problem,
-          solution, and consequences. Choose a code language above; the design is the same in every
-          language.
+          that use them. We describe it by its context, problem, solution, and consequences. Choose
+          a code language above; the design is the same in each.
         source: >-
           Gamma et al., Design Patterns: Composite; Freeman et al., Head First Design Patterns: the
           Composite Pattern
         step: Context, problem, solution, consequences
         note: A shared interface · single items · groups that hold items · clients that use them
-        visual: The library and its queue stay on screen.
+        visual: The story and its layout tree stay on screen.
         pause_after: 2.5
   - id: context
     part: Context
@@ -92,25 +89,28 @@ scenes:
       - id: part-whole
         say: >-
           First, the context. The Composite pattern applies to part-whole hierarchies: wholes made
-          of parts, where some parts are wholes themselves. A playlist is made of songs and other
-          playlists, and those playlists are made of songs, nested as deep as you like.
-        source: "Gamma et al., Design Patterns: Composite, Applicability"
+          of parts, where some parts are wholes themselves. The story is made of tiles. Its right
+          half holds the cat and the bottom split, and the bottom holds two photos. Splits nest as
+          deep as you like.
+        source: >-
+          Gamma et al., Design Patterns: Composite, Applicability; Buschmann et al.,
+          Pattern-Oriented Software Architecture, Vol. 1: Whole-Part
         step: A part-whole hierarchy
         note: Wholes made of parts; some parts are wholes themselves.
         visual: >-
-          In the library, the two playlists are marked as wholes: Road Trip holds Throwbacks, and
-          Throwbacks holds two songs.
+          In the layout tree, the three splits, story, right, and bottom, are tagged whole. Right
+          and bottom are also parts of larger wholes.
       - id: alike
         say: >-
           The second sign: clients, the code that uses these objects, want to ignore the difference
-          between a single object and a group. The Play button and the screen that shows lengths ask
-          a song and a playlist the same questions. A song answers for itself; a playlist answers
-          for everything inside it.
+          between a single object and a group. The Share button and the photo count ask a photo and
+          a split the same questions. A photo answers for itself; a split answers for everything
+          inside it.
         step: One item or a group, treated alike
         note: Clients are the code that uses the objects; they ask both kinds the same questions.
         visual: >-
-          The song Sunroof Down and the playlist Throwbacks are marked. Each shows its length and
-          has a Play button.
+          The beach photo and the bottom split are tagged same requests. Each shows a photo count
+          and a Share button.
       - id: trees
         say: >-
           Such structures are everywhere: folders that hold files and folders, drawings whose
@@ -120,417 +120,415 @@ scenes:
         source: "Gamma et al., Design Patterns: Composite, Motivation and Known Uses"
         step: Trees everywhere
         note: "Folders · grouped shapes · submenus · nested page boxes. Leaf: nothing inside; composite: a group."
-        visual: The whole library is shown as a tree, with nothing marked.
+        visual: The beach photo and the bottom split stay tagged same requests in the layout tree.
         pause_after: 2.5
   - id: problem
     part: Problem
-    label: "Problem: two lists, two loops"
-    title: Songs and playlists, handled separately
-    purpose: Find what breaks when code treats single items and groups differently.
+    label: "Problem: photo or split?"
+    title: Photos and splits, checked by type
+    purpose: Find what breaks when code checks whether each item is a single item or a group.
     takeaway: >-
-      The problem: code that tells single items from groups repeats its loops and checks, and breaks
-      as new kinds of items arrive.
+      The problem: code that asks every item for its type repeats its checks, and silently misses
+      new kinds of items.
     cues:
-      - id: two-lists
+      - id: area
         say: >-
-          Now the problem. Here is a direct implementation. Song stores a title and a length in
-          seconds. Playlist keeps its songs in one list and its nested playlists in a second list,
-          with a separate add method for each.
-        step: Two lists, two add methods
-        note: Songs and nested playlists are stored apart.
+          Now the problem. First, one small helper that both designs share. An area is a rectangle
+          that cuts itself into equal parts, side by side or stacked. A split cuts its own area into
+          one part per item and hands each item its part, in list order.
+        step: The area helper
+        note: An area cuts itself into equal parts, side by side or stacked.
         visual: >-
-          Playlist's two lists and its two add methods are marked. The library is drawn by this
-          first design, and nothing has been played yet.
-      - id: two-loops
+          In the first design's code, the loop in Split's draw and its call to area.part are marked.
+          On the canvas, every split's area is outlined with a dashed line.
+      - id: first-design
         say: >-
-          Duration adds up the songs, then asks each nested playlist for its duration. Play does the
-          same: it queues the songs, then each nested playlist. Every operation needs two loops, one
-          per list, and every new operation will need two more.
-        step: Every operation loops twice
-        note: duration() and play() each loop over both lists.
-        visual: The two loops in duration and the two loops in play are marked.
-      - id: lost-order
-        say: >-
-          Now press Play on Road Trip. You added a song, then Throwbacks, then the song meant to end
-          the trip. But play queues both songs first and Throwbacks after them. Two separate lists
-          cannot remember the order in which you added things.
-        step: The order is lost
-        note: "Queue: Sunroof Down, Last Exit, Mixtape Summer, Cassette Heart"
+          Here is a direct first design. A photo has a name. A split has a direction and one list of
+          items, and each item is either a photo or a split. The two classes share no type, so the
+          list's type says exactly that: photo or split.
+        step: No shared type
+        note: Photo has a name; Split has a direction and a list of photos or splits.
         visual: >-
-          The play method is marked. The queue lists Sunroof Down, Last Exit, Mixtape Summer, and
-          Cassette Heart, and Last Exit is flagged as out of order.
+          The Photo class, Split's list of photo-or-split items, and its add method are marked. The
+          first design draws the same story.
+      - id: branches
+        say: >-
+          So every operation asks which one it holds. Split's draw draws a photo itself, or forwards
+          the part to a nested split. Its photo count adds one for a photo, or asks the nested split
+          for its count. Each operation repeats the same check.
+        source: "Gamma et al., Design Patterns: Composite, Consequences"
+        step: Every operation checks the type
+        note: "draw and photo count each ask: photo or split?"
+        visual: The photo-or-split checks in Split's draw and photo count are marked.
       - id: client-check
         say: >-
-          Clients suffer too. The Play button must check whether it holds a song or a playlist,
-          because only Playlist has a play method. Every screen that shows a length repeats that
-          check: a song stores its seconds, but a playlist computes its duration.
-        step: Clients check the type
-        note: "The Play button asks: song or playlist?"
-        visual: The Play button's check for a song is marked. The queue is still out of order.
-      - id: predict-episodes
+          The Share button asks too: is my selection a photo or a split? A photo, it draws itself,
+          into the whole story. So the knowledge of how to draw a photo now lives in two places, the
+          split and the Share button.
+        step: The client checks too
+        note: ShareButton checks its selection's type, and draws a photo itself.
+        visual: >-
+          The checks in ShareButton's press are marked: it draws a photo itself or asks a split to
+          draw.
+      - id: predict-captions
         say: >-
-          Your app now adds podcast episodes, and listeners want them in playlists, between songs.
-          Before continuing, predict which code must change, and what happens if one change is
-          forgotten. Pause here if you want more thinking time.
-        step: Predict the cost of episodes
-        note: Which code changes when episodes join playlists? What if one change is missed?
-        visual: The whole first design stays on screen with nothing marked.
+          Now a new kind of tile arrives: a caption. The words core memories should go under the
+          beach photo. Predict what must change in this design, and what happens if one of those
+          changes is missed. Pause the narration and decide before you go on.
+        step: Predict the cost of captions
+        note: Which code changes for captions? What if one change is missed?
+        visual: >-
+          A caption, core memories, waits to go under the beach photo. The code marks the types
+          that say photo or split.
         prediction: true
         pause_after: 6
       - id: every-change
         say: >-
-          A third list and a third add method, a third loop in every operation, and another branch
-          in every client check. Forget the loop in duration, and every episode silently drops out
-          of the total time. Each new kind of item multiplies the work.
-        step: Every list, loop, and check changes
-        note: A missed loop drops episodes from the total, silently.
+          Each of the three places that ask photo or split needs a new branch for captions: Split's
+          draw, Split's photo count, and the Share button. Suppose you update the count and the
+          button, but miss draw. The caption's area stays blank, and nothing reports an error,
+          because the check has no else.
+        step: Every check changes
+        note: A missed branch skips the caption silently; the count stays right, since a caption has no photos.
         visual: >-
-          The two lists, the loops, and the Play button's check are marked. In the library, Road
-          Trip now ends with the episode Almost There, but its length still reads 14 minutes, and
-          the episode is flagged as not counted.
+          All three photo-or-split checks are marked. Under the beach photo, the caption's area is
+          blank and tagged not drawn.
       - id: demands
         say: >-
-          That is the problem: the code treats single items and groups differently, though
-          listeners treat them the same. So a good solution must meet four demands: one request
-          that works on any item, nesting to any depth, the order the listener chose, and new kinds
-          of items without editing every loop.
-        source: "Kerievsky, Refactoring to Patterns: Replace One/Many Distinctions with Composite"
-        step: The problem and its demands
-        note: Any item · any depth · the listener's order · new kinds without edits
-        visual: The loops of duration and play are marked again. The queue is still out of order.
+          So a solution must meet four demands. One shared type for photos and splits. A split that
+          holds one ordered list of that type, so splits nest without checks. A Share button that
+          works on any tile without checks. And a new kind of tile that needs no edits to existing
+          classes.
+        step: Four demands
+        note: One shared type · one ordered list · Share without checks · new kinds without edits
+        visual: >-
+          All three checks stay marked, and the caption's area stays blank and tagged not drawn.
         pause_after: 3
-  - id: playable_role
+  - id: tile_role
     part: Solution
-    label: "Solution, concretely: one interface for every item"
-    title: One type for songs and playlists
-    purpose: Give songs and playlists one shared interface.
-    takeaway: Playable declares the requests that songs and playlists both answer.
+    label: "Solution, concretely: one type for every tile"
+    title: One type for photos and splits
+    purpose: Give photos and splits one shared type.
+    takeaway: Tile is the shared type; photos and splits both implement it.
     cues:
       - id: shared-type
         say: >-
-          Here is the fix, one class at a time. To keep songs and playlists in one ordered list,
-          they need one shared type. Playable is that interface. It declares what listeners do with
-          any item: ask for its duration, and play it.
-        step: "Playable: one shared type"
-        note: duration() and play(queue) for every item
+          Solution, concretely. First, one shared type. Tile declares the two requests that every
+          tile answers: draw yourself into this area, and tell me your photo count. Photo and Split
+          both implement Tile, so code that holds a tile no longer needs to know which kind it
+          holds.
+        source: "Gamma et al., Design Patterns: Composite, Participants"
+        step: One shared type
+        note: "Tile: draw into an area, and photo count"
         visual: >-
-          The Playable interface and its two operations are marked. Playable is highlighted in the
-          class diagram of the redesign.
-      - id: queue
+          The Tile interface is marked in the code and highlighted in the class diagram. Every row
+          of the layout tree is tagged Tile.
+      - id: canvas
         say: >-
-          Play does not return a list. It receives the play queue and adds titles to it, in order.
-          Passing one queue down through every playlist collects all the titles without building
-          and joining a new list at each level.
+          Look at draw's second parameter: the canvas, a list that collects one line for each tile
+          drawn. The same canvas is handed down the whole tree, so every tile adds its own line, and
+          whoever called draw gets the finished picture back in one list.
         source: "Kerievsky, Refactoring to Patterns: Move Accumulation to Collecting Parameter"
-        step: One queue, passed down
-        note: play(queue) adds titles to the queue it receives.
-        visual: The play operation and its queue parameter are marked. Playable stays highlighted.
+        step: One canvas, passed down
+        note: Every tile adds its line to the same canvas.
+        visual: >-
+          Tile's draw method is marked, with its canvas parameter. Every row of the layout tree is
+          still tagged Tile.
         pause_after: 2.5
-  - id: song_role
+  - id: photo_role
     part: Solution
-    label: "Solution, concretely: a song answers for itself"
-    title: A single item answers directly
-    purpose: See how a single item implements the shared interface.
-    takeaway: A song answers every request itself; it has nothing inside to ask.
+    label: "Solution, concretely: a photo answers for itself"
+    title: A photo answers for itself
+    purpose: See how a leaf answers every request from its own data.
+    takeaway: A photo is a leaf; it answers draw and photo count itself and has nothing inside.
     cues:
       - id: direct
         say: >-
-          Second, Song implements Playable. Its duration returns its own length, and its play adds
-          its own title to the queue. A song has nothing inside it, so it answers every request
-          directly, without asking any other object.
-        step: Song answers directly
-        note: duration() returns its seconds; play() adds its title.
+          Photo answers both requests from its own data. Its draw adds one line to the canvas: its
+          name and the area it was given. Its photo count is simply one. A photo has nothing inside,
+          which makes it a leaf of the tree, and it never asks anyone else.
+        step: A leaf answers directly
+        note: draw adds the photo's own line; photo count returns 1.
         visual: >-
-          Song's duration and play methods are marked. Song is highlighted in the class diagram,
-          with its dashed arrow and hollow triangle to Playable.
+          Photo's draw and photo count are marked, and Photo is highlighted in the class diagram.
+          The four photo rows of the layout tree are tagged Photo.
       - id: shared
         say: >-
-          A song stores only its own title and length. It never changes, and it knows nothing about
-          the playlists that hold it. So one Song object can sit in Road Trip and in your gym
-          playlist at the same time.
+          A photo never changes after it is made, and it knows nothing about the split that holds
+          it. So one photo object can appear in two stories at once: the beach photo in your summer
+          dump and in a best-of-the-year story, both drawing the same picture.
         source: "Gamma et al., Design Patterns: Composite, Implementation"
-        step: One song, many playlists
-        note: A song that never changes can be shared.
-        visual: Song's fields are marked. Song stays highlighted.
+        step: One photo, two stories
+        note: Unchanging and parentless, so one photo can be shared.
+        visual: >-
+          Photo's unchanging name is marked. The beach row carries the tag also in another story.
         pause_after: 2.5
-  - id: playlist_role
+  - id: split_role
     part: Solution
-    label: "Solution, concretely: a playlist asks its items"
-    title: A group forwards each request
-    purpose: See how a group implements the shared interface by forwarding.
-    takeaway: >-
-      A playlist answers by forwarding each request to its items, in order, and combining their
-      answers.
+    label: "Solution, concretely: a split asks its tiles"
+    title: A split asks its tiles
+    purpose: See how a composite answers by forwarding to its children.
+    takeaway: A split holds one ordered list of tiles and answers every request by asking them.
     cues:
       - id: one-list
         say: >-
-          Third, Playlist implements Playable too, and it keeps a single ordered list of items. Each
-          item is a Playable, so it may be a song or another playlist, and Playlist never asks
-          which. Add appends any Playable to the end.
-        step: One list of Playables
-        note: The items list holds songs and playlists, in order.
+          Split keeps a direction and one ordered list of tiles. Because the list holds Tiles, not
+          photos or splits, a split can hold both kinds mixed, in any order, and splits nest inside
+          splits without a single type check. The list's order is the reading order of the story.
+        step: One ordered list
+        note: A direction and one list of Tiles
         visual: >-
-          Playlist's list of Playable items and its add method are marked. Playlist is highlighted;
-          an arrow with a hollow diamond shows that it holds any number of Playables.
-      - id: duration
+          Split's direction and its list of tiles are marked, and Split is highlighted in the class
+          diagram. The three split rows are tagged Split, with their areas outlined on the canvas.
+      - id: count
         say: >-
-          Duration asks each item for its duration and adds up the answers. When an item is itself a
-          playlist, it does the same with its own items. The question travels down to the songs,
-          and the sums travel back up.
-        step: Duration sums its items
-        note: "Throwbacks: 4:00 + 3:30 = 7:30 · Road Trip: 3:00 + 7:30 + 3:30 = 14:00"
-        visual: Playlist's duration method is marked. Playlist stays highlighted.
-      - id: play
+          Its photo count asks each of its tiles for their count and adds up the answers. It never
+          asks what kind of tile it is holding. A nested split answers the same way, so the question
+          travels down the tree, and the sums come back up.
+        step: Ask every tile
+        note: photo count sums its tiles' counts.
+        visual: Split's photo count is marked. The three split rows stay tagged Split.
+      - id: draw
         say: >-
-          Play passes the same queue to each item, in order. Because one list keeps the order you
-          chose, the queue matches the playlist exactly as you built it, unlike the first design,
-          which queued all of its own songs first.
-        step: Play keeps the order
-        note: One ordered list, so the queue follows the playlist as built.
-        visual: Playlist's play method is marked. Playlist stays highlighted.
+          Its draw cuts its area into equal parts, one per tile, and forwards each part to its tile,
+          in list order. So list order decides where each tile lands: the first tile gets the left
+          or top part. A split draws nothing itself; it only arranges.
+        source: "Gamma et al., Design Patterns: Composite, Implementation"
+        step: Cut and forward
+        note: draw hands each tile its part, in list order.
+        visual: Split's draw method is marked. On the canvas, each split's area is outlined.
       - id: safe-add
         say: >-
-          Notice that add is declared only in Playlist. A song has no add method, so a compiler or
-          type checker rejects adding to a song before the program runs. That is the safe choice.
-          The price is that code adding an item must know it holds a playlist.
-        source: "Gamma et al., Design Patterns: Composite, Implementation"
-        step: "The safe choice: add only in Playlist"
-        note: Adding to a song is rejected before the program runs.
-        visual: Playlist's add method is marked. Playlist stays highlighted, and Playable declares no add.
-      - id: transparent-add
-        say: >-
-          The other choice is transparency: declare add in Playable as well. Then every item looks
-          alike, even to code that adds, but a song must reject a call to add while the program
-          runs. You trade early errors for uniform code.
+          Notice where add lives: in Split alone, not in Tile. Code cannot add a tile to a photo;
+          that mistake is caught before the program runs. The price is that code that adds tiles
+          must know it holds a split, not just any tile.
         source: >-
           Gamma et al., Design Patterns: Composite, Implementation; Freeman et al., Head First
           Design Patterns: the Composite Pattern
-        step: "The transparent choice: add in Playable too"
-        note: Every item looks alike, but a song rejects add while the program runs.
-        visual: >-
-          Playlist's add method stays marked. Playable is highlighted: the transparent choice would
-          declare add there too.
+        step: "Safe: add only in Split"
+        note: "add only in Split: adding to a photo fails before the program runs."
+        visual: Split's add method is marked.
+      - id: transparent-add
+        say: >-
+          The other choice declares add in Tile itself. Then every tile looks alike to clients, but
+          a photo must reject add while the program runs. That is the transparent choice. This
+          lesson's code makes the safe one; both are versions of the Composite pattern.
+        step: "Transparent: add in Tile"
+        note: "add in Tile: uniform, but photos reject it at run time."
+        visual: Split's add method stays marked, and Tile is highlighted in the class diagram.
         pause_after: 2.5
   - id: collaborations
     part: Solution
     label: "Solution, concretely: one request through the tree"
-    title: Play travels down, titles collect
-    purpose: Trace one request through the nested objects.
-    takeaway: A song answers directly, a playlist forwards to each item, and the client never asks which is which.
+    title: One press of Share
+    purpose: Trace one request through the tree, from the client to every leaf.
+    takeaway: A composite forwards each request to its children; a leaf answers it directly.
     cues:
       - id: press
         say: >-
-          Now watch the objects work together on one request. Each Play button holds one Playable
-          and never asks which kind. Press the button for Road Trip: it creates an empty queue and
-          calls play on Road Trip.
-        source: "Gamma et al., Design Patterns: Composite, Collaborations"
-        step: The button calls play once
-        note: button.press() calls roadTrip.play(queue).
+          Now trace one press of Share on the story. The Share button calls draw on the story,
+          handing it the whole story's area and an empty canvas. The button neither knows nor cares
+          that the story is a split; it only knows it holds a tile.
+        step: Share calls draw
+        note: "press: draw the story into the whole story area, with an empty canvas"
         visual: >-
-          PlayButton's press method is marked. A UML sequence diagram shows button calling play on
-          roadTrip. In the library, Road Trip is marked as receiving play, and the queue is
-          empty.
-      - id: first-song
+          ShareButton's press is marked. The sequence diagram shows the button calling draw on the
+          story. On the canvas, the story's area is outlined, and nothing is drawn yet.
+      - id: first-tile
         say: >-
-          Road Trip forwards play to its first item, the song Sunroof Down, which adds its own
-          title. Its next item is the Throwbacks playlist. Predict: what does Road Trip send to
-          Throwbacks, and what happens inside it? Pause here if you want more thinking time.
-        step: Predict the next call
-        note: Road Trip's next item is a playlist.
+          The story is a split, side by side, holding the beach photo first and then the right
+          split. Now predict which tile is drawn first, and into which part of the story. Pause and
+          decide before you go on.
+        step: Predict the first tile
+        note: Which tile draws first, and where?
         visual: >-
-          Playlist's play method is marked. The sequence diagram still shows only the first call. In
-          the library, Sunroof Down is marked as played, and the queue holds its title.
+          Split's draw method is marked. The story's area stays outlined, and nothing is drawn yet.
         prediction: true
         pause_after: 5
       - id: recursion
         say: >-
-          Road Trip sends Throwbacks the same play message it sent the song. Throwbacks forwards
-          play to each of its own songs, and each one adds its title. The request travels down, one
-          level at a time, until it reaches songs.
-        step: The same call, one level down
-        note: Throwbacks forwards play to Mixtape Summer, then Cassette Heart.
+          The story cuts its area in two. The left half goes to beach, which draws itself first. The
+          right half goes to right, a split that does exactly the same thing: it cuts its half into a
+          top and a bottom. The cat is drawn second, then the gig, then the taco.
+        step: Splits inside splits
+        note: beach 1st · cat 2nd · gig 3rd · taco 4th
         visual: >-
-          Playlist's play method stays marked. The sequence diagram adds play from roadTrip to
-          throwbacks, and from throwbacks to its song mixtape. In the library, Throwbacks and its
-          two songs are marked, and the queue holds three titles.
+          Split's draw method stays marked. The sequence diagram adds the story's calls to beach and
+          to right. On the canvas, the beach, cat, gig, and taco tiles appear in that order, each
+          tagged with its drawing order.
       - id: loop
         say: >-
-          Then Road Trip plays its last song, and the call returns to the button with four titles,
-          in the order you chose. That is the whole rule: a song answers directly, a playlist
-          forwards to each item, and the button never asks which is which.
-        step: The whole rule
-        note: Song answers · playlist forwards · the button never checks
+          The call returns to the Share button with a canvas of four lines, in reading order. That
+          is the loop of this pattern: a composite forwards each request to its children, and a leaf
+          answers it directly. One call on the story reached every tile.
+        step: The loop
+        note: Composites forward; leaves answer.
         visual: >-
-          PlayButton's press returns the queue, which is marked. The whole sequence diagram stays on
-          screen. In the library, every row is marked as played, and the queue lists all four songs
-          in order.
+          The forwarding call in Split's draw and the returned canvas are marked. The finished story
+          shows all four photos with their drawing order.
         pause_after: 2.5
   - id: solution
     part: Solution
     label: "Solution, abstracted: Component, Leaf, and Composite"
-    title: From our classes to the pattern's roles
-    purpose: Generalize the redesign into the pattern's roles.
-    takeaway: >-
-      A Component interface, Leaves that answer directly, Composites that forward to their
-      children, and a Client that never tells them apart.
+    title: Component, Leaf, Composite, Client
+    purpose: Step back from the photos to the pattern's roles.
+    takeaway: Component, Leaf, Composite, and Client make up the Composite pattern.
     cues:
       - id: component
         say: >-
-          Now step back. Remove the songs and playlists, and four roles remain: they are the
-          Composite pattern. The Component, like our Playable, declares the operations that single
-          objects and groups share, so clients can use either one.
-        source: "Gamma et al., Design Patterns: Composite, Participants"
-        step: Component, like Playable
-        note: Declares the operations every object in the tree shares.
-        visual: >-
-          A UML class diagram of the Composite pattern's roles. The Component interface, which
-          declares operation, is highlighted.
+          Solution, abstracted. Remove the photos and the story, and four roles remain. The
+          Component, our Tile, declares the requests that every object in the structure answers,
+          whether it is a single item or a group. Clients hold Components and never need to know
+          which kind they hold.
+        source: "Gamma et al., Design Patterns: Composite, Structure and Participants"
+        step: Component
+        note: "Component (Tile): the requests every object answers"
+        visual: The role diagram highlights Component. Every row of the layout tree is tagged Component.
       - id: leaf
         say: >-
-          A Leaf, like our Song, has no children and implements every operation itself. The diagram
-          draws the role once, but many classes can play it, each answering requests in its own
-          way.
-        step: Leaf, like Song
-        note: No children; answers requests directly.
-        visual: Leaf is highlighted, with its dashed arrow and hollow triangle to Component.
+          A Leaf, our Photo, answers each request itself and has no children. A structure can have
+          many kinds of leaves; each kind implements the Component in its own way, and nothing above
+          it needs to know which kind it is.
+        step: Leaf
+        note: "Leaf (Photo): answers itself, no children"
+        visual: The role diagram highlights Leaf. The four photo rows are tagged Leaf.
       - id: composite
         say: >-
-          The Composite, like our Playlist, stores child components and implements each operation by
-          forwarding it to its children, sometimes adding work before or after. The arrow with the
-          hollow diamond and the star says that a composite holds any number of components.
-        step: Composite, like Playlist
-        note: Stores children; forwards each request to them.
-        visual: >-
-          Composite is highlighted, with its dashed arrow to Component and an arrow with a hollow
-          diamond, labeled children and a star, back to Component.
+          A Composite, our Split, holds children of the Component type and answers by forwarding to
+          them, sometimes adding work of its own. Notice the diagram: four classes. Beside it, the
+          tree of objects can be any depth. One class structure describes many object trees.
+        step: Composite
+        note: "Composite (Split): holds Components, forwards requests"
+        visual: The role diagram highlights Composite. The three split rows are tagged Composite.
       - id: client
         say: >-
-          The Client, like our Play button, talks only to the Component interface. Now follow the
-          arrows around the Composite: it is a component, and it holds components. That cycle in the
-          diagram is what lets groups contain groups, to any depth.
-        step: Client, like the Play button
-        note: A Composite is a Component and holds Components.
-        visual: >-
-          Client is highlighted, with its arrow to Component. The cycle from Composite back to
-          Component stays visible.
+          The Client, our Share button, uses only the Component interface. And because a Composite
+          is itself a Component, Composites can contain Composites. That loop in the diagram is what
+          lets the tree nest as deep as you like, while every client stays exactly as simple.
+        step: Client
+        note: "Client (ShareButton): uses only the Component"
+        visual: The role diagram highlights Client. Every Share button in the layout tree is tagged Client.
         pause_after: 2.5
   - id: consequences
     part: Consequences
     label: "Consequences: benefits and liabilities"
-    title: Simple clients, general structures
-    purpose: Weigh what the pattern makes easy against what it makes harder.
+    title: What the Composite pattern buys and costs
+    purpose: Weigh the benefits and the liabilities of the Composite pattern.
     takeaway: >-
-      Composite keeps clients simple and welcomes new kinds of items, at the cost of an overly
-      general structure and a choice between safety and transparency.
+      The consequences: simple clients and easy new kinds, against an overly general structure and a
+      choice between safety and transparency.
     cues:
       - id: simple-clients
         say: >-
-          Now the consequences, starting with the benefits. Clients become simple: the Play button
-          treats a song and a playlist of playlists the same way, so the type checks from the
-          problem are gone. And wherever code expects a single item, it can take a whole playlist
-          instead.
+          Now the consequences. The first benefit: simple clients. The Share button treats one photo
+          and a whole split exactly the same way, with no type checks at all. Wherever a single tile
+          fits, a whole split of tiles fits too, and the button's code never grows.
         source: "Gamma et al., Design Patterns: Composite, Consequences"
         step: "Benefit: simple clients"
-        note: No type checks; wherever one item fits, a group fits too.
-        visual: The first card states the benefit of simple clients.
+        note: Share treats one photo and a split alike.
+        visual: Every Share button in the layout tree is tagged no checks.
       - id: new-kinds
         say: >-
-          New kinds of items are easy to add. Any new leaf or group class that keeps the shared
-          interface works inside existing playlists, and existing clients handle it without a
-          change. The code that combines items is written once, in Playlist.
+          The second benefit: new kinds fit in. A new kind of tile is one new class that implements
+          Tile. Existing splits hold it, the photo count includes it, and the Share button shares it,
+          all without editing a single existing class. Compare that with the first design's checks.
         step: "Benefit: new kinds fit in"
-        note: New leaf or composite classes work with existing code.
-        visual: The second card states the benefit that new kinds of items fit in.
+        note: "A new kind: one new class; nothing else changes."
+        visual: >-
+          The story and its layout tree are shown. The note names the benefit: a new kind of tile is
+          one new class.
       - id: overly-general
         say: >-
-          The liabilities. The design can become overly general. Suppose albums, a kind of
-          playlist, may hold only songs. Album inherits add, which accepts any Playable, so the type
-          system cannot keep an episode out of an album; the album has to check each item while the
-          program runs.
-        step: "Liability: hard to restrict children"
-        note: A group that inherits the general add needs runtime checks to restrict its children.
-        visual: The third card states the liability of an overly general design.
+          The first liability: the design can be overly general. Imagine a photo-booth strip that may
+          hold only photos. It inherits add from Split, which accepts any tile, so the type system
+          cannot keep splits out. The strip needs a check while the program runs.
+        source: "Gamma et al., Design Patterns: Composite, Consequences"
+        step: "Liability: overly general"
+        note: A photos-only strip needs a runtime check.
+        visual: >-
+          The story and its layout tree are shown. The note describes a photo-booth strip that would
+          still accept any tile through add.
       - id: safety
         say: >-
-          And the choice about add costs something either way. Declared only in the composite, add
-          is checked before the program runs, but code must know it holds a composite before
-          adding. Declared in the component, every object looks alike, but leaves must reject add
-          while the program runs.
-        source: "Freeman et al., Head First Design Patterns: the Composite Pattern, transparency and safety"
+          The second liability: you must choose between safety and transparency. Add only in Split
+          is checked before the program runs, but clients see two kinds of tiles. Add in Tile treats
+          every tile alike, but leaves must reject it while the program runs.
         step: "Liability: safety or transparency"
-        note: "Composite-only add: safe · add in Component: transparent"
-        visual: The fourth card states the trade-off between safety and transparency.
+        note: "add in Split: safe. add in Tile: transparent."
+        visual: The story and its layout tree are shown. The note says add is declared only in Split.
         pause_after: 2.5
   - id: applicability
     part: Context
     label: "Context revisited: when to use Composite"
-    title: Is it really a tree?
-    purpose: Decide whether the pattern's context holds before applying it.
-    takeaway: Use Composite for structures that nest, when clients should not care whether they hold one item or a group.
+    title: When to use the Composite pattern
+    purpose: Decide when the Composite pattern fits and when a simpler design is better.
+    takeaway: >-
+      Use Composite when parts nest inside wholes and clients should not care which they hold;
+      otherwise prefer something simpler.
     cues:
       - id: fit
         say: >-
-          With those trade-offs in mind, revisit the context. Use Composite when items really nest
-          inside groups, and groups inside groups, and clients should not care whether they hold
-          one item or a group. If groups never nest, a plain list of songs is simpler.
-        step: When the context holds
-        note: Real nesting, and clients that ignore the difference
-        visual: The first card describes a good fit for the Composite pattern.
-      - id: one-class
+          Back to the context, to decide when to use the pattern. Composite fits when parts nest
+          inside wholes, wholes nest inside other wholes, and clients should not care whether they
+          hold one item or a whole group. The summer story has both: splits inside splits, and one
+          Share button for all.
+        source: "Gamma et al., Design Patterns: Composite, Applicability"
+        step: A good fit
+        note: Nesting, plus clients that treat items and groups alike
+        visual: The story and its layout tree are shown, with splits nested inside splits.
+      - id: plain-list
         say: >-
-          Check the parts, too. If every item has the same data and only some have children, one
-          class with an optional list of children can play every role; separate leaf and group
-          classes would add nothing. They pay off when single items and groups behave differently
-          and new kinds keep arriving.
-        source: "Gamma et al., Design Patterns: Composite, Known Uses"
-        step: When one class is enough
-        note: Same data everywhere → one class with optional children plays every role
+          Compare a carousel post: a flat list of photos you swipe through. Nothing nests, and
+          nothing treats one photo and the whole carousel alike, so a plain list is the better
+          design. With only one kind of leaf, one Tile class with an optional list of children can
+          be simpler too.
+        step: Simpler designs
+        note: "No nesting: a plain list. One kind of leaf: one class may do."
         visual: >-
-          The second card describes the simpler designs: a plain list, or one class with an optional
-          list of children.
+          Below the canvas, a carousel post shows three photo thumbnails, beach, cat, and gig, as a
+          flat list, showing 1 of 3.
       - id: neighbors
         say: >-
-          Composite also hides inside other patterns. In Model-View-Controller, views nested inside
-          views form a composite, and a macro command made of commands is one too. Decorator looks
-          similar but differs in purpose: a decorator wraps one object to add behavior, while a
-          composite holds many to treat them as one.
-        source: >-
-          Gamma et al., Design Patterns: Composite, Known Uses; Structural Patterns: Composite
-          versus Decorator versus Proxy
-        step: Composite among its neighbors
-        note: Nested views · macro commands · a decorator wraps one; a composite holds many
-        visual: The third card relates Composite to Model-View-Controller, Command, and Decorator.
+          Now a polaroid frame around the cat. It has the tile interface and exactly one child, and
+          it adds drawing of its own: that is a Decorator. A split holds many tiles and arranges
+          them. Composite also lives inside other patterns, such as Model-View-Controller's view
+          trees and macro commands.
+        source: "Gamma et al., Design Patterns: Composite, Related Patterns; Decorator"
+        step: Neighbors
+        note: "Frame: one child, adds drawing (Decorator). Split: many children, arranges them."
+        visual: >-
+          The cat tile is shown in a polaroid frame, tagged polaroid frame. The carousel post stays
+          below the canvas.
         pause_after: 2.5
   - id: transfer
     label: Apply the pattern
-    title: Add podcast episodes
-    purpose: Apply the pattern's roles to a new kind of item before seeing an answer.
-    takeaway: A new kind of item is one new Leaf class; playlists and clients stay unchanged.
+    title: Captions arrive in the Composite design
+    purpose: Extend the Composite design with a new kind of tile.
+    takeaway: A new kind of leaf is one new class that implements the Component; no existing class changes.
     cues:
       - id: plan
         say: >-
-          One last design check. Remember the podcast episodes that broke the first design? Plan the
-          same change for the composite: listeners drop episodes into playlists, right next to
-          songs, and an episode has a show, a title, and a length. Which class do you add, and which
-          existing code changes? Explain before continuing.
-        step: Plan the change
-        note: Name the new class and every existing line that changes.
+          Your turn. Captions arrive in the Composite design. A caption draws its text into its area,
+          and it has zero photos. Predict which class you add, and which existing classes change.
+          Pause the narration and plan your answer.
+        step: Your turn
+        note: Which class do you add? Which existing classes change?
         visual: >-
-          The library shows the podcast episode Almost There, from the show Road Stories, waiting to
-          be added to Road Trip. Three cards describe the episode and the task. No answer is shown.
+          The class diagram shows Tile, Photo, Split, and ShareButton. A caption, core memories,
+          waits to go under the beach photo.
         prediction: true
         pause_after: 6
-      - id: episode
+      - id: caption
         say: >-
-          Add an Episode class that implements Playable: a new leaf. Its duration returns its
-          length, and its play adds the show and the title. Playable, Song, Playlist, and the Play
-          button stay unchanged; only code that creates episodes knows the new class. The first
-          design needed a new list, loop, and check everywhere.
-        step: One new leaf class
-        note: Episode implements Playable; nothing else changes.
+          You add one class, Caption, which implements Tile. Its draw adds its text and its area to
+          the canvas, and its photo count returns zero. No existing class changes: a new split,
+          left, simply holds the beach photo above the caption. The first design needed three new
+          branches.
+        step: One new class
+        note: Caption implements Tile; nothing else changes.
         visual: >-
-          Road Trip now ends with the episode Almost There. Its length reads 29 minutes, and the
-          queue ends with Road Stories: Almost There.
+          The class diagram adds Caption, which implements Tile, highlighted. On the canvas, the
+          caption core memories appears under the beach photo, tagged new.
         pause_after: 2.5
   - id: summary
     label: "Summary: the whole pattern"
@@ -540,16 +538,15 @@ scenes:
     cues:
       - id: recap
         say: >-
-          To finish, recall the whole pattern. Context: a part-whole hierarchy that nests, whose
-          clients want to treat one object and a group alike. Problem: code that handles single
-          objects and groups separately repeats its loops and type checks, and breaks as new kinds
-          arrive. Solution: a Component interface, which Leaves implement directly and Composites
-          implement by forwarding to their children. Consequences: simple clients and easy new
-          kinds, at the cost of an overly general structure and a choice between safety and
-          transparency. The summary quiz checks each part on a new example.
+          To finish, recall the whole pattern. Context: parts nest into wholes, and clients treat
+          one object and a group alike. Problem: code that asks every item for its type repeats its
+          checks and silently misses new kinds. Solution: a Component interface that Leaves
+          implement directly and Composites implement by forwarding to their children. Consequences:
+          simple clients and easy new kinds, but an overly general structure and a choice between
+          safety and transparency.
         step: The Composite pattern in four parts
         note: Context → Problem → Solution → Consequences
         visual: >-
           Four cards summarize the Composite pattern's context, problem, solution, and
-          consequences.
+          consequences. The finished story shows the caption under the beach photo.
         pause_after: 2.5

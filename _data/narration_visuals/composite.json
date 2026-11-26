@@ -2,10 +2,10 @@
   "version": 1,
   "presentation": {
     "visuals": {
-      "ui": "composite-library-panel.html"
+      "ui": "composite-collage-panel.html"
     },
     "scripts": [
-      "composite-library.js"
+      "composite-collage.js"
     ],
     "styles": [
       "/css/composite-narration.css"
@@ -29,20 +29,27 @@
     ],
     "diagrams": {
       "solution": {
-        "label": "Class diagram of the music library redesign",
-        "description": "Song and Playlist both implement the Playable interface, which declares duration() and play(queue). Song keeps a title and a length in seconds. Playlist keeps a name, offers add(item: Playable), and holds any number of Playable items, so its items may be songs or other playlists.",
-        "caption": "A dashed arrow with a hollow triangle means a class implements an interface. The arrow with a hollow diamond means a Playlist holds any number of Playables, which may be songs or other playlists.",
-        "source": "@startuml\nlayout portrait\ninterface Playable {\n  + duration(): int\n  + play(queue)\n}\nclass Song {\n  - title\n  - seconds\n  + duration(): int\n  + play(queue)\n}\nclass Playlist {\n  - name\n  + add(item: Playable)\n  + duration(): int\n  + play(queue)\n}\nSong ..|> Playable\nPlaylist ..|> Playable\nPlaylist o--> \"*\" Playable : items\n@enduml\n"
+        "label": "Class diagram of the photo collage redesign",
+        "description": "Photo and Split both implement the Tile interface, which declares draw(area, canvas) and photoCount(). Photo keeps a name. Split keeps a direction, offers add(tile: Tile), and holds any number of Tiles, so its tiles may be photos or other splits. ShareButton holds one Tile as its selection and offers press(), which returns the canvas.",
+        "caption": "A dashed arrow with a hollow triangle means a class implements an interface. The arrow with a hollow diamond means a Split holds any number of Tiles, which may be photos or other splits. The plain arrow means a ShareButton uses one Tile.",
+        "source": "@startuml\nlayout portrait\ninterface Tile {\n  + draw(area, canvas)\n  + photoCount(): int\n}\nclass Photo {\n  - name\n  + draw(area, canvas)\n  + photoCount(): int\n}\nclass Split {\n  - direction\n  + add(tile: Tile)\n  + draw(area, canvas)\n  + photoCount(): int\n}\nclass ShareButton {\n  - selection: Tile\n  + press(): canvas\n}\nShareButton --> Tile : selection\nPhoto ..|> Tile\nSplit ..|> Tile\nSplit o--> \"*\" Tile : tiles\n@enduml\n"
+      },
+      "solution_caption": {
+        "label": "Class diagram with the Caption class added",
+        "description": "As before, Photo and Split implement Tile, Split holds any number of Tiles, and ShareButton uses one Tile. A new class, Caption, keeps a text and also implements Tile, with draw(area, canvas) and photoCount(). No other class changed.",
+        "caption": "Caption is one new class that implements Tile. Split and ShareButton are unchanged: a split holds Tiles, so it can hold captions too.",
+        "source": "@startuml\nlayout portrait\ninterface Tile {\n  + draw(area, canvas)\n  + photoCount(): int\n}\nclass Photo {\n  - name\n  + draw(area, canvas)\n  + photoCount(): int\n}\nclass Caption {\n  - text\n  + draw(area, canvas)\n  + photoCount(): int\n}\nclass Split {\n  - direction\n  + add(tile: Tile)\n  + draw(area, canvas)\n  + photoCount(): int\n}\nclass ShareButton {\n  - selection: Tile\n  + press(): canvas\n}\nShareButton --> Tile : selection\nPhoto ..|> Tile\nCaption ..|> Tile\nSplit ..|> Tile\nSplit o--> \"*\" Tile : tiles\n@enduml\n"
       },
       "trace": {
         "type": "sequence",
-        "label": "Sequence of one press of Play on Road Trip",
-        "description": "The Play button, button, calls play(queue) on roadTrip. roadTrip calls play(queue) on throwbacks, which calls play(queue) on its song mixtape.",
-        "caption": "Lifelines are named like the variables in the main program. The trace follows one path down the tree: Road Trip's two songs and Cassette Heart receive play the same way and are left out. Messages appear as the narration reaches them.",
-        "source": "@startuml\nparticipant button: PlayButton\nparticipant roadTrip: Playlist\nparticipant throwbacks: Playlist\nparticipant mixtape: Song\n",
+        "label": "Sequence of one press of Share on the story",
+        "description": "The Share button, button, calls draw(whole story, canvas) on story. story calls draw(left half, canvas) on beach, which draws itself, and then draw(right half, canvas) on right.",
+        "caption": "Lifelines are named like the variables in the main program. The trace shows the first two levels: right forwards to cat and to bottom the same way, which the canvas shows. Messages appear as the narration reaches them.",
+        "source": "@startuml\nparticipant button: ShareButton\nparticipant story: Split\nparticipant beach: Photo\nparticipant right: Split\n",
         "steps": [
-          "activate button\nbutton -> roadTrip: play(queue)\nactivate roadTrip\n",
-          "roadTrip -> throwbacks: play(queue)\nactivate throwbacks\nthrowbacks -> mixtape: play(queue)\nactivate mixtape\ndeactivate mixtape\ndeactivate throwbacks\ndeactivate roadTrip\ndeactivate button\n"
+          "activate button\nbutton -> story: draw(whole story, canvas)\nactivate story\n",
+          "story -> beach: draw(left half, canvas)\nactivate beach\ndeactivate beach\n",
+          "story -> right: draw(right half, canvas)\nactivate right\ndeactivate right\ndeactivate story\ndeactivate button\n"
         ]
       },
       "roles": {
@@ -55,196 +62,90 @@
   },
   "scenes": {
     "intro": {
-      "state": {
-        "ui": true
-      },
+      "state": { "ui": true },
       "cues": {
-        "road-trip": {
-          "ui_state": "start"
-        },
-        "try-it": {
-          "ui_state": "start"
-        },
-        "pattern-parts": {
-          "ui_state": "start"
-        }
+        "photo-dump": { "ui_state": "start" },
+        "try-it": { "ui_state": "start" },
+        "pattern-parts": { "ui_state": "start" }
       }
     },
     "context": {
-      "state": {
-        "ui": true
-      },
+      "state": { "ui": true },
       "cues": {
-        "part-whole": {
-          "ui_state": "wholes"
-        },
-        "alike": {
-          "ui_state": "alike"
-        },
-        "trees": {
-          "ui_state": "start"
-        }
+        "part-whole": { "ui_state": "wholes" },
+        "alike": { "ui_state": "alike" },
+        "trees": { "ui_state": "alike" }
       }
     },
     "problem": {
-      "state": {
-        "code": "problem",
-        "ui": true
-      },
+      "state": { "code": "problem", "ui": true },
       "cues": {
-        "two-lists": {
-          "focus": "lists",
-          "ui_state": "first_start"
-        },
-        "two-loops": {
-          "focus": "loops",
-          "ui_state": "first_start"
-        },
-        "lost-order": {
-          "focus": "order",
-          "ui_state": "first_order"
-        },
-        "client-check": {
-          "focus": "client",
-          "ui_state": "first_order"
-        },
-        "predict-episodes": {
-          "ui_state": "first_order"
-        },
-        "every-change": {
-          "focus": "changes",
-          "ui_state": "first_missing"
-        },
-        "demands": {
-          "focus": "loops",
-          "ui_state": "first_order"
-        }
+        "area": { "focus": "area", "ui_state": "first_areas" },
+        "first-design": { "focus": "types", "ui_state": "first_start" },
+        "branches": { "focus": "branches", "ui_state": "first_start" },
+        "client-check": { "focus": "client", "ui_state": "first_start" },
+        "predict-captions": { "focus": "types", "ui_state": "first_caption_pending" },
+        "every-change": { "focus": "changes", "ui_state": "first_caption_blank" },
+        "demands": { "focus": "changes", "ui_state": "first_caption_blank" }
       }
     },
-    "playable_role": {
-      "state": {
-        "code": "playable",
-        "diagram": "solution"
-      },
+    "tile_role": {
+      "state": { "code": "tile", "diagram": "solution", "ui": true },
       "cues": {
-        "shared-type": {
-          "focus": "interface",
-          "diagram_focus": "Playable"
-        },
-        "queue": {
-          "focus": "play",
-          "diagram_focus": "Playable"
-        }
+        "shared-type": { "focus": "interface", "diagram_focus": "Tile", "ui_state": "tiles" },
+        "canvas": { "focus": "draw", "diagram_focus": "Tile", "ui_state": "tiles" }
       }
     },
-    "song_role": {
-      "state": {
-        "code": "song",
-        "diagram": "solution"
-      },
+    "photo_role": {
+      "state": { "code": "photo", "diagram": "solution", "ui": true },
       "cues": {
-        "direct": {
-          "focus": "requests",
-          "diagram_focus": "Song"
-        },
-        "shared": {
-          "focus": "fields",
-          "diagram_focus": "Song"
-        }
+        "direct": { "focus": "requests", "diagram_focus": "Photo", "ui_state": "photos" },
+        "shared": { "focus": "fields", "diagram_focus": "Photo", "ui_state": "photo_shared" }
       }
     },
-    "playlist_role": {
-      "state": {
-        "code": "playlist",
-        "diagram": "solution"
-      },
+    "split_role": {
+      "state": { "code": "split", "diagram": "solution", "ui": true },
       "cues": {
-        "one-list": {
-          "focus": "items",
-          "diagram_focus": "Playlist"
-        },
-        "duration": {
-          "focus": "duration",
-          "diagram_focus": "Playlist"
-        },
-        "play": {
-          "focus": "play",
-          "diagram_focus": "Playlist"
-        },
-        "safe-add": {
-          "focus": "add",
-          "diagram_focus": "Playlist"
-        },
-        "transparent-add": {
-          "focus": "add",
-          "diagram_focus": "Playable"
-        }
+        "one-list": { "focus": "tiles", "diagram_focus": "Split", "ui_state": "splits" },
+        "count": { "focus": "count", "diagram_focus": "Split", "ui_state": "splits" },
+        "draw": { "focus": "draw", "diagram_focus": "Split", "ui_state": "splits" },
+        "safe-add": { "focus": "add", "diagram_focus": "Split", "ui_state": "splits" },
+        "transparent-add": { "focus": "add", "diagram_focus": "Tile", "ui_state": "splits" }
       }
     },
     "collaborations": {
-      "state": {
-        "code": "playlist",
-        "diagram": "trace",
-        "ui": true
-      },
+      "state": { "code": "split", "diagram": "trace", "ui": true },
       "cues": {
-        "press": {
-          "focus": "press",
-          "diagram_steps": 1,
-          "diagram_focus": "roadTrip",
-          "ui_state": "trace_root"
-        },
-        "first-song": {
-          "focus": "play",
-          "diagram_steps": 1,
-          "ui_state": "trace_leaf"
-        },
-        "recursion": {
-          "focus": "play",
-          "diagram_steps": 2,
-          "diagram_focus": "throwbacks",
-          "ui_state": "trace_nested"
-        },
-        "loop": {
-          "focus": "result",
-          "diagram_steps": 2,
-          "ui_state": "trace_done"
-        }
+        "press": { "focus": "press", "diagram_steps": 1, "diagram_focus": "story", "ui_state": "trace_press" },
+        "first-tile": { "focus": "draw", "diagram_steps": 1, "ui_state": "trace_press" },
+        "recursion": { "focus": "draw", "diagram_steps": 3, "diagram_focus": "right", "ui_state": "trace_drawn" },
+        "loop": { "focus": "result", "diagram_steps": 3, "ui_state": "trace_done" }
       }
     },
     "solution": {
-      "state": {
-        "diagram": "roles"
-      },
+      "state": { "diagram": "roles", "ui": true },
       "cues": {
-        "component": {
-          "diagram_focus": "Component"
-        },
-        "leaf": {
-          "diagram_focus": "Leaf"
-        },
-        "composite": {
-          "diagram_focus": "Composite"
-        },
-        "client": {
-          "diagram_focus": "Client"
-        }
+        "component": { "diagram_focus": "Component", "ui_state": "role_component" },
+        "leaf": { "diagram_focus": "Leaf", "ui_state": "role_leaf" },
+        "composite": { "diagram_focus": "Composite", "ui_state": "role_composite" },
+        "client": { "diagram_focus": "Client", "ui_state": "role_client" }
       }
     },
     "consequences": {
       "state": {
+        "ui": true,
         "cards": [
           {
             "title": "Benefit: simple clients",
-            "text": "Clients treat one object and a group the same way, with no type checks; wherever one item fits, a whole group fits too."
+            "text": "Clients treat one tile and a whole split the same way, with no type checks; wherever one tile fits, a whole split fits too."
           },
           {
             "title": "Benefit: new kinds fit in",
-            "text": "A new leaf or group class that keeps the shared interface works in existing structures and with existing clients, unchanged."
+            "text": "A new kind of tile is one new class that implements the shared interface; existing splits and clients work with it unchanged."
           },
           {
             "title": "Liability: overly general",
-            "text": "A group that inherits the general add cannot use the type system to restrict its children; it needs checks at runtime."
+            "text": "A split that may hold only some kinds, such as a photos-only strip, cannot use the type system to restrict add; it needs a check at runtime."
           },
           {
             "title": "Liability: safety or transparency",
@@ -253,14 +154,15 @@
         ]
       },
       "cues": {
-        "simple-clients": {},
-        "new-kinds": {},
-        "overly-general": {},
-        "safety": {}
+        "simple-clients": { "ui_state": "no_checks" },
+        "new-kinds": { "ui_state": "new_kinds" },
+        "overly-general": { "ui_state": "overly_general" },
+        "safety": { "ui_state": "safety" }
       }
     },
     "applicability": {
       "state": {
+        "ui": true,
         "cards": [
           {
             "title": "A good fit",
@@ -268,49 +170,30 @@
           },
           {
             "title": "Simpler designs",
-            "text": "No nesting: a plain list. Same data in every item: one class with an optional list of children plays every role."
+            "text": "No nesting: a plain list, like a carousel post. Only one kind of leaf: one class with an optional list of children."
           },
           {
             "title": "Neighbors",
-            "text": "Nested views and macro commands are composites. A decorator wraps one object to add behavior; a composite holds many."
+            "text": "A frame around one tile adds drawing: a Decorator. View trees in Model-View-Controller and macro commands are composites."
           }
         ]
       },
       "cues": {
-        "fit": {},
-        "one-class": {},
-        "neighbors": {}
+        "fit": { "ui_state": "fit" },
+        "plain-list": { "ui_state": "carousel" },
+        "neighbors": { "ui_state": "frame" }
       }
     },
     "transfer": {
-      "state": {
-        "ui": true,
-        "cards": [
-          {
-            "title": "Podcast episodes",
-            "text": "Listeners drop episodes into playlists, right next to songs."
-          },
-          {
-            "title": "An episode",
-            "text": "It has a show, a title, and a length, and it queues as show: title."
-          },
-          {
-            "title": "Your task",
-            "text": "Name the class you add and every existing line that changes."
-          }
-        ]
-      },
+      "state": { "diagram": "solution", "ui": true },
       "cues": {
-        "plan": {
-          "ui_state": "episode_request"
-        },
-        "episode": {
-          "ui_state": "episode"
-        }
+        "plan": { "ui_state": "caption_pending" },
+        "caption": { "diagram": "solution_caption", "diagram_focus": "Caption", "ui_state": "caption" }
       }
     },
     "summary": {
       "state": {
+        "ui": true,
         "cards": [
           {
             "title": "Context",
@@ -318,7 +201,7 @@
           },
           {
             "title": "Problem",
-            "text": "Code that handles single objects and groups separately repeats its loops and type checks, and breaks as new kinds arrive."
+            "text": "Code that asks every item whether it is single or a group repeats its type checks, and silently misses new kinds."
           },
           {
             "title": "Solution",
@@ -331,7 +214,7 @@
         ]
       },
       "cues": {
-        "recap": {}
+        "recap": { "ui_state": "final" }
       }
     }
   }

@@ -495,3 +495,74 @@ test('TypeScript: the complete example and both designs pass tsc --strict', t =>
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// The storyboard: scenes, cues, and the targets each cue marks.
+const PLANNED = [
+  ['intro', null, ['photo-dump', 'try-it', 'pattern-parts']],
+  ['context', 'Context', ['part-whole', 'alike', 'trees']],
+  ['problem', 'Problem', ['area', 'first-design', 'branches', 'client-check', 'predict-captions', 'every-change', 'demands']],
+  ['tile_role', 'Solution', ['shared-type', 'canvas']],
+  ['photo_role', 'Solution', ['direct', 'shared']],
+  ['split_role', 'Solution', ['one-list', 'count', 'draw', 'safe-add', 'transparent-add']],
+  ['collaborations', 'Solution', ['press', 'first-tile', 'recursion', 'loop']],
+  ['solution', 'Solution', ['component', 'leaf', 'composite', 'client']],
+  ['consequences', 'Consequences', ['simple-clients', 'new-kinds', 'overly-general', 'safety']],
+  ['applicability', 'Context', ['fit', 'plain-list', 'neighbors']],
+  ['transfer', null, ['plan', 'caption']],
+  ['summary', null, ['recap']],
+];
+
+test('the storyboard follows the planned scenes, cues, parts, and predictions', () => {
+  assert.equal(story.title, 'The Composite pattern in a photo collage');
+  assert.deepEqual(story.scenes.map(scene => [scene.id, scene.part ?? null, scene.cues.map(cue => cue.id)]), PLANNED);
+  assert.deepEqual(story.scenes.flatMap(scene => scene.cues.filter(cue => cue.prediction).map(cue => `${scene.id}/${cue.id}`)),
+    ['problem/predict-captions', 'collaborations/first-tile', 'transfer/plan']);
+  assert.ok(story.scenes.every(scene => scene.ui), 'every scene shows the collage');
+});
+
+test('every cue names real code, diagram, and panel targets', () => {
+  const shown = new Set();
+  for (const scene of story.scenes) {
+    for (const cue of scene.cues) {
+      const at = `${scene.id}/${cue.id}`;
+      if (scene.code) {
+        assert.ok(cue.focus, `${at}: every cue in a code scene marks its lines`);
+        for (const language of story.languages) {
+          assert.ok(examples[language].blocks[scene.code].focus[cue.focus], `${language}/${at}: ${scene.code} has ${cue.focus}`);
+        }
+      } else {
+        assert.equal(cue.focus, undefined, `${at}: focus without code`);
+      }
+      assert.ok(cue.ui_state in collage.panels, `${at}: ${cue.ui_state} is an illustrated panel`);
+      shown.add(cue.ui_state);
+      const diagram = story.diagrams[cue.diagram || scene.diagram];
+      if (cue.diagram) assert.ok(diagram, `${at}: the diagram ${cue.diagram} exists`);
+      if (cue.diagram_steps) assert.ok(cue.diagram_steps >= 1 && cue.diagram_steps <= diagram.steps.length, `${at}: diagram steps`);
+      if (cue.diagram_focus) {
+        assert.match(diagram.source, new RegExp(`^(class|interface|participant) ${cue.diagram_focus}\\b`, 'm'), `${at}: ${cue.diagram_focus} is declared`);
+      }
+    }
+  }
+  assert.deepEqual([...shown].sort(), Object.keys(collage.panels).sort(), 'every illustrated panel is shown by some cue');
+});
+
+test('predictions leave thinking time, and every check follows a viewing pause', () => {
+  // js/narration-transport.js opens a check 0.3 s before the section boundary,
+  // so 2.5 s of silence leaves 2.2 s to inspect the finished picture.
+  for (const scene of story.scenes) {
+    assert.ok(scene.cues.at(-1).pause_after >= 2.5, `${scene.id} ends with too little silence`);
+    scene.cues.forEach((cue, index) => {
+      if (!cue.prediction) return;
+      assert.ok(cue.pause_after >= 5, `${scene.id}/${cue.id}: a prediction needs time to think`);
+      assert.ok(index < scene.cues.length - 1, `${scene.id}/${cue.id}: the answer follows in the same section`);
+    });
+  }
+  assert.ok(story.scenes.find(scene => scene.id === 'problem').cues.at(-1).pause_after >= 3, 'the problem section ends with three seconds');
+});
+
+test('speech never asks for arithmetic', () => {
+  for (const scene of story.scenes) {
+    for (const cue of scene.cues) assert.doesNotMatch(cue.text, /\d{3,}|px\b/, `${scene.id}/${cue.id} names pixel numbers`);
+  }
+});
