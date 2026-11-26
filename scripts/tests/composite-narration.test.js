@@ -319,7 +319,8 @@ class Caption {
 }
 
 function report(name: string, item: Item): void {
-  const count = item instanceof Photo ? 1 : item.photoCount();
+  // With captions in Item, this client needs its own caption branch too.
+  const count = item instanceof Photo ? 1 : item instanceof Split ? item.photoCount() : 0;
   console.log(\`\${name}|\${count}|\${new ShareButton(item).press().join(";")}\`);
 }
 `,
@@ -390,8 +391,8 @@ void print(const std::string& name, int count, const std::vector<std::string>& c
 // arrive, TypeScript and C++ must widen it before a caption fits in a split.
 const WIDEN = {
   typescript: [/^type Item = Photo \| Split;$/m, 'type Item = Photo | Split | Caption;'],
-  cpp: [/^using Item = std::variant<Photo, std::shared_ptr<const Split>>;$/m,
-    'struct Caption {\n    std::string text;\n};\nusing Item = std::variant<Photo, Caption, std::shared_ptr<const Split>>;'],
+  cpp: [/^using Item = std::variant<Photo, SplitPtr>;$/m,
+    'struct Caption {\n    std::string text;\n};\nusing Item = std::variant<Photo, Caption, SplitPtr>;'],
 };
 function firstDesign(language) {
   const source = examples[language].blocks.problem.source;
@@ -423,6 +424,19 @@ ${statements.map(line => `    ${line}`).join('\n')}
 `;
 }
 
+// The three programs each language must run: the reader's complete example,
+// the composite design under the harness, and the first design under it.
+function programsFor(language) {
+  const example = examples[language];
+  const block = name => example.blocks[name].source;
+  const composite = [example.imports, ...story.example_order.filter(name => name !== 'wire').map(block)].join('\n');
+  return {
+    complete: `${composite}\n${block('wire')}`,
+    composite: `${composite}\n${harness(language, 'composite')}`,
+    first: `${example.imports}\n${block('area')}\n${firstDesign(language)}\n${harness(language, 'first')}`,
+  };
+}
+
 const TOOLS = { python: 'python3', java: 'javac', cpp: 'clang++', typescript: process.execPath };
 function runProgram(language, directory, program) {
   const example = examples[language];
@@ -447,17 +461,37 @@ for (const language of story.languages) {
       t.skip(`${tool} is required to run this language`);
       return;
     }
-    const example = examples[language];
-    const block = name => example.blocks[name].source;
-    const composite = [example.imports, ...story.example_order.filter(name => name !== 'wire').map(block)].join('\n');
+    const programs = programsFor(language);
     const directory = mkdtempSync(path.join(tmpdir(), 'composite-collage-'));
     try {
-      assert.equal(runProgram(language, directory, `${composite}\n${block('wire')}`), `${expectedWire.join('\n')}\n`, 'the complete example');
-      assert.equal(runProgram(language, directory, `${composite}\n${harness(language, 'composite')}`), `${expectedComposite.join('\n')}\n`, 'the composite design');
-      assert.equal(runProgram(language, directory, `${example.imports}\n${block('area')}\n${firstDesign(language)}\n${harness(language, 'first')}`),
-        `${expectedFirst.join('\n')}\n`, 'the first design');
+      assert.equal(runProgram(language, directory, programs.complete), `${expectedWire.join('\n')}\n`, 'the complete example');
+      assert.equal(runProgram(language, directory, programs.composite), `${expectedComposite.join('\n')}\n`, 'the composite design');
+      assert.equal(runProgram(language, directory, programs.first), `${expectedFirst.join('\n')}\n`, 'the first design');
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }
   });
 }
+
+// Node only strips TypeScript's types, so the type checker runs separately:
+// the shipped examples, and the first design once it is widened for captions.
+test('TypeScript: the complete example and both designs pass tsc --strict', t => {
+  let tsc;
+  try {
+    tsc = require.resolve('typescript/bin/tsc');
+  } catch {
+    t.skip('the typescript package is required to type-check');
+    return;
+  }
+  const directory = mkdtempSync(path.join(tmpdir(), 'composite-tsc-'));
+  try {
+    for (const [name, program] of Object.entries(programsFor('typescript'))) {
+      const file = path.join(directory, `${name}.ts`);
+      writeFileSync(file, program);
+      const result = spawnSync(process.execPath, [tsc, '--strict', '--noEmit', '--target', 'es2022', '--lib', 'es2022,dom', file], { encoding: 'utf8' });
+      assert.equal(result.status, 0, `${name} program:\n${result.stdout}${result.stderr}`);
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
