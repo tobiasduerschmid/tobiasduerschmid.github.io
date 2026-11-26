@@ -1,0 +1,365 @@
+version: 1
+reviews:
+  intro:
+    - scene: intro
+      cue: preview
+      retry:
+        type: single
+        question: "A UML class diagram replaces a sketch whose arrows might mean owns, calls, or creates. What problem does the notation address?"
+        options:
+          - "Readers assigning different meanings to the same mark"
+          - "Programs having too many classes to compile together"
+          - "Objects being created in an unexpected time order"
+        correct_index: 0
+        explanation: "Shared notation makes each relationship's meaning explicit so readers can discuss the same design."
+        option_feedback:
+          1: "A class diagram communicates a design; its notation does not reduce the classes a compiler must process."
+          2: "Message order is a question for a sequence diagram. Here the ambiguity concerns what the relationships mean."
+  class_box:
+    - scene: class_box
+      cue: operations
+      retry:
+        type: single
+        question: "How does a UML class diagram write an operation rename that accepts a String called name and returns Boolean?"
+        options:
+          - "Boolean rename(String name)"
+          - "rename(name: String): Boolean"
+          - "rename: Boolean(name: String)"
+        correct_index: 1
+        explanation: "UML writes the operation name, its named and typed parameters in parentheses, then the result type after a colon."
+        option_feedback:
+          0: "This puts the result type first, as some programming languages do. UML puts it after the parameter list."
+          2: "The result type belongs after the closing parenthesis, not between the name and its parameters."
+  visibility:
+    - scene: visibility
+      cue: detail
+      retry:
+        type: single
+        question: "A UML class sketch lists save() without a visibility marker. What can a reviewer conclude about access to save?"
+        options:
+          - "All clients may call it because public is the default"
+          - "Only its class may call it because private is the default"
+          - "Its visibility is unspecified in this particular view"
+        correct_index: 2
+        explanation: "Omitting visibility means the view does not show it. It supplies neither public nor private access information."
+        option_feedback:
+          0: "A shown public member uses a plus sign. An omitted sign does not select public access."
+          1: "A shown private member uses a minus sign. An omitted sign does not select private access."
+  generalization:
+    - scene: generalization
+      cue: triangle
+      retry:
+        type: single
+        question: "In a UML class diagram, AnnouncementChannel is a kind of TextChannel. Which relationship expresses this?"
+        options:
+          - "A solid line with its hollow triangle at TextChannel"
+          - "A solid line with its hollow triangle at AnnouncementChannel"
+          - "A dashed line with its hollow triangle at TextChannel"
+        correct_index: 0
+        explanation: "The generalization triangle touches the more general class, TextChannel. The line is solid."
+        option_feedback:
+          1: "The more specific class is AnnouncementChannel. The triangle points toward the general class instead."
+          2: "A dashed triangle expresses realization of an interface; this relationship says one class is a kind of another."
+  interfaces:
+    - scene: interfaces
+      cue: compare
+      retry:
+        type: single
+        question: "A UML class diagram shows Channel and Role realizing Mentionable. What may a client that needs mention() rely on?"
+        options:
+          - "Both classes inherit one implementation from Mentionable"
+          - "Both classes provide the operation promised by Mentionable"
+          - "Both classes inherit the attributes declared by Channel"
+        correct_index: 1
+        explanation: "Realization commits each class to the interface's operations without making the classes inherit one another's implementation."
+        option_feedback:
+          0: "The UML interface supplies the operation contract, not an implementation for the classes to inherit."
+          2: "Realizing the same interface does not make Role a subclass of Channel."
+  associations:
+    - scene: associations
+      cue: line
+      retry:
+        type: single
+        question: "A UML class diagram already draws the saved author reference as a Message-to-Member association. How should the Message attributes treat that same reference?"
+        options:
+          - "Repeat author so the line and attribute document two links"
+          - "Replace the association with a generalization triangle"
+          - "Omit author from the box because the line represents it"
+        correct_index: 2
+        explanation: "The association and an author attribute would be two representations of the same stored reference. Use one representation."
+        option_feedback:
+          0: "Repeating the reference does not create a second relationship; it makes one fact appear twice."
+          1: "A Message has an author; it is not a kind of Member. Generalization would change the meaning."
+  multiplicity:
+    - scene: multiplicity
+      cue: reveal_voice
+      retry:
+        type: single
+        question: "In a UML class diagram, a player may join at most one lobby, and a lobby may contain any number of players. Which end labels fit?"
+        options:
+          - "0..1 at Lobby and * at Player"
+          - "* at Lobby and 0..1 at Player"
+          - "1 at Lobby and 1..* at Player"
+        correct_index: 0
+        explanation: "Start at one player and count lobbies, then start at one lobby and count players. Put each count at the end being counted."
+        option_feedback:
+          1: "These ends are reversed; the player can reach at most one lobby, not at most one player."
+          2: "This requires every player to join a lobby and every lobby to have a player. The stated rules require neither."
+  composition:
+    - scene: composition
+      cue: no_diamond
+      retry:
+        type: single
+        question: "A chat app deletes a channel's messages when the channel is deleted, but keeps messages when their author leaves. Where does the UML filled diamond belong?"
+        options:
+          - "At Member on the author association"
+          - "At Channel on the message association"
+          - "At both Member and Channel on those associations"
+        correct_index: 1
+        explanation: "Channel owns its current messages' lifetime. The author link does not own them, and a part has at most one composite owner at a time."
+        option_feedback:
+          0: "Messages survive the author's departure, so the author reference does not express this ownership rule."
+          2: "Keeping a reference is not enough for ownership. The messages cannot simultaneously be parts of two composite owners."
+  aggregation:
+    - scene: aggregation
+      cue: grouping
+      retry:
+        type: single
+        question: "A UML model groups channels into categories. Channels remain when a category is deleted. Which notation can express grouping without exclusive ownership?"
+        options:
+          - "A filled diamond at Category"
+          - "A filled diamond at Channel"
+          - "A hollow diamond at Category"
+        correct_index: 2
+        explanation: "The hollow diamond identifies a whole-and-part grouping without composite ownership. The design's deletion rule must still be specified; the hollow diamond alone does not define lifetime."
+        option_feedback:
+          0: "Composition would give Category ownership of its current parts, conflicting with the stated deletion rule."
+          1: "Channel is not the grouping whole, and a filled diamond would introduce an ownership claim the requirement does not make."
+  dependency:
+    - scene: dependency
+      cue: dashed
+      retry:
+        type: single
+        question: "Exporter uses a Format argument while export runs and never retains it. Which relationship fits a UML class diagram?"
+        options:
+          - "A dashed open arrow from Exporter to Format"
+          - "A dashed open arrow from Format to Exporter"
+          - "A solid association from Exporter to Format"
+        correct_index: 0
+        explanation: "Exporter is the client that needs Format. Temporary use is a dependency directed toward the supplier."
+        option_feedback:
+          1: "The class doing the using is the arrow's source, so reversing it reverses the dependency."
+          2: "A stored reference would support an association. This argument is only used during the call."
+  reading:
+    - scene: reading
+      cue: one_view
+      retry:
+        type: single
+        question: "A UML class view for message ownership omits the Mentionable interface. What is the sound interpretation?"
+        options:
+          - "Mentionable was removed from the application's design"
+          - "This view selects details needed for its reader's question"
+          - "UML forbids interface and ownership lines in one diagram"
+        correct_index: 1
+        explanation: "A view can omit valid design elements to keep its question readable. Omission is not a claim that an element does not exist."
+        option_feedback:
+          0: "A focused view is only part of the design; absence from it is not evidence of deletion."
+          2: "These relationships may appear together. Limiting detail is a communication choice."
+  transfer:
+    - scene: interfaces
+      cue: realization
+      retry:
+        type: single
+        question: "An Event in the chat app must implement mention() but is not a kind of Member. Which UML relationship should it add?"
+        options:
+          - "Generalization from Event to Member"
+          - "Composition from Mentionable to Event"
+          - "Realization from Event to Mentionable"
+        correct_index: 2
+        explanation: "Event keeps Mentionable's operation promise without becoming a Member or a part owned by the interface."
+        option_feedback:
+          0: "Sharing one promised operation does not establish the is-a relationship needed for generalization."
+          1: "An interface contract does not own the lifetime of the objects that implement it."
+  summary:
+    - scene: visibility
+      cue: markers
+      retry:
+        type: single
+        question: "In a UML class box, `- score: Integer` appears above `+ reset()`. Which interpretation fits?"
+        options:
+          - "score is a private attribute; reset is a public operation"
+          - "score is a public attribute; reset is a private operation"
+          - "score is a private operation; reset is a public attribute"
+        correct_index: 0
+        explanation: "Minus marks private, plus marks public, and parentheses distinguish an operation from an attribute."
+        option_feedback:
+          1: "This reverses the visibility markers: minus hides a member, while plus exposes it."
+          2: "reset has the operation's parentheses; score names a stored value and its type."
+    - scene: generalization
+      cue: abstract
+      retry:
+        type: single
+        question: "In a UML class diagram, italic Clip is the superclass of AudioClip and VideoClip. What does the italic class name imply?"
+        options:
+          - "Clip is an interface that offers no inherited members"
+          - "Clip is abstract and has no directly created objects"
+          - "Clip owns every AudioClip and VideoClip as a part"
+        correct_index: 1
+        explanation: "An italic class name marks an abstract class. Concrete subclasses supply the particular kinds of objects."
+        option_feedback:
+          0: "An interface has the interface keyword; an abstract class can still declare inherited attributes and operations."
+          2: "Generalization relates more specific and more general classes, not an owner to its parts."
+    - scene: interfaces
+      cue: realization
+      retry:
+        type: single
+        question: "In a UML class diagram, Photo and Album each implement share() from Shareable. Which line should each draw to Shareable?"
+        options:
+          - "A solid line ending in a hollow triangle"
+          - "A dashed line ending in an open arrowhead"
+          - "A dashed line ending in a hollow triangle"
+        correct_index: 2
+        explanation: "A realization is a dashed line whose hollow triangle touches the interface being implemented."
+        option_feedback:
+          0: "A solid triangle relationship is generalization, which claims a more specific kind of a class."
+          1: "An open arrowhead on a dashed line shows a dependency; using a type is weaker than promising its operations."
+    - scene: multiplicity
+      cue: numbers
+      retry:
+        type: single
+        question: "Every UML Playlist object has at least one Entry, and each Entry belongs to exactly one Playlist. Which multiplicities fit?"
+        options:
+          - "1 at Playlist and 1..* at Entry"
+          - "1..* at Playlist and 1 at Entry"
+          - "* at Playlist and * at Entry"
+        correct_index: 0
+        explanation: "One playlist reaches one or more entries, so 1..* goes at Entry. One entry reaches exactly one playlist, so 1 goes at Playlist."
+        option_feedback:
+          1: "Each multiplicity counts the class at its own end, read from one object at the opposite end."
+          2: "Stars permit zero links and multiple playlists per entry, which contradict the stated bounds."
+    - scene: aggregation
+      cue: when_unsure
+      retry:
+        type: single
+        question: "Deleting a Project deletes its Tasks; deleting a Dashboard keeps the Projects it groups. Which UML relationships fit these rules?"
+        options:
+          - "Aggregation for Tasks; composition for Projects"
+          - "Composition for Tasks; aggregation for Projects"
+          - "Composition for Tasks; composition for Projects"
+        correct_index: 1
+        explanation: "Project owns its current Tasks. Dashboard only groups Projects, so it does not get a composite ownership claim."
+        option_feedback:
+          0: "This assigns ownership to the grouping relationship and removes it from the relationship with the deletion rule."
+          2: "Composition at Dashboard would tie its current Projects' lifetime to Dashboard, contrary to the requirement."
+    - scene: dependency
+      cue: stored
+      retry:
+        type: single
+        question: "A UML Report operation reads a Template parameter during render() without retaining it. How should the relationship be shown?"
+        options:
+          - "An association with a multiplicity at Template"
+          - "A dependency from Template toward Report"
+          - "A dependency from Report toward Template"
+        correct_index: 2
+        explanation: "Report needs Template for the operation but stores no link to it. The dependency points from client to supplier."
+        option_feedback:
+          0: "Multiplicities describe stored object links. Temporary use here is modeled as a dependency."
+          1: "Template is the supplier being used; Report is the client at the arrow's tail."
+exercises:
+  - id: voice-capacity
+    title: Change the voice-room limits
+    scene: multiplicity
+    cue: reveal_voice
+    prompt: >-
+      The chat app now lets a member join up to two voice channels, including none.
+      Each voice channel may be empty and may hold at most four members. Edit the
+      existing association to express both rules. Before previewing, read your
+      line aloud from one member and then from one channel. Preview checks the
+      drawing, not whether the model satisfies these rules.
+    type: class
+    starter: |
+      @startuml
+      layout horizontal
+      class VoiceChannel
+      class Member
+      VoiceChannel "0..1" --> "*" Member
+      @enduml
+    solution: |
+      @startuml
+      layout horizontal
+      class VoiceChannel
+      class Member
+      VoiceChannel "0..2" --> "0..4" Member
+      @enduml
+    checks:
+      - "From one Member, the model permits zero, one, or two VoiceChannels and excludes three."
+      - "From one VoiceChannel, the model permits zero through four Members and excludes five."
+      - "Each number is next to the class it counts; the relationship remains an association."
+  - id: message-bookmarks
+    title: Add message bookmarks
+    scene: composition
+    cue: no_diamond
+    prompt: >-
+      Add the relationships for Bookmark. A member may create any number of
+      bookmarks; each bookmark belongs to exactly one member and is deleted with
+      that member. A bookmark points to exactly one message, and many bookmarks
+      may point to the same message. Deleting a bookmark never deletes the message.
+      Model just these two relationships, then explain which lifetime rule each
+      line records. Other chat-app relationships are omitted from this view.
+    type: class
+    starter: |
+      @startuml
+      class Member
+      class Bookmark
+      class Message
+      @enduml
+    solution: |
+      @startuml
+      class Member
+      class Bookmark
+      class Message
+      Member "1" *-- "*" Bookmark
+      Bookmark "*" --> "1" Message
+      @enduml
+    checks:
+      - "Every Bookmark has exactly one Member owner; a Member may have no bookmarks or many."
+      - "A Message can be referenced by several bookmarks and survives their deletion."
+      - "The model records a stored reference from Bookmark to Message without giving Message a second owner."
+comparisons:
+  - id: group-or-own
+    title: Grouping versus owning channels
+    question: >-
+      Categories must be removable without deleting channels, while deleting a
+      server must delete its current channels. Compare the two relationships.
+      What would a filled diamond on Category incorrectly require, and what
+      constraints does Server's filled diamond add?
+    before:
+      scene: aggregation
+      cue: grouping
+      label: Category groups channels
+    after:
+      scene: composition
+      cue: owner
+      label: Server owns channels
+    consequences:
+      - "Composition gives each current part at most one composite owner and couples its deletion to that owner."
+      - "Category's grouping must not claim that ownership. A plain association can express the link with fewer symbols."
+      - "A hollow diamond alone does not specify deletion behavior; the app's explicit rule says categories leave channels intact."
+  - id: kind-or-contract
+    title: A new kind or a shared promise
+    question: >-
+      The app adds another channel kind and also adds a Role that can be mentioned
+      but shares no channel data. Compare generalization with realization. Which
+      relationship fits each change, and what extra promise would inheritance make?
+    before:
+      scene: generalization
+      cue: triangle
+      label: TextChannel is a Channel
+    after:
+      scene: interfaces
+      cue: compare
+      label: Unrelated classes keep Mentionable's promise
+    consequences:
+      - "A new Channel subclass inherits the declared members and must work where a Channel is expected."
+      - "Role can realize Mentionable by supplying mention() without inheriting Channel's data or claiming to be a Channel."
+      - "Realization keeps unrelated classes separate, but each class still has to supply an implementation that fulfills the contract."

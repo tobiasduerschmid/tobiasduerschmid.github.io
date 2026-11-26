@@ -14,7 +14,8 @@
       quizzes: '[data-np-quizzes]',
     };
     const read = (name, fallback) => {
-      const element = root.querySelector(`[data-narration-${name}]`) || root.querySelector(legacy[name]);
+      const element = root.querySelector(`[data-narration-${name}]`)
+        || (legacy[name] && root.querySelector(legacy[name]));
       if (element) return JSON.parse(element.textContent);
       if (fallback !== undefined) return fallback;
       throw new Error(`Narration ${name} data is missing.`);
@@ -29,7 +30,7 @@
       return { min_score: 0.8, shuffle_questions: false,
         ...(check.questions ? check : { questions: [check] }) };
     });
-    return { story, timing: read('timing'), examples: read('examples', {}) || {}, checks };
+    return { story, timing: read('timing'), examples: read('examples', {}) || {}, checks, study: read('study', null) };
   }
 
   function linkNavigation(root, story, player) {
@@ -93,6 +94,7 @@
           root.querySelector('.nja-status').textContent = `Step ${cueIndex + 1}: ${story.scenes[sceneIndex].cues[cueIndex].step}`;
         }
         next.addEventListener('click', () => {
+          if (player.holdPrediction()) return;
           const index = player.currentScene();
           const cue = player.currentCue();
           if (cue + 1 < story.scenes[index].cues.length) showCue(index, cue + 1);
@@ -123,6 +125,7 @@
     const playButton = root.querySelector('[data-action="play"]');
     const nextStep = root.querySelector('[data-narration-action="next-step"]');
     let player;
+    let study;
     let resumeAfterCheck = Boolean(story.audio);
 
     function focusPlayback(resume) {
@@ -152,16 +155,29 @@
     }
 
     const quiz = window.NarrationQuiz.create(root, {
-      scenes: story.scenes, checks,
+      scenes: story.scenes, checks, reviews: data.study?.reviews || {},
       continueLabel: story.audio ? 'Continue narration' : 'Continue lesson',
       finishLabel: window.NarrationSong.hasSong(root) ? 'Continue to song' : 'Finish review',
       onContinue: index => continueAfter(index, resumeAfterCheck),
       onReplay: story.audio ? replaySegment : null,
+      onReview(reference) {
+        if (study) study.close();
+        const sceneIndex = story.scenes.findIndex(scene => scene.id === reference.scene);
+        const cueIndex = story.scenes[sceneIndex].cues.findIndex(cue => cue.id === reference.cue);
+        player.showCue(sceneIndex, cueIndex);
+      },
+      onReviewReturn() {
+        if (study) study.close();
+        player.pause();
+        player.dismissPrediction();
+      },
     });
 
     async function finishScene(index, resume = Boolean(story.audio)) {
       resumeAfterCheck = resume;
       player.pause();
+      player.dismissPrediction();
+      if (study) study.close();
       if (checks[index]) quiz.open(index);
       else if (resume && index === story.scenes.length - 1) status.textContent = 'Narration complete.';
       else await continueAfter(index, resume);
@@ -169,9 +185,14 @@
 
     player = window.NarrationTransport.mount(root, {
       storyboard: story, timing, checkScenes,
-      render(frame) { renderVisuals(frame); steps.update(frame); },
-      onSectionEnd: finishScene, onSeek: quiz.close, canPlay: () => !quiz.isOpen(),
+      render(frame) { renderVisuals(frame); steps.update(frame); if (study) study.update(frame); },
+      onSectionEnd: finishScene, onSeek: quiz.close,
+      canPlay: () => !quiz.isOpen() && !(study && study.isOpen()),
     });
+    if (window.NarrationStudy) {
+      study = window.NarrationStudy.create(root, data, player);
+      player.refresh();
+    }
     steps.bind(player, finishScene);
     linkNavigation(root, story, player);
     bindReading(root, player);

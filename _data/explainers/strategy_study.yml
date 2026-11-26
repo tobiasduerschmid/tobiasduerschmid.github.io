@@ -1,0 +1,453 @@
+# Study activities use existing teaching cues; they do not alter narrated speech.
+version: 1
+reviews:
+  intro:
+  - scene: intro
+    cue: cue-3
+    retry:
+      type: single
+      question: Why does a Strategy pattern description include consequences as well as a solution?
+      options:
+      - To name the files a library must contain
+      - To judge what the design buys and costs
+      - To require the same classes in every app
+      correct_index: 1
+      explanation: A pattern explains the context and problem, a reusable solution, and its trade-offs
+        so the design can be chosen appropriately.
+      option_feedback:
+        0: A file layout belongs to one implementation; consequences explain the effects of the design.
+        2: Pattern roles can be adapted to different applications. Their costs help decide whether the
+          structure is useful.
+  context:
+  - scene: context
+    cue: cue-2
+    retry:
+      type: single
+      question: Which requirement most directly supports using the Strategy pattern?
+      options:
+      - Several panels react to one data change
+      - Events move an object between behavior modes
+      - Clients select from a growing family of algorithms
+      correct_index: 2
+      explanation: Strategy fits interchangeable algorithms for one task when clients care which algorithm
+        is used and the family can grow.
+      option_feedback:
+        0: Independent reactions to a changing object are addressed by Observer.
+        1: State objects replacing one another as events occur describe the State pattern's context.
+  problem:
+  - scene: problem
+    cue: cue-3
+    retry:
+      type: single
+      question: A bill-splitting class stores percentages and a birthday guest even when it uses equal
+        splitting. Which Strategy problem does that reveal?
+      options:
+      - The Context collects algorithm-specific data
+      - Equal splitting needs a different total field
+      - The client cannot reuse the expense object
+      correct_index: 0
+      explanation: Keeping every algorithm's special data in the Context makes it change whenever another
+        algorithm needs new data.
+      option_feedback:
+        1: The expense total is common input; the percentages and guest belong only to particular algorithms.
+        2: The object is still reusable. The concern is that its responsibilities include all algorithms'
+          configuration.
+  solution:
+  - scene: solution
+    cue: cue-3
+    retry:
+      type: single
+      question: In the Strategy pattern, which object stores the selected algorithm and delegates requests
+        through its interface?
+      options:
+      - The client that makes the initial choice
+      - The Context that uses the algorithm
+      - A Concrete Strategy that computes a result
+      correct_index: 1
+      explanation: The Context keeps the Strategy reference and forwards requests. The client supplies
+        the choice, and the Concrete Strategy performs the algorithm.
+      option_feedback:
+        0: The client configures the Context; the Context retains the reference used for later requests.
+        2: A Concrete Strategy receives delegated work. It does not play the Context role merely by implementing
+          the algorithm.
+  strategy_role:
+  - scene: strategy_role
+    cue: cue-3
+    retry:
+      type: single
+      question: A new split strategy has the right method names but returns shares that exceed the expense
+        total. Can it replace the others under the Strategy contract?
+      options:
+      - Yes, because the method signatures match
+      - Yes, if the Context checks its concrete class
+      - No, because it breaks the shared promise
+      correct_index: 2
+      explanation: 'Interchangeability includes behavior: every split strategy must return shares that
+        add up to the total.'
+      option_feedback:
+        0: Matching signatures is necessary but does not establish the promised behavior.
+        1: Type-specific compensation would make the Context know each algorithm again instead of relying
+          on one contract.
+  context_role:
+  - scene: context_role
+    cue: cue-3
+    retry:
+      type: single
+      question: In a Strategy design, the selected algorithm never changes after an object is created.
+        Which configuration mechanism is sufficient?
+      options:
+      - A Strategy constructor parameter
+      - A required public Strategy setter
+      - A type check before every delegated call
+      correct_index: 0
+      explanation: Constructor injection is enough when the choice is fixed for the Context's lifetime;
+        a setter supports later replacement when needed.
+      option_feedback:
+        1: A setter is useful for changing a live object's algorithm, but that requirement is absent here.
+        2: The Context can retain the supplied Strategy reference and delegate without checking its concrete
+          type.
+  concrete_roles:
+  - scene: concrete_roles
+    cue: cue-5
+    retry:
+      type: single
+      question: In the Strategy expense app, which object can be shared across independent expenses without
+        mixing their choices?
+      options:
+      - A PercentSplit storing one expense's percentages
+      - An EqualSplit with no per-expense data
+      - A BirthdaySplit storing one expense's guest
+      correct_index: 1
+      explanation: A stateless algorithm can serve many Contexts because the inputs come with each request.
+      option_feedback:
+        0: This strategy retains one expense's configuration. Sharing it would also share those percentages.
+        2: A saved guest is specific to an expense's chosen split, so the lesson gives that strategy its
+          own instance.
+  collaborations:
+  - scene: collaborations
+    cue: cue-4
+    retry:
+      type: single
+      question: In the Strategy pattern, a user switches a split method. Which participant should supply
+        the replacement strategy to Expense?
+      options:
+      - The old strategy, which chooses its successor
+      - Expense, by branching on all split classes
+      - The client that interprets the user's choice
+      correct_index: 2
+      explanation: The client makes the choice and gives the new Strategy to the Context, which continues
+        forwarding requests.
+      option_feedback:
+        0: State objects can choose successors; the strategies in this design do not replace one another.
+        1: Branching on every concrete strategy would restore the algorithm knowledge removed from Expense.
+  consequences:
+  - scene: consequences
+    cue: cue-3
+    retry:
+      type: single
+      question: A Strategy interface supports several algorithms, but the caller cannot tell which one
+        fits its needs. Which cost does this expose?
+      options:
+      - Clients must understand the available choices
+      - The Context must implement every algorithm
+      - Algorithms cannot be changed after construction
+      correct_index: 0
+      explanation: Strategy gives clients a meaningful choice, which also requires them to understand
+        the differences among strategies.
+      option_feedback:
+        1: Algorithms remain in Concrete Strategies. The Context delegates through their shared interface.
+        2: A Context may provide a setter when runtime switching is required.
+  applicability:
+  - scene: applicability
+    cue: cue-2
+    retry:
+      type: single
+      question: A Strategy candidate has two stable variants and one readable conditional. What is the
+        best reason to keep that design?
+      options:
+      - Strategy always makes computations slower
+      - The extra classes would buy little flexibility
+      - Conditional code can never be refactored later
+      correct_index: 1
+      explanation: A small stable variation may be clearer as a conditional than as several new classes
+        and objects.
+      option_feedback:
+        0: The applicability decision here concerns complexity and change cost, not a universal performance
+          rule.
+        2: The code can be refactored if real growth later makes the pattern worthwhile.
+  transfer:
+  - scene: transfer
+    cue: cue-2
+    retry:
+      type: single
+      question: A Strategy-based expense app adds WeightedSplit while retaining split() and label(). What
+        must learn about the new concrete class?
+      options:
+      - Every existing Concrete Strategy
+      - Expense's forwarding methods
+      - The client that offers and creates it
+      correct_index: 2
+      explanation: The new algorithm implements the existing contract. Client selection code creates it,
+        while Expense and existing strategies remain independent.
+      option_feedback:
+        0: Existing strategies do not need to know one another.
+        1: The Context already forwards to the shared Strategy interface and needs no new algorithm branch.
+  summary:
+  - scene: context
+    cue: cue-2
+    retry:
+      type: single
+      question: A route app offers shortest, scenic, and step-free routes, chosen by the user, with more
+        algorithms planned. Which part of a Strategy pattern description is this?
+      options:
+      - The context in which the problem recurs
+      - The interface-based solution to the problem
+      - The costs introduced by applying the solution
+      correct_index: 0
+      explanation: 'This describes one task, interchangeable algorithms, client choice, and expected variation:
+        the pattern''s context.'
+      option_feedback:
+        1: The scenario does not yet say how classes or interfaces organize the algorithms.
+        2: The scenario states a need; costs arise from a chosen design for meeting it.
+  - scene: problem
+    cue: cue-2
+    retry:
+      type: single
+      question: A route app checks the selected route method in both calculate() and describe(). Which
+        problem does Strategy address?
+      options:
+      - A route method's rules are split between operations
+      - A route method is chosen before the calculation
+      - A route result is used by more than one caller
+      correct_index: 0
+      explanation: Repeated checks scatter one algorithm's behavior across the Context, making another
+        algorithm touch multiple operations.
+      option_feedback:
+        1: Client selection is part of the Strategy context, not the coupling problem.
+        2: Several callers can reuse either design. The problem is where each algorithm's rules live.
+  - scene: solution
+    cue: cue-2
+    retry:
+      type: single
+      question: In a Strategy route app, RoutePlanner forwards to a RouteStrategy. ScenicRoute implements
+        a particular route algorithm. Which role does ScenicRoute play?
+      options:
+      - Context
+      - Concrete Strategy
+      - Strategy interface
+      correct_index: 1
+      explanation: A Concrete Strategy implements one algorithm in the interchangeable family.
+      option_feedback:
+        0: RoutePlanner plays Context because it keeps the selected algorithm and forwards requests.
+        2: RouteStrategy is the shared interface; ScenicRoute supplies one implementation.
+  - scene: collaborations
+    cue: cue-3
+    retry:
+      type: single
+      question: A Strategy route app changes from scenic to shortest routing on the same RoutePlanner.
+        What happens on the next calculation?
+      options:
+      - ScenicRoute chooses and calls ShortestRoute
+      - RoutePlanner tests every route class in a branch
+      - The client supplies ShortestRoute; RoutePlanner delegates
+      correct_index: 2
+      explanation: Replacing the chosen Strategy changes the next delegated algorithm without changing
+        the Context's calculation logic.
+      option_feedback:
+        0: The client chooses the Strategy; the old algorithm does not choose its successor.
+        1: The Context relies on the interface instead of branching on concrete classes.
+  - scene: consequences
+    cue: cue-1
+    retry:
+      type: single
+      question: A Strategy route app adds QuietRoute using the existing operations. Which outcome shows
+        the pattern's extension benefit?
+      options:
+      - RoutePlanner retains its existing forwarding logic
+      - The client no longer needs to choose an algorithm
+      - All existing route classes gain QuietRoute branches
+      correct_index: 0
+      explanation: A new Concrete Strategy can implement the current contract without modifying the Context
+        or other algorithms.
+      option_feedback:
+        1: Client choice remains part of the design. Offering QuietRoute changes that selection code.
+        2: Existing algorithms are independent; adding branches to each one would defeat the separation.
+  - scene: applicability
+    cue: cue-2
+    retry:
+      type: single
+      question: Which route-app requirement gives the weakest reason to maintain a family of Strategy
+        classes?
+      options:
+      - Users choose among many route policies
+      - One fixed algorithm will serve every request
+      - Algorithms have their own configuration data
+      correct_index: 1
+      explanation: A single fixed algorithm has no useful family to swap. A direct operation is usually
+        simpler.
+      option_feedback:
+        0: Meaningful client choice among algorithms is a strong reason for Strategy.
+        2: Algorithm-specific data can make separate strategy objects useful when the family varies.
+exercises:
+- id: weighted-split
+  title: Add a split with its own data
+  scene: transfer
+  cue: cue-2
+  prompt: 'The expense app needs WeightedSplit: each person has a positive weight, and the shares are
+    proportional to those weights. Extend the diagram so the picker can offer this algorithm. Decide where
+    its weights belong, expose the existing operations, and preserve Expense''s independence from concrete
+    algorithms. The implementation must allocate whole cents whose sum equals the total; this diagram
+    task does not ask you to implement rounding.'
+  type: class
+  starter: |
+    @startuml
+    class SplitPicker
+    class Expense {
+      - total
+      - people
+      + shares()
+      + label()
+      + setStrategy(strategy)
+    }
+    interface SplitStrategy {
+      + split(total, people)
+      + label()
+    }
+    class EqualSplit
+    class PercentSplit {
+      - percents
+    }
+    class BirthdaySplit {
+      - guest
+    }
+    SplitPicker ..> Expense : configures
+    Expense o--> "1" SplitStrategy : strategy
+    EqualSplit ..|> SplitStrategy
+    PercentSplit ..|> SplitStrategy
+    BirthdaySplit ..|> SplitStrategy
+    @enduml
+  solution: |
+    @startuml
+    class SplitPicker
+    class Expense {
+      - total
+      - people
+      + shares()
+      + label()
+      + setStrategy(strategy)
+    }
+    interface SplitStrategy {
+      + split(total, people)
+      + label()
+    }
+    class EqualSplit
+    class PercentSplit {
+      - percents
+    }
+    class BirthdaySplit {
+      - guest
+    }
+    SplitPicker ..> Expense : configures
+    Expense o--> "1" SplitStrategy : strategy
+    EqualSplit ..|> SplitStrategy
+    PercentSplit ..|> SplitStrategy
+    BirthdaySplit ..|> SplitStrategy
+    class WeightedSplit {
+      - weights
+      + split(total, people)
+      + label()
+    }
+    WeightedSplit ..|> SplitStrategy
+    SplitPicker ..> WeightedSplit : creates
+    @enduml
+  checks:
+  - WeightedSplit keeps its algorithm-specific weights and fulfills the existing split(total, people)
+    and label() contract.
+  - Expense still holds a SplitStrategy and gains neither a weights field nor a branch for WeightedSplit.
+  - The picker can create and supply the new concrete strategy; existing strategies do not learn about
+    it.
+  - 'State the shared behavioral promise: returned shares use whole cents and sum to the original total.
+    A diagram preview cannot verify that computation.'
+- id: switch-birthday
+  title: Replace the algorithm on one expense
+  scene: context_role
+  cue: cue-3
+  prompt: Dinner is the same 6000-cent expense for Ava, Ben, and Chloe throughout this trace. It currently
+    uses EqualSplit. A BirthdaySplit configured for Chloe already exists. Add the messages for the app
+    to switch to the birthday treat and then request shares. Show delegation and the returned shares in
+    Ava, Ben, Chloe order. Do not replace Dinner or make the old algorithm choose its successor.
+  type: sequence
+  starter: |
+    @startuml
+    participant app: Main
+    participant dinner: Expense
+    participant birthday: BirthdaySplit
+    note right of dinner: Current strategy is EqualSplit
+    note right of birthday: Guest is Chloe
+    @enduml
+  solution: |
+    @startuml
+    participant app: Main
+    participant dinner: Expense
+    participant birthday: BirthdaySplit
+    note right of dinner: Current strategy is EqualSplit
+    note right of birthday: Guest is Chloe
+    app -> dinner: setStrategy(birthday)
+    app -> dinner: shares()
+    activate dinner
+    dinner -> birthday: split(6000, people)
+    activate birthday
+    birthday --> dinner: [3000, 3000, 0]
+    deactivate birthday
+    dinner --> app: [3000, 3000, 0]
+    deactivate dinner
+    @enduml
+  checks:
+  - The app chooses and supplies BirthdaySplit through setStrategy before the new shares request.
+  - Dinner forwards split with its total and people to the selected BirthdaySplit instance.
+  - The returned shares are 3000, 3000, and 0 cents, preserving the 6000-cent total.
+  - The same Dinner object remains in use; no concrete algorithm check or successor choice is added to
+    it.
+comparisons:
+- id: algorithm-data
+  title: 'New algorithm data: expense or strategy?'
+  question: WeightedSplit needs a weight for every person. Compare where that data belongs and which existing
+    code must change to support it.
+  before:
+    scene: problem
+    cue: cue-3
+    label: Expense collects all algorithm data
+  after:
+    scene: concrete_roles
+    cue: cue-3
+    label: Each strategy owns its configuration
+  consequences:
+  - The conditional Expense grows another parameter and related branches. The Strategy design puts weights
+    and their rules in one new algorithm object.
+  - Expense continues to pass common inputs through SplitStrategy. Client code still needs to construct
+    and offer the new choice.
+  - 'A shared interface can constrain future algorithms: one may need inputs it does not supply. More
+    strategy classes also mean more objects to understand.'
+  - For two small stable variants, a conditional may be clearer. A single stateless operation can often
+    use a passed function instead of a class.
+- id: runtime-choice
+  title: A fixed algorithm or a replaceable object?
+  question: While editing one expense, a user switches from equal splitting to a birthday treat. How does
+    keeping a Strategy reference change that operation compared with hard-wiring a method into the expense?
+  before:
+    scene: problem
+    cue: cue-5
+    label: Algorithms hard-wired into Expense
+  after:
+    scene: context_role
+    cue: cue-3
+    label: Client replaces the Strategy reference
+  consequences:
+  - A replaceable reference lets the same Expense use a different algorithm. Subclassing Expense for each
+    algorithm would require replacing the expense to change that choice.
+  - The client must understand the algorithms well enough to configure the replacement; the Context only
+    forwards through the common contract.
+  - Offer a setter only when the choice must change during the object's lifetime. A constructor parameter
+    is sufficient for a fixed choice.
+  - When one simple algorithm is the only expected choice, direct code avoids an interface and objects
+    with no useful variation.

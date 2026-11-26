@@ -1,5 +1,10 @@
 # Video narrations
 
+Video narrations use the shared [study tools](narration-study.md), including
+learner-controlled prediction pauses and searchable cue review. Optional study
+companions add question-specific review/retries and authored practice. These
+interactions belong to the common player, not topic choreographies.
+
 A video narration is a narrated lesson with one screen that shows, cue by
 cue, an animated stage drawn with the song-video engine. It plays like a
 video, with the music player's controls, and shares its transport, one

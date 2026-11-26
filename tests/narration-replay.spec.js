@@ -44,7 +44,8 @@ async function openCheck(player, lesson, index) {
     for (const cue of lesson.story.scenes[index].cues.slice(1)) {
       await player.getByRole('button', { name: 'Next step', exact: true }).click();
     }
-    await player.getByRole('button', { name: 'Knowledge check', exact: true }).click();
+    const lastCue = lesson.story.scenes[index].cues.at(-1);
+    await player.getByRole('button', { name: lastCue.prediction ? 'Reveal explanation' : 'Knowledge check', exact: true }).click();
   } else await player.getByRole('button', { name: 'Knowledge check', exact: true }).click();
   return player.getByRole('region', { name: /— (Knowledge check|Summary quiz)$/ });
 }
@@ -63,6 +64,18 @@ async function expectReplaying(player, lesson, startIndex) {
   await expect.poll(() => player.locator('audio').evaluate(audio => audio.currentTime))
     .toBeGreaterThanOrEqual(start);
   expect(await player.locator('audio').evaluate(audio => audio.currentTime)).toBeLessThan(start + 2);
+}
+
+async function finishPlaybackScene(player, lesson, timing, sceneIndex) {
+  const scene = lesson.story.scenes[sceneIndex];
+  for (const [cueIndex, cue] of scene.cues.entries()) {
+    if (!cue.prediction) continue;
+    await player.locator('audio').evaluate((audio, end) => { audio.currentTime = end - 0.04; }, timing.scenes[sceneIndex].cues[cueIndex].end);
+    await player.getByRole('button', { name: 'Reveal explanation', exact: true }).click();
+  }
+  if (!scene.cues.at(-1).prediction) {
+    await player.locator('audio').evaluate((audio, end) => { audio.currentTime = end - 0.04; }, timing.scenes[sceneIndex].end);
+  }
 }
 
 for (const lesson of lessons) {
@@ -115,7 +128,7 @@ for (const { topic, fallback, mobile } of [
     // minutes of speech; the production boundary handler must reopen the check.
     const timing = JSON.parse(readFileSync(`_data/explainers/${topic}_timing.json`, 'utf8'));
     for (let scene = previous + 1; scene <= index; scene++) {
-      await player.locator('audio').evaluate((audio, end) => { audio.currentTime = end - 0.04; }, timing.scenes[scene].end);
+      await finishPlaybackScene(player, lesson, timing, scene);
       if (scene < index) {
         await expect(player.getByRole('heading', { name: lesson.story.scenes[scene + 1].title, exact: true })).toBeVisible();
         await expect(player.getByRole('button', { name: 'Pause narration', exact: true })).toBeVisible();

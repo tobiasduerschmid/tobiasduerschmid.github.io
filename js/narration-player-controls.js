@@ -60,7 +60,7 @@
       }
     }).observe(checkpoint, { attributes: true, attributeFilter: ['hidden'] });
     // Keys typed in a checkpoint answer it; they never control playback.
-    listen(checkpoint, 'keydown', event => event.stopPropagation());
+    listen(checkpoint, 'keydown', event => { if (event.key !== 'Escape') event.stopPropagation(); });
     const exit = checkpoint.querySelector('.vn-check-exit');
     if (exit) listen(exit, 'click', () => root.querySelector('[data-action="fullscreen"]').click());
     // The checkpoint replaces the toolbar, so its heading is the return target

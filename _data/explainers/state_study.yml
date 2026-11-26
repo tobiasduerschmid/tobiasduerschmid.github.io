@@ -1,0 +1,441 @@
+# Study activities use existing teaching cues; they do not alter narrated speech.
+version: 1
+reviews:
+  intro:
+  - scene: intro
+    cue: cue-3
+    retry:
+      type: single
+      question: A State pattern description includes a class diagram. What else is needed to judge whether
+        to use it?
+      options:
+      - Only the names of the implementation files
+      - Only an executable version in each language
+      - Its context, recurring problem, and trade-offs
+      correct_index: 2
+      explanation: A reusable design idea needs its situation, problem, solution, and consequences so
+        a developer can judge its fit.
+      option_feedback:
+        0: File names describe one implementation but do not explain when the design helps.
+        1: Executable examples can illustrate a solution without explaining its context or costs.
+  context:
+  - scene: context
+    cue: cue-3
+    retry:
+      type: single
+      question: Which change most strengthens the case for the State pattern in a game character?
+      options:
+      - New modes give different reactions to several inputs
+      - More independent displays observe its position
+      - The user chooses one of several path algorithms
+      correct_index: 0
+      explanation: State is a strong fit when multiple requests depend on a changing state and new states
+        bring distinct behavior.
+      option_feedback:
+        1: Independent displays reacting to changes are the variation handled by Observer.
+        2: A client choosing an interchangeable algorithm is the variation handled by Strategy.
+  problem:
+  - scene: problem
+    cue: cue-3
+    retry:
+      type: single
+      question: A game character checks the same mode in jump(), tick(), and interact(). Why can the State
+        pattern make a new mode easier to add?
+      options:
+      - It removes the need for public requests
+      - It groups one mode's reactions together
+      - It guarantees every request runs faster
+      correct_index: 1
+      explanation: Grouping a state's reactions in one Concrete State avoids finding that state's branches
+        across many operations.
+      option_feedback:
+        0: Clients still send the same requests to the Context; their handling is delegated.
+        2: The design change is about modifiability. Faster execution is not guaranteed by the pattern.
+  solution:
+  - scene: solution
+    cue: cue-3
+    retry:
+      type: single
+      question: In the State pattern, a new mode has its own reactions to all existing requests. Which
+        role should implement those reactions?
+      options:
+      - The State interface
+      - The Context forwarding methods
+      - A new Concrete State
+      correct_index: 2
+      explanation: A Concrete State collects the behavior for one state while fulfilling the shared request
+        contract.
+      option_feedback:
+        0: The State interface declares the common operations; it does not implement one mode's reactions.
+        1: Putting each mode's reactions in the Context would reintroduce scattered mode checks.
+  state_role:
+  - scene: state_role
+    cue: cue-1
+    retry:
+      type: single
+      question: In a State pattern design, pause() and resume() behave differently by state, while setState(next)
+        replaces the current state. What belongs in the State interface?
+      options:
+      - pause(context) and resume(context)
+      - setState(next) and a getter for the current state
+      - One enter method for each possible state
+      correct_index: 0
+      explanation: The State interface declares the requests that the Context delegates because their
+        behavior varies by state.
+      option_feedback:
+        1: Replacing or reading the current reference is a Context responsibility, not a state-dependent
+          reaction.
+        2: The interface describes requests. It need not enumerate all possible next states.
+  context_role:
+  - scene: context_role
+    cue: cue-2
+    retry:
+      type: single
+      question: In the State pattern, how does a Context choose the behavior for its next state-dependent
+        request?
+      options:
+      - It asks the client which state class to use
+      - It forwards to its current state object
+      - It branches on each concrete state class
+      correct_index: 1
+      explanation: The current state reference determines which implementation receives the delegated
+        request.
+      option_feedback:
+        0: The client sends requests; in this design the state objects decide transitions.
+        2: A branch per concrete state restores the mode-checking design that delegation replaces.
+  concrete_roles:
+  - scene: concrete_roles
+    cue: cue-4
+    retry:
+      type: single
+      question: Two dogs share one Following object in a State pattern design. Where should each dog's
+        energy be kept?
+      options:
+      - In the shared Following object
+      - In one shared variable for all states
+      - In each Dog Context
+      correct_index: 2
+      explanation: Keeping per-dog energy in each Context lets shared state objects supply behavior without
+        mixing dogs' data.
+      option_feedback:
+        0: Per-dog data inside the shared state would be shared too, so one dog could affect another.
+        1: A shared energy variable still mixes independent dogs. Passing a Context gives access to that
+          dog's data.
+  collaborations:
+  - scene: collaborations
+    cue: cue-3
+    retry:
+      type: single
+      question: In the State pattern, a dog moves from Following to Fetching after one throw. Where is
+        a second throw delegated?
+      options:
+      - To the current Fetching object
+      - To the old Following object
+      - To a mode check in the client
+      correct_index: 0
+      explanation: The transition changed the Context's current reference. The next request reaches Fetching
+        without a client mode check.
+      option_feedback:
+        1: Following no longer holds the current-state role for that dog after the transition.
+        2: The client can send the same request without knowing which state is current.
+  consequences:
+  - scene: consequences
+    cue: cue-3
+    retry:
+      type: single
+      question: A State pattern design gains a new feed() request that behaves differently in every state.
+        Which work is required?
+      options:
+      - Add one Feed state and leave the others alone
+      - Extend the State contract and every state implementation
+      - Change only the Context's current reference
+      correct_index: 1
+      explanation: A new state-dependent request needs a common operation and a reaction in every Concrete
+        State, plus Context forwarding.
+      option_feedback:
+        0: Feed is a request, not another mode. Each existing state must define its reaction to that request.
+        2: Replacing the current reference selects an existing behavior; it does not define a new operation
+          for all states.
+  applicability:
+  - scene: applicability
+    cue: cue-2
+    retry:
+      type: single
+      question: A feature has two stable states and one small, exhaustively checked switch. What does
+        State pattern applicability suggest?
+      options:
+      - Add state classes in case more states appear
+      - Duplicate the entire object for each state
+      - Keep the simpler checked switch
+      correct_index: 2
+      explanation: Few stable states may not justify the extra classes and distributed transitions of
+        the State pattern.
+      option_feedback:
+        0: Possible growth alone does not establish a benefit worth paying for now.
+        1: The need is small state-dependent behavior; duplicating the whole object adds more structure
+          than it needs.
+  transfer:
+  - scene: transfer
+    cue: cue-2
+    retry:
+      type: single
+      question: A State pattern design adds Guarding using the existing requests. Besides the new Concrete
+        State, what needs editing?
+      options:
+      - Transitions that can enter Guarding
+      - Every existing Context forwarding method
+      - The common interface with a guarding() request
+      correct_index: 0
+      explanation: A new state implements the existing interface. Existing code changes where transitions
+        select that new state.
+      option_feedback:
+        1: The Context already forwards to whichever state is current; it needs no state-specific branch.
+        2: A state name is not a new request. The interface changes only if callers need another state-dependent
+          operation.
+  summary:
+  - scene: context
+    cue: cue-3
+    retry:
+      type: single
+      question: An upload reacts differently to cancel(), tick(), and connectionLost() while Waiting,
+        Sending, or Retrying. Why does this fit the State pattern?
+      options:
+      - Its views all display the upload size
+      - Several requests depend on a changing state
+      - A user chooses the compression algorithm
+      correct_index: 1
+      explanation: The same object changes how multiple requests behave as events move it between states.
+      option_feedback:
+        0: Multiple displays reacting to data changes suggest Observer, not this state-dependent behavior.
+        2: Choosing an algorithm suggests Strategy. The upload's changing reactions are the State concern.
+  - scene: problem
+    cue: cue-3
+    retry:
+      type: single
+      question: An upload class checks Waiting, Sending, and Retrying separately in each request method.
+        Which State pattern problem is present?
+      options:
+      - The class stores its current state only once
+      - All requests are visible to outside callers
+      - One state's reactions are scattered across methods
+      correct_index: 2
+      explanation: Repeated state checks distribute the behavior for one state across every state-dependent
+        operation.
+      option_feedback:
+        0: A single current-state field is normal; repeatedly branching on it creates the change cost.
+        1: The public requests remain available after applying the pattern. Their visibility is not the
+          issue.
+  - scene: solution
+    cue: cue-1
+    retry:
+      type: single
+      question: In a State pattern upload manager, Upload holds the current UploadState and receives client
+        requests. Which role does Upload play?
+      options:
+      - Context
+      - State interface
+      - Concrete State
+      correct_index: 0
+      explanation: The Context is the client-facing object that holds the current state reference and
+        delegates requests.
+      option_feedback:
+        1: UploadState declares the common request operations; that is the State interface.
+        2: Sending or Retrying implements one state's behavior; that is the Concrete State role.
+  - scene: collaborations
+    cue: cue-4
+    retry:
+      type: single
+      question: In a State pattern upload, Retrying calls setState(sending). The client next calls cancel().
+        Which object supplies the reaction?
+      options:
+      - Retrying, until another client command resets it
+      - Sending, now the current state
+      - Upload, after testing the state name
+      correct_index: 1
+      explanation: setState replaces the current reference, so later requests are delegated to Sending.
+      option_feedback:
+        0: The state change has already happened; the client does not need to reset the Context.
+        2: The Context delegates without testing a state name. Dynamic dispatch selects the implementation.
+  - scene: consequences
+    cue: cue-3
+    retry:
+      type: single
+      question: A State pattern upload manager needs both a Verifying state and a new prioritize() request.
+        Which change touches every Concrete State?
+      options:
+      - Adding Verifying with the existing requests
+      - Changing a transition into Verifying
+      - Adding prioritize() to the shared request contract
+      correct_index: 2
+      explanation: Each Concrete State must supply a reaction to a new state-dependent request. A new
+        state instead localizes its reactions in a new class.
+      option_feedback:
+        0: Adding a state creates that class and changes incoming transitions; it does not alter every
+          existing state.
+        1: An incoming transition changes at its source, not automatically in every state.
+  - scene: applicability
+    cue: cue-2
+    retry:
+      type: single
+      question: Which upload design gives the weakest reason for separate State classes?
+      options:
+      - Two stable modes with almost identical reactions
+      - New modes with different reactions in each release
+      - Several requests that differ across many modes
+      correct_index: 0
+      explanation: With little behavioral variation or growth, extra classes and spread transitions may
+        cost more than a small checked switch.
+      option_feedback:
+        1: Regularly adding distinct states is a reason the State pattern can help.
+        2: Distinct reactions across requests are the behavior that State classes localize.
+exercises:
+- id: guarding-lifecycle
+  title: Add a guarding state
+  scene: transfer
+  cue: cue-2
+  prompt: Add Guarding to the companion dog's lifecycle. A whistle while Following now starts guarding.
+    While Guarding, a throw starts Fetching, a tick returns to Following, and a whistle leaves the state
+    unchanged. Preserve all other transitions and the initial state. As in the starter, omit events that
+    leave the state unchanged. After previewing, identify which existing state implementation must change.
+  type: state
+  starter: |
+    @startuml
+    layout horizontal
+    state Following
+    state Fetching
+    state Napping
+    [*] --> Following
+    Following --> Fetching : throwBall()
+    Fetching --> Following : tick() [energy left]
+    Fetching --> Napping : tick() [no energy left]
+    Napping --> Following : whistle()
+    @enduml
+  solution: |
+    @startuml
+    layout horizontal
+    state Following
+    state Fetching
+    state Napping
+    [*] --> Following
+    Following --> Fetching : throwBall()
+    Fetching --> Following : tick() [energy left]
+    Fetching --> Napping : tick() [no energy left]
+    Napping --> Following : whistle()
+    state Guarding
+    Following --> Guarding : whistle()
+    Guarding --> Fetching : throwBall()
+    Guarding --> Following : tick()
+    @enduml
+  checks:
+  - The initial transition still enters Following, and the existing Fetching energy guards and Napping
+    transition remain intact.
+  - A whistle in Following enters Guarding; Guarding reaches Fetching on a throw and Following on a tick.
+  - No new transition is needed for a whistle in Guarding under the stated convention.
+  - The implementation needs a new Concrete State and a changed whistle reaction in Following; Dog and
+    DogState retain their request contracts.
+- id: new-treat-request
+  title: Add a request every state must handle
+  scene: consequences
+  cue: cue-3
+  prompt: The companion dog gains giveTreat(). Following wags; Fetching drops the ball and returns to
+    Following; Napping wakes and returns to Following. Extend the class diagram to expose this new state-dependent
+    request and show which classes must implement it. Keep the current-state delegation. Existing operations
+    inside the concrete classes are omitted for space; show only their new operation. Explain where the
+    three reactions belong.
+  type: class
+  starter: |
+    @startuml
+    class Dog {
+      + throwBall()
+      + whistle()
+      + tick()
+      + setState(next)
+    }
+    interface DogState {
+      + throwBall(dog)
+      + whistle(dog)
+      + tick(dog)
+    }
+    class Following
+    class Fetching
+    class Napping
+    Dog --> "1" DogState : current
+    Following ..|> DogState
+    Fetching ..|> DogState
+    Napping ..|> DogState
+    @enduml
+  solution: |
+    @startuml
+    class Dog {
+      + throwBall()
+      + whistle()
+      + tick()
+      + giveTreat()
+      + setState(next)
+    }
+    interface DogState {
+      + throwBall(dog)
+      + whistle(dog)
+      + tick(dog)
+      + giveTreat(dog)
+    }
+    class Following {
+      + giveTreat(dog)
+    }
+    class Fetching {
+      + giveTreat(dog)
+    }
+    class Napping {
+      + giveTreat(dog)
+    }
+    Dog --> "1" DogState : current
+    Following ..|> DogState
+    Fetching ..|> DogState
+    Napping ..|> DogState
+    @enduml
+  checks:
+  - Dog offers giveTreat() to clients and delegates it to its current state with the dog as context.
+  - DogState declares the new request, and all three Concrete States provide a matching reaction.
+  - The state-specific reactions and transitions belong in their Concrete States; Dog gains no branch
+    naming them.
+  - Explain why adding a request changes more existing classes than adding a state with the current requests.
+comparisons:
+- id: new-state
+  title: 'A new state: scattered checks or one class?'
+  question: Designers add Swimming with a different reaction to throwBall, whistle, and tick. Compare
+    where those three reactions must be written in the two designs.
+  before:
+    scene: problem
+    cue: cue-3
+    label: Operations each test the mode
+  after:
+    scene: context_role
+    cue: cue-2
+    label: Context forwards to the current state
+  consequences:
+  - The conditional design adds Swimming branches across the request methods. The State design adds one
+    Concrete State and changes transitions that can enter it.
+  - Delegation keeps Context forwarding independent of the number of states, but introduces more classes.
+  - Transitions now live across state classes, so the lifecycle diagram remains useful as the map.
+  - A few stable states with small, exhaustively checked switches may not justify the additional objects
+    and indirection.
+- id: new-request
+  title: 'A new request: which grouping helps?'
+  question: Instead of another state, the next release adds giveTreat(), with a distinct reaction in every
+    existing state. Which design groups this change together, and how does that affect the choice?
+  before:
+    scene: problem
+    cue: cue-3
+    label: Behavior grouped by request methods
+  after:
+    scene: concrete_roles
+    cue: cue-1
+    label: Behavior grouped by state classes
+  consequences:
+  - A conditional design can put the new request's branches in one method. A State design extends the
+    interface and every Concrete State, plus Context forwarding.
+  - Grouping by state makes each state's behavior easier to change, while grouping by request makes an
+    added request easier to locate.
+  - 'Choose based on the expected variation: State is a bet that distinct states change more often than
+    the set of requests.'
+  - When states are few and stable, the simpler conditional design may have the better change cost.

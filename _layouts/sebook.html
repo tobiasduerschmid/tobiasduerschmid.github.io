@@ -159,7 +159,8 @@
           target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
           return;
         }
-        if (!target.matches('#main-content pre[tabindex], .inline-language-panel pre')) return;
+        // Pointer focus must not move a source line between mouse-down and click.
+        if (!target.matches('#main-content pre[tabindex], .inline-language-panel pre') || !target.matches(':focus-visible')) return;
         var rect = target.getBoundingClientRect();
         if (rect.top < 96 || rect.bottom > window.innerHeight) {
           target.scrollIntoView({ block: 'center', inline: 'nearest' });

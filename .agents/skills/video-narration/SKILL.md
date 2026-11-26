@@ -20,6 +20,26 @@ description: >-
 
 # Authoring video narrations
 
+## Shared student study tools
+
+Video narrations inherit **Pause and predict** and **Search and review** from
+the common player. `prediction: true` holds after the spoken prompt and authored
+pause until **Reveal explanation**; the settings checkbox can opt out. Do not
+change audio timing or implement this gate in a topic choreography. The reader
+uses an answer disclosure and print reveals its contents.
+
+Follow [`narration-authoring`](../narration-authoring/SKILL.md#student-study-tools)
+and [`docs/narration-study.md`](../../../docs/narration-study.md) for optional
+`<topic>_study.yml` companions: question-specific review plus fresh retries,
+editable diagram exercises with worked solutions/self-check rubrics, and two
+existing cue frames compared under a change request. Stable scene/cue references
+are validated at compilation and do not alter the speech fingerprint. Practice
+previews render notation; they do not run code or grade design correctness.
+Study drafts and marks are session-only and must be described that way.
+Verify prediction holds at multiple speeds, manual seeking/opt-out, keyboard
+operation, summary-question review/return, both themes, mobile fullscreen, and
+printed answers. Keep transport/quiz/study state out of visual renderers.
+
 Read [narration-authoring](../narration-authoring/SKILL.md) first for the shared
 versioned format, source ownership, compiler, and audio regeneration workflow.
 Speech and teaching text belong in `_data/narrations/<topic>.yml`; animation

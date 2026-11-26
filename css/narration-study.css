@@ -1,0 +1,84 @@
+/* Study tools share the narration's light/dark semantic palette. */
+.narrated-explainer .narration-study {
+  margin: 0.6em 1em;
+  border: 2px solid var(--nja-line);
+  border-radius: 8px;
+  background: var(--nja-bg);
+  color: var(--nja-text);
+  min-width: 0;
+}
+.narrated-explainer .narration-study > summary {
+  padding: 0.65em 0.8em;
+  font-weight: 600;
+  cursor: pointer;
+}
+.narrated-explainer .narration-study-body { padding: 0 1em 1em; }
+.narrated-explainer .narration-study :is(p, li, label, input, select, textarea, button, summary) {
+  font: inherit;
+  color: inherit;
+  line-height: 1.5;
+}
+.narrated-explainer .narration-study :is(h4, h5) { color: inherit; font-size: 1.2em; line-height: 1.4; margin: 0.8em 0; }
+.narrated-explainer .narration-study :is(button, select, input[type="search"], textarea),
+.narrated-explainer :is(.narration-prediction, .narration-question-review) button {
+  font: inherit;
+  color: var(--nja-text);
+  background: var(--nja-input);
+  border: 2px solid var(--nja-line);
+  border-radius: 5px;
+  padding: 0.45em 0.65em;
+  min-height: 2.6em;
+  max-width: 100%;
+}
+.narrated-explainer .narration-study button { cursor: pointer; text-align: left; }
+.narrated-explainer .narration-study button:hover { background: var(--nja-hover); }
+.narrated-explainer .narration-study button[aria-pressed="true"] { background: var(--nja-highlight); color: var(--nja-text); border-color: var(--nja-accent); }
+.narrated-explainer :is(.narration-study, .narration-prediction, .narration-question-review) :focus-visible {
+  outline: 3px solid var(--nja-cyan);
+  outline-offset: 3px;
+}
+.narrated-explainer .narration-study label { display: flex; flex-direction: column; gap: 0.3em; margin: 0.8em 0; }
+.narrated-explainer .narration-study .narration-study-checkbox { flex-direction: row; align-items: baseline; gap: 0.65em; }
+.narration-study-checkbox input { flex: 0 0 auto; min-width: 1.2em; min-height: 1.2em; }
+.narrated-explainer .narration-study textarea { width: 100%; resize: vertical; min-height: 5em; }
+.narrated-explainer .narration-study .narration-exercise textarea { font-family: monospace; }
+.narration-study-toolbar, .narration-inspect-targets, .narration-prediction-actions { display: flex; flex-wrap: wrap; gap: 0.6em; align-items: center; }
+.narration-study-toolbar label { flex: 1 1 15em; }
+.narrated-explainer .narration-study-results { list-style: none; margin: 1em 0; padding: 0; }
+.narration-study-results li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em; border-top: 1px solid var(--nja-line); padding: 0.8em 0; }
+.narration-study-results li > button:first-child { flex: 1 1 20em; }
+.narration-study-progress { flex: 1 1 14em; }
+.narration-study-frame { min-width: 0; border: 1px solid var(--nja-line); border-radius: 5px; padding: 0.8em; margin: 0.8em 0; }
+.narration-study-artifacts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 25em), 1fr)); gap: 1em; min-width: 0; }
+.narration-study-artifacts > * { min-width: 0; }
+.narrated-explainer .narration-study pre { font-size: 1em; line-height: 1.6; overflow: auto; max-height: 26em; background: var(--nja-code-bg); color: var(--nja-text); }
+.narration-study-diagram { max-width: 100%; overflow: auto; min-height: 4em; }
+.narration-study-diagram svg { max-width: none; }
+.narration-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1em; }
+.narration-comparison .narration-study-artifacts { display: block; }
+.narrated-explainer .narration-study details:not(.narration-study) { padding: 0.6em; margin-top: 1em; border: 1px solid var(--nja-line); }
+.narrated-explainer .narration-study details:not(.narration-study) > summary { min-height: 2.6em; cursor: pointer; }
+.narration-inspectable { cursor: pointer; text-decoration: underline; text-underline-offset: 0.2em; }
+.narration-inspectable:hover { outline: 2px solid var(--nja-cyan); }
+.narrated-explainer .is-studying :is(.nja-stage, .vn-captions, .narration-prediction, .narration-question-review) { display: none; }
+.narrated-explainer .vn-video:has(.narration-check:not([hidden])) .narration-study { display: none; }
+.narrated-explainer :is(.narration-prediction, .narration-question-review) { padding: 0.8em 1.4em; background: var(--nja-panel); color: var(--nja-text); }
+.narrated-explainer :is(.narration-prediction, .narration-question-review) p { font: inherit; color: inherit; }
+.narrated-explainer :is(.narration-prediction, .narration-question-review) h3 { margin: 0.3em 0; font-size: 1.2em; color: inherit; }
+.narrated-explainer .vn-video.is-fullscreen .narration-study { grid-area: 1 / 1; z-index: 4; margin: 0.4em 0.6em; }
+.narrated-explainer .vn-video.is-fullscreen .narration-study[open] { grid-area: 1 / 1 / 3 / 2; overflow-y: auto; overscroll-behavior: contain; }
+.narrated-explainer .vn-video.is-fullscreen :is(.narration-prediction, .narration-question-review) { grid-area: 1 / 1; z-index: 5; max-height: 45vh; overflow-y: auto; }
+.narration-study-reading pre { overflow-x: auto; font-size: 1em; }
+.narrated-explainer .vn-video.is-fullscreen:has(.narration-prediction:not([hidden]), .narration-question-review:not([hidden])) .narration-study:not([open]) { visibility: hidden; }
+@media (max-width: 800px) {
+  .narration-comparison { grid-template-columns: minmax(0, 1fr); }
+  .narrated-explainer .narration-study { margin: 0.4em; }
+  .narrated-explainer .narration-study-body { padding: 0 0.6em 0.6em; }
+}
+/* Semantic --nja-* tokens supply both palettes; print always uses light. */
+@media print {
+  .narration-study, .narration-prediction, .narration-question-review { display: none !important; }
+  .np-reading-answer > * { display: block !important; }
+  .np-reading-answer::details-content { content-visibility: visible; display: block; }
+  .np-reading-answer { color: #192d43; background: #fff; }
+}

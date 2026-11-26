@@ -1,0 +1,367 @@
+version: 1
+reviews:
+  intro:
+    - scene: intro
+      cue: preview
+      retry:
+        type: single
+        question: "A team needs to explain which object calls scan first and what happens after its reply. What does a UML sequence diagram contribute?"
+        options:
+          - "The fields and operations declared by every class"
+          - "The ordered messages in that particular interaction"
+          - "The physical machines hosting those objects"
+        correct_index: 1
+        explanation: "A sequence diagram follows messages between participants through a scenario, with time ordered down the page."
+        option_feedback:
+          0: "A class diagram describes static structure. It does not tell the order of messages in one run."
+          2: "Hosting belongs to a deployment view rather than the message order of an interaction."
+  lifelines:
+    - scene: lifelines
+      cue: naming
+      retry:
+        type: single
+        question: "A UML sequence diagram contains pebble: Asteroid and shard: Asteroid. How many objects and types do these heads identify?"
+        options:
+          - "One object appearing twice, with two different types"
+          - "Two classes, each representing every asteroid object"
+          - "Two distinct objects, both having the Asteroid type"
+        correct_index: 2
+        explanation: "The name before the colon identifies a participant object. Repeating Asteroid after the colon means both have the same type."
+        option_feedback:
+          0: "pebble and shard name different participants. Their shared type does not merge them into one object."
+          1: "Lifelines represent objects participating in the interaction, not two class declarations."
+  calls:
+    - scene: calls
+      cue: async
+      retry:
+        type: single
+        question: "In a UML sequence diagram, a probe queues a chime and immediately scans the next asteroid. Which message notation fits the chime request?"
+        options:
+          - "A solid line with an open arrowhead"
+          - "A solid line with a filled arrowhead"
+          - "A dashed line returning to the caller"
+        correct_index: 0
+        explanation: "The probe continues without waiting for the queued sound, so the message is asynchronous."
+        option_feedback:
+          1: "A filled arrowhead would say the sender waits for the receiver to finish."
+          2: "A dashed reply answers an outstanding synchronous call; scheduling the chime is a new message."
+  replies:
+    - scene: replies
+      cue: optional
+      retry:
+        type: single
+        question: "A UML sequence diagram shows a synchronous tag(2) call whose return value is irrelevant. What may the author do with its reply?"
+        options:
+          - "Change the call to asynchronous to avoid drawing a reply"
+          - "Omit the reply while retaining the synchronous call"
+          - "Send its reply to whichever object receives the next call"
+        correct_index: 1
+        explanation: "Obvious replies may be omitted for readability. That drawing choice does not change whether the caller waits."
+        option_feedback:
+          0: "Waiting behavior determines the arrow type. Omitting an uninformative return does not make the call asynchronous."
+          2: "A reply, when drawn, returns to the caller of the synchronous message it answers."
+  activations:
+    - scene: activations
+      cue: waiting
+      retry:
+        type: single
+        question: "In a UML sequence diagram, scanAll waits for an asteroid's scan operation. What happens to scanAll's activation bar during the wait?"
+        options:
+          - "It ends because only the asteroid is using the processor"
+          - "It moves to the asteroid until that operation replies"
+          - "It remains open because scanAll has not returned"
+        correct_index: 2
+        explanation: "An activation includes time waiting for a nested synchronous call. Both the caller's and receiver's operations are still active."
+        option_feedback:
+          0: "Activation duration is not CPU utilization. The caller's unfinished operation includes its waiting time."
+          1: "Each activation belongs to its own lifeline. Calling another object adds its activation without transferring the caller's bar."
+  loop:
+    - scene: loop
+      cue: loop
+      retry:
+        type: single
+        question: "A probe may scan zero, two, or twenty asteroids. How can one UML sequence diagram express one scan call per asteroid?"
+        options:
+          - "Put scan inside a loop guarded by the asteroid collection"
+          - "Draw twenty scan calls and omit any that are unused"
+          - "Put scan inside an opt guarded by the collection being nonempty"
+        correct_index: 0
+        explanation: "A loop repeats its enclosed interaction once for each selected object, allowing the same diagram to describe lists of different lengths."
+        option_feedback:
+          1: "A fixed list of calls describes a particular number of messages, not iteration over arbitrary collection sizes."
+          2: "An opt chooses whether its operand occurs once; it does not repeat it for each object."
+  choices:
+    - scene: choices
+      cue: opt
+      retry:
+        type: single
+        question: "A UML sequence diagram should create a StarMap only when all rocks were scanned, with no alternative action. Which fragment fits?"
+        options:
+          - "A loop repeating creation while all rocks are scanned"
+          - "An opt containing creation, guarded by that condition"
+          - "An alt with both operands creating the same map"
+        correct_index: 1
+        explanation: "An opt describes one optional operand: perform it when its guard holds, otherwise skip it."
+        option_feedback:
+          0: "Repetition would create multiple maps. The requirement chooses whether one creation happens."
+          2: "This would create a map whichever operand runs. The false case must skip creation."
+  runs:
+    - scene: runs
+      cue: traces
+      retry:
+        type: single
+        question: "A UML sequence diagram models scanning, but contains no run in which the probe repairs a damaged asteroid. What can it say about that repair run?"
+        options:
+          - "The run is invalid because it does not appear in the diagram"
+          - "The run is valid because unspecified messages are permitted"
+          - "The run is outside what this diagram describes"
+        correct_index: 2
+        explanation: "A scenario diagram describes its covered traces. It makes no validity claim about a run it does not cover."
+        option_feedback:
+          0: "Leaving out a scenario is not a prohibition against it."
+          1: "Leaving out a scenario does not positively establish that it is supported either."
+  practice:
+    - scene: practice
+      cue: consistency
+      retry:
+        type: single
+        question: "A UML sequence message sends collectSample() to sfx: SoundPlayer, whose class only has play(). What should a reviewer investigate?"
+        options:
+          - "Whether the message target or the receiver's operations are wrong"
+          - "Whether moving SoundPlayer left would make the message valid"
+          - "Whether making the arrow asynchronous supplies the missing operation"
+        correct_index: 0
+        explanation: "The receiver's type must support the message. A mismatch means the interaction or the structural model needs correction."
+        option_feedback:
+          1: "Horizontal position helps layout; it does not change the participant's type or capabilities."
+          2: "Asynchronous delivery changes waiting behavior, not the operations a receiver can handle."
+  transfer:
+    - scene: choices
+      cue: else
+      retry:
+        type: single
+        question: "A dock calls needsRepair() on each drone and repairs only when the returned needsFix value is true. Which UML sequence is faithful?"
+        options:
+          - "Put needsRepair() inside the guard and omit its message"
+          - "Call needsRepair(), receive needsFix, then guard an opt around repair()"
+          - "Guard repair() with needsFix, then request needsRepair() afterward"
+        correct_index: 1
+        explanation: "A guard tests information already available. Show the synchronous query and its reply before the guarded optional repair."
+        option_feedback:
+          0: "A guard does not send the query. The message that produces the value must appear in the interaction."
+          2: "The decision requires the reply value before repair is chosen, so asking afterward reverses the dependency."
+  summary:
+    - scene: lifelines
+      cue: anonymous
+      retry:
+        type: single
+        question: "In a UML sequence diagram, morning: Schedule appears beside : Reminder. What does the missing name before Reminder's colon mean?"
+        options:
+          - "Reminder is a class rather than a participant object"
+          - "The Reminder object does not exist until a later creation call"
+          - "This view does not need to identify the Reminder by name"
+        correct_index: 2
+        explanation: "A colon followed by a type labels an anonymous object. The object still participates; only its individual name is omitted."
+        option_feedback:
+          0: "The colon still identifies an instance of Reminder, not the class itself."
+          1: "An anonymous head says nothing about creation time. Creation is shown by a creation message and the head's position."
+    - scene: calls
+      cue: sync
+      retry:
+        type: single
+        question: "A UML sequence participant calls remaining() and needs the returned number before choosing its next action. Which arrows express that dependency?"
+        options:
+          - "A filled-head solid call and a dashed reply carrying the number"
+          - "An open-head solid call and a new call carrying the number"
+          - "A dashed call and a filled-head reply carrying the number"
+        correct_index: 0
+        explanation: "The caller waits for the synchronous operation, shown with a filled arrowhead, and its reply returns the needed value."
+        option_feedback:
+          1: "An open arrowhead would let the sender continue without waiting, contrary to the required ordering."
+          2: "This swaps call and reply notation: the call is solid and the reply is dashed."
+    - scene: calls
+      cue: async
+      retry:
+        type: single
+        question: "In a UML sequence diagram, an app queues a reminder and proceeds without waiting for the reminder service. Which representation fits?"
+        options:
+          - "A synchronous call followed by a dashed completion reply"
+          - "An asynchronous solid message with an open arrowhead"
+          - "A dashed reply from the app to the reminder service"
+        correct_index: 1
+        explanation: "Queuing work and continuing immediately is asynchronous communication, shown with an open arrowhead on a solid line."
+        option_feedback:
+          0: "That sequence makes the app wait for completion, changing the described behavior."
+          2: "The app is initiating work, not returning a value to a service that called it."
+    - scene: activations
+      cue: waiting
+      retry:
+        type: single
+        question: "A UML sequence diagram keeps the caller's activation open while a nested validate() call executes. What does that bar record?"
+        options:
+          - "The caller is continually consuming processor time"
+          - "The caller and receiver are the same object instance"
+          - "The caller's operation is unfinished, including its wait"
+        correct_index: 2
+        explanation: "The bar covers the operation from invocation to return, including waiting for synchronous work on other objects."
+        option_feedback:
+          0: "Activation bars do not measure CPU activity; a blocked caller still has an unfinished operation."
+          1: "Overlapping activations can belong to different lifelines. They do not imply object identity."
+    - scene: choices
+      cue: else
+      retry:
+        type: single
+        question: "For every task, a UML interaction either archives it when complete or reminds its owner otherwise. Which fragment structure captures the behavior?"
+        options:
+          - "A loop containing an alt for the two outcomes"
+          - "An alt containing one loop for each possible task"
+          - "An opt containing both outcome messages together"
+        correct_index: 0
+        explanation: "Iterate over tasks with loop, then choose at most one outcome for each task with an alt inside that loop."
+        option_feedback:
+          1: "Putting the choice outside the iteration selects a branch before treating individual tasks rather than deciding per task."
+          2: "One opt would execute both messages together or skip both, instead of selecting the appropriate outcome."
+    - scene: practice
+      cue: consistency
+      retry:
+        type: single
+        question: "A UML sequence diagram calls reschedule(date) on a Reminder, but its class diagram offers only cancel(). What is the useful review conclusion?"
+        options:
+          - "Sequence messages are independent of class operations"
+          - "The diagrams disagree about what Reminder can handle"
+          - "The call is valid if its return arrow is left out"
+        correct_index: 1
+        explanation: "The interaction and class model must agree on the receiver's operations and their arguments."
+        option_feedback:
+          0: "A message must match behavior the receiving participant can perform; the two models constrain one another."
+          2: "Omitting a reply affects presentation, not whether the receiving type supports the call."
+exercises:
+  - id: weaker-scan
+    title: Trace a weaker scan
+    scene: runs
+    cue: answer
+    prompt: >-
+      The probe now scans with power 8. The pebble needs 10 points; a shard needs
+      6 points and yields 4 crystals when collected. Edit the reply values and add
+      the appropriate follow-up after each scan: unfinished rocks are tagged for
+      two passes, while completed rocks yield a sample. Keep the pebble first.
+      This focused view omits sounds and the star map. Predict the two remaining
+      amounts before previewing; the preview draws your model without executing it.
+    type: sequence
+    starter: |
+      @startuml
+      layout compact
+      participant probe: Probe
+      participant pebble: Asteroid
+      participant shard: Asteroid
+      probe -> pebble: scan(8)
+      pebble --> probe: remaining
+      probe -> shard: scan(8)
+      shard --> probe: remaining
+      @enduml
+    solution: |
+      @startuml
+      layout compact
+      participant probe: Probe
+      participant pebble: Asteroid
+      participant shard: Asteroid
+      probe -> pebble: scan(8)
+      pebble --> probe: 2
+      probe -> pebble: tag(2)
+      probe -> shard: scan(8)
+      shard --> probe: 0
+      probe -> shard: collectSample()
+      shard --> probe: 4
+      @enduml
+    checks:
+      - "Each remaining amount follows from the asteroid's starting amount and the scan power, with no negative remaining amount."
+      - "The pebble and shard receive the follow-up matching their own reply before the next asteroid is processed."
+      - "Replies return to the caller, carry values rather than new operation calls, and each lifeline identifies an object and its type."
+  - id: optional-tracking
+    title: Make tracking optional
+    scene: choices
+    cue: opt
+    prompt: >-
+      Add a trackingEnabled setting to the general scan interaction. Fully scanned
+      rocks still yield a sample. An unfinished rock is tagged only when the setting
+      is true; otherwise scanning continues with the next rock. Edit the fragment
+      structure without moving scan into a guard. Explain the messages for an
+      unfinished rock with tracking disabled before revealing the solution.
+    type: sequence
+    starter: |
+      @startuml
+      layout compact
+      participant probe: Probe
+      participant rock: Asteroid
+      loop [for each rock in rocks]
+      probe -> rock: scan(power)
+      rock --> probe: unscanned
+      alt [unscanned == 0]
+      probe -> rock: collectSample()
+      rock --> probe: crystals
+      else [else]
+      probe -> rock: tag(2)
+      end
+      end
+      @enduml
+    solution: |
+      @startuml
+      layout compact
+      participant probe: Probe
+      participant rock: Asteroid
+      loop [for each rock in rocks]
+      probe -> rock: scan(power)
+      rock --> probe: unscanned
+      alt [unscanned == 0]
+      probe -> rock: collectSample()
+      rock --> probe: crystals
+      else [else]
+      opt [trackingEnabled]
+      probe -> rock: tag(2)
+      end
+      end
+      end
+      @enduml
+    checks:
+      - "Each rock is scanned once before any branch tests its reply."
+      - "Complete rocks yield a sample regardless of the tracking setting."
+      - "An unfinished rock receives tag only with tracking enabled; disabling tracking does not stop the loop."
+comparisons:
+  - id: concrete-or-general
+    title: One run versus a family of runs
+    question: >-
+      A bug report includes exactly two asteroids, but the next release must handle
+      any number. Compare the concrete trace with the fragment-based view. Which
+      helps reproduce the report, which expresses the general rule, and what does
+      each leave for the reader to work out?
+    before:
+      scene: replies
+      cue: labels
+      label: Named pebble and boulder in one run
+    after:
+      scene: choices
+      cue: opt
+      label: A loop with alternative and optional behavior
+    consequences:
+      - "A concrete trace exposes actual objects, values, and order, making a particular failure easier to discuss."
+      - "Fragments express repeated and conditional behavior for varying inputs without drawing a lifeline for every asteroid."
+      - "The general view requires evaluating guards to recover a particular trace; neither view establishes behavior for scenarios it does not describe."
+  - id: wait-or-continue
+    title: Waiting for a result versus queuing work
+    question: >-
+      The probe needs the scan result before choosing its next action, but the ping
+      can play later. Compare the two message types. What would break if scan were
+      made asynchronous without redesigning how the result arrives, and what cost
+      would waiting for the sound add?
+    before:
+      scene: calls
+      cue: async
+      label: Queue the ping and continue
+    after:
+      scene: calls
+      cue: sync
+      label: Wait for the scan's remaining amount
+    consequences:
+      - "A synchronous scan supplies the value needed for the immediate branch, while the probe's activation remains open during the wait."
+      - "An asynchronous scan would need a separately modeled way to deliver and act on its later result; the existing dashed reply does not provide it."
+      - "Queuing the sound lets scanning proceed independently. Waiting for sound completion would delay work that needs no sound result."

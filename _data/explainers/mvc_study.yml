@@ -1,0 +1,470 @@
+# Study activities use existing teaching cues; they do not alter narrated speech.
+version: 1
+reviews:
+  intro:
+  - scene: intro
+    cue: cue-3
+    retry:
+      type: single
+      question: A cell edit arrives, stored minutes change, and charts redraw. Which assignment matches
+        Model-View-Controller?
+      options:
+      - Controller interprets input; model stores data; views draw
+      - Model interprets input; views store data; controller draws
+      - Views interpret input; controller stores data; model draws
+      correct_index: 0
+      explanation: The controller turns input into a request, the model owns the data, and views present
+        that data.
+      option_feedback:
+        1: This assigns presentation to the controller and data to views, mixing the responsibilities
+          MVC separates.
+        2: The model holds data and its rules; it does not draw the interface or leave data ownership
+          to a controller.
+  context:
+  - scene: context
+    cue: cue-2
+    retry:
+      type: single
+      question: Which recurring change makes Model-View-Controller useful for a screen-time app?
+      options:
+      - Changing the file format of a batch conversion
+      - Adding screens while users edit the same data
+      - Replacing one calculation with another algorithm
+      correct_index: 1
+      explanation: MVC fits interactive applications whose displays and input interfaces change while
+        the underlying data remains useful across them.
+      option_feedback:
+        0: A batch converter without an interactive display does not need this separation of views and
+          input.
+        2: Interchangeable algorithms alone call for a different design decision; MVC addresses an evolving
+          interactive interface.
+  problem:
+  - scene: problem
+    cue: cue-6
+    retry:
+      type: single
+      question: A screen-time app stores minutes inside the class that draws all its charts. Why does
+        Model-View-Controller separate those jobs?
+      options:
+      - To require a database for every minutes value
+      - To guarantee that every drawing operation is faster
+      - To keep display changes from editing data-owning code
+      correct_index: 2
+      explanation: Separating stable data from a changing interface limits how often new displays or platform
+        ports touch the model.
+      option_feedback:
+        0: The model can keep data in memory. A database is not required by these roles.
+        1: The design improves separation and change cost; it can still incur expensive redraws.
+  model_role:
+  - scene: model_role
+    cue: cue-2
+    retry:
+      type: single
+      question: In the Model-View-Controller visualizer, how can Dataset notify a new display without
+        knowing its chart class?
+      options:
+      - Keep it as a dependent supporting update()
+      - Store a drawing branch for the new chart
+      - Ask each controller to coordinate the charts
+      correct_index: 0
+      explanation: Dataset relies on a common notification operation; the dependent decides how to react.
+      option_feedback:
+        1: Concrete drawing branches make the model change whenever a display is added.
+        2: The model notifies registered dependents directly. Controllers handle input rather than coordinating
+          every redraw.
+  view_role:
+  - scene: view_role
+    cue: cue-1
+    retry:
+      type: single
+      question: In the Model-View-Controller visualizer, update() carries no minutes. How does a view
+        get the values to draw?
+      options:
+      - It treats the controller's last input as all the data
+      - It reads the current rows from Dataset
+      - It asks another view to copy its display state
+      correct_index: 1
+      explanation: Each view pulls the current data from the model when notified, then redraws its own
+        presentation.
+      option_feedback:
+        0: The model is the shared source of current data. One input event is not a substitute for its
+          complete state.
+        2: Views need not copy or coordinate one another; each reads the same model.
+  controller_role:
+  - scene: controller_role
+    cue: cue-3
+    retry:
+      type: single
+      question: In Model-View-Controller, selecting a bar changes only its highlight. Where should the
+        chart controller send that request?
+      options:
+      - To Dataset, so it changes the stored minutes
+      - To every view, so all displays are rebuilt
+      - To its own view, leaving Dataset unchanged
+      correct_index: 2
+      explanation: A local presentation change goes to the controller's view. A data change would go to
+        the model.
+      option_feedback:
+        0: Highlighting does not change the minutes; involving the data model would confuse display state
+          with domain data.
+        1: Other views need no redraw when neither their data nor their presentation changes.
+  collaborations:
+  - scene: collaborations
+    cue: cue-4
+    retry:
+      type: single
+      question: In Model-View-Controller, a controller changes Study to 120 minutes. How do the other
+        displays become current?
+      options:
+      - The model notifies them; they fetch data and redraw
+      - The controller writes each display's new output
+      - One view forwards the edit through the other views
+      correct_index: 0
+      explanation: The controller requests a model change. After storing it, the model announces the change
+        and each view redraws from current data.
+      option_feedback:
+        1: Drawing belongs to views, while the controller only asks for the data change.
+        2: Views hear from the model independently; they do not pass updates along a chain of views.
+  setup:
+  - scene: setup
+    cue: cue-3
+    retry:
+      type: single
+      question: In the Model-View-Controller visualizer, BarChartView needs a ChartController during initialization.
+        Where is that choice made?
+      options:
+      - In Dataset's attach implementation
+      - In the view's makeController method
+      - In every existing controller's update method
+      correct_index: 1
+      explanation: The view creates its controller through its factory method after setup supplies the
+        model.
+      option_feedback:
+        0: The model must remain independent of concrete views and controllers; attach only registers
+          a dependent.
+        2: Existing controllers need not coordinate another view's creation.
+  solution:
+  - scene: solution
+    cue: cue-4
+    retry:
+      type: single
+      question: Which dependency preserves the Model-View-Controller model's independence from particular
+        screens?
+      options:
+      - Model calls TableView and BarChartView directly
+      - Model relies on one controller to draw all views
+      - Model calls dependents through the Observer interface
+      correct_index: 2
+      explanation: The model's link back to the interface is its list of dependents, accessed through
+        the notification contract.
+      option_feedback:
+        0: Concrete view dependencies would make interface changes require model edits again.
+        1: Controllers interpret input; they are not a drawing gateway through which the model updates
+          every view.
+  consequences:
+  - scene: consequences
+    cue: cue-4
+    retry:
+      type: single
+      question: A Model-View-Controller model changes the operations used to read and edit its data. Which
+        code may need adapting?
+      options:
+      - Views and controllers that call those operations
+      - Only the model, because MVC removes all coupling
+      - Only the setup code that first creates the model
+      correct_index: 0
+      explanation: Views and controllers still depend on the model's interface. MVC reduces certain dependencies
+        without removing all of them.
+      option_feedback:
+        1: Separating responsibilities does not stop a caller from depending on the operations it uses.
+        2: Setup connects objects, but later view and controller calls also rely on the model's interface.
+  applicability:
+  - scene: applicability
+    cue: cue-2
+    retry:
+      type: single
+      question: A Model-View-Controller toolkit merges drawing and input handling into each component.
+        Which flexibility is lost?
+      options:
+      - Different components displaying one shared model
+      - Replacing a view's controller independently
+      - Keeping the model apart from drawing code
+      correct_index: 1
+      explanation: When the view and controller are one component, a separate controller can no longer
+        be swapped while keeping the view.
+      option_feedback:
+        0: Merged components can still observe and read the same model.
+        2: Combining input with drawing does not require moving either into the model.
+  transfer:
+  - scene: transfer
+    cue: cue-2
+    retry:
+      type: single
+      question: A Model-View-Controller dashboard adds a total-minutes display. What preserves the existing
+        model and views?
+      options:
+      - Add a total-display case to Dataset.notify()
+      - Make every controller update the new display
+      - Add a view and initialize it in setup
+      correct_index: 2
+      explanation: The new view draws from the current model and joins its dependents during initialization,
+        with a suitable controller.
+      option_feedback:
+        0: Notification should keep using the common update operation rather than naming concrete displays.
+        1: Controllers request data changes; model notification reaches the new view without editing each
+          controller.
+  summary:
+  - scene: context
+    cue: cue-2
+    retry:
+      type: single
+      question: A planning app shows editable tasks on a board, calendar, and phone, with frequent interface
+        redesigns. Why does Model-View-Controller fit?
+      options:
+      - Interactive displays evolve around shared task data
+      - The task data must be distributed among servers
+      - Every view should keep its own independent tasks
+      correct_index: 0
+      explanation: The pattern fits interactive applications with changing interfaces and data that remains
+        useful across different displays.
+      option_feedback:
+        1: Deployment across servers is separate from organizing interactive model, view, and controller
+          responsibilities.
+        2: The shared model keeps the views consistent; independent authoritative copies would introduce
+          another problem.
+  - scene: problem
+    cue: cue-6
+    retry:
+      type: single
+      question: A planning app stores tasks in its calendar widget. Which Model-View-Controller problem
+        appears when adding a board view?
+      options:
+      - The app has too few task status values
+      - A display change touches the data-owning code
+      - The calendar cannot use methods to draw tasks
+      correct_index: 1
+      explanation: Placing data inside a display tangles interface change with the code responsible for
+        the application's data.
+      option_feedback:
+        0: The number of task statuses does not explain the dependency between data and a particular widget.
+        2: Drawing methods remain useful. The problem is combining those methods with shared data ownership.
+  - scene: solution
+    cue: cue-1
+    retry:
+      type: single
+      question: In a Model-View-Controller planning app, Project owns tasks and announces their changes.
+        Which role does it fill?
+      options:
+      - Controller
+      - View
+      - Model
+      correct_index: 2
+      explanation: The Model owns application data and rules and notifies its dependents after a change.
+      option_feedback:
+        0: A controller interprets input and requests a change; it does not replace the model as the owner
+          of task data.
+        1: A view presents tasks obtained from the model rather than owning their authoritative state.
+  - scene: collaborations
+    cue: cue-4
+    retry:
+      type: single
+      question: In a Model-View-Controller planning app, a user changes a task deadline. Which interaction
+        keeps board and calendar consistent?
+      options:
+      - Controller changes Project; Project notifies the views
+      - Calendar edits Board directly before storing the deadline
+      - Project polls every controller before drawing both views
+      correct_index: 0
+      explanation: Input goes to a controller, which changes the model. Notified views read the resulting
+        data and redraw themselves.
+      option_feedback:
+        1: Views do not coordinate one another, and the data change should be complete before redraws
+          read it.
+        2: The model neither polls input nor draws views. Controllers receive events and views draw themselves.
+  - scene: consequences
+    cue: cue-3
+    retry:
+      type: single
+      question: A Model-View-Controller planning app notifies every view after every tiny task edit. Which
+        cost should the team watch for?
+      options:
+      - Automatic dependencies on every concrete view class
+      - Repeated redraw work that some views do not need
+      - A requirement to store one copy of tasks per view
+      correct_index: 1
+      explanation: Frequent announcements can cause repeated redraws. A model can identify the changed
+        part so unrelated views can skip work.
+      option_feedback:
+        0: The model still uses the shared notification contract, regardless of how often it calls it.
+        2: The model remains the common data source; repeated updates do not require independent task
+          copies.
+  - scene: applicability
+    cue: cue-1
+    retry:
+      type: single
+      question: Which part of a planning app least needs separate Model-View-Controller classes?
+      options:
+      - An editable board synchronized with a calendar
+      - A task model used by phone and desktop views
+      - A fixed label showing the app's version
+      correct_index: 2
+      explanation: A small fixed display may not benefit enough from swapping and separation to justify
+        the extra classes and wiring.
+      option_feedback:
+        0: Several interactive views of shared data are a strong fit for the pattern.
+        1: Keeping data reusable across changing interfaces is one of MVC's benefits.
+exercises:
+- id: total-minutes-view
+  title: Add a display of the same dataset
+  scene: transfer
+  cue: cue-2
+  prompt: Add TotalMinutesView, which displays the sum of the current minutes. Extend the view hierarchy
+    so it reuses the existing update and initialization behavior and specializes only its drawing. It
+    may keep the base controller that ignores input. Do not add a display-specific operation to Dataset.
+    Existing concrete-view members are omitted for space. After previewing, explain how setup makes the
+    new view current and keeps it synchronized.
+  type: class
+  starter: |
+    @startuml
+    interface Observer {
+      + update()
+    }
+    class Dataset {
+      + rows()
+    }
+    class View {
+      + initialize()
+      + update()
+      # makeController()
+      # draw(rows)
+    }
+    class TableView
+    class BarChartView
+    class PieChartView
+    View ..|> Observer
+    View --> "1" Dataset : reads
+    TableView --|> View
+    BarChartView --|> View
+    PieChartView --|> View
+    @enduml
+  solution: |
+    @startuml
+    interface Observer {
+      + update()
+    }
+    class Dataset {
+      + rows()
+    }
+    class View {
+      + initialize()
+      + update()
+      # makeController()
+      # draw(rows)
+    }
+    class TableView
+    class BarChartView
+    class PieChartView
+    View ..|> Observer
+    View --> "1" Dataset : reads
+    TableView --|> View
+    BarChartView --|> View
+    PieChartView --|> View
+    class TotalMinutesView {
+      # draw(rows)
+    }
+    TotalMinutesView --|> View
+    @enduml
+  checks:
+  - TotalMinutesView extends View and provides draw(rows), while reusing the inherited update and initialization
+    behavior.
+  - Dataset remains the source of minutes; the new display derives a total rather than keeping a separate
+    authoritative dataset.
+  - Setup creates and initializes the new view, which registers with Dataset and draws from its current
+    rows.
+  - Explain why no existing view or controller needs a branch for the new display, and why a controller
+    that ignores input makes it read-only.
+- id: slider-edits-model
+  title: Repair an input-to-display interaction
+  scene: collaborations
+  cue: cue-4
+  prompt: A new SliderController handles an edit setting Study to 120 minutes. The starter wrongly asks
+    the table and bar chart to update without changing the data. Rewrite this interaction so both displays
+    redraw from the completed change in Dataset. Show notification and the views' reads; these two views
+    are already registered. The pie chart and controller setup are omitted to keep this trace focused.
+  type: sequence
+  starter: |
+    @startuml
+    participant slider: SliderController
+    participant dataset: Dataset
+    participant table: TableView
+    participant bars: BarChartView
+    slider -> table: update()
+    slider -> bars: update()
+    @enduml
+  solution: |
+    @startuml
+    participant slider: SliderController
+    participant dataset: Dataset
+    participant table: TableView
+    participant bars: BarChartView
+    slider -> dataset: setMinutes("Study", 120)
+    activate dataset
+    note right of dataset: Stores Study = 120
+    dataset -> dataset: notify()
+    dataset -> table: update()
+    activate table
+    table -> dataset: rows()
+    deactivate table
+    dataset -> bars: update()
+    activate bars
+    bars -> dataset: rows()
+    deactivate bars
+    deactivate dataset
+    @enduml
+  checks:
+  - The controller sends the edit to Dataset rather than issuing drawing or update calls to concrete views.
+  - Dataset stores the change before notifying its registered views.
+  - Each notified view asks Dataset for current rows; neither copies another view's display state.
+  - Explain how the same path would reach an already registered pie chart without adding code to SliderController.
+comparisons:
+- id: new-platform
+  title: 'A phone interface: tangled class or shared model?'
+  question: The screen-time app needs a phone interface and another chart. Which design lets the minutes
+    and their rules remain in place, and what extra coordination does it require?
+  before:
+    scene: problem
+    cue: cue-6
+    label: ScreenTimeApp combines data and interface
+  after:
+    scene: model_role
+    cue: cue-1
+    label: Dataset owns data independently of widgets
+  consequences:
+  - The combined class changes for each new display and platform. Separate views and controllers can adapt
+    to the phone while keeping Dataset.
+  - Setup must connect the model, views, and controllers, and registered views must read the same current
+    model state.
+  - The separation adds classes and wiring. Views and controllers still depend on the model's interface,
+    so changes to that interface can propagate.
+  - For one small fixed display, direct calls may cost less than the extra roles.
+- id: local-highlight
+  title: 'A selected bar: all displays or one view?'
+  question: Clicking Games changes only the bar highlight. Compare the work triggered by these designs.
+    What should happen differently when the user edits Games minutes instead?
+  before:
+    scene: problem
+    cue: cue-4
+    label: Every click redraws every display
+  after:
+    scene: controller_role
+    cue: cue-3
+    label: Controller requests a local highlight
+  consequences:
+  - The original handler rebuilds the table and pie chart even when their data is unchanged. A view-only
+    request redraws the affected bar chart.
+  - 'Editing minutes is a model change: the controller requests it from Dataset, which notifies all interested
+    views after storing it.'
+  - Separate controllers make input behavior replaceable but add wiring and a close relationship with
+    their views.
+  - A single fixed widget may not justify a separate controller. Merging view and controller retains model
+    separation but gives up swapping the controller independently.
