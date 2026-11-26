@@ -37,7 +37,7 @@ steps:
     | **Submodules** | 12–14 | Nested repos, the gitlink, six-step publish ceremony |
     | **Capstone** | 15 | Compose 5+ tools under pressure with no hand-holding |
 
-    Steps 1–3 are foundational — every later step refers back. After Step 7, take a break before Step 8 (spacing helps consolidation).
+    Steps 1–3 are foundational — every later step refers back. After Step 7, take a break before Step 8 (a break helps the ideas settle).
 
     </details>
 
@@ -397,17 +397,15 @@ steps:
     - **Prove Git's history model is snapshot-based** — commits point to trees that point to blobs holding full file bytes — by hashing content directly.
     - **Predict** that one changed byte gives a new blob SHA, while every existing commit keeps its SHA.
 
-    ### 🚪 This is the threshold step
+    ### 🚪 The step everything else builds on
 
     Step 3 is the conceptual hinge of the whole tutorial. Every later
     step (rebase, cherry-pick, bisect, submodules) becomes obvious *or*
     mysterious depending on whether the object model clicks here.
 
-    If it doesn't click on the first read, that's expected — threshold
-    concepts (Meyer & Land) are *transformative* (they reframe the whole
-    domain) and *troublesome* (they resist quick mastery). Re-read,
-    re-run the hashing experiment, sleep on it. Most learners need two
-    passes. The recall prompt at the bottom is your self-check.
+    If it doesn't click on the first read, re-read it, re-run the hashing
+    experiment, and sleep on it. The recall prompt at the bottom is your
+    self-check.
 
     ### Relative references
 
@@ -641,7 +639,7 @@ steps:
   instructions: |
     ### Why this matters
 
-    Mid-feature interruptions are constant on real teams: a hotfix lands, a teammate needs a reproduction, your lead asks you to switch contexts. Without `git stash`, every interruption tempts you into WIP commits or `git restore` — both leave scars in history or destroy work. Stash is the day-one daily-driver tool that lets you context-switch cleanly, and the untracked-files footgun is the most common cause of "I lost my work" tickets.
+    Mid-feature interruptions are constant on real teams: a hotfix lands, a teammate needs a reproduction, your lead asks you to switch contexts. Without `git stash`, every interruption tempts you into WIP commits or `git restore` — both leave scars in history or destroy work. Stash is the day-one daily-driver tool that lets you context-switch cleanly, but plain `git stash` skips untracked files, so they stay in your working tree.
 
     ### 🎯 You will learn to
     - **Context-switch cleanly** mid-feature without polluting history with WIP commits.
@@ -1105,7 +1103,7 @@ steps:
     A new commit `Add absolute value function` sits on `main` with a
     **different SHA** from the original. Same patch, new parent → new SHA.
 
-    > 💡 **Schema check (Step 3 callback).** Cherry-pick *creates* a new
+    > 💡 **Step 3 callback.** Cherry-pick *creates* a new
     > immutable object and *moves* the branch pointer to it. The original
     > commit on `experimental` is untouched — Git never edits commits in
     > place. This pattern repeats in every step from here on.
@@ -1365,7 +1363,7 @@ steps:
   instructions: |
     ### Why this matters
 
-    "Why does this line exist?" is the question every code reviewer, every on-caller, every refactorer asks weekly. Plain `git blame` answers it 90% of the time — but the other 10% (reformatter commits masking the real author) is where engineers waste hours blaming the wrong person. Knowing when blame lies, and the one flag that defuses it, is what separates competent forensic work from frustrating archaeology.
+    "Why does this line exist?" is the question every code reviewer, every on-caller, every refactorer asks weekly. Plain `git blame` usually answers it, but when a reformatter commit touched the line last, blame names the formatter instead of the person who wrote the logic. Knowing when blame lies, and the one flag that defuses it, is what separates competent forensic work from frustrating archaeology.
 
     ### 🎯 You will learn to
     - **Answer "why does this line exist?"** by chaining `blame -L` → `show <sha>`.
@@ -1388,7 +1386,7 @@ steps:
     git show <that-sha>
     ```
 
-    Who, when, why — covered. That chain is 90% of real blame use.
+    Who, when, why — covered.
 
     ### Task 2: The reformatter-masked authorship case
 
@@ -1647,7 +1645,7 @@ steps:
   instructions: |
     ### Why this matters
 
-    "Some commit in the last 1000 broke prod" is a real on-call scenario, and the difference between bisect-fluent and bisect-novice engineers is hours of debug time. Binary search turns 1000 commits into ~10 tests, and `git bisect run` automates the whole thing. Skipping this step costs you on every regression hunt for the rest of your career.
+    "Some commit in the last 1000 broke prod" is a real on-call scenario, and the difference between bisect-fluent and bisect-novice engineers is hours of debug time. Binary search turns 1000 commits into ~10 tests, and `git bisect run` automates the whole thing.
 
     ### 🎯 You will learn to
     - **Decide** when bisect is worth reaching for (rule: ≥ ~5 commits or slow tests).
@@ -1823,10 +1821,6 @@ steps:
     Steps 8–11 are **history rewriting** — denser and structurally riskier.
 
     **Walk away for at least 30 minutes** (overnight is better) before continuing.
-    Spaced practice is one of the most replicated findings in cognitive science:
-    a 30-minute break before harder material produces measurably better retention
-    than pushing straight through. Your hippocampus consolidates while you're not
-    studying.
 
     When you come back, predict from memory: *what does `git stash` actually save?
     Why does cherry-pick create a new SHA?* If those don't come fast, re-do the
@@ -2018,7 +2012,7 @@ steps:
     `main`'s tip, paste. Each paste is a **new commit object** — same patch,
     new parent, new SHA. Originals stay in `.git/objects` (reflog recovers).
 
-    > 💡 **Schema check (Step 3 callback).** Rebase = "cherry-pick a *series*"
+    > 💡 **Step 3 callback.** Rebase = "cherry-pick a *series*"
     > under the hood. New objects, branch pointer moved. Same mechanic Step 5
     > used on one commit; Step 8 just iterates.
 
@@ -2077,7 +2071,7 @@ steps:
 
     Result: one linear line on the graph. No diamond.
 
-    ### Task 3: Rebase through a conflict (desirable difficulty)
+    ### Task 3: Rebase through a conflict
 
     Real rebases conflict when upstream touched the same lines.
     Produce one deliberately:
@@ -2338,7 +2332,7 @@ steps:
   instructions: |
     ### Why this matters
 
-    Interactive rebase is what separates engineers who *use* Git from engineers who *shape* Git history. PR reviewers shouldn't see your seven WIP commits — they should see one clean commit per logical change. This step also covers the worst-case scenario: you accidentally committed a secret. Knowing how to drop a commit (and recover it from reflog if you need to rotate the secret) turns a panic moment into a routine fix.
+    Interactive rebase lets you squash, reword, reorder, or drop your own commits before anyone reviews them. PR reviewers shouldn't see your seven WIP commits — they should see one clean commit per logical change. This step also covers the worst-case scenario: you accidentally committed a secret. Knowing how to drop a commit (and recover it from reflog if you need to rotate the secret) turns a panic moment into a routine fix.
 
     ### 🎯 You will learn to
     - **Squash** messy WIP commits into one clean commit before opening a PR.
@@ -2346,13 +2340,10 @@ steps:
     - **Reword** a commit message retroactively without changing its diff.
     - **Pick the right verb** (`pick`/`reword`/`squash`/`fixup`/`drop`/`edit`) for the rewriting goal.
 
-    ### 🚪 This is the second threshold step
+    ### 🚪 The densest step
 
-    Step 9 is the densest step in the tutorial — eight verbs, several edge
-    cases, and the most "wait, what?" moments in real Git. That's not a
-    bug; it's where most engineers' command of Git plateaus. *Crossing*
-    this threshold is what separates "I use Git" from "I shape Git
-    history." Plan two passes. Don't worry if Task 4 needs a re-read.
+    Step 9 is the densest step in the tutorial, with eight verbs and
+    several edge cases. Plan two passes.
 
     ### ⚠️ Safe zone only
 
@@ -2366,7 +2357,7 @@ steps:
     do the original four still exist anywhere — and could you recover one
     of them with `git reflog`?
 
-    > 💡 **Schema check.** Same pattern as Steps 5 & 8: every rewriting verb
+    > 💡 **Pattern check.** Same pattern as Steps 5 & 8: every rewriting verb
     > here (`squash`, `drop`, `reword`, `edit`) creates new commit objects
     > and moves the branch pointer. The "old" commits don't disappear —
     > they're just unreferenced. Reflog finds them.
@@ -3023,7 +3014,7 @@ steps:
   instructions: |
     ### Why this matters
 
-    The reflex to `reset --hard + force-push` after a bad merge is one of the most destructive habits in collaborative Git — it breaks every teammate's clone. Revert is the additive, public-safe undo: no SHAs change, no force-push, no pain. Internalizing the one-question rule (*has this been pushed?*) is what saves you from being the engineer who breaks production *and* the team's history at 2 AM.
+    The reflex to `reset --hard + force-push` after a bad merge is one of the most destructive habits in collaborative Git — it breaks every teammate's clone. Revert is the additive, public-safe undo: no SHAs change, no force-push, no pain.
 
     ### 🎯 You will learn to
     - **Reach for revert** — not `reset --hard` — whenever a bad commit is already on a shared branch.
@@ -3042,7 +3033,7 @@ steps:
     - **A.** `git reset --hard HEAD~1` + `git push --force`
     - **B.** `git revert HEAD` + `git push`
 
-    Which one breaks every teammate's clone? Why? (Step 3's schema is the key —
+    Which one breaks every teammate's clone? Why? (Step 3 is the key —
     *what changes existing SHAs?*)
 
     ### The answer
@@ -3272,7 +3263,7 @@ steps:
   instructions: |
     ### Why this matters
 
-    Submodules are the canonical "I learned wrong and now I'm afraid of them" Git feature — most engineers experience the empty-folder-after-clone footgun once and avoid them forever. The fix is the same as Step 3's: see the gitlink as a pointer (a 41-byte commit SHA in a tree entry), not a photocopy. Once you grasp the pinned-SHA model, submodules are simple, deterministic, and the right tool for vendoring a specific edition of a library.
+    Submodules confuse many people, often starting with the empty folder you get when you clone without `--recursive`. The fix is the same as Step 3's: see the gitlink as a pointer (a commit SHA in a tree entry), not a photocopy. Once you grasp the pinned-SHA model, submodules are simple, deterministic, and the right tool for vendoring a specific edition of a library.
 
     ### 🎯 You will learn to
     - **Add** a submodule to an existing repo with one command.
@@ -3549,7 +3540,7 @@ steps:
   instructions: |
     ### Why this matters
 
-    "I pulled but the submodule didn't update" is the most common submodule support ticket on every team. The fix is the two-step dance: a submodule update touches both the inner repo (fetch + checkout) *and* the outer repo (add + commit). Knowing this dance — and knowing the one-command resync that fixes any drift — turns submodule updates from a recurring trap into a routine post-pull habit.
+    "I pulled but the submodule didn't update" is a common submodule surprise. The fix is the two-step dance: a submodule update touches both the inner repo (fetch + checkout) *and* the outer repo (add + commit). Knowing this dance — and knowing the one-command resync that fixes any drift — turns submodule updates from a recurring trap into a routine post-pull habit.
 
     ### 🎯 You will learn to
     - **Upgrade** a submodule to new upstream work via the two-step dance (fetch/checkout inside, `add`/`commit` outside).
@@ -3768,7 +3759,7 @@ steps:
   instructions: |
     ### Why this matters
 
-    `git status` says "modified content" *and* "new commits" on the same submodule and engineers freeze. The cure is the simple SHA-comparison rule: outer pinned SHA vs. inner HEAD SHA tells you exactly which message to expect, and which fix applies. Owning the six-step publish ceremony — and avoiding the detached-HEAD trap inside submodules — is what makes you the person teammates DM when their submodules go weird.
+    `git status` says "modified content" *and* "new commits" on the same submodule and engineers freeze. The cure is the simple SHA-comparison rule: outer pinned SHA vs. inner HEAD SHA tells you exactly which message to expect, and which fix applies.
 
     ### 🎯 You will learn to
     - **Read `modified content` vs. `new commits`** straight from `git status` and pick the right fix.
@@ -3896,7 +3887,7 @@ steps:
     # add --force if local submodule changes should be discarded
     ```
 
-    ### 🧭 Fixes 95% of "my submodule is weird" moments
+    ### 🧭 A common fix for "my submodule is weird" moments
 
     ```bash
     git submodule update --init --recursive
@@ -4086,7 +4077,7 @@ steps:
       - 'git submodule update --init --recursive'
       - 'git push --force origin update-halve'
       - 'git rebase origin/main'
-      explanation: 'Each ceremony step preserves one invariant — branch-attached HEAD, commit-exists-in-submodule, SHA-on-remote, SHA-pinned-in-outer. Each distractor breaks one: `git add vendor/math-utils/utils.py` fails because the outer repo tracks only the gitlink, not the files inside; `submodule update` resets the submodule to the old pin; `--force` is a shared-history violation; `rebase` rewrites the commits you just tried to publish. Committing while detached also works if you `switch -c` before anything moves HEAD, as Task 3 shows. Knowing the invariants is the schema that makes the recipe stick.'
+      explanation: 'Each ceremony step preserves one invariant — branch-attached HEAD, commit-exists-in-submodule, SHA-on-remote, SHA-pinned-in-outer. Each distractor breaks one: `git add vendor/math-utils/utils.py` fails because the outer repo tracks only the gitlink, not the files inside; `submodule update` resets the submodule to the old pin; `--force` is a shared-history violation; `rebase` rewrites the commits you just tried to publish. Committing while detached also works if you `switch -c` before anything moves HEAD, as Task 3 shows.'
 # Pedagogy: productive failure (Bjork) — compose 5+ tools under pressure with no hand-holding
 - title: 'Capstone: On-Call Debugging Under Pressure'
   view: git_graph
@@ -4104,9 +4095,7 @@ steps:
     <details markdown="1"><summary>🩺 30-second readiness check — answer before starting</summary>
 
     Without scrolling, answer from memory. If any feels shaky, revisit the
-    listed step *before* attempting the capstone. Component-skill research
-    (Lovett 2001, Ambrose et al. 2010): 45 min on a weak skill beats hours
-    on the integrated task.
+    listed step *before* attempting the capstone.
 
     1. Where do orphaned commits live, and how do you anchor one as a branch?
        *Shaky? → revisit Step 2 (reflog).*
@@ -4212,15 +4201,13 @@ steps:
     | Messy intermediates | **rebase / squash** | rewrite from scratch |
     | "Lost" commits | **reflog** | panicked `rm -rf` |
 
-    Same competence gap you'll see on every team for the rest of your career.
-
     ### 🏔️ Stretch (optional, not auto-tested)
 
     Re-run with one extra wrinkle: the shelved note conflicts with the
     bug-fix line on `stash pop`. Resolve the conflict, pick keep-both
     or keep-fix, verify tests + reflog. This is the capstone's capstone.
 
-    ### 🗺️ The unifying schema — one picture
+    ### 🗺️ One picture for every command
 
     Most commands from the basic tutorial and these 14 advanced steps fall
     into one of three categories, by what they do to existing commits.
@@ -4239,21 +4226,15 @@ steps:
     teammates' clones will diverge. Reach for category 2 (`revert`, `merge`,
     `cherry-pick`) when undoing pushed work.
 
-    ### 🌱 What to do this week (post-tutorial spaced retrieval)
+    ### 🌱 What to do this week (review after the tutorial)
 
-    Without spaced retrieval, ~50% of what you learned today is gone in a
-    week. Twenty minutes total over the next month locks it in:
+    Set aside twenty minutes in total over the next month:
 
     | When | What |
     |---|---|
     | **Tomorrow (10 min)** | Recreate the capstone from a blank slate — same scenario, same tools, no scrolling back. If you stumble, re-do that step (not the whole capstone). |
-    | **In 1 week (5 min)** | Pick any 3 commands from this tutorial. From memory: state name, scenario, and the Step 3 schema (creates objects? moves pointers? both?). |
-    | **In 1 month (5 min)** | The next time you face a real "lost commit" or "messy branch" at work, reach for `git reflog` *first* and `rm -rf .git` *never*. That moment is the highest-value retrieval practice you'll do. |
-
-    The Cepeda meta-analysis (254 studies, 14,000+ participants) shows
-    spaced practice produces ~2× better retention than equal-duration
-    massed practice — and the gap *widens* with delay. This 20 minutes is
-    your highest-ROI study time.
+    | **In 1 week (5 min)** | Pick any 3 commands from this tutorial. From memory: state name, scenario, and the Step 3 rule (creates objects? moves pointers? both?). |
+    | **In 1 month (5 min)** | The next time you face a real "lost commit" or "messy branch" at work, reach for `git reflog` *first* and `rm -rf .git` *never*. That moment is the best review you'll get. |
   watch_files:
   - myproject/calculator.py
   - myproject/test_calculator.py
@@ -4316,7 +4297,7 @@ steps:
       - **Why bisect.** Manually reading 5 diffs would work here but would not work at 500. The point is the habit: for regressions, bisect is the default reach, even for small histories.
       - **Why read the culprit's intent.** Step 6's warning: the author wasn't malicious. Their commit message and diff may reveal which part of the change was intended and which was the accidental regression — informing whether you fix the bug or revert the whole commit.
       - **Why clean the fix branch before merging.** Main's history is read during future bisects (this one's regression will be someone else's bisect in six months). Each commit on main should be one reason, not "WIP, WIP, WIP, real fix."
-      - **Why reflog at the end.** Proof that the desirable-difficulty exercise did not actually destroy anything. This is the Step 2 safety-net claim, cashed in on a composite workflow.
+      - **Why reflog at the end.** Proof that the exercise did not actually destroy anything. This is the Step 2 safety-net claim, cashed in on a composite workflow.
   tests:
   - description: 'On main branch (cleanup verified)'
     command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/main'
@@ -4446,7 +4427,7 @@ steps:
       option_feedback:
         4: This answer treats fast-forward merge as creating commits; it only advances a ref pointer — no new SHAs.
         5: This answer treats `git branch` as creating commits; it only writes a 41-byte ref file — no new SHAs.
-      explanation: 'A commit''s SHA hashes its tree + parent(s) + author + committer + message. **Change any of those and the SHA changes.** Cherry-pick, rebase, interactive-rebase, and squash-merge all create new commit objects with different parents or combined trees. Fast-forward merge and `git branch` do NOT create commits — they only move pointers (Step 1''s whole point). This is the deep schema: commits are immutable; "moving" a commit is always "copy + move pointer to copy."'
+      explanation: 'A commit''s SHA hashes its tree + parent(s) + author + committer + message. **Change any of those and the SHA changes.** Cherry-pick, rebase, interactive-rebase, and squash-merge all create new commit objects with different parents or combined trees. Fast-forward merge and `git branch` do NOT create commits — they only move pointers (Step 1''s whole point). This is the core rule: commits are immutable; "moving" a commit is always "copy + move pointer to copy."'
     - question: 'You performed three destructive-feeling operations in sequence: `git reset --hard HEAD~3`, then `git rebase -i` dropping a commit, then entering detached HEAD and making a throwaway commit. Which **single** tool can recover commits lost in all three cases?'
       options:
       - '`git revert` — it reverses any recent operation'
@@ -4560,7 +4541,7 @@ steps:
       correct_index: 1
       option_feedback:
         0: Most operations do both, creating objects and moving refs; the real invariant is that existing commits are never rewritten.
-        2: This answer abandons the underlying invariant for rote learning; the schema is what makes Git predictable.
+        2: This answer abandons the underlying invariant for rote learning; the invariant is what makes Git predictable.
         3: This answer mistakes per-command behavior for a remote-config sensitivity that doesn't exist.
       explanation: "This is the load-bearing invariant from Step 3 cashed in across all 15 steps. Branch creation moves a ref. Commit creates an object + moves a ref + leaves the index matching the new commit. Rebase creates a *series* of new objects + moves a ref. Cherry-pick creates one new object + moves a ref. git merge --squash prepares the combined index/worktree result; the subsequent git commit creates a commit and moves a ref. History-rewriting operations leave old commits available until retention and pruning remove them; reflogs can help find those commits. Working-tree changes discarded by reset --hard are a separate risk. If you internalize *immutability of existing commits*, nothing in Git is mysterious."
     - question: 'A junior teammate says: "Destructive Git commands like rebase and reset are too dangerous to use; I''ll stick with merge and revert only." Evaluate this position.'
