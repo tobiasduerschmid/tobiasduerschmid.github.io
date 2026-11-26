@@ -1,5 +1,5 @@
 title: "SOLID Design Principles: Stop Writing Code That Falls Apart"
-description: "Learn the SOLID principles by suffering through rigid code first, then leveling up with refactoring. Each principle hits you with a realistic scenario where one tiny change request breaks everything — and then shows you how to fix it so your code actually survives contact with reality."
+description: "Learn the five SOLID principles by first changing rigid code, then refactoring it. Each principle hits you with a realistic scenario where one tiny change request breaks everything — and then shows you how to fix it so your code actually survives contact with reality."
 
 # Authoring-time Bloom-verb objectives. Not yet rendered to students.
 learning_objectives:
@@ -38,7 +38,7 @@ steps:
 
       **Which diagram view should I use?** Use **Implementation details** when matching your code to a target diagram or checking an exercise. **Design focus** is for reference only: it simplifies types, names, and expressions to emphasize the design. Targets may use UML notation; translate those labels to the source-language names and types while matching the required structure or message order. Switching views does not change your code or verify correctness; use **Test My Work** to check the exercise.
 
-      Software you'll ship in your career will be edited by many teams over many years — and the moment two unrelated change requests touch the same private helper, "small fix" becomes "broken release." Feeling that friction first-hand is the only durable motivation for the five SOLID principles that follow. Everything in this tutorial flows from the pain you're about to feel in the next 20 minutes. (Assumes Python classes, dicts, f-strings, `json.dumps` — see the [Python tutorial](/SEBook/tools/python-tutorial) if shaky.)
+      Software you'll ship in your career will be edited by many teams over many years — and the moment two unrelated change requests touch the same private helper, "small fix" becomes "broken release." The five SOLID principles that follow are ways to keep one change request from rippling into unrelated features. Everything in this tutorial flows from the pain you're about to feel in the next 20 minutes. (Assumes Python classes, dicts, f-strings, `json.dumps` — see the [Python tutorial](/SEBook/tools/python-tutorial) if shaky.)
 
       ### 🎯 You will learn to
 
@@ -56,10 +56,6 @@ steps:
       - **Cohesion** — how much the things **inside** one class belong together. A class is highly cohesive when its methods all serve the same actor for the same reason. Low cohesion = a Swiss-army-knife class where unrelated features are awkward roommates.
 
       **Good design = low coupling between modules, high cohesion within each module.** SOLID is five specific tactics for hitting that target.
-
-      ### Inherited Code Is Normal. The Stress Is Normal.
-
-      You're about to open a tangled class. That isn't a contrived teaching example — it's week 1 of almost every real engineering job. Every senior developer you'll ever meet has been exactly where you are in the next 20 minutes. If the code feels overwhelming: you're reading it right.
 
       ### The Scenario
 
@@ -99,7 +95,7 @@ steps:
 
       As you edit, keep one eye on `_format_grade()`. It is used by **three** other methods: `get_grade_summary()`, `generate_report()`, *and* `send_grade_notification()`. Any format change you make ripples into *all three* outputs simultaneously — even though each one has a different audience (academic display vs. registrar's report vs. student email). **The friction you feel is the point.** SOLID is five ways to defuse exactly this kind of ripple.
 
-      > **Errors are the lesson.** You will almost certainly break something on the first attempt. That's normal — read the message, adjust, re-run. If you want a reference after your attempt, hit the **Solution** button to compare. The point isn't to guess the perfect patch; it's to feel how the design resists you.
+      > If something breaks, read the error message, adjust, and re-run. After your attempt, you can compare with the **Solution** button.
 
       ### Reflect → Fill in the Ownership
 
@@ -449,7 +445,7 @@ steps:
             `_format_grade()` is called from `get_grade_summary()`, `generate_report()`, AND `send_grade_notification()` — three outputs owned by three different audiences (academics, registrar, students). "Private" only means "not part of the public class API." It says *nothing* about internal coupling. Any ripple you have to hold in your head to be safe is coupling; coupling is what SOLID is designed to dissolve.
 
         - question: |
-            **Evaluate.** Your manager looks at the patched `CourseManager` and says: *"It works. Let's ship it and move on."* You disagree. Which of the following are the **strongest** reasons to push back **before** the next ticket arrives? Select all that apply.
+            Your manager looks at the patched `CourseManager` and says: *"It works. Let's ship it and move on."* You disagree. Which of the following are the **strongest** reasons to push back **before** the next ticket arrives? Select all that apply.
           type: multiple
           options:
             - "The shared `_format_grade()` means that the next Finance or Registrar ticket will *almost certainly* break the other team's output — we are one ticket away from a bug in production"
@@ -526,11 +522,9 @@ steps:
 
       Knowing these names is useful: your IDE, static analysis tools (SonarQube, PyLint), and senior developers in code review will all reach for this vocabulary. (See the code smells reference in [`SEBook/development_practices/code_smells`](/SEBook/development_practices/code_smells.html) for more.)
 
-      > **Struggle is the lesson.** This step is supposed to feel clunky. You'll make a change, run the code, and realize something unrelated broke. That's not your mistake — that's the class's design talking.
-
       ### Reflect → Write the Incident Report
 
-      Before you run the code, imagine that in six months, the HR team files a bug: *"The pay stub started showing the tax rate as `24%` instead of `22%`, but nobody on HR asked for that change."* Write a one-paragraph **incident report** (3–4 sentences) that would land on your team's postmortem channel. Name the specific method that was edited, name the specific method that was affected, and name *which team asked for the original change*. Writing the bug report you'd actually send is a faster path to the schema than writing a textbook definition of SRP — and you'll find yourself reading real incident reports just like this one in your first engineering job.
+      Before you run the code, imagine that in six months, the HR team files a bug: *"The pay stub started showing the tax rate as `24%` instead of `22%`, but nobody on HR asked for that change."* Write a one-paragraph **incident report** (3–4 sentences) that would land on your team's postmortem channel. Name the specific method that was edited, name the specific method that was affected, and name *which team asked for the original change*.
 
     files:
       - path: "employee_manager.py"
@@ -894,7 +888,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      Diagnosing an SRP violation is half the skill — the other half is performing the structural surgery that eliminates it. This step shows the worked refactor for the `EmployeeManager` class you suffered through in Step 2, then asks you to apply the same move to a *different* domain (rideshare) so the pattern transfers rather than memorizes. Each class you produce will end up serving one actor, and one team will be able to change without breaking another.
+      Diagnosing an SRP violation is half the skill — the other half is performing the structural surgery that eliminates it. This step shows the worked refactor for the `EmployeeManager` class you suffered through in Step 2, then asks you to apply the same move to a *different* domain (rideshare). Each class you produce will end up serving one actor, and one team will be able to change without breaking another.
 
       ### 🎯 You will learn to
 
@@ -1567,7 +1561,7 @@ steps:
             - "Classes can be reused outside NightOwl (e.g., `SafetyAuditor` dropped into a different rideshare product)"
           correct_indices: [0, 1, 3]
           explanation: |
-            SRP often *increases* total line count slightly (more class scaffolding, sometimes duplicated helpers) — and that's fine. The payoff is independent testability, independent release cadence across teams, and reusable focused classes. The only "cost" is a small amount of duplication; the "benefit" is being able to change software without terror. That's the right trade in any system that ships for years.
+            SRP often *increases* total line count slightly (more boilerplate classes, sometimes duplicated helpers) — and that's fine. The payoff is independent testability, independent release cadence across teams, and reusable focused classes. The only "cost" is a small amount of duplication; the "benefit" is being able to change software without terror. That's the right trade in any system that ships for years.
   # --------------------------------------------------------------------------
   # STEP 4 — OCP: Feel the Friction
   # Pedagogy:
@@ -1623,8 +1617,6 @@ steps:
       4. Pray you didn't accidentally break email or SMS while editing
 
       This is the pain the Open/Closed Principle is trying to save you from. We'll fix it properly in the next step.
-
-      > **Struggling is the lesson.** OCP feels counter-intuitive at first — your instinct says "just add another `elif`, the code works, ship it." The point of this step is to *feel* what happens when that instinct scales to 20 channels, so that polymorphism in Step 5 arrives as relief, not academic theory.
 
       ### Reflect → Draft the PR-Review Comment
 
@@ -2001,7 +1993,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      Polymorphism is the structural move that turns "every new variant requires modifying the dispatcher" into "every new variant is a self-contained class the dispatcher never has to know about." Once you've performed this refactor twice — once with a worked example, once on your own — you'll start seeing if/elif chains as design debt rather than as the natural way to write code. This is the principle that changes the most lines of code you'll write next year.
+      Polymorphism is the structural move that turns "every new variant requires modifying the dispatcher" into "every new variant is a self-contained class the dispatcher never has to know about." Once you've performed this refactor twice — once with a worked example, once on your own — you'll start seeing if/elif chains as design debt rather than as the natural way to write code.
 
       ### 🎯 You will learn to
 
@@ -2714,7 +2706,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      LSP is the deepest of the five SOLID principles — every senior developer has been burned by a subclass that quietly broke a caller written against the parent's contract. This step puts you in front of a payment hierarchy that *looks* polymorphic and *runs* until production hits a `GiftCardProcessor`, where the strengthened precondition and weakened postcondition shred a working `checkout()` flow. Once you've watched that fail, "honor the contract" stops being abstract advice and becomes a concrete, mechanically-checkable rule.
+      A subclass can break callers that were written against the parent's contract. This step puts you in front of a payment hierarchy that *looks* polymorphic and *runs* until production hits a `GiftCardProcessor`, where the strengthened precondition and weakened postcondition shred a working `checkout()` flow. Once you've watched that fail, "honor the contract" stops being abstract advice and becomes a concrete, mechanically-checkable rule.
 
       ### 🎯 You will learn to
 
@@ -2735,11 +2727,9 @@ steps:
 
       Break either rule and code that trusts the parent's contract will blow up the moment it meets the subclass.
 
-      > **Struggling is the lesson.** LSP is the deepest SOLID principle — every senior developer has been burned by it at least once. If "strengthening vs. weakening" feels abstract, that's normal. The exercises below make it mechanically observable.
-
       ### The Happy / Sad Visual Mnemonic
 
-      Students routinely forget which of pre- and post-conditions can be weakened and which can be strengthened. Baniassad (ICSE-SEET 2018) developed a visual cue that sticks in memory: a *substitutable* method is **happy** — a smile, wider at the top and narrower at the bottom. A *violating* method is **sad** — a frown, narrow at the top and wide at the bottom.
+      Students routinely forget which of pre- and post-conditions can be weakened and which can be strengthened. Baniassad (ICSE-SEET 2018) proposed a visual cue: a *substitutable* method is **happy** — a smile, wider at the top and narrower at the bottom. A *violating* method is **sad** — a frown, narrow at the top and wide at the bottom.
 
       ```
       Happy  ⌣   — substitutable (LSP-compliant)
@@ -2822,7 +2812,7 @@ steps:
 
       ### Reflect → Pick a Side and Argue It
 
-      Your team is in a heated Slack debate. **Senior-A** argues: *"`GiftCardProcessor.refund()` returning `{'success': False}` is fine — it's honest about what happened and avoids the scary exception."* **Senior-B** argues: *"It's worse than a crash, because crashes surface the problem. A `success=False` hidden in a dict gets silently ignored until Tuesday's reconciliation report."* In **one or two sentences**, pick a side and cite the LSP contract language (pre/postcondition, Happy/Sad) to back your argument. Being able to argue LSP — not just recognize it — is what separates engineers who enforce contracts in review from ones who merely nod when violations slide by.
+      Your team is in a heated Slack debate. **Senior-A** argues: *"`GiftCardProcessor.refund()` returning `{'success': False}` is fine — it's honest about what happened and avoids the scary exception."* **Senior-B** argues: *"It's worse than a crash, because crashes surface the problem. A `success=False` hidden in a dict gets silently ignored until Tuesday's reconciliation report."* In **one or two sentences**, pick a side and cite the LSP contract language (pre/postcondition, Happy/Sad) to back your argument.
 
     files:
       - path: "payments.py"
@@ -3397,7 +3387,7 @@ steps:
             - "Be allowed to throw a new exception type that the parent's contract didn't declare, as long as it's documented in the subclass's docstring"
           correct_indices: [0, 1]
           explanation: |
-            LSP is about **behavioral compatibility**. A subclass can't reject inputs the parent accepts (no strengthening preconditions — the "restrict inputs" option is the *opposite* of what LSP requires; the smile-vs-frown picture says preconditions get *weaker* in subtypes, not stronger) and can't surprise callers with exceptions the parent never declared (the "new exception in docstring" option is the classic Refused-Bequest dressed up as documentation). Both are misconceptions students arrive with from intuition — "specific subtypes should be stricter" and "documenting an exception makes it OK." Neither survives contact with the contract: callers wrote against the parent's promises, not the subclass's footnotes.
+            LSP is about **behavioral compatibility**. A subclass can't reject inputs the parent accepts (no strengthening preconditions — the "restrict inputs" option is the *opposite* of what LSP requires; the smile-vs-frown picture says preconditions get *weaker* in subtypes, not stronger) and can't surprise callers with exceptions the parent never declared (the "new exception in docstring" option is a Refused Bequest dressed up as documentation). Callers were written against the parent's promises, so the subclass has to keep them.
 
         - question: |
             A `PaymentProcessor` base class defines `refund(txn_id)` with the postcondition "returns `{"success": True, "amount": <float>}`." A `GiftCardProcessor` subclass returns `{"success": False, "error": "non-refundable"}` instead. A teammate argues: *"It still returns a dict with the right keys, so it follows the contract."*
@@ -4396,13 +4386,13 @@ steps:
 
       ### Key Insight: ISP is NOT SRP
 
-      The #1 ISP misconception is conflating it with SRP. They look similar, but they target different problems:
+      ISP is often confused with SRP. They look similar, but they target different problems:
 
       - **SRP** = what a class does *internally* (one reason to change, one actor).
       - **ISP** = what a class exposes to its *clients* (no client should depend on methods it does not use).
 
       <details markdown="1">
-      <summary><strong>Discrimination drill (expand): which principle does each sketch violate?</strong> Try this if you want extra practice telling SRP and ISP apart before moving on.</summary>
+      <summary><strong>Telling-apart drill (expand): which principle does each sketch violate?</strong> Try this if you want extra practice telling SRP and ISP apart before moving on.</summary>
 
       Study these two code sketches. Both look "wrong" at first glance, but they violate *different* principles. Think about each one before reading the diagnoses.
 
@@ -5319,7 +5309,7 @@ steps:
 
             **Class B** has a single actor (text editing) but is forced to implement video and image methods with `raise NotImplementedError` — classic **ISP** violation. Fix by splitting into `TextEditable`, `ImageEditable`, `VideoEditable` interfaces. No SRP problem: the class has one cohesive responsibility (edit text), it just depends on too-wide an interface.
 
-            The discrimination rule: **multiple actors → SRP; forced-to-stub methods → ISP**.
+            The rule for telling them apart: **multiple actors → SRP; forced-to-stub methods → ISP**.
 
         - question: |
             How does ISP help prevent LSP violations?
@@ -5375,7 +5365,7 @@ steps:
 
       ### DIP is NOT Dependency Injection
 
-      These get mixed up constantly, and the confusion is the #1 DIP misconception:
+      These two are often confused:
 
       - **DIP** (Dependency Inversion Principle) = an **architectural decision** to depend on abstractions instead of concrete implementations. The high-level module **owns** the interface — it describes what *it needs*, not what the low-level module happens to provide.
       - **DI** (Dependency Injection) = a **mechanism** for delivering dependencies (via constructor, setter, or container). DI is *one way* to implement DIP.
@@ -5432,8 +5422,6 @@ steps:
       2. **DIP violations cannot be eliminated entirely — but they can be herded into one small concrete corner**, which is where factories, dependency-injection containers, and composition roots earn their keep.
 
       </details>
-
-      > **Struggling is the lesson.** DIP is the principle that most unlocks testing — and the one most commonly confused with Dependency Injection. If "who owns the abstraction" still feels slippery, that's normal. The Task 2 refactor will crystallize it in code.
 
       ### The Scenario — Feel the Friction
 
@@ -6302,7 +6290,7 @@ steps:
             - "No — DIP requires using a dependency injection framework like Spring"
           correct_index: 1
           explanation: |
-            Classic misconception. Passing `PostgresDatabase` via constructor is **Dependency Injection** (delivering the dependency externally), but not **Dependency Inversion** (depending on an abstraction). To satisfy DIP, the parameter type should be an abstract interface (`OrderRepository`), not a concrete class. Your class should not know or care whether it's talking to Postgres, MySQL, or an in-memory fake.
+            Passing `PostgresDatabase` via constructor is **Dependency Injection** (delivering the dependency externally), but not **Dependency Inversion** (depending on an abstraction). To satisfy DIP, the parameter type should be an abstract interface (`OrderRepository`), not a concrete class. Your class should not know or care whether it's talking to Postgres, MySQL, or an in-memory fake.
 
         - question: |
             Which of the following are benefits of applying DIP to the `WeatherDashboard`?
@@ -6340,7 +6328,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      In real code reviews, violations don't come with labels. You have to look at a class and *recognize the smell* from its structure alone. This exercise mixes all five principles so you practice **discrimination** — telling similar-looking problems apart — instead of recognition, which is what step-by-step practice has trained so far.
+      In real code reviews, violations don't come with labels. You have to look at a class and *recognize the smell* from its structure alone. This exercise mixes all five principles, so you have to tell similar-looking problems apart without a step title telling you which principle to look for.
 
       ### 🎯 You will learn to
 
@@ -6928,7 +6916,7 @@ steps:
             Recognizing well-designed code is just as important as spotting violations — otherwise you'll "refactor" things that are already correct, which is just creating problems where there were none.
 
         - question: |
-            **Spaced retrieval — back to Step 1.** Across all six snippets in this step, the violations had different surface symptoms (an `if/elif` chain, a raised exception, a fat ABC, a direct `new` keyword call). But the same *two* underlying failures from Step 1's vocabulary show up every time. Which two?
+            **Review: Step 1.** Across all six snippets in this step, the violations had different surface symptoms (an `if/elif` chain, a raised exception, a fat ABC, a direct `new` keyword call). But the same *two* underlying failures from Step 1's vocabulary show up every time. Which two?
           type: single
           options:
             - "Premature optimization and global state across modules"
@@ -6953,7 +6941,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      Every step so far isolated one principle in one file — but real refactors land on systems where multiple violations interact, and the order you fix them in determines whether your test suite stays green or goes red mid-refactor. This capstone forces you to see the cascade: DIP enables the tests that make the LSP+OCP refactor safe, which makes the LSP structural fix obvious. You'll also see where SOLID stops paying for itself — over-application is the second-most-common failure mode after under-application.
+      Every step so far isolated one principle in one file — but real refactors land on systems where multiple violations interact, and the order you fix them in determines whether your test suite stays green or goes red mid-refactor. This capstone forces you to see the cascade: DIP enables the tests that make the LSP+OCP refactor safe, which makes the LSP structural fix obvious. You'll also see where SOLID stops paying for itself, in a cautionary example that wraps `2 + 3` in four interfaces and a factory.
 
       ### 🎯 You will learn to
 
@@ -7112,8 +7100,6 @@ steps:
       - **Prototypes and spikes:** Favor speed over structure — you're gonna throw it away anyway.
       - **When there's only one variant:** Don't create an ABC with a single implementation. Wait until you actually have two variants, then extract the abstraction.
       - **When it obscures intent:** If a 5-line function becomes 50 lines across 4 classes, the cure is worse than the disease.
-
-      **SOLID is the grammar. Architecture is the sentences.** You have the grammar now. Go write things that last.
 
       <details markdown="1">
       <summary><strong>Optional (expand): SOLID scales up to architecture.</strong> A short forward-pointer to where you'll meet these principles again at the package and service level.</summary>
@@ -8138,16 +8124,16 @@ steps:
   #   When-NOT-to-apply    — guards against over-engineering (Step 11's cautionary tale).
   #   Bloom's level        — Understand / Analyze / Evaluate (quiz).
   # --------------------------------------------------------------------------
-  - title: "Consolidation — What Survives"
+  - title: "Final Review — What Survives"
     instructions: |
       ### Why this matters
 
-      Material you *read* decays within days, but material you **actively retrieved** from your own head survives for months. This step is the one that decides whether your SOLID knowledge is still alive in six months — re-derive the five principles from memory, then name three signs of over-engineering so the guardrails come along for the ride. *Best done at least 24 hours after the capstone* — the spacing is the point.
+      This step is the one that decides whether your SOLID knowledge is still alive in six months — re-derive the five principles from memory, then name three signs of over-engineering so the guardrails come along for the ride. *Best done at least 24 hours after the capstone*.
 
       ### 🎯 You will learn to
 
-      - Apply spaced retrieval to re-derive each SOLID principle without rereading earlier steps
-      - Analyze under interleaving by discriminating between principles in randomized order
+      - Apply what you remember to re-derive each SOLID principle without rereading earlier steps
+      - Analyze situations in randomized order to tell the principles apart
       - Evaluate a candidate situation to decide whether SOLID would help or over-engineer it
 
       ### What You Will Do
@@ -8155,8 +8141,8 @@ steps:
       You will do three things:
 
       1. **Re-derive** all five principles *without re-reading earlier steps*. Write each one in your own words.
-      2. **Discriminate** under interleaving: the quiz below mixes all five principles in random order so you can't coast on step-by-step recency.
-      3. **Reflect** on when *not* to apply SOLID — because the second most common SOLID failure (after violating it) is over-applying it.
+      2. **Distinguish** the principles: the quiz below mixes all five in random order.
+      3. **Reflect** on when *not* to apply SOLID, since over-applying it causes problems too.
 
       ### Task — Fill the `PRINCIPLES` Dictionary From Memory
 
@@ -8168,7 +8154,7 @@ steps:
       - Avoid empty rewordings like "SRP means single responsibility." Say *what single responsibility actually means* — *one actor, one reason to change, one audience for the class's output*.
       - The tests are forgiving about exact wording but check that each principle's definition touches its unique anchor concept (e.g., SRP must mention actors/reasons/responsibility, OCP must mention extension/modification, etc.).
 
-      > **If a principle escapes you**: write what you remember, then scroll back if you must — but write first. The *attempt to retrieve* is what strengthens memory, even when it fails. Reading the definition again before you've tried feels comfortable and *measurably hurts* long-term retention.
+      > **If a principle escapes you**: write what you remember, then scroll back if you must — but write first. The gaps in your attempt show you which principles to review.
 
       ### Task — List Three Reasons NOT to Apply SOLID
 
@@ -8177,9 +8163,9 @@ steps:
       Recognizing when *not* to apply a principle is what separates engineers who use SOLID as a tool from ones who use it as a cudgel. Put the guardrails in words you'll remember.
 
       <details markdown="1">
-      <summary><strong>Optional but powerful (expand): Teach it back.</strong> A 3-minute exercise that exploits the protégé effect — preparing to teach produces deeper encoding than preparing to be tested.</summary>
+      <summary><strong>Optional but powerful (expand): Teach it back.</strong> A 3-minute exercise: explain one principle as if teaching it.</summary>
 
-      Before you take the quiz, pick **one** of the five principles and, in 3–5 sentences, write a teach-back for an imaginary junior engineer on your team. Use a concrete code smell from the tutorial (e.g., *God Class*, *Switch Statement Smell*, *Refused Bequest*, *Fat Interface*, *Hardcoded Dependency*) as your hook. This step has no test — it's for you. Research on the [protégé effect](https://en.wikipedia.org/wiki/Protégé_effect) shows that preparing to teach material produces deeper encoding than preparing to be tested on it.
+      Before you take the quiz, pick **one** of the five principles and, in 3–5 sentences, write a teach-back for an imaginary junior engineer on your team. Use a concrete code smell from the tutorial (e.g., *God Class*, *Switch Statement Smell*, *Refused Bequest*, *Fat Interface*, *Hardcoded Dependency*) as your hook. This step has no test — it's for you.
 
       </details>
 
@@ -8449,7 +8435,7 @@ steps:
       questions:
 
         - question: |
-            **Interleaved retrieval.** A teammate's `OrderService` has a method `dispatch(order, carrier_type)` with an `if/elif` chain for `"ups"`, `"fedex"`, and `"dhl"`. Adding `"usps"` means editing this method. Which principle is primarily violated?
+            A teammate's `OrderService` has a method `dispatch(order, carrier_type)` with an `if/elif` chain for `"ups"`, `"fedex"`, and `"dhl"`. Adding `"usps"` means editing this method. Which principle is primarily violated?
           type: single
           options:
             - "SRP — the class handles too many carriers"
@@ -8461,7 +8447,7 @@ steps:
             This is the canonical **OCP** smell — the Switch Statement Smell from Step 4. Each new carrier forces surgery on `dispatch()`, putting every existing carrier at risk of regression. Fix: a `Carrier` ABC with one `dispatch(order)` method, concrete `UpsCarrier`/`FedexCarrier`/etc., and a registry/dictionary in `OrderService` that maps carrier name → `Carrier` instance.
 
         - question: |
-            **Interleaved retrieval.** A `StreamingService` ABC declares `play()`, `pause()`, and `download_offline()`. A new `LivePodcastStreamer` subclass overrides `download_offline()` to `raise NotImplementedError("Live streams cannot be downloaded")`. Which principle(s) are in play?
+            A `StreamingService` ABC declares `play()`, `pause()`, and `download_offline()`. A new `LivePodcastStreamer` subclass overrides `download_offline()` to `raise NotImplementedError("Live streams cannot be downloaded")`. Which principle(s) are in play?
           type: multiple
           options:
             - "LSP — LivePodcastStreamer cannot safely substitute for StreamingService"
@@ -8473,7 +8459,7 @@ steps:
             Both **LSP** and **ISP** are violated here, and they're the same Step-7/Step-8 pairing: an ABC promised capabilities some implementers can't deliver, so a subclass tries to fake it via `NotImplementedError`. The structural fix is ISP (split the ABC); the LSP violation is what the ISP violation causes. Recognizing both at once is the mark of someone who has internalized the principles as a connected system, not five separate rules.
 
         - question: |
-            **Vocabulary retrieval (from Step 1).** In a well-designed module, **coupling** should be __________ and **cohesion** should be __________.
+            **Review: Step 1 vocabulary.** In a well-designed module, **coupling** should be __________ and **cohesion** should be __________.
           type: single
           options:
             - "high / high"
@@ -8485,7 +8471,7 @@ steps:
             **Low coupling between modules, high cohesion within each module.** That's the two-sentence summary the whole tutorial was building toward. SOLID is five specific tactics for achieving exactly that target.
 
         - question: |
-            **Discrimination.** Your colleague's `PDFReportGenerator.__init__` does `self.storage = S3Storage()`. They say: *"I'm going to fix this with Dependency Injection — I'll pass `S3Storage` into the constructor instead."* Is this actually a DIP fix?
+            Your colleague's `PDFReportGenerator.__init__` does `self.storage = S3Storage()`. They say: *"I'm going to fix this with Dependency Injection — I'll pass `S3Storage` into the constructor instead."* Is this actually a DIP fix?
           type: single
           options:
             - "Yes — passing dependencies through the constructor is Dependency Inversion"
@@ -8497,7 +8483,7 @@ steps:
             The Step 9 trap — DI without DIP. Injecting a concrete `S3Storage` through the constructor makes the coupling **later** (at construction time) but doesn't make it **looser**. To invert, type the parameter as an abstraction the high-level module owns (a `CloudStorage` ABC shaped by what `PDFReportGenerator` needs), so a `LocalFileStorage` or `FakeStorage` could be substituted without any change to the high-level class.
 
         - question: |
-            **Evaluate — when NOT to apply SOLID.** Which of the following would be **over-engineering**? Select all that apply.
+            **Review: when NOT to apply SOLID.** Which of the following would be **over-engineering**? Select all that apply.
           type: multiple
           options:
             - "A one-off data-migration script you will run once and delete next week. You extract a `MigrationStrategy` ABC with one concrete subclass"
@@ -8513,7 +8499,7 @@ steps:
             The judgment is always: *does the domain complexity justify the indirection?* For a one-hour script, no. For a payment system that runs for years, absolutely.
 
         - question: |
-            **Synthesis.** Which statement best captures how the five principles relate?
+            Which statement best captures how the five principles relate?
           type: single
           options:
             - "They're five independent rules — you satisfy each one separately"
@@ -8522,4 +8508,4 @@ steps:
             - "They apply only to object-oriented languages with inheritance"
           correct_index: 1
           explanation: |
-            The capstone insight. The five principles aren't a checklist — they're a system where each one *enables* the next. This is also why people who learn SOLID as "five rules to memorize" tend to apply it robotically. People who learn it as a chain of design moves apply it judgmentally, which is what lets them also know when to *not* apply it. You now have the chain. Go write things that last.
+            The capstone insight. The five principles aren't a checklist — they're a system where each one *enables* the next. This is also why people who learn SOLID as "five rules to memorize" tend to apply it robotically. People who learn it as a chain of design moves apply it judgmentally, which is what lets them also know when to *not* apply it.
