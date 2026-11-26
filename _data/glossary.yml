@@ -175,6 +175,11 @@
   description: Software that stores, queries, indexes, and protects persistent data. A DBMS handles concerns such as transactions, concurrency, durability, and query planning.
   related: [SQL, ACID]
 
+- term: DDS
+  definition: Data Distribution Service
+  description: A publish-subscribe middleware standard for real-time systems. Programs publish and subscribe to named topics, and the middleware delivers each message to every current subscriber; ROS 2 uses it to connect robot programs.
+  related: [ROS, MQTT]
+
 - term: DI
   definition: Dependency Injection
   description: A design technique where collaborators are provided to an object from the outside instead of being constructed internally. DI makes code easier to test and swap because dependencies are explicit.
@@ -265,6 +270,10 @@
 - term: GPS
   definition: Global Positioning System
   description: The satellite navigation system a phone uses to work out where it is, for example to show a car's position on a map.
+
+- term: GPU
+  definition: Graphics Processing Unit
+  description: The processor that draws a computer's or game console's graphics. A graphics driver translates drawing commands into instructions for one particular GPU.
 
 - term: gRPC
   definition: gRPC Remote Procedure Calls
@@ -375,6 +384,10 @@
   description: A compilation strategy that turns code into machine code while a program is running, often using runtime information to optimize hot paths.
   related: [V8]
 
+- term: JPEG
+  definition: Joint Photographic Experts Group
+  description: A compressed image format for photos, named after the committee that defined it. Its compression is lossy, so each time a photo is decoded and saved again it can lose a little more detail.
+
 - term: JS
   definition: JavaScript
   description: The programming language used by browsers and Node.js to add behavior to web pages, build applications, and run server-side JavaScript programs.
@@ -439,6 +452,11 @@
   definition: Method Resolution Order
   description: The order in which Python searches classes for inherited attributes and methods. Cooperative super calls continue along the receiving class's order, which can include another branch of multiple inheritance.
   related: [OOP, ABC]
+
+- term: MQTT
+  definition: MQ Telemetry Transport
+  description: A lightweight publish-subscribe messaging protocol for small, resource-constrained devices such as sensors. The name began as MQ Telemetry Transport, after IBM's MQ message-queuing products; the standard now uses MQTT as its name.
+  related: [DDS]
 
 - term: MB
   definition: Megabyte
@@ -597,6 +615,11 @@
   definition: Red, Green, Blue
   description: A color model that represents colors as combinations of red, green, and blue light, commonly used for screens and CSS colors.
   related: [CSS]
+
+- term: ROS
+  definition: Robot Operating System
+  description: An open-source framework of libraries and tools for building robot software, not an operating system in the usual sense. Its programs exchange messages through publish-subscribe topics; ROS 2 delivers them over DDS.
+  related: [DDS]
 
 - term: RPC
   definition: Remote Procedure Call
