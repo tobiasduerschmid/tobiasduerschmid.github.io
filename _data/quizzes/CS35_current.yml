@@ -33,6 +33,7 @@ decks:
   - makefile
   - dev_practice_genai
   - design_with_reuse
+  - dev_practice_code_comprehension
 
 other:
   - design_pattern_observer
