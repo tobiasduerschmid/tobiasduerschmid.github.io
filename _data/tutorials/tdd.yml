@@ -305,7 +305,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      RED is the moment TDD looks weirdest: you deliberately write a test that *cannot* pass yet, and you make the failure happen on purpose. That inversion is the threshold concept — a *failing* test is the goal, not the accident, because it's the first place where the spec gets pinned down before any implementation exists. Learning to read a failure for the *right reason* is the foundation everything else in this tutorial sits on.
+      RED is the moment TDD looks weirdest: you deliberately write a test that *cannot* pass yet, and you make the failure happen on purpose. That inversion is the core of TDD: a *failing* test is the goal, not the accident, because it's the first place where the spec gets pinned down before any implementation exists. Learning to read a failure for the *right reason* is the foundation everything else in this tutorial sits on.
 
       ### 🎯 You will learn to
 
@@ -1083,11 +1083,11 @@ steps:
             - "TDD requires writing all tests for a feature first, then all the code at once — which is the opposite of unit testing's incremental style"
           correct_index: 1
           option_feedback:
-            0: "This misses the **threshold concept**. Test-first changes which questions you ask first (\"how should this be called?\") and what pressure shapes the design. The resulting code is often *very* different — typically more decoupled, with interfaces that didn't exist before the test demanded them."
+            0: "Test-first changes which questions you ask first (\"how should this be called?\") and what pressure shapes the design. The resulting code is often *very* different — typically more decoupled, with interfaces that didn't exist before the test demanded them."
             2: "Refactoring is *one* phase; framing TDD as primarily-refactoring inverts the order. The tests do far more than catch regressions: they specify behavior, drive interface decisions, and force you to decompose problems incrementally. Calling them just a safety net misses the design pressure they exert."
             3: "This describes **upfront test design**, which Beck's Canon TDD lists as a mistake: converting every list item into a test before any pass invites rework, plus \"depression and/or boredom.\" TDD is *one test at a time* — granular and incremental, the opposite of all-at-once."
           explanation: |
-            This is the threshold concept: TDD is design first, testing second. The test
+            TDD is design first, testing second. The test
             forces you to decide the public interface (function name, parameters, return
             shape) before any logic exists. The REFACTOR phase is where the design that
             emerged under pressure gets shaped intentionally. Calling it "unit testing in
@@ -2377,7 +2377,7 @@ steps:
           option_feedback:
             1: "Performance isn't the lesson. Cycle 5's restructuring isn't about speed (it's negligibly different); it's about *which model of the input the code commits to*. Two competing models is the structural smell, regardless of microbenchmarks."
             2: "`Counter` works fine inside loops — it's just a dict subclass. This invents a Python constraint that doesn't exist. The real reason against the hybrid approach is design coherence, not language mechanics."
-            3: "Pytest has no opinion on iteration styles. (As with earlier questions, made-up framework rules are a sign you're searching for *external* enforcement of discipline that has to come from your own design judgment.)"
+            3: "Pytest has no opinion on iteration styles."
           explanation: |
             The rewrite is not "add Counter on top of the existing loop." It is "*replace*
             the per-die view with the per-face-count view." Mixing both is the worst of
@@ -2415,7 +2415,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      One combo branch in `score` is fine. Adding a second one — *next to* the first — makes the duplication ugly enough that "add another `if`" feels obviously wrong. That ugliness is the design pressure; what it earns is the **rule object** abstraction (`ComboRule` + `SingleRule` with `apply()`). The Open-Closed Principle stops being a slogan: new behavior is now new *data*, not new branches. This is the cycle where students stop pattern-matching TDD and start *listening to the test*.
+      One combo branch in `score` is fine. Adding a second one — *next to* the first — makes the duplication ugly enough that "add another `if`" feels obviously wrong. That ugliness is the design pressure; what it earns is the **rule object** abstraction (`ComboRule` + `SingleRule` with `apply()`). The Open-Closed Principle stops being a slogan: new behavior is now new *data*, not new branches.
 
       ### 🎯 You will learn to
 
@@ -3181,7 +3181,7 @@ steps:
 
       > **Spec:** `score([1, 1, 1, 1, 1, 1])` produces **two** Dragon Blasts (2000 damage).
 
-      🪞 **Predict first (don't open the reveal yet).** Look at your `ComboRule.apply` and trace through six 1s by hand. *Write down the damage your current code produces.* The whole pedagogical value of this step depends on the order: predict before peeking.
+      🪞 **Predict first (don't open the reveal yet).** Look at your `ComboRule.apply` and trace through six 1s by hand. *Write down the damage your current code produces.*
 
       <details markdown="1"><summary>Reveal — what the current code actually does (open AFTER tracing)</summary>
 
@@ -3770,8 +3770,8 @@ steps:
       ### 🎯 You will learn to
 
       - Create your own Canon TDD test list for an unfamiliar problem, ordered from simplest to most design-breaking
-      - Apply RED-GREEN-REFACTOR to FizzBuzz with no instructor scaffolding — driving the cycles yourself in compressed form
-      - Evaluate the structural parallels between each FizzBuzz move and the Dragon-Dice cycle it mirrors (Variation Theory generalization)
+      - Apply RED-GREEN-REFACTOR to FizzBuzz with no step-by-step instructions, driving the cycles yourself in compressed form
+      - Evaluate the structural parallels between each FizzBuzz move and the Dragon-Dice cycle it mirrors
 
       You've completed seven cycles of TDD on dice scoring. The risk: *"TDD only works because Dragon Dice is a naturally compositional domain."* Try applying the same rhythm to a different problem and compare the decisions you make.
 
@@ -3815,7 +3815,7 @@ steps:
 
       ## What you're doing here
 
-      You are *applying* what you learned. There is no instructor-provided RED test, no GREEN scaffold, no REFACTOR checklist. **The cycle discipline is now yours.** If the rhythm feels familiar — that's the threshold concept doing its work.
+      You are *applying* what you learned. There is no instructor-provided RED test, no GREEN starter code, no REFACTOR checklist. **The cycle discipline is now yours.**
 
       <details markdown="1"><summary>🛟 Stuck? (Open only after at least 5 minutes of trying)</summary>
 
@@ -3852,7 +3852,7 @@ steps:
       - TPP — smallest transformation that passes the failing test
       - Allow-the-ugly-first-GREEN (don't pre-design the abstraction)
 
-      If your answer captured the *rhythm and the discipline*, you have the threshold concept. **TDD is a rhythm, not a problem-specific technique** — you just demonstrated it on a problem with no shared code with Dragon Dice.
+      If your answer captured the *rhythm and the discipline*, you have the main idea. **TDD is a rhythm, not a problem-specific technique** — you just demonstrated it on a problem with no shared code with Dragon Dice.
       </details>
 
       ---
@@ -4188,7 +4188,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      The cycles taught the rhythm one beat at a time; this step asks whether you can hear the *whole song*. You'll synthesize the journey from memory before any reveals, recalibrate your own confidence in writing, and probe whether the discipline transfers to a real piece of code from your own work — not "I'd write more tests" but a specific bug it would have caught. The final quiz is mixed retrieval across all seven cycles, the way Bjork's spacing principle predicts will make the rhythm last.
+      The cycles taught the rhythm one beat at a time; this step asks whether you can hear the *whole song*. You'll summarize the cycles from memory before any reveals, recalibrate your own confidence in writing, and probe whether the discipline transfers to a real piece of code from your own work — not "I'd write more tests" but a specific bug it would have caught. The final quiz mixes questions on earlier cycles with new ones.
 
       ### 🎯 You will learn to
 
@@ -4196,7 +4196,7 @@ steps:
       - Evaluate your own confidence to apply Red-Green-Refactor *unaided* on a problem you haven't seen before
       - Apply the rhythm to one specific piece of your own code — naming what TDD would have prevented in concrete terms
 
-      Seven Dragon-Dice cycles. Then an eighth on a totally different problem — FizzBuzz — driven by you with no scaffolding. Every line in your final `scorer.py` is justified by a test; every line in your `fizzbuzz.py` is too; and the rhythm that produced both is the *same rhythm*.
+      Seven Dragon-Dice cycles. Then an eighth on a totally different problem — FizzBuzz — driven by you without step-by-step help. Every line in your final `scorer.py` is justified by a test; every line in your `fizzbuzz.py` is too; and the rhythm that produced both is the *same rhythm*.
 
       ---
 
@@ -4646,7 +4646,7 @@ steps:
             2: "Speed-of-shipping isn't the case for TDD on small features (managers in four Microsoft/IBM case studies estimated 15–35% longer initial development). The case is on **long-lived code with multiple authors**, where a regression net may repay its maintenance cost. \"Faster shipping\" oversells; the honest claim is *defect reduction over time*."
             3: "This frames the same issue around coverage from a different angle. The lesson the tutorial built across 7+1 cycles is design pressure, not coverage. Cycle 7 specifically showed how 100%-covered code can still be wrong."
           explanation: |
-            The threshold concept of the tutorial: TDD is design, not testing. Cycle 6's
+            The main idea of the tutorial: TDD is design, not testing. Cycle 6's
             rule-object refactor *emerged* under cycle-6's test pressure, not from a
             whiteboard. The test suite is a (valuable) byproduct.
 
