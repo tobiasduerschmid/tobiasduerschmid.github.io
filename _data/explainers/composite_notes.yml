@@ -6,13 +6,13 @@ intro-try-it:
   - "Songs and playlists both show a length and offer Play"
   - "Try Play on a song, on Throwbacks, and on Road Trip"
 intro-pattern-parts:
-  - "**Roles:** a shared interface, standalone single items, groups holding items"
+  - "**Roles:** shared interface, standalone single items, groups holding items, clients using them"
   - "**Pattern description:** context, problem, solution, consequences"
 context-part-whole:
   - "**Part-whole hierarchy:** wholes built from parts; some parts are wholes too"
   - "Playlists contain songs and playlists, nested to any depth"
 context-alike:
-  - "Clients want to ignore single-versus-group differences"
+  - "**Clients:** code using these objects; it ignores single-versus-group differences"
   - "A song answers alone; a playlist answers for its contents"
 context-trees:
   - "Examples: file folders, grouped drawing shapes, submenus, nested page boxes"
@@ -57,10 +57,13 @@ playlist_role-duration:
   - "Nested playlists repeat this: requests go down, sums come up"
 playlist_role-play:
   - "play() gives every item, in turn, the one shared queue"
-  - "Road Trip: first song, all of Throwbacks, then the closing song"
+  - "One ordered list preserves the built order; the first design could not"
 playlist_role-safe-add:
-  - "**Safe:** add() only in Playlist; adders must know they hold a playlist"
-  - "**Transparent:** add() in Playable too; songs must reject it at runtime"
+  - "**Safe:** add() only in Playlist; compilers or type checkers catch song.add early"
+  - "Cost: code that adds must know it holds a playlist"
+playlist_role-transparent-add:
+  - "**Transparent:** add() in Playable too; every item looks identical"
+  - "Cost: songs must reject add while running; early errors are lost"
 collaborations-press:
   - "Each Play button holds one Playable, never checking its kind"
   - "press() starts a fresh queue, then asks Road Trip to play into it"
@@ -72,7 +75,7 @@ collaborations-recursion:
   - "Requests descend level by level until songs answer"
 collaborations-loop:
   - "Four titles return in the chosen order"
-  - "**Loop:** leaves answer; composites forward; the client never checks kinds"
+  - "**Rule:** leaves answer; composites forward; the client never checks kinds"
 solution-component:
   - "Four roles remain after removing the music details"
   - "**Component** (Playable): operations shared by single objects and groups"
@@ -87,33 +90,34 @@ solution-client:
   - "Composite is a Component and holds Components, enabling unlimited nesting"
 consequences-simple-clients:
   - "**Benefit:** clients need no type checks"
-  - "Groups nest at any depth without additional code"
+  - "Wherever one item is expected, an entire playlist works"
 consequences-new-kinds:
-  - "**Benefit:** new Playable classes fit existing playlists and clients unchanged"
+  - "**Benefit:** new leaf or group classes fit existing playlists and clients unchanged"
   - "The combining loop lives once, in Playlist"
 consequences-overly-general:
-  - "**Liability:** add() accepts any Playable, so types cannot restrict children"
-  - "Songs-only albums need runtime checks"
+  - "**Liability:** an inherited add() accepts any Playable; types cannot restrict children"
+  - "Songs-only albums, a kind of playlist, need runtime checks"
 consequences-safety:
-  - "**Liability:** safe add exposes the composite to adding code"
-  - "Transparent add makes every object uniform but leaves reject add at runtime"
+  - "**Liability:** safe add is checked early, but adders must know the composite"
+  - "Transparent add makes every object uniform; leaves reject it at runtime"
 applicability-fit:
   - "Use Composite for real nesting where clients ignore single-versus-group differences"
   - "No nesting: a plain list is simpler"
 applicability-one-class:
-  - "Identical data everywhere: one class with optional children suffices"
+  - "Identical data everywhere: one class with optional children plays every role"
   - "Composite pays off when kinds behave differently and keep multiplying"
 applicability-neighbors:
   - "Composites appear as nested views in MVC and as macro commands"
   - "**Decorator** wraps one object to add behavior; Composite groups many"
 transfer-plan:
-  - "**Task:** Episodes (show, title, length) join playlists beside songs"
+  - "**Task:** the change that broke the first design: episodes join playlists"
   - "**Predict:** Which class is new? Which existing lines change?"
 transfer-episode:
   - "**Episode** implements Playable as a new leaf"
   - "Playable, Song, Playlist, and Play button stay untouched"
+  - "Contrast: the first design changed every list, loop, and check"
 summary-recap:
   - "**Context:** nesting part-whole hierarchy; clients treat one object and groups alike"
-  - "**Problem:** separate handling repeats loops, loses order, breaks with new kinds"
+  - "**Problem:** separate handling repeats loops and type checks; new kinds break it"
   - "**Solution:** Component interface; Leaves answer directly; Composites forward to children"
   - "**Consequences:** simple clients, easy extension; overly general, safety-versus-transparency choice"

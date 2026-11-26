@@ -17,7 +17,7 @@ reviews:
       option_feedback:
         0: A pattern is a reusable design idea, not a library. Its classes are roles that each application
           names and adapts.
-        2: Role names such as Component are placeholders. A music app calls them Playable, Song, and Playlist.
+        2: Role names are placeholders that each application renames for its own domain.
   context:
   - scene: context
     cue: alike
@@ -25,12 +25,12 @@ reviews:
       type: single
       question: Which requirement most directly points to the Composite pattern?
       options:
-      - Several screens must refresh whenever one record changes
-      - Users pick one of several compression algorithms
-      - Photos go in albums, albums in collections, and any of them can be shared
+      - Several screens must refresh whenever one shared record changes
+      - Users pick one of several interchangeable compression algorithms
+      - Albums hold photos and other albums, and any of them can be shared
       correct_index: 2
-      explanation: Albums inside collections are a part-whole hierarchy that nests, and sharing a photo or
-        a whole collection the same way is the uniform treatment Composite provides.
+      explanation: Albums inside albums are a part-whole hierarchy that nests, and sharing one photo or a
+        whole album the same way is the uniform treatment Composite provides.
       option_feedback:
         0: Refreshing dependents after a change is the Observer pattern's context.
         1: Choosing among interchangeable algorithms is the Strategy pattern's context.
@@ -42,16 +42,15 @@ reviews:
       question: A drawing app keeps shapes and groups in separate lists, with a loop for each in move()
         and draw(). In Composite pattern terms, what happens when text boxes are added?
       options:
-      - Text boxes cannot be drawn until groups are removed
-      - Each operation needs another list and loop, and a missed one skips text boxes
-      - Each loop becomes slower than a call through an interface
+      - Only a TextBox class is added; the existing loops already draw it
+      - Each operation needs another list and loop; a missed one skips text boxes
+      - Only the group class changes; the loops in move() and draw() stay
       correct_index: 1
       explanation: Every kind of item has its own list and its own loop in every operation, so a new kind
         edits all of them, and a forgotten loop silently leaves the new items out.
       option_feedback:
-        0: Groups and text boxes can coexist; the trouble is that every operation must learn about the new
-          list.
-        2: The problem is how much code must change, not speed.
+        0: Each loop covers only the kind it names, so text boxes need their own list and loop.
+        2: The loops live in every operation, so each operation must learn about the new list.
   playable_role:
   - scene: playable_role
     cue: shared-type
@@ -59,9 +58,9 @@ reviews:
       type: single
       question: In the Composite pattern, why must single items and groups share one type?
       options:
-      - So one ordered collection holds both, and clients ask both the same things
-      - So every item can find the groups that contain it
-      - So a group can copy each item when it is added
+      - So one ordered list holds both kinds, which answer the same requests
+      - So every item can find each of the groups that contain it at runtime
+      - So a group can copy each item when it is added to the group
       correct_index: 0
       explanation: A shared type lets a group keep any mix of items in one ordered list and lets clients
         send every item the same requests.
@@ -81,7 +80,7 @@ reviews:
       correct_index: 1
       explanation: A file is a leaf. It has nothing inside, so it answers from its own data.
       option_feedback:
-        0: Requests travel down from folders to their items, not up. A file needs no help from its folder.
+        0: A file knows nothing about the folder that holds it, so it answers from its own data.
         2: Adding up the items inside is what a folder, the composite, does. A file has nothing inside.
   playlist_role:
   - scene: playlist_role
@@ -99,7 +98,7 @@ reviews:
         the program runs, which costs the safety of the other choice.
       option_feedback:
         0: Quietly keeping children a leaf never uses would hide a mistake instead of reporting it.
-        1: A leaf does not know the group that holds it. Requests travel down, not up.
+        1: A leaf in this design does not know the group that holds it, so it cannot forward add to it.
   collaborations:
   - scene: collaborations
     cue: recursion
@@ -138,18 +137,18 @@ reviews:
     cue: overly-general
     retry:
       type: single
-      question: A Composite design for photos must keep collections out of single albums. Why can't the
-        type system enforce this rule?
+      question: In a Composite design for photos, albums are a kind of collection that inherits add, and
+        albums must not contain collections. Why can't the type system enforce this rule?
       options:
-      - Albums must be leaves, so they cannot have an add operation
+      - Albums must be leaves, so they cannot offer an add operation at all
       - Clients must check every item's type before adding it
-      - Add accepts any component, so the rule needs a check at runtime
+      - The inherited add accepts any component, so it needs a runtime check
       correct_index: 2
-      explanation: The shared add accepts every kind of component, so restricting an album's children is
-        left to a check that runs while the program runs.
+      explanation: The add that albums inherit accepts every kind of component, so restricting an album's
+        children is left to a check that runs while the program runs.
       option_feedback:
         0: An album holds photos, so it is a composite with an add operation, and add accepts any component.
-        1: Clients in a Composite design do not check types. The album itself must reject the wrong items.
+        1: Clients use the shared operations without checking types; the album itself must reject the wrong items.
   applicability:
   - scene: applicability
     cue: one-class
@@ -175,15 +174,15 @@ reviews:
       question: A music app built with the Composite pattern adds audiobook chapters to playlists. Which
         classes change?
       options:
-      - Playlist, which needs a branch for chapters
-      - Only a new Chapter leaf, plus the code that creates chapters
-      - Playable and every class that implements it
+      - Playlist, which needs a new branch to handle each chapter
+      - A new Chapter leaf, plus the code that creates chapters
+      - Playable, plus every existing class that implements it
       correct_index: 1
       explanation: The new leaf implements the existing interface, so playlists and clients accept it
         unchanged.
       option_feedback:
         0: Playlist forwards to any Playable through the shared interface, so it needs no branch.
-        2: The interface changes only when every item needs a new operation.
+        2: A new leaf implements the existing interface, so the interface and the existing classes stay unchanged.
   summary:
   - scene: context
     cue: part-whole
@@ -208,15 +207,15 @@ reviews:
       question: The recipe app's first Section class keeps steps and subsections in two lists, and
         totalMinutes() loops over each. In Composite pattern terms, what is the problem?
       options:
-      - Every operation repeats the step-or-section split, so new kinds edit them all
-      - Sections cannot be placed inside other sections at all
-      - The two loops are slower than one call through an interface
+      - Every operation repeats the step-or-section split; new kinds edit them all
+      - Sections cannot be placed inside other sections, so recipes stay flat
+      - Only a class for each new kind is added; the loops already handle it
       correct_index: 0
       explanation: Each operation handles steps and sections separately, so every new kind of item edits
         every loop.
       option_feedback:
         1: The two-list design can nest sections; each subsection loops over its own lists.
-        2: The problem is how much code must change, not speed.
+        2: Each loop covers only the kind it names, so a new kind needs a loop in every operation.
   - scene: solution
     cue: composite
     retry:
@@ -252,17 +251,17 @@ reviews:
     cue: overly-general
     retry:
       type: single
-      question: The recipe app wants quick recipes whose sections may contain only steps. What do the
-        Composite pattern's consequences say about this rule?
+      question: The recipe app wants quick sections, a kind of Section, that may contain only steps. What
+        do the Composite pattern's consequences say about this rule?
       options:
-      - The shared add accepts any part, so the rule needs a check at runtime
+      - Section's add accepts any part, so the rule needs a check at runtime
       - The type system enforces it once steps and sections share an interface
       - Composite forbids sections that restrict their children
       correct_index: 0
-      explanation: Because add accepts any component, the type system cannot keep sections out; the
-        restriction becomes a runtime check.
+      explanation: A quick section inherits Section's add, which accepts any part, so the type system
+        cannot keep sections out; the restriction becomes a runtime check.
       option_feedback:
-        1: The shared interface is what lets any part be added, so it makes this rule harder to enforce.
+        1: The inherited add accepts every kind of part, so the type system cannot enforce this rule.
         2: The pattern allows the rule; it cannot enforce it through types.
   - scene: applicability
     cue: fit
@@ -273,13 +272,13 @@ reviews:
       options:
       - Yes, because every list is a part-whole hierarchy
       - No, because nothing nests, so a plain list is simpler
-      - Yes, because any collection of objects should be a composite
+      - No, because a composite holds only one kind of leaf
       correct_index: 1
       explanation: Composite pays off when groups nest inside groups. Without nesting, a plain list is
         simpler.
       option_feedback:
         0: The context needs parts that are wholes themselves; a flat list has no group inside a group.
-        2: A collection alone is not a nesting hierarchy, so a composite adds classes without benefit.
+        2: A composite can hold many kinds of leaves. The reason to skip it is that nothing nests.
 exercises:
 - id: add-episode
   title: Add podcast episodes as a new kind of item
