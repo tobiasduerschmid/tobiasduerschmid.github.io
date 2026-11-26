@@ -220,8 +220,9 @@ another.
 - **Safety over transparency:** `add` is declared only in `Split`, so adding to a
   photo fails before the program runs. The price is that code that adds must know
   it holds a split. One cue presents the transparent alternative.
-- **Child order:** the list order is the reading order. Reordering moves tiles,
-  and the picture shows it.
+- **Child order:** the list order is the reading order, so it decides where each
+  tile lands. The trace tags each tile with the order in which it was drawn. No
+  cue reorders tiles.
 - **Sharing:** a photo never changes and knows no parent, so one `Photo` object
   can appear in two stories. The C++ version shares tiles through
   `std::shared_ptr<const Tile>`.
@@ -240,8 +241,12 @@ another.
   kind of leaf.
 - **A polaroid frame around one tile:** a Decorator. It has the same interface
   and one child, and adds drawing. A split holds many tiles and arranges them.
-- **Composite inside other patterns:** view trees in Model-View-Controller
-  (linking to the MVC lesson), and macro commands.
+- **Composite inside other patterns:** view trees in Model-View-Controller,
+  and macro commands. The MVC lesson is named in speech and on the card. Cards
+  are plain text, so there is no link.
+
+The applicability scene draws the carousel and the frame (see
+[The live picture](#the-live-picture)). Neither one is part of the story's tree.
 
 ## Lesson sequence
 
@@ -249,20 +254,24 @@ The lesson has 12 scenes and 40 cues. At about 145 words per minute, it runs
 about 12 minutes. The cue IDs below are the planned IDs; the wording is the
 builder's.
 
-| Scene | Part | Cues | The picture |
-|---|---|---|---|
-| intro | | `photo-dump`, `try-it`, `pattern-parts` | The story is drawn, and the layout tree shows a Share button and a photo count on every node. Learners may press any Share button. |
-| context | Context | `part-whole`, `alike`, `trees` | The splits are marked as wholes. `beach` and `bottom` are marked "same requests". Trees elsewhere, and the names leaf and composite. |
-| problem | Problem | `area`, `first-design`, `branches`, `client-check`, `predict-captions` (prediction, about 6 s), `every-change`, `demands` | The first design's code, then the caption requested under the beach, then its area blank and flagged "not drawn". |
-| tile_role | Solution | `shared-type`, `canvas` | `Tile`'s code, with the class diagram focused on `Tile`. |
-| photo_role | Solution | `direct`, `shared` | `Photo`, and one photo object in two stories. |
-| split_role | Solution | `one-list`, `count`, `draw`, `safe-add`, `transparent-add` | `Split`, with its cut lines in the picture. |
-| collaborations | Solution | `press`, `first-tile` (prediction, about 5 s), `recursion`, `loop` | The sequence diagram, one message group per cue, while the canvas fills in area by area. |
-| solution | Solution | `component`, `leaf`, `composite`, `client` | The role diagram, with each role mapped to the class that played it. One line contrasts the four-class diagram with an object tree of any depth. |
-| consequences | Consequences | `simple-clients`, `new-kinds`, `overly-general`, `safety` | The Share button without checks, the caption as one class, and the photo-booth strip. |
-| applicability | Context | `fit`, `plain-list`, `neighbors` | The carousel and the polaroid frame. |
-| transfer | | `plan` (prediction, about 6 s), `caption` | The class diagram gains one box, and the caption appears in the story. |
-| summary | | `recap`, then the summary quiz | All four parts. |
+| Scene | Part | Cues | Code and diagram | The panel, cue by cue |
+|---|---|---|---|---|
+| intro | | `photo-dump`, `try-it`, `pattern-parts` | none | The story is drawn, and every node of the layout tree has a Share button and a photo count. Learners may press any Share button. |
+| context | Context | `part-whole`, `alike`, `trees` | none | `part-whole` marks the three splits as wholes. `alike` marks `beach` and `bottom` "same requests". `trees` keeps that state. |
+| problem | Problem | `area`, `first-design`, `branches`, `client-check`, `predict-captions` (prediction, about 6 s), `every-change`, `demands` | the `problem` block; the `area` cue marks its calls to `area.part` | The first design's story through `client-check`. From `predict-captions`, the caption is pending under the beach. From `every-change`, its area is blank and tagged "not drawn". |
+| tile_role | Solution | `shared-type`, `canvas` | the `tile` block; the `solution` diagram on `Tile` | Every node is tagged "Tile". |
+| photo_role | Solution | `direct`, `shared` | the `photo` block; the `solution` diagram on `Photo` | `direct` tags the photo rows. `shared` adds the text tag "also in another story" to `beach`. No second story is drawn. |
+| split_role | Solution | `one-list`, `count`, `draw`, `safe-add`, `transparent-add` | the `split` block; the `solution` diagram on `Split` | The split rows are tagged, with their cut lines on the canvas. |
+| collaborations | Solution | `press`, `first-tile` (prediction, about 5 s), `recursion`, `loop` | the `split` block, focused on `press` and `draw`; the `trace` diagram, one message group per cue | `press` outlines the story's area. `first-tile` is unchanged, because it marks what is at stake, not the answer. `recursion` draws beach 1st, cat 2nd, gig 3rd, and taco 4th. `loop` shows the finished story. |
+| solution | Solution | `component`, `leaf`, `composite`, `client` | the `roles` diagram | Each cue tags the nodes playing its role: every node, then the photos, then the splits, then the Share buttons. The `composite` cue contrasts the four-class diagram with the tree beside it. |
+| consequences | Consequences | `simple-clients`, `new-kinds`, `overly-general`, `safety` | none; one card per consequence | `simple-clients` tags the Share buttons "no checks". The other cues keep the story, with the note line naming the point. The photo-booth strip is described, not drawn. |
+| applicability | Context | `fit`, `plain-list`, `neighbors` | none; cards | `fit` shows the story. `plain-list` adds a carousel strip of three photos below the canvas. `neighbors` shows the cat tile in a polaroid frame. |
+| transfer | | `plan` (prediction, about 6 s), `caption` | the `caption` block; the `solution` diagram variant with `Caption` | `plan` shows the caption pending. `caption` draws the caption under the beach and tags it "new". |
+| summary | | `recap`, then the summary quiz | none; cards | The finished story with its caption. |
+
+`new-kinds` stays general: a new kind of tile is one new class that implements
+`Tile`, and no existing class changes. It does not name captions, so the
+transfer's prediction is not answered in advance.
 
 The problem's four demands are:
 
@@ -288,6 +297,10 @@ as `js/mvc-dashboard.js` and the current library script do.
     "caption"), its photo count, and a Share button.
   - Below both, a note line and a polite status line.
   - On narrow screens, the canvas stacks above the tree.
+  - In scenes with code and a diagram, the shared layout gives the panel its own
+    full-width row below them.
+- **Panel states:** every cue in a scene that shows the panel has its own panel
+  state, as listed in the lesson-sequence table.
 - **Narrated states:** each cue's state comes from the static panel's
   `data-composite-cue`.
   - **Marks:** whole, same requests, and role marks.
@@ -305,6 +318,8 @@ as `js/mvc-dashboard.js` and the current library script do.
     design, and the caption stays blank.
   - **Reset:** a "Back to the narration's picture" button restores the narrated
     state.
+  - **Not interactive:** the carousel strip and the polaroid frame are pictures
+    of the neighbors, not nodes of the tree, so they have no Share buttons.
 - **Built with the pattern:** the script implements `Tile`, `Photo`, `Split`,
   `Caption`, and the first design. Areas come from `Split.draw` and map onto the
   4 × 4 grid at runtime.
@@ -326,6 +341,12 @@ as `js/mvc-dashboard.js` and the current library script do.
   fixed palette chosen so its name chip keeps at least 4.5:1 contrast.
 - **Themes:** the same art in dark mode, because photos do not invert, opted out
   of the inversion. Print uses the same light palette.
+- **The neighbors:**
+  - The carousel strip reuses three of the photo illustrations at thumbnail
+    size, with a text position ("1 of 3").
+  - The polaroid frame is CSS decoration inside the cat's grid cell, so the
+    4 × 4 grid holds.
+  - Each has its own text alternative.
 - **Process:** drawn under the `asset-creator` skill, and checked in both themes
   and in print.
 
@@ -337,9 +358,16 @@ All three diagrams are ArchUML, rendered at build time (`static_uml: true`).
   layout. `diagram_focus` follows the role scenes. A variant adds `Caption` for
   the transfer.
 - **`trace`:** a sequence diagram with the lifelines `button: ShareButton`,
-  `story: Split`, `right: Split`, and `cat: Photo`. It shows one message group
-  per cue: `press` to `draw` of the story's area, `draw` of the right half, and
-  `draw` of the top of the right half.
+  `story: Split`, `beach: Photo`, and `right: Split`. It has three message
+  groups:
+  1. `press` calls `draw` on the story's area. This group appears from `press`
+     and stays through the `first-tile` prediction.
+  2. `draw` of the left half goes to beach. This group appears at `recursion`.
+  3. `draw` of the right half goes to right. This group also appears at
+     `recursion`.
+
+  The canvas shows the rest of the recursion (cat, then gig and taco), so the
+  diagram stays at four lifelines.
 - **`roles`:**
   - Client uses Component.
   - Leaf and Composite implement Component.
@@ -359,6 +387,14 @@ All three diagrams are ArchUML, rendered at build time (`static_uml: true`).
   drawn lines.
 
 `resources.example_order` is `area`, `tile`, `photo`, `split`, `caption`, `wire`.
+
+The player shows one code block per scene (`scene.code`), and a cue cannot
+switch blocks. So the `area` block never appears on the stage:
+
+- The problem's `area` cue marks the first design's calls to `area.part` and
+  explains the helper in words.
+- The helper's code appears in the reader's complete examples.
+- The node test prepends the `area` block when it assembles each program.
 
 Each language uses its own idioms:
 
@@ -466,10 +502,12 @@ static panel and the live script render from it.
 - **Updated:**
   - the shipped-example sentence in
     `.agents/skills/design-pattern-narration/SKILL.md`;
+  - `tests/narration-fullscreen.spec.js`, which hard-codes the lesson title and
+    the `playlist_role` scene. They become the new title and `split_role`.
   - the pull request description.
 - **Unchanged:** the chapter page, `read.html` and `print.html`, the lists of
-  narrated lessons, and the fullscreen and navigation spec entries. They name the
-  topic, not the example.
+  narrated lessons, and the navigation spec entry. They name the topic, not the
+  example.
 
 ## Delivery
 
@@ -500,6 +538,17 @@ static panel and the live script render from it.
     that cannot become decoration.
   - **The study-planner summary quiz stays:** it tests transfer to a different
     surface.
+  - **What the panel draws:** the per-cue panel column in the lesson-sequence
+    table is the full list.
+    - The shared photo is a tag, not a second story.
+    - The photo-booth strip is described, not drawn.
+    - The carousel and the polaroid frame are drawn, because the neighbor
+      contrast is one of the reasons the collage won.
+  - **`new-kinds` stays general:** the transfer remains a real prediction.
+  - **The `area` helper stays off the stage:** the player can show only one
+    block per scene, and the helper is not what the lesson teaches.
+  - **The trace shows the leaf case and the first recursive call:** this keeps
+    it at four lifelines, and the canvas carries the deeper calls.
 - **Left to the builder:**
   - the exact cue wording within the outline;
   - the illustration details;
