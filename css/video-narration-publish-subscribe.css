@@ -1,0 +1,113 @@
+/*
+ * The Publish-Subscribe narration's own objects on its animated stage
+ * (js/video-narration/publish-subscribe-kit.js), loaded only inside its
+ * frame after the wall kit and the architecture kit. Mochi, the map, the
+ * walkway strip, and the phone are paper and ink, the same in both modes;
+ * pieces set straight on the blueprint use the stage's --vn-* tokens.
+ * Readable text is at least 20px on the 960x540 stage; uppercase
+ * micro-labels at least 17px.
+ */
+
+/* Mochi from the side. */
+.ps-robot { position: absolute; }
+.ps-robot-art { display: block; width: 100%; height: 100%; overflow: visible; }
+.ps-robot-body { fill: #fdfbf3; stroke: #0b0f1a; stroke-width: 4; }
+.ps-robot-lid { fill: none; stroke: #0b0f1a; stroke-width: 3; }
+.ps-robot-eye { fill: #1b2340; stroke: #0b0f1a; stroke-width: 2; }
+.ps-robot-lens { fill: #38d3f5; }
+.ps-robot-wheel { fill: #1b2340; stroke: #0b0f1a; stroke-width: 3; }
+.ps-robot-pole { stroke: #0b0f1a; stroke-width: 3; stroke-linecap: round; }
+.ps-robot-flag { fill: #ff8a3d; stroke: #0b0f1a; stroke-width: 2; stroke-linejoin: round; }
+.ps-robot-name {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 2px);
+  translate: -50% 0;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: #0b0f1a;
+  color: #fdfbf3;
+  font-size: 18px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+/* The campus as a paper map. */
+.ps-map { position: absolute; overflow: hidden; border-radius: 16px; background: #eef3e2; box-shadow: var(--vn-paper-shadow); }
+.ps-map-art { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ps-map-walk { fill: none; stroke: #d9c9a3; stroke-width: 34; stroke-linecap: round; }
+.ps-map-building { fill: #d5dbe8; stroke: #6b7894; stroke-width: 3; }
+.ps-map-scooter { fill: #0b4a7a; stroke: #0b4a7a; stroke-width: 3; stroke-linecap: round; }
+.ps-map-name { position: absolute; color: #0b0f1a; font-size: 21px; font-weight: 900; white-space: nowrap; translate: -50% -50%; }
+.ps-map-name--walk { padding: 1px 8px; border-radius: 6px; background: #fdfbf3; translate: 0 -50%; }
+
+/* A strip of the main walkway: who is on it, and where Mochi is. */
+.ps-walk {
+  position: absolute;
+  box-sizing: border-box;
+  height: 110px;
+  padding: 6px 12px 0;
+  border-radius: 14px;
+  background: #eef3e2;
+  color: #0b0f1a;
+  box-shadow: var(--vn-paper-shadow);
+}
+.ps-walk-name { display: block; color: #3a4660; font-size: 17px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; }
+.ps-walk-lane { position: absolute; left: 12px; right: 12px; bottom: 8px; height: 62px; border-radius: 10px; background: #d9c9a3; }
+.ps-walk-robot { position: absolute; bottom: 2px; width: 64px; height: 56px; }
+.ps-walk-prop { position: absolute; bottom: 4px; display: grid; place-items: center; width: 52px; height: 56px; color: #0b0f1a; }
+.ps-walk-prop svg { width: 46px; height: 46px; }
+.ps-walk-prop--tour { color: #0b4a7a; }
+.ps-skater-art { overflow: visible; }
+.ps-skater-art circle:first-child { fill: #0b0f1a; }
+.ps-skater-limbs { fill: none; stroke: #0b0f1a; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.ps-skater-board { stroke: #b42318; stroke-width: 5; stroke-linecap: round; }
+.ps-skater-wheel { fill: #0b0f1a; }
+
+/* The delivery app on a phone. */
+.ps-phone {
+  position: absolute;
+  box-sizing: border-box;
+  width: 270px;
+  height: 380px;
+  padding: 18px 16px;
+  border: 8px solid #1b2340;
+  border-radius: 34px;
+  background: #fdfbf3;
+  color: #0b0f1a;
+  box-shadow: var(--vn-paper-shadow);
+}
+.ps-phone-app { margin: 4px 0 16px; color: #0b4a7a; font-size: 26px; font-weight: 900; }
+.ps-phone-card { position: absolute; left: 16px; right: 16px; top: 80px; display: flex; align-items: center; gap: 12px; padding: 14px 12px; border-radius: 14px; background: #e6ebf6; }
+.ps-phone-icon { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%; background: #0b4a7a; color: #fff; }
+.ps-phone-icon svg { width: 26px; height: 26px; }
+.ps-phone-words { display: flex; flex-direction: column; font-size: 20px; font-weight: 700; line-height: 1.2; }
+.ps-phone-words b { font-size: 22px; font-weight: 900; }
+
+/* Boxes on one bus: who talks to whom is not drawn. */
+.ps-bus { position: absolute; display: flex; flex-direction: column; gap: 26px; }
+.ps-bus-line { display: block; height: 10px; border-radius: 5px; background: var(--vn-line); }
+.ps-bus-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.ps-bus-box {
+  position: relative;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fdfbf3;
+  color: #0b0f1a;
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  box-shadow: var(--vn-paper-shadow);
+}
+/* Each box joins the bus by its own short line, in the gap between them. */
+.ps-bus-box::after { content: ''; position: absolute; left: 50%; width: 4px; height: 26px; margin-left: -2px; background: var(--vn-line); }
+.ps-bus-row--above .ps-bus-box::after { top: 100%; }
+.ps-bus-row--below .ps-bus-box::after { bottom: 100%; }
+
+/* A subscriber, too small to name: one person on a paper disk. */
+.ps-sub-chip { position: absolute; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: #fdfbf3; color: #0b4a7a; box-shadow: var(--vn-paper-shadow); }
+.ps-sub-chip svg { width: 32px; height: 32px; }
+
+/* The topic as its own process, and an event trace in code type. */
+.ps-process { border-style: dashed; }
+.ps-trace .sk-list-item { font-family: var(--font-mono); font-size: 20px; font-weight: 600; }

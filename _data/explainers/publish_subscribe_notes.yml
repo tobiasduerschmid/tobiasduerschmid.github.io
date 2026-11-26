@@ -1,0 +1,113 @@
+# Key points for the printable notes of the Publish-Subscribe video narration
+# (docs/narration-format.md, "Editable lesson notes and PDF export"). One entry
+# per cue, keyed by <scene id>-<cue id>: one to four short bullets in note form,
+# with **bold** key terms. They live apart from the script, so editing a bullet
+# never changes the narration's audio fingerprint.
+intro-lunch:
+  - "**Example:** Mochi, a campus delivery robot"
+  - "It drives itself from the student union to your building"
+intro-inside:
+  - "Six programs: camera driver (30 frames/s), obstacle detector, planner"
+  - "Also a motor controller, a logger, and an operator dashboard"
+intro-ticket:
+  - "Ticket: add a **pedestrian counter** that reads camera frames"
+  - "More programs keep wanting the camera's frames"
+direct_calls-calls:
+  - "**Direct calls:** the camera's loop calls each receiver by name"
+  - "Each call **blocks** until its receiver returns"
+direct_calls-predict_counter:
+  - "**Predict:** adding the counter changes which code, and who retests it?"
+direct_calls-edit_camera:
+  - "Each new receiver means editing, retesting, and redeploying the sender"
+  - "The camera team ends up owning features it never asked for"
+direct_calls-freeze:
+  - "A hung dashboard blocked the camera's loop"
+  - "One slow receiver **stalled the whole robot**"
+direct_calls-need:
+  - "Needed: announce once, know no receivers, never wait"
+  - "That is the **publish-subscribe** style"
+topic-publisher:
+  - "**Topic:** a named channel that the messaging infrastructure runs"
+  - "**Publisher:** sends each event to the topic once, names no receiver"
+topic-subscribers:
+  - "**Subscriber:** registers for a topic with a **callback**"
+  - "Each subscriber has its own **message queue**; every queue gets a copy"
+topic-counter_joins:
+  - "The counter just subscribes: zero lines of the camera change"
+  - "The publisher's code is the same for any number of subscribers"
+topic-both_roles:
+  - "One program may publish and subscribe (detector, planner)"
+  - "Arrows join programs to topics, **never program to program**"
+ignorance-publisher_rule:
+  - "**Rule 1, publisher ignorance:** don't rely on whether or which subscribers exist"
+  - "Fire and forget: correctness never depends on a listener"
+ignorance-subscriber_rule:
+  - "**Rule 2, subscriber ignorance:** subscribe to the event, not its source"
+  - "A laser detector replaces the camera detector; the planner never notices"
+ignorance-observer:
+  - "**Observer:** the subject keeps a list of observers and calls them"
+  - "Publish-subscribe: only the topic keeps the list, maybe in another process"
+one_way-no_return:
+  - "**Rule 3, one-way propagation:** publishing returns no value"
+  - "Answers, if any, become **new events** on other topics"
+one_way-async:
+  - "**Rule 4, asynchronous:** publish() returns at once; it never blocks"
+  - "Each subscriber drains its own queue at its own pace"
+one_way-predict_hang:
+  - "**Predict:** the dashboard hangs again. What happens to Mochi and its frames?"
+one_way-hurts_itself:
+  - "Mochi keeps driving; only the dashboard's queue fills"
+  - "Full queue (10 frames): the oldest frames are dropped"
+  - "A slow subscriber hurts only itself"
+buys-extensibility:
+  - "**Extensibility** (promoted): new subscribers join, no publisher changes"
+  - "It comes from rule 1, publisher ignorance"
+buys-late_binding:
+  - "**Run-time flexibility** (promoted): connections are made while the system runs"
+  - "Subscribe and unsubscribe at any time; nothing restarts"
+buys-swap:
+  - "Swap a publisher for one sending the same events (rule 2)"
+  - "A slow or crashed subscriber can't stall others (rule 4)"
+  - "Each benefit comes from a rule"
+nobody_listens-rename:
+  - "A tidy rename: the detector publishes to a new topic name"
+  - "The planner keeps the old name; everything compiles and starts"
+nobody_listens-predict_rename:
+  - "**Predict:** a skateboarder crosses. What does the planner do? What reports an error?"
+nobody_listens-silent:
+  - "Events sent to a topic nobody reads vanish, with **no error**"
+  - "A real self-driving framework hid such a bug for two months"
+nobody_listens-robustness:
+  - "Still shared: each **topic's name**, its **event format**, and what events mean"
+  - "A direct call fails loudly; publishing never learns who got the event"
+  - "**Robustness** (inhibited)"
+who_talks-scattered:
+  - "**Understandability** (inhibited): receivers are spread across many files"
+  - "A bus diagram hides who talks to whom"
+who_talks-order:
+  - "Notification order isn't fixed; queues drain at different paces"
+  - "Tests can be flaky; trace events at run time"
+who_talks-visible:
+  - "Design topic names and event formats early, like any interface"
+  - "Keep a topic list; test programs together"
+who_talks-latency:
+  - "The extra hop through the infrastructure adds **latency**"
+  - "One central broker is a **single point of failure**"
+when-brake:
+  - "Need an answer or a guarantee? Use a **direct call**"
+  - "Emergency stop: a call that fails loudly, not an event"
+when-rule_of_thumb:
+  - "Publish **facts** many may want: frames, battery level, arrivals"
+  - "Call for **requests** needing a reply: stop motors, charge a card"
+when-frameworks:
+  - "Frameworks package the style: DDS (ROS 2), MQTT, Apache Kafka"
+  - "Choosing one adopts its trade-offs"
+summary-recap_problem:
+  - "Direct calls coupled the camera to every receiver"
+  - "A topic sits between publishers and subscribers' queues"
+summary-recap_rules:
+  - "Four rules: publisher ignorance, subscriber ignorance, one-way, asynchronous"
+  - "They buy extensibility and run-time flexibility"
+summary-recap_costs:
+  - "Costs: silent failures, scattered flow, extra latency"
+  - "Facts: publish. Requests needing an answer: call"

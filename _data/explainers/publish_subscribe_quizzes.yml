@@ -1,0 +1,298 @@
+# One knowledge check per section, from the intro on: each question puts the
+# section's central idea to work on a new system, not Mochi, and its
+# distractors are the wrong reasoning a partial understanding produces,
+# phrased in the lesson's own words so the key never stands out by
+# vocabulary. Every key, and every reason to reject a distractor, is said in
+# the narration before its check. The player, print, and notes views all show
+# the options in this order, so keys sit in irregular positions. The summary
+# asks several questions, about one new system (a campus parking garage),
+# under `questions`.
+intro:
+  question: Which campus system raises the same design question as Mochi's camera frames?
+  options:
+    - A thermostat that reports one daily reading to one fixed spreadsheet
+    - Shuttle positions that a map, signs, and a logger want, with more to come
+    - A chat app where two friends reply to each other's messages
+  correct_index: 1
+  explanation: >-
+    Mochi's frames raised the question because several programs needed every frame and new ones
+    kept asking for them. The shuttle positions have the same shape: many programs want each new
+    position, and more will join.
+  option_feedback:
+    0: >-
+      One reading for one fixed receiver gives the sender nothing to keep track of. The camera's
+      problem came from many programs wanting every frame, with new fans on the way.
+    2: >-
+      Two friends replying to each other is a conversation between known people. The camera's frames
+      went to several programs, and the list of programs kept growing.
+direct_calls:
+  question: >-
+    A parking app's payment module calls the receipt mailer, the loyalty tracker, and the analytics
+    service by name after every payment. A new budget tracker needs every payment too. What does this
+    design force?
+  options:
+    - Editing, retesting, and redeploying the payment module to add a call
+    - Only writing the budget tracker; the payment module stays exactly the same
+    - Nothing, unless the budget tracker is slower than the other three
+  correct_index: 0
+  explanation: >-
+    With direct calls, the sender names every receiver, so each new receiver means editing,
+    retesting, and redeploying the sender, just as the pedestrian counter meant a new line in the
+    camera's loop.
+  option_feedback:
+    1: >-
+      The payment module calls each receiver by name, so a new receiver needs a new call in the
+      payment module, the way the counter needed a new call in camera.py.
+    2: >-
+      Speed decides how long each call blocks, but the edit comes first: the sender has to name the
+      new receiver before it can call it at all.
+topic:
+  question: >-
+    In a smart dorm, each washer publishes a "cycle done" event to a topic, and students' phone apps
+    and the front desk's dashboard subscribe. Maintenance wants a new usage logger. What has to change?
+  options:
+    - The washer's code, so that it also sends each event to the logger
+    - The topic's code, which must list each subscriber by name
+    - Only the new logger, which subscribes to the topic
+  correct_index: 2
+  explanation: >-
+    Each subscriber tells the infrastructure which topic it wants and hands it a callback, and the
+    washer publishes each event once. Adding a subscriber changes no publisher, as the pedestrian
+    counter changed no line of the camera driver.
+  option_feedback:
+    0: >-
+      The washer publishes each event once to the topic and calls no receiver by name, so a new
+      subscriber needs no change to it.
+    1: >-
+      Nobody edits the topic to add a name. The logger tells the infrastructure itself that it wants
+      the topic, and from then on a copy of each event lands in its own queue.
+ignorance:
+  question: >-
+    A shuttle system's GPS tracker publishes positions to a topic, and the arrival signs subscribe.
+    The team replaces the tracker with a new one that publishes the same positions to the same topic.
+    Why do the signs need no change?
+  options:
+    - The new tracker keeps a list of the signs and calls each one
+    - The signs subscribe to the new tracker by name when they start
+    - They subscribe to the positions, not to the tracker that sends them
+  correct_index: 2
+  explanation: >-
+    By subscriber ignorance, a subscriber depends on the event, not on who published it. Any
+    publisher that sends the same events can replace another, like the laser detector replacing the
+    camera-based one.
+  option_feedback:
+    0: >-
+      A subject that keeps its own list of observers and calls each one is the Observer pattern. In
+      publish-subscribe, only the topic keeps the list; the tracker holds no reference to the signs.
+    1: >-
+      Subscribers subscribe to a topic, never to a publisher, and must not rely on who published. They
+      depend only on the positions arriving on the topic.
+one_way:
+  question: >-
+    A smart doorbell publishes "button pressed" events. The living-room speaker subscribes and plays
+    a chime, but its handler is slow today. What happens when the doorbell publishes?
+  options:
+    - It waits until the speaker has finished playing the chime
+    - It returns at once, and the event waits in the speaker's queue
+    - It keeps retrying until the speaker answers that the chime played
+  correct_index: 1
+  explanation: >-
+    Publishing is asynchronous: it drops a copy of the event into each subscriber's queue and returns
+    right away. A slow subscriber only falls behind in its own queue.
+  option_feedback:
+    0: >-
+      Waiting for the receiver is what a blocking direct call does. A publisher never blocks, so a
+      slow subscriber can't stall it.
+    2: >-
+      Publishing returns no value, and information flows only from publisher to subscriber, so there
+      is no answer for the doorbell to wait for.
+buys:
+  question: >-
+    A campus events app publishes "event created" messages. During finals week only, the library runs
+    a study-room service that wants them too. What happens when that service starts, and when it
+    stops?
+  options:
+    - It subscribes when it starts and unsubscribes when it stops
+    - The app is redeployed with the service added, then again without it
+    - The app holds its messages until the service confirms it has subscribed
+  correct_index: 0
+  explanation: >-
+    Run-time flexibility: connections are made late, while the system runs. Like Mochi's operator
+    dashboard, the service subscribes when it starts and unsubscribes when it stops, and the app
+    never restarts.
+  option_feedback:
+    1: >-
+      The app keeps no list of receivers, so nothing in it changes or restarts when a subscriber joins
+      or leaves. Connections are made while the system runs.
+    2: >-
+      A publisher never waits and must not rely on any subscriber being present. It publishes the same
+      way whether the service listens or not.
+nobody_listens:
+  question: >-
+    In a campus shuttle system, the GPS program now publishes to "shuttle/pos", but the arrival signs
+    still subscribe to "shuttle/position". What happens?
+  options:
+    - The GPS program's publish call fails with a "no subscribers" error
+    - The signs show no arrivals, and neither program reports an error
+    - The infrastructure delivers the positions to the closest topic name
+  correct_index: 1
+  explanation: >-
+    The topic's name is part of what still couples the programs, and a publisher never learns whether
+    anyone got its events. Events sent to a topic nobody reads vanish without an error, as the renamed
+    obstacles topic left Mochi's planner blind.
+  option_feedback:
+    0: >-
+      Publishing works the same with no subscribers at all. Unlike a direct call, it never learns
+      whether anyone got the event, so it reports nothing.
+    2: >-
+      The infrastructure does exactly what it's told and delivers to the topic named. Change a name,
+      and every subscriber must follow, or go silent.
+who_talks:
+  question: >-
+    A team's publish-subscribe system has 40 programs and 25 topics. A new developer must change the
+    format of "order ready" events. What's the hardest part?
+  options:
+    - Editing the publisher, which lists every receiver by name
+    - Nothing, since subscribers never depend on an event's format
+    - Finding every program that subscribes to "order ready"
+  correct_index: 2
+  explanation: >-
+    Who receives an event is spread across every program's subscriptions, so the developer has to
+    search all the code for the topic's name before changing a format that every subscriber depends
+    on.
+  option_feedback:
+    0: >-
+      Publishers in this style name no receivers. That's exactly why finding the subscribers takes a
+      search across every program.
+    1: >-
+      Subscribers don't rely on who published, but they do depend on the event's format. Change it,
+      and every subscriber must follow.
+when:
+  question: Which message should a campus food-ordering backend send as a direct call instead of publishing it?
+  options:
+    - Charging the customer's card before the order is confirmed
+    - Updating the pickup screen, today its only reader, when order 482 is ready
+    - Updating every menu screen when the vegan burrito sells out
+  correct_index: 0
+  explanation: >-
+    Call directly when the sender needs an answer or a guarantee, like a card charge that must succeed
+    before the order is confirmed. Publish facts that many programs might want, like an order being
+    ready or an item selling out.
+  option_feedback:
+    1: >-
+      An order being ready is a fact, and other programs may want it later, such as the customer's
+      app. One reader today doesn't make it a request, and nobody has to answer it.
+    2: >-
+      A sold-out item is a fact to announce; many programs may want it, and the sender needs no
+      reply.
+summary:
+  questions:
+    - question: >-
+        A campus parking garage's entry gate calls the occupancy sign, the billing service, and the
+        security log by name for every car. Billing hangs for a minute. What happens at the gate?
+      options:
+        - The gate skips billing and keeps letting cars in
+        - The gate waits at the billing call, so cars stop entering
+        - Only billing falls behind; the gate keeps going
+      correct_index: 1
+      explanation: >-
+        Each direct call waits until the receiver returns, so one hung receiver stalls the sender and
+        everything after it, as the hung dashboard froze Mochi.
+      option_feedback:
+        0: >-
+          A blocking call doesn't skip a slow receiver; the gate waits at that line until billing
+          returns.
+        2: >-
+          A slow receiver hurting only itself is what publishing buys. With direct calls, the gate
+          waits for billing.
+    - question: >-
+        The garage team redesigns the gate to publish "car entered" to a topic. Which code must the
+        gate no longer contain?
+      options:
+        - The code that reads the gate's own car sensor
+        - The name of the topic it publishes to
+        - A list of the programs that want to know about each car
+      correct_index: 2
+      explanation: >-
+        By publisher ignorance, the gate must not rely on who listens, so it keeps no list of
+        receivers. It still reads its own sensor and still names its topic.
+      option_feedback:
+        0: >-
+          Reading its own sensor is the gate's own job; publishing changes only how it hands each
+          event on.
+        1: >-
+          The gate publishes to a topic by name, like pub.publish on "/camera/image". The topic name
+          is one of the things that still couples the programs.
+    - question: >-
+        In the garage, the occupancy sign subscribes to "car entered". The gate would like to know
+        the sign's new count. Under the style's rules, how does it learn that?
+      options:
+        - The sign publishes its count as a new event that the gate subscribes to
+        - Publishing returns each subscriber's new count to the gate
+        - The gate calls the sign's callback directly and reads the result
+      correct_index: 0
+      explanation: >-
+        Information flows one way, with no return values. If an answer exists at all, it travels as
+        a new event on another topic, to whoever subscribes.
+      option_feedback:
+        1: >-
+          Publishing returns no value; it drops a copy of the event into each queue and returns at
+          once.
+        2: >-
+          Calling a subscriber directly would turn the event into a direct call, so the gate would
+          have to know the sign. Neither side holds a reference to the other.
+    - question: >-
+        After the redesign, the garage's security log crashes during a busy afternoon. What happens
+        to the gate and the other subscribers?
+      options:
+        - The gate keeps publishing, and the sign and billing keep getting events
+        - The gate stops publishing until the security log restarts
+        - The topic stops delivering to every subscriber until the log is back
+      correct_index: 0
+      explanation: >-
+        Publishing never waits, so a slow or crashed subscriber can't stall the rest: the gate keeps
+        publishing, and every other subscriber keeps getting its events, as Mochi kept rolling when
+        the dashboard hung.
+      option_feedback:
+        1: >-
+          A publisher never waits for its subscribers, so a crashed one can't stall it. Waiting at a
+          hung receiver is what the gate's old direct calls did.
+        2: >-
+          Each subscriber gets its own copy of every event in its own queue, so one crashed
+          subscriber affects no other.
+    - question: >-
+        After a cleanup, the garage gate publishes to "garage/enter", but billing still subscribes to
+        "garage/entry". What happens?
+      options:
+        - The gate reports that the billing service is missing
+        - Billing fails at startup with a topic-name error
+        - Billing hears nothing, and no program reports an error
+      correct_index: 2
+      explanation: >-
+        A publisher never learns whether anyone got its events, and events sent to a topic nobody
+        reads vanish without an error. Billing starts normally and simply hears nothing, as Mochi's
+        planner did.
+      option_feedback:
+        0: >-
+          Detecting a missing receiver is what a direct call does. Publishing never learns whether
+          anyone got the event.
+        1: >-
+          Subscribing to a topic nobody publishes to is perfectly valid, so billing starts normally
+          and simply hears nothing.
+    - question: Which garage message should be a direct call rather than an event?
+      options:
+        - Updating the signs and the app when a space on level 2 is freed
+        - Opening the exit gate for a car whose payment went through
+        - Recording each car's exit time in the monthly usage report
+      correct_index: 1
+      explanation: >-
+        Opening the exit gate is a request that needs a guarantee that it happened, so it goes as a
+        direct call that fails loudly. A freed space and an exit time are facts that programs might
+        want, so they are published.
+      option_feedback:
+        0: >-
+          A freed space is a fact the signs, an app, and a log may all want; nobody needs to answer
+          it.
+        2: >-
+          An exit time is a fact; the report and any later program may want it, and nobody has to
+          answer it.

@@ -5,6 +5,9 @@ layout: sebook
 
 # Overview
 
+The narrated lesson follows a campus delivery robot from direct calls to a topic, then through the style's four rules and the trade-offs they bring. The sections below go deeper.
+
+{% include narration.html topic="publish_subscribe" %}
 
 ## The Essence of Publish-Subscribe
 Historically, software components interacted primarily through explicit, synchronous procedure calls—Component A directly invokes a specific method on Component B. However, as systems scaled and became increasingly distributed, this tight coupling proved fragile and difficult to evolve. The *publish-subscribe* architectural style (often referred to as an event-based style or implicit invocation) emerged as a fundamental paradigm shift to resolve this fragility {% cite Garlan1993 %}.

@@ -1,0 +1,71 @@
+It's twelve fifty. Your lab runs until two, and you're starving. You order a sandwich on your phone, and across campus, a cooler-sized robot named Mochi rolls out of the student union, weaves between scooters on the main walkway, and parks at your building's door.
+
+Inside Mochi, six programs work together. A camera driver grabs thirty frames a second. An obstacle detector finds people and scooters in each frame. A planner picks the path, and a motor controller turns the wheels. A logger records the trip, and an operator dashboard shows the camera's view.
+
+You've just joined Mochi's software team, and your first ticket sounds easy. Campus planning wants to know how crowded the main walkway gets, so add a pedestrian counter that reads the camera's frames. Those frames keep finding new fans: first the logger, then the dashboard, now this.
+
+Here's the camera driver's loop. For every frame, it calls each program by name: the detector, the logger, the dashboard, one after another. Each call waits until that program returns. The camera knows exactly who gets its frames, and in what order.
+
+Before you write a line, predict. To add the pedestrian counter, which code has to change: only the new counter, or the camera driver as well? And who has to test that change?
+
+The camera driver too. To add a listener, you add a call to the camera's loop, then retest and redeploy the most critical code on the robot. The camera team now owns a counting feature it never asked for, and every future fan means another edit.
+
+It gets worse. Last week the dashboard's server hung, so the call to show a frame never returned. The camera waited at that line, the detector got no new frames, and Mochi froze in the middle of the walkway, in front of a campus tour. One slow listener stalled the whole robot.
+
+So here's what you need. The camera should announce each frame once, without knowing who wants it, and never wait for anyone. That's the publish subscribe style. Let's meet its parts and its four rules, then see what those rules buy, and what they cost.
+
+Publish-subscribe puts something in the middle: a topic, a named channel run by the messaging infrastructure. The camera becomes a publisher. For each frame, it publishes once to the camera image topic, and goes straight back to grabbing the next frame. It calls no one by name.
+
+On the other side sit the subscribers. The detector, logger, and dashboard each tell the infrastructure: I want the camera image topic, and here's my callback. Each gets its own message queue. When a frame is published, a copy lands in every queue, and each callback runs.
+
+Now take your ticket again. The pedestrian counter subscribes to the same topic, and that's the whole change. Not one line of the camera driver moves. With three subscribers, four, or none at all, the camera's code is exactly the same.
+
+A program can play both roles. The detector subscribes to camera images and publishes obstacles. The planner subscribes to obstacles and publishes driving commands, which the motor controller subscribes to. Every arrow now runs from a program to a topic, or from a topic to a program, never program to program.
+
+Now the rules, the part that gives the style its power. Rule one, publisher ignorance: a publisher must not rely on the presence or identity of any subscriber. The camera works the same whether five programs listen or none. It fires and forgets, and its correctness never depends on a listener.
+
+Rule two, subscriber ignorance: a subscriber must not rely on who published. The planner subscribes to obstacles, not to the detector. So when the team swaps in a new detector that uses a laser scanner, publishing the same obstacles topic, the planner never notices the change.
+
+If you know the Observer pattern, this looks familiar, with one big difference. An observed subject keeps its own list of observers and calls each one. Here, neither side holds a reference to the other. The topic keeps the list, and it can even run in another process, or on another machine.
+
+Rule three, one-way propagation: information flows from publisher to subscriber, and never back. Publishing returns no value. The camera can't ask, did anyone see an obstacle? If an answer exists at all, it travels as a new event, on another topic, to whoever subscribes.
+
+Rule four, asynchronous: a publisher never blocks. Publishing drops a copy of the frame into each subscriber's queue and returns right away. Each subscriber empties its own queue at its own pace, while the camera keeps sending thirty frames a second.
+
+Now replay last week's disaster. The dashboard's server hangs again, and its callback stops returning. Predict: what happens to Mochi this time? And what happens to the frames meant for the dashboard?
+
+Mochi keeps rolling. The camera still publishes, and the detector still gets every frame. Only the dashboard falls behind. Its queue holds ten frames; when it's full, the oldest frames are dropped to make room. A slow subscriber now hurts no one but itself.
+
+Now, the consequences, starting with what the rules buy. First, extensibility. Campus planning's counter, a battery monitor, a recorder for the research lab: each one just subscribes. Publisher ignorance is what makes adding a subscriber cost nothing on the publishing side.
+
+Second, run-time flexibility. Connections are made late, while the robot runs. When an operator opens the dashboard, it subscribes to the camera topic; when the operator closes it, it unsubscribes. The research lab's recorder joins only during experiments. Mochi never restarts for any of it.
+
+Third, replaceable parts. Thanks to subscriber ignorance, any publisher can be swapped for one that sends the same events, like the laser detector. And because publishing never waits, a slow or crashed subscriber can't stall the rest. Each benefit traces back to a rule.
+
+Now the costs. A teammate tidies up names, and the detector now publishes to a topic called obstacles, instead of obstacle list. The planner still subscribes to the old name. Everything compiles. Every program starts. Read on its own, each file looks correct, and the change gets approved.
+
+So predict. On the next delivery, a skateboarder cuts across Mochi's path, and the detector spots the board right away. What does the planner do about it? And which of Mochi's programs reports an error?
+
+The planner does nothing: it never hears about the skateboard. And no program reports an error. The detector publishes into a topic nobody reads, and by publisher ignorance, it can't tell. Only the safety bumper stops Mochi. A renamed topic like this hid for two months in a popular self-driving framework.
+
+So what still couples the programs? Each topic's name, and the format and meaning of its events. Change any of them, and every subscriber must follow, or it quietly goes wrong. And unlike a direct call, which fails loudly when its receiver is missing, publishing never learns whether anyone got the event.
+
+The second cost is understandability. The camera's old loop listed every receiver in one place. Now that answer is scattered: to learn who gets frames, you search every program for the topic's name. And a diagram of boxes on one bus says only that anyone might talk to anyone.
+
+Timing is harder to reason about too. When several subscribers get the same event, the order in which they're notified isn't fixed, and each queue drains at its own pace. A test that passes today can fail tomorrow, so teams trace events at run time to see what really happened.
+
+So teams make the hidden flow visible again. They design topic names and event formats early, as carefully as any interface. They keep a list of who publishes and who subscribes to each topic. And they test publishers and subscribers running together, not just each file alone.
+
+And every message takes a detour through the infrastructure, which adds latency compared with a direct call. If that infrastructure is one central broker, it's also a single point of failure: when it goes down, every conversation stops at once.
+
+So when shouldn't you publish? When the sender needs an answer, or must know the job got done. Take the emergency stop. If the safety monitor just published brake now and nobody heard it, Mochi would keep rolling. So that command is a direct call, which fails loudly if the motor controller is gone.
+
+Here's a rule of thumb. Publish facts that many programs might want, like a new camera frame, the battery level, or arriving at a building. Call directly for requests that need a reply or a guarantee, like stop the motors, or charge this card. Most real systems, Mochi included, use both.
+
+You rarely build the infrastructure yourself. Robot frameworks, messaging protocols for tiny devices, and event-streaming platforms for big backends all package this style, with its trade-offs built in. Choosing one means choosing extensibility and flexibility, and accepting the costs that come with them.
+
+Let's recap. Mochi's camera once called every listener by name, so each new listener meant editing the camera, and one slow listener froze the robot. Publish-subscribe puts a topic in the middle: publishers send events to it, and the infrastructure delivers them to every subscriber's queue.
+
+Four rules give the style its power. Publishers don't rely on who listens. Subscribers don't rely on who published. Information flows one way, with no return values. And publishing never waits. Together, they let you add, swap, and plug in programs while the system runs.
+
+The price: nobody confirms delivery, so a renamed topic fails in silence, and the flow of events is spread across many files. Publish facts that many programs might want; call directly when you need an answer or a guarantee. Next time you write a call, ask who's listening, and whether you need to know.
