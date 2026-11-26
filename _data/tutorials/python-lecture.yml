@@ -957,7 +957,7 @@ steps:
             it crosses only the exact line boundaries that separate the three clauses.
 
         - question: |
-            *(Spaced review — Step 1: print())*
+            *(Review: print())*
 
             What is the output of `print(["Given", "When", "Then"], sep='\n')`?
           type: single
@@ -979,7 +979,7 @@ steps:
             `print(*["Given", "When", "Then"], sep='\n')`.
 
         - question: |
-            *(Spaced review — Step 2: Classes)*
+            *(Review: Classes)*
 
             After fixing the `IndentationError` in `Book.__init__`, which attribute would be
             `None` if you accidentally wrote `self.author = None` instead of

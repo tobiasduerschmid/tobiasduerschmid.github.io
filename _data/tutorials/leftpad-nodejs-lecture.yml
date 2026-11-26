@@ -826,7 +826,7 @@ steps:
             `String(value)` (no `new`) is the canonical explicit-coercion idiom — it returns a primitive string. `new String(value)` is a constructor call that wraps the primitive in a boxed `String` object; the wrapper has all the prototype methods (so `wrapperObj.padStart(...)` would work), but it fails `===` against primitives and behaves surprisingly in boolean contexts (`new String('')` is *truthy*). Almost every JavaScript style guide recommends `String(value)` for this reason.
 
         - question: |
-            *(Spaced review — step 1)* What does `leftpad('foobar', 3)` return under **all three** implementations the lecture walks through?
+            *(Review: Step 1)* What does `leftpad('foobar', 3)` return under **all three** implementations the lecture walks through?
           options:
             - "An empty string"
             - "`'foobar'` (unchanged) — the no-truncation rule is in the contract"
@@ -841,7 +841,7 @@ steps:
             The "no truncation when already long enough" rule is a core part of the `leftpad` contract — and conveniently, `String.prototype.padStart` follows the same rule. That alignment is *why* `padStart` is a drop-in candidate at all. If `padStart` truncated, the standard library wouldn't be a viable replacement.
 
         - question: |
-            *(Spaced review — step 2)* Six of the nine tests passed under the naive `return str.padStart(length, paddingCharacter)` swap. The lecture argues this still makes `padStart` a legitimate replacement candidate. Which of these is the *strongest* reason?
+            *(Review: Step 2)* Six of the nine tests passed under the naive `return str.padStart(length, paddingCharacter)` swap. The lecture argues this still makes `padStart` a legitimate replacement candidate. Which of these is the *strongest* reason?
           options:
             - "Speed — V8's C++ implementation of `padStart` is faster than allocating new strings in JS"
             - "Zero dependencies — replacing the module removes a supply-chain risk like the 2016 npm incident"

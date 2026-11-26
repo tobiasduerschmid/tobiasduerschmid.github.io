@@ -96,7 +96,7 @@ steps:
             - "Yes — but only because linters will flag it; the runtime behavior is identical and the change has no real benefit"
           correct_index: 1
           explanation: |
-            `const` makes intent explicit: any reader immediately knows the value will never change, reducing cognitive load. It also makes a future accidental reassignment a compile-time error rather than a silent bug. This is a meaningful code-quality flag, not merely a style preference.
+            `const` makes intent explicit: any reader immediately knows the value will never change, which makes the code easier to follow. It also makes a future accidental reassignment a compile-time error rather than a silent bug. This is a meaningful code-quality flag, not merely a style preference.
 
   # --------------------------------------------------------------------------
   # STEP 2 — JSON (Slide 42)
