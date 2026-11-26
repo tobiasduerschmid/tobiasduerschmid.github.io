@@ -20,7 +20,7 @@
 (function () {
   'use strict';
 
-  const { fx, onFrame, progress, easeInOutCubic } = window.Timeline;
+  const { fx, onFrame, progress, easeInOutCubic, hash01 } = window.Timeline;
   const kit = window.SongKit;
   const { el, svg, icon } = kit;
   const wall = window.WallKit;
@@ -128,14 +128,90 @@
     return g;
   }
 
-  /** The game's night scene: rooftops, the moon, boba pearls, and the squirrel mid-jump. */
+  /*
+   * The game's night scene in its 400 x 220 view: a starry sky, the moon
+   * with its glow, a far skyline of campus towers, and the near rooftops the
+   * squirrel runs on (flat tops lit along their ledges, lit and dark windows,
+   * a gabled house with a chimney, a water tower, an antenna), boba pearls in
+   * an arc, and the squirrel mid-leap.
+   */
+  const SCENE = {
+    roofs: 'M0 170 H70 V138 H110 V170 H150 V180 H190 V124 L220 104 L250 124 V180 H300 V150 H360 V170 H400 V220 H0 Z',
+    /** Each flat building: x from, x to, and its roof's height. */
+    blocks: [[0, 70, 170], [70, 110, 138], [110, 150, 170], [150, 190, 180], [190, 250, 124], [250, 300, 180], [300, 360, 150], [360, 400, 170]],
+    skyline: 'M0 176 V150 H18 V138 H34 V146 H48 V118 H54 V104 L58 96 L62 104 V118 H68 V140 H96 V128 C96 116 120 116 120 128 V142 H140 V130 H156 V150 H176 V136 H188 V150 H262 V132 H276 V120 H282 V132 H292 V146 H316 V138 H332 V128 H344 V142 H372 V132 H388 V146 H400 V176 Z',
+    pearls: [[120, 96], [168, 82], [212, 70], [262, 92], [306, 118]],
+  };
+  const { circle, box } = arch.shape;
+  /** Stars, away from the moon: [x, y, radius] from a fixed seed. */
+  const STARS = Array.from({ length: 34 }, (_, i) => [hash01(i * 5 + 1) * 400, 4 + hash01(i * 5 + 2) * 96, 0.6 + 0.8 * hash01(i * 5 + 3)])
+    .filter(([sx, sy]) => Math.hypot(sx - 330, sy - 46) > 36);
+
+  /** Windows on each flat building's face, every few rows lit: [lit paths, dark paths]. */
+  function windows() {
+    const lit = [];
+    const dark = [];
+    SCENE.blocks.forEach(([x1, x2, top], b) => {
+      if (x2 - x1 < 36) return;
+      const startY = (b === 4 ? top + 2 : top) + 10;
+      for (let wy = startY, row = 0; wy < 212; wy += 14, row += 1) {
+        for (let wx = x1 + 8, col = 0; wx + 7 <= x2 - 6; wx += 13, col += 1) {
+          (hash01(b * 97 + row * 13 + col) < 0.3 ? lit : dark).push(box(wx, wy, 7, 8));
+        }
+      }
+    });
+    return [lit.join(' '), dark.join(' ')];
+  }
+  const [WINDOWS_LIT, WINDOWS_DARK] = windows();
+
   function sceneArt(parent) {
     const art = svg('svg', { class: 'ls-scene-art', viewBox: '0 0 400 220', preserveAspectRatio: 'xMidYMid slice', 'aria-hidden': 'true' }, parent);
-    svg('rect', { x: 0, y: 0, width: 400, height: 220, class: 'ls-scene-sky' }, art);
-    svg('circle', { cx: 330, cy: 46, r: 20, class: 'ls-scene-moon' }, art);
-    svg('path', { d: 'M0 170 H70 V138 H110 V170 H150 V180 H190 V124 L220 104 L250 124 V180 H300 V150 H360 V170 H400 V220 H0 Z', class: 'ls-scene-roofs' }, art);
-    [[120, 96], [168, 82], [212, 70], [262, 92], [306, 118]].forEach(([cx, cy]) => svg('circle', { cx, cy, r: 6, class: 'ls-scene-pearl' }, art));
+    const path = (d, part) => svg('path', { d, class: `ls-scene-${part}` }, art);
+    path(box(0, 0, 400, 220), 'sky');
+    path(box(0, 110, 400, 110), 'horizon');
+    path(STARS.filter((_, i) => i % 3).map(([x, y, r]) => circle(x, y, r * 0.8)).join(' '), 'star-dim');
+    path(STARS.filter((_, i) => !(i % 3)).map(([x, y, r]) => circle(x, y, r)).join(' '), 'star');
+    path(`${circle(330, 46, 34)}`, 'glow-far');
+    path(`${circle(330, 46, 27)}`, 'glow');
+    path(circle(330, 46, 20), 'moon');
+    path(`${circle(322, 40, 3.6)} ${circle(338, 53, 2.6)} ${circle(335, 35, 1.8)} ${circle(318, 54, 1.6)}`, 'crater');
+    path(SCENE.skyline, 'skyline');
+    path(SCENE.roofs, 'roofs');
+    path(WINDOWS_DARK, 'window');
+    path(WINDOWS_LIT, 'window-lit');
+    // The gabled house: roof planes, ridge, chimney, and a round attic window.
+    path('M190 124 L220 104 L250 124 L246 126 L220 109 L194 126 Z', 'gable');
+    path('M232 116 V100 H240 V121', 'chimney');
+    path(`${circle(220, 120, 5)}`, 'window-lit');
+    // The water tower and the antenna, with its light.
+    path('M322 150 L326 138 M342 150 L338 138 M324 144 H340', 'tower-legs');
+    path('M318 126 C318 122 346 122 346 126 V138 C346 141 318 141 318 138 Z', 'tank');
+    path('M30 170 V146 M24 152 H36', 'antenna');
+    path(circle(30, 145, 1.8), 'beacon');
+    // Moonlit ledges along every rooftop.
+    path(SCENE.blocks.map(([x1, x2, top], i) => (i === 4 ? '' : `M${x1 + 1} ${top + 1} H${x2 - 1}`)).join(' '), 'ledge');
+    // Boba pearls: dark and glossy, a shaded underside and a highlight.
+    path(SCENE.pearls.map(([cx, cy]) => circle(cx, cy, 6)).join(' '), 'pearl');
+    path(SCENE.pearls.map(([cx, cy]) => `M${cx - 5.4} ${cy + 1.6} A6 6 0 0 0 ${cx + 5.4} ${cy + 1.6} A7 7 0 0 1 ${cx - 5.4} ${cy + 1.6} Z`).join(' '), 'pearl-shade');
+    path(SCENE.pearls.map(([cx, cy]) => circle(cx - 2, cy - 2.2, 1.7)).join(' '), 'pearl-gloss');
     squirrelArt(art, { x: 76, y: 116, tilt: -12 });
+    return art;
+  }
+
+  /** The handheld's controls: a D-pad in its well, or two face buttons. */
+  function padArt(parent, kind) {
+    const art = svg('svg', { viewBox: '0 0 56 56', class: 'ls-pad-art', 'aria-hidden': 'true' }, parent);
+    svg('path', { d: circle(28, 28, 27), class: 'ls-pad-well' }, art);
+    if (kind === 'dpad') {
+      const cross = 'M22 10 H34 V22 H46 V34 H34 V46 H22 V34 H10 V22 H22 Z';
+      svg('path', { d: cross, class: 'ls-pad-cross' }, art);
+      svg('path', { d: 'M23.4 11.4 H32.6 V13 H23.4 Z M11.4 23.4 H21 V25 H11.4 Z', class: 'ls-pad-cross-light' }, art);
+      svg('path', { d: circle(28, 28, 3.2), class: 'ls-pad-dimple' }, art);
+    } else {
+      svg('path', { d: circle(20, 33, 8.5), class: 'ls-pad-button ls-pad-button--b' }, art);
+      svg('path', { d: circle(36, 22, 8.5), class: 'ls-pad-button ls-pad-button--a' }, art);
+      svg('path', { d: `${circle(17.4, 30.2, 2.4)} ${circle(33.4, 19.2, 2.4)}`, class: 'ls-pad-gloss' }, art);
+    }
     return art;
   }
 
@@ -157,8 +233,10 @@
     }
     if (device === 'laptop') el('span', 'ls-laptop-base', node);
     else {
-      el('span', 'ls-pad ls-pad--dpad', node).append(icon('gamepad'));
-      el('span', 'ls-pad ls-pad--buttons', node);
+      padArt(el('span', 'ls-pad ls-pad--dpad', node), 'dpad');
+      padArt(el('span', 'ls-pad ls-pad--buttons', node), 'buttons');
+      const grille = svg('svg', { viewBox: '0 0 30 10', class: 'ls-speaker', 'aria-hidden': 'true' }, node);
+      svg('path', { d: [3, 9, 15, 21, 27].flatMap((gx) => [circle(gx, 2.5, 1.5), circle(gx, 7.5, 1.5)]).join(' '), class: 'ls-speaker-hole' }, grille);
     }
     if (label) el('span', 'ls-device-label', node, label);
     if (states.length) arch.track(node, 'is-', states);

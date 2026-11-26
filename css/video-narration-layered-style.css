@@ -45,13 +45,32 @@
 /* Pearl Dash on a device: the device is dark plastic with its own inks. */
 .ls-device { position: absolute; box-sizing: border-box; color: #f5f7fb; }
 .ls-device--laptop { padding: 14px 14px 0; border-radius: 16px 16px 0 0; background: #1b2340; }
-.ls-device--console { padding: 16px 92px; border-radius: 40px; background: #2a3358; box-shadow: var(--vn-paper-shadow); }
+.ls-device--console { padding: 16px 92px; border-radius: 40px; background: #2a3358; box-shadow: inset 0 2px 0 #3c4880, var(--vn-paper-shadow); }
 .ls-screen { position: relative; overflow: hidden; aspect-ratio: 400 / 220; border-radius: 6px; background: #0f1a3d; }
 .ls-scene-art { display: block; width: 100%; height: 100%; }
-.ls-scene-sky { fill: #12204a; }
+/* The night scene (layered-style-kit.js, sceneArt). */
+.ls-scene-sky { fill: #101c44; }
+.ls-scene-horizon { fill: #17275a; }
+.ls-scene-star { fill: #eef2ff; }
+.ls-scene-star-dim { fill: #9fb0dd; }
+.ls-scene-glow-far { fill: rgba(243, 236, 210, 0.06); }
+.ls-scene-glow { fill: rgba(243, 236, 210, 0.1); }
 .ls-scene-moon { fill: #f3ecd2; }
-.ls-scene-roofs { fill: #2c3a6b; stroke: #8fa4d8; stroke-width: 2; }
-.ls-scene-pearl { fill: #3b2416; stroke: #f0e0c8; stroke-width: 2.5; }
+.ls-scene-crater { fill: #e0d5b2; }
+.ls-scene-skyline { fill: #1f2f62; }
+.ls-scene-roofs { fill: #2c3a6b; }
+.ls-scene-window { fill: #23305c; }
+.ls-scene-window-lit { fill: #ffd76a; }
+.ls-scene-gable { fill: #22305c; }
+.ls-scene-chimney { fill: #2c3a6b; stroke: #6f86c8; stroke-width: 1.5; }
+.ls-scene-tower-legs { fill: none; stroke: #6f86c8; stroke-width: 1.6; stroke-linecap: round; }
+.ls-scene-tank { fill: #3a4a80; stroke: #6f86c8; stroke-width: 1.5; }
+.ls-scene-antenna { fill: none; stroke: #6f86c8; stroke-width: 1.4; stroke-linecap: round; }
+.ls-scene-beacon { fill: #ff6b6b; }
+.ls-scene-ledge { fill: none; stroke: #8fa4d8; stroke-width: 2.4; stroke-linecap: round; }
+.ls-scene-pearl { fill: #3b2416; }
+.ls-scene-pearl-shade { fill: #24140b; }
+.ls-scene-pearl-gloss { fill: #f6e7d2; }
 /* The squirrel: red-squirrel fur lit from the upper right, cream underneath,
    dark-brown ink over the fills. Game art, the same in both page themes. */
 .ls-squirrel-tail { fill: #d0813f; }
@@ -81,11 +100,25 @@
 }
 .ls-hud--fps { left: auto; right: 8px; }
 .ls-hud--fps.is-bad { background: #ffd6dc; color: #7a1526; }
-.ls-laptop-base { display: block; height: 22px; margin: 0 -40px; border-radius: 0 0 14px 14px; background: #2a3358; }
-.ls-pad { position: absolute; top: 50%; display: grid; place-items: center; width: 56px; height: 56px; margin-top: -28px; border-radius: 50%; background: #1b2340; color: #9fb3e6; }
-.ls-pad svg { width: 34px; height: 34px; }
+/* The laptop: a camera in the bezel, a hinge, and a keyboard deck with a finger notch. */
+.ls-device--laptop::before { content: ''; position: absolute; top: 5px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: #3e4a78; }
+.ls-laptop-base { position: relative; display: block; height: 22px; margin: 0 -40px; border-top: 3px solid #0f1530; border-radius: 0 0 14px 14px; background: #2f3a66; }
+.ls-laptop-base::after { content: ''; position: absolute; top: 0; left: 50%; width: 76px; height: 7px; margin-left: -38px; border-radius: 0 0 8px 8px; background: #222b52; }
+/* The handheld: a D-pad and two face buttons in their wells, and a speaker grille. */
+.ls-pad { position: absolute; top: 50%; width: 56px; height: 56px; margin-top: -28px; }
+.ls-pad-art { display: block; width: 100%; height: 100%; }
 .ls-pad--dpad { left: 18px; }
-.ls-pad--buttons { right: 18px; background: radial-gradient(circle at 35% 35%, #ff8a99 0 9px, transparent 10px), radial-gradient(circle at 65% 65%, #7ee787 0 9px, transparent 10px), #1b2340; }
+.ls-pad--buttons { right: 18px; }
+.ls-pad-well { fill: #1b2340; }
+.ls-pad-cross { fill: #3b4675; stroke: #0f1530; stroke-width: 1.5; stroke-linejoin: round; }
+.ls-pad-cross-light { fill: #56639a; }
+.ls-pad-dimple { fill: #2c365f; }
+.ls-pad-button { stroke: #0f1530; stroke-width: 1.5; }
+.ls-pad-button--a { fill: #ff7a8c; }
+.ls-pad-button--b { fill: #6fdc8c; }
+.ls-pad-gloss { fill: rgba(255, 255, 255, 0.55); }
+.ls-speaker { position: absolute; right: 30px; bottom: 12px; width: 30px; height: 10px; }
+.ls-speaker-hole { fill: #151b3a; }
 
 /* Forty source files; red ones must change. */
 .ls-files { position: absolute; display: grid; }
