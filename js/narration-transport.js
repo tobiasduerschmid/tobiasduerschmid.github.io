@@ -270,7 +270,7 @@
 
     function renderPlayback(time) {
       const boundary = currentScene >= 0 ? timing.scenes[currentScene].end : Infinity;
-      const checkAt = options.checkScenes.includes(currentScene) ? boundary - SECTION_END_LEAD : Infinity;
+      const checkAt = options.shouldCheck(currentScene) ? boundary - SECTION_END_LEAD : Infinity;
       // Consider crossed cues, too: a delayed animation frame must never show
       // an answer before stopping at the prediction that precedes it.
       const hold = prediction && predictionBoundaries.find(cue => cue.end > position + TIME_EPSILON
@@ -283,7 +283,7 @@
         prediction.hold({ ...hold, resumePlayback });
         return true;
       }
-      if (options.checkScenes.includes(currentScene) && time + TIME_EPSILON >= boundary - SECTION_END_LEAD) {
+      if (options.shouldCheck(currentScene) && time + TIME_EPSILON >= boundary - SECTION_END_LEAD) {
         audio.pause();
         // Keep the completed section on screen while its checkpoint is open.
         audio.currentTime = Math.max(0, boundary - 0.002);
@@ -352,7 +352,7 @@
       else status.textContent = 'Explanation shown. Narration paused.';
     }
 
-    // Volume and mute belong to the control bar (js/narration-player-controls.js).
+    // Sound and saved playback preferences belong to the shared control bar.
     const actions = {
       play() {
         if (audio.paused) play();
@@ -369,9 +369,6 @@
     });
     seek.addEventListener('input', () => seekTo(Number(seek.value)));
     sceneSelect.addEventListener('change', () => selectScene(Number(sceneSelect.value)));
-    root.querySelector('[data-setting="speed"]').addEventListener('change', (event) => {
-      audio.playbackRate = Number(event.target.value);
-    });
     if (motion) motion.addEventListener('change', () => render(position));
     // Full screen also resizes the window, so this refits the stage.
     window.addEventListener('resize', () => render(position));
@@ -426,7 +423,8 @@
       onCheck(index) {
         audio.pause();
         seekTo(timing.scenes[index].end - 0.002);
-        options.onSectionEnd(index);
+        // Explicit review remains available even when segment pauses are off.
+        options.onSectionEnd(index, true, { review: true });
       },
     });
     render(0);

@@ -248,6 +248,69 @@ info_nav_title: "My Settings"
     </fieldset>
 
     <fieldset class="settings-section">
+      <legend class="sr-only">Narration players</legend>
+      <h2 class="settings-section-title">Narration players</h2>
+      <div class="settings-list">
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Narration closed captions</p>
+            <p class="setting-description" id="setting-narration-captions-help">
+              Show captions in every narrated video, design-pattern lesson,
+              explainer, and case study. On by default. Change this here or with
+              any player's CC button. Saved with playback speed for one year in
+              the <code>sebook-narration-preferences</code> cookie.
+            </p>
+          </div>
+          <div class="setting-control">
+            <div class="setting-toggle-row">
+              <label class="switch" for="setting-narration-captions">
+                <span class="sr-only">Narration closed captions</span>
+                <input type="checkbox" id="setting-narration-captions" data-setting="narrationCaptions" data-status-target="setting-narration-captions-status" aria-describedby="setting-narration-captions-help">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-narration-captions-status" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div>
+            <label class="setting-name" for="setting-narration-speed">Narration playback speed</label>
+            <p class="setting-description" id="setting-narration-speed-help">
+              Shared by every narration player, including its audio and timed
+              visuals. Defaults to 1x. Change this here or in any player's
+              settings. Stored in <code>sebook-narration-preferences</code>.
+            </p>
+          </div>
+          <div class="setting-control">
+            <select id="setting-narration-speed" data-setting="narrationSpeed" aria-describedby="setting-narration-speed-help">{% include narration-playback-speeds.html %}</select>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Only pause for the final knowledge check</p>
+            <p class="setting-description" id="setting-narration-final-check-help">
+              Play through knowledge checks between segments and keep the last
+              check. Off by default. You can still open any check yourself to
+              review it; the separate Pause and predict setting is unchanged.
+              Shared by every narration player and stored in
+              <code>sebook-narration-preferences</code>.
+            </p>
+          </div>
+          <div class="setting-control">
+            <div class="setting-toggle-row">
+              <label class="switch" for="setting-narration-final-check">
+                <span class="sr-only">Only pause for the final knowledge check</span>
+                <input type="checkbox" id="setting-narration-final-check" data-setting="narrationFinalCheck" data-status-target="setting-narration-final-check-status" aria-describedby="setting-narration-final-check-help">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-narration-final-check-status" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="settings-section">
       <legend class="sr-only">Video playlists</legend>
       <h2 class="settings-section-title">Video playlists</h2>
       <div class="settings-list">
@@ -816,6 +879,7 @@ info_nav_title: "My Settings"
 
 <script src="{{ '/js/song-video/preferences.js' | relative_url }}"></script>
 <script src="{{ '/js/sebook-code-preferences.js' | relative_url }}"></script>
+<script src="{{ '/js/narration-preferences.js' | relative_url }}?v={{ site.asset_version }}"></script>
 <script>
 (function () {
   'use strict';
@@ -1167,6 +1231,11 @@ info_nav_title: "My Settings"
     } else if (setting === 'audioSpeed') {
       writeLS('cap_speed', target.value);
       announce('Audio speed setting saved.');
+    } else if (setting === 'narrationCaptions' || setting === 'narrationSpeed' || setting === 'narrationFinalCheck') {
+      var narrationSaved = window.NarrationPreferences.set(setting === 'narrationCaptions'
+        ? { captions: target.checked } : setting === 'narrationSpeed'
+          ? { speed: Number(target.value) } : { finalCheckOnly: target.checked });
+      announce(narrationSaved ? 'Narration preferences saved.' : 'Narration preferences changed for this page. Your browser could not save them.');
     } else if (setting === 'songSpeed') {
       var saved = window.SongPreferences.saveSpeed(Number(target.value));
       announce(saved ? 'Music video playback speed saved.' : 'Your browser could not save the music video playback speed.');
@@ -1189,6 +1258,11 @@ info_nav_title: "My Settings"
   var form = document.getElementById('settings-form');
   window.SEBookCodePreferences.subscribe(function () {
     document.getElementById('setting-code-language').value = window.SEBookCodePreferences.choose();
+  });
+  window.NarrationPreferences.subscribe(function (preferences) {
+    setCheckbox('setting-narration-captions', preferences.captions);
+    setCheckbox('setting-narration-final-check', preferences.finalCheckOnly);
+    document.getElementById('setting-narration-speed').value = String(preferences.speed);
   });
   if (form) {
     form.addEventListener('change', handleChange);

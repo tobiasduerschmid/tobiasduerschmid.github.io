@@ -421,7 +421,7 @@ and verification screenshots outside the repository.
   declared visual renderer, and owns check continuation, replay boundaries,
   roadmap and step navigation, focus, language refresh, and final song handoff.
   Every kind uses this lifecycle, including explainers without authored checks.
-- `js/narration-transport.js`: the audio clock, seeking, speed, motion,
+- `js/narration-transport.js`: the audio clock, seeking, motion,
   fullscreen, cue presentation, and print lifecycle. `mount` selects an audio
   or text-only session from the presence of authored media. Both support scene
   and cue navigation, refresh, pause, and fullscreen; audio sessions also expose
@@ -437,6 +437,29 @@ and verification screenshots outside the repository.
   While a knowledge check or decision is open, the bar steps aside: the
   checkpoint replaces the picture, keys typed in it answer it, and its own
   buttons continue or skip.
+- `js/narration-preferences.js`: the shared captions, playback-speed, and knowledge-check
+  preference for video, pattern, explainer, and case-study players and
+  `/settings/`. The `sebook-narration-preferences` cookie stores
+  `{captions: boolean, speed: number, finalCheckOnly: boolean}` for one year,
+  with `Path=/`, `SameSite=Lax`, and `Secure` on HTTPS. Defaults are captions on,
+  1x, and all knowledge checks;
+  visiting a lesson does not write a cookie. Every speed selector uses
+  `narration-playback-speeds.html` (0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x).
+  The shared control bar applies viewing preferences, including audio's current
+  and default playback rate. Choices synchronize all mounted players without
+  moving the playback position or starting audio. Returning to an open tab
+  refreshes external changes or deletion; `/cookies/` lists and deletes the
+  cookie. Invalid fields use their defaults, and blocked cookies leave the
+  current page usable. Music video and inline audio clip settings are separate.
+  **Only pause for the final knowledge check** is available in every player's
+  settings and My Settings. The player supplies `shouldCheck(index)` to the
+  transport, skipping intermediate boundaries without pausing or restarting
+  audio. Step-mode continuation and its button labels follow the same policy.
+  The last authored check remains enabled even if unchecked scenes follow it;
+  a lesson with no checks gains no pause. Explicit review through the timeline
+  or review buttons still opens any check. Prediction pauses are independent,
+  and changing this preference affects upcoming boundaries without dismissing
+  an already open check or changing quiz answers.
 - Full screen fills the screen with the player's video
   (`css/narrated-explainer.css`): the stage, or the checkpoint that replaces
   it, takes the whole surface and scrolls inside; captions and the bar

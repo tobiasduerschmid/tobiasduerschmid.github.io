@@ -74,7 +74,7 @@
 
   // Step navigation is an optional view of the same session, with or without
   // audio. It never maintains a second scene/cue position.
-  function stepControls(root, { story, checks }) {
+  function stepControls(root, { story }, shouldCheck) {
     const next = root.querySelector('[data-narration-action="next-step"]');
     const previous = root.querySelector('[data-narration-action="previous-step"]');
     const progress = root.querySelector('[data-narration-progress]');
@@ -83,7 +83,7 @@
         if (!next) return;
         previous.disabled = sceneIndex === 0 && cueIndex === 0;
         next.textContent = cueIndex + 1 < scene.cues.length ? 'Next step'
-          : checks[sceneIndex] ? 'Knowledge check'
+          : shouldCheck(sceneIndex) ? 'Knowledge check'
           : sceneIndex + 1 < story.scenes.length ? 'Next scene' : 'Finish review';
         progress.textContent = `Scene ${sceneIndex + 1} of ${story.scenes.length} · Step ${cueIndex + 1} of ${scene.cues.length}`;
       },
@@ -119,14 +119,21 @@
     // An incompletely rendered lesson still has its readable transcript.
     if (story.audio && !timing) return;
     const renderVisuals = window[root.dataset.narrationRenderer].createRenderer(root, data);
-    const steps = stepControls(root, data);
     const checkScenes = checks.flatMap((check, index) => check ? [index] : []);
+    let finalCheckOnly = false;
+    const shouldCheck = index => Boolean(checks[index]) && (!finalCheckOnly || index === checkScenes.at(-1));
+    const steps = stepControls(root, data, shouldCheck);
     const status = root.querySelector('.nja-status');
     const playButton = root.querySelector('[data-action="play"]');
     const nextStep = root.querySelector('[data-narration-action="next-step"]');
     let player;
     let study;
     let resumeAfterCheck = Boolean(story.audio);
+    window.NarrationPreferences.subscribe(preferences => {
+      if (finalCheckOnly === preferences.finalCheckOnly) return;
+      finalCheckOnly = preferences.finalCheckOnly;
+      if (player) player.refresh();
+    });
 
     function focusPlayback(resume) {
       const target = player.isFullscreen() ? root.querySelector('[data-vn-video]')
@@ -173,18 +180,18 @@
       },
     });
 
-    async function finishScene(index, resume = Boolean(story.audio)) {
+    async function finishScene(index, resume = Boolean(story.audio), { review = false } = {}) {
       resumeAfterCheck = resume;
       player.pause();
       player.dismissPrediction();
       if (study) study.close();
-      if (checks[index]) quiz.open(index);
+      if (checks[index] && (review || shouldCheck(index))) quiz.open(index);
       else if (resume && index === story.scenes.length - 1) status.textContent = 'Narration complete.';
       else await continueAfter(index, resume);
     }
 
     player = window.NarrationTransport.mount(root, {
-      storyboard: story, timing, checkScenes,
+      storyboard: story, timing, checkScenes, shouldCheck,
       render(frame) { renderVisuals(frame); steps.update(frame); if (study) study.update(frame); },
       onSectionEnd: finishScene, onSeek: quiz.close,
       canPlay: () => !quiz.isOpen() && !(study && study.isOpen()),
@@ -200,7 +207,7 @@
       button.hidden = checkScenes.length === 0;
       button.addEventListener('click', async () => {
         const index = player.currentScene();
-        if (checks[index]) await finishScene(index);
+        if (checks[index]) await finishScene(index, Boolean(story.audio), { review: true });
         else status.textContent = `${index + 1}. ${story.scenes[index].label} has no knowledge check.`;
       });
     });
