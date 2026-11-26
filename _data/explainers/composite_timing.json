@@ -1,0 +1,332 @@
+{
+  "duration": 724.39,
+  "voice": "drama3-female6",
+  "speed": 1,
+  "speech_sha256": "6b588878ebbedaf362efa67987aee316c9463ec5c2aa372e899316599b1c2d7f",
+  "scenes": [
+    {
+      "id": "intro",
+      "start": 0.0,
+      "cues": [
+        {
+          "id": "road-trip",
+          "start": 0.0,
+          "end": 15.45,
+          "speech_end": 14.9
+        },
+        {
+          "id": "try-it",
+          "start": 15.45,
+          "end": 29.64,
+          "speech_end": 29.09
+        },
+        {
+          "id": "pattern-parts",
+          "start": 29.64,
+          "end": 54.5,
+          "speech_end": 52.0
+        }
+      ],
+      "end": 54.5
+    },
+    {
+      "id": "context",
+      "start": 54.5,
+      "cues": [
+        {
+          "id": "part-whole",
+          "start": 54.5,
+          "end": 71.25,
+          "speech_end": 70.7
+        },
+        {
+          "id": "alike",
+          "start": 71.25,
+          "end": 90.48,
+          "speech_end": 89.93
+        },
+        {
+          "id": "trees",
+          "start": 90.48,
+          "end": 112.02,
+          "speech_end": 109.52
+        }
+      ],
+      "end": 112.02
+    },
+    {
+      "id": "problem",
+      "start": 112.02,
+      "cues": [
+        {
+          "id": "two-lists",
+          "start": 112.02,
+          "end": 126.13,
+          "speech_end": 125.58
+        },
+        {
+          "id": "two-loops",
+          "start": 126.13,
+          "end": 142.98,
+          "speech_end": 142.43
+        },
+        {
+          "id": "lost-order",
+          "start": 142.98,
+          "end": 157.89,
+          "speech_end": 157.34
+        },
+        {
+          "id": "client-check",
+          "start": 157.89,
+          "end": 173.28,
+          "speech_end": 172.73
+        },
+        {
+          "id": "predict-episodes",
+          "start": 173.28,
+          "end": 193.76,
+          "speech_end": 187.76
+        },
+        {
+          "id": "every-change",
+          "start": 193.76,
+          "end": 210.23,
+          "speech_end": 209.68
+        },
+        {
+          "id": "demands",
+          "start": 210.23,
+          "end": 232.43,
+          "speech_end": 229.43
+        }
+      ],
+      "end": 232.43
+    },
+    {
+      "id": "playable_role",
+      "start": 232.43,
+      "cues": [
+        {
+          "id": "shared-type",
+          "start": 232.43,
+          "end": 248.28,
+          "speech_end": 247.73
+        },
+        {
+          "id": "queue",
+          "start": 248.28,
+          "end": 263.56,
+          "speech_end": 261.06
+        }
+      ],
+      "end": 263.56
+    },
+    {
+      "id": "song_role",
+      "start": 263.56,
+      "cues": [
+        {
+          "id": "direct",
+          "start": 263.56,
+          "end": 278.65,
+          "speech_end": 278.1
+        },
+        {
+          "id": "shared",
+          "start": 278.65,
+          "end": 293.63,
+          "speech_end": 291.13
+        }
+      ],
+      "end": 293.63
+    },
+    {
+      "id": "playlist_role",
+      "start": 293.63,
+      "cues": [
+        {
+          "id": "one-list",
+          "start": 293.63,
+          "end": 309.1,
+          "speech_end": 308.55
+        },
+        {
+          "id": "duration",
+          "start": 309.1,
+          "end": 322.69,
+          "speech_end": 322.14
+        },
+        {
+          "id": "play",
+          "start": 322.69,
+          "end": 336.92,
+          "speech_end": 336.37
+        },
+        {
+          "id": "safe-add",
+          "start": 336.92,
+          "end": 354.17,
+          "speech_end": 353.62
+        },
+        {
+          "id": "transparent-add",
+          "start": 354.17,
+          "end": 371.79,
+          "speech_end": 369.29
+        }
+      ],
+      "end": 371.79
+    },
+    {
+      "id": "collaborations",
+      "start": 371.79,
+      "cues": [
+        {
+          "id": "press",
+          "start": 371.79,
+          "end": 385.94,
+          "speech_end": 385.39
+        },
+        {
+          "id": "first-song",
+          "start": 385.94,
+          "end": 407.84,
+          "speech_end": 402.84
+        },
+        {
+          "id": "recursion",
+          "start": 407.84,
+          "end": 422.45,
+          "speech_end": 421.9
+        },
+        {
+          "id": "loop",
+          "start": 422.45,
+          "end": 440.27,
+          "speech_end": 437.77
+        }
+      ],
+      "end": 440.27
+    },
+    {
+      "id": "solution",
+      "start": 440.27,
+      "cues": [
+        {
+          "id": "component",
+          "start": 440.27,
+          "end": 456.16,
+          "speech_end": 455.61
+        },
+        {
+          "id": "leaf",
+          "start": 456.16,
+          "end": 469.07,
+          "speech_end": 468.52
+        },
+        {
+          "id": "composite",
+          "start": 469.07,
+          "end": 485.76,
+          "speech_end": 485.21
+        },
+        {
+          "id": "client",
+          "start": 485.76,
+          "end": 503.26,
+          "speech_end": 500.76
+        }
+      ],
+      "end": 503.26
+    },
+    {
+      "id": "consequences",
+      "start": 503.26,
+      "cues": [
+        {
+          "id": "simple-clients",
+          "start": 503.26,
+          "end": 519.87,
+          "speech_end": 519.32
+        },
+        {
+          "id": "new-kinds",
+          "start": 519.87,
+          "end": 535.08,
+          "speech_end": 534.53
+        },
+        {
+          "id": "overly-general",
+          "start": 535.08,
+          "end": 554.27,
+          "speech_end": 553.72
+        },
+        {
+          "id": "safety",
+          "start": 554.27,
+          "end": 574.87,
+          "speech_end": 572.37
+        }
+      ],
+      "end": 574.87
+    },
+    {
+      "id": "applicability",
+      "start": 574.87,
+      "cues": [
+        {
+          "id": "fit",
+          "start": 574.87,
+          "end": 591.72,
+          "speech_end": 591.17
+        },
+        {
+          "id": "one-class",
+          "start": 591.72,
+          "end": 610.07,
+          "speech_end": 609.52
+        },
+        {
+          "id": "neighbors",
+          "start": 610.07,
+          "end": 633.29,
+          "speech_end": 630.79
+        }
+      ],
+      "end": 633.29
+    },
+    {
+      "id": "transfer",
+      "start": 633.29,
+      "cues": [
+        {
+          "id": "plan",
+          "start": 633.29,
+          "end": 659.51,
+          "speech_end": 653.51
+        },
+        {
+          "id": "episode",
+          "start": 659.51,
+          "end": 682.75,
+          "speech_end": 680.25
+        }
+      ],
+      "end": 682.75
+    },
+    {
+      "id": "summary",
+      "start": 682.75,
+      "cues": [
+        {
+          "id": "recap",
+          "start": 682.75,
+          "end": 724.39,
+          "speech_end": 721.89
+        }
+      ],
+      "end": 724.39
+    }
+  ]
+}
