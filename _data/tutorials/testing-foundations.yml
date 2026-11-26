@@ -280,7 +280,7 @@ steps:
           option_feedback:
             0: "Tests written after implementation can still check its specification. Waiting nevertheless loses feedback during the initial implementation and creates a risk of deriving expectations from existing code instead of requirements."
             1: "A later test can use an independent specification, but it cannot provide feedback during development that already happened. Derive expected results from requirements regardless of when the test is written."
-            2: "Coverage measures which lines *ran*, not whether their behavior was *checked*. A weak oracle (`assert result is not None`) hits 100% coverage and verifies almost nothing. You'll see this exact failure mode in Step 3."
+            2: "Coverage measures which lines *ran*, not whether their behavior was *checked*. A weak oracle (`assert result is not None`) hits 100% coverage and verifies almost nothing. You'll see this exact failure mode in Step 4."
             3: "Context-switching can cost time, but the larger lost opportunity is feedback during initial development. Later tests can still check the specification if their expectations are derived independently."
           explanation: |
             Tests written afterward can verify intended behavior when their expectations come from the specification.
@@ -379,7 +379,7 @@ steps:
       - Analyze numeric specs to pinpoint the boundary values where off-by-one bugs hide.
       - Create your own pytest tests from scratch — `test_` prefix, AAA shape, single assertion.
 
-      🔍 **Retrieve first.** Scan the three tests you inherited in Step 1 (`test_streaks.py`). Each test calls `streak_badge` and asserts something with `==`. Notice the *shape* of each — same structure, different inputs. You're about to write tests just like these.
+      🔍 **Answer from memory first.** Scan the three tests you inherited in Step 1 (`test_streaks.py`). Each test calls `streak_badge` and asserts something with `==`. Notice the *shape* of each — same structure, different inputs. You're about to write tests just like these.
 
       ### 📝 The shape of a pytest test
 
@@ -748,7 +748,7 @@ steps:
             budget on the *boundaries between* partitions, not the middles.
 
         - question: |
-            **(Spaced review — Step 1)** Recall the bug in `streak_badge`: `days > 100` instead of `days >= 100`. Which is the **most specific supported** classification of this bug?
+            **(Review: Step 1)** Recall the bug in `streak_badge`: `days > 100` instead of `days >= 100`. Which is the **most specific supported** classification of this bug?
           type: single
           options:
           - A type error — `days` should be a float but is being compared as an integer
@@ -1078,7 +1078,7 @@ steps:
             check at least one value; only `isinstance` checks no values at all.
 
         - question: |
-            **(Spaced review — Step 2)** A teammate writes `assert squad_name_valid("epic")` (no `is True`). The test passes against the current code. Why is this oracle still weak?
+            **(Review: Step 2)** A teammate writes `assert squad_name_valid("epic")` (no `is True`). The test passes against the current code. Why is this oracle still weak?
           type: single
           options:
             - "It is not weak — the test passes, so the oracle is doing its job"
@@ -1098,7 +1098,7 @@ steps:
             different shapes.
 
         - question: |
-            **(Spaced review — Step 1)** A passing test stays in the suite. Why?
+            **(Review: Step 1)** A passing test stays in the suite. Why?
           type: single
           options:
             - "Symmetry — every code change should ship with a matching test addition or removal"
@@ -1225,7 +1225,7 @@ steps:
       The brittle version breaks the moment `_scores` is renamed, restructured, or replaced — even if the top-player behavior is unchanged. The robust version only breaks when the **behavior itself** changes — which is exactly when you *want* it to fail.
       </details>
 
-      <details markdown="1"><summary>📊 What the experiment reveals — expand after completing step 5</summary>
+      <details markdown="1"><summary>📊 What the experiment reveals — expand after re-running the suite</summary>
 
       The rename changed the *implementation* but **not** the public behavior, yet only the robust tests survive:
 
@@ -1309,7 +1309,7 @@ steps:
 
       The **Arrange** deserves investigation: many collaborators and database records are prepared for one outcome. For a focused unit test, that may indicate too much responsibility; a broader integration scenario may legitimately need more setup.
 
-      This may be the *Excessive Setup* smell. Dependencies can require corresponding fixtures. Elaborate scaffolding is a reason to investigate both the production responsibilities and the scope of the test.
+      This may be the *Excessive Setup* smell. Dependencies can require corresponding fixtures. Elaborate setup is a reason to investigate both the production responsibilities and the scope of the test.
 
       > 🪞 **Tests are also a design tool, not just a verifier.** A large Arrange section can reveal coupling in the production code or unnecessary breadth in a test. Inspect the dependencies before deciding what to refactor.
 
@@ -1846,7 +1846,7 @@ steps:
             `cached_at`.
 
         - question: |
-            **(Spaced review — Step 3)** Which assertion is the *strongest* oracle for `compute_total([1.50, 2.00])`?
+            **(Review: Step 3)** Which assertion is the *strongest* oracle for `compute_total([1.50, 2.00])`?
           type: single
           options:
             - "`assert compute_total([1.50, 2.00]) is not None`"
@@ -1856,7 +1856,7 @@ steps:
           correct_index: 3
           option_feedback:
             0: "`is not None` is the canonical *weak oracle*. Any non-`None` return passes — `0.0`, `\"banana\"`, `[]`. It tells you the function returned *something*, not whether it returned *the right thing*."
-            1: "Type checks catch type errors only. The function could return `42.0` (wrong sum) and `isinstance` is happy. Step 3 named this the *medium-strength* oracle — better than `is not None`, still wrong-value-blind."
+            1: "Type checks catch type errors only. The function could return `42.0` (wrong sum) and `isinstance` is happy. Step 3 called this the *type* flavor of weak oracle."
             2: "`> 0` is a property check, not a value check. The function could return `0.01`, `42.0`, `1000000.0` — all positive, all wrong. Property assertions are useful when you genuinely don't know the exact expected value, but for a deterministic function whose answer you can compute, pin the value."
             3: "Exactly. `== 3.50` is the only strong oracle here — any wrong return value (`0.0`, `1.5`, `42.0`) would fail it. The other options accept large families of wrong answers."
           explanation: |
@@ -1865,7 +1865,7 @@ steps:
             float — exactly the *Liar test* anti-pattern from Step 3.
 
         - question: |
-            **(Spaced review — Step 2)** For a function `charge_fee(amount)` with rule *"fee is 2% if amount is 100 or more, else free"*, which test pair exposes the most bugs?
+            **(Review: Step 2)** For a function `charge_fee(amount)` with rule *"fee is 2% if amount is 100 or more, else free"*, which test pair exposes the most bugs?
           type: single
           options:
             - "`amount = 50` and `amount = 200` — one value on each side, well away from the boundary"
@@ -1884,7 +1884,7 @@ steps:
             the bugs that Boundary Value Analysis is designed to expose.
 
         - question: |
-            **(Spaced review — Step 2)** A test reads `assert is_age_valid(18) == True`. A colleague says to use `is True` instead. What is the reason?
+            **(Review: Step 2)** A test reads `assert is_age_valid(18) == True`. A colleague says to use `is True` instead. What is the reason?
 
             ```python
             # Option A (current):
@@ -1940,7 +1940,7 @@ steps:
 
       Write all four sentences *before* expanding the disclosure below — the comparison is only useful if you retrieved first, not read first.
 
-      Once you've written your four sentences, expand the box below and compare. If your version names the same ideas in different words, you've consolidated the schema. If a step is fuzzy, that's where to revisit.
+      Once you've written your four sentences, expand the box below and compare. If your version names the same ideas in different words, you have a solid mental model. If a step is fuzzy, that's where to revisit.
 
       <details markdown="1"><summary>📖 Compare with our recap</summary>
 
@@ -1991,7 +1991,7 @@ steps:
 
       🪞 **Recalibrate**: Rate your confidence in designing a test suite from scratch, then compare that feeling with evidence: can you explain which bug each test catches? Confidence is a self-report, not a measure of learning. Use the optional new practice problem below to check independent performance.
 
-      🧭 **Threshold check** — compare then and now: look back at the first test you encountered in Step 1. What did that test *specify* about the function? Now look at the tests you just wrote. What do they *specify*? Write one sentence naming what changed in how you think about what a test is *for*. Then explain *why* that shift matters for the next function you write — what will you do differently tomorrow that you wouldn't have done before this tutorial?
+      🧭 **Compare Step 1 and now**: look back at the first test you encountered in Step 1. What did that test *specify* about the function? Now look at the tests you just wrote. What do they *specify*? Write one sentence naming what changed in how you think about what a test is *for*. Then explain *why* that shift matters for the next function you write — what will you do differently tomorrow that you wouldn't have done before this tutorial?
 
       ### 🪞 Two independent dimensions of test design
 
@@ -2025,7 +2025,7 @@ steps:
       | Takes a numeric input with a valid range (`min ≤ x ≤ max`) | **Boundary value analysis** — test `min-1, min, max, max+1` | Step 2 |
       | Takes an input from a small set of categories (`"student"`, `"family"`, …) | **Equivalence partitioning** — one test per category | Step 2 + Step 5 |
       | Returns a value (vs. mutates state) | **Strong-oracle equality** — `assert result == expected` | Step 3 |
-      | Returns a float computed by multiplication/division | **`pytest.approx`** — `assert result == pytest.approx(expected)` to avoid floating-point rounding surprises | Step 3 + real projects |
+      | Returns a float computed by multiplication/division | **`pytest.approx`** — `assert result == pytest.approx(expected)` to avoid floating-point rounding surprises | Step 3 + Step 5 |
       | Should raise an exception for certain inputs | **`pytest.raises`** — `with pytest.raises(ValueError): func(bad_input)` | Next tutorial |
       | Returns a dict / record | **Field-by-field equality on spec-mandated fields only** — `assert result["price"] == 5` for each field the spec names. Don't full-equality the whole dict (over-specification: it breaks when an unrelated field gets added) | Step 4 |
       | Returns a list | **Collection equality** — `assert result == [1, 2, 3]`; for order-independent: `assert sorted(result) == sorted(expected)` | Step 3 + real projects |
@@ -2071,7 +2071,7 @@ steps:
       | **`pytest-cov`** (coverage) | Measuring *which* lines of production code your tests execute | When you suspect a partition is missing — coverage shows untested branches. (Reminder from Step 4: coverage ≠ quality.) |
       | **Property-based testing** (`hypothesis`) | Auto-generating thousands of inputs to find edge cases your boundary tests missed | When the input space is too large for case-by-case enumeration. |
 
-      Next pedagogical step: the **Test-Driven Development (TDD)** tutorial — where you write the test *before* the production code, and let failing tests drive the design. Everything from this tutorial (oracle strength, partitions, behavior testing) becomes a foundation that TDD layers a discipline on top of.
+      Next step: the **Test-Driven Development (TDD)** tutorial — where you write the test *before* the production code, and let failing tests drive the design. Everything from this tutorial (oracle strength, partitions, behavior testing) becomes a foundation that TDD layers a discipline on top of.
 
       For a different next step — the same testing concepts applied to a *whole React app through a real browser* — see the **[Playwright Tutorial](/SEBook/tools/playwright-tutorial)**. It picks up exactly where this one leaves off: AAA becomes navigate-interact-assert, partitions become user-path scenarios, oracle strength shows up in `toHaveText` vs `toBeVisible`, and the *behavior vs implementation* concept gets a tactile workout against UI refactors.
 
@@ -2199,7 +2199,7 @@ steps:
       questions:
 
         - question: |
-            **(Spaced review — all steps)** A function ships free for orders **≥ $50** and charges $5 otherwise. Which test pair is the *single most important*?
+            **(Review: Step 2)** A function ships free for orders **≥ $50** and charges $5 otherwise. Which test pair is the *single most important*?
           type: single
           options:
             - "`order = $25` and `order = $200` — one in the middle of each partition"
@@ -2258,7 +2258,7 @@ steps:
             to a new function — no peeking at the implementation required.
 
         - question: |
-            **(Spaced review — Step 4)** You rename a private attribute `_cache` to `_store` in a class without changing any public method behavior. Three tests break immediately.
+            **(Review: Step 4)** You rename a private attribute `_cache` to `_store` in a class without changing any public method behavior. Three tests break immediately.
 
             What does this tell you?
           type: single
