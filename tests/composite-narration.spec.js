@@ -1,7 +1,7 @@
 const { loadStory } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
-const { openPlayerSettings, seekNarration, setSiteTheme, serveAudioRanges } = require('./helpers/narration-player');
+const { openPlayerSettings, setSiteTheme, serveAudioRanges } = require('./helpers/narration-player');
 const { readFileSync } = require('node:fs');
 const yaml = require('js-yaml');
 
@@ -14,12 +14,19 @@ const url = '/SEBook/designpatterns/composite.html';
 const player = page => page.getByRole('region', { name: story.title, exact: true });
 const sceneIndex = id => story.scenes.findIndex(scene => scene.id === id);
 const questionsOf = id => quizzes[id].questions || [quizzes[id]];
+// Pattern lessons label their slider "Animation position"; video narrations
+// use the shared seekNarration helper with "Narration position".
+async function seekTo(page, time) {
+  const animation = player(page);
+  await animation.getByRole('slider', { name: 'Animation position' }).fill(String(Number(time.toFixed(2))));
+  await expect.poll(() => animation.locator('audio').evaluate(audio => audio.currentTime)).toBeCloseTo(time, 1);
+}
 const cueMiddle = (id, cueId) => {
   const scene = story.scenes[sceneIndex(id)];
   const cueTiming = timing.scenes[sceneIndex(id)].cues[scene.cues.findIndex(cue => cue.id === cueId)];
   return (cueTiming.start + cueTiming.end) / 2;
 };
-const seek = (page, id, cueId) => seekNarration(player(page), cueMiddle(id, cueId));
+const seek = (page, id, cueId) => seekTo(page, cueMiddle(id, cueId));
 const titleOf = row => (row.kind === 'episode' ? `${row.show}: ${row.name}` : row.name);
 const rowsOf = panel => (['added', 'uncounted'].includes(panel.episode) ? [...library.rows, ...library.episode] : library.rows);
 // The live library of the scene on screen.
@@ -51,7 +58,7 @@ test('each scene names its part of the pattern description', async ({ page }) =>
   await page.goto(url);
   const animation = player(page);
   for (const [index, scene] of story.scenes.entries()) {
-    await seekNarration(animation, timing.scenes[index].start + 0.5);
+    await seekTo(page, timing.scenes[index].start + 0.5);
     const parts = animation.locator('.nja-scene:visible').getByRole('list', { name: 'Part of the pattern description' });
     await expect(parts.getByRole('listitem')).toHaveText(['Context', 'Problem', 'Solution', 'Consequences']);
     await expect(parts.locator('[aria-current="step"]')).toHaveText(scene.part ? [scene.part] : []);
@@ -188,7 +195,7 @@ test('narration stops inside the silence before each check and resumes only when
   for (const [index, scene] of story.scenes.entries()) {
     const end = timing.scenes[index].end;
     const speechEnd = timing.scenes[index].cues.at(-1).speech_end ?? end - scene.cues.at(-1).pause_after;
-    await seekNarration(animation, end - 0.9);
+    await seekTo(page, end - 0.9);
     await page.evaluate(() => { window.pausedAt = null; });
     await animation.getByRole('button', { name: 'Play narration' }).click();
     const questions = questionsOf(scene.id);
