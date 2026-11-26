@@ -1,0 +1,100 @@
+# Key points for the printable notes of the Layers video narration
+# (docs/narration-format.md, "Editable lesson notes and PDF export"). One entry
+# per cue, keyed by <scene id>-<cue id>: one to four short bullets in note form,
+# with **bold** key terms. They live apart from the script, so editing a bullet
+# never changes the narration's audio fingerprint.
+intro-jam:
+  - "**Example:** Pearl Dash, a team's rooftop platformer"
+  - "Built in one game-jam weekend, on laptops"
+intro-console:
+  - "A publisher wants it on a **handheld console**"
+  - "Different graphics chip, buttons, and sound system"
+  - "Next: a second game on the same tech"
+intro-team:
+  - "Four people edit the same files"
+  - "Changes keep breaking each other's work"
+tangle-update:
+  - "One function mixes game rules, physics, and device calls"
+  - "Laptop keyboard, audio driver, and graphics library, line by line"
+tangle-predict_port:
+  - "**Predict:** to port the game, which of its 40 files change?"
+tangle-ripple:
+  - "Device calls sit in nearly every file: 312 calls in 38 files"
+  - "Porting means rewriting; a second game starts from zero"
+tangle-mud:
+  - "**Big ball of mud:** everything uses everything"
+  - "The fix: a strict rule on which code may use which"
+stack-levels:
+  - "The same feature exists at several **levels of abstraction**"
+  - "Jump, then physics, then graphics, then device bytes"
+stack-layers:
+  - "**Layer:** modules at one level of abstraction, serving the layer above"
+  - "Pearl Dash: game rules, engine, platform, drivers"
+stack-translate:
+  - "Each layer turns one request into several simpler ones below"
+  - "Each layer is a **virtual machine** for the layer above"
+allowed-uses:
+  - "**Allowed-to-use** relation: decided before anyone writes an import"
+  - "A **uses** B: A is correct only if B is present and correct"
+allowed-rules:
+  - "**Rule 1:** every module belongs to exactly one layer"
+  - "**Rule 2:** use only your own layer or the one directly below"
+  - "**Rule 3:** two layers at least, typically three or more"
+  - "So: **never up**"
+allowed-predict_upward:
+  - "**Predict:** may the engine import the game's score module? At what cost?"
+allowed-upward_cost:
+  - "An **upward use** ties the engine to this one game"
+  - "Two layers depending on each other form a **cycle**"
+callbacks-callback:
+  - "The engine defines a **collision listener**; the game registers a handler"
+  - "The engine calls whatever was registered, unaware of Pearl Dash"
+callbacks-not_uses:
+  - "A **callback** sends control up at run time"
+  - "The dependency still points down: game uses the listener interface"
+relaxed-strictness:
+  - "**Strict layering:** only the layer directly below"
+  - "**Relaxed layering:** any lower layer"
+  - "**Layer bridging:** a skip in a strict design, documented as an exception"
+relaxed-tiers:
+  - "**Layers** organize code (a module view)"
+  - "**Tiers** are separate running processes, like a game and its server; layers run together"
+port-predict_console:
+  - "**Predict:** which layers change for the console, and which stay?"
+port-portability:
+  - "Only the bottom two: a new platform layer, same interface"
+  - "**Portability** (promoted): device details live in the lowest layers"
+port-modify_reuse:
+  - "**Modifiability** (promoted): swap a layer's insides behind its interface"
+  - "**Reusability** (promoted): a second game shares the lower layers"
+port-everyday:
+  - "Network stacks are layered: application, transport, internet, link"
+  - "Apps work over Wi-Fi, cable, or cellular; only the link differs"
+port-team_test:
+  - "Layers split the work among teammates"
+  - "**Testability:** test game rules on a fake engine"
+costs-overhead:
+  - "60 frames/s gives about 16.7 ms per frame"
+  - "Each layer translates and copies: **performance** (inhibited)"
+costs-bridge:
+  - "A bridge to the laptop's driver restores the frame rate"
+  - "But that code only runs on the laptop: speed traded for portability"
+costs-upfront:
+  - "**Up-front cost:** choosing levels, designing interfaces, keeping the rules"
+  - "Worth it for code that must live on several devices for years"
+leaks-leak:
+  - "Same interface, but the console draws small images more slowly"
+  - "An interface includes the **timing** layers above rely on"
+leaks-granularity:
+  - "Too few layers: a port reaches deep inside"
+  - "Too many: extra hand-offs and edits on many floors"
+  - "Split where things change for different reasons, at different speeds"
+summary-recap_problem:
+  - "Mud: rules and device calls mixed, so porting rewrote everything"
+  - "Layers: grouped by abstraction, each a machine for the one above"
+summary-recap_rules:
+  - "One layer per module; use only downward; never up"
+  - "News goes up through callbacks; layers are code, tiers are processes"
+summary-recap_tradeoff:
+  - "Promoted: portability, modifiability, reusability"
+  - "Inhibited: performance and up-front design effort"

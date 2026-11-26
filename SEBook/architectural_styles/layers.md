@@ -6,6 +6,10 @@ layout: sebook
 
 # Overview
 
+The narrated lesson follows a student team porting its game to a handheld console, from a ball of mud to the rules of the layered style and the trade-offs they bring. The sections below go deeper.
+
+{% include narration.html topic="layered_style" %}
+
 ## The Essence of Layering
 Of all the structural paradigms in software engineering, the *layered architectural style* is arguably the most ubiquitous and historically significant. Tracing its roots back to Edsger Dijkstra’s 1968 design of the T.H.E. operating system, layering introduced the revolutionary idea that software could be structured as a sequence of abstract virtual machines. 
 

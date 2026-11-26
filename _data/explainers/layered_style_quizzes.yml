@@ -1,0 +1,276 @@
+# One knowledge check per section, from the intro on: each question puts the
+# section's central idea to work on a new system, not Pearl Dash, and its
+# distractors are the wrong reasoning a partial understanding produces,
+# phrased in the lesson's own words so the key never stands out by
+# vocabulary. Every key, and every reason to reject a distractor, is said in
+# the narration before its check. The player, print, and notes views all show
+# the options in this order, so keys sit in irregular positions. The summary
+# asks several questions, about one new system (a music streaming app), under
+# `questions`.
+intro:
+  question: >-
+    A campus radio app's team gets three requests. Which one is a port, like moving Pearl Dash to the
+    handheld console?
+  options:
+    - Running the app on smart speakers with no screen and a different audio system
+    - Building a podcast app on the radio app's existing audio code
+    - Stopping teammates from breaking each other's changes in shared files
+  correct_index: 0
+  explanation: >-
+    A port moves the same program onto different hardware, here a different audio system and no
+    screen, like Pearl Dash's console with its own graphics chip, buttons, and sound system.
+  option_feedback:
+    1: >-
+      Building a second product on the same code is reuse, like the publisher's second game on
+      Pearl Dash's tech. A port runs the same app on a different device.
+    2: >-
+      That's the team problem from Pearl Dash: everyone editing the same files at night. A port is
+      about running on a different device.
+tangle:
+  question: >-
+    A fitness app's 25 workout screens each call the phone's step-sensor API directly. The team moves
+    the app to a smartwatch whose sensor API is different. What does this tangle force?
+  options:
+    - Plugging the watch's sensor API in underneath the screens
+    - Rewriting the rule that turns sensor readings into steps
+    - Editing each of the 25 screens that call the phone's API
+  correct_index: 2
+  explanation: >-
+    When device calls are sprinkled through every file, a device change touches every file that
+    makes them, like the 312 graphics calls spread over 38 of Pearl Dash's files.
+  option_feedback:
+    0: >-
+      The watch brings its own sensor API, but every screen still calls the phone's API by name, so
+      each screen has to change too.
+    1: >-
+      The step rule doesn't depend on which device measures steps. What breaks is every screen that
+      calls the phone's API directly.
+stack:
+  question: >-
+    A ride-sharing app has fare rules, a routing service that measures each trip on the map, and a
+    module that wraps the phone's location API. Arranged as layers, which goes in the top layer?
+  options:
+    - The location module, since everything else builds on location
+    - The fare rules, since they're furthest from the hardware
+    - The routing service, since the other two connect through it
+  correct_index: 1
+  explanation: >-
+    Layers are ordered by level of abstraction. The business's own ideas, like fares, sit on top, the
+    routing service below them, and the code closest to the device, like the location module, at the
+    bottom, as Pearl Dash's drivers do.
+  option_feedback:
+    0: >-
+      Code close to the device sits at the bottom of the stack, like Pearl Dash's drivers. Each layer
+      above speaks a more abstract language than the location module.
+    2: >-
+      Sitting between the other two puts the routing service in the middle, not on top: the fare
+      rules use it, the way Pearl Dash's game rules use the engine.
+allowed:
+  question: >-
+    A strictly layered banking app has Screens on top, then Services, then Data access, then the
+    database driver. Which dependency breaks the style's rules?
+  options:
+    - Services calls Data access to load an account
+    - Data access imports a Screens helper to show an error dialog
+    - Screens calls Services to transfer money
+  correct_index: 1
+  explanation: >-
+    No layer may use a layer above it. Data access importing a Screens helper is an upward use: the
+    lower layer would depend on this one app's screens, and the two layers would form a cycle.
+  option_feedback:
+    0: >-
+      Services uses the layer directly below it, which is exactly what strict layering allows.
+    2: >-
+      Screens uses the layer directly below it, which is exactly what strict layering allows.
+callbacks:
+  question: >-
+    A weather app's sensor layer sits below its display layer and must tell the display about each
+    new reading. Which design keeps the layering intact?
+  options:
+    - The sensor layer defines a listener, and the display registers a handler
+    - The sensor layer imports the display module and calls refresh()
+    - The display layer moves below the sensor layer
+  correct_index: 0
+  explanation: >-
+    The lower layer defines what it can report, and the upper layer hands it a handler at startup.
+    Control travels up at run time, but the dependency still points down.
+  option_feedback:
+    1: >-
+      Importing the display module is an upward use: the sensor layer would depend on this one
+      display, and the layers would form a cycle.
+    2: >-
+      Layers are ordered by abstraction, and the display is more abstract than a sensor. A callback
+      sends the news up without reordering the layers.
+relaxed:
+  question: >-
+    A video app's architects let each layer use only the layer directly below, except for one call
+    from the top layer straight to the codec layer, which they record as an exception. What does this
+    describe?
+  options:
+    - Relaxed layering, since one layer skips another
+    - A broken layering, since no layer may ever skip one
+    - Strict layering with one layer bridge
+  correct_index: 2
+  explanation: >-
+    Where only the next layer down is allowed, a recorded skip is a layer bridge. The design stays
+    strict, with one documented exception, and the call still points down.
+  option_feedback:
+    0: >-
+      Relaxed layering lets every layer use any lower layer. Here only the next layer down is allowed,
+      with one recorded exception: a bridge in a strict design.
+    1: >-
+      A strict design may allow a few skips, each documented as an exception. Only a use that goes up
+      is never allowed.
+port:
+  question: >-
+    A layered smart thermostat has Comfort rules on top, then Control, then a Hardware layer, then
+    sensor drivers. It moves to a new sensor chip. Which layer does the team rewrite?
+  options:
+    - The Hardware layer, on top of the new chip's drivers
+    - The Comfort rules, since they decide based on temperatures
+    - All four layers, since temperatures pass through each one
+  correct_index: 0
+  explanation: >-
+    Device details live in the lowest layers. The team writes a new Hardware layer with the same
+    interface on the new drivers, and the layers above never notice, as Pearl Dash's game rules
+    didn't on the console.
+  option_feedback:
+    1: >-
+      The Comfort rules ask Control for temperatures and never see the chip, so a new chip doesn't
+      touch them.
+    2: >-
+      Each layer uses only the interface of the layer below. As long as the Hardware layer keeps its
+      interface, the layers above stay exactly as they are.
+costs:
+  question: >-
+    A layered video-call app sends every video frame through five layers and misses its latency goal.
+    A developer lets the video code call the operating system's camera API directly, skipping the
+    layers between. What does the team gain and lose?
+  options:
+    - It gains speed, and loses nothing, since the call still points down
+    - It gains speed on that path and loses portability there
+    - It gains speed but creates a cycle between the two layers
+  correct_index: 1
+  explanation: >-
+    Skipping layers saves the time each layer spends translating and copying data, but the video code
+    now depends on one camera API and must be rewritten for any device with a different one.
+  option_feedback:
+    0: >-
+      Pointing down keeps the layers free of cycles, but the bridged code now depends on one specific
+      camera API, so it must be rewritten for devices with a different one.
+    2: >-
+      A cycle needs a use that goes up. This call points down; what it costs is portability, since
+      the video code now depends on one camera API.
+leaks:
+  question: >-
+    A layered music app's storage layer is replaced by a cloud version with the same interface, but
+    each read now takes 200 milliseconds instead of 2, and playlists lag. What does this show?
+  options:
+    - The playlist layer must be rewritten, since layers no longer isolate change
+    - Nothing about layering, since an interface never covers speed
+    - The layers above relied on fast reads, which no function name shows
+  correct_index: 2
+  explanation: >-
+    An interface is more than its function names; it includes the timing the layers above rely on.
+    Same names, slower behavior, and the change leaks through, like the stuttering pearl storm.
+  option_feedback:
+    0: >-
+      The layers above need storage that keeps the timing they rely on, not a rewrite: every function
+      name still holds.
+    1: >-
+      Timing is part of what the layers above rely on, so it belongs to the interface, even though no
+      function name shows it.
+summary:
+  questions:
+    - question: >-
+        Before it was layered, a music streaming app called the phone's audio API directly from 30
+        of its files. Why would moving it to a car's dashboard system have been so expensive?
+      options:
+        - The 30 files' rules for picking the next song would change in a car
+        - Each of the 30 files names the phone's audio API and must be edited
+        - The car's audio API would have to be written by the team
+      correct_index: 1
+      explanation: >-
+        With device calls sprinkled through the code, a device change touches every file that makes
+        them, like Pearl Dash's graphics calls in 38 of its 40 files.
+      option_feedback:
+        0: >-
+          Picking the next song doesn't depend on the device. The cost comes from the 30 files that
+          call the phone's audio API directly.
+        2: >-
+          The car comes with its own audio API, as the console came with its drivers. The cost is in
+          the 30 files that call the phone's API directly.
+    - question: >-
+        In the layered music app, which layer should hold the code that decides which song plays
+        next?
+      options:
+        - The platform layer, beside audio output and the network
+        - Every layer, so each can decide quickly
+        - The top layer, with the listening features such as playlists
+      correct_index: 2
+      explanation: >-
+        Choosing the next song is a listening idea, the most abstract kind of code, so it belongs in
+        the top layer. Every module belongs to exactly one layer.
+      option_feedback:
+        0: >-
+          The platform layer offers device-level services like audio output; deciding what to play
+          is a higher, more abstract idea.
+        1: >-
+          Every module belongs to exactly one layer; spreading one decision over all of them breaks
+          that rule.
+    - question: >-
+        The music app's playback engine, below the listening layer, must tell the playlist screen
+        that a song has ended. What keeps the layers intact?
+      options:
+        - The engine defines a "song ended" listener that the listening layer registers
+        - The engine imports the playlist screen and calls next_song()
+        - The playlist screen moves into the engine's layer, so no layer is crossed
+      correct_index: 0
+      explanation: >-
+        The lower layer defines what it can report, and the upper layer registers a handler, so
+        control travels up while the dependency still points down.
+      option_feedback:
+        1: >-
+          Importing the playlist screen is an upward use: the engine would depend on this one app
+          and could no longer be reused.
+        2: >-
+          Layers are ordered by abstraction, and the playlist screen is a listening feature, more
+          abstract than the engine. A callback sends the news up without moving anything.
+    - question: >-
+        The layered music app has a listening layer on top, a playback engine, and a platform layer
+        for audio output, the screen, and the network. It moves to a car's dashboard system with its
+        own audio and display APIs. With strict layering, what changes?
+      options:
+        - The listening layer, since songs now play through the car's speakers
+        - Every layer, since the music's audio passes through all of them
+        - A new platform layer with the same interface, on the car's APIs
+      correct_index: 2
+      explanation: >-
+        Device details live in the lowest layers, so the team writes a new platform layer with the
+        same interface on the car's APIs, and the layers above don't change, as Pearl Dash's game
+        rules didn't on the console.
+      option_feedback:
+        0: >-
+          The listening features ask the engine for songs and never see the car's speakers, so the
+          move doesn't touch them.
+        1: >-
+          Each layer uses only the interface below it. A platform layer with the same interface keeps
+          every layer above unchanged.
+    - question: >-
+        To start songs faster, the music app's team lets the listening layer call the phone's audio
+        API directly, skipping the engine and platform layers. What does that cost?
+      options:
+        - It ties that code to one audio API, costing portability
+        - Nothing, since it only skips layers going down
+        - The listening layer becomes a separate tier
+      correct_index: 0
+      explanation: >-
+        A bridge buys speed but ties that code to one audio API, so it must change on any device with
+        a different one: portability traded for speed.
+      option_feedback:
+        1: >-
+          Skipping down keeps the layers free of cycles, but it isn't free: the bridged code now
+          depends on one specific audio API.
+        2: >-
+          Tiers are separate running processes; a layer calling an audio API directly is still part of
+          the same app.

@@ -1,0 +1,117 @@
+/*
+ * The Layers narration's own objects on its animated stage
+ * (js/video-narration/layered-style-kit.js), loaded only inside its frame
+ * after the wall kit and the architecture kit. Floors, devices, and readouts
+ * are paper or devices with their own inks, the same in both modes; the
+ * building's section lines and the ball of mud are drawn with the stage's
+ * --vn-* tokens, so they follow the site's light or dark mode. Readable text
+ * is at least 20px on the 960x540 stage; uppercase micro-labels at least 17px.
+ */
+
+/* A layer as a floor of the building: its name over chips naming its parts. */
+.ls-floor {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  box-sizing: border-box;
+  padding: 6px 14px;
+  border-left: 8px solid #1e4f9c;
+  border-radius: 8px;
+  background: #fdfbf3;
+  color: #0b0f1a;
+  box-shadow: var(--vn-paper-shadow);
+}
+.ls-floor-name { font-size: 22px; font-weight: 900; line-height: 1.15; white-space: nowrap; }
+.ls-floor-items { display: flex; flex-wrap: wrap; gap: 6px; }
+.ls-chip { padding: 0 8px; border-radius: 6px; background: #e3e9f5; color: #0b0f1a; font-size: 20px; font-weight: 700; line-height: 26px; white-space: nowrap; }
+.ls-floor.is-same { background: #c4f5d3; }
+.ls-floor.is-new { background: #fff1ad; }
+.ls-floor.is-changed { background: #ffd6dc; }
+.ls-floor.is-lit { outline: 5px solid var(--vn-lit); outline-offset: 3px; }
+/* Thin floors in the too-many building, and the one wide floor in the too-few one. */
+.ls-floor--thin { padding: 2px 12px; }
+.ls-floor--thin .ls-floor-name { font-size: 20px; }
+.ls-floor--wide { border-left-color: #b42318; }
+
+/* The building in section: roof, walls, and hatched ground, in sheet ink. */
+.ls-frame { position: absolute; }
+.ls-frame-art { display: block; width: 100%; height: 100%; overflow: visible; }
+.ls-frame-line { fill: none; stroke: var(--vn-line); stroke-width: 3; stroke-linejoin: round; }
+.ls-frame-ground { stroke: var(--vn-line); stroke-width: 4; }
+.ls-frame-hatch { stroke: var(--vn-line); stroke-width: 2; }
+
+/* Pearl Dash on a device: the device is dark plastic with its own inks. */
+.ls-device { position: absolute; box-sizing: border-box; color: #f5f7fb; }
+.ls-device--laptop { padding: 14px 14px 0; border-radius: 16px 16px 0 0; background: #1b2340; }
+.ls-device--console { padding: 16px 92px; border-radius: 40px; background: #2a3358; box-shadow: var(--vn-paper-shadow); }
+.ls-screen { position: relative; overflow: hidden; aspect-ratio: 400 / 220; border-radius: 6px; background: #0f1a3d; }
+.ls-scene-art { display: block; width: 100%; height: 100%; }
+.ls-scene-sky { fill: #12204a; }
+.ls-scene-moon { fill: #f3ecd2; }
+.ls-scene-roofs { fill: #2c3a6b; stroke: #8fa4d8; stroke-width: 2; }
+.ls-scene-pearl { fill: #3b2416; stroke: #f0e0c8; stroke-width: 2.5; }
+.ls-squirrel-tail { fill: #c97a3d; stroke: #3b1e08; stroke-width: 2.5; stroke-linejoin: round; }
+.ls-squirrel-body { fill: #b5652d; stroke: #3b1e08; stroke-width: 2.5; stroke-linejoin: round; }
+.ls-squirrel-eye { fill: #0b0f1a; }
+.ls-squirrel-leg { stroke: #3b1e08; stroke-width: 4; stroke-linecap: round; }
+.ls-hud {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  padding: 2px 10px;
+  border-radius: 6px;
+  background: #0b0f1a;
+  color: #fdfbf3;
+  font-size: 20px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.ls-hud--fps { left: auto; right: 8px; }
+.ls-hud--fps.is-bad { background: #ffd6dc; color: #7a1526; }
+.ls-laptop-base { display: block; height: 22px; margin: 0 -40px; border-radius: 0 0 14px 14px; background: #2a3358; }
+.ls-pad { position: absolute; top: 50%; display: grid; place-items: center; width: 56px; height: 56px; margin-top: -28px; border-radius: 50%; background: #1b2340; color: #9fb3e6; }
+.ls-pad svg { width: 34px; height: 34px; }
+.ls-pad--dpad { left: 18px; }
+.ls-pad--buttons { right: 18px; background: radial-gradient(circle at 35% 35%, #ff8a99 0 9px, transparent 10px), radial-gradient(circle at 65% 65%, #7ee787 0 9px, transparent 10px), #1b2340; }
+
+/* Forty source files; red ones must change. */
+.ls-files { position: absolute; display: grid; }
+.ls-file { box-sizing: border-box; border: 3px solid #4a5578; border-radius: 4px 12px 4px 4px; background: #fdfbf3; }
+.ls-file.is-red { border-color: #b42318; background: #ffb3bd; }
+
+/* A ball of mud, in sheet ink. */
+.ls-mud { position: absolute; }
+.ls-mud-art { display: block; width: 100%; height: 100%; overflow: visible; }
+.ls-mud-line { fill: none; stroke: var(--vn-line); stroke-width: 3; stroke-dasharray: 1; }
+.ls-mud-dot { fill: #fdfbf3; stroke: var(--vn-line); stroke-width: 3; }
+
+/* One frame's time against its budget. */
+.ls-bar { position: absolute; box-sizing: border-box; padding: 10px 16px 12px; border-radius: 12px; background: #fdfbf3; color: #0b0f1a; box-shadow: var(--vn-paper-shadow); }
+.ls-bar-words { display: flex; justify-content: space-between; gap: 12px; margin: 0 0 8px; font-size: 22px; }
+.ls-bar-words b { font-weight: 900; }
+.ls-bar-value { font-weight: 800; white-space: nowrap; }
+.ls-bar-track { position: relative; display: block; height: 26px; border: 3px solid #4a5578; border-radius: 8px; background: #e6ebf6; }
+.ls-bar-fill { display: block; width: 0; height: 100%; border-radius: 5px; background: #2f7d4f; }
+.ls-bar-fill.is-over { background: #b42318; }
+.ls-bar-budget { position: absolute; top: -8px; bottom: -8px; width: 0; border-left: 3px dashed #0b0f1a; }
+.ls-bar-budget-label { display: block; margin-top: 6px; color: #3a4660; font-size: 17px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* A socket the engine defines, so the game can plug a handler in. */
+.ls-socket {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 3px dashed #1e4f9c;
+  border-radius: 12px;
+  background: #e8f1ff;
+  color: #0b1f3a;
+}
+.ls-socket-plug { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%; background: #1e4f9c; color: #fff; }
+.ls-socket-plug svg { width: 24px; height: 24px; }
+.ls-socket-words { display: flex; flex-direction: column; font-size: 20px; line-height: 1.25; }
+.ls-socket-words b { font-weight: 800; }

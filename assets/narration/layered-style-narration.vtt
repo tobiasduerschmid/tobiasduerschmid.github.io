@@ -1,0 +1,125 @@
+WEBVTT
+
+intro-1
+00:00:00.000 --> 00:00:19.790
+It's three a.m. on the last night of a campus game jam. Your team's game, Pearl Dash, is finally fun: a squirrel sprints across rooftops, double-jumps over gaps, and grabs runaway boba pearls before sunrise. You submit with four minutes to spare, and it wins Best Game.
+
+intro-2
+00:00:19.790 --> 00:00:36.860
+Monday, an email: a game publisher wants Pearl Dash on its handheld console by spring. Different graphics chip, buttons instead of a keyboard, a different sound system. And the publisher's next question: could your team build a second game on the same tech by summer?
+
+intro-3
+00:00:36.860 --> 00:00:55.940
+There's also the team. Four of you edit the same files: the artist swaps in animations, the gameplay programmer tunes jumps, someone fixes a sound glitch, and every night, somebody's change breaks somebody else's. You open the code to see what porting will take.
+
+tangle-1
+00:00:55.940 --> 00:01:14.350
+Here's how the squirrel jumps. In one function, the code reads the laptop's space bar, sets the jump speed, plays a sound through the laptop's audio driver, moves the squirrel by its speed, and draws it with the laptop's graphics library. Game rules and device calls, line by line.
+
+tangle-2
+00:01:14.350 --> 00:01:31.390
+Every one of the game's forty files looks like this. So predict: to port Pearl Dash to the console, which files must change? Only the ones about graphics, sound, and input, or nearly all of them?
+
+tangle-3
+00:01:31.390 --> 00:01:49.120
+Nearly all of them. Device calls are sprinkled through every file, from the pearl counter to the pause menu. A search for the graphics library finds three hundred and twelve calls in thirty-eight files. Porting means rewriting the game, and the second game would start from zero.
+
+tangle-4
+00:01:49.120 --> 00:02:07.860
+Architects call this shape a big ball of mud: everything uses everything, and nobody can say what depends on what. It's what you get by default, under a deadline. The fix is a structure with one strict rule about who may use whom. Let's build it.
+
+stack-1
+00:02:07.860 --> 00:02:25.970
+Look at that jump again, and the lines sit at different heights. Jump is a game idea. Move a body by its speed is physics. Draw this image at this spot is graphics. Send these bytes to the graphics chip is the device. Each level speaks a simpler language than the one above.
+
+stack-2
+00:02:25.970 --> 00:02:45.520
+Group the code by those levels, and you get layers. A layer is a group of modules at one level of abstraction that offers services to the layer above. Pearl Dash gets four: game rules on top, then the engine, then a platform layer for graphics, sound, and input, and drivers at the bottom.
+
+stack-3
+00:02:45.520 --> 00:03:07.120
+Each layer turns one request from above into several simpler ones below. Jump becomes apply an upward push. The engine turns that into new positions and a draw call. The platform turns the draw call into commands for the graphics chip. Each layer is a machine the layer above can program.
+
+allowed-1
+00:03:07.120 --> 00:03:23.970
+The style's power comes from its rules, written as an allowed-to-use relation. To use a module means your code is only correct if that module is present and correct. The style decides who is allowed to depend on whom, before anyone writes an import.
+
+allowed-2
+00:03:23.970 --> 00:03:44.320
+Rule one: every module belongs to exactly one layer. Rule two: a layer may use only modules in its own layer, or in the layer directly below. Rule three: there are at least two layers, usually three or more. And it follows that no layer may ever use a layer above it.
+
+allowed-3
+00:03:44.320 --> 00:04:02.000
+Test the rules. The engine detects that the squirrel touched a pearl, and the score should go up. A teammate wants the engine to import the game's score module and add a point. Predict: does that break a rule? And what would it cost?
+
+allowed-4
+00:04:02.000 --> 00:04:22.940
+It breaks the never-up rule. The engine would then depend on Pearl Dash's own scoring, so it couldn't run without this game, and the second game couldn't reuse it. Worse, each layer now depends on the other: change either, and the other may break. That's a cycle, and the layers are gone.
+
+callbacks-1
+00:04:22.940 --> 00:04:40.450
+But the score still has to go up. The fix: the engine defines what it can report, a collision listener, and the game hands it one at startup: when the squirrel touches a pearl, call this. The engine calls whatever was registered, without knowing it belongs to Pearl Dash.
+
+callbacks-2
+00:04:40.450 --> 00:05:00.510
+Is that an upward use? No. Control travels up, but the engine's correctness doesn't depend on what the handler does: its job ends when it reports the collision. The dependency still points down: the game depends on the engine's listener interface, never the other way around.
+
+relaxed-1
+00:05:00.510 --> 00:05:21.480
+Teams choose how strict to be. Strict layering: a layer may use only the layer directly below. Relaxed layering: it may use any lower layer. A strict design may still allow a few skips, like game rules calling the platform directly. That's layer bridging, and each bridge must be documented as an exception.
+
+relaxed-2
+00:05:21.480 --> 00:05:43.720
+One more thing layers are not: tiers. Layers organize code, a module view, decided before the game runs. When Pearl Dash runs, all four layers run together on one console. Tiers are separate running processes, often on separate machines, like the game and its online leaderboard server.
+
+port-1
+00:05:43.720 --> 00:06:02.880
+Back to the publisher's request, on the layered game this time. The console has a different graphics chip, buttons, and a different sound system. Predict: which of the four layers must change for the console, and which stay exactly as they are?
+
+port-2
+00:06:02.880 --> 00:06:19.350
+Only the bottom two. The drivers come with the console, and the team writes a new platform layer on top of them, with the same interface. The engine still asks it to draw an image here, and never notices. The game rules don't change at all. That's portability.
+
+port-3
+00:06:19.350 --> 00:06:38.740
+The same rule buys modifiability. Swap the engine's physics for a faster version with the same interface, and only the engine changes. And it buys reuse: the team's second game, a skateboard racer, sits on the same engine and platform. The lower the layer, the more programs can share it.
+
+port-4
+00:06:38.740 --> 00:06:58.110
+You rely on this every day. A chat message travels down a layered network stack: the app's protocol, then a transport layer, then the internet layer, then the link at the bottom. The same chat app works over dorm Wi-Fi, a cable, or cellular data, because only that bottom layer differs.
+
+port-5
+00:06:58.110 --> 00:07:16.850
+Layers also split the work. Gameplay changes land in the game rules, engine work in the engine, the sound fix in the platform, and nobody edits everyone's files at night. And you can test the game rules on a laptop, with a fake engine below them, no console needed.
+
+costs-1
+00:07:16.850 --> 00:07:35.860
+Now the costs. A game draws sixty frames a second, so each frame gets about sixteen milliseconds. Every request now crosses four floors, and each layer translates and copies data on the way down. In the pearl storm level, with five hundred pearls on screen, the frame rate drops.
+
+costs-2
+00:07:35.860 --> 00:07:54.390
+The tempting fix is a bridge: let the pearl-drawing code skip the engine and platform and talk straight to the laptop's graphics driver. The frame rate comes back. But that code now runs only on the laptop. On the console it must be rewritten: you've traded portability for speed.
+
+costs-3
+00:07:54.390 --> 00:08:13.430
+And layers cost design time up front. Someone has to choose the levels, design each interface, and keep the rules when a deadline begs for shortcuts. For a weekend jam, one file was fine. For a game that must live on two devices for years, the floors pay off.
+
+leaks-1
+00:08:13.430 --> 00:08:32.840
+Layers can still leak. On the console, the new platform layer has the very same interface, but it draws many small images more slowly. Nothing above changed, yet the pearl storm stutters. An interface is more than its function names: it includes the timing that the layers above quietly rely on.
+
+leaks-2
+00:08:32.840 --> 00:08:53.540
+And how many layers? Too few, like one big engine-and-platform layer, and the console port reaches deep into the engine. Too many, and every frame pays for extra hand-offs, while every feature needs edits on six floors. Pick levels that change for different reasons, at different speeds.
+
+summary-1
+00:08:53.540 --> 00:09:12.290
+Let's recap. Pearl Dash began as a ball of mud: jumps, physics, and device calls on the same lines, so porting meant rewriting nearly every file. Layers group modules by level of abstraction, from game rules down to drivers, and each layer is a machine for the one above.
+
+summary-2
+00:09:12.290 --> 00:09:33.280
+The rules: every module sits in exactly one layer; a layer uses only its own layer or the one directly below, or, if relaxed, any lower one; and nothing uses a layer above. News travels up through callbacks the lower layer defines. And layers organize code; tiers are running processes.
+
+summary-3
+00:09:33.280 --> 00:09:56.080
+What the rules buy: swap the bottom for a new device, swap a layer's insides, and reuse the lower layers in the next game. What they cost: time in every frame, design time up front, and shortcuts that trade portability for speed. Next time you write an import, ask: is that one floor down?

@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "presentation": {
+    "animation": {
+      "page": "/assets/video-narration/layered_style.html",
+      "theme": "drafting-room",
+      "sheet_title": "LAYERED STYLE",
+      "sheet_subtitle": "ALLOWED TO USE",
+      "styles": [
+        "/css/song-video-drafting-room.css",
+        "/css/video-narration-wall-kit.css",
+        "/css/video-narration-arch-kit.css",
+        "/css/video-narration-layered-style.css"
+      ],
+      "scripts": [
+        "/js/song-video/drafting-room.js",
+        "/js/video-narration/wall-kit.js",
+        "/js/video-narration/arch-kit.js",
+        "/js/video-narration/layered-style-kit.js",
+        "/js/video-narration/layered-style.js"
+      ]
+    }
+  },
+  "resources": {},
+  "scenes": {
+    "intro": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "jam": {},
+        "console": {},
+        "team": {}
+      }
+    },
+    "tangle": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "update": {},
+        "predict_port": {},
+        "ripple": {},
+        "mud": {}
+      }
+    },
+    "stack": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "levels": {},
+        "layers": {},
+        "translate": {}
+      }
+    },
+    "allowed": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "uses": {},
+        "rules": {},
+        "predict_upward": {},
+        "upward_cost": {}
+      }
+    },
+    "callbacks": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "callback": {},
+        "not_uses": {}
+      }
+    },
+    "relaxed": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "strictness": {},
+        "tiers": {}
+      }
+    },
+    "port": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "predict_console": {},
+        "portability": {},
+        "modify_reuse": {},
+        "everyday": {},
+        "team_test": {}
+      }
+    },
+    "costs": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "overhead": {},
+        "bridge": {},
+        "upfront": {}
+      }
+    },
+    "leaks": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "leak": {},
+        "granularity": {}
+      }
+    },
+    "summary": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "recap_problem": {},
+        "recap_rules": {},
+        "recap_tradeoff": {}
+      }
+    }
+  }
+}

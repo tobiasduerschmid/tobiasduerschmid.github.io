@@ -1,0 +1,264 @@
+{
+  "duration": 596.08,
+  "voice": "drama3-female6",
+  "speed": 1,
+  "speech_sha256": "cfdc19299ffe0969a694ec4f42ed1680fcfd0593bd37da69b46488b65a5b1bc1",
+  "scenes": [
+    {
+      "id": "intro",
+      "start": 0.0,
+      "cues": [
+        {
+          "id": "jam",
+          "start": 0.0,
+          "end": 19.79,
+          "speech_end": 19.24
+        },
+        {
+          "id": "console",
+          "start": 19.79,
+          "end": 36.86,
+          "speech_end": 36.31
+        },
+        {
+          "id": "team",
+          "start": 36.86,
+          "end": 55.94,
+          "speech_end": 53.44
+        }
+      ],
+      "end": 55.94
+    },
+    {
+      "id": "tangle",
+      "start": 55.94,
+      "cues": [
+        {
+          "id": "update",
+          "start": 55.94,
+          "end": 74.35,
+          "speech_end": 73.8
+        },
+        {
+          "id": "predict_port",
+          "start": 74.35,
+          "end": 91.39,
+          "speech_end": 87.39
+        },
+        {
+          "id": "ripple",
+          "start": 91.39,
+          "end": 109.12,
+          "speech_end": 108.57
+        },
+        {
+          "id": "mud",
+          "start": 109.12,
+          "end": 127.86,
+          "speech_end": 125.36
+        }
+      ],
+      "end": 127.86
+    },
+    {
+      "id": "stack",
+      "start": 127.86,
+      "cues": [
+        {
+          "id": "levels",
+          "start": 127.86,
+          "end": 145.97,
+          "speech_end": 145.42
+        },
+        {
+          "id": "layers",
+          "start": 145.97,
+          "end": 165.52,
+          "speech_end": 164.97
+        },
+        {
+          "id": "translate",
+          "start": 165.52,
+          "end": 187.12,
+          "speech_end": 184.62
+        }
+      ],
+      "end": 187.12
+    },
+    {
+      "id": "allowed",
+      "start": 187.12,
+      "cues": [
+        {
+          "id": "uses",
+          "start": 187.12,
+          "end": 203.97,
+          "speech_end": 203.42
+        },
+        {
+          "id": "rules",
+          "start": 203.97,
+          "end": 224.32,
+          "speech_end": 223.77
+        },
+        {
+          "id": "predict_upward",
+          "start": 224.32,
+          "end": 242.0,
+          "speech_end": 238.0
+        },
+        {
+          "id": "upward_cost",
+          "start": 242.0,
+          "end": 262.94,
+          "speech_end": 260.44
+        }
+      ],
+      "end": 262.94
+    },
+    {
+      "id": "callbacks",
+      "start": 262.94,
+      "cues": [
+        {
+          "id": "callback",
+          "start": 262.94,
+          "end": 280.45,
+          "speech_end": 279.9
+        },
+        {
+          "id": "not_uses",
+          "start": 280.45,
+          "end": 300.51,
+          "speech_end": 298.01
+        }
+      ],
+      "end": 300.51
+    },
+    {
+      "id": "relaxed",
+      "start": 300.51,
+      "cues": [
+        {
+          "id": "strictness",
+          "start": 300.51,
+          "end": 321.48,
+          "speech_end": 320.93
+        },
+        {
+          "id": "tiers",
+          "start": 321.48,
+          "end": 343.72,
+          "speech_end": 341.22
+        }
+      ],
+      "end": 343.72
+    },
+    {
+      "id": "port",
+      "start": 343.72,
+      "cues": [
+        {
+          "id": "predict_console",
+          "start": 343.72,
+          "end": 362.88,
+          "speech_end": 358.88
+        },
+        {
+          "id": "portability",
+          "start": 362.88,
+          "end": 379.35,
+          "speech_end": 378.8
+        },
+        {
+          "id": "modify_reuse",
+          "start": 379.35,
+          "end": 398.74,
+          "speech_end": 398.19
+        },
+        {
+          "id": "everyday",
+          "start": 398.74,
+          "end": 418.11,
+          "speech_end": 417.56
+        },
+        {
+          "id": "team_test",
+          "start": 418.11,
+          "end": 436.85,
+          "speech_end": 434.35
+        }
+      ],
+      "end": 436.85
+    },
+    {
+      "id": "costs",
+      "start": 436.85,
+      "cues": [
+        {
+          "id": "overhead",
+          "start": 436.85,
+          "end": 455.86,
+          "speech_end": 455.31
+        },
+        {
+          "id": "bridge",
+          "start": 455.86,
+          "end": 474.39,
+          "speech_end": 473.84
+        },
+        {
+          "id": "upfront",
+          "start": 474.39,
+          "end": 493.43,
+          "speech_end": 490.93
+        }
+      ],
+      "end": 493.43
+    },
+    {
+      "id": "leaks",
+      "start": 493.43,
+      "cues": [
+        {
+          "id": "leak",
+          "start": 493.43,
+          "end": 512.84,
+          "speech_end": 512.29
+        },
+        {
+          "id": "granularity",
+          "start": 512.84,
+          "end": 533.54,
+          "speech_end": 531.04
+        }
+      ],
+      "end": 533.54
+    },
+    {
+      "id": "summary",
+      "start": 533.54,
+      "cues": [
+        {
+          "id": "recap_problem",
+          "start": 533.54,
+          "end": 552.29,
+          "speech_end": 551.74
+        },
+        {
+          "id": "recap_rules",
+          "start": 552.29,
+          "end": 573.28,
+          "speech_end": 572.73
+        },
+        {
+          "id": "recap_tradeoff",
+          "start": 573.28,
+          "end": 596.08,
+          "speech_end": 593.58
+        }
+      ],
+      "end": 596.08
+    }
+  ]
+}
