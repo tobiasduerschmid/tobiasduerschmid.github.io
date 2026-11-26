@@ -117,7 +117,7 @@ steps:
 
       ### Why this matters
 
-      Duplication isn't just a style problem — it multiplies the cost of every future bug. When the same logic lives in three places, one fix becomes three fixes, and missing one means the bug ships in production. Before you can *refactor* duplication away, you need to *feel* what it costs. This step plants that schema: a single bug, fixed in N places, where N is the number of duplicates.
+      Duplication isn't just a style problem — it multiplies the cost of every future bug. When the same logic lives in three places, one fix becomes three fixes, and missing one means the bug ships in production. Before you can *refactor* duplication away, you need to *feel* what it costs.
 
       ### 🎯 You will learn to
 
@@ -451,7 +451,7 @@ steps:
       questions:
 
         - question: |
-            **Retrieval.** Which operator was wrong in two of the three royalty functions, and what should it have been?
+            Which operator was wrong in two of the three royalty functions, and what should it have been?
           type: single
           options:
             - "`+` was wrong; should have been `*`"
@@ -496,7 +496,7 @@ steps:
             **Fix-then-refactor.** Fix the bug in each duplicate first, with tests passing for each location. Only then refactor to consolidate — the consolidated helper now contains the corrected formula. This is one of the most useful sequencing rules in the refactoring toolkit.
 
         - question: |
-            **Transfer — operational cost of duplication.** Next month the team adds two more royalty methods, both copying the same buggy formula from the existing duplicates. **No refactor happens in between.** When a developer finally notices the bug after that, how many code lines must they touch to fix every broken method?
+            Next month the team adds two more royalty methods, both copying the same buggy formula from the existing duplicates. **No refactor happens in between.** When a developer finally notices the bug after that, how many code lines must they touch to fix every broken method?
           type: single
           options:
             - "1 — the bug lives in shared code, so one fix propagates everywhere"
@@ -522,7 +522,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      A method that does five things needs five names — but it's been given one. Long Methods are the most common code smell in real Python, and the cure (Extract Function) is the most important refactoring you'll learn. You'll do this one *by hand*, slowly and deliberately, so when the tool drives later extractions you recognize what it's doing under the hood. The safety dance — green tests → change → green tests — is the discipline that turns refactoring from a coin flip into a reliable craft.
+      A method that does five things needs five names — but it's been given one. The cure, **Extract Function**, gives each sub-goal its own named method. You'll do this one *by hand*, slowly and deliberately, so when the tool drives later extractions you recognize what it's doing under the hood. The safety dance — green tests → change → green tests — is the discipline that turns refactoring from a coin flip into a reliable craft.
 
       ### 🎯 You will learn to
 
@@ -557,7 +557,7 @@ steps:
 
       The first sub-goal of `process_play_event` is the subscription check (lines tagged `# 1.`). **Before** you read the worked example below, write down the function name *you* would choose for that block. One word or short phrase. Hold your choice in mind. After you see the worked example, compare to the name we chose — and ask yourself whether yours is clearer, equivalent, or worse.
 
-      Naming is the load-bearing micro-decision in every Extract Function. Generating a name yourself first — even if you change it after — anchors the schema better than reading our name first.
+      Naming is the load-bearing micro-decision in every Extract Function.
 
       ## Worked example — extracting the first sub-goal
 
@@ -989,7 +989,7 @@ steps:
       questions:
 
         - question: |
-            **Retrieval.** What's the *minimum* test discipline a refactoring requires?
+            What's the *minimum* test discipline a refactoring requires?
           type: single
           options:
             - "Run the tests once at the end to confirm nothing broke"
@@ -1058,11 +1058,11 @@ steps:
   # test → parametrize expansion exposes the bug. Three sub-tasks, with the
   # IfsMerged sub-task as the load-bearing one.
   # ==========================================================================
-  - title: "Boolean Anti-Patterns — and the trap that costs you everything"
+  - title: "Boolean Anti-Patterns and the IfsMerged Trap"
     instructions: |
       ### Why this matters
 
-      Boolean code looks innocent and breaks loudly. About 30% of conditional anti-patterns in one large empirical study come from a single shape — wrapping a boolean expression in `if/else: return True/False`. Worse, some "obvious" boolean simplifications silently drop a branch, and a happy-path test will let the bug ship. Truth tables are the safety net that catches what your eyes miss.
+      About 30% of conditional anti-patterns in one large empirical study come from a single shape — wrapping a boolean expression in `if/else: return True/False`. Worse, some "obvious" boolean simplifications silently drop a branch, and a happy-path test will let the bug ship. Truth tables are the safety net that catches what your eyes miss.
 
       ### 🎯 You will learn to
 
@@ -1143,7 +1143,7 @@ steps:
 
       The colleague's simplification is **wrong**. The original returns `"play_cached"` for `(is_logged_in=True, is_offline=True)`. The simplified version returns `"error_login_required"` for the same input. The branch where you're logged in *and* offline got silently dropped. That's the **IfsMerged trap**: collapsing nested `if`s into a single `and` is safe *only when* the inner `else` returns the same value as the outer fall-through. Here it doesn't — the inner `else` returns `"play_cached"`, but the outer fall-through returns `"error_login_required"`.
 
-      If you missed it during the prediction: that's the point. Empirical studies of code review show this is one of the most common classes of regression introduced *during simplification* — exactly because the change *looks* obvious. The truth table is the safety net.
+      If you missed it during the prediction: that's the point. The truth table is the safety net.
 
       ## Why a happy-path test misses this
 
@@ -1181,7 +1181,7 @@ steps:
           return "play_cached" if is_offline else "stream"
       ```
 
-      Externalizing the truth table on paper before touching the function is the load-bearing move: it converts a 6-element working-memory task (4 truth combinations × 2 versions to compare) into a written artifact you can stare at.
+      Writing the truth table down before you touch the function lets you compare both versions row by row instead of juggling all four cases in your head.
 
     files:
       - path: "gates.py"
@@ -1575,7 +1575,7 @@ steps:
       questions:
 
         - question: |
-            **Retrieval / prediction.** In a truth table over `(is_logged_in, is_offline)`, which row does the naive `if is_logged_in and not is_offline` collapse get **wrong**?
+            In a truth table over `(is_logged_in, is_offline)`, which row does the naive `if is_logged_in and not is_offline` collapse get **wrong**?
           type: single
           options:
             - "(False, False)"
@@ -2070,7 +2070,7 @@ steps:
       questions:
 
         - question: |
-            **Retrieval / prediction.** After Extract Function, which **four** regions of `filters.py` will have changed compared to the starter?
+            After Extract Function, which **four** regions of `filters.py` will have changed compared to the starter?
           type: single
           options:
             - "Function definitions, return statements, imports, the test file"
@@ -2086,7 +2086,7 @@ steps:
             **One new import, one new helper, two delegators.** Each duplicate body shrinks to a single-line `return self._apply_filter(lambda t: ...)`. The `Callable` import is needed because the helper's signature gains a callable parameter. The test file should not change — if it did, you changed behavior, not just structure.
 
         - question: |
-            **Spacing back to Step 1.** Suppose Step 1's `royalty_song`, `royalty_podcast`, `royalty_audiobook` (with the bug `+` in two of them) had been refactored *before* the bug was discovered — extracted into a single `_royalty(plays, rate)` helper. What would have happened?
+            **Review: Step 1.** Suppose Step 1's `royalty_song`, `royalty_podcast`, `royalty_audiobook` (with the bug `+` in two of them) had been refactored *before* the bug was discovered — extracted into a single `_royalty(plays, rate)` helper. What would have happened?
           type: single
           options:
             - "The bug would have been caught immediately"
@@ -2099,7 +2099,7 @@ steps:
             2: "The duplicates were *near*-identical — same structure, same operator (or at least, same intended operator). The tool would have happily extracted them; whether the result was *correct* depends on which of the three the helper inherits its body from."
             3: "Existing tests covered only `royalty_song`. Without coverage of the other two, no extraction or non-extraction would surface the bug."
           explanation: |
-            **Fix-then-refactor.** This is exactly why Step 1's lesson is "fix first." Extracting buggy duplicates into a helper consolidates the bug, which feels like progress but isn't. The bug is still there — it's just in a single, harder-to-spot location.
+            **Fix-then-refactor.** This is exactly why Step 1's lesson is "fix first." Extracting buggy duplicates into a helper copies the bug into one place, which feels like progress but isn't. The bug is still there — it's just in a single, harder-to-spot location.
 
         - question: |
             You see a piece of code that's been duplicated **once** (two copies). Should you extract it?
@@ -2118,7 +2118,7 @@ steps:
             **Judgment beats rules.** Sandi Metz: "Duplication is far cheaper than the wrong abstraction." When unsure, wait for the third occurrence. When the variation is one obvious dimension, extract early.
 
         - question: |
-            **Apply.** Imagine `MusicLibrary` grows a third filter, `apply_album_filter(album)`, also written as a sort-and-truncate over a single-field equality predicate. Using the helper you extracted in this step, what's the smallest body the new filter needs?
+            Imagine `MusicLibrary` grows a third filter, `apply_album_filter(album)`, also written as a sort-and-truncate over a single-field equality predicate. Using the helper you extracted in this step, what's the smallest body the new filter needs?
           type: single
           options:
             - "Re-extract `_apply_filter` again — the existing helper only handles two predicates"
@@ -2145,7 +2145,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      A method that takes eight parameters is not just *long* — it's hiding a relationship the code refuses to name. When four of the eight always travel together, that's a **data clump**, and every call site that touches one is forced to touch all four. Introduce Parameter Object names the clump as a real type, so the relationship becomes a compile-time fact rather than a convention every reader has to discover.
+      When four of a method's eight parameters always travel together, that's a **data clump**, and every call site that touches one is forced to touch all four. Introduce Parameter Object names the clump as a real type, so the relationship becomes a compile-time fact rather than a convention every reader has to discover.
 
       ### 🎯 You will learn to
 
@@ -2612,7 +2612,7 @@ steps:
       questions:
 
         - question: |
-            **Retrieval.** Which of `add_track`'s eight parameters travel together as a clump?
+            Which of `add_track`'s eight parameters travel together as a clump?
           type: multiple
           options:
             - "title"
@@ -2764,7 +2764,7 @@ steps:
 
       Place your cursor inside `compute_remaining_seconds`, then **Refactor: Move Method…** with target class `Track`. Same flow as Step 4's Extract Function — preview, accept. Watch the live UML in the bottom-left: the method migrates from `Player` to `Track`, and the `Player → Track` "uses" arrow disappears because `Player` no longer reaches into `Track` for this calculation.
 
-      ## Spacing callback — apply Step 3's lesson here
+      ## Apply Step 3's lesson here
 
       `Track` has a sibling method `is_finished` that suffers from the boolean-return anti-pattern from Step 3:
 
@@ -3064,7 +3064,7 @@ steps:
       explanation: |
         **`Player` got smaller. `Track` got one method richer.** The `Player → Track` "uses" arrow disappeared from the diagram because `Player` no longer reaches into `Track` for that calculation. The method is now where the data lives.
 
-        **Two refactorings in one step.** Move Method on `compute_remaining_seconds`, and the Step-3 boolean simplification on `is_finished`. The point of the second is **spacing** — applying a previous step's lesson in a new context. Step 3 simplified booleans in standalone functions; here you simplified one inside a class method. Same anti-pattern, same fix.
+        **Two refactorings in one step.** Move Method on `compute_remaining_seconds`, and the Step-3 boolean simplification on `is_finished`. Step 3 simplified booleans in `PlaybackGates` methods; here you simplified one in another class. Same anti-pattern, same fix.
 
         **Compare before/after.** The inline UML at the top showed `Player` containing `compute_remaining_seconds` with an arrow pointing to `Track`. The live UML now shows the method inside `Track`'s box and no arrow. **The tests still pass** — that's the proof of behavior preservation.
 
@@ -3235,7 +3235,7 @@ steps:
             **Methods are easier to move than data.** A method has one home and a few callers; a field tends to have many readers and writers. Moving fields shotgun-surgeries the codebase. Moving methods tightens it.
 
         - question: |
-            **Variation Theory — non-example.** A `Catalog.build_default_track()` method on a `Catalog` class uses no `self` state and only returns a new `Track` from a few constants. Is this Feature Envy?
+            A `Catalog.build_default_track()` method on a `Catalog` class uses no `self` state and only returns a new `Track` from a few constants. Is this Feature Envy?
           type: single
           options:
             - "Yes — it uses no Catalog state, so it should be moved to Track"
@@ -3251,7 +3251,7 @@ steps:
             **The diagnostic catches Feature Envy candidates, but judgment decides.** "Uses zero host state" makes a method *a candidate for Move Method*, not *a guaranteed instance of the smell*. Factories, default constructors, and pure-policy synthesizers live where the API surface is, not where the data is.
 
         - question: |
-            **Variation Theory — Feature Envy vs Inappropriate Intimacy.** `Player.adjust_for_track(track)` reads several `track` fields *and* writes `track.last_play_volume`. `Track.adjust_for_player(player)` reads `player.volume` *and* writes `player.eq_preset`. What's the smell, and what's the right fix?
+            `Player.adjust_for_track(track)` reads several `track` fields *and* writes `track.last_play_volume`. `Track.adjust_for_player(player)` reads `player.volume` *and* writes `player.eq_preset`. What's the smell, and what's the right fix?
           type: single
           options:
             - "Feature Envy on both sides — apply Move Method twice"
@@ -3267,7 +3267,7 @@ steps:
             **One arrow vs two.** Feature Envy is one-sided — a method on the wrong class. Move Method fixes it. Inappropriate Intimacy has arrows in *both* directions — moving one method just makes the other class envious. The structural fix is different: introduce a mediator that owns the cross-cutting logic, or, when the two classes are really one concept, merge them. Diagnose before you reach for the tool.
 
         - question: |
-            **Mid-tutorial mix — Step 1 callback.** You've just discovered that two functions have the same arithmetic bug. According to what you practiced in Step 1, what's the correct order of operations?
+            **Review: Step 1.** You've just discovered that two functions have the same arithmetic bug. According to what you practiced in Step 1, what's the correct order of operations?
           type: single
           options:
             - "Refactor first to remove the duplication, then fix the bug in the helper"
@@ -3283,7 +3283,7 @@ steps:
             **Fix-then-refactor.** The Step 1 lesson generalizes: never refactor over a known bug. Fix in each location with green tests, *then* consolidate. This is the highest-leverage sequencing rule in the toolkit.
 
         - question: |
-            **Mid-tutorial mix — Step 4 callback.** Two near-duplicate functions were just written this morning. The third occurrence isn't on the roadmap. The variation between the two copies is **subtle** — you'd have to study them to be sure what's common. What does the **Rule of Three** suggest as the *default*?
+            **Review: Step 4.** Two near-duplicate functions were just written this morning. The third occurrence isn't on the roadmap. The variation between the two copies is **subtle** — you'd have to study them to be sure what's common. What does the **Rule of Three** suggest as the *default*?
           type: single
           options:
             - "Extract immediately — duplication is always a smell"
@@ -3379,7 +3379,7 @@ steps:
 
       > 💡 **Expert's note.** Extract Class still follows the field-then-method safety rule internally. Fields become the new class's state first; then methods that use only that field-set can move without leaving dangling `self.X` references behind.
 
-      ## Spacing callback — Rule of Three from Step 4
+      ## Rule of Three from Step 4
 
       Look at `charge_monthly` and `charge_annual` carefully. They share most of their logic. **Should you Extract Function on the shared body before moving them?**
 
@@ -3803,7 +3803,7 @@ steps:
       explanation: |
         **One fat box, two collaborating boxes.** `StreamingApp` now has only catalog responsibilities. `BillingManager` owns subscription, payment, invoices, and the `notify_payment_due` method. Anything billing-related is one place.
 
-        **Spacing callback paid off.** Inside `BillingManager`, `charge_monthly` and `charge_annual` were extracted to share `_create_invoice(period, multiplier)`. This used the Step-4 Rule of Three, but applied *after* the move so the helper lives where billing logic lives.
+        **Extract after the move.** Inside `BillingManager`, `charge_monthly` and `charge_annual` were extracted to share `_create_invoice(period, multiplier)`. This used the Step-4 Rule of Three, but applied *after* the move so the helper lives where billing logic lives.
 
         **The unlabeled `notify_payment_due`** belonged with billing — it reads `payment_method`, which is now a billing field. It moved to `BillingManager`.
 
@@ -3985,7 +3985,7 @@ steps:
             **Fields first, methods second.** Methods depend on fields; reverse order breaks references during the intermediate state. Whether you use a single Extract Class action (which sequences internally) or chain Move Field + Move Method by hand, the underlying ordering rule is the same.
 
         - question: |
-            **Spacing callback to Step 4.** `charge_monthly` and `charge_annual` share most of their body. Should you Extract Function on them **before** moving them to `BillingManager`?
+            **Review: Step 4.** `charge_monthly` and `charge_annual` share most of their body. Should you Extract Function on them **before** moving them to `BillingManager`?
           type: single
           options:
             - "Yes — fewer methods to move = simpler refactoring"
@@ -4116,7 +4116,7 @@ steps:
 
       Tool-wise, this is just **Refactor: Move Method** done three times — same flow you used in Steps 6 and 7. Some branches may be easier to copy/paste because the conditional pattern doesn't always select cleanly for tool-driven moves; that's fine.
 
-      ## Spacing callback — Step 6's Feature Envy in disguise
+      ## Step 6's Feature Envy in disguise
 
       Each `if track_kind == "X"` branch in the original `play` function is a bit of code that uses *only* track-kind-specific data. By Step 6's diagnostic ("uses zero state of host class"), each branch is Feature Envy on the `Track`-of-that-kind. The polymorphism refactoring is a **special case of Move Method**: instead of moving one method to one class, we move N methods to N subclasses dispatched by type.
 
@@ -4443,7 +4443,7 @@ steps:
       explanation: |
         **Three branches, three subclasses, one polymorphic call.** The `play` function dropped from 13 lines of conditional dispatch to a single line. Each branch's logic now lives on the subclass that owns the relevant state.
 
-        **The productive failure paid off.** `Audiobook` had no `play` method initially. Python raised `TypeError: Can't instantiate abstract class Audiobook with abstract method play`. The error message told you exactly what to add. That's the value of `@abstractmethod` — it makes the missing implementation a *startup* error, not a *runtime* error somewhere later.
+        **The missing `Audiobook.play`.** `Audiobook` had no `play` method initially. Python raised `TypeError: Can't instantiate abstract class Audiobook with abstract method play`. The error message told you exactly what to add. That's the value of `@abstractmethod` — it makes the missing implementation a *startup* error, not a *runtime* error somewhere later.
 
         **The dispatch contract was enforced from the start by `@abstractmethod`.** `test_track_cannot_be_instantiated` passed immediately — the abstract base refused construction. The other dispatch tests failed in informative ways: stub bodies returned `None`, and the missing `Audiobook.play` raised `TypeError` at instantiation. Each failure pointed at the exact next step. By the time the migrations completed, all dispatch tests went green together.
 
@@ -4602,7 +4602,7 @@ steps:
       questions:
 
         - question: |
-            **Retrieval / dispatch.** When `play(user)` is called on a `Podcast` instance, **which** method runs?
+            When `play(user)` is called on a `Podcast` instance, **which** method runs?
           type: single
           options:
             - "Track.play (the abstract base method)"
@@ -4650,7 +4650,7 @@ steps:
             **Enforcement is at instantiation.** `@abstractmethod` makes the abstract base un-instantiable; subclasses without all required overrides are *also* un-instantiable. The error message names the missing methods, which is far better than discovering at call time that the method does nothing.
 
         - question: |
-            **Spacing back to Step 6.** Why is moving each conditional branch into its corresponding subclass a special case of **Move Method**?
+            **Review: Step 6.** Why is moving each conditional branch into its corresponding subclass a special case of **Move Method**?
           type: single
           options:
             - "It's not — polymorphism is a different refactoring entirely"
@@ -4678,7 +4678,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      With six refactorings under your belt, every line of code starts to look like a nail. It isn't. "Always refactor" produces speculative generality; "never refactor" lets hotspots compound debt until the code becomes write-only. This step is the calibration: where investment of refactoring effort earns its keep, and where it's a tax on every future reader. The empirical data make the trade-off concrete — smelly hotspots have **4–5× the change-proneness** of clean code, but a smelly cold file is just noise.
+      With six refactorings under your belt, every line of code starts to look like a nail. It isn't. "Always refactor" produces speculative generality; "never refactor" lets hotspots compound debt until the code becomes write-only. This step is the calibration: where investment of refactoring effort earns its keep, and where it's a tax on every future reader. The empirical data make the trade-off concrete. In Palomba et al.'s 2018 study (below), smelly classes had about **2.7× the median change-proneness** of clean ones (4.5× when three smells co-occurred), but a smelly cold file is just noise.
 
       ### 🎯 You will learn to
 
@@ -4730,7 +4730,7 @@ steps:
           total += v
       ```
 
-      The two loops look similar, the linter might even prefer the second, and the tests on small inputs may pass. But the index-stride semantics is gone. Documented in Oliveira/Keuning/Jeuring (2023) as one of the most common refactoring misconceptions among CS students: students replace `for i in range(...)` with `for v in iterable` *because the latter is "more Pythonic,"* without checking whether the original index pattern was load-bearing.
+      The two loops look similar, the linter might even prefer the second, and the tests on small inputs may pass. But the index-stride semantics is gone. Oliveira, Keuning and Jeuring (2023) documented this as a common refactoring misconception among CS students: replacing a strided loop with a for-each loop that visits every element.
 
       The rule: **before you simplify a loop, ask what the original was doing with the index.** If the answer is "nothing" — the index was unused or only used to access `iterable[i]` sequentially — the simplification is safe. If the index was strided, reversed, paired with another sequence, or used for `enumerate`-like positional logic, the simplification is a behavior change.
 
@@ -4762,7 +4762,7 @@ steps:
       questions:
 
         - question: |
-            **Retrieval.** Which of these scenarios would you **defer** refactoring for?
+            Which of these scenarios would you **defer** refactoring for?
           type: multiple
           options:
             - "Code in a file untouched for two years that isn't on the roadmap"
@@ -4829,7 +4829,7 @@ steps:
             **Small, incremental, concurrent.** The Boy Scout rule trades coordinated big-bang refactors for many small per-task improvements. Combined with the hotspot rule, it covers most of the value of refactoring at almost none of the coordination cost.
 
         - question: |
-            **Loop-replacement misconception.** Consider:
+            Consider:
             ```python
             # Original
             total = 0
@@ -4856,7 +4856,7 @@ steps:
             1: "Type checkers detect type errors, not semantic ones. Both loops have the same types in and out; the difference is in *which elements* get summed."
             3: "The container type is unrelated to the stride semantics. The bug is the same whether `values` is a list, tuple, or generator."
           explanation: |
-            **Strided loops aren't interchangeable with foreach.** Before simplifying a loop, ask what the index was doing. Strided, reversed, paired-with-another-sequence, or used-for-position — all four patterns break under naive `for x in iterable` replacement. This is a documented misconception (Oliveira/Keuning/Jeuring 2023) that survives all the way into professional code.
+            **Strided loops aren't interchangeable with foreach.** Before simplifying a loop, ask what the index was doing. Strided, reversed, paired-with-another-sequence, or used-for-position — all four patterns break under naive `for x in iterable` replacement. Oliveira, Keuning and Jeuring (2023) found students making this replacement.
 
 
   # ==========================================================================
@@ -4871,7 +4871,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      Real code never gives you one smell at a time. The synthesis test is whether you can spot multiple smells *coexisting*, choose which refactoring to apply *first* based on the dependencies between them, and *defend* the choice in writing before any code moves. That last part — defending the choice in a memo — is the discipline that separates a senior engineer from a tool-driven button-pusher. The tool will let you refactor anything; the memo is what makes you ask whether you should.
+      Real code never gives you one smell at a time. The synthesis test is whether you can spot multiple smells *coexisting*, choose which refactoring to apply *first* based on the dependencies between them, and *defend* the choice in writing before any code moves. The tool will let you refactor anything; the memo is what makes you ask whether you should.
 
       ### 🎯 You will learn to
 
@@ -4881,9 +4881,9 @@ steps:
 
       Open `playlist.py`. The class `PlaylistManager` has multiple smells stacked together. Your job is to (a) diagnose them, (b) choose **one** refactoring to apply, (c) write the memo, and only then (d) execute the refactoring with the tool.
 
-      ## Warm-up — interleaved diagnosis
+      ## Warm-up diagnosis
 
-      Before you look at `playlist.py`, name the smell and refactoring that fits each of the four snippets below. **No code changes** — just diagnose. Each snippet has exactly one dominant smell from earlier steps.
+      Before you look at `playlist.py`, name the smell and refactoring that fits each of the five snippets below. **No code changes** — just diagnose. Snippets A–D each have one dominant smell from earlier steps; Snippet E is a foil.
 
       ### Snippet A
       ```python
@@ -4949,7 +4949,7 @@ steps:
       ```
       Two near-identical classes — same method shape, same body. Tempting to extract a base class or polymorphism, but **this might be fine**. Each processor has its own SDK, error handling, and configuration that isn't shown here. The visual similarity is shallow.
 
-      Hold all five diagnoses in your head as you read on. The quiz will check whether you can discriminate *real* smells from *looks-similar-but-fine*.
+      Hold all five diagnoses in your head as you read on. The quiz will check whether you can tell *real* smells from *looks-similar-but-fine*.
 
       ## The synthesis snippet — `playlist.py`
 
@@ -5394,7 +5394,7 @@ steps:
 
         **Either order produces clean code eventually.** The exam isn't *which* refactoring is "right" — it's whether your memo articulates a clear reason for *your* choice. The memo is the assessment.
 
-        **What you've completed.** Across ten steps you've practiced six refactorings on increasingly complex code, with tests preserving behavior at every step, and UML diagrams making structural changes visible. You've used Monaco's tool support to skip the typing and focus on judgment. You've internalized that refactoring is a *discipline*, not a bag of tricks — every move comes with a justification, an invariant, and a test that confirms the invariant.
+        **What you've completed.** Across ten steps you've practiced six refactorings on increasingly complex code, with tests preserving behavior at every step, and UML diagrams making structural changes visible. You've used Monaco's tool support to skip the typing and focus on judgment. Every refactoring move comes with a justification, an invariant, and a test that confirms the invariant.
 
         **Next steps.** [SOLID design principles](/SEBook/tools/solid-tutorial) → why these smells appear in the first place. [Observer pattern](/SEBook/designpatterns/observer-tutorial) → how design principles crystallize into reusable patterns.
 
@@ -5510,7 +5510,7 @@ steps:
             **Three smells stacked: Long Parameter List + Long Method + Duplicated Code.** Recognizing them simultaneously is the synthesis skill. Each previous step taught one in isolation; here they coexist.
 
         - question: |
-            **Interleaved warmup retrieval.** Snippet A (the `shuffle_score` function with `if mood == "energetic" and weather == "sunny"` branches) most resembles which smell from this tutorial?
+            Snippet A (the `shuffle_score` function with `if mood == "energetic" and weather == "sunny"` branches) most resembles which smell from this tutorial?
           type: single
           options:
             - "Long Method (Step 2)"
@@ -5526,7 +5526,7 @@ steps:
             **Type-conditional dispatch.** When `if mood == "X"` chooses behavior, you have a polymorphism candidate. Each mood/weather pair is dispatching to different scoring logic — same shape as the `track_kind` example in Step 8.
 
         - question: |
-            **Interleaved warmup retrieval.** Snippet B (`update_metadata` with seven parameters that travel together) most resembles which smell?
+            Snippet B (`update_metadata` with seven parameters that travel together) most resembles which smell?
           type: single
           options:
             - "Long Parameter List + clump (Step 5)"
@@ -5542,7 +5542,7 @@ steps:
             **Long Parameter List with a data clump.** Six of the seven parameters describe album metadata — they always travel together. The fix is Introduce Parameter Object.
 
         - question: |
-            **Interleaved warmup retrieval.** Snippet D (`is_hi_res` with `if track.bitrate >= 1411: return True else: return False`) most resembles which smell?
+            Snippet D (`is_hi_res` with `if track.bitrate >= 1411: return True else: return False`) most resembles which smell?
           type: single
           options:
             - "Long Method (Step 2)"
@@ -5558,7 +5558,7 @@ steps:
             **Classic boolean-return anti-pattern.** The condition is already a boolean; wrapping it in if/else with `return True / return False` adds nothing. Simplify to `return track.bitrate >= 1411`. (And maybe also Move Method onto Track, but that's secondary — Snippet D's *primary* smell is boolean.)
 
         - question: |
-            **Snippet C (Statistics class) retrieval.** `Statistics.avg_track_length(tracks)` uses zero `Statistics` state — it iterates over the parameter `tracks` and computes a sum. Which earlier-step smell does this most resemble?
+            **Snippet C (Statistics class).** `Statistics.avg_track_length(tracks)` uses zero `Statistics` state — it iterates over the parameter `tracks` and computes a sum. Which earlier-step smell does this most resemble?
           type: single
           options:
             - "Long Method (Step 2)"
@@ -5574,7 +5574,7 @@ steps:
             **Feature Envy.** The method uses zero state of its host (`Statistics`) and only data from the parameter `tracks`. Step 6's diagnostic — "uses zero host state" — fires cleanly here. The likely fix is Move Method onto whichever class owns the track collection.
 
         - question: |
-            **Snippet E (the foil) — discrimination check.** Two near-identical processor classes (`StripeProcessor`, `PayPalProcessor`) with the same `charge` signature and similar body. Should you extract a common base class or apply Replace Conditional with Polymorphism?
+            **Snippet E (the foil).** Two near-identical processor classes (`StripeProcessor`, `PayPalProcessor`) with the same `charge` signature and similar body. Should you extract a common base class or apply Replace Conditional with Polymorphism?
           type: single
           options:
             - "Yes — duplicated code is always a smell"
@@ -5587,10 +5587,10 @@ steps:
             1: "Open/Closed says be open to extension; it doesn't require *every* type-similar pair to share a base class. If the processors evolve independently, a shared base is over-coupling, not abstraction."
             3: "Step 8 trained for cases where each branch reads/writes *different* fields and the dispatch on a string-typed `kind` is the smell. Two classes that already exist, with their own state and SDK, aren't the same shape."
           explanation: |
-            **Variation Theory in action.** "Looks duplicated" can mean three different things: (1) actual duplication that should be extracted; (2) visual similarity over independent domain rules (currency rounding from Step 1); or (3) parallel infrastructure with hidden differences (this snippet). Discriminating between them is the judgment Step 9's hotspot/Boy-Scout framing was for. **When in doubt, wait for the third occurrence and a real bug-coupling signal before extracting.**
+            "Looks duplicated" can mean three different things: (1) actual duplication that should be extracted; (2) visual similarity over independent domain rules (currency rounding from Step 1); or (3) parallel infrastructure with hidden differences (this snippet). Discriminating between them is the judgment Step 9's hotspot/Boy-Scout framing was for. **When in doubt, wait for the third occurrence and a real bug-coupling signal before extracting.**
 
         - question: |
-            **Step 1 callback — fix-then-refactor.** During the synthesis you spot a bug in one of the duplicated validation blocks of `playlist.py`. What's the right discipline?
+            **Review: Step 1.** During the synthesis you spot a bug in one of the duplicated validation blocks of `playlist.py`. What's the right discipline?
           type: single
           options:
             - "Refactor first to extract the validation; the helper now needs only one fix"
@@ -5599,14 +5599,14 @@ steps:
             - "Run the tests; if they pass, the bug isn't real"
           correct_index: 1
           option_feedback:
-            0: "Extracting *with the bug intact* consolidates the bug into the helper — same bug, harder-to-spot location. The helper now contains corrupt logic that future readers will trust."
+            0: "Extracting *with the bug intact* copies the bug into the helper — same bug, harder-to-spot location. The helper now contains corrupt logic that future readers will trust."
             2: "Tempting reasoning, but the moment between 'one fix done, refactor in progress' and 'refactor complete' is exactly when a teammate might pull the branch and run the buggy duplicate."
             3: "Passing tests don't mean the bug isn't real — they mean the bug isn't in the test cases yet. Step 1's lesson was that test coverage and bug presence are independent."
           explanation: |
             **Fix-then-refactor.** Step 1's load-bearing rule generalizes across the entire toolkit: never refactor over a known bug. Fix in each location with green tests, then consolidate. This sequencing is one of the strongest rules in the discipline.
 
         - question: |
-            **Memo synthesis.** Why is the memo important — couldn't you just refactor and let the diff speak for itself?
+            Why is the memo important — couldn't you just refactor and let the diff speak for itself?
           type: single
           options:
             - "The memo is required for the assessment in this tutorial"
