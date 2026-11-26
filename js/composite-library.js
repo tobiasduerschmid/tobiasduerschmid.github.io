@@ -173,7 +173,7 @@
         button.addEventListener('click', () => this.press(row.id));
         const tags = el('span', { class: 'composite-tags' });
         const item = el('li', { class: `composite-row composite-row--depth-${row.depth} composite-row--${row.kind}` },
-          button, el('span', { class: 'composite-name' }, titleOf(row)), ' ',
+          el('span', { class: 'composite-row-main' }, button, el('span', { class: 'composite-name' }, titleOf(row))), ' ',
           el('span', { class: 'composite-kind' }, row.kind), ' ',
           el('span', { class: 'composite-length' }, clock(this.items.get(row.id).duration())),
           parent ? el('span', { class: 'sr-only' }, `, in ${parent.name}`) : '', tags);
