@@ -1,0 +1,163 @@
+{%- comment -%}
+  The illustrated photo collage for one cue: the story canvas, where every
+  split hands each of its tiles an equal part of its area, beside the layout
+  tree with each tile's kind, photo count, and Share button. Drawn from
+  _data/explainers/composite_ui.yml: the canvas from its expected canvases,
+  with tiles placed on a 4 × 4 grid by class, and the tree from its rows. In
+  the player, js/composite-collage.js turns it into a live collage whose Share
+  buttons work and moves it to the state in data-composite-cue. Params: cue.
+
+  Hooks that scripts and tests rely on: .composite-canvas, .composite-cell
+  with data-tile, the composite-cell--x/--y/--w/--h grid classes,
+  .composite-chip, .composite-badge, .composite-tag, img.composite-art, and
+  ul.composite-tree with li[data-tile].
+{%- endcomment -%}
+{%- assign collage = site.data.explainers.composite_ui -%}
+{%- assign panel = collage.panels[include.cue.ui_state] -%}
+{%- assign art_base = '/assets/narration/composite-art/' | relative_url -%}
+{%- assign cell_w = collage.canvas.width | divided_by: collage.canvas.columns -%}
+{%- assign cell_h = collage.canvas.height | divided_by: collage.canvas.rows -%}
+{%- if panel.caption == 'added' -%}
+{%- assign rows = collage.captioned_rows -%}
+{%- assign layout = collage.expected.caption -%}
+{%- if panel.design == 'first' -%}{%- assign painted = collage.expected.first_design_caption -%}{%- else -%}{%- assign painted = collage.expected.caption -%}{%- endif -%}
+{%- else -%}
+{%- assign rows = collage.rows -%}
+{%- assign layout = collage.expected.start -%}
+{%- assign painted = collage.expected.start -%}
+{%- endif -%}
+{%- assign painted_tiles = painted.drawn | map: 'tile' -%}
+{%- assign framed = '' -%}
+{%- if panel.neighbors contains 'frame' -%}{%- assign framed = collage.neighbors.frame -%}{%- endif -%}
+{%- assign trace = false -%}
+{%- if panel.drawn -%}{%- assign trace = true -%}{%- endif -%}
+
+{%- comment -%} The canvas: one cell per tile, in reading order. {%- endcomment -%}
+{%- assign canvas_words = '' -%}
+{%- capture canvas_cells -%}
+{%- for entry in layout.drawn -%}
+{%- assign is_drawn = false -%}
+{%- if painted_tiles contains entry.tile -%}{%- assign is_drawn = true -%}{%- endif -%}
+{%- assign order = 0 -%}
+{%- if trace -%}
+{%- for traced in panel.drawn -%}{%- if traced == entry.tile -%}{%- assign order = forloop.index -%}{%- endif -%}{%- endfor -%}
+{%- if order == 0 -%}{%- continue -%}{%- endif -%}
+{%- endif -%}
+{%- for candidate in rows -%}{%- if candidate.id == entry.tile -%}{%- assign row = candidate -%}{%- endif -%}{%- endfor -%}
+{%- assign x = entry.area[0] | divided_by: cell_w -%}
+{%- assign y = entry.area[1] | divided_by: cell_h -%}
+{%- assign w = entry.area[2] | divided_by: cell_w -%}
+{%- assign h = entry.area[3] | divided_by: cell_h -%}
+{%- capture key -%}{{ x }},{{ y }},{{ w }},{{ h }}{%- endcapture -%}
+{%- assign where = collage.positions[key] -%}
+{%- if row.kind == 'caption' -%}{%- capture name -%}caption "{{ row.text }}"{%- endcapture -%}{%- else -%}{%- assign name = row.id -%}{%- endif -%}
+{%- capture ordinal -%}{%- case order -%}{%- when 1 -%}1st{%- when 2 -%}2nd{%- when 3 -%}3rd{%- else -%}{{ order }}th{%- endcase -%}{%- endcapture -%}
+{%- assign flag = panel.flags[entry.tile] -%}
+{%- capture words -%}{{ name }}, {{ where }}{% if trace %}, drawn {{ ordinal }}{% endif %}{% if entry.tile == framed %}, in a polaroid frame{% endif %}{% if is_drawn and flag %}, tagged {{ flag }}{% endif %}{% unless is_drawn %}, tagged not drawn{% endunless %}{%- endcapture -%}
+{%- if canvas_words == '' -%}{%- assign canvas_words = words -%}{%- else -%}{%- assign canvas_words = canvas_words | append: '; ' | append: words -%}{%- endif -%}
+<div class="composite-cell composite-cell--x{{ x }} composite-cell--y{{ y }} composite-cell--w{{ w }} composite-cell--h{{ h }} composite-cell--{{ row.kind }}{% unless is_drawn %} is-blank{% endunless %}{% if entry.tile == framed %} is-framed{% endif %}" data-tile="{{ entry.tile }}">
+{%- if is_drawn -%}
+{%- if row.kind == 'photo' -%}<img class="composite-art" src="{{ art_base }}{{ row.art }}" alt="">{%- elsif row.kind == 'caption' -%}<span class="composite-caption-text">{{ row.text }}</span>{%- endif -%}
+{%- endif -%}
+<span class="composite-cell-labels"><span class="composite-chip">{{ row.id }}</span>
+{%- if trace %} <span class="composite-badge">{{ ordinal }}</span>{%- endif -%}
+{%- if entry.tile == framed %} <span class="composite-tag composite-tag--neighbor">polaroid frame</span>{%- endif -%}
+{%- if is_drawn and flag %} <span class="composite-tag composite-tag--flag">{{ flag }}</span>{%- endif -%}
+{%- unless is_drawn %} <span class="composite-tag composite-tag--blank">not drawn</span>{%- endunless -%}
+</span></div>
+{%- endfor -%}
+{%- comment -%} Dashed outlines: every split's area, or the one being cut. {%- endcomment -%}
+{%- for cut in layout.cuts -%}
+{%- assign is_current = false -%}
+{%- if panel.current == cut.tile -%}{%- assign is_current = true -%}{%- endif -%}
+{%- if panel.cuts or is_current -%}
+{%- for candidate in rows -%}{%- if candidate.id == cut.tile -%}{%- assign split_row = candidate -%}{%- endif -%}{%- endfor -%}
+{%- assign x = cut.area[0] | divided_by: cell_w -%}
+{%- assign y = cut.area[1] | divided_by: cell_h -%}
+{%- assign w = cut.area[2] | divided_by: cell_w -%}
+{%- assign h = cut.area[3] | divided_by: cell_h -%}
+<span class="composite-area composite-cell--x{{ x }} composite-cell--y{{ y }} composite-cell--w{{ w }} composite-cell--h{{ h }}{% if is_current %} is-current{% endif %}" data-tile="{{ cut.tile }}">
+{%- if is_current -%}<span class="composite-area-label">{{ cut.tile }} · {{ split_row.direction }}</span>{%- endif -%}
+</span>
+{%- endif -%}
+{%- endfor -%}
+{%- endcapture -%}
+
+{%- comment -%} The layout tree: one row per tile, indented by depth. {%- endcomment -%}
+{%- assign row_words = '' -%}
+{%- capture tree_rows -%}
+{%- for row in rows -%}
+{%- assign next = forloop.index -%}
+{%- if row.kind == 'split' -%}
+{%- assign count = 0 -%}
+{%- for inner in rows offset: next -%}
+{%- if inner.depth <= row.depth -%}{%- break -%}{%- endif -%}
+{%- if inner.kind == 'photo' -%}{%- assign count = count | plus: 1 -%}{%- endif -%}
+{%- endfor -%}
+{%- assign kind = 'split, ' | append: row.direction -%}
+{%- elsif row.kind == 'photo' -%}
+{%- assign count = 1 -%}{%- assign kind = 'photo' -%}
+{%- else -%}
+{%- assign count = 0 -%}{%- assign kind = row.kind -%}
+{%- endif -%}
+{%- if count == 1 -%}{%- assign count_text = '1 photo' -%}{%- else -%}{%- assign count_text = count | append: ' photos' -%}{%- endif -%}
+{%- assign tags = '' -%}
+{%- if panel.marked contains row.id -%}{%- assign tags = tags | append: '|mark=' | append: panel.mark -%}{%- endif -%}
+{%- if panel.share_mark -%}{%- assign tags = tags | append: '|share=' | append: panel.share_mark -%}{%- endif -%}
+{%- assign flag = panel.flags[row.id] -%}
+{%- if flag -%}{%- assign tags = tags | append: '|flag=' | append: flag -%}{%- endif -%}
+{%- if panel.current == row.id -%}{%- assign tags = tags | append: '|current=drawing' -%}{%- endif -%}
+{%- for traced in panel.drawn -%}
+{%- if traced == row.id -%}
+{%- capture ordinal -%}{%- case forloop.index -%}{%- when 1 -%}1st{%- when 2 -%}2nd{%- when 3 -%}3rd{%- else -%}{{ forloop.index }}th{%- endcase -%}{%- endcapture -%}
+{%- assign tags = tags | append: '|drawn=drawn ' | append: ordinal -%}
+{%- endif -%}
+{%- endfor -%}
+{%- assign tag_list = tags | remove_first: '|' | split: '|' -%}
+{%- capture words -%}level {{ row.depth | plus: 1 }}, {{ row.id }}, {{ kind }}, {{ count_text }}{% for tag in tag_list %}{% assign tag_parts = tag | split: '=' %}, tagged {{ tag_parts[1] }}{% endfor %}{%- endcapture -%}
+{%- if row_words == '' -%}{%- assign row_words = words -%}{%- else -%}{%- assign row_words = row_words | append: '; ' | append: words -%}{%- endif -%}
+<li class="composite-node composite-node--depth-{{ row.depth }} composite-node--{{ row.kind }}" data-tile="{{ row.id }}"><span class="composite-node-main"><span class="composite-share-chip"><svg viewBox="0 0 16 16" focusable="false"><path d="M8 10.5V2.5M5 5.5l3-3 3 3M3.5 9v4.5h9V9"/></svg></span><span class="composite-name">{{ row.id }}</span></span> <span class="composite-kind">{{ kind }}</span> <span class="composite-count">{{ count_text }}</span>
+{%- for tag in tag_list -%}{%- assign tag_parts = tag | split: '=' %} <span class="composite-tag composite-tag--{{ tag_parts[0] }}">{{ tag_parts[1] }}</span>{%- endfor -%}
+</li>
+{%- endfor -%}
+{%- endcapture -%}
+
+{%- comment -%} A caption waiting to join the story, and the pattern's neighbors. {%- endcomment -%}
+{%- assign pending = nil -%}
+{%- if panel.caption == 'pending' -%}
+{%- for candidate in collage.captioned_rows -%}
+{%- if candidate.kind == 'caption' -%}{%- assign pending = candidate -%}{%- assign pending_under = previous_row.id -%}{%- break -%}{%- endif -%}
+{%- assign previous_row = candidate -%}
+{%- endfor -%}
+{%- endif -%}
+{%- assign carousel = collage.neighbors.carousel -%}
+{%- assign show_carousel = false -%}
+{%- if panel.neighbors contains 'carousel' -%}{%- assign show_carousel = true -%}{%- endif -%}
+{%- capture carousel_count -%}{%- case carousel.size -%}{%- when 2 -%}two{%- when 3 -%}three{%- when 4 -%}four{%- else -%}{{ carousel.size }}{%- endcase -%}{%- endcapture -%}
+{%- capture carousel_list -%}{% for id in carousel %}{% if forloop.last and carousel.size > 1 %}and {% endif %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}{%- endcapture -%}
+
+{%- capture composite_label -%}
+{{ collage.app }}, drawn by the {{ panel.design }} design. {% if canvas_words == '' %}Canvas: nothing drawn yet.{% else %}Canvas, in reading order: {{ canvas_words }}.{% endif %} Layout tree: {{ row_words }}.
+{%- if pending %} Waiting to be added: caption "{{ pending.text }}", under {{ pending_under }}.{% endif -%}
+{%- if show_carousel %} Carousel post: a flat list of {{ carousel_count }} photos, {{ carousel_list }}, showing 1 of {{ carousel.size }}.{% endif %} {{ panel.note }}
+{%- endcapture -%}
+{%- capture composite_rows -%}{"rows": {{ collage.rows | jsonify }}, "captioned_rows": {{ collage.captioned_rows | jsonify }}}{%- endcapture -%}
+<div class="composite-collage" data-composite-cue="{{ panel | jsonify | escape }}" data-composite-rows="{{ composite_rows | escape }}" data-composite-positions="{{ collage.positions | jsonify | escape }}" data-composite-neighbors="{{ collage.neighbors | jsonify | escape }}" data-composite-art="{{ art_base }}" role="img" aria-label="{{ composite_label | strip_newlines | strip | escape }}">
+  <div aria-hidden="true">
+    <div class="nja-window-bar">{{ collage.app }} · illustrated, {{ panel.design }} design</div>
+    <div class="composite-collage-body">
+      <div class="composite-canvas">{{ canvas_cells }}</div>
+      <ul class="composite-tree">{{ tree_rows }}</ul>
+      {%- if pending %}
+      <p class="composite-pending"><span class="composite-tag composite-tag--flag">new</span> caption “{{ pending.text }}” waits to go under {{ pending_under }}</p>
+      {%- endif %}
+      {%- if show_carousel %}
+      <figure class="composite-carousel">
+        <div class="composite-carousel-strip">{% for id in carousel %}{% for candidate in collage.rows %}{% if candidate.id == id %}<img class="composite-art composite-thumb" src="{{ art_base }}{{ candidate.art }}" alt="">{% endif %}{% endfor %}{% endfor %}</div>
+        <figcaption><span class="composite-tag composite-tag--neighbor">carousel post</span> 1 of {{ carousel.size }}</figcaption>
+      </figure>
+      {%- endif %}
+      <p class="composite-collage-note">{{ panel.note }}</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 160" width="90" height="160">
+  <title>A taco photo: a taco with lettuce and tomato on a plate</title>
+  <g id="table">
+    <rect width="90" height="160" fill="#e2f4e6"/>
+    <ellipse cx="45" cy="118" rx="28" ry="7" fill="#ffffff" stroke="#c4d6c8" stroke-width="1"/>
+  </g>
+  <g id="taco">
+    <path d="M23 99 Q26 91.5 29.5 98 Q33 90.5 36.5 98 Q40 90.5 43.5 98 Q47 90.5 50.5 98 Q54 90.5 57.5 98 Q61 90.5 64.5 98 Q66.5 95 67 99 Z" fill="#6cc36b"/>
+    <circle cx="32" cy="95" r="2.3" fill="#e9564a"/>
+    <circle cx="45" cy="94" r="2.3" fill="#e9564a"/>
+    <circle cx="58" cy="95" r="2.3" fill="#e9564a"/>
+    <rect x="37.5" y="93.5" width="4" height="2" rx="0.6" fill="#ffd65c"/>
+    <rect x="50" y="93" width="4" height="2" rx="0.6" fill="#ffd65c"/>
+    <path d="M23 98 A22 22 0 0 0 67 98 Z" fill="#f4c25b"/>
+    <g fill="#d99a2b">
+      <circle cx="34" cy="106" r="0.9"/>
+      <circle cx="45" cy="112" r="0.9"/>
+      <circle cx="55" cy="105" r="0.9"/>
+      <circle cx="40" cy="101.5" r="0.9"/>
+      <circle cx="50" cy="109" r="0.9"/>
+    </g>
+  </g>
+</svg>

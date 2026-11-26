@@ -1,85 +1,116 @@
-/* Composite lesson: the illustrated music library. Rows are indented by level;
-   marks, trace states, and flags always carry a text tag as well as an outline,
-   so color is never the only cue. Colors come from the shared --nja-* tokens,
-   which already switch for dark mode and print. */
-.composite-animation .composite-library { border: 2px solid var(--nja-line); border-radius: 6px; overflow: hidden; min-width: 0; }
-.composite-animation .composite-library .nja-window-bar { display: block; }
-.composite-animation .composite-library-body { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.8em 1em; padding: 0.9em; color: var(--nja-text); }
+/* Composite lesson: the illustrated photo collage. The canvas is a 4 × 4 grid
+   (one cell is 270 × 480 story pixels) whose tiles are placed by class; the
+   layout tree beside it lists every tile with its kind and photo count. Marks,
+   traces, and flags always carry a text tag as well as an outline, so color is
+   never the only cue. Chrome colors come from the shared --nja-* tokens, which
+   switch for dark mode and print; the photo illustrations keep their own
+   light colors in every theme, as photos do. */
+.composite-animation .composite-collage { border: 2px solid var(--nja-line); border-radius: 6px; overflow: hidden; min-width: 0; }
+.composite-animation .composite-collage .nja-window-bar { display: block; }
+.composite-animation .composite-collage-body { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.9em 1.1em; padding: 0.9em; color: var(--nja-text); }
+.composite-animation .composite-collage-body p { margin: 0; overflow-wrap: break-word; }
 
-/* The library: one row per item; deeper rows hang under a guide line. */
-.composite-animation .composite-rows { flex: 3 1 18em; display: grid; gap: 0.3em; margin: 0; padding: 0; list-style: none; min-width: 0; }
-.composite-animation .composite-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2em 0.45em; min-height: 2.2em; margin: 0; padding: 0.2em 0.4em; border: 2px solid transparent; border-radius: 4px; overflow-wrap: break-word; hyphens: auto; }
-.composite-animation .composite-row--depth-1 { margin-left: 1.2em; }
-.composite-animation .composite-row--depth-2 { margin-left: 2.4em; }
-.composite-animation .composite-row--depth-1,
-.composite-animation .composite-row--depth-2 { box-shadow: inset 3px 0 0 var(--nja-line); padding-left: 0.6em; }
-.composite-animation .composite-row--playlist .composite-name { font-weight: 700; }
-/* A row's Play button stays beside its title; the title itself may wrap. */
-.composite-animation .composite-row-main { display: inline-flex; align-items: center; gap: 0.45em; min-width: 0; }
-.composite-animation .composite-name { min-width: 0; }
-.composite-animation .composite-kind { padding: 0 0.45em; border: 1px solid var(--nja-line); border-radius: 999px; color: var(--nja-muted); background: var(--nja-input); font-size: 0.85em; }
-.composite-animation .composite-length { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* The story canvas, a phone story at 9:16. Tiles and area outlines share the
+   grid; an outline is placed after the tiles, so it paints over them. */
+.composite-animation .composite-canvas { flex: none; width: 14em; max-width: 100%; aspect-ratio: 9 / 16; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 2px; overflow: hidden; border-radius: 8px; background: var(--nja-panel); outline: 2px solid var(--nja-line); outline-offset: 3px; }
+.composite-animation .composite-cell--x0 { grid-column-start: 1; }
+.composite-animation .composite-cell--x1 { grid-column-start: 2; }
+.composite-animation .composite-cell--x2 { grid-column-start: 3; }
+.composite-animation .composite-cell--x3 { grid-column-start: 4; }
+.composite-animation .composite-cell--y0 { grid-row-start: 1; }
+.composite-animation .composite-cell--y1 { grid-row-start: 2; }
+.composite-animation .composite-cell--y2 { grid-row-start: 3; }
+.composite-animation .composite-cell--y3 { grid-row-start: 4; }
+.composite-animation .composite-cell--w1 { grid-column-end: span 1; }
+.composite-animation .composite-cell--w2 { grid-column-end: span 2; }
+.composite-animation .composite-cell--w3 { grid-column-end: span 3; }
+.composite-animation .composite-cell--w4 { grid-column-end: span 4; }
+.composite-animation .composite-cell--h1 { grid-row-end: span 1; }
+.composite-animation .composite-cell--h2 { grid-row-end: span 2; }
+.composite-animation .composite-cell--h3 { grid-row-end: span 3; }
+.composite-animation .composite-cell--h4 { grid-row-end: span 4; }
 
-/* The decorative Play chip of the static picture; the live library uses real buttons. */
-.composite-animation .composite-play-chip,
-.composite-animation .composite-play { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 1.7em; height: 1.7em; border: 2px solid var(--nja-line); border-radius: 50%; color: var(--nja-text); background: var(--nja-input); }
-.composite-animation .composite-play-chip svg,
-.composite-animation .composite-play svg { width: 0.9em; height: 0.9em; fill: currentColor; }
-/* The icons take the theme's colors, so the page's dark-mode inversion of
-   article SVGs (html.dark-mode .post-content svg) must not flip them back. */
-html.dark-mode .composite-animation .composite-play-chip svg,
-html.dark-mode .composite-animation .composite-play svg { filter: none; }
+.composite-animation .composite-cell { position: relative; min-width: 0; min-height: 0; overflow: hidden; border-radius: 3px; background: var(--nja-input); }
+.composite-animation .composite-art { display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+.composite-animation .composite-cell-labels { position: absolute; left: 0.25em; right: 0.25em; bottom: 0.25em; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.2em; }
+.composite-animation .composite-chip,
+.composite-animation .composite-badge { display: inline-block; max-width: 100%; padding: 0 0.3em; border: 1px solid var(--nja-line); border-radius: 4px; color: var(--nja-text); background: var(--nja-panel); font-size: 0.9em; font-weight: 700; line-height: 1.35; overflow-wrap: break-word; }
+.composite-animation .composite-badge { background: var(--nja-highlight); }
+/* A caption is text, not a photo: it sits on a solid tile. */
+.composite-animation .composite-cell--caption { display: flex; align-items: center; justify-content: center; background: var(--nja-highlight); }
+.composite-animation .composite-caption-text { padding: 0.3em 0.3em 1.9em; color: var(--nja-text); font-size: 1.05em; font-weight: 800; line-height: 1.2; text-align: center; overflow-wrap: break-word; }
+/* A tile the first design never drew: an empty area with a dashed edge. */
+.composite-animation .composite-cell.is-blank { background: var(--nja-panel); outline: 2px dashed var(--nja-coral); outline-offset: -4px; }
+/* The polaroid frame around one tile, a neighbor of the pattern. A frame is a
+   physical object, so it stays white in both themes. */
+.composite-animation .composite-cell.is-framed { background: #fbfaf4; box-shadow: inset 0 0 0 1px #77746a; }
+.composite-animation .composite-cell.is-framed .composite-art { top: 0.35em; left: 0.35em; width: calc(100% - 0.7em); height: calc(100% - 2em); }
+
+/* Dashed outlines: the areas the splits cut, or the one being cut now. */
+.composite-animation .composite-area { position: relative; z-index: 1; min-width: 0; min-height: 0; border: 2px dashed var(--nja-accent); border-radius: 3px; pointer-events: none; }
+.composite-animation .composite-area.is-current { border-width: 3px; }
+.composite-animation .composite-area-label { position: absolute; top: 0.3em; left: 0.3em; display: block; max-width: calc(100% - 0.6em); padding: 0 0.35em; border: 1px solid var(--nja-accent); border-radius: 4px; color: var(--nja-text); background: var(--nja-panel); font-size: 0.9em; font-weight: 700; overflow-wrap: break-word; }
 
 /* Tags name every state in words. */
-.composite-animation .composite-tag { display: inline-block; padding: 0 0.5em; border: 1px solid currentColor; border-radius: 999px; font-size: 0.85em; font-weight: 700; }
-.composite-animation .composite-tag--mark { color: var(--nja-accent); background: var(--nja-panel); }
+.composite-animation .composite-tag { display: inline-block; max-width: 100%; padding: 0 0.45em; border: 1px solid currentColor; border-radius: 999px; font-size: 0.9em; font-weight: 700; line-height: 1.35; overflow-wrap: break-word; }
+.composite-animation .composite-tag--mark,
+.composite-animation .composite-tag--share { color: var(--nja-accent); background: var(--nja-panel); }
 .composite-animation .composite-tag--current { color: var(--nja-text); background: var(--nja-highlight); }
-.composite-animation .composite-tag--visited { color: var(--nja-green); background: var(--nja-success-bg); }
-.composite-animation .composite-tag--flag { color: var(--nja-coral); background: var(--nja-warning-bg); border-style: dashed; }
-.composite-animation .composite-row.is-marked { border-color: var(--nja-accent); background: var(--nja-panel); }
-.composite-animation .composite-row.is-current { border-color: var(--nja-accent); border-width: 3px; background: var(--nja-highlight); }
-.composite-animation .composite-row.is-visited { background: var(--nja-success-bg); }
-.composite-animation .composite-row.is-flagged { border-color: var(--nja-coral); border-style: dashed; }
+.composite-animation .composite-tag--drawn { color: var(--nja-green); background: var(--nja-success-bg); }
+.composite-animation .composite-tag--flag,
+.composite-animation .composite-tag--neighbor { color: var(--nja-text); background: var(--nja-panel); }
+.composite-animation .composite-tag--blank { color: var(--nja-coral); background: var(--nja-warning-bg); border-style: dashed; }
 
-.composite-animation .composite-library-body p { margin: 0; overflow-wrap: break-word; }
+/* The layout tree: one row per tile; deeper rows hang under a guide line. */
+.composite-animation .composite-tree { flex: 1 1 15em; display: grid; gap: 0.3em; margin: 0; padding: 0; list-style: none; min-width: 0; }
+.composite-animation .composite-node { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2em 0.45em; min-height: 2.2em; margin: 0; padding: 0.2em 0.4em; border-radius: 4px; overflow-wrap: break-word; }
+.composite-animation .composite-node--depth-1 { margin-left: 1.1em; }
+.composite-animation .composite-node--depth-2 { margin-left: 2.2em; }
+.composite-animation .composite-node--depth-3 { margin-left: 3.3em; }
+.composite-animation .composite-node:not(.composite-node--depth-0) { box-shadow: inset 3px 0 0 var(--nja-line); padding-left: 0.6em; }
+.composite-animation .composite-node--split .composite-name { font-weight: 700; }
+.composite-animation .composite-node-main { display: inline-flex; align-items: center; gap: 0.45em; min-width: 0; }
+.composite-animation .composite-name { min-width: 0; }
+.composite-animation .composite-kind { padding: 0 0.45em; border: 1px solid var(--nja-line); border-radius: 999px; color: var(--nja-muted); background: var(--nja-input); font-size: 0.9em; }
+.composite-animation .composite-count { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* The decorative Share chip of the static picture; the live collage uses real buttons. */
+.composite-animation .composite-share-chip,
+.composite-animation .composite-share { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 1.8em; height: 1.8em; border: 2px solid var(--nja-line); border-radius: 50%; color: var(--nja-text); background: var(--nja-input); }
+.composite-animation .composite-share-chip svg,
+.composite-animation .composite-share svg { width: 1em; height: 1em; }
+.composite-animation .composite-share-chip svg path,
+.composite-animation .composite-share svg path { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* A caption waiting to join, the carousel neighbor, and the note. */
 .composite-animation .composite-pending { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 0.3em 0.45em; padding: 0.4em 0.6em; border: 2px dashed var(--nja-line); border-radius: 4px; }
+.composite-animation .composite-carousel { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 0.6em; margin: 0; padding: 0.5em 0.6em; border: 1px solid var(--nja-line); border-radius: 4px; background: var(--nja-input); }
+.composite-animation .composite-carousel figcaption { color: var(--nja-text); }
+.composite-animation .composite-carousel-strip { display: flex; gap: 0.35em; }
+.composite-animation .composite-thumb { position: static; width: 3em; height: 5.33em; border-radius: 4px; }
+.composite-animation .composite-collage-body p.composite-collage-note { flex: 1 1 100%; padding: 0.6em 0.8em; border-left: 4px solid var(--nja-accent); background: var(--nja-note-bg); }
 
-/* The queue that one press of Play filled, in play order. */
-.composite-animation .composite-queue { flex: 2 1 11em; min-width: 0; padding: 0.6em 0.8em; border: 1px solid var(--nja-line); border-radius: 4px; background: var(--nja-input); }
-.composite-animation .composite-library-body p.composite-queue-title { margin-bottom: 0.4em; font-weight: 700; }
-.composite-animation .composite-queue-list { margin: 0; padding-left: 1.6em; }
-.composite-animation .composite-queue-list li { padding: 0.1em 0; overflow-wrap: break-word; }
-.composite-animation .composite-queue-list li.is-new { font-weight: 700; }
-.composite-animation .composite-queue-empty { color: var(--nja-muted); }
-.composite-animation .composite-library-body p.composite-library-note { flex: 1 1 100%; padding: 0.6em 0.8em; border-left: 4px solid var(--nja-accent); background: var(--nja-note-bg); }
-
-/* The live library in the player (js/composite-library.js). */
-.composite-animation .composite-play { padding: 0; font: inherit; cursor: pointer; }
-.composite-animation .composite-play:hover { background: var(--nja-hover); }
-.composite-animation .composite-play:focus-visible,
-.composite-animation .composite-reset:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
-.composite-animation .composite-library-controls { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 0.6em; align-items: center; }
-.composite-animation .composite-reset { min-height: 2.4em; padding: 0.3em 0.8em; font: inherit; color: var(--nja-text); background: var(--nja-chrome); border: 2px solid var(--nja-line); border-radius: 4px; cursor: pointer; }
-.composite-animation .composite-reset:hover { background: var(--nja-hover); }
-.composite-animation .composite-library-body p.composite-library-status { flex: 1 1 100%; }
-.composite-animation .composite-library-body p.composite-library-status:empty { display: none; }
-.composite-animation .composite-row.is-current,
-.composite-animation .composite-queue-list li.is-new { animation: composite-arrive 0.45s ease-out; }
-@keyframes composite-arrive {
-  from { box-shadow: 0 0 0 4px var(--nja-accent); }
-  to { box-shadow: 0 0 0 0 transparent; }
+/* With a diagram and the collage but no code (the abstract roles, the
+   transfer), set the class diagram beside the tree of objects it describes. */
+@media screen and (min-width: 60em) {
+  .composite-animation .np-lesson:not(.np-code-with-diagram):not(.np-code-with-visual):has(> .np-diagram-column):has(> .np-visual) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 1.2em; align-items: start; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .composite-animation .composite-row.is-current,
-  .composite-animation .composite-queue-list li.is-new { animation: none; }
+
+@media screen {
+  /* The illustrations keep their light photo colors and the Share icons take
+     the theme's colors, so the page's dark-mode inversion of article SVGs
+     (html.dark-mode .post-content svg and img[src$=".svg"]) must not flip them. */
+  html.dark-mode .composite-animation img.composite-art[src$=".svg"],
+  html.dark-mode .composite-animation .composite-share-chip svg,
+  html.dark-mode .composite-animation .composite-share svg { filter: none; }
 }
 
 @media print {
-  .composite-animation .composite-library,
-  .composite-animation .composite-row.is-flagged,
-  .composite-animation .composite-queue { border-color: #555; }
-  .composite-animation .composite-row.is-current,
-  .composite-animation .composite-row.is-marked { border-color: #000; }
-  .composite-animation .composite-row--depth-1,
-  .composite-animation .composite-row--depth-2 { box-shadow: inset 3px 0 0 #555; }
+  .composite-animation .composite-collage,
+  .composite-animation .composite-carousel,
+  .composite-animation .composite-pending { border-color: #555; }
+  .composite-animation .composite-canvas { outline-color: #555; }
+  .composite-animation .composite-node:not(.composite-node--depth-0) { box-shadow: inset 3px 0 0 #555; }
+  .composite-animation .composite-area { border-color: #000; }
+  .composite-animation .composite-cell.is-blank { outline-color: #8a1c0f; }
 }

@@ -44,11 +44,15 @@ positions:
 # Pictures of the pattern's neighbors, outside the story's tree: a carousel
 # post is a flat list of photos, and a polaroid frame wraps one tile.
 neighbors: {carousel: [beach, cat, gig], frame: cat}
-# What Share on the story draws, in drawing order. An area is
-# [x, y, width, height] in story pixels.
+# What Share on the story draws: the splits whose areas it cuts and the tiles
+# it draws, both in call order. An area is [x, y, width, height] in story pixels.
 expected:
   start:
     photos: 4
+    cuts:
+      - {tile: story, area: [0, 0, 1080, 1920]}
+      - {tile: right, area: [540, 0, 540, 1920]}
+      - {tile: bottom, area: [540, 960, 540, 960]}
     drawn:
       - {tile: beach, area: [0, 0, 540, 1920]}
       - {tile: cat, area: [540, 0, 540, 960]}
@@ -56,6 +60,11 @@ expected:
       - {tile: taco, area: [810, 960, 270, 960]}
   caption:
     photos: 4
+    cuts:
+      - {tile: story, area: [0, 0, 1080, 1920]}
+      - {tile: left, area: [0, 0, 540, 1920]}
+      - {tile: right, area: [540, 0, 540, 1920]}
+      - {tile: bottom, area: [540, 960, 540, 960]}
     drawn:
       - {tile: beach, area: [0, 0, 540, 960]}
       - {tile: caption, area: [0, 960, 540, 960]}
@@ -66,6 +75,11 @@ expected:
   # area stays blank, and nothing reports an error.
   first_design_caption:
     photos: 4
+    cuts:
+      - {tile: story, area: [0, 0, 1080, 1920]}
+      - {tile: left, area: [0, 0, 540, 1920]}
+      - {tile: right, area: [540, 0, 540, 1920]}
+      - {tile: bottom, area: [540, 960, 540, 960]}
     drawn:
       - {tile: beach, area: [0, 0, 540, 960]}
       - {tile: cat, area: [540, 0, 540, 960]}

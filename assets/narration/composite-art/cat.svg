@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 160" width="90" height="160">
+  <title>A cat photo: an orange cat sitting on a rug</title>
+  <g id="room">
+    <rect width="90" height="160" fill="#fde5d4"/>
+    <rect y="118" width="90" height="42" fill="#f2c9a6"/>
+    <ellipse cx="45" cy="119" rx="24" ry="4" fill="#e9b08a"/>
+  </g>
+  <g id="cat">
+    <path d="M56 112 C66.5 111 66.5 97 61 93" fill="none" stroke="#e58a3f" stroke-width="5" stroke-linecap="round"/>
+    <path d="M33 118 C31 102 36 88 45 88 C54 88 59 102 57 118 Z" fill="#f0a04b"/>
+    <ellipse cx="45" cy="104" rx="6" ry="9" fill="#fde8cf"/>
+    <ellipse cx="40" cy="117.5" rx="4" ry="2.4" fill="#fde8cf"/>
+    <ellipse cx="50" cy="117.5" rx="4" ry="2.4" fill="#fde8cf"/>
+    <path d="M35 70 L36 58 L43 66 Z M55 70 L54 58 L47 66 Z" fill="#f0a04b"/>
+    <path d="M37 67 L37.5 61 L41 65.5 Z M53 67 L52.5 61 L49 65.5 Z" fill="#f7b6a3"/>
+    <circle cx="45" cy="76" r="12" fill="#f0a04b"/>
+    <path d="M45 64.5 V69 M41 65.5 L42 69 M49 65.5 L48 69" fill="none" stroke="#d77e30" stroke-width="1.2" stroke-linecap="round"/>
+    <ellipse cx="40.5" cy="76" rx="1.6" ry="2.2" fill="#3b2a1e"/>
+    <ellipse cx="49.5" cy="76" rx="1.6" ry="2.2" fill="#3b2a1e"/>
+    <path d="M43.6 80 L46.4 80 L45 81.8 Z" fill="#e5737a"/>
+    <path d="M45 81.8 Q43.5 84 42 83 M45 81.8 Q46.5 84 48 83" fill="none" stroke="#3b2a1e" stroke-width="0.8" stroke-linecap="round"/>
+  </g>
+</svg>

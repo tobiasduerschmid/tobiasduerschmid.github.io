@@ -51,6 +51,9 @@ test('the expected canvases follow from the rows in both designs', () => {
   }
   assert.deepEqual(share(captioned, 'story', 'composite').drawn, expected.caption.drawn, 'composite design: the captioned story');
   assert.deepEqual(share(captioned, 'story', 'first').drawn, expected.first_design_caption.drawn, 'first design: the captioned story');
+  for (const design of designs) assert.deepEqual(share(plain, 'story', design).cuts, expected.start.cuts, `${design} design: the photo story's cuts`);
+  assert.deepEqual(share(captioned, 'story', 'composite').cuts, expected.caption.cuts, 'composite design: the captioned story\'s cuts');
+  assert.deepEqual(share(captioned, 'story', 'first').cuts, expected.first_design_caption.cuts, 'first design: the captioned story\'s cuts');
   for (const name of ['start', 'caption', 'first_design_caption']) assert.equal(expected[name].photos, 4, name);
   assert.ok(expected.caption.drawn.some(entry => entry.tile === 'caption'), 'the composite draws the caption');
   assert.ok(!expected.first_design_caption.drawn.some(entry => entry.tile === 'caption'), 'the first design leaves the caption out');
