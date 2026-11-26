@@ -31,16 +31,16 @@ steps:
   # the *act* of retrieval is what builds memory; the instruction to
   # retrieve does nothing on its own. This step puts the retrieval before
   # the routine is re-displayed.
-  - title: "Retrieval Warm-Up"
+  - title: "Warm-Up From Memory"
     backend: pyodide
     instructions: |
       ### Welcome back to Part 2
 
-      Before opening any code, let's see what stuck from Part 1. The next quiz is a quick **retrieval check** — try to answer from memory before peeking at your Part 1 notes or scrolling back.
+      Before opening any code, see what stuck from Part 1. Answer the next quiz from memory, before you look at your Part 1 notes or scroll back.
 
-      Why this comes first: research on spaced retrieval is unambiguous (Karpicke & Roediger, *Science* 2008). The *act* of retrieving is what builds durable memory. Re-reading the routine here would *feel* like consolidation but actually do nothing. So the routine is intentionally NOT re-displayed before the quiz — and the quiz is the first thing you do this session.
+      The routine is not shown again before the quiz.
 
-      If you can't recall something, that's fine. **Answer your best guess.** The retrieval *attempt* is what matters. After the quiz, the rest of Part 2 will rebuild the vocabulary on demand.
+      If you can't recall something, **answer your best guess** anyway, so you can see what to review. The rest of Part 2 rebuilds the vocabulary as you need it.
 
       Use `recall-notes.md` to write down what you remember on your own first, then take the quiz.
 
@@ -56,13 +56,12 @@ steps:
           stuck. Sentences, bullet points, sketches — whatever comes out.
 
           Whatever you can't recall is exactly what the next quiz will probe.
-          The retrieval *attempt* is what builds memory, not the structured
-          checklist. Don't pre-organize.
+          Don't pre-organize; write what you remember.
 
     open_file: "recall-notes.md"
 
     quiz:
-      title: "Step 1 — Retrieval Check"
+      title: "Step 1 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       shuffle_questions: false
@@ -171,7 +170,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      If you just finished the basics tutorial today, stop here and come back in two or three days. That pause forces retrieval, which is exactly what makes the skill stick. When you return, this step starts with one of the strongest professional beacons: tests that describe the behavior before you read the implementation.
+      If you just finished the basics tutorial today, stop here and come back in two or three days. Recalling the routine after a gap helps you keep it. When you return, this step starts with one of the strongest professional beacons: tests that describe the behavior before you read the implementation.
 
       ### 🎯 You will learn to
 
@@ -179,7 +178,7 @@ steps:
       - Verify one expectation by reading the smallest relevant helper
       - Decide when a test is a trustworthy beacon and when it needs implementation evidence
 
-      ### Retrieval Warm-Up
+      ### Warm-Up From Memory
 
       Before opening the code, recall the Part 1 routine without looking:
 
@@ -414,7 +413,7 @@ steps:
             1: "Both tests use the same public entry point, but one is about filtering and the other is about ranking."
             2: "Name length is not a behavior beacon."
             3: "The public function coordinates helpers; the contrast tells you which helper to inspect for each contract clue."
-          explanation: "Variation Theory: hold the test surface mostly constant, then vary the contract clue. The mechanism that matters is the feature that changes."
+          explanation: "Hold the test surface mostly constant, then vary the contract clue. The mechanism that matters is the feature that changes."
 
   # =========================================================================
   # STEP 3: Node Hypothesis Sprint
@@ -2472,7 +2471,7 @@ steps:
 
       Every earlier step in Part 2 was sized so that a careful linear read could still finish in time. This step is different on purpose. The codebase is around **330 lines across 11 files** — a route + four services + two data modules + a decoy route + tests. **You cannot read it all carefully during a first-attempt timer and still leave room to answer well.**
 
-      This is the moment top-down reading was invented for. Production code is rarely the size of a tutorial snippet. Pull requests at real companies routinely exceed what any human can hold in working memory. Reviewers who try to read everything either burn out or rubber-stamp. The routine is what makes the work survivable *and* the answer correct.
+      This is the moment top-down reading was invented for. Production code is rarely the size of a tutorial snippet. The routine is what makes the work survivable *and* the answer correct.
 
       ### 🎯 You will learn to
 
@@ -2512,8 +2511,7 @@ steps:
       | Read tests + the order route + one service, focusing on the failure path | **6–9 minutes** ← target |
 
       The third strategy is the only one that leaves enough time to think,
-      answer, and write evidence. Hypothesis-driven reading is not a shortcut;
-      it is the only honest path through this much code.
+      answer, and write evidence.
 
       ### Constraints
 

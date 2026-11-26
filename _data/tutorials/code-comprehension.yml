@@ -31,7 +31,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      When code feels overwhelming, the slowest move is often reading from the first line and hoping the purpose emerges. Strong readers start with a **hypothesis**: "This code probably does X, and these are the places that would prove or disprove it." That is not guessing. It is evidence-seeking with a plan.
+      When code feels overwhelming, the slowest move is often reading from the first line and hoping the purpose emerges. Strong readers start with a **hypothesis**: "This code probably does X, and these are the places that would prove or disprove it."
 
       ### 🎯 You will learn to
 
@@ -841,7 +841,7 @@ steps:
       - Which component is display-only?
 
       Use `reading-notes.md` to record your hypothesis, strongest beacons, and
-      smallest useful trace. As a transfer check, notice what this React code
+      smallest useful trace. Notice what this React code
       shares with the Python sprint: both derive a visible list, then shape
       that list for display.
 
@@ -851,7 +851,7 @@ steps:
       inspected first, what you skipped, and what evidence changed or confirmed
       your hypothesis.
 
-      After this step, **wait two or three days before starting the advanced tutorial**. That delay is not wasted time; it is how spacing turns today's code-reading routine into something you can retrieve later.
+      After this step, **wait two or three days before starting the advanced tutorial**. Recalling the routine after a break helps you remember it longer.
 
     files:
       - path: "reading-notes.md"
@@ -1161,7 +1161,7 @@ steps:
             1: "Neither example persists data across page reloads."
             2: "Both examples derive new values without mutating the starter collection."
             3: "Route handlers are part of backend Node examples, not these Python and React snippets."
-          explanation: "Transfer improves when you name the shared code plan across languages: select relevant data, then shape it for the consumer."
+          explanation: "It helps to name the shared code plan across languages: select relevant data, then shape it for the consumer."
 
         - type: single
           difficulty: intermediate
@@ -1196,7 +1196,7 @@ steps:
 
       Fast pattern recognition has a failure mode. The moment you see `for X in collection: if condition: best = X`, your brain shouts "max-tracking plan!" and you stop reading the details. Most of the time you're right. But sometimes the surface looks familiar and the substance is subtly different — and rushing past the difference is where wrong answers live.
 
-      This step is engineered for one thing: to make you commit to a prediction, then discover that your prediction was *almost* right. The recovery move — slowing down on one chosen input, finding the specific detail that breaks the obvious hypothesis — is what experienced readers do when their first hypothesis fails. We'll practice it on a real example.
+      In this step you will write a prediction before reading the code, then check it against what the code does. The recovery move — slowing down on one chosen input, finding the specific detail that breaks the obvious hypothesis — is what experienced readers do when their first hypothesis fails. We'll practice it on a real example.
 
       ### 🎯 You will learn to
 
@@ -1221,8 +1221,6 @@ steps:
       ```
 
       What does `top_student_per_topic(scores)` return? Write a specific dictionary literal in your notes, not a vague description. *Then* take the quiz.
-
-      The point isn't getting the prediction right. The point is *making* a prediction before you read the code — so when you find out whether you were right, the surprise has somewhere to land.
 
     files:
       - path: "prediction-notes.md"
@@ -1871,7 +1869,7 @@ steps:
             1: "`minutes_by_skill()` groups totals by skill."
             2: "`longest_streak()` tracks a best-so-far value across sorted days."
             3: "There is no request or response object in this Python example."
-          explanation: "Interleaved plan recognition helps transfer: the same code can contain filtering, aggregation, and best-so-far tracking."
+          explanation: "One function can contain several plans at once: filtering, aggregation, and best-so-far tracking."
 
         - type: single
           difficulty: intermediate
