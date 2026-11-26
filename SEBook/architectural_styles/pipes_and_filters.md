@@ -9,6 +9,10 @@ In the realm of software architecture, data flow styles describe systems where t
 
 The pattern of interaction in this style is characterized by the successive transformation of streams of discrete data. Originally popularized by the UNIX operating system in the 1970s—where developers could chain command-line tools together to perform complex tasks—this style treats a software system much like a chemical processing plant where fluid flows through pipes to be refined by various filters. Modern applications of this style extend far beyond the command line, encompassing signal-processing systems, the request-processing architecture of the Apache Web server, compiler toolchains, financial data aggregators, and distributed map-reduce frameworks.
 
+The narrated lesson follows a student newspaper's game-day photos from a batch script to a line of filters, then through the style's rules and the trade-offs they bring.
+
+{% include narration.html topic="pipes_and_filters" %}
+
 Unix shell scripting is the cleanest everyday example. A command such as `cat access.log | grep "500" | sort | uniq -c` is a small pipe-and-filter architecture: each command reads a text stream, transforms it, and writes another text stream. The pipe (`|`) is not a collection of filters. It is the connector that buffers and forwards the output stream of one filter into the input stream of the next filter.
 
 ##  Structural Paradigms: Elements and Constraints

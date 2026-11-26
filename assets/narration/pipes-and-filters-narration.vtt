@@ -1,0 +1,121 @@
+WEBVTT
+
+intro-1
+00:00:00.000 --> 00:00:17.410
+Fourth quarter, rivalry game, and the stadium is shaking. Your roommate shoots for the student paper from the sideline, and by the final whistle, the camera will hold three thousand photos. Fans want them tonight. The editor wants the best ones online while the game is still on.
+
+intro-2
+00:00:17.410 --> 00:00:36.850
+Every photo needs the same steps. Remove the noise from shooting at night. Brighten it. Crop it to the action. Blur the faces of fans in the stands, for privacy. Stamp the paper's watermark. Then publish it to the website. You're the one who keeps the photo desk's code running.
+
+monolith-1
+00:00:36.850 --> 00:00:57.240
+Here's the photo desk's script. Step one denoises all three thousand photos and saves them in a folder. Step two reads that folder, brightens every photo, and saves another folder. And so on, until the last step uploads everything. It all lives in one file, sharing a dozen global settings.
+
+monolith-2
+00:00:57.240 --> 00:01:14.140
+The camera finishes at ten p.m., and each step takes the script about twenty minutes for the whole batch. Predict: when can the first photo go online? And when does the editor get the touchdown catch from the second quarter?
+
+monolith-3
+00:01:14.140 --> 00:01:34.350
+Not until every step has finished every photo: two hours later, at midnight. The second-quarter catch waits behind three thousand others. Meanwhile, five folders fill with fifteen thousand in-between files. Nothing reaches the website while the game is on, and fans post blurry phone shots instead.
+
+monolith-4
+00:01:34.350 --> 00:01:56.410
+And change hurts too. The editor wants a new step that straightens tilted shots, right after the crop. The robotics club wants your denoiser for its robot's camera. Both mean surgery on one giant file, where every step reads the same global settings. You need steps that work alone and pass each photo on.
+
+filters-1
+00:01:56.410 --> 00:02:16.080
+Pipes and filters rebuilds the job as a line of small programs called filters. Each filter does exactly one thing: it reads photos from its input, transforms each one, and writes the result to its output. Denoise is one filter. Brighten is another. Each one is its own program.
+
+filters-2
+00:02:16.080 --> 00:02:31.590
+Between filters run pipes. A pipe carries photos from one filter's output to the next filter's input, one way, in order, and it never changes them. It holds a few photos in a buffer, so neighboring filters don't have to work in lockstep.
+
+filters-3
+00:02:31.590 --> 00:02:51.450
+At the ends sit a source, which feeds in photos as the camera uploads them, and a sink, the website gallery. In between, filters enrich a photo, like stamping a logo; refine it, like removing noise; or transform it, like turning a raw file into a web image.
+
+alone-1
+00:02:51.450 --> 00:03:10.820
+Now the rules that give the style its power. Rule one, independence: filters share no state and no memory. They interact only through pipes. No more global settings: if the brighten filter needs a setting, it gets it as its own parameter, like a dial on the outside of its box.
+
+alone-2
+00:03:10.820 --> 00:03:29.910
+Rule two, agnosticism: a filter must not know who sits upstream or downstream. Blur faces doesn't know that Crop comes before it, or Watermark after it. It only knows: a photo comes in, a photo goes out. That ignorance is what lets you move it anywhere.
+
+alone-3
+00:03:29.910 --> 00:03:48.370
+To connect, neighbors only have to agree on what flows between them. Here, every pipe carries the same simple thing: an image in one common file format. Because every filter takes and gives that same thing, any filter can follow any other.
+
+stream-1
+00:03:48.370 --> 00:04:06.320
+Rule three, incremental processing: a filter handles each photo as it arrives, and passes it on right away. It doesn't wait for the whole batch. While Watermark stamps photo one, Blur faces works on photo two, Crop on photo three, and so on down the line.
+
+stream-2
+00:04:06.320 --> 00:04:22.060
+Replay game night with the pipeline. Each filter takes about half a second per photo, and the camera uploads photos as they're shot. Predict: when does the second-quarter catch reach the website now?
+
+stream-3
+00:04:22.060 --> 00:04:37.630
+A few seconds after the shot. The photo slides through five filters, about half a second each, and lands in the gallery while the crowd is still cheering. All five filters work at the same time, on different photos, so the line keeps up with the camera.
+
+stream-4
+00:04:37.630 --> 00:05:00.450
+Rule four, acyclic: data flows one way, from the source to the sink, without loops. No filter sends photos back upstream. That one-way flow makes the line easy to reason about: the website's photo is simply watermark of blur of crop of brighten of denoise of the raw shot.
+
+order-1
+00:05:00.450 --> 00:05:16.360
+Filters are independent, but their order still matters. Put Crop after Watermark, and the crop can cut the logo off the edge. Add one, then double, gives a different number than double, then add one. Same filters, different line, different result.
+
+order-2
+00:05:16.360 --> 00:05:37.780
+So there are two jobs. A filter developer builds one filter, knowing nothing about the line around it. The pipeline builder knows the whole job and picks the filters and their order. When the editor wants straightened shots, the builder plugs a new filter in after Crop. Nobody edits another filter.
+
+buys-1
+00:05:37.780 --> 00:05:56.090
+Now the consequences. First, reuse. The robotics club takes your denoise filter and drops it in front of its own pipeline. It works unchanged, because it shares no state with your other filters, and never knew its neighbors. A filter that does one thing well travels.
+
+buys-2
+00:05:56.090 --> 00:06:14.740
+Second, easy change. Inserting Straighten took one new filter and one new pipe. Replacing Brighten with a smarter auto-exposure filter that reads and writes the same format touches nothing else. And you can test each filter alone: feed in a known photo, and check the photo that comes out.
+
+buys-3
+00:06:14.740 --> 00:06:34.320
+Third, throughput. Each filter works on a different photo at the same moment, so on five processor cores, the line can finish up to five times as many photos a minute as one program doing each step in turn. The slowest filter sets the pace. Each benefit comes from a rule.
+
+costs-1
+00:06:34.320 --> 00:06:53.770
+Now the costs. The editor wants a brightness slider that updates every photo live. But each drag would send photos back through the line from Brighten on, and they'd come out only at the far end. Pipelines run one way, start to finish: interactive tools with feedback loops fit this style badly.
+
+costs-2
+00:06:53.770 --> 00:07:14.500
+Second, every hand-off costs time. To keep the format common, each filter decodes the image file, does its one job, and encodes a new file for the next pipe. Five filters, five decodes, five encodes: each photo takes longer than in one program, and every encode can lose a little quality.
+
+costs-3
+00:07:14.500 --> 00:07:35.540
+Third, errors. Halfway through the game, one corrupted photo crashes Blur faces. Which photos made it out? Which are stuck in pipes? Filters share no state, so nobody knows the whole picture. Restarting the line can post some photos twice. Error handling is the style's weak spot.
+
+limits-1
+00:07:35.540 --> 00:07:53.730
+Some steps can't be incremental. The editor wants only the best shot of each burst of ten. A best-shot filter must hold all ten before it can pass one on, and a sort filter must read everything before it can output anything. Downstream filters sit idle while they wait.
+
+limits-2
+00:07:53.730 --> 00:08:11.980
+And some rules get bent on purpose. To caption players, a new filter peeks into the face filter's list of faces. It works, but now the two only run together: you can't reuse either one alone, or reorder them freely. Break a rule, and you lose the benefit it bought.
+
+limits-3
+00:08:11.980 --> 00:08:31.540
+So when should you pick pipes and filters? When the work is a stream of items through steps that don't need each other's state: photos, audio, logs, sensor data, lines of text. Skip it when users must steer the work as it runs, or when steps need to share lots of data.
+
+summary-1
+00:08:31.540 --> 00:08:50.990
+Let's recap. The photo desk's script ran each step on all three thousand photos, saved folders of in-between files, and put nothing online until midnight. Pipes and filters breaks the job into filters that each do one thing, joined by pipes that carry a stream from a source to a sink.
+
+summary-2
+00:08:50.990 --> 00:09:10.220
+Four rules give the style its power: filters share no state, don't know their neighbors, pass each item on right away, and the data flows one way, without loops. Those rules buy reuse, easy insertion and replacement, simple reasoning, and throughput, as long as you keep them.
+
+summary-3
+00:09:10.220 --> 00:09:30.420
+The price: no live feedback loops, conversion overhead at every hand-off, and hard error handling. And a filter that needs all its input turns the line back into a batch. Next time you write one giant loop over a list, ask: could each step be its own filter?

@@ -1,0 +1,291 @@
+# One knowledge check per section, from the intro on: each question puts the
+# section's central idea to work on a new system, not the photo desk, and its
+# distractors are the wrong reasoning a partial understanding produces,
+# phrased in the lesson's own words so the key never stands out by
+# vocabulary. Every key, and every reason to reject a distractor, is said in
+# the narration before its check. The player, print, and notes views all show
+# the options in this order, so keys sit in irregular positions. The summary
+# asks several questions, about one new system (a campus radio station's
+# podcast pipeline), under `questions`.
+intro:
+  question: Which campus job has the same shape as the photo desk's?
+  options:
+    - Every new sensor reading is smoothed, checked against limits, then logged
+    - Two students edit a shared document and answer each other's comments
+    - A calendar app stores events and answers questions about them
+  correct_index: 0
+  explanation: >-
+    Like every game photo, every sensor reading goes through the same fixed series of steps on its
+    way from where it starts to where it ends up.
+  option_feedback:
+    1: >-
+      Comments go back and forth between people; there's no fixed series of steps that every item
+      passes through.
+    2: >-
+      Storing events and answering questions is a lookup, not a series of steps that each new item
+      goes through.
+monolith:
+  question: >-
+    A music app's upload script normalizes all 500 songs of an album and saves a folder, then trims
+    silence on all 500 and saves another folder, then publishes them. Why does the first song appear
+    so late?
+  options:
+    - Normalizing is the slowest of the three steps
+    - Saving each folder to disk takes longer than the work itself
+    - No step passes a song on until it has finished all 500
+  correct_index: 2
+  explanation: >-
+    When each step runs on the whole batch before the next one starts, nothing is published until
+    every step has processed every item, like the photo desk's nothing-until-midnight.
+  option_feedback:
+    0: >-
+      Even fast steps would leave the first song waiting for all 500 to finish every step. The order
+      of work causes the delay, not one slow step.
+    1: >-
+      Even instant saves wouldn't help: the first song still waits until every step has finished all
+      500 songs.
+filters:
+  question: In the pipes-and-filters style, which statement describes a pipe?
+  options:
+    - It holds every item until the filter before it has finished all its input
+    - It carries items one way, in order, without changing them
+    - It decides which filter should get each item next
+  correct_index: 1
+  explanation: >-
+    A pipe carries the stream from one filter's output to the next filter's input, one way, in
+    order, and never changes it; it may hold a few items in a buffer.
+  option_feedback:
+    0: >-
+      That's the batch script's folder. A pipe holds only a few items in a buffer and passes each one
+      on, in order.
+    2: >-
+      A pipe joins one filter's output to the next filter's input. It carries items along that
+      connection; it doesn't pick where they go.
+alone:
+  question: >-
+    A log-cleaning pipeline's filter needs a threshold setting. Which way keeps that filter reusable
+    in other pipelines?
+  options:
+    - Reading the threshold from a global variable that other filters share
+    - Passing the threshold to the filter as its own parameter
+    - Asking the filter upstream which threshold it used
+  correct_index: 1
+  explanation: >-
+    Filters share no state, so settings arrive as each filter's own parameters, like a dial on the
+    outside of its box. That keeps the filter independent and movable.
+  option_feedback:
+    0: >-
+      Shared global settings tie filters together, which breaks independence and the reuse it buys.
+    2: >-
+      A filter mustn't know who sits upstream; it only knows that an item comes in and an item goes
+      out.
+stream:
+  question: >-
+    A lecture-captioning pipeline's speech-to-text filter waits until the whole lecture is recorded
+    before passing on any text. Which rule does it break?
+  options:
+    - Independence
+    - Agnosticism
+    - Incremental processing
+    - Acyclic flow
+  correct_index: 2
+  explanation: >-
+    A filter should handle each item as it arrives and pass it on right away. Waiting for the whole
+    input delays everything downstream, the way the batch script delayed every photo.
+  option_feedback:
+    0: >-
+      Independence means sharing no state with other filters. Keeping its own input in its own memory
+      shares nothing; the problem is that no text leaves until the end.
+    1: >-
+      Agnosticism means a filter doesn't know its neighbors, and this one names none. What it breaks
+      is passing each item on as it arrives.
+    3: >-
+      Nothing flows backward here; the filter just holds everything until the end, which breaks
+      incremental processing.
+order:
+  question: >-
+    A podcast pipeline has two filters, "Normalize volume" and "Add intro jingle". Which statement is
+    right?
+  options:
+    - Normalizing after the jingle changes the jingle's volume too
+    - Their order can't matter, since each filter is independent
+    - Each filter should check which filter came before it
+  correct_index: 0
+  explanation: >-
+    Independent filters can still give different results in a different order: normalizing after the
+    jingle changes the jingle as well. The pipeline builder chooses the filters and their order.
+  option_feedback:
+    1: >-
+      Independence means filters share no state, not that order is irrelevant. Cropping after the
+      watermark cut the logo off.
+    2: >-
+      Filters must not know their neighbors. Picking the filters and their order is the pipeline
+      builder's job.
+buys:
+  question: >-
+    A pipes-and-filters system's "Remove profanity" filter reads lines of text and writes lines of
+    text. Another team's chat-log pipeline also passes lines of text between its filters. What does
+    reusing the filter there take?
+  options:
+    - Copying the filters around it from the first pipeline too
+    - Rewriting it to call their pipeline's next filter by name
+    - Placing it in their line as it is, with no code changes
+  correct_index: 2
+  explanation: >-
+    A filter that shares no state, doesn't know its neighbors, and speaks the common format can be
+    reused wherever that format flows, like the robotics club's copy of the denoise filter.
+  option_feedback:
+    0: >-
+      The filter never depended on its neighbors, so they don't need to come along.
+    1: >-
+      A filter mustn't know its neighbors. The pipeline builder connects it with pipes, and its code
+      stays the same.
+costs:
+  question: >-
+    A live-captioning pipeline works well, but the lecturer wants to fix a misheard word on screen and
+    have the fix change what the translation filter in the middle of the line outputs. Why is this
+    hard in this style?
+  options:
+    - The fix would have to flow back into the middle of a one-way line
+    - Pipes can't carry corrected text, only the original stream
+    - Filters can't take any parameters while they run
+  correct_index: 0
+  explanation: >-
+    Pipelines run one way, from start to finish, but interactive tools need the user's choices to
+    flow back into the line. This style fits such feedback loops badly.
+  option_feedback:
+    1: >-
+      Pipes carry whatever the filters write. The problem is the direction the fix has to travel:
+      back upstream.
+    2: >-
+      Filters can take parameters, like the brighten filter's dial. The problem is the user's choice
+      flowing back into the middle of the line.
+limits:
+  question: >-
+    A log pipeline's filters each pass every line on as it arrives. Which new filter would leave the
+    filters after it idle until all of the day's logs are in?
+  options:
+    - A filter that hides any password that appears in a line
+    - A filter that reports which error appears in the most lines
+    - A filter that turns each line's error code into plain words
+  correct_index: 1
+  explanation: >-
+    To report the most common error, the filter must count every line before it can output anything,
+    like sort or the best shot of a burst. Everything downstream waits, and the line turns back into
+    a batch.
+  option_feedback:
+    0: >-
+      Hiding a password needs only the line at hand, so the filter can pass each line on as soon as
+      it's done.
+    2: >-
+      Translating a code needs only the line at hand, so each line moves on right away.
+summary:
+  questions:
+    - question: >-
+        A campus radio station's podcast script removes noise from all 30 episodes, then normalizes
+        all 30, then encodes all 30, then publishes them. What does this delay?
+      options:
+        - Only the last episode, which waits for the others
+        - The first episode, which waits for every step on all 30
+        - Nothing, since each step is fast on its own
+      correct_index: 1
+      explanation: >-
+        When each step finishes the whole batch first, nothing is published until every step has
+        processed every episode, the same trap as the photo desk's script.
+      option_feedback:
+        0: >-
+          In a batch, every episode waits for every step to finish all 30, so the first one is no
+          earlier than the last.
+        2: >-
+          Fast steps don't help the first episode, which still waits for every step to finish all
+          thirty.
+    - question: >-
+        In the radio station's new pipeline, Remove noise saves each episode's noise level in a global
+        variable, and Encode, further down the line, reads it to choose a bit rate. Which rule does
+        this break?
+      options:
+        - Incremental processing
+        - Acyclic flow
+        - Independence
+      correct_index: 2
+      explanation: >-
+        Filters must share no state and talk only through pipes. The global ties Remove noise and
+        Encode together, so neither can be reused, moved, or reordered alone, like the caption filter
+        that peeked at the face filter's list.
+      option_feedback:
+        0: >-
+          Both filters still pass each episode on as it arrives. The problem is the global variable:
+          the two now share state outside the pipes.
+        1: >-
+          The noise level travels forward, from an earlier filter to a later one, so there's no loop.
+          The two filters share state outside the pipes.
+    - question: >-
+        The station's Remove noise filter checks whether the next filter is Normalize and skips some
+        work if it is. What's wrong with that?
+      options:
+        - It knows its neighbor, so it can't be moved or reused freely
+        - Nothing, as long as the pipes keep the episodes in order
+        - It slows the line down, since every check takes time
+      correct_index: 0
+      explanation: >-
+        A filter must not know who sits upstream or downstream; that ignorance is what lets the
+        pipeline builder move it or reuse it anywhere.
+      option_feedback:
+        1: >-
+          Keeping order is the pipes' job, but a filter that depends on its neighbor breaks the line
+          the moment the neighbor changes.
+        2: >-
+          Speed isn't the issue; knowing the next filter ties Remove noise to this one line.
+    - question: >-
+        The station adds a "Bleep profanity" filter between Normalize and the intro jingle. What else
+        has to change?
+      options:
+        - Only one new pipe; no other filter changes
+        - Every filter after it, so that they expect bleeped audio
+        - The Normalize filter, so that it sends audio to the new filter
+      correct_index: 0
+      explanation: >-
+        Inserting a filter takes the new filter and one new pipe, like the photo desk's Straighten
+        filter; filters downstream still read the same format.
+      option_feedback:
+        1: >-
+          The new filter reads and writes the same format, so the filters after it see audio just
+          as before.
+        2: >-
+          Normalize doesn't know its neighbors. The pipeline builder connects the new filter with a
+          pipe; Normalize's code stays the same.
+    - question: >-
+        At 2 a.m., a corrupted recording crashes the station's Encode filter halfway through the
+        night's episodes, and the engineer restarts the whole line. What can go wrong?
+      options:
+        - The pipes deliver the episodes in a new, scrambled order
+        - The crash spreads upstream and damages the raw recordings
+        - Episodes that were already published get published again
+      correct_index: 2
+      explanation: >-
+        Filters share no state, so no single place knows which episodes made it out and which were
+        still in pipes. A restart can repeat work, the way it could post some photos twice. Error
+        handling is the style's weak spot.
+      option_feedback:
+        0: >-
+          Pipes keep items in order. The trouble is that nobody knows which episodes already made it
+          out, so a restart can repeat some.
+        1: >-
+          Data flows one way, and filters never change their input. What goes wrong is repeated work:
+          nobody tracked which episodes made it out.
+    - question: Which radio-station job fits pipes and filters best?
+      options:
+        - A schedule board where hosts drag shows between time slots
+        - Turning each new recording into a published episode
+        - A song-request list the host reorders while it plays
+      correct_index: 1
+      explanation: >-
+        Pipes and filters fit streams of items through steps that don't need each other's state.
+        Each recording passes through the same independent steps to become an episode.
+      option_feedback:
+        0: >-
+          Hosts dragging shows between slots is interactive work on shared data, where each move must
+          update the board at once. This style fits that badly.
+        2: >-
+          Reordering a list while it plays is interactive work on shared data, not a stream of items
+          through independent steps.

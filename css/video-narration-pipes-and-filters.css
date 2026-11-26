@@ -1,0 +1,115 @@
+/*
+ * The Pipes and Filters narration's own objects on its animated stage
+ * (js/video-narration/pipes-and-filters-kit.js), loaded only inside its
+ * frame after the wall kit and the architecture kit. Photos, filters, the
+ * gallery, the slider, and the tray are paper and print with their own inks,
+ * the same in both modes; pipes are drawn with the stage's --vn-* tokens, so
+ * they follow the site's light or dark mode. A filter's state is a class
+ * that repaints it and is also written on its light in words. Readable text
+ * is at least 20px on the 960x540 stage; uppercase micro-labels at least 17px.
+ */
+
+/* The game photo: a print with a white border, and an optional caption. */
+.pf-photo { position: absolute; box-sizing: border-box; padding: 6px; border-radius: 8px; background: #fdfbf3; color: #0b0f1a; box-shadow: var(--vn-paper-shadow); }
+.pf-photo-frame { position: relative; overflow: hidden; aspect-ratio: 160 / 110; border-radius: 4px; background: #24305e; }
+.pf-photo-art { display: block; width: 100%; height: 100%; }
+.pf-photo-caption { display: block; margin-top: 4px; font-size: 20px; font-weight: 800; line-height: 1.2; text-align: center; white-space: nowrap; }
+.pf-stands { fill: #3b4670; }
+.pf-face { fill: #e8b98f; stroke: #2b1a0d; stroke-width: 1; }
+.pf-face-block { fill: #9aa3b8; stroke: #4a5578; stroke-width: 1; }
+.pf-field { fill: #2f7d4f; }
+.pf-field-line { stroke: #e6f4ea; stroke-width: 1.5; opacity: 0.7; }
+.pf-player-jersey { fill: #2d6cdf; stroke: #0b0f1a; stroke-width: 1.5; stroke-linejoin: round; }
+.pf-player-arm,
+.pf-player-leg { stroke: #c98d5c; stroke-width: 4; stroke-linecap: round; }
+.pf-player-leg { stroke: #fdfbf3; }
+.pf-player-head { fill: #fdfbf3; stroke: #0b0f1a; stroke-width: 1.5; }
+.pf-ball { fill: #8a4b1f; stroke: #fdfbf3; stroke-width: 1.2; }
+.pf-veil { fill: #050814; opacity: 0.5; }
+.pf-speck { fill: #e6edf7; }
+.pf-speck--dark { fill: #0b0f1a; }
+.pf-block { fill: #24305e; opacity: 0.16; }
+.pf-block--alt { fill: #fdfbf3; opacity: 0.14; }
+/* The paper's logo, stamped in the corner; cut in half when a crop comes after it. */
+.pf-logo { position: absolute; right: 6px; bottom: 6px; padding: 0 6px; border-radius: 4px; background: #fdfbf3; color: #0b0f1a; font-size: 17px; font-weight: 900; letter-spacing: 0.08em; }
+.pf-logo--cut { right: -36px; }
+
+/* A photo as a token sliding down a pipe. */
+.pf-token { overflow: hidden; border: 2px solid #fdfbf3; border-radius: 4px; background: #24305e; }
+.pf-token svg { display: block; width: 100%; height: 100%; }
+.pf-token--garbled { background: repeating-linear-gradient(45deg, #b42318 0 4px, #fdfbf3 4px 8px); }
+
+/* A filter: its name in a box, a port on each side, and a light in words. */
+.pf-filter {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 3px solid #0b0f1a;
+  border-radius: 12px;
+  background: #fdfbf3;
+  color: #0b0f1a;
+  text-align: center;
+  box-shadow: var(--vn-paper-shadow);
+}
+.pf-filter-name { font-size: 20px; font-weight: 900; line-height: 1.1; text-wrap: balance; }
+.pf-light { padding: 0 8px; border-radius: 999px; background: #e6ebf6; font-size: 17px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+.pf-light:empty { display: none; }
+.pf-filter.is-busy { background: #b8f0fb; }
+.pf-filter.is-busy .pf-light { background: #0b4a7a; color: #fff; }
+.pf-filter.is-idle { background: #e6ebf6; }
+.pf-filter.is-idle .pf-light { background: #fff1ad; }
+.pf-filter.is-crashed { background: #ff9aa8; border-style: dashed; }
+.pf-filter.is-crashed .pf-light { background: #0b0f1a; color: #ffd6dc; }
+.pf-filter.is-same { background: #c4f5d3; }
+.pf-filter.is-new { background: #fff1ad; }
+.pf-filter.is-frosted { background: #dfe4ef; border-style: dashed; }
+.pf-filter.is-booth { border-width: 5px; }
+/* A filter's parameter: a dial on the outside of its box. */
+.pf-dial { position: absolute; left: 50%; top: calc(100% + 8px); display: flex; align-items: center; gap: 6px; translate: -50% 0; padding: 2px 10px; border: 2px solid #0b0f1a; border-radius: 999px; background: #fff1ad; color: #0b0f1a; font-size: 20px; font-weight: 800; white-space: nowrap; }
+.pf-dial svg { width: 22px; height: 22px; }
+
+/* A pipe: a tube in sheet ink with an arrowhead where it delivers. */
+.pf-pipe { position: absolute; height: 26px; margin-top: -13px; box-sizing: border-box; border: 3px solid var(--vn-cyan-ink); border-radius: 13px; background: var(--vn-panel); transform-origin: 0 50%; }
+.pf-pipe::after { content: ''; position: absolute; right: -14px; top: 50%; margin-top: -9px; border-left: 12px solid var(--vn-cyan-ink); border-top: 9px solid transparent; border-bottom: 9px solid transparent; }
+
+/* A batch as a timeline of bars. */
+.pf-bars { position: absolute; box-sizing: border-box; padding: 12px 16px; border-radius: 12px; background: #fdfbf3; color: #0b0f1a; box-shadow: var(--vn-paper-shadow); }
+.pf-bars-row { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 12px; margin: 6px 0; }
+.pf-bars-label { font-size: 20px; font-weight: 800; white-space: nowrap; }
+.pf-bars-track { display: block; height: 22px; border: 2px solid #4a5578; border-radius: 6px; background: #e6ebf6; }
+.pf-bars-fill { display: block; width: 0; height: 100%; border-radius: 4px; background: #0b4a7a; }
+.pf-bars-clock { margin: 10px 0 0; color: #7a1526; font-size: 21px; font-weight: 900; }
+
+/* The paper's website: a gallery that fills with photos. */
+.pf-gallery { position: absolute; box-sizing: border-box; padding: 12px 14px; border: 6px solid #1b2340; border-radius: 18px; background: #fdfbf3; color: #0b0f1a; box-shadow: var(--vn-paper-shadow); }
+.pf-gallery-head { display: flex; align-items: center; gap: 8px; color: #0b4a7a; font-size: 22px; }
+.pf-gallery-head svg { width: 26px; height: 26px; }
+.pf-gallery-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
+.pf-gallery-cell { position: relative; overflow: hidden; aspect-ratio: 160 / 110; border-radius: 4px; background: #24305e; }
+.pf-gallery-cell svg { display: block; width: 100%; height: 100%; }
+.pf-gallery-caption { position: absolute; left: 4px; bottom: 4px; padding: 0 6px; border-radius: 4px; background: #0b0f1a; color: #fdfbf3; font-size: 17px; font-weight: 900; white-space: nowrap; }
+.pf-gallery-empty { margin: 10px 0 0; color: #3a4660; font-size: 20px; font-weight: 800; }
+
+/* The editor's slider. */
+.pf-slider { position: absolute; box-sizing: border-box; padding: 12px 18px 18px; border-radius: 12px; background: #fdfbf3; color: #0b0f1a; box-shadow: var(--vn-paper-shadow); }
+.pf-slider-label { display: block; margin-bottom: 12px; font-size: 22px; font-weight: 900; }
+.pf-slider-track { position: relative; display: block; height: 10px; border-radius: 5px; background: #4a5578; }
+.pf-slider-knob { position: absolute; top: 50%; width: 28px; height: 28px; margin: -14px 0 0 -14px; border: 3px solid #0b0f1a; border-radius: 50%; background: #ffd27a; }
+
+/* A tray that collects a burst before passing one photo on. */
+.pf-tray { position: absolute; box-sizing: border-box; padding: 12px 16px; border-radius: 12px; background: #fdfbf3; color: #0b0f1a; box-shadow: var(--vn-paper-shadow); }
+.pf-tray-title { display: block; font-size: 22px; font-weight: 900; }
+.pf-tray-slots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 10px 0; }
+.pf-tray-cell { overflow: hidden; aspect-ratio: 160 / 110; border: 2px dashed #4a5578; border-radius: 4px; opacity: 0.35; }
+.pf-tray-cell.is-full { border-style: solid; opacity: 1; }
+.pf-tray-cell svg { display: block; width: 100%; height: 100%; }
+.pf-tray-count { font-size: 21px; font-weight: 900; }
+
+/* Shared globals in code type, and a filter's three small steps. */
+.pf-globals .sk-list-item { font-family: var(--font-mono); font-size: 20px; }
+.pf-steps .sk-list-title { font-size: 22px; }

@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "presentation": {
+    "animation": {
+      "page": "/assets/video-narration/pipes_and_filters.html",
+      "theme": "drafting-room",
+      "sheet_title": "PIPES & FILTERS",
+      "sheet_subtitle": "SOURCE → SINK",
+      "styles": [
+        "/css/song-video-drafting-room.css",
+        "/css/video-narration-wall-kit.css",
+        "/css/video-narration-arch-kit.css",
+        "/css/video-narration-pipes-and-filters.css"
+      ],
+      "scripts": [
+        "/js/song-video/drafting-room.js",
+        "/js/video-narration/wall-kit.js",
+        "/js/video-narration/arch-kit.js",
+        "/js/video-narration/pipes-and-filters-kit.js",
+        "/js/video-narration/pipes-and-filters.js"
+      ]
+    }
+  },
+  "resources": {},
+  "scenes": {
+    "intro": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "sideline": {},
+        "steps": {}
+      }
+    },
+    "monolith": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "script": {},
+        "predict_first": {},
+        "midnight": {},
+        "change_requests": {}
+      }
+    },
+    "filters": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "filter": {},
+        "pipe": {},
+        "source_sink": {}
+      }
+    },
+    "alone": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "independent": {},
+        "agnostic": {},
+        "common_format": {}
+      }
+    },
+    "stream": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "incremental": {},
+        "predict_online": {},
+        "seconds": {},
+        "acyclic": {}
+      }
+    },
+    "order": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "order_matters": {},
+        "roles": {}
+      }
+    },
+    "buys": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "reuse": {},
+        "change": {},
+        "throughput": {}
+      }
+    },
+    "costs": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "slider": {},
+        "latency": {},
+        "errors": {}
+      }
+    },
+    "limits": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "best_shot": {},
+        "shared_state": {},
+        "when": {}
+      }
+    },
+    "summary": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "recap_problem": {},
+        "recap_rules": {},
+        "recap_costs": {}
+      }
+    }
+  }
+}

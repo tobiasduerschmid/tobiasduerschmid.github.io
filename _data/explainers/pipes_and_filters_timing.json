@@ -1,0 +1,258 @@
+{
+  "duration": 570.42,
+  "voice": "drama3-female6",
+  "speed": 1,
+  "speech_sha256": "69a2718f9eabc2acaf232b230cfd3114de7c881006c20ed953fff73a7d53c3d3",
+  "scenes": [
+    {
+      "id": "intro",
+      "start": 0.0,
+      "cues": [
+        {
+          "id": "sideline",
+          "start": 0.0,
+          "end": 17.41,
+          "speech_end": 16.86
+        },
+        {
+          "id": "steps",
+          "start": 17.41,
+          "end": 36.85,
+          "speech_end": 34.35
+        }
+      ],
+      "end": 36.85
+    },
+    {
+      "id": "monolith",
+      "start": 36.85,
+      "cues": [
+        {
+          "id": "script",
+          "start": 36.85,
+          "end": 57.24,
+          "speech_end": 56.69
+        },
+        {
+          "id": "predict_first",
+          "start": 57.24,
+          "end": 74.14,
+          "speech_end": 70.14
+        },
+        {
+          "id": "midnight",
+          "start": 74.14,
+          "end": 94.35,
+          "speech_end": 93.8
+        },
+        {
+          "id": "change_requests",
+          "start": 94.35,
+          "end": 116.41,
+          "speech_end": 113.91
+        }
+      ],
+      "end": 116.41
+    },
+    {
+      "id": "filters",
+      "start": 116.41,
+      "cues": [
+        {
+          "id": "filter",
+          "start": 116.41,
+          "end": 136.08,
+          "speech_end": 135.53
+        },
+        {
+          "id": "pipe",
+          "start": 136.08,
+          "end": 151.59,
+          "speech_end": 151.04
+        },
+        {
+          "id": "source_sink",
+          "start": 151.59,
+          "end": 171.45,
+          "speech_end": 168.95
+        }
+      ],
+      "end": 171.45
+    },
+    {
+      "id": "alone",
+      "start": 171.45,
+      "cues": [
+        {
+          "id": "independent",
+          "start": 171.45,
+          "end": 190.82,
+          "speech_end": 190.27
+        },
+        {
+          "id": "agnostic",
+          "start": 190.82,
+          "end": 209.91,
+          "speech_end": 209.36
+        },
+        {
+          "id": "common_format",
+          "start": 209.91,
+          "end": 228.37,
+          "speech_end": 225.87
+        }
+      ],
+      "end": 228.37
+    },
+    {
+      "id": "stream",
+      "start": 228.37,
+      "cues": [
+        {
+          "id": "incremental",
+          "start": 228.37,
+          "end": 246.32,
+          "speech_end": 245.77
+        },
+        {
+          "id": "predict_online",
+          "start": 246.32,
+          "end": 262.06,
+          "speech_end": 258.06
+        },
+        {
+          "id": "seconds",
+          "start": 262.06,
+          "end": 277.63,
+          "speech_end": 277.08
+        },
+        {
+          "id": "acyclic",
+          "start": 277.63,
+          "end": 300.45,
+          "speech_end": 297.95
+        }
+      ],
+      "end": 300.45
+    },
+    {
+      "id": "order",
+      "start": 300.45,
+      "cues": [
+        {
+          "id": "order_matters",
+          "start": 300.45,
+          "end": 316.36,
+          "speech_end": 315.81
+        },
+        {
+          "id": "roles",
+          "start": 316.36,
+          "end": 337.78,
+          "speech_end": 335.28
+        }
+      ],
+      "end": 337.78
+    },
+    {
+      "id": "buys",
+      "start": 337.78,
+      "cues": [
+        {
+          "id": "reuse",
+          "start": 337.78,
+          "end": 356.09,
+          "speech_end": 355.54
+        },
+        {
+          "id": "change",
+          "start": 356.09,
+          "end": 374.74,
+          "speech_end": 374.19
+        },
+        {
+          "id": "throughput",
+          "start": 374.74,
+          "end": 394.32,
+          "speech_end": 391.82
+        }
+      ],
+      "end": 394.32
+    },
+    {
+      "id": "costs",
+      "start": 394.32,
+      "cues": [
+        {
+          "id": "slider",
+          "start": 394.32,
+          "end": 413.77,
+          "speech_end": 413.22
+        },
+        {
+          "id": "latency",
+          "start": 413.77,
+          "end": 434.5,
+          "speech_end": 433.95
+        },
+        {
+          "id": "errors",
+          "start": 434.5,
+          "end": 455.54,
+          "speech_end": 453.04
+        }
+      ],
+      "end": 455.54
+    },
+    {
+      "id": "limits",
+      "start": 455.54,
+      "cues": [
+        {
+          "id": "best_shot",
+          "start": 455.54,
+          "end": 473.73,
+          "speech_end": 473.18
+        },
+        {
+          "id": "shared_state",
+          "start": 473.73,
+          "end": 491.98,
+          "speech_end": 491.43
+        },
+        {
+          "id": "when",
+          "start": 491.98,
+          "end": 511.54,
+          "speech_end": 509.04
+        }
+      ],
+      "end": 511.54
+    },
+    {
+      "id": "summary",
+      "start": 511.54,
+      "cues": [
+        {
+          "id": "recap_problem",
+          "start": 511.54,
+          "end": 530.99,
+          "speech_end": 530.44
+        },
+        {
+          "id": "recap_rules",
+          "start": 530.99,
+          "end": 550.22,
+          "speech_end": 549.67
+        },
+        {
+          "id": "recap_costs",
+          "start": 550.22,
+          "end": 570.42,
+          "speech_end": 567.92
+        }
+      ],
+      "end": 570.42
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+# Key points for the printable notes of the Pipes and Filters video narration
+# (docs/narration-format.md, "Editable lesson notes and PDF export"). One entry
+# per cue, keyed by <scene id>-<cue id>: one to four short bullets in note form,
+# with **bold** key terms. They live apart from the script, so editing a bullet
+# never changes the narration's audio fingerprint.
+intro-sideline:
+  - "**Example:** the student paper's game-day photos"
+  - "3,000 photos per game; readers want them during the game"
+intro-steps:
+  - "Every photo: denoise, brighten, crop, blur fans' faces, watermark, publish"
+  - "The same fixed series of steps for each photo"
+monolith-script:
+  - "One script runs each step on all photos, saving a folder each time"
+  - "Everything in one file, with shared **global settings**"
+monolith-predict_first:
+  - "**Predict:** six 20-minute steps from 10 p.m. When is the first photo online?"
+monolith-midnight:
+  - "Nothing online until every step finished every photo: midnight"
+  - "15,000 in-between files; this is a **batch sequential** design"
+monolith-change_requests:
+  - "A new step or a reuse request means surgery on one giant file"
+  - "Needed: steps that work alone and pass each item on"
+filters-filter:
+  - "**Filter:** reads a stream, transforms each item, writes a stream"
+  - "Each filter does exactly one thing and is its own program"
+filters-pipe:
+  - "**Pipe:** joins a filter's output to the next filter's input"
+  - "One way, in order, unchanged; a small **buffer**, so no lockstep"
+filters-source_sink:
+  - "**Source** feeds the line; **sink** takes the results"
+  - "Filters **enrich**, **refine**, or **transform** each item"
+alone-independent:
+  - "**Rule 1, independence:** no shared state; talk only through pipes"
+  - "Settings become each filter's own **parameters**"
+alone-agnostic:
+  - "**Rule 2, agnosticism:** don't know upstream or downstream neighbors"
+  - "Item in, item out: that ignorance lets a filter move anywhere"
+alone-common_format:
+  - "Connected filters agree on the data in the pipe"
+  - "One common format lets any filter follow any other"
+stream-incremental:
+  - "**Rule 3, incremental:** pass each item on right away"
+  - "Different filters work on different photos at once"
+stream-predict_online:
+  - "**Predict:** five filters at half a second each. When is the catch online?"
+stream-seconds:
+  - "Seconds after the shot, since every filter works in parallel"
+  - "The line keeps up with the camera"
+stream-acyclic:
+  - "**Rule 4, acyclic:** one way from source to sink, no loops"
+  - "Output = composition: watermark(blur(crop(brighten(denoise(raw)))))"
+order-order_matters:
+  - "Independent filters, but **order matters**"
+  - "Crop after watermark cuts the logo; +1 then ×2 differs from ×2 then +1"
+order-roles:
+  - "**Filter developer:** builds one filter, knows nothing of the line"
+  - "**Pipeline builder:** picks the filters and their order"
+buys-reuse:
+  - "**Reusability** (promoted): a filter works unchanged in other pipelines"
+  - "Comes from independence and agnosticism"
+buys-change:
+  - "**Extensibility:** insert a filter with one new pipe"
+  - "**Modifiability:** replace a filter that keeps the same format"
+  - "Test each filter alone with a known input"
+buys-throughput:
+  - "**Throughput** (promoted): filters run in parallel on different items"
+  - "Up to 5× the photos per minute on five cores; the slowest filter sets the pace"
+costs-slider:
+  - "**Interactivity** (inhibited): pipelines run one way"
+  - "Each change must re-run items through the rest of the line"
+costs-latency:
+  - "Each filter decodes and re-encodes the common format"
+  - "**Latency** (inhibited); lossy encoding can cost quality"
+costs-errors:
+  - "A crashed filter: which items made it, which are stuck?"
+  - "Restarts can duplicate output; **error handling** is the weak spot"
+limits-best_shot:
+  - "A filter needing all its input (sort, best shot) stalls the line"
+  - "Downstream filters wait: back to a batch"
+limits-shared_state:
+  - "Bending independence: a filter peeks at another's state"
+  - "Then neither can be reused alone or reordered"
+limits-when:
+  - "Good fit: streams of items through independent steps"
+  - "Poor fit: interactive tools, steps sharing lots of data"
+summary-recap_problem:
+  - "The batch script published nothing until midnight"
+  - "Pipes and filters: one-job filters, joined by pipes, source to sink"
+summary-recap_rules:
+  - "Rules: independence, agnosticism, incremental, acyclic"
+  - "They buy reuse, easy change, simple reasoning, and throughput"
+summary-recap_costs:
+  - "Costs: no live feedback loops, conversion overhead, hard error handling"
+  - "A filter needing all its input turns the line into a batch"
