@@ -1,7 +1,8 @@
 # Composite lesson: the photo-collage example
 
 - **Date:** 2026-11-26
-- **Status:** draft for approval
+- **Status:** approved by the instructor on 2026-11-26; the build plan is
+  `docs/superpowers/plans/2026-11-26-composite-photo-collage.md`
 - **Branch:** `feature/composite-narration` (pull request #108)
 - **Replaces:** the music-library example on that branch, described in
   `docs/composite-narration.md`
@@ -266,7 +267,7 @@ builder's.
 | solution | Solution | `component`, `leaf`, `composite`, `client` | the `roles` diagram | Each cue tags the nodes playing its role: every node, then the photos, then the splits, then the Share buttons. The `composite` cue contrasts the four-class diagram with the tree beside it. |
 | consequences | Consequences | `simple-clients`, `new-kinds`, `overly-general`, `safety` | none; one card per consequence | `simple-clients` tags the Share buttons "no checks". The other cues keep the story, with the note line naming the point. The photo-booth strip is described, not drawn. |
 | applicability | Context | `fit`, `plain-list`, `neighbors` | none; cards | `fit` shows the story. `plain-list` adds a carousel strip of three photos below the canvas. `neighbors` shows the cat tile in a polaroid frame. |
-| transfer | | `plan` (prediction, about 6 s), `caption` | the `caption` block; the `solution` diagram variant with `Caption` | `plan` shows the caption pending. `caption` draws the caption under the beach and tags it "new". |
+| transfer | | `plan` (prediction, about 6 s), `caption` | no code; the `solution` diagram, switching to its variant with `Caption` at `caption` | `plan` shows the caption pending. `caption` draws the caption under the beach and tags it "new". |
 | summary | | `recap`, then the summary quiz | none; cards | The finished story with its caption. |
 
 `new-kinds` stays general: a new kind of tile is one new class that implements
@@ -450,8 +451,8 @@ static panel and the live script render from it.
   - two comparisons: "type checks or one shared type" and "carousel list or
     split".
 
-  The study tools are not on master yet, so the file has no effect until they
-  land.
+  The study tools are on master (a3e02f12), and the lesson loader validates
+  this file whenever the lesson loads, including in every site build.
 
 ## Verification
 
@@ -549,6 +550,12 @@ static panel and the live script render from it.
     block per scene, and the helper is not what the lesson teaches.
   - **The trace shows the leaf case and the first recursive call:** this keeps
     it at four lifelines, and the canvas carries the deeper calls.
+  - **The transfer shows no code:** the player shows one code block for a whole
+    scene, so the `caption` block would answer the `plan` prediction before it
+    is asked. No shipped lesson shows code in its transfer. The diagram switches
+    to its `Caption` variant at the answer instead, and the `caption` block
+    appears in the reader's complete examples. This was settled while planning,
+    after approval.
 - **Left to the builder:**
   - the exact cue wording within the outline;
   - the illustration details;
