@@ -346,6 +346,43 @@ test('live tiles sit where their areas say, every illustration loads, and narrow
   }
 });
 
+// Below 1100 px the SE Book theme gives every content image `height: auto`, which
+// would shrink an illustration to its own proportions inside a taller tile.
+test('every illustration covers its tile, and the polaroid frame keeps its border, at desktop, tablet, and phone widths', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const neighbors = story.scenes[sceneIndex('applicability')].cues.findIndex(cue => cue.id === 'neighbors');
+  const views = {
+    player: async () => { await page.goto(url); await seek(page, 'applicability', 'neighbors'); return liveCollage(page); },
+    reader: async () => { await page.goto(viewUrl('read')); await revealAnswers(page); return step(page, 'applicability', neighbors); },
+  };
+  // Gaps between each illustration and its tile, in em of the tile's text.
+  const gaps = scope => scope.locator('.composite-canvas img.composite-art').evaluateAll(images => images.map(image => {
+    const cell = image.closest('.composite-cell');
+    const art = image.getBoundingClientRect();
+    const box = cell.getBoundingClientRect();
+    const em = parseFloat(getComputedStyle(cell).fontSize);
+    return { tile: cell.dataset.tile, top: (art.top - box.top) / em, right: (box.right - art.right) / em, bottom: (box.bottom - art.bottom) / em, left: (art.left - box.left) / em, em };
+  }));
+  const desktopFrame = {};
+  for (const width of [1280, 800, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const [view, open] of Object.entries(views)) {
+      const measured = await gaps(await open());
+      expect(measured.map(({ tile }) => tile).sort(), `${view} at ${width} px: illustrated tiles`).toEqual(['beach', 'cat', 'gig', 'taco']);
+      for (const { tile, em, ...sides } of measured) {
+        const where = `${view} at ${width} px: ${tile}`;
+        if (tile === collage.neighbors.frame) {
+          desktopFrame[view] ??= sides;
+          for (const [side, gap] of Object.entries(sides)) expect(gap, `${where}: the frame's ${side} border, in em, as at 1280 px`).toBeCloseTo(desktopFrame[view][side], 1);
+        } else {
+          for (const [side, gap] of Object.entries(sides)) expect(Math.abs(gap * em), `${where}: gap at the ${side}, in px`).toBeLessThanOrEqual(1);
+        }
+      }
+    }
+  }
+  expect(desktopFrame.player.bottom, 'the polaroid frame is deeper at the bottom').toBeGreaterThan(desktopFrame.player.top);
+});
+
 // ---------------------------------------------------------------------------
 // The player: code marks, parts, diagrams, checks, themes, and the reader link.
 const examples = yaml.load(readFileSync(require.resolve('../_data/explainers/composite_code.yml'), 'utf8'));
