@@ -23,6 +23,21 @@
   const clock = seconds => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
   const titleOf = row => (row.kind === 'episode' ? `${row.show}: ${row.name}` : row.name);
   const startsWith = (list, prefix) => prefix.every((value, index) => list[index] === value);
+  // A panel's absent fields arrive as JSON null; give every field its empty value.
+  const readCue = json => {
+    const cue = JSON.parse(json);
+    return {
+      ...cue,
+      episode: cue.episode || '',
+      played: cue.played || '',
+      queue: cue.queue || [],
+      visited: cue.visited || [],
+      current: cue.current || '',
+      marked: cue.marked || [],
+      mark: cue.mark || '',
+      flags: cue.flags || {},
+    };
+  };
 
   // Leaves answer every request from their own data.
   class Song {
@@ -104,7 +119,7 @@
       this.token = 0;
       this.cue = null;
       this.render();
-      this.applyCue(JSON.parse(panel.dataset.compositeCue), false);
+      this.applyCue(readCue(panel.dataset.compositeCue), false);
     }
 
     // Replace the static picture with the same library as live controls.
@@ -222,8 +237,8 @@
       this.note.hidden = false;
       this.note.textContent = cue.note;
       this.status.textContent = '';
-      const visited = cue.visited || [];
-      const before = previous ? previous.visited || [] : [];
+      const { visited } = cue;
+      const before = previous ? previous.visited : [];
       const sameRows = `${cue.design}|${cue.episode}` === this.structure;
       if (!sameRows) this.drawRows(cue);
       const continues = animate && sameRows && previous && previous.played === cue.played
@@ -238,8 +253,8 @@
         if (row.kind !== 'playlist') this.addToQueue(titleOf(row));
       }
       if (token !== this.token) return;
-      this.drawMarks({ marked: cue.marked || [], mark: cue.mark, flags: cue.flags || {}, visited, current: cue.current });
-      this.drawQueue(cue.queue || [], cue.played);
+      this.drawMarks(cue);
+      this.drawQueue(cue.queue, cue.played);
     }
 
     // A student's press: play visits rows in the design's order and fills the queue.
@@ -288,7 +303,7 @@
       const settled = event.detail.settled.querySelector('.composite-library');
       if (!settled) return;
       event.preventDefault();
-      library.applyCue(JSON.parse(settled.dataset.compositeCue), true);
+      library.applyCue(readCue(settled.dataset.compositeCue), true);
     });
   });
 })();
