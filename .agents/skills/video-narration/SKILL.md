@@ -362,7 +362,9 @@ not change its fingerprint. Stage-specific rules:
 - **A copy must look like the video.** It inherits the stage page's type
   (browser defaults), not the notes' type, and its slot uses
   `contain: strict`; without containment, Chrome's print shrinks every page
-  to fit the 960px stage.
+  to fit the 960px stage. A copy is rescaled after it is drawn, so its SVG
+  text uses `text-rendering: geometricPrecision`; otherwise Chromium paints
+  SVG lettering where the first scale put it.
 
 Each cue and check has a labeled rich-text field with keyboard help and no
 formatting toolbar. Cmd/Ctrl+B, I, U toggle bold, italic, and underline;

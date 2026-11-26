@@ -62,6 +62,12 @@ html body.vn-notes-page {
 /* The copy inherits what the stage page's body gives it (browser defaults),
    not the notes' type, so its words wrap and sit as in the video. */
 .vn-note-still > .stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; transform: scale(var(--vn-still-scale, 0.5)); font-size: 16px; line-height: normal; }
+/* Chromium lays SVG text out at the size it appears on screen, and only
+   again when the drawing itself is laid out. A copy is scaled after it is
+   drawn (to fit its slot, and again on every resize), so SVG lettering such
+   as the blueprint's would paint where the old scale put it. Geometric
+   precision lays the text out in the drawing's own units, at any scale. */
+.vn-note-still > .stage svg text { text-rendering: geometricPrecision; }
 .vn-note-still, .vn-note-still * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 /* The posed original the stills are copied from, out of view until removed. */
 .vn-notes-master { position: absolute; top: 0; left: -10000px; width: 960px; height: 540px; overflow: hidden; }
