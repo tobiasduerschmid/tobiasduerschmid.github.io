@@ -566,3 +566,28 @@ test('speech never asks for arithmetic', () => {
     for (const cue of scene.cues) assert.doesNotMatch(cue.text, /\d{3,}|px\b/, `${scene.id}/${cue.id} names pixel numbers`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// Knowledge checks: one per section, and a summary quiz on a new scenario.
+const quizzes = yaml.load(readFileSync(path.join(root, '_data/explainers/composite_quizzes.yml'), 'utf8'));
+
+test('every section ends in a valid check, and the last one is a multi-question summary', () => {
+  assert.deepEqual(Object.keys(quizzes), story.scenes.map(scene => scene.id));
+  const final = quizzes[story.scenes.at(-1).id];
+  assert.ok(final.questions.length >= 6, 'The summary quiz covers every part of the pattern.');
+  const keys = [];
+  for (const scene of story.scenes) {
+    const check = quizzes[scene.id];
+    for (const question of check.questions || [check]) {
+      assert.match(question.question, /Composite|pattern/, `${scene.id}: the stem names the pattern`);
+      assert.ok(question.options.length >= 3 && question.explanation.trim(), `${scene.id}: options and an explanation`);
+      assert.ok(Number.isInteger(question.correct_index) && question.options[question.correct_index], `${scene.id}: a real key`);
+      keys.push(question.correct_index);
+      for (const index of Object.keys(question.option_feedback || {})) {
+        assert.notEqual(Number(index), question.correct_index, `${scene.id}: feedback on the correct option never fires`);
+        assert.ok(question.options[Number(index)], `${scene.id}: feedback names a real option`);
+      }
+    }
+  }
+  for (const index of [0, 1, 2]) assert.ok(keys.filter(key => key === index).length >= 4, `the key sits at index ${index} often enough`);
+});
