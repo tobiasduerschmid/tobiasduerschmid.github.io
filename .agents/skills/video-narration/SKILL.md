@@ -365,6 +365,13 @@ not change its fingerprint. Stage-specific rules:
   to fit the 960px stage. A copy is rescaled after it is drawn, so its SVG
   text uses `text-rendering: geometricPrecision`; otherwise Chromium paints
   SVG lettering where the first scale put it.
+- **The printed pictures must stay vector graphics.** Chromium's PDF output
+  turns tiled gradients, radial gradients, gradients with transparent stops,
+  and any gradient of two or more colors in a rounded box that holds text
+  into bitmaps. Paint such kit pieces with flat fills (a one-color layer
+  over half a box splits it in two), or give the notes' print block a
+  vector stand-in, such as the dashed border it draws for dashed arrows and
+  wires.
 
 Each cue and check has a labeled rich-text field with keyboard help and no
 formatting toolbar. Cmd/Ctrl+B, I, U toggle bold, italic, and underline;

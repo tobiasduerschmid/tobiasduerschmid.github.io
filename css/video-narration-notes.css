@@ -157,17 +157,21 @@ html body.vn-notes-page {
   .vn-note-still .sw-pool,
   .vn-note-still .sw-lamp-glow,
   .vn-note-still .sw-vignette { display: none; }
-  /* The blueprint prints as its whiteprint: flat paper and its linework. */
+  /* The blueprint prints as its whiteprint: flat paper and its linework.
+     Its graph grid is tiled gradients, which would print as bitmaps. */
   .vn-note-still .dr-base { background-image: linear-gradient(180deg, #f7fafd 0%, #eef4fa 55%, #e0eaf6 100%) !important; }
+  .vn-note-still .dr-grid,
   .vn-note-still .dr-light,
   .vn-note-still .dr-dust,
   .vn-note-still .dr-vignette { display: none; }
   .vn-note-still .sk-ball { background: #7c3aed !important; }
   .vn-note-still .us-card-pin { background: #e11d48 !important; }
   /* Transparent gradient strokes also rasterize. Borders preserve the
-     dashed arrows and index-card margin without a bitmap paint layer. */
-  .vn-note-still .sk-arrow--dashed { background: none !important; }
-  .vn-note-still .sk-arrow--dashed::before { content: ''; position: absolute; inset: 0; box-sizing: border-box; border-top: 6px dashed currentColor; }
+     dashed arrows, the architecture kit's dashed wires, and the index-card
+     margin without a bitmap paint layer. */
+  .vn-note-still :is(.sk-arrow--dashed, .ak-wire--dashed) { background: none !important; }
+  .vn-note-still :is(.sk-arrow--dashed, .ak-wire--dashed)::before { content: ''; position: absolute; inset: 0; box-sizing: border-box; border-top: 6px dashed currentColor; }
+  .vn-note-still .ak-wire--dashed::before { border-top-width: 4px; }
   .vn-note-still .us-card { background: linear-gradient(170deg, #fffaf0, var(--paper) 60%, #f6ead0) !important; }
   .vn-note-still .us-card::before { content: ''; position: absolute; top: 0; bottom: 0; left: calc(var(--margin) - 2px); border-left: 2px solid rgba(230, 60, 80, 0.55); }
   /* The lines fill whatever room the picture, points, or question leave. */

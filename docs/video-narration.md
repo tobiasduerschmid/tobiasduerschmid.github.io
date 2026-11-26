@@ -243,10 +243,15 @@ graphics; the pictures keep their colors with `print-color-adjust: exact`.
 The notes always use the light palette, including when the site or operating
 system prefers dark mode. Print CSS keeps the live HTML text and SVG artwork
 as vector graphics: it disables filters and shadows, omits the decorative
-plaster and ruled-paper textures, and gives confetti a solid paper color.
-The remaining gradients, slide content, and layout are preserved. Stills
-lay out SVG text with geometric precision: Chromium otherwise keeps SVG
-glyph positions from the scale a still was first drawn at, and a still is
+plaster and ruled-paper textures and the blueprint's graph grid, draws
+dashed connectors as dashed borders, and gives confetti a solid paper color.
+The remaining gradients, slide content, and layout are preserved. Kit paint
+that must print stays flat where Chromium's PDF output would make a bitmap:
+tiled gradients, gradients with transparent stops, radial gradients, and any
+gradient of two or more colors in a rounded box that holds text (the Blood
+Groups AT paint is a one-color layer over the right half of an A fill).
+Stills lay out SVG text with geometric precision: Chromium otherwise keeps
+SVG glyph positions from the scale a still was first drawn at, and a still is
 rescaled after it is drawn. The notes
 tests inspect every object in the generated PDF for raster images (including
 images inside patterns and soft masks), and compare the light/dark PDF drawing

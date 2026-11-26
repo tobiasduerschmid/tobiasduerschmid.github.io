@@ -23,7 +23,10 @@
   --bg-zero-edge: #4a5578;
   --bg-r: #e7c6ff;
   --bg-r-edge: #6b2f8a;
-  --bg-at: linear-gradient(90deg, var(--bg-a) 50%, var(--bg-t) 50%);
+  /* AT: A's paint with T's over the right half. The half is a one-color
+     layer, which paints as a flat fill; a two-color gradient in a rounded
+     box that holds text prints as a bitmap in Chromium's PDF output. */
+  --bg-at: linear-gradient(var(--bg-t), var(--bg-t)) right / 50% 100% no-repeat, var(--bg-a);
   --bg-editor: linear-gradient(155deg, #172039, #080d1e 72%);
   --bg-editor-text: #e6edf7;
   --bg-editor-muted: #b8c4d9;
