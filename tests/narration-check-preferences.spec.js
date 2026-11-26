@@ -71,7 +71,7 @@ for (const lesson of lessons) {
     await expect(check.getByRole('heading', { level: 3 })).toContainText(lesson.story.scenes[finalIndex].label);
     await expect(player.locator('audio')).toHaveJSProperty('paused', true);
     await page.reload();
-    await player.getByRole('button', { name: 'Mute narration', exact: true }).click();
+    await expect(player.getByRole('button', { name: 'Unmute narration', exact: true })).toBeVisible();
     await openPlayerSettings(player);
     await expect(player.getByRole('checkbox', { name: option, exact: true })).toBeChecked();
     await player.getByRole('checkbox', { name: option, exact: true }).uncheck();

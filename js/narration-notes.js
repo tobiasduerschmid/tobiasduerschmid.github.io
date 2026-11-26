@@ -66,15 +66,25 @@
   fields.forEach(field => richText.mount(field, () => save(field), message => { formatStatus.textContent = message; }));
   window.addEventListener('storage', event => { if (event.key === key || event.key === null) restore(); });
 
-  // Choose a code language for this handout without changing a site preference.
+  // Share the code-language choice with players and reading views.
   const language = root.querySelector('[data-notes-code-language]');
   if (language) {
+    const preferences = window.SEBookCodePreferences;
+    const available = [...language.options].map(option => option.value);
+    const fallback = language.value;
     language.disabled = false;
-    const updateLanguage = () => root.querySelectorAll('[data-notes-language]').forEach(panel => {
-      panel.hidden = panel.dataset.notesLanguage !== language.value;
+    const updateLanguage = () => {
+      if (preferences) language.value = preferences.choose(available, fallback);
+      root.querySelectorAll('[data-notes-language]').forEach(panel => {
+        panel.hidden = panel.dataset.notesLanguage !== language.value;
+      });
+    };
+    language.addEventListener('change', () => {
+      if (preferences) preferences.set(language.value);
+      else updateLanguage();
     });
-    language.addEventListener('change', updateLanguage);
-    updateLanguage();
+    if (preferences) preferences.subscribe(updateLanguage);
+    else updateLanguage();
   }
 
   function drawExplainerPictures() {

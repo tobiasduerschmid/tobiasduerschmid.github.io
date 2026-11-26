@@ -37,7 +37,11 @@
       active = event.detail.active;
       resize();
     });
-    listen(landscape, 'change', resize);
+    listen(landscape, 'change', () => window.NarrationPreferences.set({ landscape: landscape.checked }));
+    window.NarrationPreferences.subscribe(preferences => {
+      landscape.checked = preferences.landscape;
+      resize();
+    });
     listen(window, 'resize', resize);
     listen(touch, 'change', resize);
     if (window.visualViewport) {
@@ -101,13 +105,22 @@
         audio.muted = false;
         if (audio.volume === 0) audio.volume = 1;
       } else audio.muted = true;
+      window.NarrationPreferences.set({ muted: audio.muted, volume: audio.volume });
     });
     listen(volume, 'input', () => {
       audio.volume = Number(volume.value) / 100;
       audio.muted = audio.volume === 0;
+      window.NarrationPreferences.set({ muted: audio.muted, volume: audio.volume });
     });
     listen(audio, 'volumechange', sync);
-    sync();
+    let applied;
+    window.NarrationPreferences.subscribe(preferences => {
+      // Other preferences must not undo a native media-volume change.
+      if (!applied || applied.volume !== preferences.volume) audio.volume = preferences.volume;
+      if (!applied || applied.muted !== preferences.muted) audio.muted = preferences.muted;
+      applied = preferences;
+      sync();
+    });
   }
 
   /**
@@ -151,11 +164,14 @@
     });
     root.querySelectorAll('[data-vn-skip]').forEach(button => listen(button, 'click', () => skip(Math.sign(Number(button.dataset.vnSkip)))));
     if (cc) listen(cc, 'click', toggleCaptions);
-    listen(root.querySelector('.vn-caption-size'), 'change', event => video.style.setProperty('--vn-caption-scale', event.target.value));
+    const captionSize = root.querySelector('.vn-caption-size');
+    listen(captionSize, 'change', () => window.NarrationPreferences.set({ captionSize: Number(captionSize.value) }));
     const speed = root.querySelector('[data-setting="speed"]');
     const finalCheckOnly = root.querySelector('[data-setting="final-check-only"]');
     window.NarrationPreferences.subscribe(preferences => {
       finalCheckOnly.checked = preferences.finalCheckOnly;
+      captionSize.value = String(preferences.captionSize);
+      video.style.setProperty('--vn-caption-scale', String(preferences.captionSize));
       if (audio) {
         cc.setAttribute('aria-pressed', String(preferences.captions));
         video.classList.toggle('are-captions-off', !preferences.captions);

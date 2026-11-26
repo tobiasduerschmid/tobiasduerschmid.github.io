@@ -97,12 +97,20 @@ player the song player's keys, auto-hiding full-screen controls, captions,
 mute and volume, settings, and landscape surface;
 `tests/narration-player-controls.spec.js` checks every lesson's bar against
 that order. `js/narration-preferences.js` owns the one-year, site-wide
-`sebook-narration-preferences` cookie (`captions`, `speed`, `finalCheckOnly`) used
-by the control bar and `/settings/`. Defaults are captions on, 1x, and all checks; every narration offers
+`sebook-narration-preferences` cookie used by the control bar and `/settings/`:
+`captions` (true), `speed` (1), `finalCheckOnly` (false), `captionSize` (1),
+`landscape` (true), `predictions` (true), `motion` (null: follow system),
+`volume` (1), and `muted` (false). Explicit motion choices are booleans and
+survive system-preference changes. Every narration offers
 0.5x, 0.75x, 1x, 1.25x, 1.5x, and 2x via
 `narration-playback-speeds.html`. Choices synchronize players on the page and
-refresh on returning to a tab; blocked cookies still permit changes for that
-page. Keep these preferences out of individual renderers and the song player's
+refresh on cookie-change events where supported or on returning to a tab;
+blocked cookies still permit changes for that page. A player without a control
+must preserve its saved value. Scene selection is lesson navigation, not a
+shared preference. Code language uses the separate, site-wide
+`sebook-code-language` cookie through `SEBookCodePreferences`, including the
+reading and print views; old localStorage choices migrate before profile sync
+retires them. Keep these preferences out of individual renderers and the song player's
 separate preferences. `tests/narration-preferences.spec.js` covers all lessons,
 cross-kind persistence, settings, and deletion. **Only pause for the final
 knowledge check** skips intermediate checks during audio and step-mode
@@ -241,8 +249,8 @@ preserve undo history; storage and export remain in the lifecycle script.
   section, with an answer/reasoning field; answers stay at the end. Reuse
   code, diagram, illustration, and explainer renderers. Do not flatten
   readable content into screenshots or reimplement the lesson in a handout.
-- The code-language select affects the open handout only; it does not write
-  a language preference. Keep authored bullets and student writing separate
+- The code-language select shares `SEBookCodePreferences` and its cookie with
+  players and reading views. Keep authored bullets and student writing separate
   from the speech. Notes-only edits never require audio regeneration.
 - Save on input under `sebook-narration-notes-<id>` as
   `{version: 2, entries: {"cue:scene/id": {html: "My <strong>note</strong>"}}}`.

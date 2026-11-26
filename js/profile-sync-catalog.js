@@ -9,7 +9,7 @@
 (function () {
   window.__sebookStorageCatalog = {
     version: 1,
-    retired: []
+    retired: [{ area: 'local', key: 'sebook-code-language' }]
   };
   window.dispatchEvent(new Event('sebook-storage-catalog'));
 })();

@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { loadLesson } = require('../scripts/narration/source');
 
 const classChapter = '/SEBook/uml_class_diagram.html';
 const observerChapter = '/SEBook/designpatterns/observer.html';
@@ -135,8 +136,17 @@ test('Observer tabs and dropdowns share the preference without restarting narrat
   await expect(page.getByRole('combobox', { name: 'Code language' })).toHaveValue('cpp');
   await page.getByRole('link', { name: 'Print view', exact: true }).click();
   await expect(page.getByRole('combobox', { name: 'Code language' })).toHaveValue('cpp');
+  await page.goto(loadLesson('observer').lesson.notes_url);
+  const notesLanguage = page.getByRole('combobox', { name: 'Code language for these notes' });
+  await expect(notesLanguage).toHaveValue('cpp');
+  await expect(page.locator('[data-notes-language="cpp"]').first()).toBeVisible();
+  await notesLanguage.selectOption('java');
+  await expect(page.locator('[data-notes-language="java"]').first()).toBeVisible();
+  await expect(page.locator('[data-notes-language="cpp"]').first()).toBeHidden();
+  await page.reload();
+  await expect(notesLanguage).toHaveValue('java');
   await page.goto(classChapter);
-  await expectLanguage(page, 'C++');
+  await expectLanguage(page, 'Java');
   expect(errors).toEqual([]);
 });
 
@@ -154,7 +164,7 @@ test('settings and storage deletion update open chapters and restore the default
 
   const inventory = await context.newPage();
   await inventory.goto('/cookies/');
-  const entry = inventory.getByRole('row').filter({ has: inventory.getByRole('cell', { name: 'sebook-code-language', exact: true }) });
+  const entry = inventory.locator('tr[data-storage="cookie"]').filter({ has: inventory.getByRole('cell', { name: 'sebook-code-language', exact: true }) });
   await expect(entry.getByText('set', { exact: true })).toBeVisible();
   await entry.getByRole('button', { name: 'Delete sebook-code-language', exact: true }).click();
   await expect(entry.getByText('not set', { exact: true })).toBeVisible();
@@ -162,4 +172,17 @@ test('settings and storage deletion update open chapters and restore the default
   await expectLanguage(page, 'Python');
   await page.reload();
   await expectLanguage(page, 'Python');
+});
+
+test('an earlier localStorage language moves to a cookie and survives narration navigation', async ({ page, context }) => {
+  await page.goto('/settings/');
+  await page.evaluate(() => localStorage.setItem('sebook-code-language', 'java'));
+  await page.reload();
+  await expect(page.getByRole('combobox', { name: 'SE Book code language' })).toHaveValue('java');
+  const cookie = (await context.cookies()).find(cookie => cookie.name === 'sebook-code-language');
+  expect(cookie.value).toBe('java');
+  expect(cookie.path).toBe('/');
+  expect(await page.evaluate(() => localStorage.getItem('sebook-code-language'))).toBeNull();
+  await page.goto('/SEBook/designpatterns/strategy.html');
+  await expect(page.getByRole('combobox', { name: 'Code language', exact: true })).toHaveValue('java');
 });

@@ -5,14 +5,17 @@ const vm = require('node:vm');
 const source = readFileSync(require.resolve('../../js/narration-preferences.js'), 'utf8');
 const key = 'sebook-narration-preferences';
 const encode = value => encodeURIComponent(JSON.stringify(value));
-const expected = (captions, speed, finalCheckOnly = false) => ({ captions, speed, finalCheckOnly });
+const expected = (captions, speed, finalCheckOnly = false) => ({
+  captions, speed, finalCheckOnly, captionSize: 1, landscape: true,
+  predictions: true, motion: null, volume: 1, muted: false,
+});
 
 // The browser's cookie boundary: real preference code, with an external
 // cookie jar that can deny storage or change while this page is inactive.
 function preferencePage(saved = null, blocked = '', protocol = 'https:') {
   let cookie = saved;
   const writes = [];
-  const window = new EventTarget();
+  const window = Object.assign(new EventTarget(), { cookieStore: new EventTarget() });
   const document = Object.assign(new EventTarget(), { visibilityState: 'visible' });
   Object.defineProperty(document, 'cookie', {
     get() {
@@ -93,7 +96,7 @@ for (const blocked of ['throws', 'ignores writes']) {
 
 test('returning to a tab or history page picks up changes and deletion', () => {
   const page = preferencePage();
-  for (const [target, event] of [[page.window, 'focus'], [page.window, 'pageshow'], [page.document, 'visibilitychange']]) {
+  for (const [target, event] of [[page.window, 'focus'], [page.window, 'pageshow'], [page.document, 'visibilitychange'], [page.window.cookieStore, 'change']]) {
     page.replaceCookie(encode({ captions: false, speed: 2 }));
     target.dispatchEvent(new Event(event));
     assert.deepEqual(page.current, expected(false, 2));
@@ -119,4 +122,30 @@ test('only an explicit boolean enables skipping segment checks; turning it off p
   assert.deepEqual(page.current, expected(false, 1.5, true));
   assert.equal(page.preferences.set({ finalCheckOnly: false }), true);
   assert.deepEqual(preferencePage(page.stored).current, expected(false, 1.5));
+});
+
+test('every playback and display choice persists independently across pages', () => {
+  const page = preferencePage();
+  const choices = { ...expected(false, 1.5, true), captionSize: 2, landscape: false,
+    predictions: false, motion: false, volume: 0.35, muted: true };
+  for (const [key, value] of Object.entries(choices)) page.preferences.set({ [key]: value });
+  assert.deepEqual(preferencePage(page.stored).current, choices);
+  page.preferences.set({ captionSize: 1.25 });
+  assert.deepEqual(preferencePage(page.stored).current, { ...choices, captionSize: 1.25 });
+  page.preferences.set({ motion: null, muted: false });
+  assert.deepEqual(preferencePage(page.stored).current, { ...choices, captionSize: 1.25, motion: null, muted: false });
+});
+
+test('invalid settings use safe defaults; volume and caption sizes accept their supported boundaries', () => {
+  const invalid = { captionSize: 99, landscape: 'false', predictions: 0, motion: 'on', volume: -0.01, muted: 'true' };
+  assert.deepEqual(preferencePage(encode(invalid)).current, expected(true, 1));
+  for (const volume of [0, 0.01, 0.35, 1]) {
+    assert.equal(preferencePage(encode({ volume })).current.volume, volume);
+  }
+  for (const volume of [1.01, null, '0.5']) {
+    assert.equal(preferencePage(encode({ volume })).current.volume, 1);
+  }
+  for (const captionSize of [1, 1.25, 1.5, 2]) {
+    assert.equal(preferencePage(encode({ captionSize })).current.captionSize, captionSize);
+  }
 });
