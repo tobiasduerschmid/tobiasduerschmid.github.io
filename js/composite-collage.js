@@ -149,6 +149,20 @@
     return tiles;
   }
 
+  // The splits that hold a row, nearest first.
+  function splitsAbove(rows, id) {
+    const chain = [];
+    let index = rows.findIndex(row => row.id === id);
+    let depth = rows[index].depth;
+    for (index -= 1; index >= 0 && depth > 0; index -= 1) {
+      if (rows[index].depth < depth) {
+        chain.push(rows[index].id);
+        depth = rows[index].depth;
+      }
+    }
+    return chain;
+  }
+
   // One press of Share: the selection draws into the whole story area. The
   // first design's Share button checks the kind too; it did learn captions.
   function share(tile, design, story) {
@@ -193,6 +207,10 @@
         this.applyCue(this.cue, false);
         this.status.textContent = 'The story is back to the narration’s picture.';
       });
+      // Space presses a focused Share or reset button, as on any button, instead of starting the narration.
+      panel.addEventListener('keydown', event => {
+        if (event.key === ' ') event.stopPropagation();
+      });
       // The status stays rendered, even when empty, so screen readers announce what is added.
       panel.replaceChildren(this.title, el('div', { class: 'composite-collage-body' },
         this.canvas, this.tree, this.pending, this.carousel, this.note,
@@ -217,10 +235,12 @@
     get story() { return new Area(0, 0, this.size.width, this.size.height); }
 
     // Rebuild the layout tree for a design and a caption state. A focused
-    // Share button is replaced by the same tile's new button.
+    // Share button is replaced by the same tile's new button or, when that
+    // tile leaves the tree, by the button of the nearest split that stays.
     drawTree(cue) {
       const focused = this.tree.contains(document.activeElement)
         ? document.activeElement.closest('[data-tile]')?.dataset.tile : null;
+      const keep = focused ? [focused, ...splitsAbove(this.rows, focused)] : [];
       this.rows = cue.caption === 'added' ? this.trees.captioned_rows : this.trees.rows;
       this.tiles = build(this.rows, cue.design);
       this.design = cue.design;
@@ -240,9 +260,8 @@
         return item;
       }));
       this.structure = `${cue.design}|${cue.caption === 'added'}`;
-      if (focused && this.rowParts.has(focused)) {
-        this.rowParts.get(focused).item.querySelector('button').focus({ preventScroll: true });
-      }
+      const target = keep.find(id => this.rowParts.has(id));
+      if (target) this.rowParts.get(target).item.querySelector('button').focus({ preventScroll: true });
     }
 
     // A cue's marks, flags, and trace, each with a text tag; no cue clears them.
@@ -372,6 +391,8 @@
       const token = ++this.token;
       const tile = this.tiles.get(id);
       const events = share(tile, this.design, this.story);
+      // On narrow layouts the canvas sits above the tree; show it for the learner's own press.
+      this.canvas.scrollIntoView({ block: 'nearest', behavior: reducedMotion.matches ? 'auto' : 'smooth' });
       this.note.hidden = true;
       this.status.textContent = '';
       this.drawTags(null);

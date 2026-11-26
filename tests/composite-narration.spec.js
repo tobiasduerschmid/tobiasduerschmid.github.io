@@ -277,6 +277,97 @@ test('a focused Share button keeps focus when the caption joins the tree', async
   await expect(shareButton(liveCollage(page), 'story')).toBeFocused();
 });
 
+test('a focused Share button whose tile leaves the tree hands focus to the nearest split that stays', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(url);
+  await seek(page, 'problem', 'every-change');
+  await shareButton(liveCollage(page), 'caption').focus();
+  // Back before the caption arrived, the caption and its split, left, are gone; story holds them both.
+  await player(page).locator('audio').evaluate((audio, time) => { audio.currentTime = time; }, cueMiddle('problem', 'client-check'));
+  await expect(treeRows(liveCollage(page))).toHaveCount(collage.rows.length);
+  await expect(shareButton(liveCollage(page), 'story')).toBeFocused();
+});
+
+test('Space on a focused collage button presses it and leaves the narration paused', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(url);
+  await seek(page, 'intro', 'try-it');
+  const live = liveCollage(page);
+  const paused = () => player(page).locator('audio').evaluate(audio => audio.paused);
+  await shareButton(live, 'bottom').focus();
+  await page.keyboard.press('Space');
+  await expect(statusOf(live)).toHaveText('Shared bottom: 2 photos.');
+  expect(await paused(), 'Space started the narration').toBe(true);
+  await live.getByRole('button', { name: 'Back to the narration’s picture', exact: true }).focus();
+  await page.keyboard.press('Space');
+  await expect(statusOf(live)).toHaveText('The story is back to the narration’s picture.');
+  expect(await paused(), 'Space started the narration').toBe(true);
+});
+
+// On a phone the canvas sits above the tree, so a press near the bottom of the
+// tree would otherwise draw off screen.
+test('on a phone, a Share press brings the whole canvas into view and keeps focus on the button', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto(url);
+  await seek(page, 'problem', 'every-change');
+  const live = liveCollage(page);
+  const taco = shareButton(live, 'taco');
+  await taco.evaluate(button => button.scrollIntoView({ block: 'end' }));
+  await expect(canvasOf(live), 'the canvas starts partly or wholly off screen').not.toBeInViewport({ ratio: 1 });
+  await taco.click();
+  await expect(statusOf(live)).toHaveText('Shared taco: 1 photo.');
+  await expect(canvasOf(live)).toBeInViewport({ ratio: 1 });
+  const covered = await canvasOf(live).evaluate(canvas => {
+    const box = canvas.getBoundingClientRect();
+    return [box.top + 2, box.bottom - 2].filter(y => !canvas.contains(document.elementFromPoint(box.left + box.width / 2, y)));
+  });
+  expect(covered, 'canvas edges hidden under another element').toEqual([]);
+  await expect(taco).toBeFocused();
+});
+
+// With motion on, each drawing step stays on screen for 320 ms. The clock
+// advances 400 ms per frame, so exactly one more step has happened.
+test('with motion on, a Share press draws one tile at a time and outlines each split as it cuts', async ({ page }) => {
+  await page.clock.install();
+  await page.goto(url);
+  await seek(page, 'intro', 'try-it');
+  await page.clock.runFor(500);
+  const live = liveCollage(page);
+  const outline = live.locator('.composite-area-label');
+  await shareButton(live, 'story').click();
+  await expect(outline).toHaveText('story · side by side');
+  await expect(canvasOf(live)).toHaveAccessibleName('Canvas: nothing drawn yet.');
+  await page.clock.runFor(400);
+  await expect(canvasOf(live)).toHaveAccessibleName(`Canvas, in reading order: beach, ${collage.positions['0,0,2,4']}.`);
+  await expect(outline).toHaveText('story · side by side');
+  await page.clock.runFor(400);
+  await expect(outline).toHaveText('right · stacked');
+  await expect(statusOf(live)).toHaveText('');
+  await page.clock.runFor(5000);
+  await expect(canvasOf(live)).toHaveAccessibleName(collageSpec.pressDescription(collage, panels.start, 'story'));
+  await expect(statusOf(live)).toHaveText('Shared story: 4 photos.');
+});
+
+test('with motion on, a cue that continues the trace draws its new tiles one at a time', async ({ page }) => {
+  await page.clock.install();
+  await page.goto(url);
+  const live = liveCollage(page);
+  await seek(page, 'collaborations', 'press');
+  await expect(live.getByText(panels.trace_press.note, { exact: true })).toBeVisible();
+  await seek(page, 'collaborations', 'recursion');
+  await expect(live.getByText(panels.trace_drawn.note, { exact: true })).toBeVisible();
+  await expect(canvasOf(live)).toHaveAccessibleName('Canvas: nothing drawn yet.');
+  await page.clock.runFor(400);
+  await expect(canvasOf(live)).toHaveAccessibleName(`Canvas, in reading order: beach, ${collage.positions['0,0,2,4']}, drawn 1st.`);
+  await expect(treeRows(live).filter({ hasText: 'drawing' })).toHaveCount(1);
+  await expect(treeRows(live).filter({ hasText: 'drawing' }).first()).toHaveAttribute('data-tile', 'story');
+  await page.clock.runFor(400);
+  await expect(treeRows(live).filter({ hasText: 'drawing' }).last()).toHaveAttribute('data-tile', 'right');
+  await page.clock.runFor(5000);
+  await expect(canvasOf(live)).toHaveAccessibleName(collageSpec.canvasDescription(collage, panels.trace_drawn));
+});
+
 test('the illustrations and the Share icons keep their colors in dark mode, in the player and the reader', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   for (const view of [url, viewUrl('read')]) {

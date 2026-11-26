@@ -138,7 +138,11 @@ design's calls to `area.part` and explains the helper in words.
   `data-composite-cue`; a trace that continues the previous cue's trace draws
   the newly drawn tiles one at a time. Learners can press Share on any tile, in
   the first design or the composite, and watch it fill the story; a polite
-  status reports each press. Reduced motion skips the stepping.
+  status reports each press. Reduced motion skips the stepping. A press
+  scrolls the canvas into view when it is off screen (on phones it sits above
+  the tree), Space presses a focused collage button instead of starting the
+  narration, and when a cue removes the focused tile, focus moves to the
+  nearest split that stays.
 
 ## Regeneration and checks
 
