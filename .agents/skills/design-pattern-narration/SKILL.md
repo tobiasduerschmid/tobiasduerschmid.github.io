@@ -2,7 +2,7 @@
 name: design-pattern-narration
 description: >-
   Authoring guide for narrated design-pattern lessons in the SEBook (the Observer, State, Strategy,
-  and Model-View-Controller narrations, and any new one). USE THIS SKILL EVERY TIME you create, extend, restructure, or review
+  Model-View-Controller, and Composite narrations, and any new one). USE THIS SKILL EVERY TIME you create, extend, restructure, or review
   a narrated pattern lesson: `_data/narrations/<topic>.yml` (readable speech and teaching text),
   `_data/narration_visuals/<topic>.json` (diagrams and renderer state),
   `<topic>_code.yml` (Python/Java/C++/TypeScript examples), `<topic>_notes.yml` (handout key points), `<topic>_quizzes.yml` (section checks and
@@ -107,7 +107,9 @@ companion dog that follows, fetches, and naps (State); a group-expense app that 
 equally, by percentage, or as a birthday treat, refactored from a method-checking calculation
 the way Kerievsky refactors a loan's capital calculation (Strategy); a screen-time visualizer
 whose table, bar chart, and pie chart share one dataset, live and editable in the player
-(Model-View-Controller).
+(Model-View-Controller); a music library whose playlists hold songs and whole playlists,
+refactored from separate song and playlist lists the way Kerievsky replaces a one/many
+distinction, with a live Play button on every row (Composite).
 
 Ground the whole lesson in those sources, not only the example: follow GoF's applicability,
 participants, collaborations, consequences, and implementation issues, use Kerievsky's
