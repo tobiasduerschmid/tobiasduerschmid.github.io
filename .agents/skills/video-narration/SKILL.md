@@ -137,7 +137,11 @@ from building.
   `window.WallKit`, styled by `css/video-narration-wall-kit.css`): cards,
   notes, badges, stickers, labels, arrows, checklists, list cards. A topic
   kit (`scrum-kit.js`, `blood-groups-kit.js`) adds only the topic's own
-  objects and loads after the wall kit.
+  objects and loads after the wall kit. An architecture lesson also loads
+  the architecture kit (`arch-kit.js`, `window.ArchKit`) between the two:
+  components with state classes, wires, queues, code cards, rule plaques,
+  quality cards, and travelling tokens. Reuse it before drawing a new
+  component or connector.
 - Paper pieces (`card`, `note`, `speech`, `checklist`) are as wide as `w`
   plus padding; `listCard` is exactly `w`. Leave room for a raised, lit card.
 - Stamps do not shake the stage, and nothing large changes brightness quickly
