@@ -173,18 +173,31 @@ class TutorialModelAddon {
   }
   /**
    * Read a design-review comment against the step's answer key
-   * (js/browser-llm/design-review-judge.mjs). Resolves to the judgement;
-   * rejects with AbortError when cancelled.
+   * (js/browser-llm/design-review-judge.mjs), then coach an incomplete
+   * attempt in a separate turn. Cancelling either stage rejects with AbortError.
    */
-  async reviewDesign({spec,review,onCriterion}) {
+  async reviewDesign({spec,review,hints,onCriterion,onCoaching}) {
     if (!this.runtime.ready && !(this.plan?.cached && this.plan?.canLoad)) {
       throw new Error('Download the model in the Review assistant panel first.');
     }
-    const {judgeReview} = await import('./design-review-judge.mjs');
     try {
-      return await this.perform('review',signal=>judgeReview({key:spec.key,review,signals:spec.signals,anchors:spec.anchors,signal,onCriterion,
-        generate:(messages,options)=>this.runtime.generate(messages,{...options,
-          onProgress:value=>this.generationProgress(value,signal,'Reading your review comment locally…')})}),{rethrow:true});
+      return await this.perform('review',async signal=>{
+        const [{judgeReview},{coachReview}] = await Promise.all([
+          import('./design-review-judge.mjs'), import('./design-review-coach.mjs'),
+        ]);
+        signal.throwIfAborted();
+        let progress = 'Reading your review comment locally…';
+        const generate = (messages,options)=>this.runtime.generate(messages,{...options,
+          onProgress:value=>this.generationProgress(value,signal,progress)});
+        const judgement = await judgeReview({key:spec.key,review,signals:spec.signals,anchors:spec.anchors,signal,onCriterion,generate});
+        const coaching = await coachReview({review,given:spec.given,judgement,hints,signal,generate,onCoaching:()=>{
+          progress = 'Preparing a question for your next revision…';
+          this.view.status(progress);
+          onCoaching?.();
+        }});
+        this.view.status('Review check finished. Read the feedback above.');
+        return {...judgement,coaching};
+      },{rethrow:true});
     } catch(error) {
       if (error.name === 'InputError') {
         throw new Error('This comment is too long for the selected engine. Shorten it, or choose Processor in Model & storage.');

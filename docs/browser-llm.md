@@ -85,7 +85,7 @@ of an AI agent's UML design. The comment and the model's ratings follow the
 tutorial's save preference (`designReviews` in the progress record); nothing
 is sent to a server.
 
-The model only classifies. `js/browser-llm/design-review-judge.mjs` asks
+The checking stage only classifies. `js/browser-llm/design-review-judge.mjs` asks
 three narrow questions, one per criterion (does the comment make the key's
 point about the design flaw; about what goes wrong; about the fix), and asks
 for a quote from the comment followed by `VERDICT: YES|PARTLY|NO` (up to 160
@@ -96,10 +96,60 @@ content words. A verdict that points at nothing in the comment becomes NO, and
 so does any credit for a comment that contains none of the criterion's
 authored concept signals. The verdicts become two ratings: correctness and
 convincingness (the latter also needs a diagram element of the flaw to be
-named). Everything the learner reads is authored coaching selected by these
-verdicts, except the located words of their own comment. Comments are capped
-at 900 characters so every prompt stays within the ONNX engine's 768-token
-input limit.
+named). Comments are capped at 900 characters.
+
+If either rating is incomplete, `js/browser-llm/design-review-coach.mjs`
+makes one additional local model call. The guarded verdicts select the current
+authored hint for the first unmet criterion. When all three points are present
+but no diagram element is named, it selects a hint about diagram evidence.
+The prompt receives the comment, public Given scenario, and that hint; it
+excludes the answer key, expert review, and fixed diagram. The model's task is
+to turn the hint into a focused Socratic question for the student's next
+revision, preserving its meaning without answering it. The tutorial appends
+an authored, criterion-specific instruction to revise the comment and explain
+the reasoning. Keeping that instruction authored avoids asking the small
+model to supply a finished review or implement a design fix. This applies the
+pedagogical-advisor's feedback and bounded-assistance guidance; it is not
+evidence of improved learning.
+
+The follow-up is limited to 120 output tokens and a 2,200-character input
+budget (a conservative estimate for the smallest engine's 768-token limit,
+not an exact tokenizer guarantee). No source text is silently truncated.
+Accepted questions must finish normally, fit 500 characters on one line, end
+in a question mark, and contain one or two questions. Short paired questions
+are allowed because some authored hints use them. Code fences, answer
+continuations, and CamelCase names absent from the supplied context are
+rejected. Rejected output falls back to the course hints; generation errors
+preserve the completed ratings. Fallback messages distinguish an unusable
+completed reply from an interrupted reply or an unavailable generation. The
+model panel announces completion instead of retaining the progress message.
+Accepted feedback renders as plain text. All course hints remain visible:
+the model can produce a less precise question than the authored hint. These
+guards cannot verify the advice's accuracy or prevent every answer leak.
+Editing, cancelling, or changing steps aborts the pending response. Generated
+feedback is transient; it is not added to saved progress and never changes
+ratings or completion. A correct and convincing check makes no coaching call.
+
+**Coaching failure reproduced (2026-11-26, Firefox, ONNX 3B).** For the
+Food-Truck starter comment, the original coaching prompt produced a completed
+48-token answer about a nonexistent `BruinPayCharge`, with no question. The
+format guard rejected it; this was not a timeout. A subsequent prompt asking
+for an observation, question, and revision still invented types and supplied
+solutions, even with a feedback example. This motivated the narrower question
+generation and authored revision instructions.
+
+**Final question trial (2026-11-26, isolated Chromium, ONNX 3B).** The production
+coach completed all seven cases: the Food-Truck starter at three hint levels,
+plus vague reviews of login state, the radio pipeline, stored HTML, and buffer
+ownership. All seven produced bounded questions without invented class names
+or supplied solutions; generation took about 2.7–4.2 seconds after loading.
+Some questions generalized the hint, so the UI retains the more precise
+authored guidance. This small sample checks output behavior, not learning gains
+or reliability on arbitrary comments; the final prompt was not rerun in the
+user's active Firefox profile. An additional unmocked tutorial-button check in
+the isolated Chromium profile classified the starter as Close / Not yet
+convincing and displayed the generated question, revision instruction, and
+course hints successfully.
 
 **Real-model trials (2026-11-24, Chrome, WebLLM 3B, M-series Mac).** With
 the first wording (answer key first, then a yes/no question, verdict before
@@ -148,7 +198,7 @@ labeled set of comments in a real browser before claiming accuracy.
 - wllama 3.8.1: WebGPU or WebAssembly processor inference, GGUF `Q4_K_M`, **2,104,932,800 bytes**, pinned at revision `f74adce6aa16316c625447af059dbebe4983757c`. Hosted compatibility assets cover browsers lacking newer WebAssembly features.
 - Transformers.js 3.8.1 with ONNX Runtime Web 1.22.0-dev.20250409-89f8206ba4: JavaScript WebGPU backend, ONNX `q4f16`, **2,379,064,640 bytes** including tokenizer/configuration, pinned at revision `0e076a9c5291f8c74b3ce1558f21336b18f94739`. The graph is 271,268,174 bytes and its external weights are 2,096,365,568 bytes. This is the Firefox graphics path.
 - All three derive from the same upstream Qwen2.5-Coder **3B Instruct** checkpoint. Quantization/layout differ, so their generated outputs need not be identical. The byte counts describe downloads, not peak RAM.
-- Context: 4,096 tokens; output: up to 1,024 tokens for either code-generation workflow and 220 for feedback. ONNX retains the conservative 768-token cap on the complete templated input: its graph materializes FP32 logits for every prompt position. Longer inputs are rejected before graphics execution with a request to shorten the specification or choose Processor; input is never silently truncated. One worker/model and one request at a time. Processor threads are capped at four and half the reported concurrency, or one without isolation.
+- Context: 4,096 tokens; output: up to 1,024 tokens for either code-generation workflow, 220 for specification feedback, and 120 for design-review questions. ONNX retains the conservative 768-token cap on the complete templated input: its graph materializes FP32 logits for every prompt position. Longer inputs are rejected before graphics execution with a request to shorten the specification or choose Processor; input is never silently truncated. One worker/model and one request at a time. Processor threads are capped at four and half the reported concurrency, or one without isolation.
 
 Preflight requires nine storage buffers for ONNX, half precision, **1 GiB for both `maxBufferSize` and `maxStorageBufferBindingSize`** (the 3B embedding table is about 622 MB), and 32 KiB workgroup storage. WebLLM requires ten storage buffers per shader stage, half precision, and the same 1 GiB buffer/binding limits: the pinned runtime otherwise falls back to a 128 MiB binding, too small for a roughly 155 MB 3B tensor. Some Firefox adapters expose only nine storage buffers. Unsupported options are disabled before a download. Preflight requests and releases a real graphics device, inspects exposed features/limits, WebAssembly vector support, isolation, and concurrency. Memory is only an optional coarse hint; free memory, exact processor model, and available graphics memory cannot be reliably inferred. No model or inference vendor is fetched by preflight. Automatic selection is a conservative heuristic: compatible cached formats first, otherwise ONNX graphics in Firefox, WebLLM graphics in other browsers, then the remaining compatible graphics engines and processor. It does not guarantee the globally fastest engine. Explicit Processor never selects graphics. A same-format wllama graphics initialization failure can retry processor mode without downloading again. Cancellation, invalid input, and exhausted deadlines never trigger that retry. A graphics failure during generation ends the attempt, unloads it, and reprobes before offering a new load action; partial output is never replayed. Switching from a failed graphics engine to another model representation requires a new explicit download action. No automatic larger models, background benchmark downloads, or server inference.
 

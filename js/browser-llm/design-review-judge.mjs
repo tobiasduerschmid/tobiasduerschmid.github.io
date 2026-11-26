@@ -2,14 +2,13 @@
  * Reads a student's design-review comment with the local model, against an
  * authored answer key.
  *
- * The small on-device model is not trusted to write feedback: in earlier
- * trials it invented facts, flattered weak answers, and leaked solutions
- * (docs/local-tutor-evaluation.md). It only classifies. For each criterion it
+ * This stage only classifies. For each criterion it
  * answers one narrow question with YES, PARTLY, or NO and quotes the words of
  * the comment that support its verdict. This module then finds those words
  * in the comment, requires the criterion's authored concept signals for any
- * credit, and turns the three verdicts into two ratings. The wording the
- * learner sees is authored elsewhere (js/tutorial-design-review-core.js).
+ * credit, and turns the three verdicts into two ratings. A separate coaching
+ * stage (design-review-coach.mjs) uses the guarded result and course hints;
+ * its generated advice cannot change the ratings.
  *
  * Every prompt fits the ONNX engine's 768-token input limit: the comment is
  * capped at REVIEW_LIMITS.maxReviewChars and each key text at maxKeyChars.
