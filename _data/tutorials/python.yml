@@ -727,10 +727,10 @@ steps:
 
       ### 🎯 You will learn to
 
-      - Analyze Python code to identify indentation errors caused by negative transfer from C++
+      - Analyze Python code to identify indentation errors caused by a habit from C++
       - Apply correct indentation rules (4 spaces, never mixed with tabs) to fix block structure
 
-      ## ⚠️ The Indentation Trap (Negative Transfer from C++)
+      ## ⚠️ The Indentation Trap (Habit from C++)
 
       In C++, indentation is cosmetic — the compiler ignores it, `{}` defines blocks.
       **In Python, indentation is part of the syntax.** Missing or inconsistent indentation can raise `IndentationError`; moving a statement into a different valid block instead changes when it runs.
@@ -800,7 +800,7 @@ steps:
       explanation: |
         **Why this is correct:**
 
-        - **Bug 1 — indentation error:** The original `print(f"Score {score}: A")` was at the same indentation level as `if score >= 90:`, which is an `IndentationError`. The body of an `if` block must be indented one level further. Python uses indentation (4 spaces) instead of `{}` to define blocks — this is the most common negative-transfer mistake from C++.
+        - **Bug 1 — indentation error:** The original `print(f"Score {score}: A")` was at the same indentation level as `if score >= 90:`, which is an `IndentationError`. The body of an `if` block must be indented one level further. Python uses indentation (4 spaces) instead of `{}` to define blocks — this is a common mistake for C++ programmers.
         - **Bug 2 — type error:** The original `print("Score " + score + ": B")` combines strings with an integer and raises `TypeError`. An f-string formats the integer for display, or you can explicitly convert it with `str(score)`. C++ stream insertion can display an integer too, but C++ string concatenation does not generally convert an integer to its decimal text.
         - The tests check all five scores: 95 earns A, 83 earns B, 71 and 62 earn C, and 55 earns F.
 
@@ -3455,7 +3455,7 @@ steps:
             still has its own opinions about what operations are legal between which types.
 
         - question: |
-            *(Spaced review — Functions)*
+            *(Review: Functions)*
 
             Which function signature correctly combines type hints with a default parameter?
           type: single
@@ -3540,14 +3540,14 @@ steps:
     instructions: |
       ### Why this matters
 
-      Iteration is the workhorse of any program. Python's `for` is item-based by default — you almost never write `for i in range(len(...))` like you would in C++. Mastering `enumerate()` and `range()` unlocks idiomatic Python, and avoiding the `**` vs `^` and `/` vs `//` operator traps will save you hours of confused debugging.
+      Iteration is the workhorse of any program. Python's `for` is item-based by default — you almost never write `for i in range(len(...))` like you would in C++. Use `enumerate()` when you also need each item's index and `range()` for counting loops, and watch for the two operator traps from C++, `**` vs `^` and `/` vs `//`.
 
       ### 🎯 You will learn to
 
       - Apply Python `for` loops with `enumerate()` and `range()` to iterate over collections idiomatically
       - Analyze the operator differences between Python and C++ (`**` vs `^`, `/` vs `//`)
 
-      ### Transfer Note: C++ Range-Based Loops → Python `for`
+      ### C++ Range-Based Loops vs Python `for`
 
       Prefer `for x in collection` when you need each object, and `enumerate`
       when you also need its position. Each iteration binds the Python name
@@ -3818,7 +3818,7 @@ steps:
             split each `(index, value)` pair into two loop variables.
 
         - question: |
-            *(Spaced review — Functions)*
+            *(Review: Functions)*
 
             What does this function return when called as `compute(10)`?
             ```python
@@ -3887,7 +3887,7 @@ steps:
 
       List comprehensions are one of Python's most powerful idioms, but their compact syntax can feel cryptic at first. That is normal — everyone reads comprehensions slowly when they first encounter them. After a few exercises they become natural. Do not worry if you need to mentally "unpack" each one into a for-loop to understand it.
 
-      ## Try It First (Productive Failure)
+      ## Try It First
 
       **Challenge:** Before reading further, try to build the list `[1, 4, 9, 16, 25]` (the squares of 1 through 5) in a **single line of Python**. You already know `range()` and `**` from the previous step. Give it your best shot in the editor, then read on.
 
@@ -4144,7 +4144,7 @@ steps:
             The comprehension equivalent is `[name.upper() for name in ["Alice", "Bob", "Charlie"] if len(name) > 3]`.
 
         - question: |
-            *(Spaced review — f-Strings)*
+            *(Review: f-Strings)*
 
             What does this expression produce?
             ```python
@@ -4389,7 +4389,7 @@ steps:
             into a list loses that advantage. C++'s `std::getline` supports the same streaming approach.
 
         - question: |
-            *(Spaced review — Indentation)*
+            *(Review: Indentation)*
 
             What is wrong with this code?
             ```python
@@ -4410,7 +4410,7 @@ steps:
             indentation rule: a colon `:` starts a block that must be indented.
 
         - question: |
-            *(Spaced review — String Quotes)*
+            *(Review: String Quotes)*
 
             A student writes this Python code and gets a `SyntaxError`. Why?
             ```python
@@ -4730,7 +4730,7 @@ steps:
             email addresses. This combines `\w+` (word chars), literal `@`, and escaped `.`.
 
         - question: |
-            *(Spaced review — List Comprehensions)*
+            *(Review: List Comprehensions)*
 
             Which expression keeps the complete ERROR lines, including their timestamps,
             from a variable `lines` containing all log lines as a list of strings?
@@ -5018,7 +5018,7 @@ steps:
             Approach B "works" but violates the Unix convention of separating output from diagnostics.
 
         - question: |
-            *(Spaced review — Loops)*
+            *(Review: Loops)*
 
             A student writes this code to print each word with its position number. What is wrong?
             ```python
@@ -5037,10 +5037,10 @@ steps:
             Python's `for i in words` gives you the *elements*, not indices — this is
             different from C++'s `for (int i = 0; ...)`. Using `words['apple']` causes
             a TypeError. The Pythonic fix: `for i, word in enumerate(words):` gives both
-            the index and the value. This is a common negative transfer trap from C++.
+            the index and the value. This is a common habit from C++ that breaks here.
 
         - question: |
-            *(Spaced review — Reading Files)*
+            *(Review: Reading Files)*
 
             What happens if you forget the `with` keyword and write `f = open("data.txt")` instead?
           type: single
@@ -5057,7 +5057,7 @@ steps:
             in C. The `with` statement guarantees cleanup via Python's context manager protocol.
 
         - question: |
-            *(Spaced review — String Quotes)*
+            *(Review: String Quotes)*
 
             In C++, `'A'` is a `char` and `"Alice"` is a string — they are different types. What is the equivalent distinction in Python?
           type: single
@@ -5167,7 +5167,7 @@ steps:
       - path: "log_analyzer.py"
         content: |
           # Capstone: Build a complete log analyzer.
-          # No scaffolding — use everything you have learned.
+          # No starter code — use everything you have learned.
           import sys
           import re
         language: "python"
@@ -5395,7 +5395,7 @@ steps:
             act as documentation.
 
         - question: |
-            *(Spaced review — Loops)*
+            *(Review: Loops)*
 
             You need to process a list of log lines and print each line's number alongside it (starting from 1). Which approach is most Pythonic?
           type: single
@@ -5414,7 +5414,7 @@ steps:
             manual indexing. The `start=1` parameter avoids the `+1` hack.
 
         - question: |
-            *(Spaced review — Regular Expressions)*
+            *(Review: Regular Expressions)*
 
             A log analyzer needs to extract all timestamps matching the pattern `2024-01-15 14:30:22` from a log string. Which `re` call is correct?
           type: single
@@ -5601,7 +5601,7 @@ steps:
       1. **TODO 1.** Define `Point` using `@dataclass` (no kwargs yet) with two `int` fields `x` and `y`.
       2. **TODO 2.** Change to `@dataclass(frozen=True)` so `Point` is immutable.
       3. **TODO 3.** Add a `@property distance_to_origin` that returns `(x**2 + y**2) ** 0.5` annotated `-> float`.
-      4. **TODO 4 (independent practice).** Below `Point`, define a *new* frozen dataclass `RGB` with three `int` fields `r`, `g`, `b` and a `@property as_hex` that returns the lowercase 7-character hex string (e.g., `RGB(255, 128, 0).as_hex == '#ff8000'`). Use the f-string format `f'{r:02x}'` (Variables, Types & f-Strings spaced review) for two-digit hex. No further hints — this one is on you.
+      4. **TODO 4 (independent practice).** Below `Point`, define a *new* frozen dataclass `RGB` with three `int` fields `r`, `g`, `b` and a `@property as_hex` that returns the lowercase 7-character hex string (e.g., `RGB(255, 128, 0).as_hex == '#ff8000'`). Use the f-string format `f'{r:02x}'` (Variables, Types & f-Strings, review) for two-digit hex. No further hints — this one is on you.
 
       *Stretch (optional):* uncomment both lines of the mutation probe at the bottom, observe the `FrozenInstanceError`, then comment them back out before Test My Work.
 
@@ -5696,7 +5696,7 @@ steps:
         - **`x: int` / `y: int`** are not just documentation — `@dataclass` reads these type hints (Type Hints) to figure out what fields the class has. Without the annotations, `@dataclass` would not know to generate `__init__`.
         - **`frozen=True`** blocks ordinary field assignment with `FrozenInstanceError`. These points hold immutable integers, so their contents stay stable and their generated hash works. A frozen dataclass with a list field would still allow mutation of that member list.
         - **`@property`** turns `distance_to_origin` into a *read-as-attribute* method. The test reads `p.distance_to_origin` (no parens). Without `@property`, that expression would evaluate to a *bound method object*, not a number — a confusing error mode.
-        - **`RGB.as_hex`** reuses every pattern from `Point` — frozen dataclass, typed `int` fields, `@property` returning a typed string. The f-string spec `f'{r:02x}'` (Variables, Types & f-Strings spaced review) formats an int as a two-digit lowercase hex value. Same recipe, different field types and different return type — that's the point of this independent task.
+        - **`RGB.as_hex`** reuses every pattern from `Point` — frozen dataclass, typed `int` fields, `@property` returning a typed string. The f-string spec `f'{r:02x}'` (Variables, Types & f-Strings, review) formats an int as a two-digit lowercase hex value. Same recipe, different field types and different return type — that's the point of this independent task.
         - **Dataclass defaults have an extra safeguard.** A dataclass rejects an unhashable field default such as `events: list = []`. `field(default_factory=list)` creates a list for each new instance. Ordinary classes and functions have no such safeguard; their shared defaults still need deliberate handling.
         - **`PointManual` stays in the file** as a contrast — it shows what the decorator saved you from writing.
 
@@ -5829,7 +5829,7 @@ steps:
             And it is a descriptor, not `__getattr__`.
 
         - question: |
-            *(Spaced review — List Comprehensions)*
+            *(Review: List Comprehensions)*
 
             What is `points[2]` after this line?
             ```python
@@ -5873,7 +5873,7 @@ steps:
             objects — use a regular class.
 
         - question: |
-            *(Spaced review — Type Hints)*
+            *(Review: Type Hints)*
 
             Given:
             ```python
