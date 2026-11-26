@@ -19,12 +19,6 @@ steps:
       Welcome to the **Shell Scripting Tutorial**! On the top is a code
       editor; on the bottom is a real Linux terminal.
 
-      > Shell scripting has a reputation for tricky syntax — even
-      > experienced developers regularly look up Bash quoting rules.
-      > If something feels confusing, that's a sign you're engaging
-      > with genuinely hard material, not a sign you're doing it wrong.
-      > Every error message is a clue; every mistake is a step forward.
-
       ### Why this matters
 
       Every time you repeat a task in the terminal — processing files, checking
@@ -1994,12 +1988,9 @@ steps:
     instructions: |
       ### Why this matters
 
-      Time to combine everything into a real tool. This is a **retrieval
-      practice** exercise: you have all the knowledge, now you must
-      retrieve it from memory and synthesize it. Capstone projects like
-      this one are where shell scripting concepts move from "I read about
-      that" to "I can build that on demand" — the only kind of knowledge
-      that survives long enough to use at work.
+      Useful scripts combine many small shell features in one file. Build
+      this one from memory, so you can see which pieces you still need to
+      look up.
 
       ### 🎯 You will learn to
 
@@ -2040,7 +2031,6 @@ steps:
       7. Exit with code 0 if no errors are found, and code 1 if errors are present.
 
       ### Design Approach
-      Don't just write code immediately. In learning science, planning reduces cognitive load. 
       Sketch your script out in comments first:
 
       ```bash

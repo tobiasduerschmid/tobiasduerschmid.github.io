@@ -53,7 +53,7 @@ steps:
 
       Defensive Programming asks "how do I reject bad input clearly?" Design by Contract asks a sharper question first: **"whose job was this?"** That single shift in framing changes how the code is structured — sometimes radically.
 
-      Bertrand Meyer, who coined Design by Contract in the 1980s, argued explicitly *against* defensive programming. He called blanket input-checking a methodology that "can only … cause … a decrease in reliability" because redundant checks across a large system compound into "a monster of useless complexity." His **Non-Redundancy Principle**: *under no circumstances shall the body of a routine ever test for its precondition*. The caller's job is to satisfy preconditions; the supplier's job is to satisfy postconditions, *assuming the preconditions held*.
+      Bertrand Meyer, who coined Design by Contract in the 1980s, argued explicitly *against* defensive programming. In his view, redundant checks added just in case only make the software more complex, and so less reliable. His **Non-Redundancy Principle**: *under no circumstances shall the body of a routine ever test for its precondition*. The caller's job is to satisfy preconditions; the supplier's job is to satisfy postconditions, *assuming the preconditions held*.
 
       That's a strong claim — and the opposite of the DP tutorial you just finished. This step makes the contrast visible by putting two versions of the same function side by side, then introduces the pragmatic Python middle ground we'll use for the rest of the tutorial.
 
@@ -1465,7 +1465,7 @@ steps:
           option_feedback:
             1: "Rejecting *more* calls is a *stronger* precondition, not a weaker one. The set of accepted inputs shrinks."
             2: "The scenario changes which calls are *allowed*, not what's guaranteed *after* success — that's a precondition change, not a postcondition change."
-            3: "This is the canonical Liskov misconception. 'More specific' in vocabulary does *not* mean 'demands more' in contract terms — quite the opposite. Behavioral subtyping requires *weaker-or-equal* preconditions."
+            3: "'More specific' in vocabulary does *not* mean 'demands more' in contract terms — quite the opposite. Behavioral subtyping requires *weaker-or-equal* preconditions."
           explanation: "Strengthened preconditions break substitutability. Any caller that withdrew $20 from a `BankAccount` will fail when handed a `PremiumSavingsAccount` — the subclass has narrowed the contract."
 
         - type: single

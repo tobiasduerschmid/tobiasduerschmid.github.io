@@ -274,7 +274,7 @@ steps:
 
       ### Why this matters
 
-      Comparing objects with `==` is one of the most common Java bugs for newcomers from Python or C++. Two strings that look identical can be unequal — or sneakily equal because of caching. Mastering identity vs. value equality is non-negotiable for writing Java code that is correct *and* portable across JVMs.
+      Comparing objects with `==` is one of the most common Java bugs for newcomers from Python or C++. Two strings that look identical can be unequal — or sneakily equal because of caching. Using `.equals()` for value comparison gives the same answer on every JVM, regardless of caching.
 
       ### 🎯 You will learn to
 
@@ -494,7 +494,7 @@ steps:
 
       ### Why this matters
 
-      Java pretends primitives and objects are interchangeable, but they are not. Autoboxing makes the boundary invisible until a `NullPointerException` blows up on what looked like an `int`. Knowing where the boundary is — and where the JVM silently crosses it — is the difference between code that runs and code that mysteriously crashes in production.
+      Autoboxing converts between primitives and their wrapper classes automatically, so the boundary between them is easy to miss until a line that looks like plain `int` code throws a `NullPointerException`.
 
       ### 🎯 You will learn to
 
@@ -2319,7 +2319,7 @@ steps:
 
       ### Why this matters
 
-      Real Java code spends most of its time pushing data through `List`, `Set`, and `Map`. Picking the wrong implementation — `LinkedList` where you needed random access, `HashMap` where you needed sorted iteration — is the single most common cause of "code that works but is mysteriously slow." The Java Collections Framework rewards programmers who think in terms of interfaces first and implementations second.
+      Real Java code spends most of its time pushing data through `List`, `Set`, and `Map`. Picking the wrong implementation, such as a `LinkedList` where you needed random access, can make each `get(i)` call O(n) instead of O(1). The Java Collections Framework rewards programmers who think in terms of interfaces first and implementations second.
 
       ### 🎯 You will learn to
 

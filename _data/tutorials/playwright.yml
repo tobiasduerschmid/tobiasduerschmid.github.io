@@ -114,7 +114,7 @@ steps:
       - `getByRole('button', { name: /add todo/i })` — describes a button whose accessible name matches the regular expression.
       - `await expect(...).toHaveText('Milk')` — the matcher retries until the text matches or its timeout expires. Awaiting its Promise keeps the test from finishing before that check completes.
 
-      <details markdown="1"><summary>⚠️ Negative-transfer trap: this is *not* React Testing Library or Jest</summary>
+      <details markdown="1"><summary>⚠️ Habit check: this is *not* React Testing Library or Jest</summary>
 
       If you've used **React Testing Library (RTL)** with Jest, the API looks deceptively similar — `getByRole`, `getByText`, `expect(...).toBeVisible()`. The methods have *the same names* but different machinery underneath:
 
@@ -797,7 +797,7 @@ steps:
             A behavior-focused test should survive implementation changes that preserve its contract. The button's role and accessible name still identify the same action after its CSS class changes.
 
         - question: |
-            **(Spaced review — Step 1)** A Playwright test contains the line:
+            **(Review: Step 1)** A Playwright test contains the line:
 
             ```javascript
             expect(await page.getByText('Saved').isVisible()).toBe(true);
@@ -1236,7 +1236,7 @@ steps:
             Test IDs are only as durable as their *naming*. A test ID named after styling or layout is functionally equivalent to a CSS-class locator — it pins implementation. A test ID named after the action or the semantic role (`save-action`, `cart-checkout-button`) is what the docs intend: a stable contract that the test can rely on indefinitely.
 
         - question: |
-            **(Spaced review — Step 2)** The app must reject both empty input and whitespace-only input. How can you cover both without duplicating the whole test body?
+            **(Review: Step 2)** The app must reject both empty input and whitespace-only input. How can you cover both without duplicating the whole test body?
           type: single
           options:
             - "Keep only the empty-string case because both currently reach the same branch"
@@ -1265,7 +1265,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      A green test you can't trust is worse than no test at all — it gives false confidence while the bug ships. *Liar tests* are the most dangerous failure mode in an e2e suite because the test visibly clicks buttons, which makes it *feel* like real verification. This step makes that lie tactile: you'll watch a buggy app pass a weak assertion, then strengthen it until it tells the truth.
+      A green test you can't trust is worse than no test at all — it gives false confidence while the bug ships. *Liar tests* pass while the feature is broken. This step makes that lie tactile: you'll watch a buggy app pass a weak assertion, then strengthen it until it tells the truth.
 
       ### 🎯 You will learn to
 
@@ -1596,7 +1596,7 @@ steps:
             The Playwright best-practices guide is direct: *"Don't use manual assertions that are not awaiting the expect."* Always use `await expect(locator).matcher()` so your test gets auto-waiting and retrying — the whole point of Playwright's web-first assertions.
 
         - question: |
-            **(Spaced review — Step 3)** A test uses `page.locator('.add-todo-btn')` to find the Add button. The team renames the CSS class to `.primary-btn`. The behavior is unchanged. The test fails. What's the most accurate label for this failure?
+            **(Review: Step 3)** A test uses `page.locator('.add-todo-btn')` to find the Add button. The team renames the CSS class to `.primary-btn`. The behavior is unchanged. The test fails. What's the most accurate label for this failure?
           type: single
           options:
             - "A real regression — the team broke the test by renaming"
@@ -1962,7 +1962,7 @@ steps:
             The locator ladder isn't \"always pick option 1.\" The right rung depends on what's *promised* by the spec. Step 6 makes this trade-off explicit by introducing the *match assertion specificity to spec specificity* principle.
 
         - question: |
-            **(Spaced review — Step 4)** A weak assertion `await expect(page.getByRole('listitem')).toHaveCount(1)` passed against an app that renders an empty `<li>` (the user's text was dropped). Why did it pass?
+            **(Review: Step 4)** A weak assertion `await expect(page.getByRole('listitem')).toHaveCount(1)` passed against an app that renders an empty `<li>` (the user's text was dropped). Why did it pass?
           type: single
           options:
             - "Because Playwright's auto-wait masked the bug"
@@ -2427,7 +2427,7 @@ steps:
             A stable locator for the dedicated value lets `toHaveText(orderId)` reject near matches such as `123456` while ignoring surrounding copy. Exactness belongs on the promised value, not on the entire presentation.
 
         - question: |
-            **(Spaced review — Step 5)** A test fails after a CSS class rename. The behavior is unchanged. The team then changes the class back to silence the test. What's the underlying problem?
+            **(Review: Step 5)** A test fails after a CSS class rename. The behavior is unchanged. The team then changes the class back to silence the test. What's the underlying problem?
           type: single
           options:
             - "The team's solution is correct — keeping CSS class names stable is essential for tests to work"
@@ -2569,7 +2569,7 @@ steps:
 
       Check the intermediate done state before unmarking. A test that only checks the final state after two clicks can pass when neither click changes anything.
 
-      ### 🤔 Metacognitive close
+      ### 🤔 Self-check
 
       Before you submit:
 
@@ -3005,7 +3005,7 @@ steps:
             The principle works on both sides — locators (Step 5) and assertions (Step 6). When an assertion pins something the spec doesn't promise (specific color, exact wording, internal classnames), it generates false alarms. The fix is to find the user-facing promise and pin only that.
 
         - question: |
-            **(Spaced review — Steps 1–6, the integration question)** Imagine you're writing an e2e test for a new feature, **before any code exists**. Which is the most useful first step?
+            **(Review: Steps 1–6)** Imagine you're writing an e2e test for a new feature, **before any code exists**. Which is the most useful first step?
           type: single
           options:
             - "Open the Playwright codegen tool and click through a planned flow"

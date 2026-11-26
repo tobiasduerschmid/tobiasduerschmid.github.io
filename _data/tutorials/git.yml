@@ -46,9 +46,8 @@ steps:
       - Analyze the role of the hidden `.git/` directory in storing history
       - Evaluate when version control beats ad-hoc file copies
 
-      Welcome to the **Git Tutorial**! You've got a code editor
-      (top) and a real Linux terminal in the workspace. Files you
-      edit are automatically synced to the VM. Let's get into it.
+      You've got a code editor (top) and a real Linux terminal in the
+      workspace. Files you edit are automatically synced to the VM.
 
       ### Why version control?
 
@@ -402,9 +401,8 @@ steps:
     instructions: |
       ### Why this matters
 
-      Real coding rarely means committing brand-new files — it means evolving
-      tracked ones. The edit → diff → stage → commit loop is how you save
-      every meaningful change for the rest of your career. Mastering `git
+      Most commits change files Git already tracks, and you record each of
+      those changes with the edit → diff → stage → commit loop. Mastering `git
       diff` here also gives you the power to review your own work before
       committing, catching mistakes before they enter history.
 
@@ -856,12 +854,10 @@ steps:
     instructions: |
       ### Why this matters
 
-      Every developer fat-fingers a `git add` or pastes "BROKEN CODE" into a
-      file at some point. The difference between panic and confidence is
-      knowing the difference between *unstaging* (reversible) and *discarding*
-      (irreversible) — they share the same command name but have very
-      different blast radii. Confusing them is one of the top sources of lost
-      work in Git.
+      *Unstaging* a file keeps your edits in the working directory, so you
+      can stage them again. *Discarding* overwrites your unstaged edits, and
+      Git cannot recover them. The two use the same command and differ by
+      one flag. Confusing them is one of the top sources of lost work in Git.
 
       ### 🎯 You will learn to
 
@@ -870,9 +866,6 @@ steps:
       - Evaluate when `git reset --hard` is appropriate versus dangerous
 
       ### Ctrl+Z for Git (kind of)
-
-      Accidentally staged the wrong file? Made changes you want to yeet
-      into oblivion? Don't panic — Git has your back.
 
       > **Challenge — try before you learn:** You're about to stage a
       > broken change by accident. Before reading ahead, think: if you
@@ -1547,16 +1540,13 @@ steps:
     instructions: |
       ### Why this matters
 
-      Reading instructions and following them is not the same as *knowing*
-      Git. Real engineering work hands you a broken repository and says "fix
-      it" — no command list provided. This unguided checkpoint forces you to
-      retrieve, sequence, and apply everything from Steps 1–7 from memory.
-      Struggling here is the point: it's where transfer to the real world
-      actually happens.
+      Earlier steps showed you which commands to run. This checkpoint gives
+      you a broken repository and no command list, so you apply what you
+      learned in Steps 1–7 from memory.
 
       ### 🎯 You will learn to
 
-      - Apply unstaging, restoring, and `.gitignore` skills without scaffolding
+      - Apply unstaging, restoring, and `.gitignore` skills without step-by-step help
       - Analyze a broken repository and choose the right tool for each problem
       - Evaluate your own readiness before moving on to branching
 
@@ -2375,12 +2365,10 @@ steps:
     instructions: |
       ### Why this matters
 
-      Most learners encounter their first merge conflict in the middle of a
-      stressful real-world deadline. By engineering one on purpose now — in a
-      controlled sandbox — you remove the surprise factor. The trick is
-      understanding *why* the conflict will happen: same lines, two different
-      branches, no automatic reconciliation possible. Set the stage here;
-      resolve it next step.
+      Creating a merge conflict on purpose lets you practice resolving one in
+      this sandbox. The trick is understanding *why* the conflict will happen:
+      same lines, two different branches, no automatic reconciliation possible.
+      Set the stage here; resolve it next step.
 
       ### 🎯 You will learn to
 
@@ -3491,8 +3479,7 @@ steps:
 
       You now have your colleague's work in your local repository.
       That's the complete Git collaboration cycle:
-      **branch → commit → push → pull → merge**. This is literally
-      how teams at every tech company ship code every day.
+      **branch → commit → push → pull → merge**.
 
     solution:
       commands:
@@ -3633,7 +3620,7 @@ steps:
 
       ### 🎯 You will learn to
 
-      - Apply the full branch → commit → merge → push → pull cycle without scaffolding
+      - Apply the full branch → commit → merge → push → pull cycle without step-by-step help
       - Analyze a rejected push and recover by pulling and resolving conflicts
       - Evaluate professional best practices against your own emerging habits
 
@@ -3750,7 +3737,7 @@ steps:
       </details>
 
       This exercises branching, committing, merging, remote push/pull,
-      and conflict resolution — all without scaffolding. If you can do
+      and conflict resolution — all without step-by-step help. If you can do
       this independently, you're ready for real-world Git usage.
 
       ```bash

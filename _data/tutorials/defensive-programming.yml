@@ -497,12 +497,12 @@ steps:
           options:
             - "No — the trailing-slash strip is at a *trust boundary* (untrusted user input from HTTP) where normalization is intentional and is usually logged. `clamp` is an *internal contract* between trusted code where silent repair hides programmer mistakes."
             - "Yes — any silent transformation of input is always bad."
-            - "No — Postel's Law was deprecated by RFC 8546, so neither pattern is acceptable."
+            - "No — Postel's Law was deprecated by RFC 9413, so neither pattern is acceptable."
             - "Yes — but only because URLs and numeric ranges are fundamentally different domains."
           correct_index: 0
           option_feedback:
-            1: "This is the canonical Postel's Law misconception. There's a meaningful distinction between *boundary tolerance* (normalize HTTP input, web forms, file encodings) and *interior strictness* (function arguments between trusted modules)."
-            2: "RFC 8546 (2019) does push back on Postel's Law, but the practical rule that emerged isn't 'never normalize' — it's 'normalize at the boundary, be strict in the interior.' Modern HTTP frameworks still strip trailing slashes."
+            1: "There's a meaningful distinction between *boundary tolerance* (normalize HTTP input, web forms, file encodings) and *interior strictness* (function arguments between trusted modules)."
+            2: "RFC 9413 (2023) does push back on Postel's Law, but the practical rule that emerged isn't 'never normalize' — it's 'normalize at the boundary, be strict in the interior.' Modern HTTP frameworks still strip trailing slashes."
             3: "The domain isn't the point. The point is *who* is on the other side of the call: an untrusted HTTP client (normalize) or another part of your own program (fail loud)."
           explanation: "Defensive programming has a *location* dimension: at the system boundary (HTTP input, file parsing, command-line args), liberal acceptance with documented normalization is often correct. *Inside* trusted code, silent repair hides bugs and should be rejected — exactly what `clamp` enforces."
 
@@ -1128,7 +1128,7 @@ steps:
         - type: single
           difficulty: intermediate
           question: |
-            **Retrieval from Step 3**: a teammate proposes that `parse_port_range(\"9000-8000\")` should silently swap to `(8000, 9000)` because \"the user obviously meant the lower port first.\" What principle from `clamp` (Step 3) applies here?
+            A teammate proposes that `parse_port_range(\"9000-8000\")` should silently swap to `(8000, 9000)` because \"the user obviously meant the lower port first.\" What principle from `clamp` (Step 3) applies here?
           options:
             - "Silent repair hides caller bugs. The next time someone writes `parse_port_range(f\"{max_port}-{min_port}\")` because they confused the variable order, the function appears to work — and the actual bug surfaces somewhere far away, much later."
             - "Silent repair is fine because the result is mathematically equivalent."
@@ -1144,7 +1144,7 @@ steps:
         - type: single
           difficulty: intermediate
           question: |
-            **Retrieval from Step 5**: imagine `parse_port_range` was extended to read its input from a config file — `port_range = json.load(...)\\[\"ports\"\\]`. Which defensive pattern from `load_json_config` (Step 5) should re-enter the picture?
+            Imagine `parse_port_range` was extended to read its input from a config file — `port_range = json.load(...)\\[\"ports\"\\]`. Which defensive pattern from `load_json_config` (Step 5) should re-enter the picture?
           options:
             - "Catch only the *specific* failures you can translate (`OSError`, `json.JSONDecodeError`), use `raise ConfigError(...) from exc` to preserve the cause, then validate the loaded *shape* before handing it to the parser."
             - "Wrap the whole flow in `except Exception: return None` so the program never crashes."

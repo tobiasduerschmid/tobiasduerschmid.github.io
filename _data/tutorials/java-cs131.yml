@@ -892,7 +892,7 @@ steps:
       which values are safe to inspect before using `slots.length` or `slots[index]`.
 
 
-      **Retrieve:** does checking `slots != null` ask about the array's contents or its reference
+      **From memory:** does checking `slots != null` ask about the array's contents or its reference
       value? Explain using step 4's distinction.
     files:
       - path: SafeLookup.java
@@ -1072,7 +1072,7 @@ steps:
       separate branch for each class.
 
 
-      **Retrieve:** if the same entry appears twice, are there necessarily two objects? Why should
+      **From memory:** if the same entry appears twice, are there necessarily two objects? Why should
       both positions still contribute to this sum?
     files:
       - path: InterfaceClient.java
@@ -2310,7 +2310,7 @@ steps:
       ### Why this matters
 
 
-      Transfer means choosing the right rule when the prompt no longer names it for you. This final
+      This step asks you to choose the right rule when the prompt no longer names it for you. This final
       client combines shared objects, a common contract, and content-based selection.
 
 
