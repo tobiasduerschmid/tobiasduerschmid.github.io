@@ -9,8 +9,10 @@ const yaml = require('js-yaml');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
 const data = file => yaml.load(readFileSync(require.resolve(`../_data/${file}`), 'utf8'));
-// Rendered text: emphasis markers gone, typographic apostrophes and quotes plain.
-const plain = text => text.replace(/\*\*/g, '').replace(/[’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').trim();
+// Text with typographic apostrophes and quotes made plain and spaces collapsed.
+const plain = text => text.replace(/[’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').trim();
+// A key point's Markdown as the page shows it: bold and code markers gone.
+const shown = point => plain(point.replace(/\*\*|`/g, ''));
 // A Letter page inside the notes' print margins, at CSS's 96 pixels per inch.
 const INCH = 96;
 const LETTER = { width: (8.5 - 2 * 0.5) * INCH, height: (11 - 0.4 - 0.55) * INCH };
@@ -65,7 +67,7 @@ for (const [topic, lesson] of Object.entries(loadRegistry('video'))) {
     for (const { cue, points, heading } of cues) {
       const row = page.getByRole('region', { name: heading, exact: true });
       await expect(row.getByRole('img', { name: cue.visual, exact: true })).toBeVisible();
-      expect((await row.getByRole('listitem').allTextContents()).map(plain), heading).toEqual(points.map(plain));
+      expect((await row.getByRole('listitem').allTextContents()).map(plain), heading).toEqual(points.map(shown));
     }
     await a11yCheckpoint(page, `${topic} notes`, { feature: 'video-narration-notes' });
   });
