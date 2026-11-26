@@ -500,3 +500,13 @@ Keep this boundary when extending the system. Prefer another lesson in an
 existing kind over a new player. Add an adapter only for a demonstrated new
 interaction, with a compiled contract and behavior tests. Do not move speech
 into a visual package or hard-code a new topic in the audio renderer.
+
+## Student study companions
+
+Optional `_data/explainers/<id>_study.yml` files add question-to-cue reviews and
+fresh retries, editable diagram exercises, and comparisons of two authored
+frames. `scripts/narration/study.js` validates the version-1 contract and every
+reference; the source loader exports `entry.study`. These fields do not change
+the speech fingerprint. See [the schema and runtime contract](narration-study.md).
+All players share prediction holds and searchable review. Keep topic scripts
+limited to visuals; do not reimplement these learning controls per lesson.

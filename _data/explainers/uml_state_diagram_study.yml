@@ -1,0 +1,367 @@
+version: 1
+reviews:
+  intro:
+    - scene: intro
+      cue: whose_states
+      retry:
+        type: single
+        question: "A UML state machine models a robot during one delivery. What is its main subject?"
+        options:
+          - "All robot classes and the fields they share"
+          - "One recorded order of calls between several robots"
+          - "One robot's possible situations and reactions to events"
+        correct_index: 2
+        explanation: "Choose the object whose lifecycle is modeled. Its state determines which transitions and behaviors respond to an event."
+        option_feedback:
+          0: "Class structure is a different view. This diagram concerns the behavior of an object over its lifecycle."
+          1: "A concrete message trace describes one scenario; a state machine specifies the object's possible state-dependent behavior."
+  states:
+    - scene: states
+      cue: initial
+      retry:
+        type: single
+        question: "In a UML state machine, a black dot points directly to Ready. How should the start be read?"
+        options:
+          - "The machine enters Ready immediately through the initial pseudostate"
+          - "The object waits at the black dot until a start event arrives"
+          - "The black dot is the final state after Ready completes"
+        correct_index: 0
+        explanation: "The initial pseudostate is a starting marker, not a state the object occupies. Its transition immediately selects the first state."
+        option_feedback:
+          1: "The initial transition has no event trigger or guard, and the object does not wait at the marker."
+          2: "The final state uses a bullseye. The plain black dot marks the start instead."
+  events:
+    - scene: events
+      cue: ignored
+      retry:
+        type: single
+        question: "A UML machine is in Returning when enterPin arrives. No applicable transition handles enterPin there. What happens in this model?"
+        options:
+          - "enterPin waits until the object reaches a state that accepts it"
+          - "enterPin is discarded and the object stays Returning"
+          - "The machine returns to its initial state to handle enterPin"
+        correct_index: 1
+        explanation: "An event with no applicable transition is ignored in this model. An unhandled event does not itself cause a state change."
+        option_feedback:
+          0: "The model does not specify deferred events. Missing a transition does not create a queue for a later state."
+          2: "Restarting requires a modeled transition or other explicit rule, not merely an unhandled event."
+  guards:
+    - scene: guards
+      cue: guard
+      retry:
+        type: single
+        question: "A UML transition reads submit [form valid] / save(). Which event-and-condition combination runs save()?"
+        options:
+          - "The form becomes valid, even without submit arriving"
+          - "submit arrives, even if the form is invalid"
+          - "submit arrives while the form is valid"
+        correct_index: 2
+        explanation: "The trigger supplies the event; the guard is checked when that event arrives. The effect runs only if the transition fires."
+        option_feedback:
+          0: "A guard is not a change-event trigger. Becoming true alone does not take this transition."
+          1: "The trigger is necessary but not sufficient: the guard must also hold at that moment."
+  time_change:
+    - scene: time_change
+      cue: when
+      retry:
+        type: single
+        question: "A UML machine should leave Idle after 3 minutes and leave Charging when the battery first exceeds 90 percent. Which pair of triggers fits?"
+        options:
+          - "after(3 min) and when(battery > 90%)"
+          - "when(3 min) and [battery > 90%]"
+          - "[idle for 3 min] and after(battery > 90%)"
+        correct_index: 0
+        explanation: "after expresses elapsed time since entry; when expresses a condition changing from false to true."
+        option_feedback:
+          1: "A guard in square brackets does not generate the battery event, and elapsed duration uses after."
+          2: "A guard alone does not supply a timed trigger, while after takes a duration rather than a battery condition."
+  entry_exit:
+    - scene: entry_exit
+      cue: order
+      retry:
+        type: single
+        question: "A UML transition leaves Editing with exit / closeEditor(), has effect save(), and enters Viewing with entry / showPage(). What is the order?"
+        options:
+          - "save(), then closeEditor(), then showPage()"
+          - "closeEditor(), then save(), then showPage()"
+          - "showPage(), then save(), then closeEditor()"
+        correct_index: 1
+        explanation: "Transition execution follows source exit, transition effect, then target entry."
+        option_feedback:
+          0: "The source state's exit behavior precedes the transition's own effect."
+          2: "The target's entry comes after leaving the source and performing the transition effect."
+  do_activity:
+    - scene: do_activity
+      cue: completion
+      retry:
+        type: single
+        question: "In a UML state machine, Returning has do / driveToBase() and a triggerless arrow to Done. What enables that completion transition?"
+        options:
+          - "Any unrelated event received during the drive"
+          - "Entry into Returning before driving starts"
+          - "Completion of Returning's driveToBase activity"
+        correct_index: 2
+        explanation: "The state completes when its ongoing work finishes, allowing the triggerless completion transition to be taken."
+        option_feedback:
+          0: "This arrow has no event trigger; an unrelated event is not the reason it fires."
+          1: "A do activity may take time. Its state's completion does not occur merely because entry finished."
+  internal_self:
+    - scene: internal_self
+      cue: internal
+      retry:
+        type: single
+        question: "A UML Waiting state starts a timer on entry. A statusRequest should report status without restarting that timer. Which representation fits?"
+        options:
+          - "An internal statusRequest / reportStatus() behavior in Waiting"
+          - "A statusRequest arrow leaving Waiting and returning to Waiting"
+          - "An entry / reportStatus() behavior added to Waiting"
+        correct_index: 0
+        explanation: "An internal transition handles the event without exiting or re-entering the state, so its timer continues."
+        option_feedback:
+          1: "A self-transition exits and re-enters Waiting, restarting entry behavior and the timer."
+          2: "Entry behavior runs on entry, not each time a statusRequest arrives while the state remains active."
+  review:
+    - scene: review
+      cue: checklist
+      retry:
+        type: single
+        question: "A UML state machine contains a nonfinal Processing state with no way to leave it. Which review question exposes the problem?"
+        options:
+          - "Do all state names describe actions rather than situations?"
+          - "Does every nonfinal state have a way out?"
+          - "Does every transition carry an effect after a slash?"
+        correct_index: 1
+        explanation: "A nonfinal state with no way out can trap the lifecycle. Check that it can leave as intended, or that completion is explicitly modeled as final."
+        option_feedback:
+          0: "State names should describe situations. Renaming Processing does not supply a way to leave it."
+          2: "Effects are optional. Adding an effect to an incoming arrow does not create an outgoing path."
+  composite:
+    - scene: composite
+      cue: inside_out
+      retry:
+        type: single
+        question: "A UML border transition leaves Delivering while its Unlocked substate is active with exit / lockLid(). What occurs before the target state is entered?"
+        options:
+          - "Delivering is left while Unlocked's exit is skipped"
+          - "Unlocked stays active after Delivering has been left"
+          - "Unlocked's exit runs, then Delivering is exited"
+        correct_index: 2
+        explanation: "Leaving the composite exits the active nested state from the inside out, preserving its exit behavior."
+        option_feedback:
+          0: "Starting an arrow at the border does not bypass the active substate's exit behavior."
+          1: "An active substate cannot remain active after its containing state has been exited."
+  transfer:
+    - scene: composite
+      cue: border
+      retry:
+        type: single
+        question: "A UML composite Session contains Active and Idle. logout must end the session from either substate. Which placement expresses the shared rule?"
+        options:
+          - "A logout transition from Session's border to LoggedOut"
+          - "A logout transition only from the Active substate"
+          - "An internal logout behavior that stays in Session"
+        correct_index: 0
+        explanation: "A border transition applies from any active substate when the event occurs, allowing one rule to cover both situations."
+        option_feedback:
+          1: "The Idle case would lack the required transition, so the rule would not hold in both substates."
+          2: "An internal transition keeps the state active; logout here must leave Session for LoggedOut."
+  summary:
+    - scene: states
+      cue: naming
+      retry:
+        type: single
+        question: "A UML machine models a download while bytes are being transferred. Which name describes a state as a situation?"
+        options:
+          - "Begin transfer"
+          - "Transferring"
+          - "Send next byte"
+        correct_index: 1
+        explanation: "The object is Transferring describes its ongoing situation. Commands such as begin or send describe actions instead."
+        option_feedback:
+          0: "Beginning transfer is an action that enters a situation, not the name of that situation."
+          2: "Sending a byte is behavior performed during a state rather than a state name."
+    - scene: events
+      cue: label_parts
+      retry:
+        type: single
+        question: "A UML transition reads unlock [badge accepted] / openDoor(). Which part is evaluated as a Boolean condition when unlock arrives?"
+        options:
+          - "unlock"
+          - "openDoor()"
+          - "[badge accepted]"
+        correct_index: 2
+        explanation: "The guard is the condition in square brackets. The event triggers consideration of the transition, and the effect runs if it fires."
+        option_feedback:
+          0: "unlock names the incoming event, not the condition checked for that event."
+          1: "openDoor() is the effect after the slash; it performs behavior rather than deciding whether the transition is allowed."
+    - scene: time_change
+      cue: after
+      retry:
+        type: single
+        question: "A UML Reserved state should expire 7 minutes after entry unless the object leaves sooner. Which transition trigger fits?"
+        options:
+          - "after(7 min)"
+          - "[reservation expired]"
+          - "entry / expire()"
+        correct_index: 0
+        explanation: "An after trigger measures time from entry into the state. Leaving earlier prevents that time event from firing there."
+        option_feedback:
+          1: "A guard checks a condition when an event arrives; it does not create an elapsed-time event on its own."
+          2: "Entry behavior runs immediately on entry, rather than seven minutes later."
+    - scene: entry_exit
+      cue: why_exit
+      retry:
+        type: single
+        question: "A UML Recording state must stop its microphone whenever it is left, including future exit paths. Where should stopMicrophone() be written?"
+        options:
+          - "As an effect copied onto the currently drawn exit arrow"
+          - "Once as Recording's exit behavior"
+          - "Once as the next state's entry behavior"
+        correct_index: 1
+        explanation: "Exit behavior belongs to leaving Recording itself, so every departure runs it without copying the effect onto each path."
+        option_feedback:
+          0: "A copied effect covers only arrows carrying that copy; a newly added exit can omit it."
+          2: "The next state can vary. The invariant concerns leaving Recording, regardless of destination."
+    - scene: internal_self
+      cue: internal
+      retry:
+        type: single
+        question: "A UML Recording state starts capture on entry. A levelUpdate should change the displayed level without restarting capture. How should it be modeled?"
+        options:
+          - "A self-transition from Recording back to Recording"
+          - "An additional entry behavior on Recording"
+          - "An internal transition inside Recording"
+        correct_index: 2
+        explanation: "Handling levelUpdate internally leaves the state active, preserving capture and avoiding another entry."
+        option_feedback:
+          0: "A self-transition re-enters Recording and therefore repeats the capture-start behavior."
+          1: "Entry behavior is tied to entering the state, not to each levelUpdate while it remains active."
+    - scene: composite
+      cue: border
+      retry:
+        type: single
+        question: "A UML machine should handle connectionLost from both Uploading and Verifying with one transition to Offline. What structure supports that rule?"
+        options:
+          - "A composite containing both states, with the transition at its border"
+          - "A transition from Uploading, with Verifying placed beside its arrow"
+          - "An initial pseudostate connecting both states directly to Offline"
+        correct_index: 0
+        explanation: "A border transition on the containing state expresses behavior shared by its substates."
+        option_feedback:
+          1: "Visual proximity does not extend a transition's scope; an Uploading transition does not apply while Verifying is active."
+          2: "An initial pseudostate chooses a starting state; it does not handle events shared by active states."
+exercises:
+  - id: waiting-responses
+    title: Keep or restart the waiting period
+    scene: internal_self
+    cue: code_internal
+    prompt: >-
+      Repair the robot's Waiting behavior. A wrong PIN must beep without sending
+      another notification or restarting the 10-minute timeout. Add an extendWait
+      event that deliberately sends a fresh notification and starts the timeout
+      again. Keep the correct-PIN and timeout paths. Predict the notification and
+      timer behavior for both events, then edit the diagram and compare your model
+      with the solution. Preview does not simulate the timer.
+    type: state
+    starter: |
+      @startuml
+      layout compact
+      Waiting : entry / notifyCustomer()
+      Waiting --> Waiting : enterPin(code) [pin wrong] / beep()
+      Waiting --> Unlocked : enterPin(code) [pin matches]
+      Waiting --> Returning : after(10 min)
+      @enduml
+    solution: |
+      @startuml
+      layout compact
+      Waiting : entry / notifyCustomer()
+      Waiting : enterPin(code) [pin wrong] / beep()
+      Waiting --> Waiting : extendWait
+      Waiting --> Unlocked : enterPin(code) [pin matches]
+      Waiting --> Returning : after(10 min)
+      @enduml
+    checks:
+      - "A wrong PIN produces one beep while the existing waiting period and notification remain unchanged."
+      - "extendWait leaves and re-enters Waiting, so entry behavior and the waiting period start again."
+      - "The two PIN guards cannot both hold, and the correct-PIN and timeout destinations are preserved."
+  - id: closing-time
+    title: Apply a rule to every delivery state
+    scene: composite
+    cue: inside_out
+    prompt: >-
+      The dining hall adds a closedForNight event. It must return the robot from
+      Driving, Waiting, or Unlocked and refund the order once. Add one shared rule
+      to this focused delivery diagram. Preserve the lid's behavior: it unlocks
+      on entering Unlocked and locks on every exit. Trace closedForNight while
+      Unlocked, naming the behavior order. The normal completion paths and battery
+      rule are omitted from this view.
+    type: state
+    starter: |
+      @startuml
+      layout compact
+      [*] --> Delivering
+      state Delivering {
+        [*] --> Driving
+        Driving --> Waiting : arrived
+        Waiting --> Unlocked : enterPin(code) [pin matches]
+        Unlocked : entry / unlockLid()
+        Unlocked : exit / lockLid()
+      }
+      state Returning
+      @enduml
+    solution: |
+      @startuml
+      layout compact
+      [*] --> Delivering
+      state Delivering {
+        [*] --> Driving
+        Driving --> Waiting : arrived
+        Waiting --> Unlocked : enterPin(code) [pin matches]
+        Unlocked : entry / unlockLid()
+        Unlocked : exit / lockLid()
+      }
+      Delivering --> Returning : closedForNight / refund()
+      @enduml
+    checks:
+      - "The new rule applies from all three delivery substates without three duplicated transitions."
+      - "The transition reaches Returning and runs refund once when closedForNight occurs during delivery."
+      - "Starting in Unlocked, the trace locks the lid, exits Delivering, refunds, then enters Returning."
+comparisons:
+  - id: wrong-pin-timeout
+    title: A beep that accidentally extends the deadline
+    question: >-
+      The robot must beep for a wrong PIN but still leave after the original
+      waiting period. Compare the self-transition with the internal transition.
+      What extra behavior does the self-transition cause, and when would that
+      extra behavior be useful instead?
+    before:
+      scene: internal_self
+      cue: self_transition
+      label: Wrong PIN exits and re-enters Waiting
+    after:
+      scene: internal_self
+      cue: internal
+      label: Wrong PIN is handled within Waiting
+    consequences:
+      - "A self-transition repeats exit and entry behavior and restarts the timeout, so repeated wrong PINs can extend the wait indefinitely."
+      - "The internal transition beeps without disturbing the active state or its elapsed waiting time."
+      - "Re-entry is useful for the explicit extendWait request, where restarting the wait and notifying again are intended behavior."
+  - id: shared-or-selective
+    title: A shared emergency versus selective cancellation
+    question: >-
+      Low battery must return the robot from any delivery substate, but customer
+      cancellation must be refused after the lid opens. Compare the border rule
+      with the two cancel rules. Why is one compact rule appropriate for only one
+      of these requirements, and what maintenance cost follows?
+    before:
+      scene: composite
+      cue: border
+      label: Low battery leaves all of Delivering
+    after:
+      scene: transfer
+      cue: cancel_answer
+      label: Cancel leaves only Driving and Waiting
+    consequences:
+      - "The border rule covers every substate, including Unlocked and any new substate added to Delivering."
+      - "Separate cancel transitions encode the narrower permission and leave cancel unhandled in Unlocked."
+      - "Separate rules require checking new eligible states when the model grows; a border rule is shorter but would grant cancellation too broadly here."

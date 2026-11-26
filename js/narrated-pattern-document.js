@@ -60,6 +60,28 @@
     language.addEventListener('change', () => preferences.set(language.value));
   }
 
+  // Older print engines do not expose closed <details> content through CSS.
+  // Open answers for the print job, preserving the reader's disclosure choices.
+  function printableAnswers(lesson) {
+    const answers = Array.from(lesson.querySelectorAll('.np-reading-answer'));
+    let saved = null;
+    function reveal() {
+      if (saved) return;
+      saved = answers.map(answer => answer.open);
+      answers.forEach(answer => { answer.open = true; });
+    }
+    function restore() {
+      if (isPrintView || !saved) return;
+      answers.forEach((answer, index) => { answer.open = saved[index]; });
+      saved = null;
+    }
+    const media = window.matchMedia('print');
+    if (isPrintView || media.matches) reveal();
+    window.addEventListener('beforeprint', reveal);
+    window.addEventListener('afterprint', restore);
+    media.addEventListener('change', event => { if (event.matches) reveal(); else restore(); });
+  }
+
   function enhancePreferences(lesson) {
     // Combined course pages may load this script once per embedded lesson.
     if (lesson.dataset.npPreferences) return;
@@ -79,6 +101,7 @@
     new MutationObserver(updateTheme).observe(page, { attributes: true, attributeFilter: ['class'] });
 
     if (lesson.classList.contains('np-document-page')) {
+      printableAnswers(lesson);
       lesson.querySelector('.np-document-controls').hidden = false;
       lesson.querySelector('[data-document-print]').addEventListener('click', () => window.print());
       if (themeButton) themeButton.addEventListener('click', () => page.classList.toggle('dark-mode'));

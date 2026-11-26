@@ -21,6 +21,27 @@ description: >-
 
 # Authoring narrated design-pattern lessons
 
+## Practice, inspection, and review
+
+UML and pattern lessons use the shared study tools documented in
+[`narration-authoring`](../narration-authoring/SKILL.md#student-study-tools) and
+[`docs/narration-study.md`](../../../docs/narration-study.md). Author a
+`_data/explainers/<topic>_study.yml` companion with two progressive diagram
+exercises, two comparisons, and a specific teaching cue plus fresh retry for
+every section and summary question. Keep speech and audio unchanged when only
+adding these activities. Extend the same running example; ask for a meaningful
+design modification, then expose a worked solution with an honest self-check
+rubric. Preview is diagram rendering, not semantic grading or code execution.
+
+Compare the original and revised design under an explicit change request.
+Include added classes/indirection, registration or transition obligations,
+and conditions where the simpler design suffices. Inspection uses existing
+`diagram_focus` names and per-language code `focus` lines; check these mappings
+in all four languages. Selectable labels/lines need equivalent named buttons.
+Prediction answers stay behind a deliberate reveal in player/reader; print
+shows them. Verify mobile/fullscreen, review return to the same question,
+separate retry scoring, draft retention, search/marks, both themes, and print.
+
 Read [narration-authoring](../narration-authoring/SKILL.md) first for the common
 source format, compiler, player boundary, and speech workflow. Use `kind: pattern`;
 keep the narration readable and the renderer state in its separate JSON package.

@@ -1,0 +1,400 @@
+version: 1
+reviews:
+  intro:
+    - scene: intro
+      cue: roadmap
+      retry:
+        type: single
+        question: "A team wants to explain which running parts offer services and which parts need them. What does a UML component diagram emphasize?"
+        options:
+          - "Replaceable parts, their interfaces, and their connections"
+          - "Source folders, their filenames, and their import order"
+          - "Individual objects and the time order of one interaction"
+        correct_index: 0
+        explanation: "In this runtime view, components are the running units, interfaces describe offered and needed services, and connectors join the parts."
+        option_feedback:
+          1: "Source organization belongs to a code view. Its folders do not map one-to-one to running parts."
+          2: "Individual participants and message order belong to a sequence diagram of a scenario."
+  parts:
+    - scene: parts
+      cue: black_box
+      retry:
+        type: single
+        question: "AlertService is rewritten internally but preserves its offered services and introduces no new needs. Why can the surrounding UML components remain unchanged?"
+        options:
+          - "They automatically inherit the replacement's new implementation"
+          - "They interact through its services rather than its internal code"
+          - "Their connectors guarantee that every rewrite preserves behavior"
+        correct_index: 1
+        explanation: "Treating a component as a black box makes its public service contracts the boundary other parts rely on."
+        option_feedback:
+          0: "Components do not inherit each other's implementation through connectors."
+          2: "The drawing does not prove behavioral compatibility. The rewrite must still preserve the contracts the surrounding parts use."
+  runtime_view:
+    - scene: runtime_view
+      cue: answer
+      retry:
+        type: single
+        question: "SeatPoller uses a parsing library that executes inside its process. In the lesson's UML runtime component view, how should that library be treated?"
+        options:
+          - "As a separate running component because it has a source folder"
+          - "As an outside service because SeatPoller calls its functions"
+          - "As internal code, rather than a separate running component"
+        correct_index: 2
+        explanation: "This runtime view models separately running parts. The library is code executing within SeatPoller, not another running part here."
+        option_feedback:
+          0: "A source folder is a code-organization unit; that alone does not make it a runtime unit."
+          1: "An in-process function call does not turn a library into an outside service."
+  interfaces:
+    - scene: interfaces
+      cue: provided
+      retry:
+        type: single
+        question: "A UML component has a ball labeled SeatCounts on Registrar. What does that mark mean?"
+        options:
+          - "Registrar offers the SeatCounts service to clients"
+          - "Registrar requires SeatCounts from another component"
+          - "SeatCounts is a separately running component"
+        correct_index: 0
+        explanation: "The ball is a provided interface: its component supplies the named service."
+        option_feedback:
+          1: "A required interface is drawn as a socket. The ball goes on the supplier."
+          2: "The interface describes a contract offered by Registrar; it is not a separate running box."
+  assembly:
+    - scene: assembly
+      cue: snap
+      retry:
+        type: single
+        question: "In a UML component diagram, StudentWeb's Watches socket connects to AlertService's Watches ball. What has been established?"
+        options:
+          - "StudentWeb provides Watches for AlertService to use"
+          - "AlertService supplies the Watches service StudentWeb needs"
+          - "Both components share the same internal Watches code"
+        correct_index: 1
+        explanation: "An assembly joins a required interface to a matching provider, satisfying the client's need."
+        option_feedback:
+          0: "This reverses the notation: StudentWeb has the socket, and AlertService has the providing ball."
+          2: "Matching contracts permit interaction without requiring shared implementation code."
+  substitution:
+    - scene: substitution
+      cue: swap
+      retry:
+        type: single
+        question: "A FakeRegistrar honors SeatCounts for SeatPoller tests. What must change to substitute it for Registrar in the UML component wiring?"
+        options:
+          - "SeatPoller must add the fake's internal operations"
+          - "SeatPoller's required interface must become a provided one"
+          - "The SeatCounts socket must connect to the new provider"
+        correct_index: 2
+        explanation: "A compatible provider fills the existing required interface. The client can remain unchanged while the assembly is rewired."
+        option_feedback:
+          0: "The point of the interface is that clients do not depend on the provider's internals."
+          1: "SeatPoller still needs counts; switching providers does not turn it into the supplier."
+  ports:
+    - scene: ports
+      cue: own_rules
+      retry:
+        type: single
+        question: "In a UML component diagram, AlertService uses events and store ports for different conversations. Why keep those ports separate?"
+        options:
+          - "Each interaction point can carry its own interfaces and rules"
+          - "Each port must be deployed on a different physical machine"
+          - "Each port exposes the internal classes behind its connectors"
+        correct_index: 0
+        explanation: "A port identifies a boundary interaction point, helping partners use the appropriate interface and communication rules."
+        option_feedback:
+          1: "A component diagram does not assign ports to physical machines; machine placement is a deployment concern."
+          2: "Ports preserve the boundary. Partners see the interaction point rather than internal classes."
+  connector_types:
+    - scene: connector_types
+      cue: answer
+      retry:
+        type: single
+        question: "In the alert app, a durable queue buffers seat news while an HTTPS request needs a live AlertService. During its restart, what differs?"
+        options:
+          - "Both interactions finish immediately because connectors hide failures"
+          - "News can wait in the queue while the live request fails"
+          - "The live request waits in the queue while seat news is discarded"
+        correct_index: 1
+        explanation: "These connector kinds have different behavior during interruption: the modeled queue retains news, while the synchronous request needs both endpoints available."
+        option_feedback:
+          0: "Drawing a connector does not make the receiver available. The interaction kind determines how failure is experienced."
+          2: "This assigns the queue's buffering behavior to the request connection, which has no such queue in this design."
+  dependencies:
+    - scene: dependencies
+      cue: missing
+      retry:
+        type: single
+        question: "An overview UML component diagram draws SeatPoller depending on Registrar, with no dependency from Registrar back to the app. What does that view claim?"
+        options:
+          - "Registrar must call SeatPoller before answering its requests"
+          - "The two components have identical dependency directions"
+          - "SeatPoller needs Registrar, while Registrar does not need the app"
+        correct_index: 2
+        explanation: "A dependency runs from the client that needs another part toward that supplier. Missing dependencies in this overview claim independence in that direction."
+        option_feedback:
+          0: "Serving a client does not require the provider to depend on that client's application."
+          1: "Dependency is directed; a relationship in one direction does not establish its reverse."
+  trace:
+    - scene: trace
+      cue: announce
+      retry:
+        type: single
+        question: "SeatPoller queues seat news for AlertService, which requires TextMessages from TextGateway. Which route delivers a notification in the UML component model?"
+        options:
+          - "SeatPoller to AlertService by queue, then to TextGateway through TextMessages"
+          - "SeatPoller to TextGateway by queue, then to AlertService through TextMessages"
+          - "TextGateway to SeatPoller through TextMessages, then to AlertService by queue"
+        correct_index: 0
+        explanation: "Follow the modeled interaction path: the queued event reaches AlertService, which requests the text service from its provider."
+        option_feedback:
+          1: "The queued event's consumer is AlertService, not TextGateway; AlertService decides which notification to send."
+          2: "TextGateway supplies the text service when AlertService requests it. It is not the source of seat news."
+  when_to_use:
+    - scene: when_to_use
+      cue: machines
+      retry:
+        type: single
+        question: "A team moves SeatPoller and AlertService from one cloud machine onto two. Which UML view should record that placement change?"
+        options:
+          - "The class diagram showing their operations"
+          - "The deployment diagram showing their hosts"
+          - "The sequence diagram showing one seat alert"
+        correct_index: 1
+        explanation: "Deployment diagrams show which machines run which software parts. The runtime component relationships may remain the same after a move."
+        option_feedback:
+          0: "Class structure does not specify the machines that host running software."
+          2: "A scenario's message order does not establish the components' host placement."
+  mistakes:
+    - scene: mistakes
+      cue: sketch_errors
+      retry:
+        type: single
+        question: "A UML runtime component sketch draws SharedFormatting beside StudentWeb because both have repository folders. What needs correction?"
+        options:
+          - "StudentWeb must be omitted because many browsers run it"
+          - "Every source folder needs its own offered service interface"
+          - "SharedFormatting must be treated as code inside its running users"
+        correct_index: 2
+        explanation: "In this view, shared library code belongs inside the components that execute it. Repository boundaries do not establish running units."
+        option_feedback:
+          0: "Multiple running copies do not stop StudentWeb from appearing as a component in this architectural view."
+          1: "A folder does not become a running service merely by adding interface notation to it."
+  transfer:
+    - scene: transfer
+      cue: answer
+      retry:
+        type: single
+        question: "The alert app adds EmailGateway so students can choose email or texts and save that choice. Which changes fit this extension of the UML component model?"
+        options:
+          - "Add EmailGateway; update AlertService and the choice/storage paths"
+          - "Add EmailGateway; rewrite SeatPoller and replace Registrar"
+          - "Add EmailGateway; keep every existing component unchanged"
+        correct_index: 0
+        explanation: "AlertService needs the new delivery contract, StudentWeb needs the choice, and AlertDB must retain it. The seat-discovery path can keep its existing behavior."
+        option_feedback:
+          1: "Discovering open seats does not depend on the chosen notification channel, so this change does not require replacing that path."
+          2: "A new provider alone does not make AlertService request email or let students select and save the new choice."
+  summary:
+    - scene: runtime_view
+      cue: answer
+      retry:
+        type: single
+        question: "A library app has a running CatalogService, a sorting function inside it, and a shared source folder. Which belongs as a component in this runtime view?"
+        options:
+          - "The sorting function used by CatalogService"
+          - "CatalogService serving requests at runtime"
+          - "The shared folder used to build the service"
+        correct_index: 1
+        explanation: "CatalogService is a running unit. Functions and source folders describe its code organization rather than separate running parts here."
+        option_feedback:
+          0: "Calling a function within a component does not make that function a separate runtime component."
+          2: "Shared source can contribute code to several runtime components without becoming one itself."
+    - scene: interfaces
+      cue: both
+      retry:
+        type: single
+        question: "A UML LibraryService asks an outside LoanProvider to authorize a loan through Loans. Where do the provided and required marks go?"
+        options:
+          - "Ball on LibraryService, socket on LoanProvider"
+          - "Balls on both LibraryService and LoanProvider"
+          - "Socket on LibraryService, ball on LoanProvider"
+        correct_index: 2
+        explanation: "The client needs the Loans service, so it has the socket. The provider answers those requests, so it has the ball."
+        option_feedback:
+          0: "This makes the caller the provider and reverses which component needs the service."
+          1: "Two provided interfaces do not show which part needs the other or satisfy a required interface."
+    - scene: substitution
+      cue: swap
+      retry:
+        type: single
+        question: "In a UML component model, a new LoanProvider preserves the Loans contract required by LibraryService. What can LibraryService keep unchanged?"
+        options:
+          - "LibraryService's internals and its required Loans interface"
+          - "The identity of the provider connected to LibraryService"
+          - "The provider's internal implementation and source code"
+        correct_index: 0
+        explanation: "Compatible replacement allows the client and its required contract to stay stable while the supplying component changes."
+        option_feedback:
+          1: "The provider identity is what changes during the replacement, even though the interface contract remains the same."
+          2: "A provider can implement a preserved contract differently. Shared internals are not required for substitution."
+    - scene: connector_types
+      cue: answer
+      retry:
+        type: single
+        question: "A UML model connects scanners to CatalogService through a queue that retains messages. CatalogService is briefly unavailable. What does this design allow?"
+        options:
+          - "Queued scans are handled immediately by the unavailable service"
+          - "Scans remain queued until CatalogService can consume them"
+          - "Each scanner must directly replace the unavailable service"
+        correct_index: 1
+        explanation: "The modeled queue separates sending from consumption, retaining the scans while the consumer is unavailable."
+        option_feedback:
+          0: "Buffering protects the messages but does not execute the missing consumer's work."
+          2: "A buffered connection does not transfer the consumer's responsibility to its senders."
+    - scene: dependencies
+      cue: missing
+      retry:
+        type: single
+        question: "A UML dependency overview shows App to Service and Service to Database, but no App-to-Database arrow. What does that absence claim?"
+        options:
+          - "The app can never be affected by a database failure"
+          - "The database is not part of the running system"
+          - "The app has no direct dependency on the database"
+        correct_index: 2
+        explanation: "The omitted arrow rules out a direct dependency in this view. Indirect effects through Service still need analysis."
+        option_feedback:
+          0: "A dependency through Service may still expose the app to some failure effects. Direct independence is not total isolation."
+          1: "The diagram already includes Database. Absence of one relationship does not remove the component."
+    - scene: when_to_use
+      cue: questions
+      retry:
+        type: single
+        question: "The library team wants to show the order of requests and replies when a reader borrows a book. Which UML diagram best answers that question?"
+        options:
+          - "A sequence diagram for that borrowing scenario"
+          - "A component diagram of all running services"
+          - "A deployment diagram of service host machines"
+        correct_index: 0
+        explanation: "A sequence diagram shows participants exchanging messages in time order within one scenario."
+        option_feedback:
+          1: "Components show available parts and connections; that structural view does not establish the scenario's message order."
+          2: "Deployment describes where parts run, rather than the order of their requests and replies."
+exercises:
+  - id: replace-text-provider
+    title: Replace the text provider for testing
+    scene: substitution
+    cue: swap
+    prompt: >-
+      Tests should send alerts through FakeTextGateway, which honors TextMessages
+      and records messages for inspection. Replace TextGateway in this focused
+      component view while keeping AlertService's required contract unchanged.
+      Draw only the provider selected for the test configuration. Before editing,
+      explain which boundary lets AlertService stay unchanged. Preview renders
+      the wiring; it does not send a message or verify a service contract.
+    type: component
+    starter: |
+      @startuml
+      component AlertService {
+        require "TextMessages" as as_texts
+      }
+      component TextGateway {
+        provide "TextMessages" as tg_texts
+      }
+      tg_texts --> as_texts
+      @enduml
+    solution: |
+      @startuml
+      component AlertService {
+        require "TextMessages" as as_texts
+      }
+      component FakeTextGateway {
+        provide "TextMessages" as ftg_texts
+      }
+      ftg_texts --> as_texts
+      @enduml
+    checks:
+      - "AlertService still needs TextMessages and has not acquired the provider's internal behavior."
+      - "FakeTextGateway supplies the matching service, and only that provider is assembled in this test configuration."
+      - "Explain why a matching name alone is insufficient unless the fake also honors the contract's expected behavior."
+  - id: email-option
+    title: Add email delivery as another option
+    scene: transfer
+    cue: answer
+    prompt: >-
+      Students may now select email instead of text alerts. An outside EmailGateway
+      supplies an EmailMessages service, and AlertService must use it when email
+      is selected. Add the necessary interfaces and assembly while preserving
+      text delivery. This view shows only delivery components; the student's
+      choice controls and stored preference are outside its scope. Explain why
+      the existing TextMessages connection still belongs in the design.
+    type: component
+    starter: |
+      @startuml
+      component AlertService {
+        require "TextMessages" as as_texts
+      }
+      component TextGateway {
+        provide "TextMessages" as tg_texts
+      }
+      component EmailGateway
+      tg_texts --> as_texts
+      @enduml
+    solution: |
+      @startuml
+      component AlertService {
+        require "TextMessages" as as_texts
+        require "EmailMessages" as as_email
+      }
+      component TextGateway {
+        provide "TextMessages" as tg_texts
+      }
+      component EmailGateway {
+        provide "EmailMessages" as eg_email
+      }
+      tg_texts --> as_texts
+      eg_email --> as_email
+      @enduml
+    checks:
+      - "The new contract identifies AlertService as the client and EmailGateway as the supplier."
+      - "EmailMessages connects matching required and provided interfaces rather than appearing as a separate running component."
+      - "TextMessages remains available for students who still select texts; the diagram does not claim both channels are used for every alert."
+comparisons:
+  - id: provider-substitution
+    title: A test provider behind the same contract
+    question: >-
+      Tests need deterministic seat counts without changing SeatPoller. Compare
+      the real registrar assembly with the fake. What can remain stable, what
+      must be rewired, and what does this test arrangement still fail to establish
+      about the real registrar?
+    before:
+      scene: assembly
+      cue: requests_travel
+      label: Registrar supplies live SeatCounts
+    after:
+      scene: substitution
+      cue: swap
+      label: FakeRegistrar supplies controlled SeatCounts
+    consequences:
+      - "SeatPoller keeps its required SeatCounts contract; changing its provider changes the assembly rather than its counting logic."
+      - "The fake makes chosen counts repeatable, but must behave consistently with the contract for those tests to be useful."
+      - "Passing against a fake does not establish the real provider's availability or integration behavior; those require separate checks."
+  - id: extra-notification-channel
+    title: Add a channel without changing seat discovery
+    question: >-
+      Students request push notifications alongside texts. Compare the original
+      alert path with the focused push extension. Which components must support
+      the new choice, which contracts remain stable, and what new dependency does
+      the feature introduce?
+    before:
+      scene: trace
+      cue: whole_story
+      label: Existing seat alerts with text delivery
+    after:
+      scene: transfer
+      cue: answer
+      label: Notification partners after adding push
+    consequences:
+      - "AlertService gains a PushMessages requirement and chooses a delivery channel; PushGateway supplies the new service."
+      - "StudentWeb must offer the choice and AlertDB must retain it. The drawing's new assembly alone does not implement those changes."
+      - "SeatPoller and Registrar keep their seat-discovery responsibilities. Push delivery adds a provider whose failure can affect that path, while the text contract remains."

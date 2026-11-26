@@ -28,6 +28,11 @@
     consequence: 'Reading your comment: what goes wrong (2 of 3)…',
     fix: 'Reading your comment: the fix (3 of 3)…',
   };
+  var COACHING_PROBLEMS = {
+    unusable: 'The assistant’s follow-up was not usable.',
+    incomplete: 'The follow-up feedback stopped before it finished.',
+    unavailable: 'The follow-up feedback is unavailable.',
+  };
   var DEFAULT_TASK = 'Find the flaw. Name the element of the design that is wrong, trace what goes wrong in the Given scenario, and propose a fix that removes the cause.';
   var SELF_CHECK = [
     { criterion: 'flaw', label: 'named the flaw and the element where it sits' },
@@ -187,7 +192,6 @@
   Review.prototype.buildLesson = function () {
     var section = el('section', 'tutorial-design-review__lesson');
     section.hidden = true;
-    section.setAttribute('aria-labelledby', this.prefix + '-lesson');
     return section;
   };
 
@@ -200,6 +204,7 @@
       heading.id = this.prefix + '-lesson';
       heading.tabIndex = -1;
       section.append(heading);
+      section.setAttribute('aria-labelledby', heading.id);
       var definition = template(this.host, 'lesson:definition');
       if (definition) section.append(definition);
       var ask = template(this.host, 'lesson:ask');
@@ -327,7 +332,7 @@
     if (!state.usable) {
       return { enabled: false, note: 'Checking needs the local model. Download it once in the Review assistant below, or compare with the expert review instead.' };
     }
-    return { enabled: true, note: 'Runs on this device. Checks take about 10 to 60 seconds.' };
+    return { enabled: true, note: 'Runs on this device. Checking and follow-up feedback can take about a minute.' };
   };
 
   Review.prototype.refresh = function () {
@@ -360,6 +365,7 @@
   };
 
   Review.prototype.onInput = function () {
+    if (this.checking && this.runtime.llmAddon) this.runtime.llmAddon.cancel();
     this.refresh();
     var self = this;
     clearTimeout(this.saveTimer);
@@ -396,9 +402,15 @@
       var result = await addon.reviewDesign({
         spec: this.spec,
         review: review,
+        hints: Core.coaching(this.spec, {}, this.record.checks.length + 1),
         onCriterion: function (criterion) { if (!self.destroyed) self.setStatus(CRITERION_PROGRESS[criterion]); },
+        onCoaching: function () { if (!self.destroyed) self.setStatus('Preparing a question for your next revision…'); },
       });
       if (this.destroyed || !result) return;
+      if (this.textarea.value !== review) {
+        this.setStatus('Your comment changed during the check. Check again for feedback on the revision.');
+        return;
+      }
       this.record = Core.addCheck(this.record, result);
       this.lastCheck = { result: result, review: review };
       this.renderFeedback(result, review);
@@ -437,10 +449,22 @@
     this.coachingList.replaceChildren();
     var attempt = this.record.checks.length;
     var lines = Core.coaching(this.spec, result.verdicts, attempt);
+    if (result.coaching) {
+      const coaching = result.coaching;
+      const item = el('li');
+      item.append(el('strong', null, coaching.status === 'generated' ? 'Feedback for your next revision: ' : 'Course hints: '),
+        document.createTextNode(coaching.status === 'generated' ? coaching.text :
+          (COACHING_PROBLEMS[coaching.reason] || COACHING_PROBLEMS.unavailable) +
+          ' Use the hints below, revise your comment, and check again.'));
+      this.coachingList.append(item);
+      // The small model can ask a less precise question than the course hint.
+      // Keep that authored guidance available even after a usable generation.
+      if (!lines.length) lines.push(coaching.hint);
+    }
     var self = this;
     lines.forEach(function (line) {
       var item = el('li');
-      item.append(el('strong', null, CRITERION_NAMES[line.criterion] + ': '), document.createTextNode(line.text));
+      item.append(el('strong', null, (CRITERION_NAMES[line.criterion] || 'Diagram evidence') + ': '), document.createTextNode(line.text));
       self.coachingList.append(item);
     });
     Core.wrongClaimNotes(this.spec, review, result.verdicts).forEach(function (note) {
@@ -453,7 +477,7 @@
         result.unread.map(function (name) { return CRITERION_NAMES[name].toLowerCase(); }).join(' and ') +
         ' could not be read, so it counts as not found. Check again, or compare with the expert review.'));
     }
-    if (!lines.length) {
+    if (!lines.length && !result.coaching) {
       this.coachingList.append(el('li', null, 'Your comment names the flaw, traces what goes wrong, and fixes the cause. Compare it with the expert review to check the details.'));
     }
     this.quoteList.replaceChildren();

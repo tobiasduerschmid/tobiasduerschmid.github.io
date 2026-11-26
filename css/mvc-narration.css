@@ -14,6 +14,10 @@
     --mvc-games: #ffc75a;
     --mvc-study: #6ee79a;
   }
+  /* The charts draw this dark palette themselves, so the page's dark-mode
+     inversion of article SVGs (html.dark-mode .post-content svg) must not
+     flip them back. */
+  html.dark-mode:not(.print-light-mode) .mvc-animation .mvc-dashboard svg { filter: none; }
 }
 .mvc-animation .mvc-fill--social { fill: var(--mvc-social); background-color: var(--mvc-social); }
 .mvc-animation .mvc-fill--video { fill: var(--mvc-video); background-color: var(--mvc-video); }

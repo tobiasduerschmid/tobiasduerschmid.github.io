@@ -1,0 +1,445 @@
+# Study activities use existing teaching cues; they do not alter narrated speech.
+version: 1
+reviews:
+  ui:
+  - scene: ui
+    cue: cue-1
+    retry:
+      type: single
+      question: In the Observer editor, which value should remain part of the document when the preview
+        layout changes?
+      options:
+      - The preview pane width
+      - The text being edited
+      - The counter display style
+      correct_index: 1
+      explanation: The document owns the edited text. Each view owns the presentation it builds from that
+        text.
+      option_feedback:
+        0: Pane width is a presentation choice; changing it need not change the document.
+        2: The counter owns its display style, while the document supplies the text.
+  context:
+  - scene: context
+    cue: cue-2
+    retry:
+      type: single
+      question: Which requirement is a strong reason to use the Observer pattern for an editor?
+      options:
+      - Let the user choose a sorting algorithm
+      - Let editing behavior follow the current mode
+      - Let independent panels join and leave while editing
+      correct_index: 2
+      explanation: Observer supports independently changing dependents whose registrations can change
+        during use.
+      option_feedback:
+        0: Choosing among algorithms is the variation addressed by Strategy.
+        1: Behavior that changes with the object's current state is the variation addressed by State.
+  conditions:
+  - scene: conditions
+    cue: cue-5
+    retry:
+      type: single
+      question: A document class must change whenever a counter changes its display format. Which Observer
+        problem does this reveal?
+      options:
+      - The domain class owns a concrete view's rule
+      - The document has too many text values
+      - The views use different display formats
+      correct_index: 0
+      explanation: Knowing a concrete view's presentation rule couples the document to interface changes.
+      option_feedback:
+        1: The number of stored values does not explain why a display change edits the document.
+        2: Different display formats are useful; placing their rules in the document causes the coupling.
+  roles:
+  - scene: roles
+    cue: cue-1
+    retry:
+      type: single
+      question: In the Observer pattern, which role removes a closed panel from the notification collection?
+      options:
+      - The Observer interface
+      - The Subject
+      - Another Concrete Observer
+      correct_index: 1
+      explanation: The Subject owns registrations. Client code can ask it to detach the panel when that
+        panel closes.
+      option_feedback:
+        0: The interface declares the notification operation; it does not own the registration collection.
+        2: Concrete Observers own their reactions and need not track one another.
+  contract:
+  - scene: contract
+    cue: cue-2
+    retry:
+      type: single
+      question: An Observer receives a change notification with no text, then asks the document for its
+        text. Which variant is this?
+      options:
+      - Push, because the Subject starts the notification
+      - Push, because update runs synchronously
+      - Pull, because the Observer queries the state
+      correct_index: 2
+      explanation: Pull describes an Observer obtaining state from the Subject after notification. Push
+        sends the state with the notification.
+      option_feedback:
+        0: Both variants can start with a Subject notification. The distinction is how the Observer gets
+          the changed data.
+        1: Synchronous scheduling does not determine whether notification pushes data or prompts a query.
+  subject:
+  - scene: subject
+    cue: cue-3
+    retry:
+      type: single
+      question: In the Observer pattern, what must the Subject know to notify a newly attached panel?
+      options:
+      - That it supports the update contract
+      - Which concrete panel class it belongs to
+      - How it formats the changed text
+      correct_index: 0
+      explanation: The same loop calls update on each registered Observer. Each object supplies its own
+        implementation.
+      option_feedback:
+        1: Testing the panel class would restore the concrete dependencies the pattern removes.
+        2: Formatting belongs to the concrete Observer, not to the notification loop.
+  document:
+  - scene: document
+    cue: cue-1
+    retry:
+      type: single
+      question: An Observer may read the Subject during update. Which order keeps its argument consistent
+        with the stored state?
+      options:
+      - Notify first, then store the changed value
+      - Store the changed value, then notify
+      - Let the first Observer store the changed value
+      correct_index: 1
+      explanation: Complete the state change before notification so an Observer that queries the Subject
+        sees the new state.
+      option_feedback:
+        0: The callback could receive the new value while a query still returns the old one.
+        2: The Subject owns its state. An Observer's reaction should not be required to finish the Subject's
+          assignment.
+  views:
+  - scene: views
+    cue: cue-3
+    retry:
+      type: single
+      question: In an Observer editor, a counter must show a special message for empty text. Where should
+        that condition live?
+      options:
+      - In the Document state assignment
+      - In every registered Observer
+      - In the counter's update operation
+      correct_index: 2
+      explanation: The counter owns its display rule. Useful conditions remain in the object responsible
+        for the behavior.
+      option_feedback:
+        0: Putting a counter rule in Document makes the domain class depend on that view again.
+        1: Other Observers do not need the counter's special display behavior.
+  trace:
+  - scene: trace
+    cue: cue-4
+    retry:
+      type: single
+      question: In the Observer editor, Preview and CharacterCount both show Hi and 2. CharacterCount
+        is detached, then the text becomes Hello. What results?
+      options:
+      - Preview shows Hello; CharacterCount stays 2
+      - Preview stays Hi; CharacterCount stays 2
+      - Preview shows Hello; CharacterCount becomes 5
+      correct_index: 0
+      explanation: Only the still-registered Preview is notified. Detachment leaves the counter's existing
+        stored display unchanged.
+      option_feedback:
+        1: Detaching the counter does not remove Preview from the registration collection.
+        2: An object must remain registered to receive later notifications; implementing Observer is not
+          enough.
+  consequences:
+  - scene: consequences
+    cue: cue-2
+    retry:
+      type: single
+      question: In a synchronous Observer loop, an early Observer takes a long time to return. What happens
+        to later Observers?
+      options:
+      - They update concurrently on new threads
+      - Their calls wait until that call returns
+      - They are skipped after a default timeout
+      correct_index: 1
+      explanation: The loop calls Observers one at a time, so slow work delays the caller and later notification
+        calls.
+      option_feedback:
+        0: Observer alone does not create threads. Concurrent delivery would require another scheduling
+          decision.
+        2: The teaching loop has no timeout policy. Such a policy must be designed explicitly.
+  applicability:
+  - scene: applicability
+    cue: cue-1
+    retry:
+      type: single
+      question: Which requirement gives the least reason to introduce the Observer pattern?
+      options:
+      - Several panels can close independently
+      - New views keep joining the same model
+      - One fixed helper always receives the result
+      correct_index: 2
+      explanation: A direct call may be clearer when there is one fixed collaborator and no useful variation
+        in registrations.
+      option_feedback:
+        0: Independent registration lifetimes are a reason Observer can pay off.
+        1: New independent views are the extension the Observer contract supports.
+  transfer:
+  - scene: transfer
+    cue: cue-2
+    retry:
+      type: single
+      question: In the Observer editor, attach only registers a panel. A panel opens after text exists
+        and no new edit follows. What ensures a current display?
+      options:
+      - Initialize it from the current document state
+      - Wait for attach to deliver a first update
+      - Put its formatting into the notification loop
+      correct_index: 0
+      explanation: Registration and initialization are separate actions here. Client code initializes
+        the new view from the existing state.
+      option_feedback:
+        1: This attach operation does not call update, so waiting for it leaves the panel uninitialized.
+        2: The panel must retain its own reaction; the loop still uses the common contract.
+  summary:
+  - scene: context
+    cue: cue-2
+    retry:
+      type: single
+      question: A music app has a track title, cover-art panel, and queue panel that can open independently.
+        Which need favors the Observer pattern?
+      options:
+      - Choosing a decoder for each audio format
+      - Updating independent views after one track change
+      - Changing playback behavior between paused and playing
+      correct_index: 1
+      explanation: Independent dependents react to one changing object, and their registrations can vary.
+      option_feedback:
+        0: Choosing an algorithm is the variation addressed by Strategy.
+        2: State-dependent behavior is the variation addressed by State.
+  - scene: conditions
+    cue: cue-5
+    retry:
+      type: single
+      question: A music app's Player directly formats the title, cover art, and queue panel after a track
+        change. Which problem motivates Observer?
+      options:
+      - Player must store more than one song
+      - Panels present the song in different ways
+      - Every panel rule becomes a Player dependency
+      correct_index: 2
+      explanation: Directly owning each view's reaction makes new panels and presentation changes require
+        edits to Player.
+      option_feedback:
+        0: The size of the song collection does not cause the presentation coupling.
+        1: Different views are useful. The problem is Player knowing how each one presents the song.
+  - scene: roles
+    cue: cue-1
+    retry:
+      type: single
+      question: In an Observer music app, Player owns the current track and notifies registered panels.
+        Which role does Player fill?
+      options:
+      - Subject
+      - Observer contract
+      - Concrete Observer
+      correct_index: 0
+      explanation: The Subject is the changing object that manages registered dependents and notifies
+        them.
+      option_feedback:
+        1: The Observer contract declares the operation that recipients implement.
+        2: A Concrete Observer reacts to the Player's changes, as a title or cover-art panel would.
+  - scene: trace
+    cue: cue-4
+    retry:
+      type: single
+      question: In the Observer music app, the cover-art panel is detached before the next track change.
+        Who is notified?
+      options:
+      - Every object that implements Observer
+      - The title and queue panels still registered
+      - Only panels created after the detachment
+      correct_index: 1
+      explanation: Notification follows the current registration collection; removing one Observer leaves
+        the others registered.
+      option_feedback:
+        0: Supporting the interface does not automatically put an object in the Subject's collection.
+        2: Creation time does not decide notification. Attachment and detachment do.
+  - scene: consequences
+    cue: cue-1
+    retry:
+      type: single
+      question: An Observer music app adds an optional lyrics panel. Which implementation preserves the
+        pattern's extension benefit?
+      options:
+      - Add lyrics branches to Player's notification loop
+      - Make the title panel update the lyrics panel
+      - Implement an Observer and register its instance
+      correct_index: 2
+      explanation: A new Concrete Observer supplies its reaction through the existing contract, leaving
+        the Subject's loop unchanged.
+      option_feedback:
+        0: A concrete lyrics branch reintroduces the Player's dependence on each view.
+        1: Each Observer should react independently; the title panel need not coordinate another panel.
+  - scene: applicability
+    cue: cue-1
+    retry:
+      type: single
+      question: Which version of a music app is least likely to benefit from Observer registration?
+      options:
+      - One permanent display with no optional panels
+      - Several panels that users open and close
+      - Independent views added in later releases
+      correct_index: 0
+      explanation: Without changing dependents, registration and indirect calls can add more complexity
+        than a direct call.
+      option_feedback:
+        1: Changing registration lifetimes are a strong reason to use Observer.
+        2: Independent view extension is one of the pattern's main benefits.
+exercises:
+- id: word-count-observer
+  title: Add an optional word-count panel
+  scene: transfer
+  cue: cue-2
+  prompt: The editor needs an optional WordCount panel. Extend this class diagram so the new panel can
+    react to text changes through the same notification mechanism. Keep the document independent of concrete
+    views. Preview your diagram, then explain how opening and closing this panel changes registrations.
+    Existing concrete-view members are omitted for space.
+  type: class
+  starter: |
+    @startuml
+    class Subject {
+      + attach(observer)
+      + detach(observer)
+      # notifyObservers(text)
+    }
+    interface Observer {
+      + update(text)
+    }
+    class Document {
+      + setText(text)
+    }
+    class Preview
+    class CharacterCount
+    class SaveButton
+    Document --|> Subject
+    Subject --> "0..*" Observer : notifies
+    Preview ..|> Observer
+    CharacterCount ..|> Observer
+    SaveButton ..|> Observer
+    @enduml
+  solution: |
+    @startuml
+    class Subject {
+      + attach(observer)
+      + detach(observer)
+      # notifyObservers(text)
+    }
+    interface Observer {
+      + update(text)
+    }
+    class Document {
+      + setText(text)
+    }
+    class Preview
+    class CharacterCount
+    class SaveButton
+    Document --|> Subject
+    Subject --> "0..*" Observer : notifies
+    Preview ..|> Observer
+    CharacterCount ..|> Observer
+    SaveButton ..|> Observer
+    class WordCount {
+      + update(text)
+    }
+    WordCount ..|> Observer
+    @enduml
+  checks:
+  - WordCount supplies the common update(text) operation and can be used wherever an Observer is expected.
+  - Document still changes text and uses Subject notification; it does not gain a reference or branch
+    for WordCount.
+  - Opening registers an instance and initializes it from current text; closing detaches that instance.
+  - Explain why a new panel adds a reaction without editing the notification loop. Rendering alone does
+    not establish this design property.
+- id: late-panel-lifetime
+  title: Open and close a panel after editing
+  scene: transfer
+  cue: cue-2
+  prompt: 'The document already contains "one two" when a WordCount panel opens. Complete the sequence
+    after attachment: make the panel current immediately, edit the text to "one two three", close the
+    panel, then change the document to "done". Show who invokes each update and when notifications stop.
+    Other existing views are omitted; this exercise only traces WordCount.'
+  type: sequence
+  starter: |
+    @startuml
+    participant client: Main
+    participant document: Document
+    participant words: WordCount
+    note right of document: text is already "one two"
+    client -> document: attach(words)
+    @enduml
+  solution: |
+    @startuml
+    participant client: Main
+    participant document: Document
+    participant words: WordCount
+    note right of document: text is already "one two"
+    client -> document: attach(words)
+    client -> words: update(document.text)
+    client -> document: setText("one two three")
+    activate document
+    document -> words: update("one two three")
+    deactivate document
+    client -> document: detach(words)
+    client -> document: setText("done")
+    @enduml
+  checks:
+  - The client explicitly initializes the newly attached panel; attachment alone is not treated as an
+    update.
+  - The open panel receives the later edit from Document through the inherited notification mechanism.
+  - Detachment precedes the final edit, and no update to WordCount follows that edit.
+  - Explain that detachment stops future calls without erasing the panel object's previous display state.
+comparisons:
+- id: new-dependent
+  title: 'A new panel: concrete checks or registration?'
+  question: A word-count panel must open and close independently. Which design makes that addition local,
+    and what new lifecycle responsibility comes with it?
+  before:
+    scene: conditions
+    cue: cue-5
+    label: Document knows concrete widgets
+  after:
+    scene: subject
+    cue: cue-3
+    label: Subject loops over registered Observers
+  consequences:
+  - The first design needs another concrete widget rule in Document. The second adds a Concrete Observer
+    and registration code while retaining the same loop.
+  - The benefit requires a stable update contract. Changing its payload can still affect every Observer.
+  - Client code must manage attachment, initialization, and detachment. Indirect calls also make the cause
+    of a redraw harder to trace.
+  - For one fixed collaborator with no useful registration changes, a direct call may remain clearer.
+- id: reaction-owner
+  title: 'A display rule: document or view?'
+  question: The Save button should change its empty-text behavior while the preview and counter keep their
+    rules. In which design can that change stay with the button, and what does that tell you about conditions?
+  before:
+    scene: conditions
+    cue: cue-3
+    label: Document decides whether Save is enabled
+  after:
+    scene: views
+    cue: cue-3
+    label: SaveButton owns its condition
+  consequences:
+  - A rule kept in SaveButton can change without editing Document or other Observers. In the first design,
+    the same interface change edits the domain class.
+  - Observer moves responsibility; useful if statements remain inside a concrete reaction. Removing every
+    conditional is not the objective.
+  - The synchronous notification loop still pays for each reaction's work, and registration lifetimes
+    still need management.
+  - If the document serves only one permanent display, separate registration machinery may not earn its
+    cost.

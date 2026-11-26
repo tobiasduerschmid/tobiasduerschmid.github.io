@@ -229,6 +229,14 @@
     let currentScene = -1;
     let currentCue = -1;
     let pendingSeek = null;
+    const prediction = window.NarrationPrediction && window.NarrationPrediction.create(root, {
+      storyboard, onReveal: revealPrediction,
+      onToggle(enabled) { if (enabled) renderPlayback(position); },
+    });
+    const predictionBoundaries = timing.scenes.flatMap((scene, sceneIndex) => scene.cues.flatMap((cue, cueIndex) => (
+      storyboard.scenes[sceneIndex].cues[cueIndex].prediction
+        ? [{ sceneIndex, cueIndex, end: cue.end, time: Math.max(cue.start, cue.end - SECTION_END_LEAD) }] : []
+    )));
 
     if (motion) motion.checked = !reducedMotion.matches;
 
@@ -244,6 +252,7 @@
       }
       currentScene = index;
       currentCue = cueIndex;
+      if (prediction) prediction.update({ sceneIndex: index, cueIndex });
       const progress = Math.max(0, Math.min(1, (position - cueTiming.start) / (cueTiming.end - cueTiming.start)));
       // Renderers that pose artwork on the narration clock also get its time.
       options.render({ element: scenes[index], scene: storyboard.scenes[index],
@@ -261,15 +270,29 @@
 
     function renderPlayback(time) {
       const boundary = currentScene >= 0 ? timing.scenes[currentScene].end : Infinity;
+      const checkAt = options.checkScenes.includes(currentScene) ? boundary - SECTION_END_LEAD : Infinity;
+      // Consider crossed cues, too: a delayed animation frame must never show
+      // an answer before stopping at the prediction that precedes it.
+      const hold = prediction && predictionBoundaries.find(cue => cue.end > position + TIME_EPSILON
+        && cue.time <= Math.min(time, checkAt) + TIME_EPSILON && prediction.shouldHold(cue));
+      if (hold) {
+        const resumePlayback = !audio.paused;
+        audio.pause();
+        audio.currentTime = hold.time;
+        render(hold.time);
+        prediction.hold({ ...hold, resumePlayback });
+        return true;
+      }
       if (options.checkScenes.includes(currentScene) && time + TIME_EPSILON >= boundary - SECTION_END_LEAD) {
         audio.pause();
         // Keep the completed section on screen while its checkpoint is open.
         audio.currentTime = Math.max(0, boundary - 0.002);
         render(audio.currentTime);
         options.onSectionEnd(currentScene);
-        return;
+        return true;
       }
       render(time);
+      return false;
     }
 
     function tick() {
@@ -283,6 +306,7 @@
     }
 
     function seekTo(time) {
+      if (prediction) prediction.reset();
       if (options.onSeek) options.onSeek();
       const next = Math.max(0, Math.min(timing.duration, time));
       render(next);
@@ -303,6 +327,7 @@
 
     async function play() {
       if (options.canPlay && !options.canPlay()) return;
+      if (prediction && prediction.isHolding()) { prediction.focusReveal(); return; }
       if (!audio.paused) return;
       if (position >= timing.duration - 0.1) seekTo(0);
       try {
@@ -311,6 +336,20 @@
       } catch (error) {
         status.textContent = 'Narration could not play. You can still select scenes, read the transcript, or download the audio.';
       }
+    }
+
+    function revealPrediction({ sceneIndex, cueIndex, resumePlayback = false }) {
+      const scene = storyboard.scenes[sceneIndex];
+      if (cueIndex + 1 < scene.cues.length) {
+        seekTo(timing.scenes[sceneIndex].cues[cueIndex + 1].start);
+      } else if (options.checkScenes.includes(sceneIndex) || sceneIndex === scenes.length - 1) {
+        options.onSectionEnd(sceneIndex, resumePlayback);
+        return;
+      } else selectScene(sceneIndex + 1);
+      const focusTarget = fullscreen.isFullscreen() ? fullscreenTargetOf(root, options) : playButton;
+      focusTarget.focus({ preventScroll: true });
+      if (resumePlayback) void play();
+      else status.textContent = 'Explanation shown. Narration paused.';
     }
 
     // Volume and mute belong to the control bar (js/narration-player-controls.js).
@@ -364,6 +403,7 @@
     audio.addEventListener('ended', () => {
       stopFrames();
       updatePlayButton();
+      if (renderPlayback(timing.duration)) return;
       render(timing.duration);
       status.textContent = 'Narration complete.';
       if (options.onSectionEnd) options.onSectionEnd(scenes.length - 1);
@@ -399,9 +439,16 @@
       currentScene: () => currentScene,
       currentCue: () => currentCue,
       pause: () => audio.pause(),
+      dismissPrediction: () => { if (prediction) prediction.dismiss(); },
+      holdPrediction() {
+        if (!prediction || !prediction.shouldHold({ sceneIndex: currentScene, cueIndex: currentCue })) return false;
+        audio.pause();
+        return prediction.hold({ sceneIndex: currentScene, cueIndex: currentCue });
+      },
       showCue(sceneIndex, cueIndex) {
         audio.pause();
         seekTo(timing.scenes[sceneIndex].cues[cueIndex].start);
+        if (prediction) prediction.hold({ sceneIndex, cueIndex });
       },
     };
     bindPlayerControls(root, api);
@@ -420,16 +467,35 @@
     const fullscreen = fullscreenControl(root, fullscreenTargetOf(root, options));
     let currentScene = -1;
     let currentCue = -1;
+    const prediction = window.NarrationPrediction && window.NarrationPrediction.create(root, {
+      storyboard, onReveal: revealPrediction,
+      onToggle(enabled) { if (enabled) renderCue(currentScene, currentCue); },
+    });
 
-    function showCue(index, cueIndex) {
-      if (options.onSeek) options.onSeek();
+    function renderCue(index, cueIndex) {
       presenter.show(index, cueIndex);
       currentScene = index;
       currentCue = cueIndex;
+      if (prediction) prediction.update({ sceneIndex: index, cueIndex });
       const scene = storyboard.scenes[index];
       // Without a clock, each cue shows its settled picture without motion.
       options.render({ element: presenter.scenes[index], scene, cue: scene.cues[cueIndex],
         sceneIndex: index, cueIndex, progress: 1, motion: false });
+      if (prediction) prediction.hold({ sceneIndex: index, cueIndex });
+    }
+
+    function showCue(index, cueIndex) {
+      if (prediction) prediction.reset();
+      if (options.onSeek) options.onSeek();
+      renderCue(index, cueIndex);
+    }
+
+    function revealPrediction({ sceneIndex, cueIndex }) {
+      const scene = storyboard.scenes[sceneIndex];
+      if (cueIndex + 1 < scene.cues.length) showCue(sceneIndex, cueIndex + 1);
+      else { options.onSectionEnd(sceneIndex, false); return; }
+      const nextStep = root.querySelector('[data-narration-action="next-step"]');
+      if (nextStep) nextStep.focus({ preventScroll: true });
     }
 
     function selectScene(index) {
@@ -444,10 +510,12 @@
     showCue(0, 0);
     const api = {
       showCue, selectScene,
-      refresh: () => showCue(currentScene, currentCue),
+      refresh: () => renderCue(currentScene, currentCue),
       isFullscreen: fullscreen.isFullscreen, exitFullscreen: fullscreen.exitFullscreen, toggleFullscreen: fullscreen.toggleFullscreen,
       currentScene: () => currentScene, currentCue: () => currentCue,
       pause() {},
+      dismissPrediction: () => { if (prediction) prediction.dismiss(); },
+      holdPrediction: () => prediction && prediction.hold({ sceneIndex: currentScene, cueIndex: currentCue }),
     };
     bindPlayerControls(root, api);
     return api;

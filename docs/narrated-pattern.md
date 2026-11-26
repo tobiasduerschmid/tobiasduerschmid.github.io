@@ -1,5 +1,10 @@
 # Narrated design-pattern lessons
 
+The shared [study tools](narration-study.md) add learner-controlled prediction
+pauses, editable diagram exercises, question-specific review and fresh retries,
+diagram/code inspection, design comparisons, and searchable review. Author these
+in `<topic>_study.yml`; keep speech and renderer state in their existing sources.
+
 Observer, State, Strategy, Model-View-Controller, and Composite share one player:
 language-selectable code, ArchUML class, state, sequence, and CRC diagrams,
 topic illustrations, and a knowledge check at the end of every section. A

@@ -7,9 +7,16 @@
   <section class="nja-transcript-scene" id="{{ include.topic }}-reading-{{ scene.id }}" aria-labelledby="{{ include.topic }}-reading-{{ scene.id }}-title">
     <h3 id="{{ include.topic }}-reading-{{ scene.id }}-title">{{ scene_number }}. {{ scene.label | escape }}</h3>
     <p class="nja-purpose"><strong>Our task:</strong> {{ scene.purpose | escape }}</p>
-    {% assign after_prediction = false %}
+    {% assign awaiting_prediction_answer = false %}
+    {% assign prediction_answer_open = false %}
     {% for cue in scene.cues %}
-    {% if after_prediction %}<details class="np-reading-answer"><summary>Reveal step {{ scene_number }}.{{ forloop.index }} and explanation</summary>{% endif %}
+    {% if cue.prediction or cue.pose == 'question' %}
+      {% if prediction_answer_open %}</details>{% assign prediction_answer_open = false %}{% endif %}
+    {% elsif awaiting_prediction_answer %}
+      <details class="np-reading-answer"><summary>Reveal step {{ scene_number }}.{{ forloop.index }} and explanation</summary>
+      {% assign prediction_answer_open = true %}
+      {% assign awaiting_prediction_answer = false %}
+    {% endif %}
     <section class="np-reading-step" data-reading-scene="{{ scene.id }}" data-reading-cue="{{ forloop.index0 }}" data-scene="{{ scene.id }}" aria-labelledby="{{ include.topic }}-reading-{{ scene.id }}-{{ forloop.index }}">
       <h4 id="{{ include.topic }}-reading-{{ scene.id }}-{{ forloop.index }}">{{ scene_number }}.{{ forloop.index }} — <span class="nja-step">{{ cue.step | escape }}</span></h4>
       <p>{{ cue.text | escape }}</p>
@@ -19,10 +26,11 @@
       <p class="np-reading-note"><strong>Notice:</strong> <span class="nja-note">{{ cue.note | escape }}</span></p>
       <p class="nja-description"><strong>Visual:</strong> {{ cue.visual | escape }}</p>
     </section>
-    {% if after_prediction %}</details>{% endif %}
-    {% if cue.pose == 'question' %}{% assign after_prediction = true %}{% endif %}
+    {% if cue.prediction or cue.pose == 'question' %}{% assign awaiting_prediction_answer = true %}{% endif %}
     {% endfor %}
+    {% if awaiting_prediction_answer %}<details class="np-reading-answer"><summary>Reveal section takeaway</summary>{% assign prediction_answer_open = true %}{% endif %}
     <p class="nja-takeaway">{{ scene.takeaway | escape }}</p>
+    {% if prediction_answer_open %}</details>{% endif %}
   </section>
   {% endfor %}
 </div>

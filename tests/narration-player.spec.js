@@ -74,7 +74,8 @@ test('a text-only lesson retains feedback on review and continues through its fi
   await expect(player.locator('audio')).toHaveCount(0);
   await expect(player.getByRole('button', { name: 'Play narration', exact: true })).toHaveCount(0);
   await finishSteps(player, scene);
-  await player.getByRole('button', { name: 'Knowledge check', exact: true }).click();
+  await expect(player.getByRole('button', { name: 'Knowledge check', exact: true })).toBeDisabled();
+  await player.getByRole('button', { name: 'Reveal explanation', exact: true }).click();
   const check = checkPanel(player);
   const wrongIndex = scene.checkpoint.options.findIndex((_, index) => index !== scene.checkpoint.correct_index);
   await check.getByRole('radio').filter({ hasText: scene.checkpoint.options[wrongIndex] }).click();
@@ -88,7 +89,8 @@ test('a text-only lesson retains feedback on review and continues through its fi
   await expect(check).toBeHidden();
   await expect(player.getByRole('region', { name: 'Narration', exact: true })).toHaveText(finalScene.cues[0].text);
   await finishSteps(player, finalScene);
-  await player.getByRole('button', { name: 'Finish review', exact: true }).click();
+  await expect(player.getByRole('button', { name: 'Finish review', exact: true })).toBeDisabled();
+  await player.getByRole('button', { name: 'Reveal explanation', exact: true }).click();
   await expect(player.getByRole('status').filter({ hasText: 'Lesson complete.' })).toBeVisible();
   await expect(player.getByRole('button', { name: 'Player settings', exact: true })).toBeFocused();
 });
@@ -97,7 +99,7 @@ test('an illustrated explainer can replay a wrong check without changing another
   const player = audioPlayer(page);
   const other = textPlayer(page);
   await finishSteps(other, investigation.story.scenes[0]);
-  await other.getByRole('button', { name: 'Knowledge check', exact: true }).click();
+  await other.getByRole('button', { name: 'Reveal explanation', exact: true }).click();
   await player.getByRole('button', { name: `Knowledge check: ${explainer.story.scenes[0].label}`, exact: true }).click();
   const check = checkPanel(player);
   await check.getByRole('radio').filter({ hasText: question.options[1] }).click();

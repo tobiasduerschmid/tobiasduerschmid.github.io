@@ -1,0 +1,39 @@
+<template data-narration-study-template>
+  <details class="narration-study" data-fullscreen-scroll>
+    <summary>Study tools</summary>
+    <div class="narration-study-body">
+      <h3>Explore this lesson</h3>
+      <p>Explore at your own pace. Drafts and review marks stay here until you leave or reload this page.</p>
+      <div class="narration-study-toolbar">
+        <label>Study activity<select data-study-activity>
+          <option value="review">Search and review</option>
+          <option value="inspect">Inspect diagram and code</option>
+          <option value="practice">Try this example</option>
+          <option value="compare">Compare designs</option>
+        </select></label>
+        <button type="button" data-study-close>Return to lesson</button>
+      </div>
+      <section data-study-panel="review" aria-label="Search and review">
+        <label>Search this lesson<input type="search" data-study-search placeholder="Search a concept, class, or explanation"></label>
+        <label class="narration-study-checkbox"><input type="checkbox" data-study-marked> Only steps marked for review</label>
+        <button type="button" data-study-mark-current>Mark current step for review</button>
+        <p data-study-search-status role="status" aria-live="polite"></p>
+        <ul class="narration-study-results" data-study-results></ul>
+      </section>
+      <section data-study-panel="inspect" aria-label="Inspect diagram and code" hidden>
+        <p>Select an explanation, a marked diagram label, or a source line to connect it with the lesson. The buttons below provide the same actions using a keyboard.</p>
+        <label>Inspect a scene<select data-study-scene></select></label>
+        <div class="narration-inspect-targets" role="group" aria-label="Explanations to inspect" data-study-targets></div>
+        <div class="narration-study-frame" data-study-inspection></div>
+      </section>
+      <section data-study-panel="practice" aria-label="Try this example" hidden>
+        <label>Choose an exercise<select data-study-exercise></select></label>
+        <div data-study-workspace></div>
+      </section>
+      <section data-study-panel="compare" aria-label="Compare designs" hidden>
+        <label>Choose a comparison<select data-study-comparison></select></label>
+        <div data-study-comparison-content></div>
+      </section>
+    </div>
+  </details>
+</template>
