@@ -315,16 +315,16 @@ steps:
             print(int(m.group("amount")))
             ```
           options:
-            - '`-091`'
+            - '`9`'
             - '`-09`'
             - '`-9`'
             - 'A `ValueError`'
           correct_index: 2
           option_feedback:
-            0: "int converts the captured text before addition; this is numeric addition, not string concatenation."
-            1: "The string is -09. But The integer conversion removes the 0."
+            0: "The optional `[+-]?` is inside the `amount` group, so the minus sign is captured along with the digits."
+            1: "The string is -09, but integer conversion drops the leading 0."
             3: "int accepts a sign followed by digits; the label is outside the amount group."
-          explanation: "group('amount') returns '-09'; integer converstion turns that into -9."
+          explanation: "group('amount') returns '-09'; integer conversion turns that into -9."
     solution:
       files:
         - path: read_scores.py

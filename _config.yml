@@ -4,7 +4,7 @@ plugins:
   - jekyll-scholar
 
 env: production
-asset_version: "20261126-example-artwork-layout"
+asset_version: "20261126-arch-styles-merge-master"
 
 # Feature flags
 personal_gym: true

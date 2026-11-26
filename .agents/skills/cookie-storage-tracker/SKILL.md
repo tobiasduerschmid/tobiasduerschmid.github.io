@@ -117,8 +117,9 @@ If you skipped any of these, go back and do them — the cookies page is a priva
 
 This is a snapshot to help you spot duplicates and pick the right category — **`cookies.html` is the source of truth**, not this list.
 
-**Cookies (20):**
+**Cookies:**
 - `dark-mode`, `show-highlights`, `highlights` (alias on blog index), `blog-show-citations`, `read-aloud`, `uml-accent-color`, `more-confetti`
+- `sebook-narration-preferences` — `{captions: boolean, speed: number, finalCheckOnly: boolean}` shared by all narration players and `/settings/`; defaults are captions on, 1x, and all knowledge checks. `finalCheckOnly` skips intermediate automatic/step-mode checks, retaining the last authored check and explicit review access. Written only on a choice, with a one-year max-age, `Path=/`, `SameSite=Lax`, and `Secure` on HTTPS. `/cookies/` provides individual, UI-category, and global deletion. Open players refresh on returning to the tab.
 - `se-bookmarks`, `se-bookmarks-active`
 - `se-gym-workout-fullscreen` — optional fullscreen for workout launches; off by default
 - `se-gym`, `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `analyze-performance`, `se-gym-show-difficulty`, `se-gym-show-workout-hero`, `se-gym-active-difficulties`
@@ -168,6 +169,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - Glossary abbreviation underlines: `abbr-underlines`
 - Read-aloud controls and voice: `read-aloud`, `tts-voice-name`
 - Audio defaults: `cap_volume`, `cap_speed`
+- Narration captions, playback speed, and final knowledge check only: `sebook-narration-preferences`
 - Tutorial autosave: `tutorial-autosave`
 - Tutorial instructions hidden by default: `tutorial-instructions-hidden`
 - SE Book code language: `sebook-code-language` (Python, Java, C++, TypeScript)

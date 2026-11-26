@@ -96,7 +96,22 @@ the player's own scripts. `js/narration-player-controls.js` gives every
 player the song player's keys, auto-hiding full-screen controls, captions,
 mute and volume, settings, and landscape surface;
 `tests/narration-player-controls.spec.js` checks every lesson's bar against
-that order. A checkpoint replaces the picture and the
+that order. `js/narration-preferences.js` owns the one-year, site-wide
+`sebook-narration-preferences` cookie (`captions`, `speed`, `finalCheckOnly`) used
+by the control bar and `/settings/`. Defaults are captions on, 1x, and all checks; every narration offers
+0.5x, 0.75x, 1x, 1.25x, 1.5x, and 2x via
+`narration-playback-speeds.html`. Choices synchronize players on the page and
+refresh on returning to a tab; blocked cookies still permit changes for that
+page. Keep these preferences out of individual renderers and the song player's
+separate preferences. `tests/narration-preferences.spec.js` covers all lessons,
+cross-kind persistence, settings, and deletion. **Only pause for the final
+knowledge check** skips intermediate checks during audio and step-mode
+continuation. Keep the last authored check, even if unchecked scenes follow;
+no checks means no new pause. Manual review buttons and timeline markers
+remain available, and Pause and predict is independent. The shared player
+supplies `shouldCheck(index)` to the transport so skipped boundaries never
+pause/restart audio. `tests/narration-check-preferences.spec.js` verifies these
+transitions and restoring all checks. A checkpoint replaces the picture and the
 bar steps aside until it is answered or skipped. Full screen fills the screen
 with the video: the stage (or checkpoint) scrolls inside, and captions and
 the bar overlay its lower edge. Mark scrolling panels
@@ -140,9 +155,10 @@ it never creates a transport, binds navigation, or mounts a quiz.
 
 `NarrationTransport.mount` supplies audio or text-only cue navigation behind
 one session contract. Audio sessions additionally expose `play` and `seekTo`.
-The transport owns the clock, captions, motion, speed, fullscreen, and transcript
-printing. Audio runs continuously through unchecked scenes and pauses at
-checks. Keep every player paused until explicit playback. Step-mode continuation
+The transport owns the clock, cue text, motion, fullscreen, and transcript
+printing; the shared control bar applies saved captions and playback speed.
+Audio pauses at enabled checks and prediction gates; other cues play
+continuously. Keep every player paused until explicit playback. Step-mode continuation
 stays silent; check labels and single-question completion follow the same UI
 for every kind. Shared controls, timeline, and song modules keep their existing
 specialized responsibilities.
@@ -243,9 +259,10 @@ preserve undo history; storage and export remain in the lifecycle script.
   Cmd/Ctrl+Shift+7, 8 (numbered and bulleted lists) to the focused field;
   preserve native undo/redo and Tab navigation. Keep `/shortcuts/` aligned.
   Print mirrors preserve safe formatting and semantic lists. Blank
-  animated-stage handouts keep three rows per Letter page; non-video rows
-  use content height. Populated student notes must grow across pages rather
-  than clip, overlap, or shrink to preserve a row count. Keep ruled space for
+  handouts give each cue its own page, with a full-width visual above key
+  points and nearly two inches of ruled writing space. Animated stages print
+  7.2 inches wide on Letter and A4. Code, diagrams, and populated student notes
+  must grow across pages rather than clip, overlap, or shrink. Keep ruled space for
   handwriting, light print colors, and editing controls out of print.
 - Preserve semantic headings, labeled fields, visual descriptions, keyboard
   access, and no-script blank-handout reading/printing. PDF tagging depends
@@ -287,6 +304,51 @@ state, illustrations, navigation labels, source citations, and visual-descriptio
 edits do not. Preserve written speech during structural refactors; prove old
 and compiled content equivalent before retaining existing audio. Do not fake a
 new fingerprint to bypass a substantive speech change.
+
+## Student study tools
+
+Keep the six shared learning features in the common player. The complete schema
+and behavior contract is in [`docs/narration-study.md`](../../../docs/narration-study.md).
+
+- `prediction: true` creates an intentional hold after the spoken prediction
+  and its authored pause. **Pause and predict** defaults on; **Reveal explanation**
+  continues. Seeking clears the hold, and disabling the setting restores timed
+  playback. Preserve speech timing; do not extend audio pauses to implement this.
+  Reader answers use disclosures and remain visible in print. The standalone
+  reader's `narrated-pattern-document.js` opens them for printing and restores
+  their previous state afterwards; dedicated print views open them on load.
+- `_data/explainers/<id>_study.yml` optionally supplies `version: 1`, `reviews`,
+  `exercises`, and `comparisons`. `scripts/narration/study.js` validates the
+  companion against the story/quizzes; it is exported as `entry.study` and
+  `data-narration-study`, outside the speech fingerprint.
+- `reviews[quizScene]` is an array in original question order. Each item names
+  the teaching `scene` and stable `cue`, plus a fresh single-choice `retry` using
+  the quiz schema. Supply one item per question, including summary questions.
+  Review returns to the same original question/feedback. Retry grading is
+  separate from the first score. Unauthored lessons keep segment replay.
+- Exercises carry `id`, `title`, `scene`, `cue`, `prompt`, diagram `type`,
+  `starter`, `solution`, and `checks`. Keep a meaningful design change for the
+  learner. Preview draws editable diagram notation; it does not execute code
+  or automatically grade semantic correctness. Worked solutions and self-check
+  criteria are deliberately revealed. Use the lesson's running example.
+- Comparisons carry `id`, `title`, `question`, `before`/`after` references
+  (`scene`, `cue`, `label`), and `consequences`. Contrast a concrete change request,
+  benefits, costs, and when a simpler alternative suffices. The learner can write
+  a reason before optionally revealing consequences.
+- Search indexes explanation/cue text and diagram terms. Inspection reuses
+  authored reader frames and the current language, linking `diagram_focus`
+  and code `focus` lines to cue explanations. Native labeled buttons provide the
+  keyboard equivalent of diagram/source clicks; do not invent unmapped links.
+- `NarrationStudy` owns session-only review marks, viewed cues, and answered-check
+  counts. Keep viewing separate from answering or mastery. Practice drafts and
+  comparison reflections also last only until leaving/reloading the page. No new
+  storage is written. Saved writing belongs in the existing lesson-notes view.
+
+Use `narration-study.css` for readable light/dark/fullscreen/print presentation.
+Study fields and buttons retain native keys instead of media shortcuts. Verify
+search/jump, draft retention/reset, code-language inspection, summary-question
+review/return/retry, normal/accelerated prediction holds and opt-out, mobile fullscreen, and
+printed answers with the narration-study and prediction-review tests.
 
 ## Verification
 

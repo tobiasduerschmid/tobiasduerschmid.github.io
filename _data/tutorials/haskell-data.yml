@@ -1968,7 +1968,7 @@ steps:
 
       ### A return visit
 
-      On another day, hide the solution and recreate one small function from this path: a list conversion, a tree traversal, or this simulator. Change the sample data and predict the result before running. That retrieval gives a better check of what stuck than rereading the completed solution.
+      On another day, hide the solution and recreate one small function from this path: a list conversion, a tree traversal, or this simulator. Change the sample data and predict the result before running. Rebuilding it shows what stuck better than rereading the completed solution.
     files:
       - path: "Main.hs"
         language: haskell

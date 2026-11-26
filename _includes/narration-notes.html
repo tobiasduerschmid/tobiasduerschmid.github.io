@@ -23,7 +23,7 @@
     <p class="vn-notes-kicker">Lesson notes · {{ lesson.name }}</p>
     <h1>{{ explainer.title }}</h1>
     <div class="vn-notes-intro">
-      <p>The narration's pictures, paused, beside its key points, with lines for your own notes, each section's knowledge check, and the answers at the end. Printing or saving as PDF keeps only the lesson.</p>
+      <p>Large slides with key points and space for your own notes underneath, each section's knowledge check, and the answers at the end. Printing or saving as PDF gives each slide its own page.</p>
       <p>Type in the fields below. Your notes save automatically in this browser and are included when you export a PDF. <a href="{{ '/cookies/#narration-notes' | relative_url }}">Manage saved notes</a>.</p>
       <p id="notes-format-help">While editing, use Ctrl (⌘ on Mac) + B for bold, + I for italic, or + U for underline. Ctrl/⌘ + Shift + 7 makes a numbered list; + Shift + 8 makes a bulleted list. Use your usual undo and redo keys. Formatting is saved and included in the PDF.</p>
       <p class="vn-notes-format-status" role="status" data-notes-format-status></p>
@@ -67,7 +67,6 @@
         {% include narration-note-editor.html key=vn_edit_key label='Your notes' %}
         <div class="vn-note-lines" aria-hidden="true">{{ vn_ruled }}</div>
       </div>
-      <div class="vn-note-lines vn-note-lines--below" aria-hidden="true">{{ vn_ruled }}</div>
     </section>
     {% endfor %}
     {% assign vn_check = vn_quizzes[scene.id] | default: scene.checkpoint %}

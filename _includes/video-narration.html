@@ -36,7 +36,7 @@
         {% capture video_settings %}{% if lesson.animation %}<label class="nja-motion"><input type="checkbox" data-setting="motion" checked> Animate visuals</label>{% endif %}
           <button type="button" class="np-review-check" data-review-check>Knowledge check</button>{% endcapture %}
         {% capture video_view %}{% if explainer.languages %}{% include narration-player-language.html id=topic languages=explainer.languages default=explainer.default_language examples=examples %}{% endif %}{% endcapture %}
-        {% include narration-player-controls.html id=player_id duration=timing.duration seek_label="Narration position" scenes=explainer.scenes rates="0.5,0.75,1,1.25,1.5,2" view=video_view settings=video_settings %}
+        {% include narration-player-controls.html id=player_id duration=timing.duration seek_label="Narration position" scenes=explainer.scenes view=video_view settings=video_settings %}
       <div class="vn-scenes" tabindex="0" role="region" aria-label="Scene navigation">
         {% for scene in explainer.scenes %}
         <div class="nja-scene vn-scene" data-scene="{{ scene.id }}"{% unless forloop.first %} hidden{% endunless %}>

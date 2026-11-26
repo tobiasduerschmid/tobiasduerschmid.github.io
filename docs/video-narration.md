@@ -1,5 +1,10 @@
 # Video narrations
 
+Video narrations use the shared [study tools](narration-study.md), including
+learner-controlled prediction pauses and searchable cue review. Optional study
+companions add question-specific review/retries and authored practice. These
+interactions belong to the common player, not topic choreographies.
+
 A video narration is a narrated lesson with one screen that shows, cue by
 cue, an animated stage drawn with the song-video engine. It plays like a
 video, with the music player's controls, and shares its transport, one
@@ -234,10 +239,12 @@ toolbar. Their print mirrors retain safe formatting and semantic lists, so
 student writing remains readable and can flow across pages. Old plain-text
 notes load literally and upgrade on the first edit.
 
-In print only the lesson remains. Blank animated-stage handouts keep three
-rows per Letter page, then the answers. Non-video handouts use content-height
-rows; any row with student writing grows instead of clipping its text.
-Blank-stage pictures print at a fixed 3.6in (the stage at 0.36).
+In print only the lesson remains. Each cue starts on its own page, with a
+large picture above its key points and nearly two inches of ruled writing
+space. Stage pictures print at a fixed 7.2in (the stage at 0.72), fitting
+both Letter and A4. Checks follow their section, then the answers close the
+handout. Code, diagrams, and student writing can continue across pages
+instead of clipping or shrinking to preserve a page count.
 The ruled lines are bordered spans, so they print without background
 graphics; the pictures keep their colors with `print-color-adjust: exact`.
 The notes always use the light palette, including when the site or operating
@@ -245,7 +252,9 @@ system prefers dark mode. Print CSS keeps the live HTML text and SVG artwork
 as vector graphics: it disables filters and shadows, omits the decorative
 plaster and ruled-paper textures and the blueprint's graph grid, draws
 dashed connectors as dashed borders, and gives confetti a solid paper color.
-The remaining gradients, slide content, and layout are preserved. Kit paint
+Code panels print with dark text on light paper; filled stickers and controls
+use light tints or outlines. Arrows and balance beams retain their strokes.
+The slide content and layout are preserved. Kit paint
 that must print stays flat where Chromium's PDF output would make a bitmap:
 tiled gradients, gradients with transparent stops, radial gradients, and any
 gradient of two or more colors in a rounded box that holds text (the Blood

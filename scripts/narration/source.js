@@ -3,6 +3,7 @@ const { readFileSync, readdirSync } = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
 const { compileLesson } = require('./compile');
+const { validateStudy } = require('./study');
 const ROOT = path.resolve(__dirname, '../..');
 
 function lessonIds(root = ROOT) {
@@ -15,8 +16,18 @@ function loadLesson(topic, root = ROOT) {
     const source = yaml.load(readFileSync(filename, 'utf8'));
     if (source.id !== topic) throw new Error('id must match the filename');
     const visuals = JSON.parse(readFileSync(path.join(root, '_data/narration_visuals', `${topic}.json`), 'utf8'));
-    return compileLesson(source, visuals);
+    const lesson = compileLesson(source, visuals);
+    const study = readOptionalYAML(path.join(root, '_data/explainers', `${topic}_study.yml`));
+    if (study) {
+      const quizzes = readOptionalYAML(path.join(root, '_data/explainers', `${topic}_quizzes.yml`)) || {};
+      lesson.study = validateStudy(study, lesson.story, quizzes);
+    }
+    return lesson;
   } catch (error) { throw new Error(`${filename}: ${error.message}`, { cause: error }); }
+}
+function readOptionalYAML(filename) {
+  try { return yaml.load(readFileSync(filename, 'utf8'), { filename }); }
+  catch (error) { if (error.code === 'ENOENT') return null; throw error; }
 }
 const loadStory = (topic, root = ROOT) => loadLesson(topic, root).story;
 function loadRegistry(kind, root = ROOT) {

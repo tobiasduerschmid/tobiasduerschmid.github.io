@@ -253,6 +253,21 @@ phase notes) is fine and even encouraged on steps where the pedagogy is
 load-bearing. `# Bloom: <verbs>` comments are *optional* — add them when
 they help future editors, but they're not required.
 
+**The rationale stays in the comment.** Student-facing text (instructions,
+hints, test names, quiz stems, options, feedback, explanations) never names
+the technique or cites learning research. Leave out terms such as retrieval,
+spaced review, interleaving, schema, transfer, scaffolding, productive
+failure, desirable difficulty, threshold concept, growth mindset, Variation
+Theory, PRIMM and Bloom, and statistics about retention. Give the instruction
+itself, with at most one plain clause of reason: "Answer from memory before
+you scroll up, so you can see what you have forgotten." When a step is hard,
+say what to do when stuck (which step to revisit, what an error usually
+means) instead of generic reassurance ("that's normal", "every developer
+went through this"). Do not state percentages, "most common" or "#1" claims
+unless the tutorial cites a source that supports them. Drafts written with
+this skill loaded have repeated its own rationale to students; reread new
+student text for it.
+
 **3. `instructions:` opens with `### Why this matters` + 🎯 list.** The
 first ~10 lines of every step's `instructions:` follow this exact shape:
 
@@ -712,6 +727,9 @@ students are confused" reports.
       `tdd.yml` (`Cycle N — RED/GREEN/REFACTOR:` prefix).
 - [ ] **Every step has a `# Pedagogy:` YAML comment** immediately above
       its `- title:` line, naming the PRIMM phase or the named technique.
+- [ ] **No pedagogy talk in student text.** Technique names, learning-research
+      claims, and unsourced statistics stay out of instructions, hints, and
+      quizzes (see "The rationale stays in the comment" in §1).
 - [ ] **Every step's `instructions:` opens with the canonical block:**
       `### Why this matters` + a short paragraph (usually 1–2 sentences)
       motivating the transferable skill and its practical value,
@@ -2066,11 +2084,12 @@ model's ratings never gate.
   (`DesignReview.initFrom/destroyWithin/showExpertReviewsWithin`) owns the DOM;
   `js/tutorial-design-review-core.js` (`DesignReviewCore`) the rules (word
   counts, records, coaching ladders, wrong-claim notes, rating labels);
-  `js/browser-llm/design-review-judge.mjs` the model reading;
+  `js/browser-llm/design-review-judge.mjs` the model reading and
+  `js/browser-llm/design-review-coach.mjs` the separate follow-up coaching;
   `css/tutorial-design-review.css` both themes and print;
   `_includes/tutorial-design-review-print.html` the print block (case,
   diagrams, writing area; expert review and key in the instructor block).
-- **The model only classifies.** For the flaw, its consequence, and the fix
+- **The checking stage only classifies.** For the flaw, its consequence, and the fix
   it is shown the key's point and answers with a quote from the comment and
   `VERDICT: YES|PARTLY|NO` (evidence first; paraphrases count). The prompt
   wording comes from trials with the real model (docs/browser-llm.md): do not
@@ -2080,14 +2099,41 @@ model's ratings never gate.
   nothing in the comment becomes NO, and so does any credit for a comment
   that matches none of the criterion's `signals`. Correctness: correct (flaw
   and fix YES), close, not yet. Convincingness: convincing (consequence YES
-  and an `anchors` element named), partly, not yet. All wording shown is
-  authored (`coach`, `wrong_claims`, rating labels); the only model-chosen
-  text is the learner's own located words. Each prompt fits the ONNX
-  768-token input limit (comment ≤ 900 characters).
+  and an `anchors` element named), partly, not yet. Rating explanations,
+  `coach` hints, and `wrong_claims` notes remain authored. Comments are capped
+  at 900 characters; judge prompts fit the ONNX 768-token input budget.
+- **Incomplete checks get a separate Socratic coaching call.** The widget
+  supplies the current `coach` rung for each criterion (the existing attempt
+  ladder); the coach selects the first unmet criterion. If every criterion is
+  YES but the comment names no diagram element, it asks for diagram evidence.
+  The prompt contains only the comment, public `given`, and that one hint:
+  never the key, expert review, or fixed diagram. It asks the model to rephrase
+  the hint as a focused question for the next revision, preserving its meaning
+  without answering it. The tutorial appends an authored instruction to revise
+  the relevant part of the comment and explain the reasoning. Real 3B trials
+  found that asking the model to write this revision instruction itself often
+  elicited a solution. The pedagogical-advisor's feedback and bounded-assistance
+  guidance informs this division. Complete checks skip the generation. Input
+  is limited to 2,200 characters without truncation; output to 120 tokens.
+  Accept only completed, single-line questions of at most 500 characters that
+  end in a question mark, with one or two questions (some course hints use a
+  short pair). Reject code fences, answer continuations, and CamelCase names
+  absent from the prompt context. Other output falls back to course hints.
+  The fallback reason distinguishes unusable completed text, interrupted output,
+  and unavailable generation; the model panel reports that checking finished.
+  Accepted advice renders as plain text. Keep all authored hints visible because
+  a generated question can be less precise; validation does not prove its
+  accuracy or prevent every answer leak. Generation errors
+  preserve the completed check. Editing, cancellation, or navigation aborts
+  pending feedback; generated text is transient and never affects ratings,
+  the comparison gate, or saved progress. Cover the two-stage flow and its
+  fallback/cancellation paths in `tests/agent-design-reviews.spec.js` and
+  `scripts/tests/design-review-coach.test.js`.
 - **Model add-on:** `llm: true` on `backend: none` mounts the panel (titled
   "Review assistant" on review steps). It dispatches `tvm:llm-state` on the
   tutorial root (`reviewState()`: usable, busy, unavailable) and exposes
-  `reviewDesign({spec, review, onCriterion})`.
+  `reviewDesign({spec, review, hints, onCriterion, onCoaching})`, returning the
+  guarded judgement with optional `coaching: {status, text, hint, reason}`.
 - **Authoring:** one objective flaw per design, tied to a course concept and
   a Given scenario that breaks a stated story or acceptance criterion; the
   rest of the design is sound and realistic. Name the concept up front (title,

@@ -360,11 +360,13 @@ Cmd/Ctrl+Shift+7 and 8 toggle numbered and bulleted lists. Preserve native
 undo/redo and let Tab leave the field. Document shortcuts in `/shortcuts/`.
 Only supported semantic markup is accepted from pasted or stored content;
 discard executable content, attributes, and arbitrary styling. The print
-mirror preserves that safe formatting and real list structure. Blank animated-stage
-handouts retain three rows per Letter page. Non-video rows use their content
-height, and rows with student writing can expand across pages rather than
-clip text or shrink it to meet a row count. Ruled blank space remains for
-handwriting. The handout uses the light palette, including from a dark-mode
+mirror preserves that safe formatting and real list structure. Each cue starts
+on its own printed page, with a full-width visual above its key points and
+nearly two inches of ruled handwriting space. Animated-stage pictures print
+7.2 inches wide on both Letter and A4. Code, diagrams, and student writing use
+their content height and can continue across pages rather than clip or shrink.
+Knowledge checks follow their section; answers remain at the end.
+The handout uses the light palette, including from a dark-mode
 page, and print omits editing controls, navigation, and the site footer.
 
 Export begins with accessible HTML and uses the browser's PDF support;
@@ -419,7 +421,7 @@ and verification screenshots outside the repository.
   declared visual renderer, and owns check continuation, replay boundaries,
   roadmap and step navigation, focus, language refresh, and final song handoff.
   Every kind uses this lifecycle, including explainers without authored checks.
-- `js/narration-transport.js`: the audio clock, seeking, speed, motion,
+- `js/narration-transport.js`: the audio clock, seeking, motion,
   fullscreen, cue presentation, and print lifecycle. `mount` selects an audio
   or text-only session from the presence of authored media. Both support scene
   and cue navigation, refresh, pause, and fullscreen; audio sessions also expose
@@ -435,6 +437,29 @@ and verification screenshots outside the repository.
   While a knowledge check or decision is open, the bar steps aside: the
   checkpoint replaces the picture, keys typed in it answer it, and its own
   buttons continue or skip.
+- `js/narration-preferences.js`: the shared captions, playback-speed, and knowledge-check
+  preference for video, pattern, explainer, and case-study players and
+  `/settings/`. The `sebook-narration-preferences` cookie stores
+  `{captions: boolean, speed: number, finalCheckOnly: boolean}` for one year,
+  with `Path=/`, `SameSite=Lax`, and `Secure` on HTTPS. Defaults are captions on,
+  1x, and all knowledge checks;
+  visiting a lesson does not write a cookie. Every speed selector uses
+  `narration-playback-speeds.html` (0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x).
+  The shared control bar applies viewing preferences, including audio's current
+  and default playback rate. Choices synchronize all mounted players without
+  moving the playback position or starting audio. Returning to an open tab
+  refreshes external changes or deletion; `/cookies/` lists and deletes the
+  cookie. Invalid fields use their defaults, and blocked cookies leave the
+  current page usable. Music video and inline audio clip settings are separate.
+  **Only pause for the final knowledge check** is available in every player's
+  settings and My Settings. The player supplies `shouldCheck(index)` to the
+  transport, skipping intermediate boundaries without pausing or restarting
+  audio. Step-mode continuation and its button labels follow the same policy.
+  The last authored check remains enabled even if unchecked scenes follow it;
+  a lesson with no checks gains no pause. Explicit review through the timeline
+  or review buttons still opens any check. Prediction pauses are independent,
+  and changing this preference affects upcoming boundaries without dismissing
+  an already open check or changing quiz answers.
 - Full screen fills the screen with the player's video
   (`css/narrated-explainer.css`): the stage, or the checkpoint that replaces
   it, takes the whole surface and scrolls inside; captions and the bar
@@ -500,3 +525,13 @@ Keep this boundary when extending the system. Prefer another lesson in an
 existing kind over a new player. Add an adapter only for a demonstrated new
 interaction, with a compiled contract and behavior tests. Do not move speech
 into a visual package or hard-code a new topic in the audio renderer.
+
+## Student study companions
+
+Optional `_data/explainers/<id>_study.yml` files add question-to-cue reviews and
+fresh retries, editable diagram exercises, and comparisons of two authored
+frames. `scripts/narration/study.js` validates the version-1 contract and every
+reference; the source loader exports `entry.study`. These fields do not change
+the speech fingerprint. See [the schema and runtime contract](narration-study.md).
+All players share prediction holds and searchable review. Keep topic scripts
+limited to visuals; do not reimplement these learning controls per lesson.

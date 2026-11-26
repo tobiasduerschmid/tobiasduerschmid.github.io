@@ -651,6 +651,13 @@ test('label-in-name audit reads a treeitem label from its own row, not its branc
   expect(labelFindings.some((finding) => finding.message.includes('#misnamed'))).toBe(true);
 });
 
+test('label-in-name audit distinguishes scrollable source content from a control label', async ({ page }) => {
+  await page.setContent('<main><pre id="source" tabindex="0" role="region" aria-label="Starter diagram source"><code>@startuml class Member @enduml</code></pre><pre id="copy" tabindex="0" role="button" aria-label="Different action">Copy source</pre></main>');
+  const findings = (await page.evaluate(runDomAudit)).findings.filter(finding => finding.criterion === '2.5.3');
+  expect(findings.some(finding => finding.message.includes('#source'))).toBe(false);
+  expect(findings.some(finding => finding.message.includes('#copy'))).toBe(true);
+});
+
 test('keyboard audit detects a child clipped by its frame host', async ({ page }) => {
   await focusAuditFrame(page, '<style>body { margin: 0; } button { position: fixed; left: 100px; top: 60px; } button:focus { outline: 3px solid blue; }</style><button id="clipped">Clipped child</button>',
     '#frame-host { overflow: hidden; width: 30px; height: 30px; } iframe { width: 300px; height: 150px; border: 0; }');
@@ -1553,6 +1560,10 @@ function runDomAudit() {
   // [role="group"] items, nested controls, and aria-describedby targets each
   // carry their own name or are description rather than label.
   function visibleLabelText(el) {
+    // A named, keyboard-scrollable source region contains reading material,
+    // not a visible control label (WCAG 2.5.3). A pre used as a widget still
+    // needs its visible label checked, as do controls nested inside a region.
+    if (el.matches('pre[role="region"]')) return '';
     if (el.getAttribute('role') !== 'treeitem') return visibleText(el);
     const clone = el.cloneNode(true);
     if (!(clone instanceof HTMLElement)) return '';

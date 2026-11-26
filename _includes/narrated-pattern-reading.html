@@ -19,7 +19,16 @@
     {% include narrated-pattern-parts.html scene=scene parts=lesson.parts label=lesson.parts_label %}
     <p class="nja-purpose"><strong>Our task:</strong> {{ scene.purpose | escape }}</p>
     {% assign np_previous_diagram = '' %}
+    {% assign awaiting_prediction_answer = false %}
+    {% assign prediction_answer_open = false %}
     {% for cue in scene.cues %}
+    {% if cue.prediction %}
+      {% if prediction_answer_open %}</details>{% assign prediction_answer_open = false %}{% endif %}
+    {% elsif awaiting_prediction_answer %}
+      <details class="np-reading-answer"><summary>Reveal step {{ scene_number }}.{{ forloop.index }} and explanation</summary>
+      {% assign prediction_answer_open = true %}
+      {% assign awaiting_prediction_answer = false %}
+    {% endif %}
     <section class="np-reading-step" data-reading-scene="{{ scene.id }}" data-reading-cue="{{ forloop.index0 }}" aria-labelledby="{{ include.topic }}-reading-{{ scene.id }}-{{ forloop.index }}">
       <h4 id="{{ include.topic }}-reading-{{ scene.id }}-{{ forloop.index }}">{{ scene_number }}.{{ forloop.index }} — {{ cue.step | escape }}</h4>
       <p>{{ cue.text | escape }}</p>
@@ -56,11 +65,15 @@
       <p class="np-reading-note"><strong>Notice:</strong> {{ cue.note | escape }}</p>
       {% if cue.source %}<p class="np-source"><span class="np-source-label">Source:</span> {{ cue.source | escape }}</p>{% endif %}
     </section>
+    {% if cue.prediction %}{% assign awaiting_prediction_answer = true %}{% endif %}
     {% endfor %}
+    {% if awaiting_prediction_answer %}<details class="np-reading-answer"><summary>Reveal section takeaway</summary>{% assign prediction_answer_open = true %}{% endif %}
     <p class="nja-takeaway">{{ scene.takeaway | escape }}</p>
+    {% if prediction_answer_open %}</details>{% endif %}
     {% assign check = quizzes[scene.id] %}
     {% include narrated-lesson-check.html check=check %}
   </section>
   {% endfor %}
   {% if explainer.example_order %}{% include narrated-lesson-examples.html topic=include.topic note=lesson.complete_examples %}{% endif %}
+  {% include narration-study-reading.html topic=include.topic %}
 </div>

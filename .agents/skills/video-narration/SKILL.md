@@ -20,6 +20,26 @@ description: >-
 
 # Authoring video narrations
 
+## Shared student study tools
+
+Video narrations inherit **Pause and predict** and **Search and review** from
+the common player. `prediction: true` holds after the spoken prompt and authored
+pause until **Reveal explanation**; the settings checkbox can opt out. Do not
+change audio timing or implement this gate in a topic choreography. The reader
+uses an answer disclosure and print reveals its contents.
+
+Follow [`narration-authoring`](../narration-authoring/SKILL.md#student-study-tools)
+and [`docs/narration-study.md`](../../../docs/narration-study.md) for optional
+`<topic>_study.yml` companions: question-specific review plus fresh retries,
+editable diagram exercises with worked solutions/self-check rubrics, and two
+existing cue frames compared under a change request. Stable scene/cue references
+are validated at compilation and do not alter the speech fingerprint. Practice
+previews render notation; they do not run code or grade design correctness.
+Study drafts and marks are session-only and must be described that way.
+Verify prediction holds at multiple speeds, manual seeking/opt-out, keyboard
+operation, summary-question review/return, both themes, mobile fullscreen, and
+printed answers. Keep transport/quiz/study state out of visual renderers.
+
 Read [narration-authoring](../narration-authoring/SKILL.md) first for the shared
 versioned format, source ownership, compiler, and audio regeneration workflow.
 Speech and teaching text belong in `_data/narrations/<topic>.yml`; animation
@@ -245,6 +265,12 @@ Verify with tests and eyes, every time, in both modes:
 The player's controls must stay at least as good as the music player's, which
 shares its modules. Rules that came from review:
 
+- Captions, playback speed, and the final-knowledge-check-only option use `js/narration-preferences.js` and the shared
+  `sebook-narration-preferences` cookie, just like pattern, explainer, and
+  case-study players. Use the shared speed choices and control-bar binding;
+  never persist or restore these settings in a video-specific renderer.
+  The shared lifecycle skips intermediate automatic checks when requested,
+  retaining the last authored check, manual review, and independent prediction pauses.
 - The scene header is a two-level, clickable outline. The part strip's parts
   (Theory, Roles, Artifacts, Events) jump to each part's first scene; under
   it, the current part expands into its scenes (in Roles: Team and
@@ -387,18 +413,19 @@ undo/redo and Tab navigation. Student writing autosaves under
 `sebook-narration-notes-<topic>` and prints with its safe semantic formatting.
 Follow the shared version 2 storage contract and literal migration of old
 plain-text notes. The inventory provides per-lesson and bulk deletion; update the
-storage skill and disclosures when changing persistence. Blank animated-stage
-handouts keep three rows per Letter page. Rows containing student writing
-grow across pages instead of clipping text. Other narration kinds use their
-content height; never apply the stage's fixed row height to code or diagrams.
+storage skill and disclosures when changing persistence. Each cue starts on
+its own printed page, with a full-width picture above its key points and
+nearly two inches of ruled writing space. Animated stages print 7.2 inches
+wide on Letter and A4. Code, diagrams, and student writing use their content
+height and can continue across pages instead of clipping or shrinking.
 The code-language select, when present, affects this handout only.
 
 `tests/video-narration-notes.spec.js` checks every row's picture (its
 description as its accessible name) and bullets as written; that every
 picture shows the paused video's words in the same places; that each check
 follows its section and the answers match; that print shows only the lesson
-with no row clipped and three blank rows to a Letter page; that Chromium's
-blank saved PDF preserves that pagination; and that export opens the notes
+with no content clipped, large pictures, and writing space below; that Chromium's
+blank saved PDFs preserve one slide per Letter or A4 page; and that export opens the notes
 and print dialog. `scripts/tests/video-narration-notes.test.js` checks Scrum's
 terms and bullets. Also run the all-kind `scripts/tests/narration-notes.test.js`
 and `tests/narration-notes.spec.js`, including saved writing and deletion.

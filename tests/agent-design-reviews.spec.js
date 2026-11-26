@@ -2,7 +2,7 @@
 // The design-review exercise (design_review steps) in the agent design
 // reviews tutorial. The local model is replaced only at its inference
 // boundary (runtime.generate), so prompts, parsing, the quote and signal
-// guards, ratings, and the authored coaching all run as in production.
+// guards, ratings, and the separate coaching turn all run as in production.
 const fs = require('fs');
 const path = require('path');
 const YAML = require('yaml');
@@ -14,6 +14,7 @@ const STEPS = YAML.parse(fs.readFileSync(path.join(__dirname, '../_data/tutorial
 const OWN_WORDS = 'Adding BruinPay changes the PaymentGateway interface plus OrderService, RewardsService and Order, ' +
   'because each names StripeCard or StripeCharge. Fix: declare charge with our own PaymentMethod and Receipt ' +
   'types and translate inside StripeGateway.';
+const COACHING = 'Which classes need editing before BruinPay works?';
 
 async function open(page) {
   await page.goto(URL);
@@ -40,18 +41,23 @@ async function stubModel(page, replies) {
     const addon = window._tutorial.llmAddon;
     const questions = { 'about the design flaw?': 'flaw', 'about what goes wrong?': 'consequence', 'about the fix?': 'fix' };
     window.__reviewPrompts = [];
-    addon.runtime.generate = async messages => {
-      const user = messages[1].content;
+    addon.runtime.generate = async (messages, {signal}) => {
+      const user = messages.at(-1).content;
       window.__reviewPrompts.push(user);
-      const criterion = Object.entries(questions).find(([text]) => user.endsWith(text))[1];
-      return { text: scripted[criterion], finishReason: 'stop' };
+      const question = Object.entries(questions).find(([text]) => user.endsWith(text));
+      if (question) return { text: scripted[question[1]], finishReason: 'stop' };
+      if (scripted.coachingPending) return new Promise((resolve, reject) => {
+        signal.addEventListener('abort', () => reject(new DOMException('Cancelled', 'AbortError')), {once: true});
+      });
+      if (scripted.coachingError) throw new Error('Coaching engine unavailable');
+      return { text: scripted.coaching, finishReason: scripted.coachingFinishReason || 'stop' };
     };
     // prepare() runs again after a check; keep the stub's "downloaded" state,
     // and let no device check still in flight overwrite it.
     addon.prepareRequest = (addon.prepareRequest || 0) + 1;
     addon.prepare = async () => { addon.plan = { cached: true, canLoad: true }; addon.unavailable = ''; addon.refresh(); };
     await addon.prepare();
-  }, replies);
+  }, {coaching: COACHING, ...replies});
 }
 
 test.describe('design review steps', () => {
@@ -78,6 +84,7 @@ test.describe('design review steps', () => {
     await expect(compare).toBeEnabled();
     await compare.click();
     await expect(page.getByRole('heading', { name: 'Lesson learned: Hide What Is Likely to Change' })).toBeFocused();
+    await expect(page.getByRole('region', { name: 'Lesson learned: Hide What Is Likely to Change', exact: true })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'The flaw, annotated' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'The fixed design' })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Next/ })).toBeEnabled();
@@ -98,18 +105,92 @@ test.describe('design review steps', () => {
     await expect(reading.getByRole('heading')).toBeFocused();
     await expect(reading.getByText('Close', { exact: true })).toBeVisible();
     await expect(reading.getByText('Not yet convincing', { exact: true })).toBeVisible();
-    await expect(reading).toContainText('Trace the Given change: before BruinCard payments work');
+    await expect(reading).toContainText(STEPS[0].design_review.coach.consequence[0]);
     await expect(reading).toContainText('Propose a change to the interface itself');
+    await expect(reading).toContainText(COACHING);
+    await expect(reading).toContainText('Add your answer to “What goes wrong” and explain the dependency');
+    await expect(page.getByRole('region', {name: 'Review assistant', exact: true}))
+      .toContainText('Review check finished. Read the feedback above.');
     await expect(page.getByRole('heading', { name: /Lesson learned/ })).toBeHidden();
+    await auditInteractiveState(page, 'design review with Socratic feedback', { include: '.tutorial-design-review' });
 
-    // A second check climbs each unmet criterion's ladder.
+    // A second check supplies the coach with the next authored hint.
     await check.click();
-    await expect(reading).toContainText('Could a BruinPayGateway implement charge() exactly as declared?');
+    await expect(check).toBeEnabled();
 
     const prompts = await page.evaluate(() => window.__reviewPrompts);
-    expect(prompts).toHaveLength(6);
+    expect(prompts).toHaveLength(8);
     expect(prompts.every(prompt => prompt.includes('What goes wrong: it will be bad for students.'))).toBe(true);
     expect(prompts.some(prompt => prompt.includes('Lesson learned'))).toBe(false);
+    expect(prompts[3]).toContain(STEPS[0].design_review.coach.consequence[0]);
+    expect(prompts[7]).toContain(STEPS[0].design_review.coach.consequence[1]);
+    expect(prompts[3]).not.toContain(STEPS[0].design_review.key.fix);
+  });
+
+  test('a correct and convincing check finishes without a follow-up model call', async ({ page }) => {
+    await open(page);
+    await appendToComment(page, OWN_WORDS);
+    await stubModel(page, {
+      flaw: 'VERDICT: YES\nQUOTE: its operations take a StripeCard and return a StripeCharge',
+      consequence: 'VERDICT: YES\nQUOTE: Adding BruinPay changes the PaymentGateway interface plus OrderService, RewardsService and Order',
+      fix: 'VERDICT: YES\nQUOTE: declare charge with our own PaymentMethod and Receipt types and translate inside StripeGateway',
+    });
+    await page.getByRole('button', { name: 'Check my review' }).click();
+    const reading = page.getByRole('region', { name: 'The review assistant’s reading' });
+    await expect(reading.getByText('Correct', { exact: true })).toBeVisible();
+    await expect(reading.getByText('Convincing', { exact: true })).toBeVisible();
+    await expect(reading).not.toContainText('Feedback for your next revision');
+    expect(await page.evaluate(() => window.__reviewPrompts.length)).toBe(3);
+    await expect(page.getByRole('heading', { name: /Lesson learned/ })).toBeHidden();
+  });
+
+  for (const failure of ['coachingError', 'coachingFinishReason', 'coaching']) {
+    test(`an incomplete check keeps its ratings and course hints when coaching fails (${failure})`, async ({ page }) => {
+      await open(page);
+      await appendToComment(page, 'What goes wrong: bad for students. Fix: refactor it.');
+      await stubModel(page, {
+        flaw: 'VERDICT: YES\nQUOTE: its operations take a StripeCard and return a StripeCharge',
+        consequence: 'VERDICT: NO\nQUOTE: NONE',
+        fix: 'VERDICT: NO\nQUOTE: NONE',
+        [failure]: failure === 'coachingError' ? true : failure === 'coachingFinishReason' ? 'length' :
+          'Consequence: If the BruinPayGateway does not return a BruinPayCharge, it will not be compatible with the classes that expect a StripeCharge.',
+      });
+      await page.getByRole('button', { name: 'Check my review' }).click();
+      const reading = page.getByRole('region', { name: 'The review assistant’s reading' });
+      await expect(reading.getByText('Close', { exact: true })).toBeVisible();
+      const explanation = {coachingError: 'The follow-up feedback is unavailable',
+        coachingFinishReason: 'The follow-up feedback stopped before it finished',
+        coaching: 'The assistant’s follow-up was not usable'};
+      await expect(reading).toContainText(explanation[failure]);
+      await expect(reading).not.toContainText('BruinPayCharge');
+      await expect(reading).toContainText(STEPS[0].design_review.coach.consequence[0]);
+      await expect(reading).not.toContainText(COACHING);
+      await expect(page.getByRole('button', { name: 'Check my review' })).toBeEnabled();
+    });
+  }
+
+  test('editing during coaching cancels the response and keeps the revised comment', async ({ page }) => {
+    await open(page);
+    await stubModel(page, {flaw: 'NO', consequence: 'NO', fix: 'NO', coachingPending: true});
+    await page.getByRole('button', { name: 'Check my review' }).click();
+    await expect(page.getByRole('region', { name: 'Design review', exact: true }).getByRole('status'))
+      .toHaveText('Preparing a question for your next revision…');
+    await comment(page).fill(OWN_WORDS);
+    await expect(page.getByRole('region', { name: 'Design review', exact: true }).getByRole('status'))
+      .toHaveText('Check cancelled. Your comment is unchanged.');
+    await expect(comment(page)).toHaveValue(OWN_WORDS);
+    await expect(page.getByRole('region', { name: 'The review assistant’s reading' })).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Check my review' })).toBeEnabled();
+  });
+
+  test('model feedback is displayed as text, including literal markup', async ({ page }) => {
+    await open(page);
+    const feedback = 'How does <img src=x onerror=alert(1)> affect the result?';
+    await stubModel(page, {flaw: 'NO', consequence: 'NO', fix: 'NO', coaching: feedback});
+    await page.getByRole('button', { name: 'Check my review' }).click();
+    const reading = page.getByRole('region', { name: 'The review assistant’s reading' });
+    await expect(reading).toContainText(feedback);
+    await expect(reading.getByRole('img')).toHaveCount(0);
   });
 
   test('a quote the comment does not contain earns no credit', async ({ page }) => {

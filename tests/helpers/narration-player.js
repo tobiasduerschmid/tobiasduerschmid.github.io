@@ -14,7 +14,7 @@ async function openPlayerSettings(player) {
 // Moves `player`'s narration to `time` seconds the way a viewer does, with the
 // position slider, and waits until the audio is there.
 async function seekNarration(player, time) {
-  await player.getByRole('slider', { name: 'Narration position' }).fill(String(Number(time.toFixed(2))));
+  await player.getByRole('slider', { name: /^(Narration|Animation) position$/ }).fill(String(Number(time.toFixed(2))));
   await expect.poll(() => player.locator('audio').evaluate(audio => audio.currentTime)).toBeCloseTo(time, 1);
 }
 

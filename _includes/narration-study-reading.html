@@ -1,0 +1,33 @@
+{%- assign study = site.data.narration_lessons[include.topic].study -%}
+{% if study %}
+<section class="narration-study-reading" aria-labelledby="{{ include.topic }}-study-title">
+  <h3 id="{{ include.topic }}-study-title">Practice and compare</h3>
+  <p>Sketch your changes or use <strong>Study tools → Try this example</strong> in the narrated player to edit and preview the diagrams.</p>
+  {% for exercise in study.exercises %}
+  <section aria-labelledby="{{ include.topic }}-exercise-{{ exercise.id }}">
+    <h4 id="{{ include.topic }}-exercise-{{ exercise.id }}">{{ exercise.title | escape }}</h4>
+    <p>{{ exercise.prompt | escape }}</p>
+    <pre tabindex="0" role="region" aria-label="Starter diagram source: {{ exercise.title | escape }}"><code>{{ exercise.starter | escape }}</code></pre>
+    <details class="np-reading-answer">
+      <summary>Worked solution and self-check: {{ exercise.title | escape }}</summary>
+      <pre tabindex="0" role="region" aria-label="Worked solution source: {{ exercise.title | escape }}"><code>{{ exercise.solution | escape }}</code></pre>
+      <ul>{% for check in exercise.checks %}<li>{{ check | escape }}</li>{% endfor %}</ul>
+    </details>
+  </section>
+  {% endfor %}
+  {% for comparison in study.comparisons %}
+  <section aria-labelledby="{{ include.topic }}-comparison-{{ comparison.id }}">
+    <h4 id="{{ include.topic }}-comparison-{{ comparison.id }}">{{ comparison.title | escape }}</h4>
+    <p>{{ comparison.question | escape }}</p>
+    <ul>
+      <li><a href="#{{ include.topic }}-reading-{{ comparison.before.scene }}">{{ comparison.before.label | escape }}</a></li>
+      <li><a href="#{{ include.topic }}-reading-{{ comparison.after.scene }}">{{ comparison.after.label | escape }}</a></li>
+    </ul>
+    <details class="np-reading-answer">
+      <summary>Consequences: {{ comparison.title | escape }}</summary>
+      <ul>{% for consequence in comparison.consequences %}<li>{{ consequence | escape }}</li>{% endfor %}</ul>
+    </details>
+  </section>
+  {% endfor %}
+</section>
+{% endif %}

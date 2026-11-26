@@ -2201,7 +2201,7 @@ steps:
       3. **Explain** the types between stages and why no input binding changes
          in a short comment; then select **Test My Work**.
 
-      ### A Later Retrieval Check
+      ### A Later Check from Memory
 
       Tomorrow, close these instructions and rebuild the report from its contract. Replace the domain with `(snack, price)` pairs and a maximum-price rule. Explain which parts change and which list-processing patterns stay the same.
 

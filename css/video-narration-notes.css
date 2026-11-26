@@ -1,7 +1,7 @@
 /* Shared editable handouts (_includes/narration-notes.html).
    On screen they preview the handout; in print, only the lesson remains: its
-   title, then three rows a page (each cue's picture at rest beside its key
-   points and ruled lines, and each knowledge check), then the answers. Notes
+   title, then a large picture per page above its key points and ruled lines,
+   with each section's knowledge checks and the answers at the end. Notes
    are a print surface, so they stay light. The page also loads the stage's
    styles, which color html and body for the stage page; these rules win. */
 html.print-light-mode { background: #eef1f5; color-scheme: light; }
@@ -35,12 +35,11 @@ html body.vn-notes-page {
 .vn-notes-title, .vn-note, .vn-notes-answers { margin: 0 0 1.2em; padding: 1em 1.2em; background: #fff; border: 1px solid var(--vn-notes-edge); border-radius: 8px; }
 .vn-notes-intro p { margin: 0.6em 0 0; }
 
-/* A cue row: the heading across, the picture beside its points, lines below both. */
+/* Give the picture the full readable width; key points and writing follow it. */
 .vn-note {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-areas: "head head" "still points" "below points";
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "head" "still" "points";
   gap: 0.6em 1.2em;
 }
 .vn-note-head { grid-area: head; }
@@ -49,6 +48,7 @@ html body.vn-notes-page {
 .vn-note-points { grid-area: points; display: flex; flex-direction: column; min-height: 0; }
 .vn-note-points ul { margin: 0; padding-left: 1.2em; }
 .vn-note-points li { margin: 0 0 0.35em; overflow-wrap: anywhere; }
+.vn-notes--document code { overflow-wrap: anywhere; }
 
 /* The picture: a copy of the 960x540 stage, scaled to the slot's width
    (js/narration-notes.js sets the scale on screen). Before it is drawn,
@@ -77,7 +77,6 @@ html body.vn-notes-page {
 .vn-note-lines { overflow: hidden; }
 .vn-note-lines span { display: block; box-sizing: border-box; height: var(--vn-notes-line-gap); border-bottom: 1px solid var(--vn-notes-rule); }
 .vn-note-points .vn-note-lines { flex: 1 0 auto; height: calc(3 * var(--vn-notes-line-gap)); margin-top: 0.4em; }
-.vn-note-lines--below { grid-area: below; height: calc(2 * var(--vn-notes-line-gap)); }
 
 /* A knowledge check row: the question, its options, and room for an answer. */
 .vn-check { display: flex; flex-direction: column; gap: 0.4em; }
@@ -97,8 +96,6 @@ html body.vn-notes-page {
 @media (max-width: 700px) {
   html body.vn-notes-page { font-size: 17px; }
   .vn-notes-title, .vn-note, .vn-notes-answers { padding: 0.9em; }
-  .vn-note { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "still" "points"; grid-template-rows: none; }
-  .vn-note-lines--below { display: none; }
 }
 
 @page { margin: 0.4in 0.5in 0.55in; }
@@ -114,22 +111,25 @@ html body.vn-notes-page {
   /* Only the lesson prints: no introduction, links, site footer, or stage original. */
   .vn-notes-intro, .vn-notes-footer, .vn-notes-master { display: none; }
   .vn-notes-title, .vn-note, .vn-notes-answers { padding: 0; border: 0; border-radius: 0; background: none; }
-  .vn-notes-title { display: flex; align-items: baseline; gap: 0.6em; margin: 0 0 0.1in; }
-  /* The title and three rows fill a Letter page (A4 has room to spare); a row never splits. */
+  .vn-notes-title { margin: 0 0 0.1in; }
+  /* A cue starts on its own sheet. Content can continue onto another sheet
+     when the learner writes more; the slide and text never shrink to fit. */
   .vn-note {
+    display: block;
     box-sizing: border-box;
-    height: 3in;
     margin: 0 0 0.12in;
     padding-top: 0.06in;
     border-top: 1.5pt solid var(--vn-notes-ink);
-    grid-template-columns: 3.6in minmax(0, 1fr);
-    gap: 0.06in 0.2in;
-    overflow: hidden;
-    break-inside: avoid;
+    break-inside: auto;
   }
-  /* A 3.6in still is the 960px stage at 0.36, on Letter and A4 alike. */
-  .vn-note-still { width: 3.6in; }
-  .vn-note-still > .stage { transform: scale(0.36); }
+  .vn-note > * + * { margin-top: 0.12in; }
+  .vn-note:not(.vn-check) { break-before: page; break-after: page; }
+  .vn-notes-scene:first-of-type > .vn-note:first-child { break-before: auto; }
+  .vn-check { display: flex; min-height: 3in; break-inside: avoid; }
+  /* Twice the former width, with room inside both Letter and A4 margins.
+     Keep an explicit print scale: ResizeObserver may not run before export. */
+  .vn-note-still { width: 7.2in; break-inside: avoid; }
+  .vn-note-still > .stage { transform: scale(0.72); }
   /* Keep HTML text and SVG paths as vector PDF drawing commands. Filters
      (including inline animation poses) and soft shadows create bitmap layers. */
   .vn-note-still,
@@ -164,19 +164,41 @@ html body.vn-notes-page {
   .vn-note-still .dr-light,
   .vn-note-still .dr-dust,
   .vn-note-still .dr-vignette { display: none; }
-  .vn-note-still .sk-ball { background: #7c3aed !important; }
+  .vn-note-still .sk-ball { background: #e5d9ff !important; }
   .vn-note-still .us-card-pin { background: #e11d48 !important; }
+  /* Enlarged artwork needs a paper palette even for the video's dark editor
+     cards. Keep text dark and distinguish filled objects with light tints. */
+  .vn-note-still > .stage {
+    --bg-editor: #f4f6fb;
+    --bg-editor-text: var(--vn-notes-ink);
+    --bg-editor-muted: var(--vn-notes-muted);
+  }
+  .vn-note-still :is(.code-card, .bg-snippet, .bg-search, .bg-search-bar, .bg-adapter) {
+    background: #f4f6fb;
+    color: var(--vn-notes-ink);
+  }
+  .vn-note-still .code-tok { color: var(--vn-notes-ink); }
+  .vn-note-still .bg-search-summary { color: var(--vn-notes-accent); }
+  .vn-note-still .sticker--red { background: #ffcfd6; }
+  .vn-note-still .sticker--pink { background: #ffd6eb; }
+  .vn-notes .nja-progress-track { background: #e7edf3; }
+  .vn-notes .nja-read-progress { box-sizing: border-box; border: 1px solid #005b75; background: #d2e9f0; }
+  .vn-notes .ra-button { background: #fff; color: #123f4d; }
+  .vn-notes .ra-button > .fa-heart { color: #9c1747; }
   /* Transparent gradient strokes also rasterize. Borders preserve the
-     dashed arrows, the architecture kit's dashed wires, and the index-card
-     margin without a bitmap paint layer. */
-  .vn-note-still :is(.sk-arrow--dashed, .ak-wire--dashed) { background: none !important; }
-  .vn-note-still :is(.sk-arrow--dashed, .ak-wire--dashed)::before { content: ''; position: absolute; inset: 0; box-sizing: border-box; border-top: 6px dashed currentColor; }
+     arrows, the architecture kit's dashed wires, the balance beam, and the
+     index-card margin without a bitmap paint layer or a filled bounding box
+     around a rotated line. */
+  .vn-note-still :is(.sk-arrow, .sk-balance-beam, .ak-wire--dashed) { background: none !important; }
+  .vn-note-still :is(.sk-arrow, .sk-balance-beam, .ak-wire--dashed)::before { content: ''; position: absolute; inset: 0; box-sizing: border-box; border-top: 6px solid currentColor; }
+  .vn-note-still :is(.sk-arrow--dashed, .ak-wire--dashed)::before { border-top-style: dashed; }
   .vn-note-still .ak-wire--dashed::before { border-top-width: 4px; }
+  .vn-note-still .sk-balance-beam::before { border-top: 16px solid var(--vn-line); }
   .vn-note-still .us-card { background: linear-gradient(170deg, #fffaf0, var(--paper) 60%, #f6ead0) !important; }
   .vn-note-still .us-card::before { content: ''; position: absolute; top: 0; bottom: 0; left: calc(var(--margin) - 2px); border-left: 2px solid rgba(230, 60, 80, 0.55); }
-  /* The lines fill whatever room the picture, points, or question leave. */
-  .vn-note-points .vn-note-lines, .vn-check .vn-note-lines { flex: 1 1 0; height: 0; }
-  .vn-note-lines--below { height: auto; }
+  /* Reserve nearly two inches for handwriting below each slide. */
+  .vn-note-points .vn-note-lines { flex: none; height: calc(7 * var(--vn-notes-line-gap)); }
+  .vn-check .vn-note-lines { flex: 1 0 auto; height: calc(3 * var(--vn-notes-line-gap)); }
   .vn-note-lines span { border-bottom-width: 0.75pt; }
   .vn-notes-answers { break-before: page; }
   .vn-notes-answers li { break-inside: avoid; }
@@ -216,16 +238,9 @@ html body.vn-notes-page {
 @media print {
   .vn-notes-page .vn-notes-skip, .vn-note-editor [data-notes-input] { display: none; }
   .vn-note-editor.has-text .vn-note-written { display: block; }
-  .vn-note.has-written-notes, .vn-notes--document .vn-note {
-    display: block; height: auto; min-height: 3in; overflow: visible; break-inside: auto;
-  }
-  .vn-note.has-written-notes > *, .vn-notes--document .vn-note > * { margin-bottom: 0.12in; }
+  .vn-note.has-written-notes { break-inside: auto; }
   .vn-notes--document .vn-note-still { width: auto; break-inside: avoid; }
   .vn-notes--document .vn-note-still pre { max-height: none; overflow: visible; }
-  .vn-note.has-written-notes .vn-note-points .vn-note-lines,
-  .vn-notes--document .vn-note-points .vn-note-lines { min-height: 0.56in; }
-  .vn-note.has-written-notes .vn-note-lines--below,
-  .vn-notes--document .vn-note-lines--below { display: none; }
   .vn-note-written { orphans: 3; widows: 3; }
   .vn-note-head { break-after: avoid; }
   .vn-notes--document .vn-note-still, .vn-note-written p { break-inside: auto; }

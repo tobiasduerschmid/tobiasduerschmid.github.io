@@ -493,7 +493,7 @@ steps:
 
       Our preview sends the changed value directly, like the narration sends text. Its callbacks run synchronously in list order. Observer itself does not guarantee that order or create asynchronous tasks.
 
-      ### PRIMM Exercise: Predict, Run, Investigate, Modify
+      ### Predict, Run, Investigate, Modify
 
       #### 1. Predict
       Look at `pattern_preview.py`. **Before running it**, predict:
@@ -2324,8 +2324,8 @@ steps:
 
       ### 🎯 You will learn to
 
-      - Apply Observer concepts across all earlier steps without scaffolding
-      - Analyze your own gaps and revisit specific steps where retrieval fails
+      - Apply Observer concepts across all earlier steps without step-by-step help
+      - Analyze your own gaps and revisit specific steps where your recall fails
 
       ## Test Your Understanding
 
@@ -2514,8 +2514,6 @@ steps:
       - Apply the Observer pattern with confidence the next time a one-to-many requirement appears
 
       ## What You Learned
-
-      Congratulations — you have completed the Observer Design Pattern tutorial. Here is a summary of your journey:
 
       ### Step-by-Step Recap
 

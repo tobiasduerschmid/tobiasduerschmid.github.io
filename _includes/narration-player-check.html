@@ -6,3 +6,14 @@
   <p class="tvm-quiz-status" role="status" aria-live="polite"></p>
   <button type="button" data-narration-action="review-scene"{% unless include.text_only %} hidden{% endunless %}>Review this scene</button>
 </section>
+<section class="narration-prediction" data-narration-prediction aria-labelledby="{{ include.id }}-prediction-title" hidden>
+  <h3 id="{{ include.id }}-prediction-title">Pause and predict</h3>
+  <p class="narration-prediction-prompt"></p>
+  <p>Take as long as you need. Make a prediction before revealing the explanation.</p>
+  <div class="narration-prediction-actions"><button type="button" data-narration-action="reveal-prediction">Reveal explanation</button></div>
+</section>
+<section class="narration-question-review" data-narration-question-review aria-labelledby="{{ include.id }}-review-title" hidden>
+  <h3 id="{{ include.id }}-review-title" tabindex="-1">Question review</h3>
+  <p data-narration-review-description></p>
+  <button type="button" data-narration-action="return-question">Return to question</button>
+</section>

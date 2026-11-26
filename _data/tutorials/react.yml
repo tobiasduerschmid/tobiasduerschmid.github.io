@@ -31,7 +31,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      Modern web UIs change constantly, and manually keeping the DOM in sync with your data is the #1 source of UI bugs. React eliminates that synchronization problem with a **declarative** model — but only if you make the mental shift from "tell the browser how to update" to "describe what the UI should look like." This shift is the single biggest hurdle for developers coming from imperative languages like C++ and Python.
+      Modern web UIs change constantly, and manually keeping the DOM in sync with your data is a common source of UI bugs. React eliminates that synchronization problem with a **declarative** model — but only if you make the mental shift from "tell the browser how to update" to "describe what the UI should look like." This shift is the single biggest hurdle for developers coming from imperative languages like C++ and Python.
 
       ### 🎯 You will learn to
 
@@ -65,10 +65,6 @@ steps:
       | **Analogy** | Turn-by-turn GPS directions | Dropping a pin on the destination |
       | **DOM updates** | You call `element.textContent = ...` | React diffs the Virtual DOM and patches only what changed |
       | **Bugs** | Easy to forget a step, leaving stale UI | React re-renders the whole component; inconsistent state is much harder |
-
-      ### A Note About the Paradigm Shift
-
-      The declarative mindset feels strange at first — you are used to telling the computer exactly what to do, step by step. In React, you describe the destination and let React figure out the route. This shift takes time. If it feels unnatural, that is a sign you are learning something fundamentally new, not that you are doing it wrong. Every React developer went through this disorientation.
 
       ### HTML Tags — A Quick Reminder
 
@@ -247,7 +243,7 @@ steps:
           explanation: |
             This is a real trade-off. For a static page or 2-3 interactive widgets, vanilla JS is
             perfectly fine and simpler. But as interactivity scales, manually synchronizing data and
-            DOM becomes the #1 source of bugs. React's value proposition is eliminating that
+            DOM becomes a common source of bugs. React's value proposition is eliminating that
             synchronization — you declare what the UI looks like for each state, and React handles the rest.
 
   # --------------------------------------------------------------------------
@@ -263,7 +259,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      JSX looks like HTML, and that resemblance is a trap: it tricks your HTML instincts into writing code that compiles to subtly wrong JavaScript. Most beginner React bugs are JSX syntax mistakes — `class` instead of `className`, `onclick` instead of `onClick`, missing self-closing slashes. Spot these now and you save yourself hours of confused debugging later.
+      JSX looks like HTML but compiles to JavaScript, so some HTML habits produce errors or warnings. Most beginner React bugs are JSX syntax mistakes — `class` instead of `className`, `onclick` instead of `onClick`, missing self-closing slashes. Spot these now and you save yourself hours of confused debugging later.
 
       ### 🎯 You will learn to
 
@@ -834,7 +830,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      This step is where most students get stuck. The idea that changing a variable doesn't update the UI — and that you need a special React function to do it — feels deeply wrong after years of imperative programming. That confusion is normal and expected. Every React developer had the same "but why doesn't this just work?" moment.
+      In React, changing a regular variable doesn't update the UI, because React can't detect the change and the variable resets on every render. `useState` gives you a value that survives re-renders and a setter that tells React to render again.
 
       ### 🎯 You will learn to
 
@@ -842,7 +838,7 @@ steps:
       - Analyze why regular variables don't trigger re-renders (and why mutating arrays in place doesn't either)
       - Evaluate when to use the functional update form `setCount(prev => prev + 1)` to avoid stale closures
 
-      ## Try It First (Productive Failure)
+      ## Try It First
 
       **Before reading further**, look at the counter code below. It doesn't work — clicking +1 does nothing. Spend 2 minutes trying to fix it using what you know from C++ and Python. What approaches did you try? Why didn't they work?
 
@@ -1169,8 +1165,6 @@ steps:
             Two problems: (1) React doesn't know about the global variable, so changing it doesn't trigger a re-render. (2) Global state is shared across ALL instances of the component — if you render two `<Counter />` components, they'd share the same counter. `useState` is per-instance and triggers re-renders. This is the same reason C++ classes use member variables, not global variables.
 
         - question: |
-            *(Interleaving — Which concept applies?)*
-
             For each scenario, identify the React concept needed:
             **(a)** A greeting card that shows different names for different users
             **(b)** A like counter that tracks clicks
@@ -1186,7 +1180,6 @@ steps:
             (a) Showing different data for different users = **props** — the parent passes `name` to the card.
             (b) Tracking clicks that change over time = **state** (`useState`) — clicks are user-initiated changes.
             (c) `class` vs `className` = **JSX rules** — `className` is the canonical React DOM prop; using a string `class` attribute produces a development warning.
-            This question forces you to discriminate between the three concepts rather than recall one in isolation.
 
         - question: "A component has three diagnostics: a warning recommends `className`, a click handler does nothing, and an image tag causes a syntax error. Which combination accounts for them?"
           type: single
@@ -1212,7 +1205,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      Real apps render collections — task lists, product grids, search results — and React needs you to think about lists differently than C++ and Python do. If you have always used `for` loops to iterate over arrays, the `.map()` pattern will feel unfamiliar at first. You might think: "Why can't I just use a `for` loop?" You can — but `.map()` produces a new array without mutating the original, which is exactly what React needs. Get this right and you unlock 80% of real-world UI work.
+      Real apps render collections — task lists, product grids, search results — and React needs you to think about lists differently than C++ and Python do. If you have always used `for` loops to iterate over arrays, the `.map()` pattern will feel unfamiliar at first. You might think: "Why can't I just use a `for` loop?" You can — but `.map()` produces a new array without mutating the original, which is exactly what React needs.
 
       ### 🎯 You will learn to
 
@@ -1434,7 +1427,7 @@ steps:
             Use `key={user.id}` — a stable, unique identifier from the data. Avoid: index (breaks with reordering/deletion), `Math.random()` (changes every render, forcing unmount/remount), and object references (React uses string comparison).
 
         - question: |
-            *(Spaced review — Step 3: Props)*
+            *(Review: Step 3, Props)*
 
             A `TaskItem` component needs to let the user mark a task as done. The task data comes from the parent via props. Which approach is correct?
           type: single
@@ -1477,7 +1470,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      This step is a turning point: you are combining `useState` (Step 4) with `.map()` and `.filter()` (Step 5) into a single interactive component. If it feels harder than previous steps, that is because it IS harder — you are integrating multiple skills simultaneously for the first time. Take it one piece at a time: get the buttons rendering first, then wire up the filter logic.
+      This step is a turning point: you are combining `useState` (Step 4) with `.map()` and `.filter()` (Step 5) into a single interactive component. Take it one piece at a time: get the buttons rendering first, then wire up the filter logic.
 
       ### 🎯 You will learn to
 
@@ -1839,8 +1832,6 @@ steps:
           explanation: "The ternary `filter === 'done' ? 'primary' : 'outline-secondary'` switches the button's style based on the current filter state. The distractor `onClick={setFilter('done')}` calls `setFilter` immediately during render (because of the `()`) instead of creating a function that calls it on click — a classic React bug."
 
         - question: |
-            *(Interleaving — Which concept applies?)*
-
             A teammate's code has a bug: the filter buttons work correctly, but clicking 'Add to Cart' doesn't update the cart count. Which concept is MOST LIKELY the problem?
           type: single
           options:
@@ -1852,12 +1843,10 @@ steps:
           explanation: |
             If filter buttons work, state and re-rendering are functional for the filter.
             But if the cart count never updates, the cart data isn't triggering re-renders — the
-            most likely cause is using a plain variable instead of `useState`. This requires
-            discriminating between a state problem (Step 4), a key problem (Step 5), a method
-            problem, and a JSX syntax problem (Step 2) — interleaving across all prior concepts.
+            most likely cause is using a plain variable instead of `useState`.
 
         - question: |
-            *(Spaced review — Step 4: useState)*
+            *(Review: Step 4, useState)*
 
             A shopping cart component has this handler:
             ```jsx
@@ -1882,7 +1871,7 @@ steps:
             This combines the batching concept (Step 4) with the immutable array update pattern.
 
         - question: |
-            *(Spaced review — Step 1: Declarative vs Imperative)*
+            *(Review: Step 1, Declarative vs Imperative)*
 
             A counter component needs to display the count and update when clicked. A student proposes three approaches. Which is correct?
 
@@ -1900,8 +1889,7 @@ steps:
             This question combines three concepts: (A) direct DOM manipulation bypasses React's
             declarative model (Step 1); (C) plain variables reset on every render and don't trigger
             re-renders (Step 4); (B) `useState` is the correct pattern — it persists across renders
-            and triggers re-rendering. The student must discriminate between declarative vs. imperative
-            (Step 1) AND state vs. plain variables (Step 4).
+            and triggers re-rendering.
 
   # --------------------------------------------------------------------------
   # STEP 7: Composition — Thinking in React
@@ -1917,7 +1905,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      This step asks you to combine everything you have learned into a structured design process. It is normal to feel overwhelmed by the number of moving parts — components, props, state, lists, conditionals. Take it one step at a time: start with a static version (no state), then add interactivity piece by piece.
+      This step asks you to combine components, props, state, lists, and conditionals into a structured design process. Take it one step at a time: start with a static version (no state), then add interactivity piece by piece.
 
       ### 🎯 You will learn to
 
@@ -2322,7 +2310,7 @@ steps:
             **Prop drilling** occurs when you pass props through layers of components that don't use them. Solutions: React Context API (for widely-shared state) or state management libraries. Rule of thumb: if drilling more than 2-3 levels, reconsider.
 
         - question: |
-            *(Spaced review — Step 5: Lists & Keys)*
+            *(Review: Step 5, Lists & Keys)*
 
             A drag-and-drop todo list lets users reorder items. Each item has a text input for editing. The current code uses `key={index}`. A user drags item C from position 3 to position 1. What happens to the text typed into item A's input field?
           type: single
@@ -2336,8 +2324,7 @@ steps:
             With index-based keys, React identifies components by *position*. After reordering,
             position 0 is now item C, but React thinks it is still "the same component" (key=0) —
             so it keeps item A's old input state and pairs it with item C's text. This is why stable
-            IDs (`key={task.id}`) are essential for dynamic lists. This tests the *consequence*
-            of bad keys in a realistic scenario, not just the rule.
+            IDs (`key={task.id}`) are essential for dynamic lists.
 
   # --------------------------------------------------------------------------
   # STEP 8: Integration Project — Build a Mini Store
@@ -2352,11 +2339,11 @@ steps:
     instructions: |
       ### Why this matters
 
-      In Steps 1-7 you had scaffolding: pre-built component signatures, provided data, and step-by-step task lists. This step has **none of that**. You decide the component hierarchy, where state lives, and how data flows. If you feel uncertain, that's actually a good sign — every professional React developer went through this exact transition from "I can follow tutorials" to "I can build from scratch." It is supposed to feel like a stretch.
+      In Steps 1-7 you had pre-built component signatures, provided data, and step-by-step task lists. This step has **none of that**. You decide the component hierarchy, where state lives, and how data flows.
 
       ### 🎯 You will learn to
 
-      - Create a complete React application from scratch with no scaffolding
+      - Create a complete React application from scratch with no starter code
       - Apply every prior skill (components, props, state, lists, filtering, composition) in an integrated design
       - Evaluate which component owns each piece of state using the lowest-common-ancestor rule
 
@@ -2404,7 +2391,7 @@ steps:
       - path: "step8/App.jsx"
         content: |
           // Integration Project: Build a mini product store.
-          // No scaffolding — apply everything you have learned.
+          // No starter code — apply everything you have learned.
           // Available: ReactBootstrap.Card, .Button, .Badge, .ButtonGroup, .ListGroup, etc.
           const { Card, Button, Badge, ButtonGroup } = ReactBootstrap;
 
@@ -2722,7 +2709,7 @@ steps:
 
         # ---- Comprehensive review: Steps 1-7 ----
         - question: |
-            *(Comprehensive review — Step 1: Declarative Paradigm)*
+            *(Review: Step 1, Declarative Paradigm)*
 
             A teammate suggests using `document.getElementById('counter').textContent = newCount` inside a React component to update the display. What happens?
           type: single
@@ -2735,7 +2722,7 @@ steps:
           explanation: "Direct mutation can leave the real DOM out of sync with React. A later commit may overwrite it, but an unchanged JSX value need not cause React to touch that DOM node on the next render. Update state so React owns the synchronization."
 
         - question: |
-            *(Comprehensive review — Step 2: JSX)*
+            *(Review: Step 2, JSX)*
 
             A component renders but the event handler never fires: `<button onclick={() => setCount(count + 1)}>Click</button>`. The button appears but clicking does nothing. What is wrong?
           type: single
@@ -2751,7 +2738,7 @@ steps:
             but never responds to clicks. This is a very common "why doesn't my button work?" bug.
 
         - question: |
-            *(Comprehensive review — Step 3: Props)*
+            *(Review: Step 3, Props)*
 
             A `ProfileCard` component accepts `user` as a prop. Inside it, you write `user.name = 'Anonymous'` to hide the real name. What is the problem?
           type: single
@@ -2768,7 +2755,7 @@ steps:
             `const displayName = user.name || 'Anonymous'`.
 
         - question: |
-            *(Comprehensive review — Step 4: useState)*
+            *(Review: Step 4, useState)*
 
             What is wrong with `<button onClick={handleClick()}>Go</button>`?
           type: single
@@ -2785,7 +2772,7 @@ steps:
             in an arrow function: `onClick={() => handleClick()}`.
 
         - question: |
-            *(Comprehensive review — Step 5: Keys)*
+            *(Review: Step 5, Keys)*
 
             Two separate `<ul>` lists in the same component both have items with `key="1"`, `key="2"`, etc. Does this cause a problem?
           type: single
@@ -2801,7 +2788,7 @@ steps:
             to each parent, not globally.
 
         - question: |
-            *(Comprehensive review — Step 7: Composition)*
+            *(Review: Step 7, Composition)*
 
             You need a `WarningDialog` and an `InfoDialog` that share the same layout (title bar, close button, body area) but show different content. Which approach is most aligned with React's philosophy?
           type: single
@@ -2817,7 +2804,7 @@ steps:
             This avoids the fragile base class problem of inheritance and the maintenance burden of copy-paste.
 
         - question: |
-            *(Comprehensive review — Design challenge)*
+            *(Review: Design challenge)*
 
             You are building a playlist app. Users can add songs, remove songs, and filter by genre. Which correctly identifies the **minimal** state?
           type: single
@@ -2843,7 +2830,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      You walked into this tutorial knowing C++ and Python; you are walking out with a working knowledge of React and modern declarative UI development. Taking a moment to consolidate what you learned — and to recognize the arc from your first JSX bug to a fully-featured app — turns a sequence of exercises into durable knowledge you can transfer to the next framework you encounter.
+      Reviewing what you learned, from your first JSX bug to a full app, shows which ideas you can already use on your own and which are worth revisiting before the next framework.
 
       ### 🎯 You will learn to
 
@@ -2852,7 +2839,7 @@ steps:
 
       ## You Built a React App From Scratch
 
-      Take a moment to appreciate what you just did. You walked into this tutorial knowing C++ and Python. You are walking out with a working knowledge of React and modern declarative UI development.
+      You walked into this tutorial knowing C++ and Python. You are walking out with a working knowledge of React and modern declarative UI development.
 
       ### Here is everything you learned:
 
@@ -2895,7 +2882,7 @@ steps:
       - The "Thinking in React" methodology: decompose → static version → add state → add data flow
 
       **Full Integration (Step 8)**
-      - You designed and built a complete React app with zero scaffolding
+      - You designed and built a complete React app with no starter code
       - You chose the component hierarchy, decided where state lives, and wired up data flow
       - You combined every skill: components, props, state, lists, keys, filtering, composition
 
@@ -2909,11 +2896,3 @@ steps:
       - **Custom Hooks** — Extracting reusable stateful logic
       - **TypeScript + React** — Type safety for props and state (your C++ instincts will love this)
       - **Testing** — React Testing Library for component tests
-
-      ### One Last Thing
-
-      Remember Step 4, when a regular variable didn't update the UI and everything felt broken? You got past that. Remember Step 8, when the scaffolding disappeared and you had to design everything yourself? You built it anyway.
-
-      Every concept that felt confusing at first — JSX syntax, the declarative paradigm, immutable state updates — is now a tool in your kit. The next time something in React doesn't click immediately, remember: you have already proven you can push through the confusion and come out the other side.
-
-      Now go build something.

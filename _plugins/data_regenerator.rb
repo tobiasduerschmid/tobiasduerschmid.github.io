@@ -20,7 +20,7 @@ module Jekyll
     FLASHCARDS_INCLUDE_RE = /\{%\s*include\s+flashcards\.html\s+id=["']([^"']+)["']/
     TOPIC_INCLUDE_RE      = /\{%-?\s*include\s+[\w.-]+\s[^%]*?\btopic=["']([^"']+)["']/
     # The per-lesson companions that narration includes read from _data/explainers/.
-    NARRATION_COMPANIONS  = %w[notes timing code quizzes ui]
+    NARRATION_COMPANIONS  = %w[notes timing code quizzes ui study]
     AUTO_ABBR_LAYOUTS      = %w[sebook sebook-combined tutorial print-tutorial blog-post]
 
     def self.collect_deps(doc, source)

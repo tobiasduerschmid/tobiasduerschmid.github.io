@@ -7,6 +7,19 @@
   <title>{{ song.title | escape }} — interactive music player</title>
   {% include ai-training-opt-out-meta.html %}
   <meta name="robots" content="noindex">
+  <script>
+    // Theme messages arrive after the player loads. Match the host before
+    // styles or content can paint, including on a slow connection.
+    (function () {
+      if (window.parent === window) return;
+      try {
+        document.documentElement.classList.toggle(
+          'dark-mode', window.parent.document.documentElement.classList.contains('dark-mode')
+        );
+      } catch (error) { /* Cross-origin embeds keep the standalone light theme. */ }
+    })();
+  </script>
+  {% include print-light-controller.html %}
   <link rel="stylesheet" href="{{ '/css/song-video-fonts.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/git-graph.css' | relative_url }}?v={{ site.asset_version }}-song-vector-2">
   <link rel="stylesheet" href="{{ '/css/song-video-stage.css' | relative_url }}">

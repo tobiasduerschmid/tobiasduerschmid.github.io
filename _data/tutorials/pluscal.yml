@@ -1483,7 +1483,7 @@ steps:
 
       ### A claim worth making
 
-      For your own capstone, write three short sentences:
+      For your own retry model, write three short sentences:
 
       1. **Requirement and scope:** which properties did TLC finish checking, for which RetryLimit values?
       2. **Assumptions:** where did you assume atomic steps or fair scheduling, and what would justify them in an implementation?
@@ -1514,7 +1514,7 @@ steps:
 
       ### A later return
 
-      On another day, before rereading, model two players claiming the final team slot. Produce an unsafe interleaving, a justified atomic repair, and one progress assumption. Then classify a fresh response behavior and explain one vacuous success. Compare against your earlier notes only after committing an answer. This is retrieval and transfer practice; today's completion is not a measurement of next week's retention.
+      On another day, before rereading, model two players claiming the final team slot. Produce an unsafe interleaving, a justified atomic repair, and one progress assumption. Then classify a fresh response behavior and explain one vacuous success. Compare against your earlier notes only after committing an answer.
 
       Continue with the [TLA+ and PlusCal exploration](/SEBook/verification/tla-tutorial) to see explicit TLA+ actions. The [PlusCal C-syntax manual](https://lamport.azurewebsites.net/tla/c-manual.pdf) is the language reference.
     files:

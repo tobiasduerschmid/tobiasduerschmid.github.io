@@ -1,7 +1,7 @@
 'use strict';
 const { createHash } = require('node:crypto');
 
-const SHARED_STYLES = ['/css/song-video-fonts.css', '/css/narrated-explainer.css'];
+const SHARED_STYLES = ['/css/song-video-fonts.css', '/css/narrated-explainer.css', '/css/narration-study.css'];
 const PRESENTATIONS = {
   video: {
     include: 'video-narration.html',

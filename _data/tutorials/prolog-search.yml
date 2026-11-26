@@ -1175,13 +1175,13 @@ steps:
 
       </details>
 
-      ### A Spaced Return
+      ### Come Back Later
 
       Tomorrow, hide the solutions and rebuild either the reverse helper or
       interleave from its contract. Then change this search so the first
       track must precede a specified track elsewhere in the order. Before
       writing code, decide whether you need a generator, an arithmetic check,
-      a list relation, or a combination. That decision is the skill to retain.
+      a list relation, or a combination. That decision is the part to practice.
     default_query: "permutation([lofi, jazz, ambient], Order)"
     files:
       - path: "/tutorial/search-09-playlist.pl"

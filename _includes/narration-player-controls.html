@@ -14,7 +14,7 @@
     seek_label   the position slider's accessible name
     scenes       the story's scenes, for the scene select
     scene_label  the scene select's label (default "Scene")
-    speed_label, rates   see narration-player-speed.html
+    speed_label  see narration-player-speed.html
     lead         controls before the transport, such as a case study's steps
     view         choices that stay in the bar, before the view controls,
                  such as a lesson's code language
@@ -66,10 +66,12 @@
     <div class="nja-settings">
       {% include narration-player-scene-select.html scenes=include.scenes label=include.scene_label %}
       {%- unless include.text_only %}
-      {% include narration-player-speed.html label=include.speed_label rates=include.rates %}
+      {% include narration-player-speed.html label=include.speed_label %}
       {%- endunless %}
       <label>Caption size<select class="vn-caption-size"><option value="1" selected>100%</option><option value="1.25">125%</option><option value="1.5">150%</option><option value="2">200%</option></select></label>
       <label class="nja-motion"><input type="checkbox" class="vn-landscape" checked> Landscape in full screen</label>
+      <label class="nja-motion"><input type="checkbox" data-setting="prediction" checked> Pause and predict</label>
+      <label class="nja-motion"><input type="checkbox" data-setting="final-check-only"> Only pause for the final knowledge check</label>
       {{- include.settings -}}
     </div>
   </section>
