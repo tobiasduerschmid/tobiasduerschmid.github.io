@@ -253,6 +253,21 @@ phase notes) is fine and even encouraged on steps where the pedagogy is
 load-bearing. `# Bloom: <verbs>` comments are *optional* — add them when
 they help future editors, but they're not required.
 
+**The rationale stays in the comment.** Student-facing text (instructions,
+hints, test names, quiz stems, options, feedback, explanations) never names
+the technique or cites learning research. Leave out terms such as retrieval,
+spaced review, interleaving, schema, transfer, scaffolding, productive
+failure, desirable difficulty, threshold concept, growth mindset, Variation
+Theory, PRIMM and Bloom, and statistics about retention. Give the instruction
+itself, with at most one plain clause of reason: "Answer from memory before
+you scroll up, so you can see what you have forgotten." When a step is hard,
+say what to do when stuck (which step to revisit, what an error usually
+means) instead of generic reassurance ("that's normal", "every developer
+went through this"). Do not state percentages, "most common" or "#1" claims
+unless the tutorial cites a source that supports them. Drafts written with
+this skill loaded have repeated its own rationale to students; reread new
+student text for it.
+
 **3. `instructions:` opens with `### Why this matters` + 🎯 list.** The
 first ~10 lines of every step's `instructions:` follow this exact shape:
 
@@ -712,6 +727,9 @@ students are confused" reports.
       `tdd.yml` (`Cycle N — RED/GREEN/REFACTOR:` prefix).
 - [ ] **Every step has a `# Pedagogy:` YAML comment** immediately above
       its `- title:` line, naming the PRIMM phase or the named technique.
+- [ ] **No pedagogy talk in student text.** Technique names, learning-research
+      claims, and unsourced statistics stay out of instructions, hints, and
+      quizzes (see "The rationale stays in the comment" in §1).
 - [ ] **Every step's `instructions:` opens with the canonical block:**
       `### Why this matters` + a short paragraph (usually 1–2 sentences)
       motivating the transferable skill and its practical value,

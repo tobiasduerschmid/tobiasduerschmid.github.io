@@ -45,7 +45,7 @@ steps:
 
       ### Why this matters
 
-      Before you care *how* a Makefile works, you need to feel *why* it exists. Every build tool exists to solve a real pain — and you'll appreciate Make's design only after you've suffered through manual compilation. Let's feel that pain first.
+      Compiling a multi-file C program by hand shows you what Make saves you, such as recompiling files that did not change.
 
       ### Prerequisites
 
@@ -68,7 +68,7 @@ steps:
       gcc main.c math.c io.c -o app
       ```
 
-      **Oh no!** The compilation failed. There is a syntax error in `math.c`.
+      The compilation fails because `math.c` has a syntax error.
 
       ### Task 2: Fix the error and recompile
 
@@ -81,7 +81,7 @@ steps:
 
       <details markdown="1"><summary>📖 Yes, you can press Up arrow next time</summary>
 
-      Real shells let you scroll through history with the Up arrow. We made you re-type the command on purpose — the typing time *is* the lesson. In real projects, the typing time per command is small but the *recompile* time per command is huge, and the recompile time is what makes manual builds untenable. Once you've felt that, use Up arrow / `Ctrl-R` / shell aliases as much as you like.
+      Real shells let you scroll through history with the Up arrow. In real projects the typing is quick, and the *recompile* time is what makes manual builds untenable. From now on, use Up arrow / `Ctrl-R` / shell aliases as much as you like.
 
       </details>
 
@@ -830,7 +830,7 @@ steps:
             - "The shell's exit code from the last command"
           correct_index: 2
           option_feedback:
-            0: "That's `$^` — all prerequisites. The `^` mnemonic is 'caret = up = the top half (target side)? — no, opposite — `^` is *all* prereqs.'"
+            0: "That describes `$^`, which expands to all prerequisites; `$@` is the target, the file to the left of the colon."
             1: "That's `$<` — the first prerequisite. The `<` looks like an arrow pointing into the rule from the left."
             3: "Make doesn't expose shell exit codes in its variable namespace. `$?` in shell is the exit code; `$?` in Make is 'all newer-than-target prereqs'. Different namespaces."
           explanation: "`$@` always expands to the **target** name. In `app: $(OBJS)`, using `$@` in the recipe gives you `app`. Think: `@` looks like a target symbol."
@@ -874,7 +874,7 @@ steps:
             1: "If automatic-variable syntax were wrong, Make would report it more specifically (e.g., 'invalid variable name'). 'missing separator' is Make's signature for the Tab problem."
             2: "Missing gcc would surface as 'gcc: command not found' from the *shell*, after Make tries to run the recipe. The 'missing separator' error happens at parse time, before any commands run."
             3: "Missing source files are reported as 'No rule to make target' at execution time. 'missing separator' is a parser-level error, not an I/O one."
-          explanation: "The 'missing separator' error is Make's cryptic way of saying it found spaces where it expected a Tab. This remains the #1 cause of build failures, even in advanced professional Makefiles."
+          explanation: "The 'missing separator' error is Make's cryptic way of saying it found spaces where it expected a Tab. Indenting a recipe with spaces is a common Makefile mistake."
 
         - question: |
             Pattern rules use the same `target: prerequisites` structure you learned in Step 2. In the rule below, identify the **target**, the **prerequisites**, and the **recipe**:
@@ -1039,7 +1039,7 @@ steps:
       -include $(OBJS:.o=.d)   # pull in the generated .d files
       ```
 
-      We don't do that here — it's beyond essentials. But know: **plain Makefiles silently miss header dependencies.** If you ever wonder "why does my code segfault even though everything compiled?", a stale `.o` against a changed `.h` is the #1 suspect. Always run `make clean && make` after pulling header changes from a teammate.
+      We don't do that here — it's beyond essentials. But know: **plain Makefiles silently miss header dependencies.** If you ever wonder "why does my code segfault even though everything compiled?", a stale `.o` against a changed `.h` is a likely cause. Always run `make clean && make` after pulling header changes from a teammate.
 
       </details>
 

@@ -233,9 +233,9 @@ steps:
       - `%.2f` — show exactly 2 decimal places
       - `%05d` — pad with zeros: `00042`
 
-      ### Predict Before You Run (PRIMM)
+      ### Predict Before You Run
 
-      Before compiling, **predict** what each line in `format_lab.c` will print. Write down your predictions on paper, then compile and check. This predict-then-verify cycle is called **PRIMM** (Predict, Run, Investigate, Modify, Make) — and it's one of the most effective ways to learn a new language's quirks.
+      Before compiling, **predict** what each line in `format_lab.c` will print. Write down your predictions on paper, then compile and check.
 
       ```bash
       gcc -Wall -std=c11 format_lab.c -o format_lab
@@ -386,7 +386,7 @@ steps:
     instructions: |
       ### Power Unlocked: Reading Input (with great danger)
 
-      Every superpower has a dark side. `scanf` lets you hear the user — but it's also how most C programs get hacked.
+      Every superpower has a dark side. `scanf` lets you hear the user, but unbounded `scanf("%s", ...)` is a common source of buffer overflows.
 
       `scanf` reads formatted input from the user. It uses the same `%` specifiers as `printf`, but with a critical difference: **scanf needs pointers** because it must *store* the input somewhere.
 
@@ -602,7 +602,7 @@ steps:
 
       This is the big one. The power that separates C programmers from everyone else: **you control memory directly**. No garbage collector. No smart pointers. Just you and the heap. With great power comes great responsibility — and great bugs.
 
-      This step teaches you the discipline that prevents the silent memory bugs that have crashed real systems for decades. You'll meet the grim student-error stats at the boss fight in step 11 — for now, focus on building the schema that prevents them.
+      This step teaches the four-question Ownership Rule below, a habit that prevents silent memory bugs such as leaks and use-after-free.
 
       ### 🎯 You will learn to
 
@@ -1233,7 +1233,7 @@ steps:
       - **No constructors/destructors** — you write init/cleanup functions yourself
       - **No inheritance** — you can nest structs for composition
 
-      ### ⚠️ Negative-transfer trap: `struct` defaults differ between C++ and C
+      ### ⚠️ Habit from C++: `struct` defaults differ between C++ and C
 
       If your C++ habit is "`struct` and `class` are basically the same", *unlearn it for C*:
 
@@ -1291,7 +1291,7 @@ steps:
       2. **First parameter is `Type *self`** — by convention. The function knows nothing about its receiver until you hand it one. Pass `&p` at the call site instead of writing `p.translate`.
       3. **Use `const Type *self` for read-only access** — `point_magnitude` doesn't modify `p`, so its parameter is `const Point *`. This is C's best approximation of a C++ `const` method.
 
-      ### ⚠️ Negative-transfer trap: struct assignment is *fieldwise*, not *deep*
+      ### ⚠️ Habit from C++: struct assignment is *fieldwise*, not *deep*
 
       In C++, you'd reach for a copy constructor to control what happens when one object is copied to another. C has no copy constructors. **Struct assignment in C is a literal byte-by-byte copy of the fields.** That's fine for value-type structs (like `Point` above) — but it's a trap for any struct that holds a pointer to heap memory.
 
@@ -1562,7 +1562,7 @@ steps:
     instructions: |
       ### Power Unlocked: One Memory Location, Many Forms
 
-      This power is subtle but deadly useful. A union lets a single block of memory *shape-shift* between different types — like a Pokemon swapping between Fire, Water, and Electric attack types using the same move slot. It's normal to wonder "when would I ever use this?" The answer: unions show up in parsers, network protocols, every Pokemon-style "this thing can be one of N variants" system, and any code that handles multiple data shapes through the same interface. If this step feels harder than previous ones, that's expected — you're building a more sophisticated mental model.
+      A union lets a single block of memory *shape-shift* between different types — like a Pokemon swapping between Fire, Water, and Electric attack types using the same move slot. Unions show up in parsers, network protocols, and any code that stores one of several kinds of data in the same slot.
 
       ### 🎯 You will learn to
 
@@ -1636,7 +1636,7 @@ steps:
       } TaggedValue;
       ```
 
-      ### ⚠️ Negative-transfer trap: this is *not* `std::variant`
+      ### ⚠️ Habit from C++: this is *not* `std::variant`
 
       C++17 introduced `std::variant<int, double, std::string>` — a type-safe tagged union with constructors, destructors, and the `std::visit` machinery to dispatch on the active alternative. C has *none* of that. The C tagged-union pattern is what `std::variant` was *built on top of*. In C:
 
@@ -2200,7 +2200,7 @@ steps:
 
       Array decay and pass-by-value are the kryptonite of C programmers. More bugs come from misunderstanding these two concepts than from almost anything else in the language. This step is a trial — survive it, and you'll have the mental model that separates beginners from real systems programmers.
 
-      **Scaffolding pause:** You've been writing code from scratch in the last few steps. Now we're deliberately giving you back some scaffolding — pre-written buggy code to debug — because this concept is a notorious trap even for experienced programmers. Finding bugs is the right exercise type here: it forces you to reason about *why* code breaks, which is exactly the skill you need for array/pointer issues.
+      This step gives you buggy starter code to debug.
 
       ### 🎯 You will learn to
 
@@ -2225,7 +2225,7 @@ steps:
       }
       ```
 
-      **This is the #1 source of bugs in C array code.** The function signature `int arr[]` is *identical* to `int *arr` — it's just syntactic sugar.
+      Forgetting that arrays decay is a common source of bugs in C array code. The function signature `int arr[]` is *identical* to `int *arr` — it's just syntactic sugar.
 
       ### Quick Refresh: The Pointer Lifecycle (from Step 4)
 
@@ -2780,19 +2780,17 @@ steps:
       - Apply `head` and `tail` pointers to insert at the tail in O(1).
       - Analyze a 3-node trace by hand before writing code, predicting `malloc` / `free` counts and the loop-termination condition.
 
-      ### ⚠️ Negative-transfer trap: in C++ you'd just `#include <list>`
+      ### ⚠️ Habit from C++: in C++ you'd just `#include <list>`
 
       In C++ you'd reach for `std::list<int>` (doubly-linked) or `std::forward_list<int>` (singly-linked) and the standard library would handle every memory bug for you — `push_back`, `pop_front`, the destructor, the works. The C standard library has *none of that.* No `list.h`, no built-in container. **Every linked-list operation in C is hand-rolled** — you write the struct, the malloc, the traversal, the free, and the bug fixes when one of those goes sideways. That's why this is the capstone: it's the moment the C++ training wheels come off.
 
-      **Why linked lists are the ultimate pointer test:** When researchers tracked real student code, three categories of pointer errors accounted for nearly all bugs:
+      Building a linked list exercises three common categories of pointer error:
 
-      | Error Category | % of Students Who Make It |
-      |----------------|--------------------------|
-      | Memory leak (pointer leaves scope without free) | 74% |
-      | Dereferencing a dead pointer (use-after-free) | 70% |
-      | Dereferencing a null pointer | 57% |
+      - Memory leak (pointer leaves scope without free)
+      - Dereferencing a dead pointer (use-after-free)
+      - Dereferencing a null pointer
 
-      Building a linked list exercises all three. Pay special attention to freeing nodes and checking for NULL.
+      Pay special attention to freeing nodes and checking for NULL.
 
       ### Requirements
 
@@ -2831,7 +2829,7 @@ steps:
       - In `list_free`, the `curr` pointer takes how many distinct values during the walk? (Hint: it visits every node exactly once, plus one terminal value.)
       - When `list_print` prints node 3, what does `curr->next` equal? What stops the loop?
 
-      Once you have these numbers, *then* start coding `node_create` / `list_print` / `list_free`. The implementation almost writes itself once the picture is clear. Without the picture, every implementation move is guesswork — and guesswork is why 70% of students hit use-after-free.
+      Once you have these numbers, *then* start coding `node_create` / `list_print` / `list_free`. The implementation almost writes itself once the picture is clear. Without the picture, every implementation move is guesswork, and guesswork often ends in use-after-free.
 
       ### Example Run
 
@@ -3053,7 +3051,7 @@ steps:
         hints:
           - text: "What's the danger of `curr = curr->next` *after* `free(curr)`? You're reading from memory you just released — undefined behavior."
             condition: "code_missing: free"
-          - text: "Strategy: save `curr->next` into a local `next` *before* calling `free(curr)`, then advance `curr = next`. The audit data is grim: 70% of students hit this exact use-after-free bug."
+          - text: "Strategy: save `curr->next` into a local `next` *before* calling `free(curr)`, then advance `curr = next`."
             condition: "code_contains: free"
           - text: "Skeleton:\n```c\nvoid list_free(Node *head) {\n    Node *curr = head;\n    while (curr != NULL) {\n        Node *next = ___;   // save BEFORE freeing\n        free(curr);\n        curr = ___;          // then advance\n    }\n}\n```"
             condition: "output_contains: use-after-free"

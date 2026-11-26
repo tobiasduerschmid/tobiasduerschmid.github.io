@@ -837,7 +837,7 @@ steps:
       1. `swap_coords(p)` — swap one point's own `x_` and `y_` in place. The
          caller has to see the change without reassigning anything.
       2. `swap_points(a, b)` — write the naive version on purpose: the one you'd
-         write the naive version on purpose: the one you’d write if you thought that python parameters worked like C++ references.
+         write if you thought that Python parameters worked like C++ references.
          Reassign `a` and `b` to each other and nothing else. Don't
          touch their member variables.
 
@@ -1744,8 +1744,7 @@ steps:
       Note the difference between `[5] + x` and `x.append(5)`. The first builds
       a new list with 5 in the front and leaves `x` unchanged. 
       The second changes the list the caller is holding. 
-      You may never change the original (i.e., treating the list as "immuatable") but instead create a new list with changed values; 
-      the restriction is that the input list must stay unchanged.
+      You may never change the original list (treat it as "immutable"); instead, create a new list with the changed values.
 
       ### 🔧 Your task
 

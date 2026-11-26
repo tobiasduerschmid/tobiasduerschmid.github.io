@@ -1613,8 +1613,6 @@ steps:
       3. Why does a self-call produce a *nested* activation box?
       4. If your Python method is `for x in xs: if x.valid: bot.send(x)` (no `else`), what two fragments appear — and in which order?
 
-      Retrieval before review is the learning — just reading the tables again is not.
-
       ---
 
       ### The Core Pieces
