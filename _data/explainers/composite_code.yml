@@ -1,7 +1,7 @@
 python:
   label: Python
   filename: composite_demo.py
-  note: An abstract base class makes the Tile role explicit. Photos are frozen dataclasses, so they never change and two stories can share one.
+  note: An abstract base class makes the Tile role explicit, and frozen dataclasses let two stories share one photo. draw adds one text line per tile, which the collage paints as a tile. Plain Python reports add on a Photo when the call runs; a type checker reports it earlier.
   imports: |
     from __future__ import annotations
 
@@ -186,7 +186,7 @@ python:
 java:
   label: Java
   filename: CompositeDemo.java
-  note: Tile is our own interface. Photos are records, so they never change and two stories can share one.
+  note: Tile is our own interface, and records let two stories share one photo. draw adds one text line per tile, which the collage paints as a tile.
   imports: |
     import java.util.ArrayList;
     import java.util.List;
@@ -399,7 +399,7 @@ java:
 cpp:
   label: C++
   filename: composite_demo.cpp
-  note: Splits hold their tiles through shared_ptr to const Tile, so a photo never changes and two stories can share one. Each class lists its data members first.
+  note: In the composite design, splits hold their tiles through shared_ptr to const Tile, so two stories can share one photo. draw adds one text line per tile, which the collage paints as a tile. Each class lists its data members first.
   imports: |
     #include <iostream>
     #include <memory>
@@ -621,7 +621,7 @@ cpp:
 typescript:
   label: TypeScript
   filename: composite-demo.ts
-  note: Tile is a TypeScript interface. Readonly fields keep a photo unchanged, so two stories can share one.
+  note: Tile is a TypeScript interface, and readonly fields let two stories share one photo. draw adds one text line per tile, which the collage paints as a tile.
   imports: |
     export {};
   blocks:

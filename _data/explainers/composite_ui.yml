@@ -131,7 +131,7 @@ panels:
     design: composite
     marked: [beach, cat, gig, taco]
     mark: Photo
-    note: Each photo answers draw and photo count from its own name, with nothing inside.
+    note: Each photo answers draw and photo count from its own data, with nothing inside.
   photo_shared:
     design: composite
     marked: [beach, cat, gig, taco]

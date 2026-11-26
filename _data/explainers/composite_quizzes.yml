@@ -7,7 +7,7 @@ intro:
     - A UML class diagram, a unit test suite, and a code template
     - A context, a recurring problem, a solution, and its consequences
   correct_index: 2
-  explanation: A pattern describes a problem that recurs in a context, a solution expressed as roles and collaborations, and the consequences of applying it.
+  explanation: A pattern describes a problem that recurs in a context, a solution expressed as roles that work together, and the consequences of applying it.
   option_feedback:
     0: A library is code to call. A pattern's description says when its design applies, which problem it solves, how it works, and what it costs.
     1: Diagrams and code illustrate a pattern, but without its context, problem, and consequences you cannot tell when to apply it.
@@ -20,8 +20,8 @@ context:
   correct_index: 0
   explanation: The Composite pattern applies to part-whole hierarchies in which some parts are wholes themselves, and whose clients want to ignore the difference between a single object and a group.
   option_feedback:
-    1: Choosing among interchangeable algorithms is the context of the Strategy pattern. Composite's context is a structure of parts that nests.
-    2: Notifying dependents of a change is the context of the Observer pattern. Composite's context is a structure of parts that nests.
+    1: Choosing among interchangeable algorithms involves no wholes made of parts. Composite's context is a structure of parts that nests.
+    2: Notifying dependents of a change involves no wholes made of parts. Composite's context is a structure of parts that nests.
 problem:
   question: In the Composite pattern's problem, code asks whether each item is a single item or a group. What happens when a new kind of item arrives?
   options:
@@ -73,54 +73,54 @@ collaborations:
     - Each leaf reports its answer to the root ahead of time, before anyone asks
     - The outer composite forwards it to the inner one, which forwards it again
   correct_index: 2
-  explanation: Each composite forwards the request to its children, and each leaf answers it directly, so one call on the root reaches every leaf, level by level.
+  explanation: Each composite forwards the request to its children, and each leaf answers it directly, so one call on the outer composite reaches every leaf, level by level.
   option_feedback:
-    0: The client makes one call on the root and never walks the tree. The composites pass the request down.
+    0: The client makes one call on the outer composite and never walks the tree. The composites pass the request down.
     1: A leaf answers only when it is asked. Each composite asks its children when its own request arrives.
 solution:
-  question: In the Composite pattern, which role does the photo collage's ShareButton play?
+  question: In a Composite pattern drawing app, an Export button asks whatever is selected, one shape or a whole group, to export itself. Which role does the Export button play?
   options:
     - Client, which uses only the Component interface
     - Composite, which holds children and forwards requests to them
     - Leaf, which answers requests itself and has no children
   correct_index: 0
-  explanation: The Share button holds a Tile and calls draw on it without knowing its kind, so it is a Client of the Component interface.
+  explanation: The Export button holds a selected item and calls one request on it without knowing its kind, so it is a Client of the Component interface.
   option_feedback:
-    1: Split plays the Composite role, because it holds Tiles. The Share button holds one selection and only calls draw on it.
-    2: Photo plays the Leaf role. The Share button is not part of the tree; it uses the tree.
+    1: Groups play the Composite role, because they hold children. The Export button holds one selection and only calls a request on it.
+    2: Single shapes play the Leaf role. The Export button is not part of the structure; it uses the structure.
 consequences:
-  question: Which consequence of the Composite pattern explains why the Share button needs no change when a new kind of tile is added?
+  question: In the Composite pattern, which consequence lets one client call handle a single item or a whole group with the same code?
   options:
     - Composites can contain composites, so the tree can nest without limit
     - Clients treat single items and groups alike, with no type checks
     - Add in the composite is checked before the program runs
   correct_index: 1
-  explanation: Clients use only the shared interface and never check an item's kind, so a new kind that implements the interface works with them unchanged.
+  explanation: Clients use only the shared interface and never check an item's kind, so the same call works on a single item or a whole group.
   option_feedback:
-    0: Nesting explains why the tree can grow deep, not why a client needs no new branch for a new kind.
+    0: Nesting explains why the tree can grow deep, not why a client needs no type checks.
     2: Where add is declared is the choice between safety and transparency. It does not decide whether clients check types.
 applicability:
   question: A polaroid frame wraps exactly one tile and adds a border to its drawing. Which pattern describes the frame, as opposed to the Composite pattern's split?
   options:
-    - A plain list, because the frame holds its one item in order
+    - Leaf, because the frame draws a border of its own
     - Composite, because the frame has the same interface as a tile
     - Decorator, because it has one child and adds behavior of its own
   correct_index: 2
   explanation: A frame with the component's interface, exactly one child, and drawing of its own is a Decorator; a composite holds many children and arranges them.
   option_feedback:
-    0: A plain list fits a flat collection, like a carousel post. The frame is not a collection; it wraps one tile and adds to its drawing.
+    0: A leaf has no children, but the frame holds one tile and adds to that tile's drawing.
     1: Sharing the interface is not enough. A composite holds many children and arranges them, while the frame wraps one and adds drawing.
 transfer:
-  question: Captions arrive in the Composite pattern's photo collage. A caption draws its text and has zero photos. What changes in the code?
+  question: In a Composite pattern design, a new kind of leaf must appear under an existing leaf. What changes?
   options:
-    - One new Caption class implements Tile; no existing class changes
-    - Split's draw and the Share button each get a branch for captions
-    - Tile gets a caption method that every existing class implements
+    - One new leaf class, and a new composite object that stacks the two
+    - One new leaf class, and the old leaf gets an add method to hold it
+    - The composite class gets a branch that places the new kind below
   correct_index: 0
-  explanation: A caption is a new kind of leaf. It implements the shared interface, so existing splits hold it and the Share button shares it without any edit.
+  explanation: The new kind is one new leaf class, and one more composite object holds the existing leaf and the new one in order; no existing class changes.
   option_feedback:
-    1: Those branches are what the first design needed. In the Composite design, splits and the Share button call draw without asking for a tile's kind.
-    2: The shared interface already declares draw and photo count. A caption implements them, so no class needs a caption method.
+    1: A leaf has no children and no add method. To put two tiles together, a composite object holds both.
+    2: A branch per kind was the first design's cost. A composite places its children by list order, not by their kind.
 summary:
   questions:
     - question: A study planner has tasks and projects. A project holds tasks and other projects, and students ask how many hours remain for one task or a whole project. Which part of the Composite pattern does this description match?

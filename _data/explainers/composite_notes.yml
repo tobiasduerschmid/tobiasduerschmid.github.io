@@ -24,20 +24,20 @@ problem-first-design:
   - "First design: Photo has a name; Split keeps a direction plus items"
   - "Items are typed photo-or-split, because no shared type exists"
 problem-branches:
-  - "draw and photo count each test: photo here, or nested split?"
-  - "Every new operation repeats that same test"
+  - "draw and photo count each check: photo here, or nested split?"
+  - "Every new operation repeats that same check"
 problem-client-check:
-  - "Share also tests its selection's type"
+  - "Share also checks its selection's type"
   - "Drawing a photo now lives in two places: split and button"
 problem-predict-captions:
   - "**Prediction:** captions arrive; which code must change?"
   - "What happens when one needed change is forgotten?"
 problem-every-change:
-  - "Three type tests each need a caption branch"
-  - "Forget draw's branch: a blank area and no error, because nothing handles else"
+  - "The item type must allow captions; three checks each need a branch"
+  - "Forget the branch in draw: a blank area, with no error reported"
 problem-demands:
   - "Demands: one shared type, and one ordered list of it"
-  - "Share without type tests; new kinds without editing old classes"
+  - "Share without type checks; new kinds without editing old classes"
 tile_role-shared-type:
   - "**Tile:** declares drawing into an area, and photo count"
   - "Photo and Split implement Tile, so holders stop asking which kind"
@@ -46,13 +46,13 @@ tile_role-canvas:
   - "Passed down the tree; the caller receives the full picture"
 photo_role-direct:
   - "Photo answers from its own data: one line, a count of one"
-  - "**Leaf:** has nothing inside and never delegates"
+  - "**Leaf:** has nothing inside and asks no other tile"
 photo_role-shared:
   - "Unchanging, and unaware of the split that holds it"
   - "So one Photo object can sit in two stories"
 split_role-one-list:
   - "Split: a direction plus one ordered list of Tiles"
-  - "Mixes photos and splits freely; nesting needs no type tests"
+  - "Mixes photos and splits freely; nesting needs no type checks"
 split_role-count:
   - "photo count sums every tile's answer"
   - "Never asks a tile's kind; sums travel back up"
@@ -61,7 +61,7 @@ split_role-draw:
   - "List order sets placement: whichever tile comes first lands left or on top"
 split_role-safe-add:
   - "**Safe choice:** add exists only on Split"
-  - "Adding to a photo fails before running; adders must know they hold a split"
+  - "Adding to a photo fails before running; code that adds must know it holds a split"
 split_role-transparent-add:
   - "**Transparent choice:** add declared on Tile"
   - "Uniform for clients, but photos must refuse add while running"
@@ -69,8 +69,8 @@ collaborations-press:
   - "Share calls draw on the story: whole area, empty canvas"
   - "The button only knows it holds some tile"
 collaborations-first-tile:
-  - "**Prediction:** the story holds beach first, then right"
-  - "Which tile draws first, and into which part?"
+  - "**Prediction:** the story holds beach, then the right split"
+  - "In which order do the four photos reach the canvas?"
 collaborations-recursion:
   - "Left half to beach, drawn first; right half to the right split"
   - "Right cuts again: cat 2nd, gig 3rd, taco 4th"
@@ -91,10 +91,10 @@ solution-client:
   - "Composites are Components, so composites contain composites"
 consequences-simple-clients:
   - "**Benefit, simple clients:** one photo and a whole split are treated alike"
-  - "No type tests, so the button's code never grows"
+  - "No type checks, so the button's code never grows"
 consequences-new-kinds:
   - "**Benefit, new kinds fit:** one new class implementing Tile"
-  - "Existing classes need no edits; compare the first design"
+  - "Existing classes need no edits; a kind missing draw is reported"
 consequences-overly-general:
   - "**Liability, overly general:** a photos-only strip still inherits add"
   - "The type system can't refuse splits; a runtime check is needed"
@@ -112,12 +112,13 @@ applicability-neighbors:
   - "Composite: many children, arranged; also inside MVC views and macro commands"
 transfer-plan:
   - "**Your turn:** add captions to the Composite design"
-  - "Which class is new? Which existing classes change?"
+  - "What is new, what changes, and how does the caption get under beach?"
 transfer-caption:
-  - "Add one class: Caption implements Tile; its count returns zero"
-  - "No existing class changes; the first design needed three branches"
+  - "Add one class: Caption implements Tile, with a photo count of zero"
+  - "One more stacked Split object puts beach above the caption"
+  - "Existing classes stay as they are; the first design required three new branches"
 summary-recap:
   - "**Context:** nesting parts; clients treat one object and groups alike"
-  - "**Problem:** type tests everywhere repeat and silently miss new kinds"
+  - "**Problem:** type checks everywhere repeat and silently miss new kinds"
   - "**Solution:** Component, Leaf, Composite, Client"
-  - "**Consequences:** simple clients and easy kinds; overly general; safety versus transparency"
+  - "**Consequences:** simple clients, easy new kinds; overly general; safety versus transparency"

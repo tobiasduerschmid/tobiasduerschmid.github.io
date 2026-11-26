@@ -44,7 +44,7 @@
         "type": "sequence",
         "label": "Sequence of one press of Share on the story",
         "description": "The Share button, button, calls draw(whole story, canvas) on story. story calls draw(left half, canvas) on beach, which draws itself, and then draw(right half, canvas) on right.",
-        "caption": "Lifelines are named like the variables in the main program. The trace shows the first two levels: right forwards to cat and to bottom the same way, which the canvas shows. Messages appear as the narration reaches them.",
+        "caption": "Lifelines are named after the tiles. The trace shows the first two levels; the canvas shows the deeper calls. Messages appear as the narration reaches them.",
         "source": "@startuml\nparticipant button: ShareButton\nparticipant story: Split\nparticipant beach: Photo\nparticipant right: Split\n",
         "steps": [
           "activate button\nbutton -> story: draw(whole story, canvas)\nactivate story\n",
@@ -149,7 +149,7 @@
           },
           {
             "title": "Liability: safety or transparency",
-            "text": "Add only in the composite is checked early but visible to clients; add in the component is uniform, but leaves reject it at runtime."
+            "text": "Add only in the composite is checked early, but code that builds the tree must know it holds a composite; add in the component is uniform, but leaves reject it at runtime."
           }
         ]
       },
@@ -170,11 +170,11 @@
           },
           {
             "title": "Simpler designs",
-            "text": "No nesting: a plain list, like a carousel post. Only one kind of leaf: one class with an optional list of children."
+            "text": "No nesting: a plain list, like a carousel post. One kind of leaf and no others coming: one class with an optional list of children."
           },
           {
             "title": "Neighbors",
-            "text": "A frame around one tile adds drawing: a Decorator. View trees in Model-View-Controller and macro commands are composites."
+            "text": "A frame around one tile adds drawing: a Decorator. View trees in Model-View-Controller and commands that group other commands are composites."
           }
         ]
       },
