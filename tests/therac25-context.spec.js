@@ -11,6 +11,15 @@ const firstDecision = story.scenes[firstDecisionIndex];
 const url = '/SEBook/development_practices/therac-25.html';
 const caseStudy = page => page.getByRole('region', { name: story.title, exact: true });
 
+async function revealFirstDecision(study) {
+  const prediction = study.getByRole('region', { name: 'Pause and predict', exact: true });
+  await expect(prediction).toBeVisible();
+  await expect(prediction.getByText(firstDecision.cues.at(-1).text, { exact: true })).toBeVisible();
+  await expect(study.getByRole('button', { name: 'Knowledge check', exact: true })).toBeDisabled();
+  await prediction.getByRole('button', { name: 'Reveal explanation', exact: true }).click();
+  await expect(prediction).toBeHidden();
+}
+
 test('Therac-25 explains the machine and normal setup before asking for a silent decision', async ({ page }) => {
   expect(orientationScenes.length, 'novices need orientation before investigating the first report').toBeGreaterThan(0);
   await page.goto(url);
@@ -44,7 +53,7 @@ test('Therac-25 explains the machine and normal setup before asking for a silent
     await study.getByRole('button', { name: 'Next step', exact: true }).click();
     await expect(study.getByRole('region', { name: 'Narration', exact: true })).toHaveText(cue.text);
   }
-  await study.getByRole('button', { name: 'Knowledge check', exact: true }).click();
+  await revealFirstDecision(study);
   const question = study.getByRole('region', { name: `${firstDecisionIndex + 1}. ${firstDecision.label} — Knowledge check`, exact: true });
   await expect(question).toBeVisible();
   await expect(study.getByRole('heading', { name: story.scenes[firstDecisionIndex + 1].title, exact: true })).toBeHidden();
@@ -65,6 +74,11 @@ test('Therac-25 narration continues through orientation and pauses at the first 
   const decisionBoundary = timing.scenes.find(scene => scene.id === firstDecision.id).end;
   await study.getByRole('slider', { name: 'Narration position' }).fill((decisionBoundary - 0.2).toFixed(2));
   const question = study.getByRole('region', { name: `${firstDecisionIndex + 1}. ${firstDecision.label} — Knowledge check`, exact: true });
+  await expect(study.getByRole('region', { name: 'Pause and predict', exact: true })).toBeVisible();
+  expect(await study.locator('audio').evaluate(audio => audio.paused)).toBe(true);
+  await expect(question).toBeHidden();
+  await expect(study.getByRole('heading', { name: story.scenes[firstDecisionIndex + 1].title, exact: true })).toBeHidden();
+  await revealFirstDecision(study);
   await expect(question).toBeVisible();
   // The decision replaces the control bar until the learner answers or skips it.
   expect(await study.locator('audio').evaluate(audio => audio.paused)).toBe(true);

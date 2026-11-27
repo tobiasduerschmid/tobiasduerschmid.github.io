@@ -1381,9 +1381,9 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout compact
       interface Shape {
-        + getArea(): double
-        + getPerimeter(): double
-        + describe(): String
+        + {abstract} getArea(): double
+        + {abstract} getPerimeter(): double
+        + {abstract} describe(): String
       }
       class Circle {
         - radius: double
@@ -2991,10 +2991,10 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout compact
       interface Enrollable {
-        + enroll(student: Student)
-        + drop(name: String): boolean
-        + isEnrolled(name: String): boolean
-        + getRoster(): ArrayList<String>
+        + {abstract} enroll(student: Student)
+        + {abstract} drop(name: String): boolean
+        + {abstract} isEnrolled(name: String): boolean
+        + {abstract} getRoster(): ArrayList<String>
       }
       class Course {
         - name: String

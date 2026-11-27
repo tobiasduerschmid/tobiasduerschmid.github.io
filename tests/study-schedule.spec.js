@@ -18,32 +18,123 @@
 // covered as separate test cases.
 //
 const { test, expect } = require('@playwright/test');
+const assert = require('node:assert/strict');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
 const CS35L_URL = '/SEBook/CS35L.html';
 
+let schedulerFixture;
+let schedulerScript;
+
+function extractSchedulerFixture({ html, courseUrl }) {
+  const course = new DOMParser().parseFromString(html, 'text/html');
+  const scheduler = course.querySelector('[aria-labelledby="study-schedule-heading"]');
+  const origin = new URL(courseUrl).origin;
+  const stylesheetSelector = 'style, link[rel~="stylesheet"][href]';
+
+  function localResourceUrl(element, attribute) {
+    const path = element.getAttribute(attribute);
+    if (!path) return null;
+    const url = new URL(path, courseUrl);
+    return url.origin === origin ? url : null;
+  }
+
+  const script = Array.from(course.querySelectorAll('script[src]')).find(element =>
+    localResourceUrl(element, 'src')?.pathname.endsWith('/js/study-schedule.js'));
+  if (!scheduler || !script) throw new Error('The course must publish the schedule form and its script.');
+
+  const fixture = document.implementation.createHTMLDocument(course.title);
+  fixture.documentElement.lang = course.documentElement.lang;
+  fixture.documentElement.className = course.documentElement.className;
+  fixture.body.className = course.body.className;
+  const base = fixture.createElement('base');
+  base.href = courseUrl;
+  fixture.head.prepend(base);
+
+  // Preserve cascade order across the head and body. Keep only the last
+  // occurrence of a stylesheet when its URL and applicability are identical.
+  const styles = Array.from(course.querySelectorAll(stylesheetSelector));
+  const seenStylesheets = new Set();
+  const retained = styles.reverse().filter(element => {
+    if (element.tagName === 'STYLE') return true;
+    const url = localResourceUrl(element, 'href');
+    if (!url) return false;
+    const key = JSON.stringify([url.href, element.getAttribute('media'), element.getAttribute('rel'),
+      element.getAttribute('title'), element.hasAttribute('disabled')]);
+    if (seenStylesheets.has(key)) return false;
+    seenStylesheets.add(key);
+    return true;
+  });
+  retained.reverse().forEach(element => fixture.head.append(element.cloneNode(true)));
+
+  const schedulerClone = /** @type {Element} */ (scheduler.cloneNode(true));
+  schedulerClone.querySelectorAll(`${stylesheetSelector}, script:not([type="application/json"])`)
+    .forEach(element => element.remove());
+  // Preserve the original CSS scope without mounting sibling lesson widgets.
+  let branch = /** @type {Node} */ (schedulerClone);
+  for (let parent = scheduler.parentElement; parent && parent !== course.body; parent = parent.parentElement) {
+    const wrapper = parent.cloneNode(false);
+    wrapper.appendChild(branch);
+    branch = wrapper;
+  }
+  fixture.body.append(branch, script.cloneNode(true));
+  return {
+    markup: '<!doctype html>' + fixture.documentElement.outerHTML,
+    scriptUrl: localResourceUrl(script, 'src')?.href,
+  };
+}
+
+test.beforeAll(async ({ browser, request }) => {
+  // Reuse the scheduler delivered by the build without booting every widget
+  // in the combined course. DOMParser keeps the downloaded document inert.
+  const response = await request.get(CS35L_URL);
+  await expect(response).toBeOK();
+  const parser = await browser.newPage();
+  try {
+    const fixture = await parser.evaluate(extractSchedulerFixture, {
+      html: await response.text(),
+      courseUrl: response.url(),
+    });
+    assert.ok(fixture.scriptUrl, 'the scheduler script must be served by the course origin');
+    schedulerFixture = fixture.markup;
+    schedulerScript = fixture.scriptUrl;
+  } finally {
+    await parser.close();
+  }
+});
+
+async function openSchedulerFixture(page) {
+  await page.setContent(schedulerFixture);
+}
+
 async function openSchedulerModal(page) {
-  await page.getByRole('button', { name: 'Schedule Study' }).click();
-  await expect(page.getByRole('dialog', { name: 'Schedule Your Study Plan' })).toBeVisible();
+  const scheduler = page.locator('.study-schedule');
+  await scheduler.getByRole('button', { name: 'Schedule Study', exact: true }).click();
+  await expect(scheduler.getByRole('dialog', { name: 'Schedule Your Study Plan', exact: true })).toBeVisible();
 }
 
 test.describe('CS 35L Study Schedule — page entry point', () => {
   test('the CS 35L page exposes a Schedule Study button', async ({ page }) => {
-    await page.goto(CS35L_URL);
-    const btn = page.locator('#schedule-study-btn');
+    await page.goto(CS35L_URL, { waitUntil: 'domcontentloaded' });
+    const btn = page.locator('.study-schedule').getByRole('button', { name: 'Schedule Study', exact: true });
     await expect(btn).toBeVisible();
     await expect(btn).toHaveText(/Schedule Study/i);
+    await expect(page.locator('#study-schedule-modal')).toBeHidden();
+    await openSchedulerModal(page);
   });
 
   test('the time-range modal is not visible before the button is clicked', async ({ page }) => {
-    await page.goto(CS35L_URL);
-    await expect(page.locator('#study-schedule-modal')).toBeHidden();
+    await page.goto(CS35L_URL, { waitUntil: 'commit' });
+    const modal = page.locator('#study-schedule-modal');
+    await expect(modal).toBeAttached();
+    await expect(modal).toBeHidden();
   });
 });
 
 test.describe('AC1 — selecting a time period between four days and two weeks', () => {
+  test.beforeEach(async ({ page }) => openSchedulerFixture(page));
+
   test('clicking Schedule Study reveals a number-input limited to 4–14 days', async ({ page }) => {
-    await page.goto(CS35L_URL);
     await openSchedulerModal(page);
 
     const input = page.locator('#study-schedule-days');
@@ -54,7 +145,6 @@ test.describe('AC1 — selecting a time period between four days and two weeks',
   });
 
   test('an associated label explains the 4–14 day range', async ({ page }) => {
-    await page.goto(CS35L_URL);
     await openSchedulerModal(page);
 
     const label = page.locator('label[for="study-schedule-days"]');
@@ -63,7 +153,6 @@ test.describe('AC1 — selecting a time period between four days and two weeks',
   });
 
   test('Tab and Shift+Tab wrap within the open modal', async ({ page }) => {
-    await page.goto(CS35L_URL);
     await openSchedulerModal(page);
 
     const dialog = page.getByRole('dialog', { name: 'Schedule Your Study Plan' });
@@ -84,7 +173,6 @@ test.describe('AC1 — selecting a time period between four days and two weeks',
   });
 
   test('background controls cannot keep focus while the modal is open', async ({ page }) => {
-    await page.goto(CS35L_URL);
     await openSchedulerModal(page);
 
     const dialog = page.getByRole('dialog', { name: 'Schedule Your Study Plan' });
@@ -100,7 +188,6 @@ test.describe('AC1 — selecting a time period between four days and two weeks',
   });
 
   test('the minimum 4-day plan is accepted', async ({ page }) => {
-    await page.goto(CS35L_URL);
     await openSchedulerModal(page);
 
     await page.locator('#study-schedule-days').fill('4');
@@ -111,7 +198,6 @@ test.describe('AC1 — selecting a time period between four days and two weeks',
   });
 
   test('the maximum 14-day (two-week) plan is accepted', async ({ page }) => {
-    await page.goto(CS35L_URL);
     await openSchedulerModal(page);
 
     await page.locator('#study-schedule-days').fill('14');
@@ -122,7 +208,6 @@ test.describe('AC1 — selecting a time period between four days and two weeks',
   });
 
   test('3 days (below minimum) is rejected with an error message', async ({ page }) => {
-    await page.goto(CS35L_URL);
     await openSchedulerModal(page);
 
     await page.locator('#study-schedule-days').fill('3');
@@ -135,7 +220,6 @@ test.describe('AC1 — selecting a time period between four days and two weeks',
   });
 
   test('15 days (above maximum) is rejected with an error message', async ({ page }) => {
-    await page.goto(CS35L_URL);
     await openSchedulerModal(page);
 
     await page.locator('#study-schedule-days').fill('15');
@@ -148,7 +232,6 @@ test.describe('AC1 — selecting a time period between four days and two weeks',
   });
 
   test('non-integer values are rejected', async ({ page }) => {
-    await page.goto(CS35L_URL);
     await openSchedulerModal(page);
 
     // Submit via the form so the JS validator (not the browser's built-in
@@ -164,7 +247,6 @@ test.describe('AC1 — selecting a time period between four days and two weeks',
   });
 
   test('Escape closes the modal without generating a plan', async ({ page }) => {
-    await page.goto(CS35L_URL);
     const openButton = page.getByRole('button', { name: 'Schedule Study' });
     await openSchedulerModal(page);
 
@@ -176,8 +258,9 @@ test.describe('AC1 — selecting a time period between four days and two weeks',
 });
 
 test.describe('AC2 — Create Study Plan renders an organized per-day list', () => {
+  test.beforeEach(async ({ page }) => openSchedulerFixture(page));
+
   test('the result is broken down into one section per chosen day', async ({ page }) => {
-    await page.goto(CS35L_URL);
     await openSchedulerModal(page);
 
     await page.locator('#study-schedule-days').fill('7');
@@ -193,7 +276,6 @@ test.describe('AC2 — Create Study Plan renders an organized per-day list', () 
   });
 
   test('each plan lists at least one tutorial AND at least one gym question overall', async ({ page }) => {
-    await page.goto(CS35L_URL);
     await openSchedulerModal(page);
 
     await page.locator('#study-schedule-days').fill('7');
@@ -207,7 +289,6 @@ test.describe('AC2 — Create Study Plan renders an organized per-day list', () 
   });
 
   test('each scheduled item links to its tutorial or gym URL', async ({ page }) => {
-    await page.goto(CS35L_URL);
     await openSchedulerModal(page);
 
     await page.locator('#study-schedule-days').fill('5');
@@ -227,7 +308,6 @@ test.describe('AC2 — Create Study Plan renders an organized per-day list', () 
   });
 
   test('every item from the data file ends up in the schedule exactly once', async ({ page }) => {
-    await page.goto(CS35L_URL);
 
     // Use the (validated, observable) script tag the include emits to derive
     // the spec — this guards against an item being silently dropped during
@@ -247,7 +327,6 @@ test.describe('AC2 — Create Study Plan renders an organized per-day list', () 
   });
 
   test('items keep their original course order across days', async ({ page }) => {
-    await page.goto(CS35L_URL);
 
     const expectedTitles = await page.evaluate(() => {
       const data = JSON.parse(document.getElementById('study-schedule-data').textContent || '');
@@ -265,7 +344,6 @@ test.describe('AC2 — Create Study Plan renders an organized per-day list', () 
   });
 
   test('different day choices produce different schedules', async ({ page }) => {
-    await page.goto(CS35L_URL);
 
     async function buildFor(days) {
       await page.locator('#schedule-study-btn').click();
@@ -294,7 +372,6 @@ test.describe('AC2 — Create Study Plan renders an organized per-day list', () 
   });
 
   test('each day card distinguishes Tutorials from Gym items via a labeled badge', async ({ page }) => {
-    await page.goto(CS35L_URL);
     await openSchedulerModal(page);
 
     await page.locator('#study-schedule-days').fill('4');
@@ -307,7 +384,6 @@ test.describe('AC2 — Create Study Plan renders an organized per-day list', () 
   });
 
   test('submitting closes the modal and surfaces the plan in place', async ({ page }) => {
-    await page.goto(CS35L_URL);
     await openSchedulerModal(page);
 
     await page.locator('#study-schedule-days').fill('5');
@@ -328,9 +404,7 @@ test.describe('AC2 — Create Study Plan renders an organized per-day list', () 
 // ---------------------------------------------------------------------------
 test.describe('StudySchedule.buildSchedule — distribution invariants', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(CS35L_URL);
-    // The page already loads js/study-schedule.js — wait for the public API.
-    await page.waitForFunction(() => !!window.StudySchedule);
+    await page.addScriptTag({ url: schedulerScript });
   });
 
   test('returns exactly `days` buckets', async ({ page }) => {

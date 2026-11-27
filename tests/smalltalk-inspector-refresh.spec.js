@@ -1,5 +1,5 @@
 const { test, expect: standardExpect } = require('@playwright/test');
-const { mountSmalltalkFixture } = require('./helpers/smalltalk-runtime');
+const { mountSmalltalkFixture, expectSmalltalkImage } = require('./helpers/smalltalk-runtime');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
 const expect = standardExpect.configure({ timeout: 30000 });
@@ -45,6 +45,7 @@ test('Refresh shows mutations of the retained counter and becomes unavailable af
     await page.setViewportSize({ width: 320, height: 800 });
     await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
     await page.getByRole('button', { name: 'Restart session', exact: true }).click();
+    await expectSmalltalkImage(page.getByRole('status', { name: 'Live session status', exact: true })).toContainText('Session restarted.');
     await expect(panel.getByRole('status')).toContainText('Stale object');
     await expect(refresh).toBeDisabled();
     await expect(panel.getByRole('button', { name: 'Expand count', exact: true })).toBeDisabled();

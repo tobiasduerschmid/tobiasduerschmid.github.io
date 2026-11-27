@@ -74,20 +74,17 @@ function songCaptions(storyboard) {
   return toVtt(withMusicCues(lyricCues(storyboard), storyboard.duration));
 }
 
-/**
- * The narrator's description split into sentences, spread over the time the
- * voice speaks in proportion to their length, each marked "(narrator)".
- */
-function narrationCues(hold) {
-  // Split only where punctuation meets a space, so "app.py" stays whole.
-  const sentences = hold.narration.split(/(?<=[.!?])\s+/);
-  const total = sentences.reduce((sum, s) => sum + s.length, 0);
-  let at = hold.speechStart;
-  return sentences.map((sentence) => {
-    const start = at;
-    at += (hold.speechEnd - hold.speechStart) * (sentence.length / total);
-    return { start, end: at, text: `(narrator) ${sentence}` };
-  });
+/** Split only where punctuation meets a space, so "app.py" stays whole. */
+function narrationSentences(narration) {
+  return narration.split(/(?<=[.!?])\s+/);
+}
+
+function narrationCues(hold, timings) {
+  return narrationSentences(hold.narration).map((sentence, i) => ({
+    start: hold.speechStart + timings[i].start,
+    end: hold.speechStart + timings[i].end,
+    text: `(narrator) ${sentence}`,
+  }));
 }
 
 /**
@@ -95,7 +92,7 @@ function narrationCues(hold) {
  * narration during each hold, and every lyric cue moved later by the holds
  * that come before it, never running into the next hold.
  */
-function describedCaptions(storyboard, plan) {
+function describedCaptions(storyboard, plan, sentenceTimings) {
   const { holds } = plan;
   const lyrics = lyricCues(storyboard).map((cue) => {
     let index = 0;
@@ -105,8 +102,8 @@ function describedCaptions(storyboard, plan) {
     const limit = index + 1 < holds.length ? holds[index + 1].outputStart : plan.duration;
     return { start: cue.start + shift, end: Math.min(cue.end + shift, limit), text: cue.text };
   });
-  const cues = [...holds.flatMap(narrationCues), ...lyrics].sort((a, b) => a.start - b.start);
+  const cues = [...holds.flatMap((hold, i) => narrationCues(hold, sentenceTimings[i])), ...lyrics].sort((a, b) => a.start - b.start);
   return toVtt(withMusicCues(cues, plan.duration));
 }
 
-module.exports = { songCaptions, describedCaptions, lyricCues };
+module.exports = { narrationSentences, songCaptions, describedCaptions, lyricCues };

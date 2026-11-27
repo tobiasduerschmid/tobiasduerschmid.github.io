@@ -519,6 +519,8 @@ test('native rename replay preserves preexisting client global associations', as
 
 
 test('renamed classes rebase disjoint files but reject removal of their original declaration', async ({ page }) => {
+  // The live workspace, two file staging images, independent replay, and rollback boot five native images.
+  test.setTimeout(5 * 60_000);
   const program = structuredClone(baselineProgram);
   program.files.push({ path: '/helper.st', kind: 'source', format: 'doit', content: "Object subclass: #SEBookHelper instanceVariableNames: '' classVariableNames: '' poolDictionaries: '' category: 'SEBook-Tests'. SEBookHelper class compile: 'value ^ 3' classified: 'accessing'" });
   const result = await withWorkspace(page, async (workspace, runtime) => {

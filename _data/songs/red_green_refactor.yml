@@ -54,10 +54,10 @@ soundtrack: assets/audio/red-green-refactor.m4a   # repo path, played by the liv
 described_soundtrack: assets/audio/red-green-refactor-described.m4a
 described_timeline: /assets/audio/red-green-refactor-described.json
 narrator:
-  voice: Samantha   # macOS `say` voice for the audio-described track
-  rate: 205         # words per minute
+  voice: drama3-female6
   pronounce:        # how the narrator says notation the captions keep as written
     MyStack: my stack
+    MyStak: M Y S T A K
     is_empty: is empty
     test_pop: test pop
     test_push: test push
@@ -65,6 +65,7 @@ narrator:
     pytest: pie test
     ImportError: import error
     NameError: name error
+    AttributeError: attribute error
     CI: C I
 width: 1920
 height: 1080

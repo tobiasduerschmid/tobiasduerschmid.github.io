@@ -278,7 +278,9 @@ Tutorial hosts may supply analyzer paths and `loadTypeScript` to `createClient`.
 Rendering uses a temporary off-screen surface, then replaces the visible SVG
 only when the complete result is current. `readOnly: true` gives the container
 the image role and ArchUML's native keyboard-scrolling behavior; editor hosts
-keep their own focus policy. The surface is removed on success, supersession,
+keep their own focus policy. Chapter lab previews use ArchUML's readable-fit
+policy, keeping labels paragraph-sized and letting users scroll larger drawings
+with the keyboard. The surface is removed on success, supersession,
 or failure.
 
 Each client has one worker with separate analysis/render queues. Each queue

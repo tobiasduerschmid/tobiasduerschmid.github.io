@@ -1808,7 +1808,7 @@ steps:
 
       ### The Suggested Target Diagram
 
-      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec="@startuml
+      <div class="uml-class-diagram-container" data-uml-fit="auto" data-uml-type="sequence" data-uml-spec="@startuml
       layout landscape
       participant Main as : Main
       participant bot: DiscordBot

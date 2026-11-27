@@ -214,7 +214,14 @@ for (const variant of [
     }
     expect(new Set(colors).size, 'JSX keywords, strings, tags, and attributes must be distinct.').toBe(4);
     await player(page).getByText('Transcript and visual descriptions', { exact: true }).click();
-    await expect(player(page).getByRole('code').filter({ hasText: 'const title = "React"' })).toHaveText(story.scenes.find((scene) => scene.id === 'jsx').code);
+    const sceneIndex = story.scenes.findIndex((scene) => scene.id === 'jsx');
+    const scene = story.scenes[sceneIndex];
+    for (const [cueIndex, cue] of scene.cues.entries()) {
+      const step = player(page).getByRole('region', { name: `${sceneIndex + 1}.${cueIndex + 1} — ${cue.step}`, exact: true });
+      const transcriptCode = step.getByRole('code');
+      await expect(transcriptCode).toBeVisible();
+      expect((await transcriptCode.locator('.nja-line-source').allTextContents()).join('\n')).toBe(scene.code);
+    }
     await a11yCheckpoint(page, `${variant.name}: full transcript`, { include: '#react-animation', feature: 'react-animation' });
     expect(errors).toEqual([]);
   });

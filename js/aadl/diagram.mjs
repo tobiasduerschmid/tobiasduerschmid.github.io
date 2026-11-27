@@ -61,12 +61,28 @@ export function mountDiagram(root, { onSourceLocation } = {}) {
     return button;
   }
 
-  async function draw() {
+  function setCanvasContent(content) {
+    const drawing = content?.namespaceURI === SVG_NS;
+    ui.canvas.replaceChildren();
+    if (content) ui.canvas.append(content);
+    ui.scrollHelp.hidden = !drawing;
+    if (drawing) {
+      ui.canvas.tabIndex = 0;
+      ui.canvas.setAttribute('role', 'region');
+      ui.canvas.setAttribute('aria-label', 'Scrollable architecture diagram');
+    } else {
+      ui.canvas.removeAttribute('tabindex');
+      ui.canvas.removeAttribute('role');
+      ui.canvas.removeAttribute('aria-label');
+    }
+  }
+
+  async function draw({ keepDrawing = false } = {}) {
     cancelLayout();
     const revision = generation;
     tableListeners.abort();
     tableListeners = new AbortController();
-    ui.canvas.replaceChildren();
+    if (!keepDrawing) setCanvasContent();
     ui.tables.replaceChildren();
     if (!model || destroyed) return;
     layoutWidth = ui.canvas.clientWidth;
@@ -77,13 +93,13 @@ export function mountDiagram(root, { onSourceLocation } = {}) {
       renderTables(ui.tables, projection, model, sourceButton);
       ui.status.textContent = stale ? 'Previous model; source changed. Instantiate again to update.' : 'Resolved model. Preparing diagram…';
       if (projection.tooLarge) {
-        ui.canvas.append(element(document, 'p', 'This scope contains more than seven components. Choose a smaller scope; the model details below include every component and relationship.'));
+        setCanvasContent(element(document, 'p', 'This scope contains more than seven components. Choose a smaller scope; the model details below include every component and relationship.'));
         ui.details.open = true;
         if (!stale) ui.status.textContent = 'Resolved model. This scope is available in model details.';
         return;
       }
       if (!projection.nodes.length) {
-        ui.canvas.append(element(document, 'p', projection.view === 'deployment' ? 'No actual bindings are recorded in this scope.' : 'This component has no subcomponents. Its interface is listed in model details.'));
+        setCanvasContent(element(document, 'p', projection.view === 'deployment' ? 'No actual bindings are recorded in this scope.' : 'This component has no subcomponents. Its interface is listed in model details.'));
         ui.details.open = true;
         if (!stale) ui.status.textContent = 'Resolved model. This scope is available in model details.';
         return;
@@ -95,20 +111,21 @@ export function mountDiagram(root, { onSourceLocation } = {}) {
       const laidOut = await request.result;
       if (destroyed || revision !== generation || !laidOut) return;
       pending = null;
-      ui.canvas.replaceChildren(renderSVG(document, laidOut, projection, metrics, instanceId));
+      setCanvasContent(renderSVG(document, laidOut, projection, metrics, instanceId));
       ui.status.textContent = stale ? 'Previous model; source changed. Instantiate again to update.' : 'Resolved model. Diagram and model details show the same scope.';
     } catch (error) {
       if (destroyed || revision !== generation) return;
       ui.status.textContent = `Diagram unavailable: ${error.message}`;
-      ui.canvas.replaceChildren(element(document, 'p', 'Use model details when available. No substitute diagram has been inferred.'));
+      setCanvasContent(element(document, 'p', 'Use model details when available. No substitute diagram has been inferred.'));
       ui.details.open = true;
     }
   }
 
-  ui.view.addEventListener('change', draw, { signal: listeners.signal });
-  ui.scope.addEventListener('change', draw, { signal: listeners.signal });
+  ui.view.addEventListener('change', () => void draw(), { signal: listeners.signal });
+  ui.scope.addEventListener('change', () => void draw(), { signal: listeners.signal });
   const resize = new ResizeObserver(() => {
-    if (model && !destroyed && Math.abs(ui.canvas.clientWidth - layoutWidth) > 1) void draw();
+    // A width-only relayout can retain the same drawing and scroll target.
+    if (model && !destroyed && Math.abs(ui.canvas.clientWidth - layoutWidth) > 1) void draw({ keepDrawing: true });
   });
   resize.observe(ui.canvas);
 
@@ -142,7 +159,7 @@ export function mountDiagram(root, { onSourceLocation } = {}) {
       model = null;
       stale = false;
       root.classList.remove('is-stale');
-      ui.canvas.replaceChildren();
+      setCanvasContent();
       ui.tables.replaceChildren();
       ui.path.textContent = '';
       ui.caption.textContent = '';
@@ -189,16 +206,15 @@ function createShell(root, instanceId) {
   const caption = element(document, 'figcaption');
   caption.id = `${instanceId}-caption`;
   const canvas = element(document, 'div', undefined, 'aadl-diagram__canvas');
-  canvas.tabIndex = 0;
-  canvas.setAttribute('role', 'region');
-  canvas.setAttribute('aria-label', 'Scrollable architecture diagram');
-  figure.append(caption, canvas, element(document, 'p', 'The layout follows the available width. Model details lists every component and relationship.', 'aadl-diagram__note aadl-diagram__scroll-help'));
+  const scrollHelp = element(document, 'p', 'The layout follows the available width. Model details lists every component and relationship.', 'aadl-diagram__note aadl-diagram__scroll-help');
+  scrollHelp.hidden = true;
+  figure.append(caption, canvas, scrollHelp);
   const details = element(document, 'details', undefined, 'aadl-diagram__details');
   const tables = element(document, 'div');
   details.append(element(document, 'summary', 'Model details'), tables);
   const note = element(document, 'p', 'AADL architecture overview: a simplified view of the resolved model. Shapes explain the architecture; they do not implement the complete standard graphical notation.', 'aadl-diagram__note');
   root.replaceChildren(toolbar, status, path, figure, details, note);
-  return { view, scope, status, path, caption, canvas, details, tables };
+  return { view, scope, status, path, caption, canvas, scrollHelp, details, tables };
 }
 
 function caption(projection) {

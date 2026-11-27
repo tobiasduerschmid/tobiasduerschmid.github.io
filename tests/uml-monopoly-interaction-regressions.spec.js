@@ -116,7 +116,6 @@ test('Tab through lifeline properties retains focus and applies both edits to th
 test('a committed lifeline edit survives reload before the autosave delay', async ({ page }) => {
   await openSequenceHomework(page);
   const now = new Date('2026-11-10T12:00:00Z');
-  await page.clock.install({ time: now });
   await page.clock.pauseAt(now);
   await lifelineLabel(page).fill('ActivePlayer');
   await lifelineLabel(page).press('Tab');
@@ -268,7 +267,6 @@ test('inline editing a lifeline declared after its messages starts with the full
 test('a theme rerender preserves the focused lifeline draft until it is committed', async ({ page }) => {
   await openSequenceHomework(page);
   const now = new Date('2026-11-10T12:00:00Z');
-  await page.clock.install({ time: now });
   await page.clock.pauseAt(now);
   await lifelineLabel(page).fill('ActivePlayer');
   await page.evaluate(() => document.documentElement.classList.add('dark-mode'));

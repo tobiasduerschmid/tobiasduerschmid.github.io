@@ -54,9 +54,11 @@ soundtrack: assets/audio/not-a-one-time-investment.m4a   # repo path, played by 
 described_soundtrack: assets/audio/not-a-one-time-investment-described.m4a
 described_timeline: /assets/audio/not-a-one-time-investment-described.json
 narrator:
-  voice: Samantha   # macOS `say` voice for the audio-described track
-  rate: 205         # words per minute
+  voice: drama3-female6
   pronounce:        # how the narrator says notation the captions keep as written
+    urllib3 1.26: U R L lib three, version one point two six
+    openssl: Open S S L
+    isArray: is array
     urllib3: U R L lib 3
     npm: N P M
     padStart: pad start

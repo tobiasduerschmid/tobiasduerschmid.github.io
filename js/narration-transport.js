@@ -91,7 +91,9 @@
   // Shows one cue: its scene panel, the scene select, the narration text, and
   // the art label. show() reports whether the scene changed.
   function cuePresenter(root, storyboard) {
-    const scenes = Array.from(root.querySelectorAll('[data-scene]'));
+    // Reader snapshots also identify their scene; only live panels participate
+    // in playback visibility. Transcript steps must stay available for print.
+    const scenes = Array.from(root.querySelectorAll('.nja-scene[data-scene]'));
     const sceneSelect = root.querySelector('[data-setting="scene"]');
     const narration = root.querySelector('.nja-narration p');
     let shownScene = -1;

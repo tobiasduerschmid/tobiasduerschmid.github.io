@@ -559,7 +559,6 @@ test.describe('The C4 editor in the combined book', () => {
   test('keeps edits in memory: no draft, no example or profile controls', async ({ page, context }) => {
     test.slow(); // The combined book is every chapter on one page.
     await withoutMonaco(context);
-    await page.clock.install();
     await page.goto('/SEBook/all.html');
     const embeds = page.locator('[data-c4-editor]');
     await expect(embeds.first().getByRole('region', { name: /^Canvas/ })).toBeVisible();
@@ -576,7 +575,9 @@ test.describe('The C4 editor in the combined book', () => {
     await embed.getByRole('tab', { name: 'YAML' }).click();
     const field = embed.getByRole('textbox', { name: 'YAML source' });
     await field.fill(DRAFT_MODEL);
-    await page.clock.runFor(PAST_THE_DEBOUNCE_MS);
+    // The rendered edit confirms that typing reached the model before the
+    // event that would flush a standalone editor's pending draft.
+    await expect(canvas(embed).getByRole('option', { name: 'Reader', exact: true })).toBeVisible();
     await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide')));
 
     expect(await readDraft(page)).toBeNull();

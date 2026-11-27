@@ -113,7 +113,7 @@ html.dark-mode .tutorial-llm .tutorial-llm-code-preview {
 .tutorial-llm-settings > summary { font-weight: 600; }
 .tutorial-llm-settings label { margin-top: 1em; }
 .tutorial-llm-storage { border-top: 1px solid var(--llm-divider); margin-top: 1em; padding-top: 1em; }
-.tutorial-llm a { color: var(--llm-focus); text-decoration: underline; }
+.tutorial-llm a, .tutorial-llm a:visited { color: var(--llm-focus); text-decoration: underline; }
 .tutorial-llm [hidden] { display: none !important; }
 /* The optional tutor shares the model panel's light/dark contrast tokens. */
 html .tutorial-llm .tvm-tutor-local { background: var(--llm-bg); border-color: var(--llm-divider); overflow: visible; }

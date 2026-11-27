@@ -62,8 +62,7 @@ soundtrack: assets/audio/design-it-in.m4a   # repo path, played by the live play
 described_soundtrack: assets/audio/design-it-in-described.m4a
 described_timeline: /assets/audio/design-it-in-described.json
 narrator:
-  voice: Samantha   # macOS `say` voice for the audio-described track
-  rate: 205         # words per minute
+  voice: drama3-female6
   pronounce:        # how the narrator says notation the captions keep as written
     SQLi: S Q L I
     SQL: S Q L

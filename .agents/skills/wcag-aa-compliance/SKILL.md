@@ -54,6 +54,9 @@ The complete list of all 55 success criteria you must satisfy. The format is `<i
 - **1.2.3** A — *Audio Description or Media Alternative (Prerecorded).* Either an audio description track or a full text alternative describing the visual track.
 - **1.2.4** AA — *Captions (Live).* Live audio (live streams, webinars) has captions. We don't ship live audio today, but if you add it, captions are required.
 - **1.2.5** AA — *Audio Description (Prerecorded).* Audio description for video where dialog and audio do not convey the visual information on their own.
+  For this project, render every new or revised audio description with the
+  local Fish Audio Drama 3 service on port 8000. See the
+  [audio description workflow](../narration-authoring/SKILL.md#edit-speech-and-regenerate).
 - **1.3.1** A — *Info and Relationships.* Use real semantic HTML — `<table>` with `<th>`/`<caption>`, `<ul>`/`<ol>`, `<fieldset>`/`<legend>`, `<nav>`, `<main>`, `<section>`, `<article>`. Visual grouping that is not in the DOM is invisible to assistive tech.
 - **1.3.2** A — *Meaningful Sequence.* The DOM order matches the reading/operation order. Don't use CSS `order:` or absolute positioning to reshuffle the visual order without reshuffling the DOM.
 - **1.3.3** A — *Sensory Characteristics.* Don't say "click the green button on the right" — say "click the *Save* button". Instructions must not depend solely on shape, color, size, or position.

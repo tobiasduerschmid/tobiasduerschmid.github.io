@@ -41,7 +41,7 @@ module Jekyll
     # A malformed raw block must stop at the next pre/code boundary instead of
     # borrowing a closing tag from a later, unrelated block.
     CODE_BLOCK_PATTERN = %r{
-      <pre\b[^>]*>\s*<code\b([^>]*)>
+      <pre\b([^>]*)>\s*<code\b([^>]*)>
       (
         (?:(?!</?(?:pre|code)\b)[\s\S])*?
       )
@@ -214,10 +214,10 @@ module Jekyll
 
       def collect_code_blocks(content)
         blocks = []
-        content.scan(CODE_BLOCK_PATTERN) do |attrs, text|
+        content.scan(CODE_BLOCK_PATTERN) do |pre_attrs, code_attrs, text|
           match = Regexp.last_match
           original = match[0]
-          type = diagram_type_from_code_class(html_attr(attrs, 'class'))
+          type = diagram_type_from_code_class(html_attr(code_attrs, 'class'))
           next unless type
 
           raw_text = CGI.unescapeHTML(text.strip)
@@ -226,6 +226,7 @@ module Jekyll
             type: type,
             text: caption_info[:text],
             caption: caption_info[:caption],
+            fit: html_attr(pre_attrs, 'data-uml-fit'),
             original: original,
             position: match.begin(0)
           }
@@ -248,6 +249,7 @@ module Jekyll
             type: normalize_type(type),
             text: caption_info[:text],
             caption: caption_info[:caption],
+            fit: html_attr(attrs, 'data-uml-fit'),
             original: original,
             position: match.begin(0)
           }
@@ -462,12 +464,14 @@ module Jekyll
         %(<script type="application/json" data-c4-source>#{json}</script>)
       end
 
-      # A C4 figure fits its pane only at a readable size and otherwise
-      # scrolls; the bundle's figure wrapper (createArchUmlFigure,
-      # READABLE_FIT_TYPES in js/ArchUML/uml-bundle.js) owns that policy, and
-      # a prerendered figure declares it the same way.
-      def fit_policy_attribute(type)
-        normalize_type(type) == 'c4' ? ' data-uml-fit="readable"' : ''
+      # Mirror the live figure policies in FIGURE_FIT_POLICIES: C4 can fit down
+      # to paragraph size; prose-heavy CRC cards retain their measured size.
+      def fit_policy_attribute(block)
+        policy = block[:fit]
+        if policy.nil? || policy.empty?
+          policy = { 'c4' => 'readable', 'crc' => 'off' }[normalize_type(block[:type])]
+        end
+        policy ? %( data-uml-fit="#{CGI.escapeHTML(policy)}") : ''
       end
 
       def c4_panels_attribute(text)
@@ -514,7 +518,7 @@ module Jekyll
 
         <<~HTML
           <figure class="sebook-figure sebook-figure--archuml sebook-figure--archuml-#{safe_type}">
-            <div class="uml-#{safe_type}-diagram-container" data-uml-rendered="true"#{fit_policy_attribute(block[:type])} role="img" aria-label="#{CGI.escapeHTML(desc)}" tabindex="0" data-uml-scroll-tabindex="true">
+            <div class="uml-#{safe_type}-diagram-container" data-uml-rendered="true"#{fit_policy_attribute(block)} role="img" aria-label="#{CGI.escapeHTML(desc)}" tabindex="0" data-uml-scroll-tabindex="true">
               #{presentational_svg}#{source_element}
             </div>
             #{figcaption_html(block)}

@@ -411,19 +411,43 @@ test('a static C4 figure carries the source it was drawn from: the text without 
   assert.ok(container && container[1].includes('data-c4-source'), 'the source element sits inside the figure container');
 });
 
-// The bundle's figure wrapper (createArchUmlFigure in js/ArchUML/uml-bundle.js) gives a C4 figure the readable fit
-// policy; the static wrapper must give it the same, or a prerendered C4 figure would shrink its labels to fit.
-test('a static C4 figure fits only at a readable size, and figures of other types keep the shared fit', () => {
+// The static wrapper must preserve the live figures' readable-fit policy.
+test('static C4 and CRC figures keep readable text while UML figures use the shared fit', () => {
   const svg = '<svg xmlns="http://www.w3.org/2000/svg"><text>Shop</text></svg>';
   const c4 = runPlugin('process_cached_svg', {
     content: `<main>${c4Fence(HOSTILE_C4)}</main>`, svg, page_identifier: '/SEBook/c4-fit.html',
+  }).html;
+  const crc = runPlugin('process_cached_svg', {
+    content: '<main><pre><code class="language-crc">card "Shop" as Shop {\nresponsibility: Know products\n}</code></pre></main>', svg, page_identifier: '/SEBook/crc-fit.html',
   }).html;
   const uml = runPlugin('process_cached_svg', {
     content: '<main><pre><code class="language-uml-class">class Shop</code></pre></main>', svg, page_identifier: '/SEBook/class-fit.html',
   }).html;
 
   assert.match(c4, /<div class="uml-c4-diagram-container"[^>]*\bdata-uml-fit="readable"/);
+  assert.match(crc, /<div class="uml-crc-diagram-container"[^>]*\bdata-uml-fit="off"/);
   assert.doesNotMatch(uml, /data-uml-fit=/);
+});
+
+test('static figures preserve authored fit policies from both source forms', () => {
+  const content = `<main>
+    <div data-uml-type="c4" data-uml-spec="view: context of shop
+systems:
+  shop:
+    name: Shop" data-uml-fit="off"></div>
+    <pre data-uml-fit="readable"><code class="language-uml-class">class Shop</code></pre>
+    <pre data-uml-fit="auto"><code class="language-crc">card "Shop" as Shop {
+      responsibility: Know products
+    }</code></pre>
+  </main>`;
+  const { html } = runPlugin('process_cached_svg', {
+    content,
+    svg: CACHED_SVG,
+    page_identifier: '/SEBook/explicit-fit.html',
+  });
+
+  assert.equal((html.match(/<figure\b/g) || []).length, 3);
+  assert.deepEqual(attributeValues(html, 'data-uml-fit'), ['off', 'readable', 'auto']);
 });
 
 test('figures of other diagram types carry no C4 source element', () => {

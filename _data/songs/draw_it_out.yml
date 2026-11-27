@@ -68,9 +68,9 @@ soundtrack: assets/audio/draw-it-out.m4a   # repo path, played by the live playe
 described_soundtrack: assets/audio/draw-it-out-described.m4a
 described_timeline: /assets/audio/draw-it-out-described.json
 narrator:
-  voice: Samantha   # macOS `say` voice for the audio-described track
-  rate: 205         # words per minute
+  voice: drama3-female6
   pronounce:        # how the narrator says notation the captions keep as written
+    FIXME: fix me
     getBook: get book
     addBook: add book
     getTitle: get title

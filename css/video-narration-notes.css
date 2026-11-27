@@ -59,9 +59,11 @@ html body.vn-notes-page {
    print counts the 960px stage and shrinks every page to fit it. */
 .vn-note-still.has-still { aspect-ratio: 16 / 9; contain: strict; }
 .vn-note-still > p { margin: 0; padding: 0.6em 0.8em; color: var(--vn-notes-muted); font-size: 0.9em; }
-/* The copy inherits what the stage page's body gives it (browser defaults),
-   not the notes' type, so its words wrap and sit as in the video. */
-.vn-note-still > .stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; transform: scale(var(--vn-still-scale, 0.5)); font-size: 16px; line-height: normal; }
+/* Pose the master and paint each copy at the stage page's browser-default
+   type metrics. The blueprint lettering yields to the master's text boxes. */
+.vn-notes-master > .stage,
+.vn-note-still > .stage { font-size: medium; line-height: normal; }
+.vn-note-still > .stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; transform: scale(var(--vn-still-scale, 0.5)); }
 /* Chromium lays SVG text out at the size it appears on screen, and only
    again when the drawing itself is laid out. A copy is scaled after it is
    drawn (to fit its slot, and again on every resize), so SVG lettering such

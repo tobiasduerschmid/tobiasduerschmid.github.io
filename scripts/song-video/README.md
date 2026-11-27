@@ -887,12 +887,16 @@ command chant, is `sung`.
 The song has vocals almost throughout, so there is no room to describe the
 picture over it. The described cut uses extended audio description instead:
 before each section the picture holds while the narrator (the storyboard's
-`narrator` voice for macOS `say`) reads the section's `narration`, then the
+`narrator.voice`, Fish Audio Drama 3) reads the section's `narration`, then the
 song resumes exactly where it paused. The held frames are symlinks to the
 song's frames, so the cut costs no extra capture time. Narration text keeps
 Git notation (`app.py`, `--amend`) for the captions; `spokenForm()` spells it
 out for the voice, along with dotted IP addresses and any terms in the
 storyboard's `narrator.pronounce` (for example `SYN-ACK: sin ack`).
+In the described mix, the mono narration plays on both stereo channels. The
+renderer measures the song's integrated loudness and turns loud music down to
+three loudness units above that stereo narration. Quiet music keeps its
+original level. This adjustment applies only to the described soundtrack.
 
 | File | Role |
 | --- | --- |
@@ -904,7 +908,7 @@ storyboard's `narrator.pronounce` (for example `SYN-ACK: sin ack`).
 | `../../js/song-video/virtual-clock.js` | Independent graph clocks; never replaces browser timers |
 | `../../js/song-video/graph-track.js` | Retained graph transitions with deterministic seeking and disposal |
 | `../../js/song-video/songs/<song>.js` | The choreography: what appears on which sung word |
-| `../../assets/audio/<song>.m4a` | Shared soundtrack (normalized to about −16 LUFS with −1 dBFS peaks) |
+| `../../assets/audio/<song>.m4a` | Original song recording shared by the standard player and video. The described cut uses a separately balanced mix. |
 | `captions.js` | WebVTT captions for both cuts, from the storyboard |
 | `described-cut.js`, `wav.js` | The audio-described cut: narration, holds, frame order, soundtrack |
 | `render.js` | Runs the whole pipeline |
@@ -940,8 +944,8 @@ Start the `song-video-stage` server from `.claude/launch.json` (or run
 node scripts/song-video/render.js snapshots_and_pointers
 ```
 
-Rendering the audio-described track requires macOS and the storyboard's
-`say` voice. When the storyboard declares `video`,
+Rendering the audio-described track requires macOS, the local Drama 3 service
+on port 8000, and uv on Apple silicon. When the storyboard declares `video`,
 the full render also captures frames with four headless browsers,
 screens them for flashing, and encodes the requested videos. Frame capture
 needs a Chromium for Playwright. Set `PLAYWRIGHT_CHROME_EXECUTABLE` to an
@@ -952,10 +956,18 @@ screen and MP4 encoding require Xcode Command Line Tools (`swift`).
   checking a choreography.
 - `--frames-dir DIR` keeps the frames; add `--skip-capture` to re-encode the
   frames an earlier run kept (for example after changing the bitrate).
+- `--described-only` regenerates the described audio, captions, and timeline.
+  For a downloadable described video, pass its original numbered JPEGs with
+  `--frames-dir DIR` to update the picture holds from the same speech timing.
+  Keeping this directory also caches transcript-checked takes between runs.
+  To replace a flagged take, rerun with the same directory and
+  `--retake verse-1/2` (section ID and one-based sentence number). Repeat the
+  flag for additional sentences. Changed pronunciation entries generate new
+  takes automatically when the spoken text changes.
 
 A storyboard without `video` (like `unbox_the_stack`) plays only in the live
 player. Its render skips the frames, the encode, and the poster, and writes
-the captions and the audio-described track in under a minute; add
+the captions and the audio-described track; add
 `--check-flashes` to capture the frames anyway and run the flash screen.
 
 ## Adding a song

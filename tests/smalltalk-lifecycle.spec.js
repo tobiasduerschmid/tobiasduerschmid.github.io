@@ -225,15 +225,33 @@ test('asset failure is retryable', async ({ page }) => {
 });
 
 test('a structural barrier deadline rejects without resetting a responsive image', async ({ page }) => {
+  await page.clock.install();
+  await page.exposeFunction('expireBarrierDeadline', () => page.clock.fastForward(30001));
   const result = await withSmalltalk(page, async (host, ignored, events) => {
     const session = await host.openSession('live');
     const operation = host.request(session, 'evaluate', { source: "Transcript show: 'operation started'. (Delay forMilliseconds: 700) wait. 42", bindings: 'isolated' }, { purpose: 'run' });
     await events.waitFor(event => event.type === 'output' && event.payload.text === 'operation started');
-    const barrier = await host.request(session, 'barrier', {}).catch(error => ({ code: error.code }));
+    // Deliver this one real barrier late without shortening the deadlines for
+    // the running evaluation or the subsequent image query.
+    const postMessage = MessagePort.prototype.postMessage;
+    let deliverBarrier;
+    let pending;
+    try {
+      MessagePort.prototype.postMessage = function (message, ...options) {
+        if (message.operation === 'barrier') deliverBarrier = () => postMessage.call(this, message, ...options);
+        else postMessage.call(this, message, ...options);
+      };
+      pending = host.request(session, 'barrier', {}).catch(error => ({ code: error.code }));
+    } finally {
+      MessagePort.prototype.postMessage = postMessage;
+    }
+    await window.expireBarrierDeadline();
+    deliverBarrier();
+    const barrier = await pending;
     const value = await operation;
     const info = await host.request(session, 'info', {});
     return { barrier, value, info };
-  }, null, { limits: { operationMs: 300, runMs: 3000 } });
+  });
   expect(result.barrier.code).toBe('TIMEOUT');
   expect(result.value.value.text).toBe('42');
   expect(result.info.imageBuild).toBe(22104);

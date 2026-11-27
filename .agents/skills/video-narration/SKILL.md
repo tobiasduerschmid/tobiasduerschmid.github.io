@@ -501,8 +501,10 @@ not change its fingerprint. Stage-specific rules:
   which writes every animated value into the copy's inline styles). Editing
   the storyboard, timing, choreography, bullets, or quizzes changes the notes
   with nothing to re-render. Do not commit rendered stills or PDFs.
-- **A copy must look like the video.** It inherits the stage page's type
-  (browser defaults), not the notes' type, and its slot uses
+- **A copy must look like the video.** The offscreen master and its copies
+  use the stage page's browser-default type metrics. This keeps the master's
+  text boxes and blueprint lettering coverage consistent with the video.
+  Each copy's slot uses
   `contain: strict`; without containment, Chrome's print shrinks every page
   to fit the 960px stage. A copy is rescaled after it is drawn, so its SVG
   text uses `text-rendering: geometricPrecision`; otherwise Chromium paints

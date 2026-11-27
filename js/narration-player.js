@@ -42,7 +42,7 @@
       button.setAttribute('aria-label', `${name}: jump to its start`);
       button.addEventListener('click', () => {
         player.selectScene(sceneIndex);
-        const destination = root.querySelectorAll('[data-scene]')[sceneIndex];
+        const destination = root.querySelectorAll('.nja-scene[data-scene]')[sceneIndex];
         const target = Array.from(destination.querySelectorAll('.np-navigation button'))
           .find(candidate => candidate.textContent === name);
         if (target) target.focus();

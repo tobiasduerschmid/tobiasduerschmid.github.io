@@ -69,9 +69,9 @@ soundtrack: assets/audio/it-works-on-my-machine.m4a   # repo path, played by the
 described_soundtrack: assets/audio/it-works-on-my-machine-described.m4a
 described_timeline: /assets/audio/it-works-on-my-machine-described.json
 narrator:
-  voice: Samantha   # macOS `say` voice for the audio-described track
-  rate: 205         # words per minute
+  voice: drama3-female6
   pronounce:        # how the narrator says notation the captions keep as written
+    fix commits: commits containing fixes
     .gitignore: dot git ignore
     gitignore: git ignore
     .env: dot env

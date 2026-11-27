@@ -71,6 +71,7 @@ test('YAML enables local tutor, requires explicit download, and can disable it',
 });
 
 test('Rover coaching checks source locations and offers prerequisite links; transfer stays independent',async({page})=>{
+  test.setTimeout(120000);
   await page.goto('/SEBook/development_practices/code-specification-tutorial/#handover');
   await expect(page.getByRole('button',{name:'Download model',exact:true})).toBeEnabled({timeout:90000});
   await page.evaluate(()=>{
@@ -102,7 +103,8 @@ test('Rover coaching checks source locations and offers prerequisite links; tran
   await expect(page.getByRole('link',{name:'Python: Lists of References',exact:true})).toBeFocused();
   await auditInteractiveState(page,'Source coach with prerequisite resource',{include:'.tutorial-llm'});
   await page.goto('/SEBook/development_practices/code-specification-tutorial/?instructor-mode=true#independent-transfer');
-  await expect(page.getByRole('heading',{name:'The Encore Queue',exact:true})).toBeVisible();
+  // Instructor mode opens a new document with its own cold Python startup.
+  await expect(page.getByRole('heading',{name:'The Encore Queue',exact:true})).toBeVisible({timeout:90000});
   await page.getByText('Model & storage',{exact:true}).click();
   await expect(page.getByRole('button',{name:'Download model',exact:true})).toBeEnabled();
   await page.evaluate(()=>{
@@ -153,6 +155,7 @@ for(const example of [
 });
 
 test('a truncated drawing preserves the request and retries without adding a generic tutor answer',async({page})=>{
+  test.setTimeout(90000);
   await page.goto('/SEBook/development_practices/code-specification-tutorial/#handover');
   await expect(page.getByRole('button',{name:'Download model',exact:true})).toBeEnabled({timeout:90000});
   await page.evaluate(()=>{
@@ -172,14 +175,15 @@ test('a truncated drawing preserves the request and retries without adding a gen
   await input.fill(question);
   await page.getByRole('button',{name:'Send',exact:true}).click();
   const chat=assistant.getByRole('group').filter({has:page.getByRole('log',{name:'Tutor conversation'})});
-  await expect(chat.getByRole('status')).toContainText('generation limit');
+  // The first source request starts the separate Python analysis worker, whose budget is 60 seconds.
+  await expect(chat.getByRole('status')).toContainText('generation limit',{timeout:60000});
   await expect(input).toHaveValue(question);
   await expect(page.getByRole('log')).not.toContainText('Which part of the source would you inspect next?');
   await expect(page.getByRole('log').getByRole('img')).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Download model',exact:true})).toBeEnabled();
   await page.evaluate(()=>{window._tutorial.llmAddon.plan.cached=true;});
   await page.getByRole('button',{name:'Send',exact:true}).click();
-  await expect(page.getByRole('log').getByRole('img',{name:/sequence diagram/i})).toBeVisible();
+  await expect(page.getByRole('log').getByRole('img',{name:/sequence diagram/i})).toBeVisible({timeout:60000});
   await expect(input).toHaveValue('');
   await expect(page.getByRole('log').getByRole('img')).toHaveAttribute('aria-label',/alt branch.*accepted/);
 });

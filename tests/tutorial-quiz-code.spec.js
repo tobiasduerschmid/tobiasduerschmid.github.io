@@ -2,6 +2,7 @@
 const { test, expect } = require('@playwright/test');
 const { loadTutorialConfig, waitForTutorialReady } = require('./tutorial-helpers');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { luminance, paletteOf, textContrast, contrast } = require('./print-helpers');
 
 const tutorial = loadTutorialConfig('uml-class-diagram-python');
 const timerIndex = tutorial.steps[0].quiz.questions.findIndex(question => question.question.includes('class Timer:'));
@@ -55,8 +56,19 @@ test('tutorial quiz code is highlighted in the main page and popout without text
   await popup.setViewportSize({ width: 320, height: 700 });
   await checkCodeBox(popup);
   expect(await popup.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
-  await popup.emulateMedia({ media: 'print' });
-  const printed = await checkCodeBox(popup, { print: true });
-  await expect(printed).toHaveCSS('color', 'rgb(17, 17, 17)');
+  for (const dark of [false, true]) {
+    await popup.emulateMedia({ media: 'screen' });
+    await popup.evaluate(dark => document.documentElement.classList.toggle('dark-mode', dark), dark);
+    await expect.poll(() => popup.evaluate(() => document.documentElement.classList.contains('dark-mode'))).toBe(dark);
+    await popup.emulateMedia({ media: 'print' });
+    const printed = await checkCodeBox(popup, { print: true });
+    expect(luminance((await paletteOf(printed)).background), 'code prints on a light surface').toBeGreaterThanOrEqual(0.35);
+    // Both ordinary text and highlighted tokens must remain readable with or
+    // without printed backgrounds, regardless of the saved screen theme.
+    for (const token of [printed, ...await printed.locator('span').all()]) {
+      expect(await textContrast(token), 'printed code contrast').toBeGreaterThanOrEqual(4.5);
+      expect(contrast((await paletteOf(token)).text, [255, 255, 255]), 'code contrast on white paper').toBeGreaterThanOrEqual(4.5);
+    }
+  }
   await popup.close();
 });

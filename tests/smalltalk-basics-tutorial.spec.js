@@ -1,5 +1,6 @@
 const { test, expect: standardExpect } = require('@playwright/test');
 const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
+const { expectSmalltalkImage } = require('./helpers/smalltalk-runtime');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const expect = standardExpect.configure({ timeout: 30000 });
 const route = '/SEBook/tools/smalltalk-basics-tutorial';
@@ -8,7 +9,7 @@ test.setTimeout(180000);
 
 async function openMission(page, key) {
   await page.goto(route + '#' + key);
-  await expect(page.getByRole('button', { name: 'Run', exact: true })).toBeEnabled({ timeout: 120000 });
+  await expectSmalltalkImage(page.getByRole('button', { name: 'Run', exact: true })).toBeEnabled();
 }
 
 async function typeCode(page, input, code) {
@@ -35,6 +36,8 @@ test('the live scoring mission updates the same inspected player after Accept', 
   await openMission(page, 'messages-and-results-v1');
   await evaluate(page, "'arcade' asUppercase", 'ARCADE');
   await page.getByRole('button', { name: 'Step 2: Live Objects', exact: true }).click();
+  // Navigation commits the mission URL after its new Smalltalk image is ready.
+  await expectSmalltalkImage(page).toHaveURL(/#live-scorekeeper-v1$/);
   await expect(source(page)).toContainText('points + 1');
   await evaluate(page, 'player := SEBookArcadeScore new', 'a SEBookArcadeScore');
   await evaluate(page, 'player win', 'a SEBookArcadeScore');
@@ -91,8 +94,9 @@ test('the Boolean mission opens real system source and supports the documented s
   await expect(page.locator('html')).not.toHaveClass(/dark-mode-transition/);
   await page.setViewportSize({ width: 320, height: 800 });
   await a11yCheckpoint(page, 'arcade-boolean-mobile-dark', { feature: 'smalltalk-basics' });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
-    'The lesson must reflow at 320px without horizontal page scrolling').toBe(true);
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - innerWidth), {
+    message: 'The lesson must reflow at 320px without horizontal page scrolling',
+  }).toBeLessThanOrEqual(1);
   expect(errors, 'System-source browsing must not raise page errors').toEqual([]);
 });
 

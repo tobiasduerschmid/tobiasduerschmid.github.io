@@ -16,13 +16,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { readWav } = require('./wav');
+const { narrationSentences } = require('./captions');
 
 const LEAD_SILENCE = 0.3; // seconds of quiet before the narrator speaks
 const TAIL_SILENCE = 0.5; // after the narrator, before the song resumes
 const CUT_BEFORE_LINE = 0.08; // the song pauses this long before a section's first word
 const PICTURE_AFTER_LINE = 0.6; // the held picture: the section, just after its first word
 const FADE = 0.015; // fades around every cut in the song, so the pauses don't click
-const QUIET = 0.003; // trimmed from the ends of each spoken description
 
 const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -44,26 +44,20 @@ function spokenForm(text, pronounce = {}) {
     .replace(/\bHEAD\b/g, 'head');
 }
 
-function trimQuiet(voice) {
-  let first = 0;
-  while (first < voice.length && Math.abs(voice[first]) < QUIET) first++;
-  let last = voice.length - 1;
-  while (last > first && Math.abs(voice[last]) < QUIET) last--;
-  return voice.slice(first, last + 1);
-}
-
-/** Speaks every section's narration with the storyboard's macOS `say` voice. */
-function speakNarrations(storyboard, workDir, sampleRate) {
-  const { voice, rate, pronounce } = storyboard.narrator;
-  return storyboard.sections.map((section, index) => {
+/** Renders verified Drama 3 speech at the song mixer's sample rate. */
+function speakNarrations(storyboard, workDir, sampleRate, retakes = []) {
+  const { voice, pronounce } = storyboard.narrator;
+  const sections = storyboard.sections.map(({ id, narration }) => ({
+    id,
+    sentences: narrationSentences(narration).map((written) => ({ written, spoken: spokenForm(written, pronounce) })),
+  }));
+  execFileSync('uv', ['run', '--script', path.join(__dirname, 'speak-descriptions.py'), workDir, String(sampleRate)], {
+    input: JSON.stringify({ voice, sections, retakes }),
+    stdio: ['pipe', 'inherit', 'inherit'],
+  });
+  return sections.map((_, index) => {
     const file = path.join(workDir, `narration-${index}.wav`);
-    execFileSync('say', [
-      '-v', voice, '-r', String(rate), '--file-format=WAVE', `--data-format=LEI16@${sampleRate}`,
-      '-o', file, spokenForm(section.narration, pronounce),
-    ]);
-    const spoken = readWav(file);
-    if (spoken.sampleRate !== sampleRate) throw new Error(`say wrote ${spoken.sampleRate} Hz; expected ${sampleRate} Hz.`);
-    return trimQuiet(spoken.channels[0]);
+    return readWav(file).channels[0];
   });
 }
 
@@ -131,7 +125,7 @@ function linkDescribedFrames(plan, sourceDir, outDir, frameFileName) {
 }
 
 /** The described soundtrack: each narration over silence, then the song until the next hold. */
-function mixDescribedAudio(plan, song, voices) {
+function mixDescribedAudio(plan, song, voices, musicGain = 1) {
   const { sampleRate } = song;
   const perFrame = sampleRate / plan.fps;
   if (!Number.isInteger(perFrame)) throw new Error(`${sampleRate} Hz does not split into ${plan.fps} fps frames.`);
@@ -146,6 +140,7 @@ function mixDescribedAudio(plan, song, voices) {
     const to = (hold.outputFrame + hold.frames) * perFrame;
     songChannels.forEach((source, c) => {
       const segment = source.slice(from, from + length);
+      for (let i = 0; i < segment.length; i++) segment[i] *= musicGain;
       for (let i = 0; i < fade && i < segment.length; i++) {
         segment[i] *= i / fade;
         segment[segment.length - 1 - i] *= i / fade;

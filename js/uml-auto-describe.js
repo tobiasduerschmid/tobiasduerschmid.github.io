@@ -1995,9 +1995,10 @@
     return a && b;
   }
 
-  // Try immediately (in case bundle was loaded before us via defer ordering),
-  // then poll briefly while it loads. Caps at ~5 s to avoid leaking timers.
-  if (!tryPatch()) {
+  // Only browser documents need renderer initialization. The static-build CLI
+  // uses the description API without a renderer or timers keeping Node alive.
+  // Poll briefly when the browser bundle is still loading; cap at ~5 s.
+  if (typeof document !== 'undefined' && !tryPatch()) {
     var attempts = 0;
     var iv = setInterval(function () {
       attempts += 1;

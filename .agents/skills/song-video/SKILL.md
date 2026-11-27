@@ -10,6 +10,22 @@ The engine, storyboard format, render pipeline, and tests are documented in
 `docs/song-playlists.md`. This skill keeps the rules that are easy to forget
 when a song ships.
 
+## Render audio descriptions with Drama 3
+
+Use the local Fish Audio Drama 3 server on port 8000 for every new or
+regenerated audio description. Set `narrator.voice: drama3-female6` in
+the storyboard and keep pronunciation overrides in `narrator.pronounce`.
+Check `curl --fail http://127.0.0.1:8000/health`, then run
+`node scripts/song-video/render.js <song>`. The renderer sends each caption
+sentence to `/v1/audio/speech`, checks the take against the script with
+Whisper, and times that caption from the measured waveform.
+Review flagged words. With the same `--frames-dir DIR`, use
+`--described-only --retake verse-1/2` to replace a section's second
+sentence and keep the other cached takes. Ship the resulting described soundtrack, timeline,
+captions and, when the storyboard declares one, described video together.
+The [speech engine setup](../../../docs/narration-format.md#speech-engines)
+includes the local port-forward instructions.
+
 ## Every song ships with a playlist thumbnail
 
 A song with a `player` appears in the SE Book playlist library. Without a

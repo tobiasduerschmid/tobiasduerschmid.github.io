@@ -1,9 +1,53 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
+const { execFileSync } = require('node:child_process');
 const path = require('node:path');
 const yaml = require('js-yaml');
 const { ROOT, lessonIds, loadLesson } = require('../narration/source');
+
+test('authored note bullets retain literal prefixes and inline Markdown without creating nested blocks', () => {
+  const points = [
+    '1. **Start** `watch()` with *care*; [read the lesson](/lesson/).',
+    '2. Keep this step number.',
+    '# This is a point, not a heading.',
+    '> Compare a < b & c > d.',
+  ];
+  const html = execFileSync('bundle', ['exec', 'ruby', '-e', `
+    require 'jekyll'
+    require 'json'
+    site = Jekyll::Site.new(Jekyll.configuration('quiet' => true, 'disable_disk_cache' => true))
+    site.data = {
+      'narration_lessons' => { 'demo' => { 'kind' => 'case-study', 'lesson' => { 'name' => 'Demo' } } },
+      'explainers' => {
+        'demo' => { 'title' => 'Demo', 'scenes' => [
+          { 'id' => 'scene', 'label' => 'Scene', 'cues' => [
+            { 'id' => 'cue', 'step' => 'Inspect the evidence', 'visual' => 'The evidence.' }
+          ] }
+        ] },
+        'demo_notes' => { 'scene-cue' => JSON.parse(STDIN.read) }
+      }
+    }
+    template = Liquid::Template.parse('{% include narration-notes.html topic="demo" %}')
+    print template.render!({ 'site' => site.site_payload['site'] }, registers: { site: site })
+  `], { cwd: ROOT, input: JSON.stringify(points), encoding: 'utf8' });
+  const list = html.match(/<div class="vn-note-points">\s*<ul>([\s\S]*?)<\/ul>/)?.[1];
+  assert.ok(list, 'the handout renders its authored points as a list');
+  assert.doesNotMatch(list, /<(?:ol|ul|h[1-6]|blockquote|pre)\b/, 'one authored point remains one inline list item');
+  const items = [...list.matchAll(/<li\b[^>]*>([\s\S]*?)<\/li>/g)].map(match => match[1]);
+  const text = html => html.replace(/<[^>]*>/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').trim();
+  assert.deepEqual(items.map(text), [
+    '1. Start watch() with care; read the lesson.',
+    '2. Keep this step number.',
+    '# This is a point, not a heading.',
+    '> Compare a < b & c > d.',
+  ]);
+  assert.match(items[0], /<strong>Start<\/strong>/);
+  assert.match(items[0], /<code\b[^>]*>watch\(\)<\/code>/);
+  assert.match(items[0], /<em>care<\/em>/);
+  assert.match(items[0], /<a\b[^>]*href="\/lesson\/"[^>]*>read the lesson<\/a>/);
+});
 
 const words = text => text.toLowerCase().replace(/\*\*/g, '').replace(/['’]/g, '').split(/[^a-z0-9%]+/).filter(Boolean);
 function copiedRun(point, speech) {

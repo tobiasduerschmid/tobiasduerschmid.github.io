@@ -55,6 +55,35 @@ def test_spelling_variants_of_the_same_words_are_not_slips(script, heard):
     assert mismatch(script, script, heard).rate == 0
 
 
+@pytest.mark.parametrize("written, heard", [
+    ("labelled", "labeled"),
+    ("acknowledgements", "acknowledgments"),
+    ("moustache", "mustache"),
+    ("café", "cafe"),
+    ("façade", "facade"),
+    ("centre", "center"),
+])
+def test_alternative_spellings_of_the_same_word_agree_in_either_direction(written, heard):
+    assert mismatch(written, written, heard).rate == 0
+    assert mismatch(heard, heard, written).rate == 0
+
+
+@pytest.mark.parametrize("heard, slip", [
+    ("The labeled caller.", "missing 'waits'"),
+    ("The labeled collar waits.", "'caller' heard as 'collar'"),
+    ("The labeled caller writes.", "'waits' heard as 'writes'"),
+])
+def test_spelling_equivalence_keeps_other_word_errors_visible(heard, slip):
+    script = "The labelled caller waits."
+    assert mismatch(script, script, heard).differences(heard) == [slip]
+
+
+def test_different_words_with_the_same_sound_still_need_review():
+    script = "Their labelled roles."
+    heard = "Their labeled rolls."
+    assert mismatch(script, script, heard).differences(heard) == ["'roles' heard as 'rolls'"]
+
+
 def test_a_misheard_word_is_still_a_slip():
     script = "Hi, high, hi."
     assert mismatch(script, script, "Hi, high, high.").differences("Hi, high, high.") == ["'hi' heard as 'high'"]

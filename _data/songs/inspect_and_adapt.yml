@@ -62,8 +62,7 @@ soundtrack: assets/audio/inspect-and-adapt.m4a   # repo path, played by the live
 described_soundtrack: assets/audio/inspect-and-adapt-described.m4a
 described_timeline: /assets/audio/inspect-and-adapt-described.json
 narrator:
-  voice: Samantha   # macOS `say` voice for the audio-described track
-  rate: 205         # words per minute
+  voice: drama3-female6
   pronounce:        # how the narrator says notation the captions keep as written
     "≤": "at most"
 width: 1920

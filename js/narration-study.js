@@ -46,7 +46,7 @@
       const destination = frame(data.story, reference);
       player.showCue(destination.sceneIndex, destination.cueIndex);
       close();
-      const heading = root.querySelectorAll('[data-scene]')[destination.sceneIndex]?.querySelector('h3');
+      const heading = root.querySelectorAll('.nja-scene[data-scene]')[destination.sceneIndex]?.querySelector('h3');
       if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
       root.querySelector('.nja-status').textContent = `Reviewing ${destination.cue.step || destination.scene.label}. Narration paused.`;
     }

@@ -1,6 +1,6 @@
 const { test, expect: standardExpect } = require('@playwright/test');
 const expect = standardExpect.configure({ timeout: 30000 });
-const { mountSmalltalkFixture } = require('./helpers/smalltalk-runtime');
+const { mountSmalltalkFixture, expectSmalltalkImage } = require('./helpers/smalltalk-runtime');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
 test.setTimeout(180000);
@@ -60,7 +60,7 @@ test('terminal retains variables, recalls commands and marks cyclic inspections 
     await expect(page.getByRole('region', { name: 'Evaluation result', exact: true })).toHaveText('8');
     const restart = page.getByRole('button', { name: 'Restart session', exact: true });
     await restart.focus(); await restart.press('Enter');
-    await expect(page.getByRole('status', { name: 'Live session status', exact: true })).toContainText('Live bindings and objects were cleared');
+    await expectSmalltalkImage(page.getByRole('status', { name: 'Live session status', exact: true })).toContainText('Live bindings and objects were cleared');
     await expect(page.getByRole('region', { name: 'Result object', exact: true })).toContainText('Stale object');
     await expect(restart).toBeFocused();
     await expect(page.getByRole('region', { name: 'Result object', exact: true }).getByRole('button', { name: 'Expand 2', exact: true })).toBeDisabled();
@@ -84,7 +84,7 @@ test('Stop interrupts a requested hostile printString and resets inspector handl
     await expect(transcript).toContainText('native hostile print entered');
     const stop = page.getByRole('button', { name: 'Stop evaluation', exact: true });
     await stop.focus(); await stop.press('Enter');
-    await expect(page.getByRole('status', { name: 'Live session status', exact: true })).toContainText('Session reset');
+    await expectSmalltalkImage(page.getByRole('status', { name: 'Live session status', exact: true })).toContainText('Session reset');
     await expect(page.getByRole('region', { name: 'Result object', exact: true })).toContainText('Stale object');
     await expect(page.getByRole('button', { name: 'Evaluate', exact: true })).toBeFocused();
     await expect(page.getByRole('region', { name: 'Result object', exact: true }).getByRole('button', { name: 'Next slots for Result', exact: true, includeHidden: true })).toBeDisabled();

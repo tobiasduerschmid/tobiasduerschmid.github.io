@@ -40,6 +40,7 @@ for (const [kind, url] of surfaces) {
       await expect.poll(() => page.evaluate(() => !!document.fullscreenElement)).toBe(false);
       await expect(button).toHaveAttribute('aria-pressed', 'false');
       await button.click();
+      await expect.poll(() => page.evaluate(() => document.fullscreenElement === document.documentElement)).toBe(true);
       await page.evaluate(() => document.exitFullscreen());
       await expect(button).toBeVisible();
       await expect(button).toHaveAttribute('aria-pressed', 'false');

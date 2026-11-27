@@ -384,8 +384,15 @@ function contrastRatio(colorA, colorB) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+async function mountedDesktopEntranceHeroes(page) {
+  const heroes = page.locator('#gym-entrance [data-gym-hero-svg]');
+  await expect(heroes.nth(1)).toBeAttached();
+  return heroes;
+}
+
 async function entranceHeroSignatures(page) {
-  return page.locator('#gym-entrance [data-gym-hero-svg]').evaluateAll((svgs) => {
+  const heroes = await mountedDesktopEntranceHeroes(page);
+  return heroes.evaluateAll((svgs) => {
     function visibleOption(svg, slot) {
       const groups = Array.from(svg.querySelectorAll(`[data-hero-slot="${slot}"]`));
       const visible = groups.find((group) => group.getAttribute('display') === 'inline');
@@ -1825,9 +1832,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
   test('Every visible hair choice has distinct authored geometry', async ({ page }) => {
     await page.goto(GYM_URL);
+    const hero = page.locator('#gym-entrance [data-gym-hero-svg]').filter({ visible: true }).first();
+    await expect(hero).toHaveAttribute('data-hero-avatar-ready', 'true');
 
-    const audit = await page.evaluate(() => {
-      const svg = document.querySelector('[data-gym-hero-svg]');
+    const audit = await hero.evaluate((svg) => {
       const values = window.HeroAvatar.CHOICE_SETS.hairStyle.groups
         .flatMap((group) => group.options.map((option) => option.value))
         .filter((value) => value !== 'bald');
@@ -2762,7 +2770,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
   test('Hero SVGs are hidden until avatar customization is applied', async ({ page }) => {
     await page.goto(GYM_URL);
 
-    const readiness = await page.locator('#gym-entrance [data-gym-hero-svg]').evaluateAll((svgs) =>
+    const heroes = await mountedDesktopEntranceHeroes(page);
+    const readiness = await heroes.evaluateAll((svgs) =>
       svgs.map((svg) => ({
         ready: svg.getAttribute('data-hero-avatar-ready'),
         opacity: getComputedStyle(svg).opacity,
@@ -2774,8 +2783,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       expect(hero.opacity).toBe('1');
     }
 
-    const preHydrationStyles = await page.evaluate(() => {
-      const original = document.querySelector('#gym-entrance [data-gym-hero-svg]');
+    const preHydrationStyles = await heroes.first().evaluate((original) => {
       const clone = original.cloneNode(true);
       clone.removeAttribute('data-hero-avatar-ready');
       document.body.appendChild(clone);

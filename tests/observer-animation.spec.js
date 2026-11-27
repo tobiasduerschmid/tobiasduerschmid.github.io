@@ -1,5 +1,6 @@
 const { loadStory } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
+const { openNarrationDocument } = require('./helpers/narration-reader');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const { openPlayerSettings } = require('./helpers/narration-player');
 const { readFileSync } = require('node:fs');
@@ -323,7 +324,7 @@ test('self-paced and print HTML include every step and visualization without aud
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   for (const view of ['read', 'print']) {
-    await page.goto(`/SEBook/designpatterns/observer/${view}/`);
+    await openNarrationDocument(page, `/SEBook/designpatterns/observer/${view}/`, view, story);
     await expect(page.locator('audio')).toHaveCount(0);
     const steps = page.locator('.np-reading-step');
     await expect(steps).toHaveCount(story.scenes.reduce((count, scene) => count + scene.cues.length, 0));

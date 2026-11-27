@@ -133,6 +133,11 @@ the bar overlay its lower edge. Mark scrolling panels
 `js/narration-diagram.js` is the one diagram copier for lessons and case
 studies.
 
+Explainer chapters reuse `narrated-reading-content.html` for their complete
+illustrated transcript and `narration-view-links.html` for reader/print links.
+Playback selects `.nja-scene[data-scene]` panels only: reader snapshots also
+carry `data-scene`, and must never be hidden by the transport's scene changes.
+
 The bar follows the picture and captions in document order and stays at the
 bottom in both modes; settings open above it. Inline players also include
 `narration-player-start.html`, a synchronized play/pause button at the upper
@@ -307,6 +312,11 @@ storage failure, long writing, code-language choice, and PDF export. Inspect
 representative saved PDFs and keep verification artifacts outside the repo.
 
 ## Edit speech and regenerate
+
+Generate every new or revised audio description with the local Fish Audio
+Drama 3 service at `http://127.0.0.1:8000` and registered voice
+`drama3-female6`. For song soundtracks and their synchronized captions,
+follow the [song audio description workflow](../song-video/SKILL.md#render-audio-descriptions-with-drama-3).
 
 1. Edit `say`, `speech.pronunciations`, and pauses in the YAML. Captions retain
    written English; pronunciation replacements affect TTS only. Keep at least

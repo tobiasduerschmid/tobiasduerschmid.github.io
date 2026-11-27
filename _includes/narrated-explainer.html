@@ -50,21 +50,10 @@
   {{ include.notes_actions }}
   {% include narration-player-tips.html id=player_id %}
   {% include narration-player-credit.html story=explainer %}
+  {% include narration-view-links.html topic=include.topic %}
   <details class="nja-transcript">
     <summary>Transcript and visual descriptions</summary>
-    {% for scene in explainer.scenes %}
-    <div class="nja-transcript-scene">
-      <h3>{{ forloop.index }}. {{ scene.label }}</h3>
-      {% if scene.purpose %}<p><strong>Our task:</strong> {{ scene.purpose | escape }}</p>{% endif %}
-      {% if scene.context %}<p>{{ scene.context | escape }}</p>{% endif %}
-      {% if scene.code %}{% include narrated-explainer-code.html code=scene.code filename=scene.filename language=explainer.language transcript=true %}{% endif %}
-      {% for cue in scene.cues %}
-      {% if scene.alternate_code and forloop.last %}{% if scene.alternate_context %}<p>{{ scene.alternate_context | escape }}</p>{% endif %}{% assign alternate_filename = scene.alternate_filename | default: scene.filename %}{% include narrated-explainer-code.html code=scene.alternate_code filename=alternate_filename language=explainer.language transcript=true %}{% endif %}
-      <p>{{ cue.text }}</p>
-      <p class="nja-description"><strong>Visual:</strong> {{ cue.visual | escape }}</p>
-      {% endfor %}
-    </div>
-    {% endfor %}
+    {% include narrated-reading-content.html topic=include.topic %}
     {% if explainer.references %}
     <p>Technical references: {% for reference in explainer.references %}<a href="{{ reference.url }}">{{ reference.title }}</a>{% unless forloop.last %}, {% endunless %}{% endfor %}.</p>
     {% else %}
@@ -75,4 +64,5 @@
 </section>
 {% assign art_script = '/js/' | append: include.topic | append: '-animation-art.js' %}
 <script src="{{ art_script | relative_url }}?v={{ site.asset_version }}" defer></script>
+<script src="{{ '/js/narrated-pattern-document.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 {% include narration-player-scripts.html %}

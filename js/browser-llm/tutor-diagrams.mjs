@@ -78,6 +78,7 @@ async function renderDiagram(host,part,signal,required) {
   figure.className = 'tvm-tutor-diagram';
   const canvas = document.createElement('div');
   canvas.className = 'tvm-tutor-diagram-canvas';
+  canvas.setAttribute('data-uml-fit','readable');
   canvas.setAttribute('role','img');
   canvas.setAttribute('aria-label','Tutor '+part.type+' diagram');
   const status = document.createElement('p');

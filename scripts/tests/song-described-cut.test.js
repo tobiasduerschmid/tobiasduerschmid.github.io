@@ -62,11 +62,33 @@ test('the mix puts each narration in its hold and the song right after it, sampl
   assert.deepEqual(right, left); // a mono song plays on both channels
 });
 
+test('balancing the described cut attenuates both music channels and preserves the narration and source', () => {
+  const plan = planDescribedCut(storyboard, voices, RATE);
+  const channels = [new Float32Array(1000).fill(1), new Float32Array(1000).fill(-0.5)];
+  const original = channels.map(channel => channel.slice());
+  const song = { sampleRate: RATE, channels };
+  const [left, right] = mixDescribedAudio(plan, song, voices, 0.5).channels;
+  const musicSample = Math.round((plan.holds[0].outputEnd + 0.1) * RATE);
+  assert.equal(left[musicSample], 0.5);
+  assert.equal(right[musicSample], -0.25);
+  for (const channel of [left, right]) {
+    const start = Math.round(plan.holds[0].speechStart * RATE);
+    assert.deepEqual(channel.slice(start, start + voices[0].length), voices[0]);
+    assert.ok(channel.every(sample => Math.abs(sample) <= 0.5));
+  }
+  assert.deepEqual(channels, original);
+});
+
 test('described captions narrate each hold and move the lyrics past the holds before them', () => {
   const plan = planDescribedCut(storyboard, voices, RATE);
-  const vtt = describedCaptions(storyboard, plan);
+  const sentenceTimings = [
+    [{ start: 0, end: 0.25 }, { start: 0.45, end: 1.5 }],
+    [{ start: 0, end: 1 }],
+  ];
+  const vtt = describedCaptions(storyboard, plan, sentenceTimings);
 
-  assert.match(vtt, /00:00:00\.300 --> [\d:.]+\n\(narrator\) First part\./);
+  assert.match(vtt, /00:00:00\.300 --> 00:00:00\.550\n\(narrator\) First part\./);
+  assert.match(vtt, /00:00:00\.750 --> 00:00:01\.800\n\(narrator\) Second part\./);
   assert.match(vtt, /\(narrator\) Verse shows app\.py\./);
   // "Hello." sang at 1 s; the intro hold (2.3 s) comes first.
   assert.match(vtt, /00:00:03\.300 --> [\d:.]+\nHello\./);

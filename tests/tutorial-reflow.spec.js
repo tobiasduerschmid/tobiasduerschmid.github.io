@@ -5,6 +5,8 @@ const { waitForTutorialReady } = require('./tutorial-helpers');
 for (const darkMode of [false, true]) {
   test(`tutorial content and controls remain reachable after reflow (${darkMode ? 'dark' : 'light'})`, async ({ page }) => {
     test.setTimeout(120_000);
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
     await page.setViewportSize({ width: 320, height: 256 });
     await page.goto('/SEBook/tools/haskell-tutorial');
     await waitForTutorialReady(page, { bootTimeout: 90_000 });
@@ -12,6 +14,8 @@ for (const darkMode of [false, true]) {
 
     // Opening a file tab during boot must not jump past unread instructions
     // to the editor. Starting at the toolbar or at the lesson is acceptable.
+    const nav = page.getByRole('navigation', { name: 'Tutorial navigation' });
+    const help = nav.getByRole('button', { name: 'Help links' });
     const lessonHeading = page.getByRole('heading', { name: 'Functions as Expressions', exact: true });
     await expect.poll(() => lessonHeading.evaluate((heading) =>
       heading.getBoundingClientRect().top
@@ -25,6 +29,14 @@ for (const darkMode of [false, true]) {
       { width: 1280, height: 720 },
     ]) {
       await page.setViewportSize(viewport);
+
+      const title = nav.getByText('Haskell 1: Expressions, Types, and Recursion', { exact: true });
+      await title.scrollIntoViewIfNeeded();
+      await expect(title).toBeInViewport();
+      await help.click();
+      await expect(nav.getByRole('link', { name: 'Glossary' })).toBeVisible();
+      await help.click();
+      await expect(help).toHaveAttribute('aria-expanded', 'false');
 
       for (const target of [
         lessonHeading,
@@ -47,6 +59,7 @@ for (const darkMode of [false, true]) {
         await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
       }
     }
+    expect(errors).toEqual([]);
   });
 }
 

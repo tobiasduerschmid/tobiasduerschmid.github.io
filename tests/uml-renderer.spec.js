@@ -4308,12 +4308,16 @@ note bottom of WesternBrewingKit
 end note
 @enduml`;
 
-      const host = document.createElement('div');
-      host.style.width = '1200px';
-      host.style.height = '700px';
-      host.style.position = 'absolute';
-      host.style.left = '-10000px';
-      document.body.appendChild(host);
+      function createHost() {
+        const host = document.createElement('div');
+        host.style.width = '1200px';
+        host.style.height = '700px';
+        host.style.position = 'absolute';
+        host.style.left = '-10000px';
+        document.body.appendChild(host);
+        return host;
+      }
+      const host = createHost();
       /** @type {any} */ (window).UMLClassDiagram.render(host, src);
 
       const svg = host.querySelector('svg');
@@ -4322,21 +4326,37 @@ end note
         height: 0,
         xs: {},
         ys: {},
-        methodFont: 0,
-        nameFont: 0,
-        noteFont: 0,
+        labels: [],
+        paragraphFont: 0,
+        smallestNominalText: 0,
+        smallestFittedText: 0,
+        defaultSmallestFittedText: 0,
         routeBoxHits: [],
         routeCount: 0,
         dependencyLaneYs: [],
-        dependencyStartXs: [],
+        dependencyExits: [],
       };
       if (!svg) { document.body.removeChild(host); return result; }
+
+      function smallestFittedText(drawing) {
+        const labels = Array.from(drawing.querySelectorAll('text'));
+        if (!labels.length) return 0;
+        return Math.min(...labels.map((label) => {
+          const matrix = label.getScreenCTM();
+          return parseFloat(getComputedStyle(label).fontSize) * Math.hypot(matrix.c, matrix.d);
+        }));
+      }
 
       const viewBox = (svg.getAttribute('viewBox') || '').split(/\s+/).map(Number);
       result.width = viewBox[2] || 0;
       result.height = viewBox[3] || 0;
+      result.smallestFittedText = smallestFittedText(svg);
 
       const texts = Array.from(svg.querySelectorAll('text'));
+      result.labels = texts.map((text) => text.textContent.trim());
+      result.paragraphFont = parseFloat(getComputedStyle(host).fontSize);
+      result.smallestNominalText = Math.min(...texts.filter((text) => text.textContent.trim())
+        .map((text) => parseFloat(getComputedStyle(text).fontSize)));
       const modelNames = [
         'TeaBrewingKit', 'BrewingVessel', 'SteepingProfile',
         'GongFuBrewingKit', 'WesternBrewingKit',
@@ -4349,13 +4369,6 @@ end note
         result.xs[name] = box.x + box.width / 2;
         result.ys[name] = box.y + box.height / 2;
       }
-      const methodText = texts.find((t) => t.textContent.includes('createSteepingProfile'));
-      const nameText = texts.find((t) => t.textContent.trim() === 'TeaBrewingKit');
-      const noteText = texts.find((t) => t.textContent.trim() === 'return');
-      result.methodFont = methodText ? Number(methodText.getAttribute('font-size') || 0) : 0;
-      result.nameFont = nameText ? Number(nameText.getAttribute('font-size') || 0) : 0;
-      result.noteFont = noteText ? Number(noteText.getAttribute('font-size') || 0) : 0;
-
       function parsePoints(raw) {
         return (raw || '')
           .trim()
@@ -4448,11 +4461,13 @@ end note
 
       const routes = routeElements();
       result.routeCount = routes.length;
-      for (const polyline of Array.from(svg.querySelectorAll('polyline'))) {
-        if ((polyline.getAttribute('stroke') || '') !== '#000') continue;
-        if (polyline.getAttribute('stroke-dasharray') !== '8,4') continue;
+      for (const polyline of svg.querySelectorAll('polyline[data-layout-source][stroke-dasharray="8,4"]')) {
         const points = parsePoints(polyline.getAttribute('points') || '');
-        if (points.length) result.dependencyStartXs.push(Math.round(points[0].x));
+        if (points.length) result.dependencyExits.push({
+          source: polyline.getAttribute('data-layout-source'),
+          target: polyline.getAttribute('data-layout-target'),
+          point: points[0],
+        });
         let best = null;
         for (let pointIndex = 0; pointIndex < points.length - 1; pointIndex++) {
           const a = points[pointIndex], b = points[pointIndex + 1];
@@ -4472,6 +4487,11 @@ end note
         }
       }
 
+      // Each variant starts with the same pane geometry and no saved fit state.
+      const defaultHost = createHost();
+      /** @type {any} */ (window).UMLClassDiagram.render(defaultHost, src.replace('layout compact\n', ''));
+      result.defaultSmallestFittedText = smallestFittedText(defaultHost.querySelector('svg'));
+      document.body.removeChild(defaultHost);
       document.body.removeChild(host);
       return result;
     });
@@ -4479,16 +4499,26 @@ end note
     expect(stats.width).toBeGreaterThan(0);
     expect(stats.width).toBeLessThan(1700);
     expect(stats.height).toBeLessThan(850);
-    expect(stats.nameFont).toBeGreaterThanOrEqual(19);
-    expect(stats.methodFont).toBeGreaterThanOrEqual(18);
-    expect(stats.noteFont).toBeGreaterThanOrEqual(17);
+    expect(stats.labels).toContainEqual(expect.stringContaining('createSteepingProfile'));
+    expect(stats.labels).toContain('return');
+    expect(stats.paragraphFont).toBeGreaterThan(0);
+    expect(stats.smallestNominalText).toBeGreaterThanOrEqual(stats.paragraphFont);
+    expect(stats.defaultSmallestFittedText).toBeGreaterThan(0);
+    expect(stats.smallestFittedText).toBeGreaterThan(stats.defaultSmallestFittedText);
     expect(stats.routeCount).toBeGreaterThanOrEqual(10);
     expect(stats.routeBoxHits, `Routes cross model elements: ${(stats.routeBoxHits || []).join(', ')}`).toEqual([]);
     expect(new Set(stats.dependencyLaneYs).size).toBeGreaterThanOrEqual(4);
-    const dependencyStartXs = (stats.dependencyStartXs || []).slice().sort((a, b) => a - b);
-    expect(dependencyStartXs.length).toBeGreaterThanOrEqual(4);
-    expect(dependencyStartXs[1] - dependencyStartXs[0]).toBeGreaterThanOrEqual(12);
-    expect(dependencyStartXs[3] - dependencyStartXs[2]).toBeGreaterThanOrEqual(12);
+    const factoryTargets = {
+      GongFuBrewingKit: ['Gaiwan', 'MultipleShortSteeps'],
+      WesternBrewingKit: ['SingleLongSteep', 'WesternTeapot'],
+    };
+    expect(stats.dependencyExits).toHaveLength(4);
+    for (const [factory, targets] of Object.entries(factoryTargets)) {
+      const exits = stats.dependencyExits.filter(({ source }) => source === factory);
+      expect(exits.map(({ target }) => target).sort()).toEqual(targets);
+      const [a, b] = exits.map(({ point }) => point);
+      expect(Math.hypot(a.x - b.x, a.y - b.y), `${factory} dependency exits stay separate`).toBeGreaterThanOrEqual(12);
+    }
 
     const xs = stats.xs;
     const ys = stats.ys;

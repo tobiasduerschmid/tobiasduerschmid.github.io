@@ -14,6 +14,17 @@ from dataclasses import dataclass
 
 WHISPER = "mlx-community/whisper-large-v3-turbo"
 
+# ASR can choose either spelling for the same spoken word.
+SPELLING_VARIANTS = {
+    "acknowledgement": "acknowledgment",
+    "acknowledgements": "acknowledgments",
+    "café": "cafe",
+    "façade": "facade",
+    "centre": "center",
+    "labelled": "labeled",
+    "moustache": "mustache",
+}
+
 
 def words(text):
     """Lower-case words with numbers spelled out, so "15%" and "fifteen percent" agree."""
@@ -27,7 +38,8 @@ def words(text):
     text = re.sub(r"(\d+)[:.](\d+)", r"\1 \2", text)  # clock times, spoken "two thirteen"
     text = re.sub(r"\d+", lambda match: " " + num2words(int(match.group())) + " ", text)
     text = text.replace("-", " ")
-    return re.sub(r"[^a-z' ]+", " ", text).split()
+    tokens = re.findall(r"(?:[^\W\d_]|')+", text)
+    return [SPELLING_VARIANTS.get(token, token) for token in tokens]
 
 
 def _spelling(phrase):

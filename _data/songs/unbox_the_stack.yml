@@ -48,11 +48,11 @@ soundtrack: assets/audio/unbox-the-stack.m4a   # repo path, played by the live p
 described_soundtrack: assets/audio/unbox-the-stack-described.m4a
 described_timeline: /assets/audio/unbox-the-stack-described.json
 narrator:
-  voice: Samantha   # macOS `say` voice for the audio-described track
-  rate: 205         # words per minute
+  voice: drama3-female6
   pronounce:        # how the narrator says notation the captions keep as written
     SYN-ACK: sin ack
     SYN: sin
+    ACKs: acknowledgments
     FIN-ACK: fin ack
     DMs: D Ms
     ucla.edu: U C L A dot E D U

@@ -18,6 +18,8 @@ describe('Playwright serving an existing build', { timeout: 30_000 }, () => {
 
   before(async () => {
     directory = await fs.mkdtemp(path.join(os.tmpdir(), 'sebook-playwright-built-'));
+    // Ruby version managers resolve the runtime from the child process's cwd.
+    await fs.copyFile(path.join(repositoryRoot, '.ruby-version'), path.join(directory, '.ruby-version'));
     await fs.mkdir(path.join(directory, '_site', 'tutorial'), { recursive: true });
     await fs.writeFile(path.join(directory, '_config.yml'), 'destination: _site\n');
     await fs.writeFile(path.join(directory, 'tutorial.html'), '---\n---\nREBUILT SOURCE');

@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { loadTutorialConfig } = require('./tutorial-helpers');
+const { expectSmalltalkImage } = require('./helpers/smalltalk-runtime');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const config = loadTutorialConfig('smalltalk');
 const KEY = 'tutorial-progress-smalltalk';
@@ -108,7 +109,7 @@ test('disabling Auto-save prevents saving and restoring accepted code or drafts'
   await toggle.focus(); await expect(toggle).toBeFocused(); await toggle.press('Space');
   await page.getByRole('dialog', { name: 'Delete saved progress?', exact: true }).getByRole('button', { name: 'Yes', exact: true }).click();
   // Deletion also resets native accepted source; edit after that transaction.
-  await expect.poll(() => page.evaluate(() => window._tutorial._smalltalkAdapter.getProgram().revision), { timeout: 30000 }).not.toBe(beforeReset);
+  await expectSmalltalkImage.poll(() => page.evaluate(() => window._tutorial._smalltalkAdapter.getProgram().revision)).not.toBe(beforeReset);
   await page.evaluate(async source => {
     const workspace = window._tutorial._smalltalkAdapter.getWorkspace();
     await workspace.commit({ baseRevision: workspace.snapshot().revision, action: 'acceptMethod', params: {
@@ -137,9 +138,9 @@ test('legacy saved files remain unaccepted and Reset persists a clean starter', 
   await page.getByRole('link', { name: 'Reset Current Step', exact: true }).click();
   await page.getByRole('dialog', { name: 'Reset the current step?', exact: true })
     .getByRole('button', { name: 'Reset step', exact: true }).click();
-  await expect.poll(async () => {
+  await expectSmalltalkImage.poll(async () => {
     const value = await stored(page); return value && value.smalltalk_workspace && value.smalltalk_workspace.steps[STEP].drafts;
-  }, { timeout: 30000 }).toEqual([]);
+  }).toEqual([]);
   await ready(page);
   expect(await page.evaluate(() => window._tutorial._smalltalkAdapter.getWorkspace().getDrafts())).toEqual([]);
   await run(page, 1);
@@ -258,7 +259,7 @@ for (const choice of ['Yes', 'No']) test('multi-step Auto-save ' + choice + ' ke
   await toggle.focus(); await toggle.press('Space');
   await page.getByRole('dialog', { name: 'Delete saved progress?', exact: true }).getByRole('button', { name: choice, exact: true }).click();
   if (choice === 'Yes') {
-    await expect.poll(() => page.evaluate(() => window._tutorial._smalltalkAdapter.getProgram().revision), { timeout: 30000 }).not.toBe(revision);
+    await expectSmalltalkImage.poll(() => page.evaluate(() => window._tutorial._smalltalkAdapter.getProgram().revision)).not.toBe(revision);
     expect(await stored(page)).toBeNull();
   } else expect(await stored(page)).toEqual(before);
   await toggle.focus(); await toggle.press('Space');

@@ -109,6 +109,22 @@ test('fit survives resizing and repeated renderer updates without duplicate cont
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });
 
+test('a fitted diagram keeps its view when hidden and shown again', async ({ page }) => {
+  const diagram = await diagramFixture(page);
+  await fitButtons(page).press('Enter');
+  await expect(restoreButton(page)).toBeVisible();
+
+  await diagram.evaluate(element => {
+    element.closest('figure').hidden = true;
+    window.UMLShared.autoFitSVG(element);
+  });
+  await expect(restoreButton(page)).toBeHidden();
+  await page.locator('figure').evaluate(figure => { figure.hidden = false; });
+
+  await expect(restoreButton(page)).toBeVisible();
+  await expectFits(page, diagram);
+});
+
 test('tooltips support keyboard dismissal and pointer travel onto the help', async ({ page }) => {
   await diagramFixture(page);
   const button = fitButtons(page);

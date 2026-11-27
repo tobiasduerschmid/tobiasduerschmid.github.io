@@ -2,6 +2,7 @@ const { test, expect } = require('@playwright/test');
 const { execFileSync } = require('node:child_process');
 const { readFileSync } = require('node:fs');
 const path = require('node:path');
+const yaml = require('js-yaml');
 const { loadLesson } = require('../scripts/narration/source');
 const { openPlayerSettings } = require('./helpers/narration-player');
 
@@ -25,6 +26,7 @@ let errors;
 test.beforeAll(() => {
   const data = {
     narration_lessons: { therac25: investigation, nodejs: explainer },
+    narration_views: yaml.load(readFileSync(path.join(__dirname, '../_data/narration_views.yml'), 'utf8')),
     explainers: {
       therac25: investigation.story, nodejs: explainer.story,
       nodejs_timing: JSON.parse(readFileSync(path.join(__dirname, '../_data/explainers/nodejs_timing.json'), 'utf8')),

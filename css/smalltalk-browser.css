@@ -4,7 +4,6 @@
 .smalltalk-tutorial-output { min-width: 0; overflow: auto; }
 .smalltalk-tutorial-workspace > section, .smalltalk-tutorial-output > section { margin-top: 0; }
 .smalltalk-tutorial-output .tvm-output-container { flex: 0 0 auto; max-height: 7em; overflow: auto; }
-.smalltalk-tutorial-output .tvm-output-container:has(.tvm-output-pre:empty) { display: none; }
 .smalltalk-browser, .smalltalk-inspector {
   --smalltalk-surface: var(--color-surface, #fff);
   --smalltalk-secondary: var(--color-surface-2, #f3f5f7);
@@ -102,6 +101,7 @@ html.dark-mode-transition :is(.smalltalk-browser, .smalltalk-inspector) *::after
 .smalltalk-tutorial .smalltalk-check-notice { font: inherit; overflow-wrap: anywhere; }
 .smalltalk-source-editor { height: 8em; min-height: 7em; width: 100%; border: 1px solid var(--smalltalk-border); border-radius: var(--radius-sm, 4px); background: var(--smalltalk-surface); }
 .smalltalk-expression-editor { height: 5em; min-height: 4em; width: 100%; border: 1px solid var(--smalltalk-border); border-radius: var(--radius-sm, 4px); background: var(--smalltalk-surface); }
+.smalltalk-tutorial :is(.smalltalk-source-editor, .smalltalk-expression-editor) { line-height: 1.35; }
 .smalltalk-source-preview { display: none; }
 .smalltalk-source-views { min-width: 0; }
 .smalltalk-source-views h3 { font-size: 1.2em; margin: .4em 0; overflow-wrap: anywhere; }
@@ -204,6 +204,15 @@ html.dark-mode .smalltalk-tutorial-output .tvm-output-header .smalltalk-dock-con
 .smalltalk-compact-terminal .smalltalk-terminal-history,
 .smalltalk-compact-terminal .smalltalk-transcript { min-height: 3em; max-height: 12em; }
 @media screen and (min-width: 901px) and (min-height: 650px) {
+  /* Compact navigation hides the back link. Let the title and controls share
+     the available width before wrapping, so a spare header row cannot clip
+     the source editor in the fixed-height workspace. */
+  body.tutorial-layout:has(.smalltalk-tutorial) #navnav.tutorial-nav-compact .navbar-header {
+    flex: 0 1 auto !important;
+  }
+  body.tutorial-layout:has(.smalltalk-tutorial) #navnav.tutorial-nav-compact .tutorial-navbar-title {
+    margin-left: 0;
+  }
   .smalltalk-tutorial .tvm-editor-panel { flex: 1 1 0; }
   .smalltalk-tutorial .tvm-output-panel { flex: 0 0 196px; }
   .smalltalk-tutorial-workspace,

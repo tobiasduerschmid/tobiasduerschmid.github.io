@@ -200,7 +200,6 @@ test('Test My Work grades current edits before the automatic save debounce fires
   await openLesson(page, 0);
   await page.getByRole('button', { name: /\bSteps$/ }).click();
   const frozenTime = new Date('2026-10-28T00:00:00Z');
-  await page.clock.install({ time: frozenTime });
   await page.clock.pauseAt(frozenTime);
   const repair = config.steps[0].solution.files.find(file => file.path === 'greet.py').content;
   // Prepare an unsaved editor draft while the autosync timer is paused. The

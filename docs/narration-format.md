@@ -385,6 +385,10 @@ and verification screenshots outside the repository.
 - `scripts/narration.js`: CLI used by Jekyll, audio tooling, and CI.
 - `_plugins/narrations.rb`: adapts compiled lessons to Jekyll data views.
 - `_includes/narration.html`, `narration-data.html`: page/style entry and data contract.
+- `_includes/narrated-reading-content.html`: the same settled explainer steps
+  in chapter transcripts and standalone reader/print views. Live playback
+  targets `.nja-scene[data-scene]` panels; reader snapshots also carry
+  `data-scene` but must remain outside playback visibility changes.
 - `_layouts/narration-notes.html`, `_includes/narration-notes.html`,
   `narration-note-visual.html`, and `narration-note-editor.html`: one generated
   editable handout for every lesson, with small kind-specific visual branches.

@@ -11,7 +11,7 @@ const PRESENTATIONS = {
     include: 'narrated-pattern.html',
     styles: ['/css/narrated-pattern.css', '/css/narrated-pattern-document.css'],
   },
-  explainer: { include: 'narrated-explainer.html', styles: [] },
+  explainer: { include: 'narrated-explainer.html', styles: ['/css/narrated-pattern-document.css'] },
   'case-study': { include: 'narrated-case-study.html', styles: ['/css/narrated-case-study.css'] },
 };
 const ROOT_FIELDS = ['version', 'id', 'kind', 'title', 'description', 'references', 'lesson', 'speech', 'media', 'scenes'];

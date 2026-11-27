@@ -117,7 +117,10 @@ test.describe('Settings page', () => {
     await expect(page.getByLabel('Autosave tutorial work')).toBeVisible();
     await expect(page.getByLabel('Timed practice')).toBeVisible();
     await expect(page.getByLabel('Show hero during workout')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'What each tutorial remembers' })).toBeVisible();
+    const remembered = page.getByRole('group', { name: 'What lessons and tools remember', exact: true });
+    await expect(remembered.getByRole('heading', { level: 2 })).toBeVisible();
+    await expect(remembered.getByText('Tutorial layout and breakpoints', { exact: true })).toBeVisible();
+    await expect(remembered.getByText('Tutorial progress and code', { exact: true })).toBeVisible();
 
     await clickSwitch(page, '#setting-dark-mode');
     await expect(page.locator('html')).toHaveClass(/dark-mode/);

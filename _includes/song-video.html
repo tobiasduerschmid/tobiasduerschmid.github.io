@@ -56,7 +56,7 @@
     <p>Your browser can't play this video. <a href="{{ song_video }}">Download the video</a> or read the lyrics below.</p>
   </video>
   {% endif %}
-  <figcaption class="song-video-credit">{{ song.credit }}</figcaption>
+  <figcaption class="song-video-credit">{{ song.credit }} Audio description: Built with Fish Audio.</figcaption>
 
   <details class="song-video-transcript"{% if include.id %} id="{{ include.id }}-description"{% endif %}>
     <summary>{% if song.player %}Full transcript{% else %}Audio description and lyrics{% endif %}</summary>

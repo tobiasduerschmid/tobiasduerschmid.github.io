@@ -63,7 +63,9 @@
       </div>
       {% endif %}
       <div class="vn-note-points">
-        <ul>{% if vn_cue_points %}{% for point in vn_cue_points %}<li>{{ point | markdownify | remove: '<p>' | remove: '</p>' | strip }}</li>{% endfor %}{% else %}<li>{{ cue.note | escape }}</li>{% endif %}</ul>
+        {% comment %}Each authored point is inline Markdown; leading numbers and punctuation are its text, not nested lists or headings.{% endcomment %}
+        {% capture vn_points_markup %}<ul>{% if vn_cue_points %}{% for point in vn_cue_points %}<li markdown="span">{{ point }}</li>{% endfor %}{% else %}<li>{{ cue.note | escape }}</li>{% endif %}</ul>{% endcapture %}
+        {{ vn_points_markup | markdownify }}
         {% capture vn_edit_key %}cue:{{ scene.id }}/{{ cue.id }}{% endcapture %}
         {% include narration-note-editor.html key=vn_edit_key label='Your notes' %}
         <div class="vn-note-lines" aria-hidden="true">{{ vn_ruled }}</div>

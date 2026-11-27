@@ -322,11 +322,17 @@ for (const mode of ['inline', 'native fullscreen', 'viewport fullscreen', 'inlin
     }
     await openSummary();
     const check = player.getByRole('region', { name: /— Summary quiz$/ });
-    for (const [index, question] of questions.entries()) {
-      await check.getByRole('radio').filter({ hasText: question.options[question.correct_index] }).click();
-      await check.getByRole('button', { name: index < questions.length - 1 ? 'Next Question' : 'See Results', exact: true }).click();
+    async function completeSummary() {
+      // Opening a knowledge check starts a fresh attempt, including on return
+      // from the song. Complete that attempt before taking its final action.
+      await expect(check.getByRole('radio', { checked: true })).toHaveCount(0);
+      for (const [index, question] of questions.entries()) {
+        await check.getByRole('radio').filter({ hasText: question.options[question.correct_index] }).click();
+        await check.getByRole('button', { name: index < questions.length - 1 ? 'Next Question' : 'See Results', exact: true }).click();
+      }
+      await expect(check.getByText('Knowledge Check Complete!', { exact: true })).toBeVisible();
     }
-    await expect(check.getByText('Knowledge Check Complete!', { exact: true })).toBeVisible();
+    await completeSummary();
     await expect(songFrame).toHaveCount(0);
     const continueButton = check.getByRole('button', { name: 'Continue to song', exact: true });
     await continueButton.focus();
@@ -359,6 +365,7 @@ for (const mode of ['inline', 'native fullscreen', 'viewport fullscreen', 'inlin
     else expect(await page.evaluate(() => document.fullscreenElement)).toBeNull();
     // Revisit the completed quiz: reuse the song session without losing the host.
     await openSummary();
+    await completeSummary();
     await check.getByRole('button', { name: 'Continue to song', exact: true }).click();
     await expect(songFrame).toHaveCount(1);
     await expect(song.getByRole('button', { name: 'Pause song', exact: true })).toBeFocused();
@@ -378,7 +385,8 @@ test('security final decision continues to its paired song and returns to the ca
   await openPlayerSettings(player);
   await player.getByRole('combobox', { name: 'Review a scene' }).selectOption(String(lesson.story.scenes.length - 1));
   for (const cue of scene.cues.slice(1)) await player.getByRole('button', { name: 'Next step', exact: true }).click();
-  await player.getByRole('button', { name: 'Knowledge check', exact: true }).click();
+  await expect(player.getByRole('button', { name: 'Knowledge check', exact: true })).toBeDisabled();
+  await player.getByRole('button', { name: 'Reveal explanation', exact: true }).click();
   const check = player.getByRole('region', { name: /— Knowledge check$/ });
   await check.getByRole('radio').filter({ hasText: scene.checkpoint.options[scene.checkpoint.correct_index] }).click();
   await expect(check.getByText(scene.checkpoint.explanation, { exact: true })).toBeVisible();

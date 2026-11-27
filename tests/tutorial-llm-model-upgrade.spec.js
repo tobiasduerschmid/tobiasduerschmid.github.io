@@ -80,6 +80,9 @@ test('a nine-buffer browser explains the 7B incompatibility and can return to 3B
 });
 
 test('a 7B download reports its size, can be cancelled, and deletes its partial files without losing the specification',async({page})=>{
+  // The fixture transfers only the config. Keep the full-download quota check
+  // independent of the host profile while exercising the real Cache API.
+  await page.addInitScript(()=>{navigator.storage.estimate=async()=>({quota:8e9,usage:0});});
   const {errors}=await open(page);
   const specification=page.getByLabel('Your specification',{exact:true});
   await specification.fill('Keep my specification while I manage the optional model.');

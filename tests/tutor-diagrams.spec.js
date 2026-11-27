@@ -59,15 +59,22 @@ test('diagrams remain readable in both themes and narrow panes',async({page})=>{
     await auditInteractiveState(page,'Tutor diagram '+(dark?'dark':'light'),{include:'.tutorial-llm'});
   }
   await page.setViewportSize({width:390,height:844});
-  const diagram=page.locator('.tvm-tutor-diagram-canvas');
-  await expect(diagram.locator('svg')).toBeVisible();
+  const diagram=page.getByRole('log').getByRole('img',{name:/component diagram/i});
+  await expect(diagram).toBeVisible();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-  const svg=diagram.locator('svg');
-  const fontSize=await svg.locator('text').first().evaluate(el=>{
-    const scale=el.getScreenCTM().a;
-    return parseFloat(getComputedStyle(el).fontSize)*scale;
-  });
-  expect(fontSize).toBeGreaterThanOrEqual(16);
+  await expect.poll(()=>diagram.locator('svg text').evaluateAll(labels=>{
+    const sizes=labels.filter(label=>label.textContent.trim()).map(label=>{
+      const matrix=label.getScreenCTM();
+      return parseFloat(getComputedStyle(label).fontSize)*Math.hypot(matrix.c,matrix.d);
+    });
+    return sizes.length ? Math.min(...sizes) : 0;
+  })).toBeGreaterThanOrEqual(16);
+
+  await page.getByText('Diagram source (ArchUML)',{exact:true}).focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(diagram).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect.poll(()=>diagram.evaluate(element=>element.scrollLeft)).toBeGreaterThan(0);
 });
 
 test('invalid diagrams retain explanation and source without running markup',async({page})=>{

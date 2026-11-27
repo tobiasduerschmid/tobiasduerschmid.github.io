@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
-const { countInArtwork } = require('./song-player-helpers');
+const { countInArtwork, openPlayerSettings } = require('./song-player-helpers');
 
 const PLAYER_PATH = '/assets/song-player/snapshots-and-pointers.html';
 const storyboard = yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/snapshots_and_pointers.yml'), 'utf8'));
@@ -100,6 +100,7 @@ async function openPausedPlayer(page) {
   await expect(page.getByRole('button', { name: 'Play song', exact: true })).toBeEnabled();
   // Selecting a track loads native metadata while leaving playback paused.
   // This keeps artwork tests independent of real-time audio decoding speed.
+  await openPlayerSettings(page);
   const track = page.getByRole('combobox', { name: 'Audio track', exact: true });
   await track.selectOption('described');
   await expect(page.getByRole('slider', { name: 'Song position', exact: true })).toBeEnabled();

@@ -160,7 +160,7 @@
       holdFences(root);
       archumlLoad.then(function () {
         releaseFences();
-        window.UMLShared.renderAll();
+        window.UMLShared.renderAll({ root: root, fit: 'readable' });
       }).catch(function (error) {
         releaseFences();
         console.error('The diagrams in these instructions could not be drawn.', error);

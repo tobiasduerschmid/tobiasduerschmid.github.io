@@ -118,10 +118,10 @@ for (const { id, page: pagePath, standalone = false } of SONGS) {
       const transcript = page.getByRole('group').filter({ hasText: EXTRAS_TOGGLE });
       await expect(transcript).toBeVisible();
 
-      for (const line of lines) {
-        await expect(transcript).toContainText(line.text);
-        await expect(transcript).toContainText(line.visual);
-      }
+      const entries = transcript.getByRole('listitem');
+      await expect(entries).toHaveCount(lines.length);
+      await expect(entries).toContainText(lines.map((line) => line.text), { useInnerText: true });
+      await expect(entries).toContainText(lines.map((line) => line.visual), { useInnerText: true });
     });
 
     test('the player waits for the reader and has no raster video element', async ({ page }) => {

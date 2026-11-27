@@ -17,7 +17,7 @@ async function mountDeferredInspector(page, { startInspection = true, compact = 
         if (deferEvaluation) await new Promise(resolve => { resolveEvaluation = resolve; });
         return { value: { className: 'Array', text: 'an Array', handle: 'root-' + (++resultSerial) }, error: null };
       },
-      inspect() { return new Promise(resolve => pending.push(resolve)); },
+      inspect(handle, offset) { return new Promise(resolve => pending.push({ offset, resolve })); },
       async releaseHandles(handles, options = {}) {
         if (releaseFails) throw Object.assign(new Error('release transport failed'), { code: 'RECOVERED_FAILURE' });
         released.push({ handles, sessionId: options.sessionId }); return { released: handles.length };
@@ -34,7 +34,11 @@ async function mountDeferredInspector(page, { startInspection = true, compact = 
       },
     });
     window.inspectorLifecycle = { dispose: () => view.dispose(), released,
-      resolve() { pending.shift()({ sessionId: 'original', className: 'Array', slots: [{ name: '1', value: { className: 'Array', text: 'an Array', handle: 'late-child' } }], nextOffset: null }); },
+      resolve(nextOffset = null) {
+        const request = pending.shift();
+        const slot = { name: String(request.offset + 1), value: { className: 'Array', text: 'an Array', handle: 'late-child' } };
+        request.resolve({ sessionId: 'original', className: 'Array', slots: [slot], nextOffset });
+      },
       output(text) { listeners.forEach(listener => listener({ type: 'runtime', detail: { type: 'output', payload: { stream: 'stdout', text } } })); },
       deferNextEvaluation() { deferEvaluation = true; }, resolveEvaluation() { deferEvaluation = false; resolveEvaluation(); },
       pending: () => pending.length, failRelease: value => { releaseFails = value; },
@@ -113,6 +117,21 @@ for (const action of ['Close', 'dispose']) {
     await expect(page.getByRole('region', { name: 'Result object', exact: true })).toHaveCount(0);
   });
 }
+
+test('completing the final slot page preserves focus moved to another control', async ({ page }) => {
+  await mountDeferredInspector(page);
+  await page.evaluate(() => window.inspectorLifecycle.resolve(1));
+  const panel = page.getByRole('region', { name: 'Result object', exact: true });
+  const next = panel.getByRole('button', { name: 'Next slots for Result', exact: true });
+  await next.focus();
+  await next.press('Enter');
+  await expect(next).toBeDisabled();
+  const close = panel.getByRole('button', { name: 'Close Result inspector', exact: true });
+  await close.focus();
+  await page.evaluate(() => window.inspectorLifecycle.resolve());
+  await expect(next).toBeHidden();
+  await expect(close).toBeFocused();
+});
 
 test('Inspector does not release late slots from an invalidated session', async ({ page }) => {
   await mountDeferredInspector(page);

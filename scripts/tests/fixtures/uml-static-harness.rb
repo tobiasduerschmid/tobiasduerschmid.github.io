@@ -34,7 +34,7 @@ def describer_command(describer)
 end
 
 def process_with_cached_svg(content, svg, page_identifier, describer)
-  blocks = Jekyll::UMLStatic.collect_code_blocks(content)
+  blocks = Jekyll::UMLStatic.collect_code_blocks(content) + Jekyll::UMLStatic.collect_data_attribute_blocks(content)
   renderer_hash = 'unit-test-renderer'
   cache = blocks.to_h { |block| [cache_key(renderer_hash, block), svg] }
 

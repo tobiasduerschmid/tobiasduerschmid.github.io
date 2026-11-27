@@ -1,49 +1,40 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
-async function expectNavLinkActive(page, targetId) {
-  await expect
-    .poll(async () => page.evaluate((href) => {
-      const link = document.querySelector(`#navnav .navbar-nav a[href="${href}"]`);
-      const item = link && link.closest('li');
-      const linkClass = link ? link.className : '';
-      const itemClass = item ? item.className : '';
-      return /\bactive\b/.test(linkClass) || /\bactive\b/.test(itemClass);
-    }, targetId), {
-      timeout: 5000,
-      message: `Expected nav link ${targetId} or its parent item to become active`
-    })
-    .toBe(true);
+function sectionLink(page, name) {
+  return page.getByRole('navigation', { name: 'Main navigation' })
+    .getByRole('link', { name, exact: true });
+}
+
+async function expectSectionHighlighted(link) {
+  await expect(link).toHaveAttribute('aria-current', 'location');
+  // The current section has a persistent inset marker in sebook-theme.css;
+  // aria-current alone would miss a regression in the visible highlight.
+  await expect(link).not.toHaveCSS('box-shadow', 'none');
 }
 
 test.describe('Blog Navigation Highlighting', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/blog/evidence-based-study-tips-for-college-students/');
-    await expect(page.locator('#navnav .navbar-nav a[href^="#"]').first()).toBeVisible();
+    // Navigation must work even while the unrelated third-party math renderer
+    // is still loading. Keep its request pending until the context closes.
+    await page.route('https://cdn.jsdelivr.net/npm/mathjax@3.2.2/**', () => {});
+    await page.goto('/blog/evidence-based-study-tips-for-college-students/', { waitUntil: 'domcontentloaded' });
+    await expect(sectionLink(page, 'Desirable Difficulties')).toHaveAttribute('aria-current', 'location');
   });
 
   test('clicking a navbar link highlights the matching blog section', async ({ page }) => {
-    const navLinks = page.locator('#navnav .navbar-nav a[href^="#"]');
-    const count = await navLinks.count();
-
-    expect(count, 'Blog navbar should expose section links').toBeGreaterThan(2);
-
-    const link = navLinks.nth(1);
+    const link = sectionLink(page, 'Retrieval Practice');
     const targetId = await link.getAttribute('href');
     expect(targetId).toBeTruthy();
 
     await expect(page.locator(targetId), `Expected section ${targetId} to exist`).toHaveCount(1);
     await link.click();
-    await expectNavLinkActive(page, targetId);
+    await expectSectionHighlighted(link);
   });
 
   test('scrolling into a blog section highlights the matching navbar item', async ({ page }) => {
-    const navLinks = page.locator('#navnav .navbar-nav a[href^="#"]');
-    const count = await navLinks.count();
-
-    expect(count, 'Blog navbar should expose section links').toBeGreaterThan(2);
-
-    const targetId = await navLinks.nth(2).getAttribute('href');
+    const link = sectionLink(page, 'Spaced Practice');
+    const targetId = await link.getAttribute('href');
     expect(targetId).toBeTruthy();
 
     const section = page.locator(targetId);
@@ -58,6 +49,6 @@ test.describe('Blog Navigation Highlighting', () => {
       window.scrollTo(0, Math.max(0, top - navHeight - 8));
     }, targetId);
 
-    await expectNavLinkActive(page, targetId);
+    await expectSectionHighlighted(link);
   });
 });

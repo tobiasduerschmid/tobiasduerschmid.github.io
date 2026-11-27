@@ -152,7 +152,7 @@
         return new Promise(function (resolve) {
           (function attempt() {
             if (window.UMLShared && typeof window.UMLShared.renderAll === 'function') {
-              window.UMLShared.renderAll();
+              window.UMLShared.renderAll({ root: document.querySelector('main'), fit: 'readable' });
               describeEarlyC4Figures();
               makeScrollableCodeFocusable();
               resolve();

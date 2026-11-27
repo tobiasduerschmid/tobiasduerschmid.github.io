@@ -48,9 +48,9 @@ soundtrack: assets/audio/invest-in-your-stories.m4a   # repo path, played by the
 described_soundtrack: assets/audio/invest-in-your-stories-described.m4a
 described_timeline: /assets/audio/invest-in-your-stories-described.json
 narrator:
-  voice: Samantha   # macOS `say` voice for the audio-described track
-  rate: 205         # words per minute
+  voice: drama3-female6
   pronounce:        # how the narrator says notation the captions keep as written
+    I want a ping: I want, a ping
     INVEST: invest
     DM: D M
     Dijkstra’s: Dike-struhs

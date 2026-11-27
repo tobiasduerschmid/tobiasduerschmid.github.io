@@ -1,3 +1,8 @@
+const { expect } = require('@playwright/test');
+
+// Cold image operations include booting Squeak and loading its accepted program.
+const expectSmalltalkImage = expect.configure({ timeout: 120000 });
+
 /** Exercise the real runtime API on the site's origin; never a UI substitute. */
 async function installSmalltalk(page) {
   await page.goto('/robots.txt');
@@ -29,7 +34,7 @@ async function withSmalltalk(page, scenario, data, options = {}) {
     finally { host.dispose(); }
   }, { source: scenario.toString(), data, options });
 }
-module.exports = { withSmalltalk, installSmalltalk };
+module.exports = { withSmalltalk, installSmalltalk, expectSmalltalkImage };
 
 /** Compose production views with real Monaco, Workspace and VM; no service/UI substitutes. */
 async function mountSmalltalkFixture(page, { program, drafts = [], views = ['browser', 'inspector'] }) {

@@ -190,9 +190,12 @@ test.describe('AADL diagram browser component', () => {
   test('resizing the pane relayouts the current model without requesting a new engine result', async t => {
     const page = await mount(t);
     await page.evaluate(model => window.diagram.render(model), budget);
+    const canvas = page.getByRole('region', { name: 'Scrollable architecture diagram' });
+    await canvas.focus();
     await page.setViewportSize({ width: 320, height: 900 });
     await expect.poll(() => page.getByRole('img').evaluate(svg => svg.getBoundingClientRect().width <= svg.parentElement.clientWidth)).toBe(true);
     await expect(page.getByRole('status')).toContainText('Resolved model.');
+    await expect(canvas).toBeFocused();
   });
 
   test('a bus access link renders its component endpoint and is named as access in the equivalent table', async t => {
@@ -307,15 +310,22 @@ test.describe('AADL diagram browser component', () => {
 
   test('clear cancels pending work and allows a fresh model to be displayed', async t => {
     const page = await mount(t);
+    const canvas = page.getByRole('region', { name: 'Scrollable architecture diagram' });
+    await expect(canvas).toHaveCount(0);
     await page.evaluate(async model => {
       const pending = window.diagram.render(model);
       window.diagram.clear();
       await pending;
     }, rover());
     await expect(page.getByRole('img')).toHaveCount(0);
+    await expect(canvas).toHaveCount(0);
     await expect(page.getByLabel('Current scope')).toBeDisabled();
     await page.evaluate(model => window.diagram.render(model), rover());
-    await expect(page.getByRole('img', { name: /rover.*communication/i })).toBeVisible();
+    await expect(canvas.getByRole('img', { name: /rover.*communication/i })).toBeVisible();
+    await canvas.focus();
+    await expect(canvas).toBeFocused();
+    await page.evaluate(() => window.diagram.clear());
+    await expect(canvas).toHaveCount(0);
   });
 
   test('an empty deployment view finishes with an explicit no-bindings message', async t => {
@@ -324,6 +334,7 @@ test.describe('AADL diagram browser component', () => {
     await page.evaluate(model => window.diagram.render(model), model);
     await page.getByLabel('View', { exact: true }).selectOption('deployment');
     await expect(page.getByText('No actual bindings are recorded in this scope.')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Scrollable architecture diagram' })).toHaveCount(0);
     await expect(page.getByRole('status')).not.toContainText('Preparing');
   });
 

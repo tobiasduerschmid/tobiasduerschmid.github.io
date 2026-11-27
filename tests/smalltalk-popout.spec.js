@@ -1,4 +1,5 @@
 const { test, expect: baseExpect } = require('@playwright/test');
+const { expectSmalltalkImage } = require('./helpers/smalltalk-runtime');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const features = require('./helpers/smalltalk-features');
 const { selectAllInMonaco, insertLinesInMonaco } = require('./helpers/monaco-keyboard');
@@ -7,7 +8,7 @@ test.setTimeout(180000);
 const terminal = page => page.getByRole('region', { name: 'Smalltalk live terminal', exact: true });
 async function ready(page) {
   await page.goto('/SEBook/tools/smalltalk-tutorial');
-  await expect(page.getByRole('button', { name: 'Run', exact: true })).toBeEnabled({ timeout: 120000 });
+  await expectSmalltalkImage(page.getByRole('button', { name: 'Run', exact: true })).toBeEnabled();
   await page.getByRole('listbox', { name: 'Methods', exact: true }).selectOption({ label: 'increment' });
 }
 async function edit(page, label, source) {
@@ -134,7 +135,7 @@ test('Source views detaches raw files as drafts and Accept file uses the owner c
   await expect(page.getByRole('region', { name: 'Selected saved source', exact: true })).toContainText('A retained raw-file draft');
   await evaluate(page, 'SEBookCounter new increment; value', '1');
   await popup.getByRole('button', { name: 'Accept file', exact: true }).click();
-  await expect(popup.getByRole('status', { name: 'Source view status' })).toContainText('Accepted file.', { timeout: 60000 });
+  await expectSmalltalkImage(popup.getByRole('status', { name: 'Source view status' })).toContainText('Accepted file.');
   await expect(page.getByRole('region', { name: 'Selected saved source', exact: true })).toContainText('Accepted file');
   await a11yCheckpoint(popup, 'raw-source-popup', { feature: 'smalltalk-popout' });
 });

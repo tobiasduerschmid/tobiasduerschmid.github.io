@@ -54,7 +54,6 @@ for (const historyAction of ['Undo', 'Redo']) {
     await page.keyboard.press('ArrowRight');
     if (historyAction === 'Redo') await undo(page).click();
     const now = new Date('2026-10-20T00:00:00Z');
-    await page.clock.install({ time: now });
     await page.clock.pauseAt(now);
     await page.getByRole('button', { name: new RegExp(historyAction + '$') }).click();
     const add = page.getByRole('button', { name: 'Add element: Class', exact: true });
@@ -73,7 +72,6 @@ for (const key of ['ArrowRight', 'F2']) {
     await open(page, 'class', '@startuml\nclass A\nclass B\n@enduml');
     await select(element(page, 'A'));
     const now = new Date('2026-10-20T00:00:00Z');
-    await page.clock.install({ time: now });
     await page.clock.pauseAt(now);
     await page.keyboard.press(key);
     const add = page.getByRole('button', { name: 'Add element: Class', exact: true });

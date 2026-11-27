@@ -65,6 +65,8 @@ def choose_take(takes):
 
 
 class Drama3Speaker:
+    expects_transcript = True
+
     def __init__(self, voice_id, voice, speed, *, server, takes, transcriber=transcribe):
         if speed != 1:
             raise ValueError(f"Drama 3 has no speed control; set speech.speed to 1 for {voice_id}")

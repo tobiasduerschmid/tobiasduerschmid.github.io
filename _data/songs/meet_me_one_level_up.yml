@@ -60,8 +60,7 @@ soundtrack: assets/audio/meet-me-one-level-up.m4a   # repo path, played by the l
 described_soundtrack: assets/audio/meet-me-one-level-up-described.m4a
 described_timeline: /assets/audio/meet-me-one-level-up-described.json
 narrator:
-  voice: Samantha   # macOS `say` voice for the audio-described track
-  rate: 205         # words per minute
+  voice: drama3-female6
   pronounce:        # how the narrator says notation the captions keep as written
     SE Gym: S E Gym
     TDD: T D D

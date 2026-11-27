@@ -4017,7 +4017,20 @@ channel.
   is unchanged.
 - **Shared UML fit/restore view** — the ArchUML bundle automatically adds one
   top-right control to overflowing diagram viewports,
-  including authored lesson diagrams. The shared UML editor/playground, live
+  except authored tutorial instruction figures: the main lesson pane, its
+  detached instructions window, and the print view call
+  `UMLShared.renderAll({ root, fit: 'readable' })`.
+  This fits each figure only while its smallest label remains paragraph-sized;
+  narrower panes keep the drawing readable and keyboard-scrollable. The root
+  limits this policy to the current instructions. An explicit `data-uml-fit`
+  on an authored wrapper or fenced block's `pre` survives figure replacement
+  and overrides the diagram type's policy, which overrides the host default.
+  Use `data-uml-fit="auto"` for a reference whose whole-diagram overview is
+  part of the exercise, as with the suggested daily-digest sequence diagram.
+  Its Restore control returns the reader to the scrollable, readable view.
+  Already drawn figures (including static builds) also receive the host default
+  unless they carry their own policy. Paper printing still fits drawings to the page.
+  The shared UML editor/playground, live
   tutorial viewers, and their fullscreen/popout counterparts opt out with `data-uml-fit="off"` because they own zoom and pan.
   Their view selector starts in Implementation details and omits the long help
   paragraph (`showHelp: false`); tutorial introductions explain that Design focus
@@ -4339,6 +4352,10 @@ actual bindings separately. Model details provide equivalent component, feature,
 connection, and binding tables. Feature-group drawing currently reports an
 explicit unsupported-view state; scopes above seven nodes keep complete tables
 and ask for a smaller visual scope. Diagram limits do not redefine AADL validity.
+Only a rendered drawing exposes the keyboard-scrollable region. Empty,
+loading, and explanatory fallback states leave status and model details
+available without a diagram tab stop. Resize-only layout keeps the current
+drawing in place until the replacement is ready.
 There is no text-output popout for this pane. Source buttons use official source
 locations and are disabled on stale models. Activating one opens the reported
 file through the host's `_setActiveFile` and `_renderTabs`, selects the reported
@@ -6119,6 +6136,8 @@ Expand; Focus source editor temporarily hides instructions and browsing controls
 and collapses the dock. Restore layout preserves the prior dock state. These
 actions retain mounted Monaco editors, drafts, selection, terminal history and the
 same Workspace/image. Recovery announcements remain outside the collapsible body.
+Dock selection controls pane visibility even when the selected output is empty.
+Let the existing output pane receive its first result in place.
 There is no layout persistence.
 
 Tutorial Browser composition uses compact native Search and Browser tools
@@ -6126,17 +6145,25 @@ disclosures; standalone and detached tools retain their existing composition.
 Native queries replace the pane lists while open, with synchronous focus transfer
 from the closing tools disclosure. The terminal keeps its expression, Evaluate and
 latest result visible; history, Transcript and help are disclosed on demand.
+When the Inspector's final slot page hides Next, move keyboard focus to the first
+new slot action (or the panel) if Next still owned focus. Preserve focus that the
+reader moved elsewhere while the native inspection was pending.
 Opening terminal details or an inspected object expands the dock without rebuilding
 views. CSS owns geometry, both themes and print. Below 901px wide or 650px high the
 workspace returns to document flow; print exposes output even if its dock was
-collapsed. Preserve paragraph-size controls and heading sizes when changing this
+collapsed. At desktop sizes the compact tutorial navbar lets its title and
+controls wrap only when they need a second row, preserving editor height.
+The shared tutorial navbar measures wrapping after resize notifications finish,
+so its compact layout can change the observed height in the next frame.
+Preserve paragraph-size controls and heading sizes when changing this
 layout, and measure actual unoccluded Monaco rows rather than editor rectangle
 height alone (`tests/smalltalk-workspace-layout.spec.js`).
 The compact expression editor reserves two complete rendered rows plus Monaco's
 top padding and the container borders. Keep its height font-relative with a
-64px minimum: the same 17px font can produce 26px lines in WebKit, so a height
-calculated from 23px lines clips the second row. Check Evaluate and the latest
-result remain visible alongside the editor in both themes.
+64px minimum. The live Smalltalk source and expression editors use the
+stylesheet's proportional line height when Monaco mounts, keeping the laptop
+row budget consistent across browsers. Check Evaluate and the latest result
+remain visible alongside the editor in both themes.
 
 Browser accepts an optional `lessonTarget` from the step's `smalltalk_target`;
 Lesson code returns to that native target while preserving drafts. Review drafts
@@ -6232,5 +6259,5 @@ steps:
 - **Diagram tool:** `tutor-session.mjs` makes one coaching generation (192-token maximum). A single fenced `tutor-tool` or `json` request with exactly `tool: draw_diagram`, supported `type`, and nonempty `focus` of at most 240 characters triggers at most one drawing generation (1,024-token maximum). No execution tool, recursion or automatic repair. Only that second generation gets the selected grammar from `tutor-syntax.mjs`. Do not put complete syntax examples in the coaching prompt: the small model copied them into unrelated replies during real trials.
 - **Source-mode diagrams:** honor the requested view; no learner-named caller/callee, preidentified relationship, or Python AST preflight is required. Both generations receive all current source files. An optional Python AST outline supplies declarations/call sites as model guidance; parsing failures do not block a drawing. Focused views and checking source evidence are prompt recommendations, not prerequisites. Do not force class or overview requests into a two-function sequence. Respect explicit negation/stopping. Independent-transfer mode remains separate.
 - **Drawing syntax:** prefer fenced `uml-TYPE` with complete `@startuml`/`@enduml`. Types: class, sequence, state, activity, component, deployment, usecase. Sequence found messages use `o-> receiver: label` for an external sender. Activity uses `(*)`, quoted actions and `if "condition" then` / `else` / `endif`, not modern PlantUML `start`/`stop`. If a view is unsuitable (for example, procedural source without classes), the drawing stage may return `NO_DIAGRAM: reason`, a single plain-text reason of up to 240 characters suggesting an alternative. Source-derived labels, relationships and these explanations are model-authored: syntax validation is not semantic validation, and the no-specification boundary is prompt-based for diagrams.
-- **Rendering:** `tutor-diagrams.mjs` recognizes typed/aliased fences, generic UML fences and bare complete UML; explicit unrelated code fences are not diagrams. A disposable time-limited worker renders sanitized SVG with shared readable sizing, theme handling, structural text alternative and keyboard scrolling. Source is available in a disclosure. Cancel/reset/step changes discard late generation and rendering. An optional drawing failure retains actual first-stage coaching, but a diagram-only failure throws and keeps the draft without a generic replacement answer or successful history entry. Distinguish output-budget exhaustion from input/context exhaustion; do not suggest clearing history for a known output-budget failure. Rendering accepts at most 120 lines/8,000 characters.
+- **Rendering:** `tutor-diagrams.mjs` recognizes typed/aliased fences, generic UML fences and bare complete UML; explicit unrelated code fences are not diagrams. A disposable time-limited worker renders sanitized SVG. The chat canvas opts into ArchUML's readable fit policy, so labels remain paragraph-sized and the diagram is keyboard-scrollable when wider than the conversation. It uses shared theme handling and a structural text alternative, and source is available in a disclosure. Cancel/reset/step changes discard late generation and rendering. An optional drawing failure retains actual first-stage coaching, but a diagram-only failure throws and keeps the draft without a generic replacement answer or successful history entry. Distinguish output-budget exhaustion from input/context exhaustion; do not suggest clearing history for a known output-budget failure. Rendering accepts at most 120 lines/8,000 characters.
 - **Verification:** unit tests cover full history/source/privacy, native context-error classification, parsed coaching targets, output limits, tool schema, requested class/sequence/activity views without preparatory work, found messages, cancellation and fallback. Browser tests exercise the full addon with inference-only fixtures, real Python parsing, real UML rendering, links, keyboard use, both themes and narrow panes. Fixtures verify architecture, not LLM capability. Use real cached-model conversations to evaluate pedagogy and document remaining model errors; simulated learners do not establish learning gains. See `docs/browser-llm.md` and `docs/local-tutor-evaluation.md`.

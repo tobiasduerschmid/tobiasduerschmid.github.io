@@ -41,6 +41,17 @@ async function seek(player, seconds) {
   await position(player).fill(String(Math.round(seconds)));
 }
 
+async function openTimelineLook(player, name) {
+  const marker = player.getByRole('group', { name: 'Knowledge checks and closer looks', exact: true })
+    .getByRole('button', { name });
+  const grouped = await marker.getAttribute('aria-expanded') !== null;
+  await marker.click();
+  if (grouped) {
+    await player.getByRole('region', { name: 'Choose a knowledge check or closer look', exact: true })
+      .getByRole('button', { name, exact: true }).click();
+  }
+}
+
 test('the offer shows only while its cue plays', async ({ page }) => {
   const player = await openLayers(page);
   await seek(player, cue.start - 3);
@@ -89,14 +100,7 @@ test('Escape closes the look, keeps the narration paused, and returns to the off
 test('the timeline marker opens the look at its cue from anywhere', async ({ page }) => {
   const player = await openLayers(page);
   const name = `Closer look: ${TITLE}, at ${clock(cue.start)}`;
-  const marker = player.getByRole('group', { name: 'Knowledge checks and closer looks', exact: true })
-    .getByRole('button', { name });
-  const grouped = await marker.getAttribute('aria-expanded') !== null;
-  await marker.click();
-  if (grouped) {
-    await player.getByRole('region', { name: 'Choose a knowledge check or closer look', exact: true })
-      .getByRole('button', { name, exact: true }).click();
-  }
+  await openTimelineLook(player, name);
   await expect(panel(player)).toBeVisible();
   expect(Number(await position(player).inputValue())).toBeCloseTo(cue.start, 0);
   await expect(panel(player).getByRole('button', { name: `Continue narration (${clock(cue.start)})` }).first()).toBeVisible();
@@ -246,7 +250,7 @@ for (const lesson of lessonsWithLooks) {
       const player = page.getByRole('region', { name: lesson.story.title, exact: true });
       await expect(player.getByRole('button', { name: 'Play narration', exact: true })).toBeVisible();
       const start = lessonTiming.scenes.find(item => item.id === scene).cues.find(item => item.id === cueId).start;
-      await player.getByRole('button', { name: `Closer look: ${look.title}, at ${clock(start)}` }).click();
+      await openTimelineLook(player, `Closer look: ${look.title}, at ${clock(start)}`);
       const lookPanel = player.getByRole('region', { name: look.title, exact: true });
       await expect(lookPanel).toBeVisible();
       await expect(lookPanel.getByRole('heading', { name: look.title })).toBeFocused();

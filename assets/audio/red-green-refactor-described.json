@@ -1,103 +1,103 @@
 {
   "fps": 30,
-  "frameCount": 25533,
-  "duration": 851.1,
+  "frameCount": 29860,
+  "duration": 995.3333333333334,
   "holds": [
     {
       "section": "intro",
       "outputStart": 0,
-      "outputEnd": 47.766666666666666,
+      "outputEnd": 57.9,
       "songTime": 0,
       "pictureTime": 9.066666666666666
     },
     {
       "section": "verse-1",
-      "outputStart": 76.2,
-      "outputEnd": 112.8,
+      "outputStart": 86.33333333333333,
+      "outputEnd": 133.56666666666666,
       "songTime": 28.433333333333334,
       "pictureTime": 29.1
     },
     {
       "section": "verse-2",
-      "outputStart": 144.86666666666667,
-      "outputEnd": 177.66666666666666,
+      "outputStart": 165.63333333333333,
+      "outputEnd": 210.3,
       "songTime": 60.5,
       "pictureTime": 61.166666666666664
     },
     {
       "section": "chorus-1",
-      "outputStart": 204.8,
-      "outputEnd": 259.6333333333333,
+      "outputStart": 237.43333333333334,
+      "outputEnd": 307.3,
       "songTime": 87.63333333333334,
       "pictureTime": 88.3
     },
     {
       "section": "verse-3",
-      "outputStart": 278.93333333333334,
-      "outputEnd": 306.7,
+      "outputStart": 326.6,
+      "outputEnd": 362.26666666666665,
       "songTime": 106.93333333333334,
       "pictureTime": 107.6
     },
     {
       "section": "verse-4",
-      "outputStart": 323.43333333333334,
-      "outputEnd": 372.76666666666665,
+      "outputStart": 379,
+      "outputEnd": 443.1333333333333,
       "songTime": 123.66666666666667,
       "pictureTime": 124.33333333333333
     },
     {
       "section": "chorus-2",
-      "outputStart": 401.3333333333333,
-      "outputEnd": 418.6666666666667,
+      "outputStart": 471.7,
+      "outputEnd": 493.56666666666666,
       "songTime": 152.23333333333332,
       "pictureTime": 152.9
     },
     {
       "section": "verse-5",
-      "outputStart": 435.3666666666667,
-      "outputEnd": 474.6666666666667,
+      "outputStart": 510.26666666666665,
+      "outputEnd": 560.1666666666666,
       "songTime": 168.93333333333334,
       "pictureTime": 169.6
     },
     {
       "section": "verse-6",
-      "outputStart": 501.5,
-      "outputEnd": 535.5,
+      "outputStart": 587,
+      "outputEnd": 631.9333333333333,
       "songTime": 195.76666666666668,
       "pictureTime": 196.43333333333334
     },
     {
       "section": "verse-7",
-      "outputStart": 551.8,
-      "outputEnd": 585.5666666666667,
+      "outputStart": 648.2333333333333,
+      "outputEnd": 692.2666666666667,
       "songTime": 212.06666666666666,
       "pictureTime": 212.73333333333332
     },
     {
       "section": "verse-8",
-      "outputStart": 601.8666666666667,
-      "outputEnd": 628.9333333333333,
+      "outputStart": 708.5666666666667,
+      "outputEnd": 741.5,
       "songTime": 228.36666666666667,
       "pictureTime": 229.06666666666666
     },
     {
       "section": "bridge",
-      "outputStart": 645.9,
-      "outputEnd": 709.8,
+      "outputStart": 758.4666666666667,
+      "outputEnd": 841.6666666666666,
       "songTime": 245.33333333333334,
       "pictureTime": 246
     },
     {
       "section": "chorus-3",
-      "outputStart": 757.7,
-      "outputEnd": 774.0666666666667,
+      "outputStart": 889.5666666666667,
+      "outputEnd": 911.5,
       "songTime": 293.23333333333335,
       "pictureTime": 293.9
     },
     {
       "section": "outro",
-      "outputStart": 794.8333333333334,
-      "outputEnd": 818.7,
+      "outputStart": 932.2666666666667,
+      "outputEnd": 962.9333333333333,
       "songTime": 314,
       "pictureTime": 314.6666666666667
     }

@@ -44,22 +44,24 @@ soundtrack: assets/audio/small-tools-one-job-each.m4a   # repo path, played by t
 described_soundtrack: assets/audio/small-tools-one-job-each-described.m4a
 described_timeline: /assets/audio/small-tools-one-job-each-described.json
 narrator:
-  voice: Samantha   # macOS `say` voice for the audio-described track
-  rate: 205         # words per minute
+  voice: drama3-female6
   pronounce:        # how the narrator says notation the captions keep as written
     names.txt: names dot text
     notes.txt: notes dot text
     app.log: app dot log
     hello.sh: hello dot S H
+    ./hello.sh: dot slash hello dot S H
     /bin/bash: slash bin slash bash
     /bin: slash bin
     chmod: C H mod
+    mkdir: M K D I R
     uniq: unique
     wc -l: W C dash L
     cp: C P
     ls: L S
     htop: H top
     pwd: P W D
+    and-and: double ampersand
 width: 1920
 height: 1080
 fps: 30

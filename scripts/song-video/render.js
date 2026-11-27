@@ -63,16 +63,18 @@ const POSTER_JPEG_QUALITY = 84;
 const CAPTURE_WORKERS = Math.max(1, Math.min(4, Math.floor(os.cpus().length / 2)));
 
 function usage() {
-  return 'Usage: node scripts/song-video/render.js <song> [--frames-dir DIR [--skip-capture]] [--check-flashes] | <song> --stills t1,t2,… --out DIR';
+  return 'Usage: node scripts/song-video/render.js <song> [--frames-dir DIR [--skip-capture]] [--check-flashes] | <song> --stills t1,t2,… --out DIR | <song> --described-only [--frames-dir DIR] [--retake section/sentence]';
 }
 
 function parseArgs(argv) {
-  const args = { song: null, framesDir: null, skipCapture: false, checkFlashes: false, stills: null, out: null };
+  const args = { song: null, framesDir: null, skipCapture: false, checkFlashes: false, stills: null, out: null, retakes: [] };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--frames-dir' && argv[i + 1]) args.framesDir = path.resolve(argv[++i]);
     else if (arg === '--skip-capture') args.skipCapture = true;
     else if (arg === '--check-flashes') args.checkFlashes = true;
+    else if (arg === '--described-only') args.describedOnly = true;
+    else if (arg === '--retake' && argv[i + 1]) args.retakes.push(argv[++i]);
     else if (arg === '--stills' && argv[i + 1]) args.stills = argv[++i].split(',').map(Number);
     else if (arg === '--out' && argv[i + 1]) args.out = path.resolve(argv[++i]);
     else if (!arg.startsWith('--') && !args.song) args.song = arg;
@@ -204,21 +206,36 @@ function encode(framesDir, fps, soundtrack, output) {
  * start of each section while the narrator describes it, with its own
  * soundtrack and captions.
  */
-function renderDescribedCut(storyboard, workDir) {
+function renderDescribedCut(storyboard, workDir, retakes) {
   const songWav = path.join(workDir, 'soundtrack.wav');
   execFileSync('afconvert', ['-f', 'WAVE', '-d', `LEI16@${AUDIO_SAMPLE_RATE}`, path.join(ROOT, storyboard.soundtrack), songWav]);
-  const voices = speakNarrations(storyboard, workDir, AUDIO_SAMPLE_RATE);
+  const voices = speakNarrations(storyboard, workDir, AUDIO_SAMPLE_RATE, retakes);
   const plan = planDescribedCut(storyboard, voices, AUDIO_SAMPLE_RATE);
   const describedWav = path.join(workDir, 'described.wav');
-  writeWav(describedWav, mixDescribedAudio(plan, readWav(songWav), voices));
-  execFileSync('afconvert', ['-f', 'm4af', '-d', 'aac ', '-b', '160000', describedWav, repoFile(storyboard.described_soundtrack)]);
-  fs.writeFileSync(repoFile(storyboard.described_timeline), `${JSON.stringify(describedTimeline(plan), null, 2)}\n`);
+  const measured = execFileSync('uv', ['run', '--script', path.join(__dirname, 'measure-music.py'), songWav], { encoding: 'utf8' });
+  const musicGain = Number(measured.trim());
+  if (!(musicGain > 0 && musicGain <= 1)) throw new Error(`Invalid song gain: ${measured}`);
+  writeWav(describedWav, mixDescribedAudio(plan, readWav(songWav), voices, musicGain));
+  const outputs = new Map();
+  function stage(key) {
+    const destination = repoFile(storyboard[key]);
+    const staged = path.join(workDir, `output-${key}${path.extname(destination)}`);
+    outputs.set(staged, destination);
+    return staged;
+  }
+  const sentenceTimings = JSON.parse(fs.readFileSync(path.join(workDir, 'narration-timing.json'), 'utf8'));
+  execFileSync('afconvert', ['-f', 'm4af', '-d', 'aac ', '-b', '160000', describedWav, stage('described_soundtrack')]);
+  fs.writeFileSync(stage('described_timeline'), `${JSON.stringify(describedTimeline(plan), null, 2)}\n`);
+  fs.writeFileSync(stage('described_captions'), describedCaptions(storyboard, plan, sentenceTimings));
   if (storyboard.described_video) {
     const describedFrames = path.join(workDir, 'described');
     linkDescribedFrames(plan, workDir, describedFrames, frameFileName);
-    encode(describedFrames, storyboard.fps, describedWav, repoFile(storyboard.described_video));
+    encode(describedFrames, storyboard.fps, describedWav, stage('described_video'));
   }
-  fs.writeFileSync(repoFile(storyboard.described_captions), describedCaptions(storyboard, plan));
+  for (const [staged, destination] of outputs) {
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.copyFileSync(staged, destination);
+  }
   console.log(`  described cut: ${plan.duration.toFixed(1)} s with ${plan.holds.length} described pauses`);
 }
 
@@ -232,6 +249,17 @@ async function main() {
 
   const workDir = args.framesDir || fs.mkdtempSync(path.join(os.tmpdir(), `song-video-${args.song}-`));
   fs.mkdirSync(workDir, { recursive: true });
+  if (args.describedOnly) {
+    try {
+      if (storyboard.described_video && !fs.existsSync(path.join(workDir, frameFileName(0)))) {
+        throw new Error('The described video needs the original numbered JPEG frames in --frames-dir.');
+      }
+      renderDescribedCut(storyboard, workDir, args.retakes);
+    } finally {
+      if (!args.framesDir) fs.rmSync(workDir, { recursive: true, force: true });
+    }
+    return;
+  }
   if (!args.skipCapture) {
     for (const name of fs.readdirSync(workDir)) {
       if (/^frame-\d+\.(jpg|png)$/.test(name)) fs.rmSync(path.join(workDir, name));
@@ -248,7 +276,7 @@ async function main() {
   }
   if (storyboard.video) encode(workDir, storyboard.fps, path.join(ROOT, storyboard.soundtrack), repoFile(storyboard.video));
   fs.writeFileSync(repoFile(storyboard.captions), songCaptions(storyboard));
-  renderDescribedCut(storyboard, workDir);
+  renderDescribedCut(storyboard, workDir, args.retakes);
   if (!args.framesDir) fs.rmSync(workDir, { recursive: true, force: true });
 
   for (const key of outputKeys) {

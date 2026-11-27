@@ -12,7 +12,7 @@ const patternFiles = fs.readdirSync(path.join(repositoryRoot, 'SEBook/designpatt
   .filter((name) => name.endsWith('.md')).map((name) => `SEBook/designpatterns/${name}`);
 const pages = ['test-uml.html', ...chapterFiles, ...patternFiles].map((file) => {
   const source = fs.readFileSync(path.join(repositoryRoot, file), 'utf8');
-  const authoredDiagrams = (source.match(/data-uml-spec\s*=|<code\s+class=["'](?:language-uml-|diagram-)/g) || []).length;
+  const authoredDiagrams = (source.match(/data-uml-spec\s*=|<code\s+class=["'](?:language-uml-|diagram-|language-c4\b)|\{%[-\s]*include\s+c4-view\.html\b/g) || []).length;
   return { url: `/${file.replace(/\.md$/, '.html')}`, authoredDiagrams };
 }).filter((entry) => entry.authoredDiagrams > 0);
 
@@ -79,16 +79,23 @@ for (const mode of DISPLAY_MODES) {
         // runtime embeds may still carry their public source declarations. A
         // narration player's diagram host shows a copy of a reading-step figure
         // that is already counted, so it declares nothing new.
-        const declared = page.locator('.sebook-figure--archuml > [role="img"], [data-uml-type]:not([data-np-diagram]), pre > code[class^="language-uml-"], pre > code[class^="diagram-"]');
+        const imageContainers = '.sebook-figure--archuml > [role="img"]';
+        const cardContainers = '.sebook-figure--archuml > [data-c4-notation="interface-card"]';
+        const declared = page.locator([
+          imageContainers, cardContainers, '[data-uml-type]:not([data-np-diagram])',
+          'pre > code:is([class^="language-uml-"], [class^="diagram-"], .language-c4)',
+        ].join(', '));
         const diagramCount = await declared.count();
         expect(diagramCount, `${url}: authored diagrams are present before measuring generated embeds`)
           .toBeGreaterThanOrEqual(authoredDiagrams);
         const diagrams = page.getByRole('img', { includeHidden: true })
-          .and(page.locator('.sebook-figure--archuml > [role="img"]'));
-        await expect(diagrams, `${url}: every authored and embedded diagram renders`)
-          .toHaveCount(Number(diagramCount));
+          .and(page.locator(imageContainers));
+        // C4 interface descriptions render as readable articles in figures.
+        const cards = page.locator(cardContainers).getByRole('article', { includeHidden: true });
+        await expect(diagrams.or(cards), `${url}: every authored and embedded figure renders`)
+          .toHaveCount(diagramCount);
         await expect(diagrams.locator('svg'), `${url}: every diagram has graphical output`)
-          .toHaveCount(Number(diagramCount));
+          .toHaveCount(await diagrams.count());
         // Expose every quiz/flashcard face in place for measurement. Preserve
         // the actual page typography and each diagram's existing SVG geometry.
         await diagrams.evaluateAll((elements) => {

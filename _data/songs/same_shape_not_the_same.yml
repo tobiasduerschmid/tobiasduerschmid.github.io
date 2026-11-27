@@ -311,8 +311,7 @@ soundtrack: assets/audio/same-shape-not-the-same.m4a   # repo path, played by th
 described_soundtrack: assets/audio/same-shape-not-the-same-described.m4a
 described_timeline: /assets/audio/same-shape-not-the-same-described.json
 narrator:
-  voice: Samantha   # macOS `say` voice for the audio-described track
-  rate: 205         # words per minute
+  voice: drama3-female6
   pronounce:        # how the narrator says notation the captions keep as written
     Façade: fuh-sahd
     SplitRule: split rule

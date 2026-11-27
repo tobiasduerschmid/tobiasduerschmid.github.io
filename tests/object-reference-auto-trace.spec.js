@@ -86,8 +86,7 @@ test('rapid edits and composition keep the latest source; restoring cancels pend
   const lab = await openAtStepFive(page);
   const editor = editorFor(lab);
   const original = await editor.inputValue();
-  const now = new Date();
-  await page.clock.install({ time: now });
+  const now = new Date('2026-11-10T12:00:00Z');
   await page.clock.pauseAt(now);
   await editor.fill('print("first")');
   await page.clock.runFor(300);

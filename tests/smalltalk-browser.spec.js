@@ -1,6 +1,6 @@
 const { test, expect: standardExpect } = require('@playwright/test');
 const expect = standardExpect.configure({ timeout: 30000 });
-const { mountSmalltalkFixture } = require('./helpers/smalltalk-runtime');
+const { mountSmalltalkFixture, expectSmalltalkImage } = require('./helpers/smalltalk-runtime');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
 test.setTimeout(180000);
@@ -161,7 +161,7 @@ test('Authored raw source drafts accept natively and exported accepted files rep
     await expect(view).toContainText(/filein/);
     await page.getByRole('button', { name: 'Accept file', exact: true }).focus();
     await page.getByRole('button', { name: 'Accept file', exact: true }).press('Enter');
-    await expect(page.getByRole('status', { name: 'Source view status' })).toContainText('Accepted');
+    await expectSmalltalkImage(page.getByRole('status', { name: 'Source view status' })).toContainText('Accepted');
     await expect(page.getByRole('button', { name: 'Accept file', exact: true })).toBeDisabled();
     await expect(view).toBeFocused();
     await a11yCheckpoint(page, 'raw-file-accepted', { feature: 'smalltalk-browser' });

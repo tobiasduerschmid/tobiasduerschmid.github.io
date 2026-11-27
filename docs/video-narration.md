@@ -274,8 +274,11 @@ uses) and builds the stage once, out of view. For each cue it calls
 there, and a copy of it keeps the pose because every animated value is
 written into the copy's inline styles, and ids are renamed per copy. The copy
 replaces the row's description of its picture, which is what shows without
-scripts. After the fonts and pictures are ready, the shared script opens the
-print dialog when `#export` is present; its own button prints again.
+scripts. Both the offscreen master and its copies use the stage page's default
+font size and line height so the blueprint's lettering yields to the same
+text boxes as in the live video. After the fonts and pictures are ready, the
+shared script opens the print dialog when `#export` is present. Its own button
+prints again.
 
 Each row pairs the picture with the cue's key points from
 `_data/explainers/<topic>_notes.yml`, a labeled editable field, and ruled lines;

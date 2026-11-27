@@ -20,8 +20,9 @@ beats:
   bpm: 113.3
   first: 1.62
 narrator:
-  voice: Samantha
-  rate: 180
+  voice: drama3-female6
+  pronounce:
+    getResult: get result
 extras:
   styles:
     - /css/song-video-always-code.css

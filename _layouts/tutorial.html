@@ -97,7 +97,9 @@
         document.documentElement.style.setProperty('--tutorial-navbar-height', nav.offsetHeight + 'px');
       }
       if (window.ResizeObserver) {
-        new ResizeObserver(check).observe(nav);
+        // Compact mode changes the observed navbar's height. Apply it after
+        // resize delivery so the browser can report the resulting size.
+        new ResizeObserver(function () { requestAnimationFrame(check); }).observe(nav);
       } else {
         window.addEventListener('resize', check);
       }

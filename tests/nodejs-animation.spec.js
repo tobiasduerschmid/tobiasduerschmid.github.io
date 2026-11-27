@@ -237,14 +237,19 @@ for (const variant of [
       include: '#nodejs-animation', feature: 'nodejs-animation',
     });
     await player(page).getByText('Transcript and visual descriptions', { exact: true }).click();
-    const source = story.scenes.find((scene) => scene.id === 'syntax').code;
-    const transcriptCode = player(page).getByRole('code').filter({ hasText: 'const greeting' });
-    await expect(transcriptCode).toHaveText(source);
-    const transcriptColors = [];
-    for (const token of ['let', 'Hello', '0', 'log']) {
-      transcriptColors.push(await transcriptCode.getByText(token, { exact: true }).evaluate((element) => getComputedStyle(element).color));
+    const sceneIndex = story.scenes.findIndex((scene) => scene.id === 'syntax');
+    const scene = story.scenes[sceneIndex];
+    for (const [cueIndex, cue] of scene.cues.entries()) {
+      const step = player(page).getByRole('region', { name: `${sceneIndex + 1}.${cueIndex + 1} — ${cue.step}`, exact: true });
+      const transcriptCode = step.getByRole('code');
+      await expect(transcriptCode).toBeVisible();
+      expect((await transcriptCode.locator('.nja-line-source').allTextContents()).join('\n')).toBe(scene.code);
+      const transcriptColors = [];
+      for (const token of ['let', 'Hello', '0', 'log']) {
+        transcriptColors.push(await transcriptCode.getByText(token, { exact: true }).evaluate((element) => getComputedStyle(element).color));
+      }
+      expect(new Set(transcriptColors).size, `${cue.step}: transcript syntax colors`).toBe(4);
     }
-    expect(new Set(transcriptColors).size).toBe(4);
     await a11yCheckpoint(page, `${variant.name}, highlighted transcript`, {
       include: '#nodejs-animation', feature: 'nodejs-animation',
     });

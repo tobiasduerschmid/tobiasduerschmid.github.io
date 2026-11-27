@@ -53,7 +53,7 @@ export class TLAClient {
     policy.httpEquiv = 'Content-Security-Policy';
     const host = this.frameURL.origin;
     const vendor = 'https://cjrtnc.leaningtech.com';
-    policy.content = `default-src 'none'; script-src ${host} ${vendor} 'unsafe-eval' 'wasm-unsafe-eval' blob:; connect-src ${vendor}; frame-src ${vendor}; worker-src ${vendor} blob:; style-src ${vendor} 'unsafe-inline'; img-src ${vendor} data:; font-src ${vendor}; base-uri ${host}; form-action 'none'`;
+    policy.content = `default-src 'none'; script-src ${host} ${vendor} 'unsafe-eval' 'wasm-unsafe-eval' blob:; connect-src ${vendor}; frame-src ${vendor}; worker-src ${vendor} blob:; style-src ${host} ${vendor} 'unsafe-inline'; img-src ${vendor} data:; font-src ${vendor}; base-uri ${host}; form-action 'none'`;
     html.head.prepend(policy);
     if (this.pending !== pending) return;
     const frame = this.frame = document.createElement('iframe');

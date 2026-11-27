@@ -1,5 +1,6 @@
 const { loadStory, loadRegistry } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
+const { openNarrationDocument } = require('./helpers/narration-reader');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const { openPlayerSettings } = require('./helpers/narration-player');
 const { readFileSync } = require('node:fs');
@@ -166,7 +167,7 @@ test('reading and print views include every step, diagram, and question without 
   const page = await context.newPage();
   const questions = story.scenes.reduce((count, scene) => count + questionsOf(scene.id).length, 0);
   for (const view of ['read', 'print']) {
-    await page.goto(`/SEBook/uml_component_diagram/${view}/`);
+    await openNarrationDocument(page, `/SEBook/uml_component_diagram/${view}/`, view, story);
     await expect(page.locator('audio')).toHaveCount(0);
     await expect(page.locator('.np-reading-step')).toHaveCount(story.scenes.reduce((count, scene) => count + scene.cues.length, 0));
     for (const scene of story.scenes) {

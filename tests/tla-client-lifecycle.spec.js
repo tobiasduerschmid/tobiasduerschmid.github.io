@@ -132,7 +132,6 @@ for (const phase of ['startup', 'checking']) {
   test(`${phase} timeout reports an incomplete check and discards the runtime`, async ({ page }) => {
     const dependency = await stubCheerpJ(page, { holdInit: phase === 'startup', holdExecution: phase === 'checking' });
     const start = new Date('2026-01-01T00:00:00Z');
-    await page.clock.install({ time: start });
     await page.clock.pauseAt(start);
     await openClient(page, { bootTimeoutMs: 1000, runTimeoutMs: 1000 });
     await startCheck(page);

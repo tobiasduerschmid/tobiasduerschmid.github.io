@@ -49,7 +49,8 @@ test('stopping an opaque Worker invalidates its session and a new one boots', as
 test('rejected dispatch cannot later terminate a healthy opaque Worker', async ({ page }) => {
   test.setTimeout(120000);
   await page.clock.install();
-  const scenario = withSmalltalk(page, async host => {
+  await page.exposeFunction('advancePastWatchdog', () => page.clock.runFor(31000));
+  const result = await withSmalltalk(page, async host => {
     const session = await host.openSession('live');
     const controller = new AbortController();
     const codes = [];
@@ -69,16 +70,12 @@ test('rejected dispatch cannot later terminate a healthy opaque Worker', async (
     let immediate, later;
     try { immediate = (await host.request(session, 'info', { text: 'café 😀', values: [null, true, 42, { nested: false }] }, {})).imageBuild; }
     catch (error) { immediate = error.code; }
-    window.__smalltalkDispatchRejected = true;
-    await new Promise(resolve => setTimeout(resolve, 31000));
+    // Advance only after the real image has booted and rejected the dispatch.
+    await window.advancePastWatchdog();
     try { later = (await host.request(session, 'info', {}, {})).imageBuild; }
     catch (error) { later = error.code; }
     return { codes, dispatchCode, immediate, later };
   });
-  await page.waitForFunction(() => window.__smalltalkDispatchRejected);
-  // Cross the documented 30-second watchdog boundary without a real-time sleep.
-  await page.clock.runFor(31000);
-  const result = await scenario;
   expect(result.codes).toEqual(Array(5).fill('PRECONDITION_FAILED'));
   expect(result.dispatchCode).toBe('RECOVERED_FAILURE');
   expect(result.immediate).toBe(22104);

@@ -137,8 +137,8 @@
       if (commandIndex === commands.length) pendingExpression = editor.getValue();
       commandIndex += direction; editor.setValue(commandIndex === commands.length ? pendingExpression : commands[commandIndex]); editor.focus(); updateHistory();
     }
-    function restoreFocus(control, hadFocus) {
-      if (hadFocus && [document.body, document.documentElement].includes(document.activeElement)) control.focus();
+    function restoreFocus(control, hadFocus, previousControl = control) {
+      if (hadFocus && [previousControl, document.body, document.documentElement].includes(document.activeElement)) control.focus();
     }
     function setRunning(running) { evaluate.disabled = running; stop.disabled = !running; restart.disabled = running; clearHistory.disabled = running; }
     function retain(summary, sessionId) { if (summary && summary.handle) handles.set(summary.handle, sessionId); }
@@ -290,7 +290,7 @@
         if (replace) { panel.handles = new Set([panel.handle]); panel.list.replaceChildren(); }
         const firstAction = appendSlots(panel, inspection);
         panel.offset = inspection.nextOffset; panel.next.hidden = inspection.nextOffset === null;
-        if (nextHadFocus && panel.next.hidden) restoreFocus(firstAction || panel.section, true);
+        if (panel.next.hidden) restoreFocus(firstAction || panel.section, nextHadFocus, panel.next);
         panel.status.textContent = (replace ? 'Refreshed the same live object. ' : '') +
           (inspection.slots.length ? 'Loaded ' + inspection.slots.length + ' slots.' : 'This object has no slots.');
         await releaseUnowned(previousHandles);

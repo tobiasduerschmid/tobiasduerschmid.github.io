@@ -620,6 +620,8 @@
       .print-help-links { display: none; }
       .step { page-break-inside: avoid; }
       a { text-decoration: none; }
+      /* Keep prose links distinguishable on paper without underlines. */
+      .step-instructions a[href] { font-weight: 700; }
       .print-quiz { page-break-inside: avoid; }
       .step-solution { page-break-inside: avoid; }
     }

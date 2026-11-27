@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { loadTutorialConfig } = require('./tutorial-helpers');
+const { expectSmalltalkImage } = require('./helpers/smalltalk-runtime');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const { selectAllInMonaco, insertLinesInMonaco } = require('./helpers/monaco-keyboard');
 const config = loadTutorialConfig('smalltalk');
@@ -332,6 +333,9 @@ test('tutorial grading replays accepted class/method removals and a modified cor
 });
 
 test('visible grading rejects non-Booleans, errors, output overflow and timeout without damaging live state', async ({ page }) => {
+  // Allow one live startup, seven serial image leases, and the complete
+  // 60-second watchdog on the deliberately infinite sixth check.
+  test.setTimeout(5 * 60_000);
   await ready(page);
   await evaluate(page, 'counter := SEBookCounter new. counter increment; value', '1');
   await page.evaluate(() => {
@@ -347,7 +351,7 @@ test('visible grading rejects non-Booleans, errors, output overflow and timeout 
   });
   await captureCheckReceipt(page);
   await page.getByRole('button', { name: /Test My Work/ }).click();
-  await expect(page.locator('.tvm-test-summary')).toContainText(/1\s*\/\s*7 tests passed/, { timeout: 150000 });
+  await expect(page.locator('.tvm-test-summary')).toContainText(/1\s*\/\s*7 tests passed/, { timeout: test.info().timeout });
   const receipt = await page.evaluate(() => window.checkReceipt);
   expect(receipt.results.map(row => row.passed)).toEqual([false, false, false, false, false, false, true]);
   expect(receipt.results.map(row => row.error && row.error.code)).toEqual([null, null, null, 'EVALUATION_ERROR', 'OUTPUT_LIMIT', 'TIMEOUT', null]);
@@ -516,6 +520,9 @@ test('the text-only Run output releases its native result handle', async ({ page
 
 for (const restart of ['adapter', 'terminal']) {
   test('a successful ' + restart + ' restart repairs a failed Stop recovery and permits Run, load and reset', async ({ page }) => {
+    // Startup, installing the delayed entry, successful recovery, loading the
+    // original entry and resetting its files each initialize a real live image.
+    test.setTimeout(5 * 60_000);
     await ready(page);
     const failure = await page.evaluate(async () => {
       const tutorial = window._tutorial;
@@ -543,7 +550,7 @@ for (const restart of ['adapter', 'terminal']) {
       await page.getByRole('button', { name: 'Live terminal', exact: true }).click();
       await terminal(page).getByText('Live session help', { exact: true }).click();
       await terminal(page).getByRole('button', { name: 'Restart session', exact: true }).click();
-      await expect(terminal(page).getByRole('status', { name: 'Live session status' })).toContainText('Session restarted.', { timeout: 30000 });
+      await expectSmalltalkImage(terminal(page).getByRole('status', { name: 'Live session status' })).toContainText('Session restarted.');
     }
     const value = await page.evaluate(async () => (await window._tutorial._smalltalkAdapter.run()).result.value.booleanValue);
     expect(value).toBe(true);

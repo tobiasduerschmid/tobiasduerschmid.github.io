@@ -38,8 +38,9 @@ soundtrack: assets/audio/snapshots-and-pointers.m4a   # shared by the live playe
 described_soundtrack: assets/audio/snapshots-and-pointers-described.m4a
 described_timeline: /assets/audio/snapshots-and-pointers-described.json
 narrator:
-  voice: Samantha   # macOS `say` voice for the audio-described cut
-  rate: 205         # words per minute
+  voice: drama3-female6
+  pronounce:
+    a3f2: letter A, three, letter F, two
 width: 1920
 height: 1080
 fps: 30

@@ -3921,7 +3921,11 @@
       var opts = self._monacoEditorOptions();
       opts.value = options.value || ''; opts.language = options.language || 'smalltalk';
       opts.ariaLabel = options.ariaLabel + '. ' + opts.ariaLabel;
-      opts.fontSize = Math.max(16, self.config.fontSize, parseFloat(getComputedStyle(options.element).fontSize) || 16);
+      var style = getComputedStyle(options.element);
+      var inheritedFontSize = parseFloat(style.fontSize) || 16;
+      opts.fontSize = Math.max(16, self.config.fontSize, inheritedFontSize);
+      // Monaco otherwise chooses different row heights from the browser's OS.
+      opts.lineHeight = Math.round(parseFloat(style.lineHeight) * opts.fontSize / inheritedFontSize) || 0;
       var editor = monaco.editor.create(options.element, opts);
       window.SebookMonacoFocusExit.attach(editor);
       var settingValue = false;
@@ -12941,7 +12945,9 @@
     if (this.stepContentWrapEl) this.stepContentWrapEl.scrollTop = 0;
 
     // Render any inline UML diagrams embedded in the instructions markdown
-    if (window.UMLShared && UMLShared.renderAll) UMLShared.renderAll();
+    if (window.UMLShared && UMLShared.renderAll) {
+      UMLShared.renderAll({ root: this.stepContentEl, fit: 'readable' });
+    }
     this._renderInlineMermaid(this.stepContentEl);
     const instructionLabsReady = window.ObjectReferenceLab
       ? window.ObjectReferenceLab.initFrom(this.stepContentEl)

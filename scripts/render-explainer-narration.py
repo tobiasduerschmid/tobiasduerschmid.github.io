@@ -10,7 +10,6 @@ audio and text; it never contacts a speech engine.
 """
 
 import argparse
-import hashlib
 import json
 import subprocess
 from pathlib import Path
@@ -42,34 +41,6 @@ def load_storyboard(topic):
     return json.loads(result.stdout)["story"]
 
 
-def cache_key(identity, spoken):
-    """Names a cue's cached clip; any change to the speaker or the spoken words renders anew."""
-    return hashlib.sha256(f"{identity}:{spoken}".encode()).hexdigest()[:20]
-
-
-def cue_speech(speaker, work, spoken, written, retake):
-    """The cue's speech from the cache, or freshly spoken (and cached) when missing or retaken."""
-    import soundfile as sf
-
-    from narration_speech.audio import RATE
-    from narration_speech.speech import Speech
-    from narration_speech.transcript import mismatch
-
-    key = cache_key(speaker.identity, spoken)
-    clip, review = work / f"{key}.wav", work / f"{key}.json"
-    if clip.exists() and not retake:
-        samples, rate = sf.read(clip, dtype="float32")
-        if rate != RATE:
-            raise ValueError(f"{clip}: expected {RATE} Hz, found {rate}")
-        heard = json.loads(review.read_text())["heard"] if review.exists() else None
-        return Speech(samples, heard, None if heard is None else mismatch(written, spoken, heard))
-    speech = speaker.speak(spoken, written)
-    sf.write(clip, speech.samples, RATE, subtype="FLOAT")
-    if speech.heard is not None:
-        review.write_text(json.dumps({"heard": speech.heard}) + "\n")
-    return speech
-
-
 def render(args):
     storyboard = load_storyboard(args.topic)
     text_only = "audio" not in storyboard
@@ -87,6 +58,7 @@ def render(args):
     import numpy as np
     import soundfile as sf
 
+    from narration_speech.cache import cue_speech
     from narration_speech.audio import RATE, write_mp3
     from narration_speech.voices import open_speaker
 

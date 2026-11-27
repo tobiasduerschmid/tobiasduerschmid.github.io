@@ -54,8 +54,7 @@ soundtrack: assets/audio/let-the-object-decide.m4a   # repo path, played by the 
 described_soundtrack: assets/audio/let-the-object-decide-described.m4a
 described_timeline: /assets/audio/let-the-object-decide-described.json
 narrator:
-  voice: Samantha   # macOS `say` voice for the audio-described track
-  rate: 205         # words per minute
+  voice: drama3-female6
   pronounce:        # how the narrator says notation the captions keep as written
     NPC: N P C
     vptr: V pointer

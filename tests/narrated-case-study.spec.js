@@ -21,10 +21,21 @@ async function expectPlaybackAvailable(study, story) {
 
 async function readThroughScene(study, scene) {
   await expect(study.getByRole('region', { name: 'Narration', exact: true })).toHaveText(scene.cues[0].text);
-  for (const cue of scene.cues.slice(1)) {
-    await study.getByRole('button', { name: 'Next step', exact: true }).click();
+  for (const [index, cue] of scene.cues.entries()) {
+    if (index === 0) continue;
+    const action = scene.cues[index - 1].prediction ? 'Reveal explanation' : 'Next step';
+    await study.getByRole('button', { name: action, exact: true }).click();
     await expect(study.getByRole('region', { name: 'Narration', exact: true })).toHaveText(cue.text);
   }
+}
+
+async function revealDecision(study, scene) {
+  const prediction = study.getByRole('region', { name: 'Pause and predict', exact: true });
+  await expect(prediction).toBeVisible();
+  await expect(prediction.getByText(scene.cues.at(-1).text, { exact: true })).toBeVisible();
+  await expect(study.getByRole('button', { name: 'Knowledge check', exact: true })).toBeDisabled();
+  await prediction.getByRole('button', { name: 'Reveal explanation', exact: true }).click();
+  await expect(prediction).toBeHidden();
 }
 
 for (const { topic, url } of cases) {
@@ -52,7 +63,7 @@ for (const { topic, url } of cases) {
       await study.getByRole('combobox', { name: 'Review a scene' }).selectOption(String(decisionIndex));
       await readThroughScene(study, scene);
       await expect(study.getByRole('heading', { name: followingScene.title, exact: true })).toBeHidden();
-      await study.getByRole('button', { name: 'Knowledge check', exact: true }).click();
+      await revealDecision(study, scene);
       const decision = study.getByRole('region', { name: decisionName(scene, decisionIndex), exact: true });
       await expect(decision.getByRole('heading')).toBeFocused();
       await a11yCheckpoint(page, 'case study decision', auditScope);
@@ -81,7 +92,10 @@ for (const { topic, url } of cases) {
         await study.getByRole('combobox', { name: 'Review a scene' }).selectOption(String(index));
         await expect(study.getByRole('heading', { name: scene.title, exact: true })).toBeVisible();
         for (const [cueIndex, cue] of scene.cues.entries()) {
-          if (cueIndex > 0) await study.getByRole('button', { name: 'Next step', exact: true }).click();
+          if (cueIndex > 0) {
+            const action = scene.cues[cueIndex - 1].prediction ? 'Reveal explanation' : 'Next step';
+            await study.getByRole('button', { name: action, exact: true }).click();
+          }
           const diagram = story.diagrams[cue.diagram || scene.diagram];
           await expect(study.getByRole('img', { name: diagram.label, exact: true })).toBeVisible();
           await expect(study.getByRole('region', { name: 'Narration', exact: true })).toHaveText(cue.text);
@@ -102,6 +116,11 @@ for (const { topic, url } of cases) {
       await study.getByRole('slider', { name: 'Narration position' }).fill((timing.scenes[decisionIndex].end - 0.2).toFixed(2));
       await study.getByRole('button', { name: 'Play narration', exact: true }).click();
       const decision = study.getByRole('region', { name: decisionName(story.scenes[decisionIndex], decisionIndex), exact: true });
+      await expect(study.getByRole('region', { name: 'Pause and predict', exact: true })).toBeVisible();
+      expect(await study.locator('audio').evaluate(audio => audio.paused)).toBe(true);
+      await expect(decision).toBeHidden();
+      await expect(study.getByRole('heading', { name: story.scenes[decisionIndex + 1].title, exact: true })).toBeHidden();
+      await revealDecision(study, story.scenes[decisionIndex]);
       await expect(decision).toBeVisible();
       // The decision replaces the control bar until the learner answers or skips it.
       expect(await study.locator('audio').evaluate(audio => audio.paused)).toBe(true);
@@ -166,7 +185,7 @@ for (const { topic, url } of cases) {
         await openPlayerSettings(study);
         await study.getByRole('combobox', { name: 'Review a scene' }).selectOption(String(decisionIndex));
         await readThroughScene(study, story.scenes[decisionIndex]);
-        await study.getByRole('button', { name: 'Knowledge check', exact: true }).click();
+        await revealDecision(study, story.scenes[decisionIndex]);
         await a11yCheckpoint(page, 'narrow case study decision', auditScope);
       });
     }
