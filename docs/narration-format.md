@@ -430,7 +430,8 @@ and verification screenshots outside the repository.
 - `js/narration-player-controls.js`: the control bar's behavior, from the song
   player's own modules (`js/song-video/`): the same keys in every player (K or
   Space, the arrow keys, 0 to 9, C, F, and Escape, documented at
-  `/shortcuts/`), controls that hide after 3 seconds of playback in full
+  `/shortcuts/`; Space on a button in a lesson's illustration, inside
+  `[data-np-visual]`, presses that button instead), controls that hide after 3 seconds of playback in full
   screen, 5-second skips, captions and their size, volume, the settings panel,
   and the landscape surface on portrait touch screens. A player with a picture
   control (video narrations) also plays and skips by click and double-click.

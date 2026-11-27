@@ -165,6 +165,27 @@ test('students edit the live dashboard, and only the views that need it redraw',
   await expect(board.getByText('Study 30%', { exact: true })).toBeVisible();
 });
 
+// Buttons in the illustration take Space as any button does; the player's
+// own buttons keep Space as the playback shortcut.
+test('Space presses a focused dashboard button and leaves the narration paused, while a transport button still plays', async ({ page }) => {
+  await page.goto(url);
+  const animation = player(page);
+  await seek(page, cueMiddle('intro', 1));
+  const board = liveDashboard(animation);
+  const paused = () => animation.locator('audio').evaluate(audio => audio.paused);
+  await bar(board, 'Games').focus();
+  await page.keyboard.press('Space');
+  await expect(bar(board, 'Games')).toHaveAttribute('aria-pressed', 'true');
+  expect(await paused(), 'Space on a bar started the narration').toBe(true);
+  await board.getByRole('button', { name: 'Reset to the narration', exact: true }).focus();
+  await page.keyboard.press('Space');
+  await expect(board.getByRole('status')).toHaveText(/back to the narration/);
+  expect(await paused(), 'Space on the reset button started the narration').toBe(true);
+  await animation.getByRole('button', { name: 'Play narration', exact: true }).focus();
+  await page.keyboard.press('Space');
+  await expect.poll(paused).toBe(false);
+});
+
 test('in the first design, a click on one bar redraws every view', async ({ page }) => {
   await page.goto(url);
   const animation = player(page);

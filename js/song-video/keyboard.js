@@ -2,7 +2,9 @@
 (function () {
   'use strict';
 
-  function bind({ player, positionControl, listen, toggle, skip, seekToFraction, fullscreen, captions }) {
+  // `nativeSpace` is an optional selector for elements inside the player that
+  // keep Space for themselves, such as buttons in a lesson's illustration.
+  function bind({ player, positionControl, listen, toggle, skip, seekToFraction, fullscreen, captions, nativeSpace }) {
     listen(player, 'keydown', (event) => {
       if (event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey) return;
       const target = event.target;
@@ -16,7 +18,7 @@
       if (target.closest('input, select, textarea') && !(target === positionControl && seekKey)) return;
       // Space always controls playback on player buttons, even after fullscreen
       // returns focus to its button. Enter retains native button activation.
-      if (key === ' ' && target.closest('a, summary')) return;
+      if (key === ' ' && target.closest(nativeSpace ? `a, summary, ${nativeSpace}` : 'a, summary')) return;
       // A player without a timeline omits skip, seekToFraction, and toggle;
       // those keys then keep their native behavior.
       const actions = { arrowleft: skip && (() => skip(-1)), arrowright: skip && (() => skip(1)), f: fullscreen, c: captions, k: toggle, ' ': toggle };

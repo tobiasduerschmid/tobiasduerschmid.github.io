@@ -207,10 +207,6 @@
         this.applyCue(this.cue, false);
         this.status.textContent = 'The story is back to the narration’s picture.';
       });
-      // Space presses a focused Share or reset button, as on any button, instead of starting the narration.
-      panel.addEventListener('keydown', event => {
-        if (event.key === ' ') event.stopPropagation();
-      });
       // The status stays rendered, even when empty, so screen readers announce what is added.
       panel.replaceChildren(this.title, el('div', { class: 'composite-collage-body' },
         this.canvas, this.tree, this.pending, this.carousel, this.note,
