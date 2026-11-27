@@ -1,4 +1,5 @@
 const { loadStory, loadLesson } = require('../narration/source');
+const { closerLookAnchors } = require('../narration/closer-look');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { readFileSync, statSync, mkdtempSync, writeFileSync, rmSync } = require('node:fs');
@@ -162,8 +163,10 @@ test('class boxes match the code in all four languages', () => {
 
 test('code blocks exist in all four languages and their marks name real lines', () => {
   assert.deepEqual(Object.keys(examples).sort(), ['cpp', 'java', 'python', 'typescript']);
+  // Besides the program, each closer look has one block per group (<code>_<group>).
+  const lookBlocks = closerLookAnchors(story).flatMap(({ look }) => look.groups.map(group => `${look.code}_${group.id}`));
   for (const [language, example] of Object.entries(examples)) {
-    assert.deepEqual(Object.keys(example.blocks).sort(), [...story.example_order].sort());
+    assert.deepEqual(Object.keys(example.blocks).sort(), [...story.example_order, ...lookBlocks].sort());
     for (const [name, block] of Object.entries(example.blocks)) {
       const lines = block.source.trimEnd().split('\n');
       for (const marks of Object.values(block.focus)) {

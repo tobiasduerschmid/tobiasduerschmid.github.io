@@ -434,6 +434,45 @@ scenes:
           Past completion did not establish that editing was finished now.
         step: Connect the two coordination problems
         note: ""
+        closer_look:
+          title: An edit slips past a cleared flag
+          notice: >-
+            The edit check trusts one flag, and the first delay turns that flag off while the
+            magnets are still being set.
+          code: flag
+          groups:
+            - {id: setup, label: Magnet setup}
+            - {id: delay, label: Delay checks}
+            - {id: state, label: Shared state}
+          relations:
+            - {kind: call, from: setup.call, to: delay.entry, label: [calls ↓, once per magnet]}
+            - {kind: dependency, from: delay.check, to: state.flag, label: [depends on ↓, the setting flag]}
+          steps:
+            - question: What does the flag promise?
+              focus: [setup.flag_on, state.flag]
+              text: >-
+                Magnet setup turns the setting flag on before the first magnet moves. Flag on is
+                meant to say <em>setup is in progress</em>, so a correction must still be checked.
+            - question: When does the flag go off?
+              focus: [setup.loop, setup.call, delay.clear]
+              relation: call
+              text: >-
+                Setup calls the delay once per magnet. The first call clears the flag on its way
+                out, but the loop goes on to the next magnet. <strong>The flag says setup is over
+                while setup continues.</strong>
+            - question: Where does the edit slip past?
+              focus: [state.edit, delay.wait, delay.check]
+              relation: dependency
+              text: >-
+                During a later delay, other tasks take turns, and data entry corrects the mode to E.
+                The edit check needs the flag on; the flag is already off, so the correction is
+                accepted but never seen.
+            - question: Which settings does setup finish with?
+              focus: [setup.read, setup.done]
+              text: >-
+                Setup reports <em>finished</em> with settings selected from X, while the request
+                now says E. Fast typing only decides whether an edit lands in that window; the
+                defect is clearing the flag before the work it describes has ended.
         visual: >-
           A skipped edit check can leave earlier parameters in use; the separate completion weakness
           is described in narration.

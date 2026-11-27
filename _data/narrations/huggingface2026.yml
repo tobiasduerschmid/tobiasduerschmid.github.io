@@ -436,6 +436,43 @@ scenes:
           inside that compartment.
         step: "Boundary B: compartmentalize parsing"
         note: "Rule B: parse uploads in an isolated sandbox that sees only the upload."
+        closer_look:
+          title: Parse strangers' files away from secrets
+          notice: >-
+            The worker holds a production credential, but the code that reads a stranger's upload
+            runs in a compartment that receives only the upload.
+          code: parsing
+          groups:
+            - {id: worker, label: "«component» Dataset worker"}
+            - {id: parser, label: "«compartment» Parser, boundary B"}
+          relations:
+            - {kind: call, from: worker.handoff, to: parser.entry, label: [runs ↓, with only the upload]}
+          steps:
+            - question: What does the worker hold?
+              focus: [worker.secret, worker.job]
+              text: >-
+                The worker's job is small: preview one upload that the Hub sends over connector
+                four. Its environment still holds a production credential that previewing never
+                uses. That excess belongs to least privilege, in the next scene.
+            - question: What crosses boundary B?
+              focus: [worker.handoff, parser.entry]
+              relation: call
+              text: >-
+                The worker starts a compartment with no network, no environment, and no files, and
+                passes in only the upload's bytes. Only a <code>Preview</code> comes back.
+            - question: What can a crafted upload reach?
+              focus: [parser.read, parser.template, parser.templates]
+              text: >-
+                The attack used two separate flaws: a crafted upload disclosed local files, and an
+                unsandboxed template engine allowed commands. Here, a file-disclosure trick finds
+                only the upload, and the sandboxed template engine runs no commands. <strong>A
+                parser failure stays inside the compartment.</strong>
+            - question: What did parsing beside the secret cost?
+              focus: [worker.secret, worker.handoff]
+              text: >-
+                Parse inside the worker's own process instead, and the same crafted upload can read
+                the worker's files and environment, credential included. One parser flaw then
+                becomes a foothold for the escalation that followed.
         visual: The component diagram with boundary B marked on connector four, around the dataset worker.
       - id: cluster
         say: >-

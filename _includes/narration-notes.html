@@ -68,6 +68,7 @@
         <div class="vn-note-lines" aria-hidden="true">{{ vn_ruled }}</div>
       </div>
     </section>
+    {% if cue.closer_look %}{% capture closer_notes_id %}{{ include.topic }}-notes{% endcapture %}{% include narration-closer-look.html topic=include.topic id=closer_notes_id scene=scene cue=cue mode='static' heading='h4' %}{% endif %}
     {% endfor %}
     {% assign vn_check = vn_quizzes[scene.id] | default: scene.checkpoint %}
     {% if vn_check %}

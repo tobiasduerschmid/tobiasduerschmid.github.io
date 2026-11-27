@@ -565,6 +565,48 @@ scenes:
         step: Thin adapters plug technology in
         note: Adapters are the only AT code left, and they stay thin.
         source: CMU 17-723 lecture on design for reuse, slide 28 (the adapter is AT).
+        closer_look:
+          title: The rules call, the adapter imports
+          notice: >-
+            Follow one payment: the call runs from the ride rules down to the adapter, while the
+            adapter's imports point up into the rules.
+          code: plugs
+          groups:
+            - {id: rules, label: "A: Ride rules"}
+            - {id: adapter, label: "AT: Payment adapter"}
+            - {id: client, label: "T: Payment client"}
+          relations:
+            - {kind: call, from: rules.call, to: adapter.charge, label: [calls ↓, at run time]}
+            - {kind: dependency, from: adapter.imports, to: rules.contract, label: [imports ↑, dependency]}
+          steps:
+            - question: What do the rules need?
+              focus: [rules.contract, rules.call]
+              text: >-
+                <code>Payments</code> is declared beside the ride rules, in their own words: charge
+                this rider an amount. It names no card, no cents, and no payment API, so the rules
+                stay group A.
+            - question: Who calls whom?
+              focus: [rules.call, adapter.charge]
+              relation: call
+              text: >-
+                At run time, ending a ride calls <code>charge</code> on whatever
+                <code>Payments</code> the rules were given: here, the payment adapter. The call goes
+                from the rules toward the technology.
+            - question: Who imports whom?
+              focus: [adapter.imports, adapter.implements, rules.contract]
+              relation: dependency
+              text: >-
+                The adapter imports the rules' interface and the payment client; the rules import
+                neither. <strong>The dependency points into A</strong>, against the call: the rules
+                own the socket, and the technology plugs in.
+            - question: Switch payment providers
+              focus: [adapter.translate, client.api]
+              remove: client
+              text: >-
+                Delete the payment client, and only the adapter breaks. The ride rules still build
+                and pass their tests with a fake <code>Payments</code>. A new provider needs a new
+                client and a new thin adapter, which only translates: a rider into a card, dollars
+                into cents.
         visual: >-
           Adapter pieces shaped like dongles slide in between each socket and its T card: Payment
           adapter, Map adapter, and Lock adapter, each with a small AT drop. The payment adapter

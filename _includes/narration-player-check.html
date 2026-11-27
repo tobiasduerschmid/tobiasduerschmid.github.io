@@ -1,4 +1,5 @@
-{%- comment -%}The same knowledge-check surface for every narration renderer.{%- endcomment -%}
+{%- comment -%}The surfaces that can take the picture's place in every narration renderer: closer looks, the knowledge check, prediction, and question review. Params: id, topic, text_only.{%- endcomment -%}
+{% include narration-closer-looks.html topic=include.topic id=include.id %}
 <section class="narration-check" aria-labelledby="{{ include.id }}-check-title" hidden>
   <button type="button" class="vn-check-exit">Exit full screen</button>
   <h3 id="{{ include.id }}-check-title" tabindex="-1">Knowledge check</h3>

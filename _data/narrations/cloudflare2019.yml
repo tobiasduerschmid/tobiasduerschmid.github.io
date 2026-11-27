@@ -415,6 +415,45 @@ scenes:
         note: >-
           The model grows quadratically. The full production pattern has additional structure and
           can exhibit higher polynomial growth under analyzed assumptions.
+        closer_look:
+          title: Overlapping skips make the search grow
+          notice: >-
+            Both skips accept every character, so before answering absent the matcher tries every
+            way of splitting the text between them, and each split costs one equals check.
+          code: skips
+          groups:
+            - {id: rule, label: WAF rule (teaching model)}
+            - {id: search, label: Backtracking matcher}
+          relations:
+            - {kind: call, from: rule.match, to: search.first, label: [runs ↓, this search]}
+          steps:
+            - question: Where do the two skips overlap?
+              focus: [rule.pattern]
+              text: >-
+                Each <code>.*</code> may consume any number of any characters. Nothing in the
+                pattern says which skip takes which character, so every split of the text between
+                them is a valid route to the <code>=</code> test.
+            - question: What does the matcher try?
+              focus: [rule.match, search.first, search.second]
+              relation: call
+              text: >-
+                The first skip starts as long as possible. When the equals check fails, the matcher
+                shortens the second skip; when that runs out, it shortens the first and lets the
+                second grow again. Different allocations reach the same position.
+            - question: How many checks before absent?
+              focus: [search.count, search.check]
+              text: >-
+                On <code>xxx</code>, first-skip lengths three, two, one, and zero leave one, two,
+                three, and four second-skip lengths: ten checks. Seven characters need thirty-six;
+                thirty-two need five hundred sixty-one. <strong>Each added character adds a whole
+                row of allocations.</strong>
+            - question: What does the answer hide?
+              focus: [search.absent, rule.match]
+              text: >-
+                Every run ends with the same correct answer, <em>absent</em>, so matching tests
+                pass. The cost grows with the input instead, and on the WAF that work used the
+                processors that serve requests. These counts describe this model, not the full
+                production expression.
         visual: >-
           The branches expose how alternative allocations accumulate even when the required symbol
           is absent.

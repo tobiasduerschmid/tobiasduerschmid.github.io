@@ -2,7 +2,10 @@
 (function () {
   'use strict';
 
-  function bind({ player, positionControl, listen, toggle, skip, seekToFraction, fullscreen, captions }) {
+  /** `actions` adds single-key shortcuts ({ e: open }) under the same focus and
+   * input rules as the built-in keys; an action returning false lets the key
+   * keep its native behavior. */
+  function bind({ player, positionControl, listen, toggle, skip, seekToFraction, fullscreen, captions, actions: extra = {} }) {
     listen(player, 'keydown', (event) => {
       if (event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey) return;
       const target = event.target;
@@ -19,12 +22,11 @@
       if (key === ' ' && target.closest('a, summary')) return;
       // A player without a timeline omits skip, seekToFraction, and toggle;
       // those keys then keep their native behavior.
-      const actions = { arrowleft: skip && (() => skip(-1)), arrowright: skip && (() => skip(1)), f: fullscreen, c: captions, k: toggle, ' ': toggle };
+      const actions = { ...extra, arrowleft: skip && (() => skip(-1)), arrowright: skip && (() => skip(1)), f: fullscreen, c: captions, k: toggle, ' ': toggle };
       const action = digit ? seekToFraction && (() => seekToFraction(Number(key) / 10)) : actions[key];
       if (!action) return;
-      event.preventDefault();
-      if (event.repeat && key !== 'arrowleft' && key !== 'arrowright') return;
-      action();
+      if (event.repeat && key !== 'arrowleft' && key !== 'arrowright') { event.preventDefault(); return; }
+      if (action() !== false) event.preventDefault();
     });
   }
 

@@ -303,6 +303,45 @@ scenes:
         source: >-
           Clements et al. 2010, Perspectives: Calling Higher Layers (upward data flow and invocation,
           but not uses).
+        closer_look:
+          title: Calls go up, imports point down
+          notice: >-
+            One collision, two relations: the call travels up from the engine into the game, while
+            every import points down from the game to the engine.
+          code: callbacks
+          groups:
+            - {id: game, label: "«layer» Game rules"}
+            - {id: engine, label: "«layer» Engine"}
+          relations:
+            - {kind: call, from: engine.call, to: game.handler, label: [calls ↑, at run time]}
+            - {kind: dependency, from: game.imports, to: engine.contract, label: [imports ↓, dependency]}
+          steps:
+            - question: Who owns the interface?
+              focus: [engine.contract]
+              text: >-
+                <code>CollisionListener</code> lives in the engine. The engine decides what it
+                reports and in what form; a game that wants the news implements this interface.
+            - question: Who calls whom?
+              focus: [engine.call, game.handler, game.start]
+              relation: call
+              text: >-
+                At startup the game registers its handler. At run time, <code>step()</code> calls
+                each registered listener, which runs the game’s handler in the layer above.
+                <strong>Control flows up.</strong>
+            - question: Who imports whom?
+              focus: [game.imports, game.implements, engine.contract]
+              relation: dependency
+              text: >-
+                Only the game names the engine: its imports and its <em>implements</em> both point
+                down. Nothing in the engine names the game. <strong>The dependency points
+                down</strong>, although the call goes up.
+            - question: Remove a layer
+              focus: [game.imports]
+              remove: game
+              text: >-
+                Delete <code>game/</code>: the engine still builds and passes its tests, ready for
+                a second game. Delete <code>engine/</code>: the game fails at its first import. Who
+                needs whom decides the dependency; the direction of calls does not.
         visual: >-
           Two arrows beside the wall between Game rules and Engine: a dashed blue one going up,
           labeled Calls at run time: on_collision, and a gold one going down, labeled Depends on:

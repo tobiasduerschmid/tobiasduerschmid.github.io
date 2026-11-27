@@ -70,7 +70,7 @@
       </div>
       {% endfor %}
     </div>
-    {% include narration-player-check.html id=player_id %}
+    {% include narration-player-check.html topic=include.topic id=player_id %}
     <div class="nja-narration vn-captions" id="{{ player_id }}-captions" role="region" aria-label="Narration" tabindex="0"><p>{{ explainer.scenes.first.cues.first.text }}</p></div>
     </div>
     </div>

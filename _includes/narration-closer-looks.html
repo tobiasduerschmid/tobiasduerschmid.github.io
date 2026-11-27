@@ -1,0 +1,19 @@
+{%- comment -%}
+  A lesson's closer looks (optional worked examples, one per cue that authors
+  `closer_look`): the offer the player shows while such a cue plays, and one
+  hidden panel per look. Rendered beside the knowledge check, so the offer
+  follows the picture and a panel takes the picture's place.
+  js/narration-closer-look.js opens them. Params: topic, id (player id).
+{%- endcomment -%}
+{%- assign closer_lesson = site.data.narration_lessons[include.topic] -%}
+{%- include narration-closer-look-count.html topic=include.topic -%}
+{%- if closer_look_count > 0 -%}
+<button type="button" class="narration-closer-look-offer" data-closer-look-offer aria-keyshortcuts="E" hidden>
+  {%- include narration-closer-look-icon.html -%}
+  <span class="narration-closer-look-offer-text"><span data-closer-look-offer-label>See it in code</span><span class="narration-closer-look-offer-title">: <span data-closer-look-offer-title></span></span></span>
+  <kbd class="narration-closer-look-key" aria-hidden="true">E</kbd>
+</button>
+{%- for closer_scene in closer_lesson.story.scenes -%}{%- for closer_cue in closer_scene.cues -%}{%- if closer_cue.closer_look -%}
+{% include narration-closer-look.html topic=include.topic id=include.id scene=closer_scene cue=closer_cue mode='player' %}
+{%- endif -%}{%- endfor -%}{%- endfor -%}
+{%- endif -%}

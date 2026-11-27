@@ -21,4 +21,10 @@
 <script src="{{ '/js/narration-study-view.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/narration-practice.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/narration-study.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+{%- comment -%}A reading view's closer look may have loaded the view already (narration-closer-look.html).{%- endcomment -%}
+{%- unless closer_look_view_loaded %}
+{%- assign closer_look_view_loaded = true %}
+<script src="{{ '/js/narration-closer-look-view.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+{%- endunless %}
+<script src="{{ '/js/narration-closer-look.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/narration-player.js' | relative_url }}?v={{ site.asset_version }}" defer></script>

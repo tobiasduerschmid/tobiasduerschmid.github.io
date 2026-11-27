@@ -161,6 +161,59 @@ python:
         - 9
         second:
         - 10
+    composition_app:
+      file: app/editor_app.py
+      source: |
+        from editor.document import Document
+        from views.widgets import CharacterCount, Preview
+
+        def main() -> None:
+            document = Document()
+            preview = Preview()
+            count = CharacterCount()
+            document.attach(preview)
+            document.attach(count)
+            document.set_text("Hi")
+      focus: {imports: [1, 2], attach: [8, 9]}
+    composition_subject:
+      file: editor/subject.py
+      source: |
+        from abc import ABC, abstractmethod
+
+        class Observer(ABC):
+            @abstractmethod
+            def update(self, text: str) -> None: ...
+
+        class Subject:
+            def __init__(self) -> None:
+                self._observers: list[Observer] = []
+
+            def attach(self, observer: Observer) -> None:
+                self._observers.append(observer)
+
+            def notify_observers(self, text: str) -> None:
+                for observer in self._observers:
+                    observer.update(text)
+      focus: {contract: [3, 4, 5], registry: [9, 11], notify: [15, 16], call: [16]}
+    composition_views:
+      file: views/widgets.py
+      source: |
+        from editor.subject import Observer
+
+        class Preview(Observer):
+            def __init__(self) -> None:
+                self.text: str = ""
+
+            def update(self, text: str) -> None:
+                self.text = text
+
+        class CharacterCount(Observer):
+            def __init__(self) -> None:
+                self.text: str = "0"
+
+            def update(self, text: str) -> None:
+                self.text = str(len(text))
+      focus: {imports: [1], implements: [3, 10], update: [7, 8, 14, 15]}
 java:
   label: Java
   filename: ObserverDemo.java
@@ -335,6 +388,89 @@ java:
         - 11
         second:
         - 12
+    composition_app:
+      file: app/EditorApp.java
+      source: |
+        package app;
+
+        import editor.Document;
+        import views.CharacterCount;
+        import views.Preview;
+
+        public class EditorApp {
+            public static void main(String[] args) {
+                Document document = new Document();
+                Preview preview = new Preview();
+                CharacterCount count = new CharacterCount();
+                document.attach(preview);
+                document.attach(count);
+                document.setText("Hi");
+            }
+        }
+      focus: {imports: [3, 4, 5], attach: [12, 13]}
+    composition_subject:
+      files:
+        - file: editor/Observer.java
+          source: |
+            package editor;
+
+            public interface Observer {
+                void update(String text);
+            }
+          focus: {contract: [3, 4, 5]}
+        - file: editor/Subject.java
+          source: |
+            package editor;
+
+            import java.util.ArrayList;
+            import java.util.List;
+
+            public class Subject {
+                private final List<Observer> observers =
+                    new ArrayList<>();
+
+                public void attach(Observer observer) {
+                    observers.add(observer);
+                }
+
+                protected void notifyObservers(String text) {
+                    for (Observer observer : observers)
+                        observer.update(text);
+                }
+            }
+          focus: {registry: [7, 8, 10], notify: [15, 16], call: [16]}
+    composition_views:
+      files:
+        - file: views/Preview.java
+          source: |
+            package views;
+
+            import editor.Observer;
+
+            public class Preview implements Observer {
+                String text = "";
+
+                @Override
+                public void update(String text) {
+                    this.text = text;
+                }
+            }
+          focus: {imports: [3], implements: [5], update: [9, 10]}
+        - file: views/CharacterCount.java
+          source: |
+            package views;
+
+            import editor.Observer;
+
+            public class CharacterCount implements Observer {
+                String text = "0";
+
+                @Override
+                public void update(String text) {
+                    this.text = Integer.toString(text.length());
+                }
+            }
+          focus: {imports: [3], implements: [5], update: [9, 10]}
 cpp:
   label: C++
   filename: observer_demo.cpp
@@ -522,6 +658,74 @@ cpp:
         cleanup:
         - 12
         - 13
+    composition_app:
+      file: app/main.cpp
+      source: |
+        #include "editor/document.h"
+        #include "views/widgets.h"
+
+        int main() {
+            Preview preview;
+            CharacterCount count;
+            Document document;  // declared last, destroyed first
+            document.attach(preview);
+            document.attach(count);
+            document.setText("Hi");
+        }
+      focus: {imports: [1, 2], attach: [8, 9]}
+    composition_subject:
+      files:
+        - file: editor/observer.h
+          source: |
+            #pragma once
+            #include <string>
+
+            struct Observer {
+                virtual ~Observer() = default;
+                virtual void update(const std::string& text) = 0;
+            };
+          focus: {contract: [4, 6, 7]}
+        - file: editor/subject.h
+          source: |
+            #pragma once
+            #include <string>
+            #include <vector>
+            #include "editor/observer.h"
+
+            class Subject {
+                std::vector<Observer*> observers;
+            public:
+                void attach(Observer& observer) {
+                    observers.push_back(&observer);
+                }
+            protected:
+                void notifyObservers(const std::string& text) {
+                    for (Observer* observer : observers)
+                        observer->update(text);
+                }
+            };
+          focus: {registry: [7, 9], notify: [14, 15], call: [15]}
+    composition_views:
+      file: views/widgets.h
+      source: |
+        #pragma once
+        #include <string>
+        #include "editor/observer.h"
+
+        struct Preview : Observer {
+            std::string text;
+            void update(const std::string& value) override {
+                text = value;
+            }
+        };
+
+        struct CharacterCount : Observer {
+            std::string text = "0";
+            void update(const std::string& value) override {
+                text = std::to_string(value.size());
+            }
+        };
+      focus: {imports: [3], implements: [5, 12], update: [7, 8, 14, 15]}
 typescript:
   label: TypeScript
   filename: observer-demo.ts
@@ -692,3 +896,60 @@ typescript:
         - 9
         second:
         - 10
+    composition_app:
+      file: app/editor-app.ts
+      source: |
+        import { Document } from "../editor/document";
+        import { CharacterCount, Preview } from "../views/widgets";
+
+        export function main(): void {
+          const document = new Document();
+          const preview = new Preview();
+          const count = new CharacterCount();
+          document.attach(preview);
+          document.attach(count);
+          document.setText("Hi");
+        }
+      focus: {imports: [1, 2], attach: [8, 9]}
+    composition_subject:
+      file: editor/subject.ts
+      source: |
+        export interface Observer {
+          update(text: string): void;
+        }
+
+        export class Subject {
+          private observers: Observer[] = [];
+
+          attach(observer: Observer): void {
+            this.observers.push(observer);
+          }
+
+          protected notifyObservers(text: string): void {
+            for (const observer of this.observers) {
+              observer.update(text);
+            }
+          }
+        }
+      focus: {contract: [1, 2, 3], registry: [6, 8], notify: [13, 14], call: [14]}
+    composition_views:
+      file: views/widgets.ts
+      source: |
+        import { Observer } from "../editor/subject";
+
+        export class Preview implements Observer {
+          text = "";
+
+          update(text: string): void {
+            this.text = text;
+          }
+        }
+
+        export class CharacterCount implements Observer {
+          text = "0";
+
+          update(text: string): void {
+            this.text = String(text.length);
+          }
+        }
+      focus: {imports: [1], implements: [3, 11], update: [6, 7, 14, 15]}

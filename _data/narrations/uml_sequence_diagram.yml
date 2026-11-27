@@ -232,6 +232,46 @@ scenes:
           ones.
         step: Draw the replies that matter
         note: scan(12) → 8 shown · tag(2) returns nothing → no reply drawn
+        closer_look:
+          title: No reply drawn, still synchronous
+          notice: >-
+            Both tag and play return nothing, yet the probe waits for tag to finish and never
+            waits for the sound to play.
+          code: waits
+          groups:
+            - {id: probe, label: "probe : Probe"}
+            - {id: rock, label: "rock : Asteroid"}
+            - {id: sfx, label: "sfx : SoundPlayer"}
+          relations:
+            - {kind: call, from: probe.tag_call, to: rock.tag, label: [tag(2) ↓, the probe waits]}
+          steps:
+            - question: Why does the probe wait for scan?
+              focus: [probe.scan_call, probe.branch, rock.reply]
+              text: >-
+                The next line branches on <code>unscanned</code>, the value <code>scan</code>
+                returns, so the probe cannot go on until <code>scan</code> has finished. That is a
+                <strong>synchronous</strong> message, and the returned 8 is its dashed reply.
+            - question: Does tag send anything back?
+              focus: [probe.tag_call, rock.tag]
+              relation: call
+              text: >-
+                No value, but the probe still waits: the call runs the body of <code>tag</code> to
+                its end before the probe's next line. The arrow keeps its filled arrowhead; only
+                the reply is left out, because it carries nothing worth showing.
+            - question: What makes play asynchronous?
+              focus: [probe.play, sfx.play, sfx.later]
+              text: >-
+                <code>play</code> returns nothing either, but it only queues the sound and returns
+                at once; the audio thread plays it later. The probe never waits for the sound, so
+                the arrow gets an open arrowhead. <strong>A missing reply does not make a message
+                asynchronous.</strong>
+            - question: What if play played the sound?
+              focus: [sfx.later, probe.play]
+              text: >-
+                Suppose <code>play</code> played the whole ping before returning. No line of the
+                probe's code would change, yet the probe would wait until the sound ended, and the
+                arrow would become synchronous. The arrowhead records whether the sender waits for
+                the work, not how the call looks.
         visual: >-
           The arrow scan(12) goes to the boulder with a reply labeled 8, followed by tag(2) with
           no reply. The scan and tag calls are marked.

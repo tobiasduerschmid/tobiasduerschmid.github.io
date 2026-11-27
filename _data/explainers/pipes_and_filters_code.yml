@@ -1,0 +1,258 @@
+# Code for the Pipes and Filters lesson's closer looks (scripts/narration/closer-look.js).
+# A look's `code: <name>` uses the blocks `<name>_<group>` in every language.
+# Focus keys name line numbers; lines stay within 60 characters, and Python
+# is fully type-hinted. Each filter is a lazy stream transform (a generator or
+# a Java stream), so the pipes are the streams passed between them.
+python:
+  label: Python
+  blocks:
+    agnostic_builder:
+      file: photo_desk.py
+      source: |
+        from filters.blur_faces import blur_faces
+        from filters.brighten import brighten
+        from filters.crop import crop
+        from filters.denoise import denoise
+        from filters.watermark import watermark
+        from photos.io import camera_uploads, gallery, logo
+
+        def run() -> None:
+            photos = camera_uploads()  # source
+            photos = denoise(photos)
+            photos = brighten(photos, amount=1.3)
+            photos = crop(photos)
+            photos = blur_faces(photos)
+            photos = watermark(photos, logo)
+            gallery.publish_all(photos)  # sink
+      focus: {imports: [1, 2, 3, 4, 5], chain: [12, 13, 14]}
+    agnostic_filters:
+      files:
+        - file: filters/crop.py
+          source: |
+            from collections.abc import Iterator
+            from photos.image import Image
+
+            def crop(photos: Iterator[Image]) -> Iterator[Image]:
+                for photo in photos:
+                    yield photo.crop_to(photo.action_box())
+          focus: {imports: [2]}
+        - file: filters/blur_faces.py
+          source: |
+            from collections.abc import Iterator
+            from photos.image import Image
+
+            def blur_faces(photos: Iterator[Image]) -> Iterator[Image]:
+                for photo in photos:
+                    for face in photo.find_faces():
+                        photo = photo.blur(face)
+                    yield photo
+          focus: {imports: [2], blur_in: [4], blur_body: [5, 6, 7, 8]}
+        - file: filters/watermark.py
+          source: |
+            from collections.abc import Iterator
+            from photos.image import Image
+
+            def watermark(photos: Iterator[Image],
+                          logo: Image) -> Iterator[Image]:
+                for photo in photos:
+                    yield photo.stamp(logo)
+          focus: {imports: [2]}
+java:
+  label: Java
+  blocks:
+    agnostic_builder:
+      file: PhotoDesk.java
+      source: |
+        import static filters.BlurFaces.blurFaces;
+        import static filters.Brighten.brighten;
+        import static filters.Crop.crop;
+        import static filters.Denoise.denoise;
+        import static filters.Watermark.watermark;
+
+        import photos.Io;
+
+        public class PhotoDesk {
+            static void run() {
+                var photos = Io.cameraUploads();  // source
+                photos = denoise(photos);
+                photos = brighten(photos, 1.3);
+                photos = crop(photos);
+                photos = blurFaces(photos);
+                photos = watermark(photos, Io.LOGO);
+                Io.gallery().publishAll(photos);  // sink
+            }
+        }
+      focus: {imports: [1, 2, 3, 4, 5], chain: [14, 15, 16]}
+    agnostic_filters:
+      files:
+        - file: filters/Crop.java
+          source: |
+            package filters;
+
+            import java.util.stream.Stream;
+            import photos.Image;
+
+            public final class Crop {
+                public static Stream<Image> crop(Stream<Image> photos) {
+                    return photos.map(p -> p.cropTo(p.actionBox()));
+                }
+            }
+          focus: {imports: [4]}
+        - file: filters/BlurFaces.java
+          source: |
+            package filters;
+
+            import java.util.stream.Stream;
+            import photos.Image;
+
+            public final class BlurFaces {
+                public static Stream<Image> blurFaces(
+                        Stream<Image> photos) {
+                    return photos.map(photo -> {
+                        for (var face : photo.findFaces())
+                            photo = photo.blur(face);
+                        return photo;
+                    });
+                }
+            }
+          focus: {imports: [4], blur_in: [7, 8], blur_body: [9, 10, 11, 12, 13]}
+        - file: filters/Watermark.java
+          source: |
+            package filters;
+
+            import java.util.stream.Stream;
+            import photos.Image;
+
+            public final class Watermark {
+                public static Stream<Image> watermark(
+                        Stream<Image> photos, Image logo) {
+                    return photos.map(p -> p.stamp(logo));
+                }
+            }
+          focus: {imports: [4]}
+cpp:
+  label: C++
+  blocks:
+    agnostic_builder:
+      file: photo_desk.cpp
+      source: |
+        #include <utility>
+        #include "filters/blur_faces.h"
+        #include "filters/brighten.h"
+        #include "filters/crop.h"
+        #include "filters/denoise.h"
+        #include "filters/watermark.h"
+        #include "photos/io.h"
+
+        void run() {
+            auto photos = cameraUploads();  // source
+            photos = denoise(std::move(photos));
+            photos = brighten(std::move(photos), 1.3);
+            photos = crop(std::move(photos));
+            photos = blurFaces(std::move(photos));
+            photos = watermark(std::move(photos), logo());
+            gallery().publishAll(std::move(photos));  // sink
+        }
+      focus: {imports: [2, 3, 4, 5, 6], chain: [13, 14, 15]}
+    agnostic_filters:
+      files:
+        - file: filters/crop.cpp
+          source: |
+            #include <generator>
+            #include "photos/image.h"
+
+            std::generator<Image> crop(std::generator<Image> photos) {
+                for (Image photo : photos)
+                    co_yield photo.cropTo(photo.actionBox());
+            }
+          focus: {imports: [2]}
+        - file: filters/blur_faces.cpp
+          source: |
+            #include <generator>
+            #include "photos/image.h"
+
+            std::generator<Image> blurFaces(
+                    std::generator<Image> photos) {
+                for (Image photo : photos) {
+                    for (const Face& face : photo.findFaces())
+                        photo = photo.blur(face);
+                    co_yield photo;
+                }
+            }
+          focus: {imports: [2], blur_in: [4, 5], blur_body: [6, 7, 8, 9, 10]}
+        - file: filters/watermark.cpp
+          source: |
+            #include <generator>
+            #include "photos/image.h"
+
+            std::generator<Image> watermark(
+                    std::generator<Image> photos, Image logo) {
+                for (Image photo : photos)
+                    co_yield photo.stamp(logo);
+            }
+          focus: {imports: [2]}
+typescript:
+  label: TypeScript
+  blocks:
+    agnostic_builder:
+      file: photo-desk.ts
+      source: |
+        import { blurFaces } from "./filters/blur-faces";
+        import { brighten } from "./filters/brighten";
+        import { crop } from "./filters/crop";
+        import { denoise } from "./filters/denoise";
+        import { watermark } from "./filters/watermark";
+        import { cameraUploads, gallery, logo } from "./photos/io";
+
+        export function run(): void {
+          let photos = cameraUploads(); // source
+          photos = denoise(photos);
+          photos = brighten(photos, 1.3);
+          photos = crop(photos);
+          photos = blurFaces(photos);
+          photos = watermark(photos, logo);
+          gallery.publishAll(photos); // sink
+        }
+      focus: {imports: [1, 2, 3, 4, 5], chain: [12, 13, 14]}
+    agnostic_filters:
+      files:
+        - file: filters/crop.ts
+          source: |
+            import type { Image } from "../photos/image";
+
+            export function* crop(
+              photos: Iterable<Image>,
+            ): Iterable<Image> {
+              for (const photo of photos) {
+                yield photo.cropTo(photo.actionBox());
+              }
+            }
+          focus: {imports: [1]}
+        - file: filters/blur-faces.ts
+          source: |
+            import type { Image } from "../photos/image";
+
+            export function* blurFaces(
+              photos: Iterable<Image>,
+            ): Iterable<Image> {
+              for (let photo of photos) {
+                for (const face of photo.findFaces()) {
+                  photo = photo.blur(face);
+                }
+                yield photo;
+              }
+            }
+          focus: {imports: [1], blur_in: [3, 4, 5], blur_body: [6, 7, 8, 9, 10, 11]}
+        - file: filters/watermark.ts
+          source: |
+            import type { Image } from "../photos/image";
+
+            export function* watermark(
+              photos: Iterable<Image>,
+              logo: Image,
+            ): Iterable<Image> {
+              for (const photo of photos) {
+                yield photo.stamp(logo);
+              }
+            }
+          focus: {imports: [1]}

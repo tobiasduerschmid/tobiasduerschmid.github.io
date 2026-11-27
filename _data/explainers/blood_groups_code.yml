@@ -1,0 +1,282 @@
+# Code for the Module Blood Groups lesson's closer looks (scripts/narration/closer-look.js).
+# A look's `code: <name>` uses the blocks `<name>_<group>` in every language.
+# Focus keys name line numbers; lines stay within 60 characters, and Python
+# is fully type-hinted. `payapi` stands for the third-party payment API.
+python:
+  label: Python
+  blocks:
+    plugs_rules:
+      file: rides/rules.py
+      source: |
+        from abc import ABC, abstractmethod
+        from rides.model import Ride, Rider
+
+        class Payments(ABC):
+            @abstractmethod
+            def charge(self, rider: Rider, amount: float) -> None:
+                ...
+
+        class RideRules:
+            def __init__(self, payments: Payments) -> None:
+                self.payments: Payments = payments
+
+            def price(self, ride: Ride) -> float:
+                cost = 1.00 + 0.30 * ride.minutes
+                return cost * 0.8 if ride.rider.student else cost
+
+            def end_ride(self, ride: Ride) -> None:
+                self.payments.charge(ride.rider, self.price(ride))
+      focus: {contract: [4, 5, 6, 7], call: [18]}
+    plugs_adapter:
+      file: adapters/payment_adapter.py
+      source: |
+        from payment.client import PaymentClient
+        from rides.model import Rider
+        from rides.rules import Payments
+
+        class PaymentAdapter(Payments):
+            def __init__(self, client: PaymentClient) -> None:
+                self.client: PaymentClient = client
+
+            def charge(self, rider: Rider, amount: float) -> None:
+                card = self.client.card_on_file(rider.id)
+                self.client.charge(card, round(amount * 100))
+      focus: {imports: [1, 2, 3], implements: [5], charge: [9], translate: [10, 11]}
+    plugs_client:
+      file: payment/client.py
+      source: |
+        import payapi
+
+        class PaymentClient:
+            def __init__(self, key: str) -> None:
+                self.api: payapi.Api = payapi.Api(key)
+
+            def card_on_file(self, customer: str) -> payapi.Card:
+                return self.api.customers.get(customer).card
+
+            def charge(self, card: payapi.Card, cents: int) -> None:
+                self.api.charges.create(card=card, amount=cents)
+      focus: {api: [1], charge: [10, 11]}
+java:
+  label: Java
+  blocks:
+    plugs_rules:
+      files:
+        - file: rides/Payments.java
+          source: |
+            package rides;
+
+            public interface Payments {
+                void charge(Rider rider, double amount);
+            }
+          focus: {contract: [3, 4, 5]}
+        - file: rides/RideRules.java
+          source: |
+            package rides;
+
+            public class RideRules {
+                private final Payments payments;
+
+                public RideRules(Payments payments) {
+                    this.payments = payments;
+                }
+
+                double price(Ride ride) {
+                    double cost = 1.00 + 0.30 * ride.minutes();
+                    return ride.rider().isStudent() ? cost * 0.8 : cost;
+                }
+
+                public void endRide(Ride ride) {
+                    payments.charge(ride.rider(), price(ride));
+                }
+            }
+          focus: {call: [16]}
+    plugs_adapter:
+      file: adapters/PaymentAdapter.java
+      source: |
+        package adapters;
+
+        import payment.PaymentClient;
+        import rides.Payments;
+        import rides.Rider;
+
+        public class PaymentAdapter implements Payments {
+            private final PaymentClient client;
+
+            public PaymentAdapter(PaymentClient client) {
+                this.client = client;
+            }
+
+            @Override
+            public void charge(Rider rider, double amount) {
+                var card = client.cardOnFile(rider.id());
+                client.charge(card, Math.round(amount * 100));
+            }
+        }
+      focus: {imports: [3, 4, 5], implements: [7], charge: [15], translate: [16, 17]}
+    plugs_client:
+      file: payment/PaymentClient.java
+      source: |
+        package payment;
+
+        import payapi.Api;
+        import payapi.Card;
+
+        public class PaymentClient {
+            private final Api api;
+
+            public PaymentClient(String key) { api = new Api(key); }
+
+            public Card cardOnFile(String customer) {
+                return api.customers().get(customer).card();
+            }
+
+            public void charge(Card card, long cents) {
+                api.charges().create(card, cents);
+            }
+        }
+      focus: {api: [3, 4], charge: [15, 16, 17]}
+cpp:
+  label: C++
+  blocks:
+    plugs_rules:
+      files:
+        - file: rides/payments.h
+          source: |
+            #pragma once
+            #include "rides/model.h"
+
+            class Payments {
+            public:
+                virtual ~Payments() = default;
+                virtual void charge(const Rider& rider,
+                                    double amount) = 0;
+            };
+          focus: {contract: [4, 5, 6, 7, 8, 9]}
+        - file: rides/ride_rules.h
+          source: |
+            #pragma once
+            #include "rides/model.h"
+            #include "rides/payments.h"
+
+            class RideRules {
+                Payments& payments;
+            public:
+                explicit RideRules(Payments& payments)
+                    : payments(payments) {}
+
+                double price(const Ride& ride) const {
+                    double cost = 1.00 + 0.30 * ride.minutes;
+                    return ride.rider.student ? cost * 0.8 : cost;
+                }
+
+                void endRide(const Ride& ride) {
+                    payments.charge(ride.rider, price(ride));
+                }
+            };
+          focus: {call: [17]}
+    plugs_adapter:
+      file: adapters/payment_adapter.h
+      source: |
+        #pragma once
+        #include <cmath>
+        #include "payment/client.h"
+        #include "rides/payments.h"
+
+        class PaymentAdapter : public Payments {
+            PaymentClient& client;
+        public:
+            explicit PaymentAdapter(PaymentClient& client)
+                : client(client) {}
+
+            void charge(const Rider& rider,
+                        double amount) override {
+                auto card = client.cardOnFile(rider.id);
+                client.charge(card, std::lround(amount * 100));
+            }
+        };
+      focus: {imports: [3, 4], implements: [6], charge: [12, 13], translate: [14, 15]}
+    plugs_client:
+      file: payment/client.h
+      source: |
+        #pragma once
+        #include <string>
+        #include <payapi/api.h>
+
+        class PaymentClient {
+            payapi::Api api;
+        public:
+            explicit PaymentClient(const std::string& key)
+                : api(key) {}
+
+            payapi::Card cardOnFile(const std::string& customer) {
+                return api.customers().get(customer).card();
+            }
+
+            void charge(const payapi::Card& card, long cents) {
+                api.charges().create(card, cents);
+            }
+        };
+      focus: {api: [3], charge: [15, 16, 17]}
+typescript:
+  label: TypeScript
+  blocks:
+    plugs_rules:
+      file: rides/rules.ts
+      source: |
+        import type { Ride, Rider } from "./model";
+
+        export interface Payments {
+          charge(rider: Rider, amount: number): void;
+        }
+
+        export class RideRules {
+          constructor(private readonly payments: Payments) {}
+
+          price(ride: Ride): number {
+            const cost = 1.0 + 0.3 * ride.minutes;
+            return ride.rider.student ? cost * 0.8 : cost;
+          }
+
+          endRide(ride: Ride): void {
+            this.payments.charge(ride.rider, this.price(ride));
+          }
+        }
+      focus: {contract: [3, 4, 5], call: [16]}
+    plugs_adapter:
+      file: adapters/payment-adapter.ts
+      source: |
+        import type { PaymentClient } from "../payment/client";
+        import type { Rider } from "../rides/model";
+        import type { Payments } from "../rides/rules";
+
+        export class PaymentAdapter implements Payments {
+          constructor(private readonly client: PaymentClient) {}
+
+          charge(rider: Rider, amount: number): void {
+            const card = this.client.cardOnFile(rider.id);
+            this.client.charge(card, Math.round(amount * 100));
+          }
+        }
+      focus: {imports: [1, 2, 3], implements: [5], charge: [8], translate: [9, 10]}
+    plugs_client:
+      file: payment/client.ts
+      source: |
+        import { Api, type Card } from "payapi";
+
+        export class PaymentClient {
+          private readonly api: Api;
+
+          constructor(key: string) {
+            this.api = new Api(key);
+          }
+
+          cardOnFile(customer: string): Card {
+            return this.api.customers.get(customer).card;
+          }
+
+          charge(card: Card, cents: number): void {
+            this.api.charges.create({ card, amount: cents });
+          }
+        }
+      focus: {api: [1], charge: [14, 15, 16]}

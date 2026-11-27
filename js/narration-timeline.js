@@ -1,9 +1,11 @@
-/* Chapter progress and checkpoint navigation, shared by every narration kind.
-   The native range remains the scrubbing and keyboard control. */
+/* Chapter progress, checkpoint navigation, and closer-look markers, shared by
+   every narration kind. The native range remains the scrubbing and keyboard
+   control. */
 (function () {
   'use strict';
 
-  function bind(root, { story, timing, checkScenes = [], onCheck }) {
+  /** `looks` are [{ time, title }] in lesson order; `onLook(look)` opens one. */
+  function bind(root, { story, timing, checkScenes = [], onCheck, looks = [], onLook }) {
     const timeline = root.querySelector('.vn-timeline');
     if (!timeline) return { update() {} }; // Cached markup without a timeline.
     const seek = timeline.querySelector('.nja-seek');
@@ -137,6 +139,40 @@
     markers.hidden = !checkScenes.length;
     new ResizeObserver(layoutMarkers).observe(markers);
     layoutMarkers();
+
+    // Closer looks get their own row, so a marker never covers a check dot.
+    const lookRow = timeline.querySelector('.vn-timeline-looks');
+    if (lookRow && looks.length) {
+      lookRow.hidden = false;
+      const icon = lookRow.querySelector('template').content;
+      const lookButtons = looks.map(look => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'vn-timeline-look';
+        const title = `Closer look: ${look.title}`;
+        button.setAttribute('aria-label', `${title}, at ${clock(look.time)}`);
+        button.append(icon.cloneNode(true));
+        const preview = () => showLabel(title, look.time, lookRow.offsetLeft + button.offsetLeft + 12);
+        button.addEventListener('pointerenter', preview);
+        button.addEventListener('focus', preview);
+        button.addEventListener('click', () => { hideLabel(); onLook(look); });
+        return button;
+      });
+      lookRow.replaceChildren(...lookButtons);
+      const layoutLooks = () => {
+        const width = lookRow.clientWidth;
+        if (!width) return;
+        let previous = -Infinity;
+        lookButtons.forEach((button, index) => {
+          // Keep 24-pixel targets apart when two looks are close together.
+          const x = Math.max(12, Math.min(width - 12, Math.max(previous + 26, looks[index].time / timing.duration * width)));
+          button.style.left = `${x - 12}px`;
+          previous = x;
+        });
+      };
+      new ResizeObserver(layoutLooks).observe(lookRow);
+      layoutLooks();
+    }
 
     seek.addEventListener('pointermove', event => {
       if (event.pointerType === 'touch') return;

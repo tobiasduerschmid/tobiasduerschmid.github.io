@@ -1,0 +1,145 @@
+/* Closer looks: the offer beside the picture, the timeline marker row, and
+   the panel that takes the picture's place (js/narration-closer-look.js).
+   Colors are the narration theme tokens (--nja-*), which switch for dark mode
+   and print light. Text inherits the player's paragraph size. */
+
+.narrated-explainer .narration-closer-look-icon { width: 1.3em; height: 1.3em; flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+
+/* The offer: top-right of the picture, sharing its top band. */
+.narrated-explainer .narration-closer-look-offer {
+  position: absolute; top: 0.35em; right: 0.5em; z-index: 3;
+  display: inline-flex; align-items: center; gap: 0.5em;
+  min-height: 2.4em; padding: 0.25em 0.4em 0.25em 0.3em;
+  font: inherit; font-weight: 800; line-height: 1.2; color: var(--nja-text);
+  background: var(--nja-bg); border: 2px solid var(--nja-accent); border-radius: 999px;
+  box-shadow: 0 0.15em 0.6em rgba(11, 15, 26, 0.22); cursor: pointer;
+  animation: narration-closer-look-arrive 0.25s ease-out;
+}
+.narrated-explainer .narration-closer-look-offer .narration-closer-look-icon { width: 1.7em; height: 1.7em; padding: 0.28em; border-radius: 50%; color: var(--nja-ink); background: var(--nja-accent-fill); }
+.narrated-explainer .narration-closer-look-offer:hover { background: var(--nja-hover); }
+.narrated-explainer .narration-closer-look-offer:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
+.narrated-explainer .narration-closer-look-offer-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.narrated-explainer .narration-closer-look-key { padding: 0 0.4em; font: inherit; font-size: 0.9em; font-weight: 700; color: var(--nja-muted); background: var(--nja-panel); border: 1px solid var(--nja-line); border-radius: 4px; }
+/* The offer slides in without fading, so its text never passes through low contrast. */
+@keyframes narration-closer-look-arrive { from { transform: translateY(-0.5em); } }
+/* Another surface has the stage: a knowledge check or a prediction. */
+.narrated-explainer .vn-video:has(.narration-check:not([hidden]), .narration-prediction:not([hidden])) .narration-closer-look-offer { display: none; }
+@media (prefers-reduced-motion: reduce) { .narrated-explainer .narration-closer-look-offer { animation: none; } }
+/* Full screen: the offer sits in the picture's grid cell, over the letterbox if any. */
+.narrated-explainer .vn-video.is-fullscreen .narration-closer-look-offer { position: relative; top: auto; right: auto; grid-area: 2 / 1; align-self: start; justify-self: end; margin: 0.5em; z-index: 4; }
+/* Phones: the offer is a row under the picture, so it never covers the drawing. */
+@media (max-width: 600px) {
+  .narrated-explainer .vn-video:not(.is-fullscreen) .narration-closer-look-offer { position: static; width: 100%; padding: 0.45em 0.6em; text-align: left; border-width: 2px 0; border-radius: 0; box-shadow: none; animation: none; }
+  .narrated-explainer .vn-video:not(.is-fullscreen) .narration-closer-look-offer-title { position: static; width: auto; height: auto; margin: 0; overflow: visible; clip: auto; white-space: normal; font-weight: 500; }
+  .narrated-explainer .narration-closer-look-key { display: none; }
+}
+
+/* Timeline: closer looks have their own marker row, shaped unlike check dots. */
+.narrated-explainer .vn-timeline-looks { position: relative; min-width: 0; height: 24px; margin: 0.15em 12px 0; }
+.narrated-explainer .nja-controls .vn-timeline-look {
+  position: absolute; top: 0; display: grid; place-items: center;
+  width: 24px; height: 24px; min-width: 24px; min-height: 24px; padding: 2px;
+  color: var(--nja-ink); background: var(--nja-accent-fill); border: 2px solid var(--nja-ink); border-radius: 6px; cursor: pointer;
+}
+.narrated-explainer .nja-controls .vn-timeline-look .narration-closer-look-icon { width: 15px; height: 15px; }
+.narrated-explainer .nja-controls .vn-timeline-look:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
+
+/* The panel takes the picture's place while the narration is paused. */
+.narrated-explainer .narration-closer-look { padding: 1.1em 1.4em 1.3em; color: var(--nja-text); background: var(--nja-bg); }
+.narrated-explainer .vn-video.is-fullscreen .narration-closer-look { grid-area: 2 / 1 / 4 / 2; z-index: 5; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.narrated-explainer .narration-closer-look :is(button, select) { font: inherit; color: var(--nja-text); cursor: pointer; }
+.narrated-explainer .narration-closer-look :is(button, select, h3, pre):focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
+.narrated-explainer .narration-closer-look-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 1em; align-items: center; }
+.narrated-explainer .narration-closer-look-eyebrow { display: inline-flex; align-items: center; gap: 0.4em; margin: 0; font-size: 0.9em; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nja-accent); }
+.narrated-explainer .narration-closer-look-head-actions { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: 0.5em; align-self: start; }
+.narrated-explainer .narration-closer-look h3 { grid-column: 1; margin: 0.15em 0 0.25em; font-size: 1.45em; line-height: 1.25; color: inherit; }
+.narrated-explainer .narration-closer-look-notice { grid-column: 1 / -1; max-width: 50em; margin: 0; line-height: 1.55; }
+.narrated-explainer :is(.narration-closer-look-head-actions, .narration-closer-look-foot) button { min-height: 2.6em; padding: 0.45em 0.9em; border-radius: 6px; }
+.narrated-explainer .narration-closer-look-continue { font-weight: 800; color: var(--nja-ink) !important; background: var(--nja-accent-fill); border: 2px solid var(--nja-ink); }
+.narrated-explainer .narration-closer-look-continue:hover { box-shadow: inset 0 0 0 2px var(--nja-ink); }
+.narrated-explainer :is(.narration-closer-look-replay, .narration-closer-look-close) { background: var(--nja-input); border: 2px solid var(--nja-line); }
+.narrated-explainer .narration-closer-look-close { display: grid; place-items: center; width: 2.6em; height: 2.6em; padding: 0.45em; }
+.narrated-explainer .narration-closer-look :is(.narration-closer-look-replay, .narration-closer-look-close, .narration-closer-look-steps button):hover { background: var(--nja-hover); }
+.narrated-explainer .narration-closer-look-time { font-weight: 500; }
+
+.narrated-explainer .narration-closer-look-steps { display: flex; flex-wrap: wrap; gap: 0.4em; margin: 1em 0 0.7em; }
+.narrated-explainer .narration-closer-look-steps button { display: inline-flex; align-items: center; gap: 0.4em; min-height: 2.6em; padding: 0.3em 0.75em 0.3em 0.35em; background: var(--nja-input); border: 2px solid var(--nja-line); border-radius: 999px; }
+.narrated-explainer .narration-closer-look-steps button[aria-pressed="true"] { font-weight: 800; background: var(--nja-note-bg); border-color: var(--nja-accent); }
+.narrated-explainer .narration-closer-look-step-number { display: inline-grid; place-items: center; flex: none; width: 1.65em; height: 1.65em; font-weight: 800; border: 2px solid currentColor; border-radius: 50%; }
+.narrated-explainer :is(.narration-closer-look-steps button[aria-pressed="true"], .narration-closer-look-step-text) .narration-closer-look-step-number { color: var(--nja-bg); background: var(--nja-accent); border-color: var(--nja-accent); }
+.narrated-explainer .narration-closer-look-step-text { display: flex; align-items: baseline; gap: 0.6em; max-width: 52em; min-height: 4.5em; margin: 0 0 1em; padding: 0.7em 0.9em; line-height: 1.55; background: var(--nja-note-bg); border-left: 4px solid var(--nja-accent); border-radius: 0 6px 6px 0; }
+.narrated-explainer .narration-closer-look code { font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; }
+
+/* Code, laid out like the view it explains: groups top to bottom, relations in a gutter. */
+.narrated-explainer .narration-closer-look-code-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6em 1.2em; margin-bottom: 2.6em; }
+.narrated-explainer .narration-closer-look-legend { display: flex; flex-wrap: wrap; gap: 0.3em 1.2em; margin: 0; padding: 0; list-style: none; }
+.narrated-explainer .narration-closer-look-legend li { display: inline-flex; align-items: center; gap: 0.4em; margin: 0; }
+.narrated-explainer .narration-closer-look-legend li.is-active strong { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
+.narrated-explainer .narration-closer-look-legend li.is-dim { color: var(--nja-muted); }
+.narrated-explainer .narration-closer-look-swatch { width: 2.2em; height: 0.75em; overflow: visible; }
+.narrated-explainer .narration-closer-look-language { display: inline-flex; align-items: center; gap: 0.45em; margin-left: auto; font-weight: 700; }
+.narrated-explainer .narration-closer-look-language select { padding: 0.35em 0.5em; background: var(--nja-input); border: 2px solid var(--nja-line); border-radius: 6px; }
+.narrated-explainer .narration-closer-look-languages { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2.3em; padding-right: 4em; }
+.narrated-explainer .narration-closer-look-group { position: relative; min-width: 0; padding: 0.4em; background: var(--nja-panel); border: 2px solid var(--nja-line); border-radius: 0 6px 6px 6px; }
+.narrated-explainer .narration-closer-look-group-tab { position: absolute; bottom: 100%; left: -2px; margin: 0; padding: 0.1em 0.7em; font-weight: 800; background: var(--nja-panel); border: 2px solid var(--nja-line); border-bottom: 0; border-radius: 6px 6px 0 0; }
+.narrated-explainer .narration-closer-look-file-name { margin-left: 0.5em; font-size: 0.9em; font-weight: 500; color: var(--nja-muted); }
+.narrated-explainer .narration-closer-look-group-state { color: var(--nja-green); }
+.narrated-explainer .narration-closer-look-group.is-removed { border-style: dashed; border-color: var(--nja-coral); }
+.narrated-explainer .narration-closer-look-group.is-removed .narration-closer-look-group-state { color: var(--nja-coral); }
+.narrated-explainer .narration-closer-look-group.is-removed .nja-line-source { text-decoration: line-through; text-decoration-thickness: 2px; text-decoration-color: var(--nja-coral); }
+.narrated-explainer .narration-closer-look-file { margin: 0; }
+.narrated-explainer .narration-closer-look-file + .narration-closer-look-file { margin-top: 0.7em; }
+.narrated-explainer .narration-closer-look-file figcaption { margin: 0 0 0.3em; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em; color: var(--nja-muted); overflow-wrap: anywhere; }
+.narrated-explainer .narration-closer-look-file-name { overflow-wrap: anywhere; }
+.narrated-explainer .narration-closer-look-file pre { margin: 0; padding: 0.35em 0; overflow-x: auto; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 1em; color: var(--nja-text); white-space: normal; background: var(--nja-code-bg); border: 1px solid var(--nja-line); border-radius: 6px; }
+.narrated-explainer .narration-closer-look-file pre code { padding: 0; font: inherit; color: inherit; background: none; }
+.narrated-explainer .narration-closer-look-file .nja-code-line { padding: 0.02em 0.6em 0.02em 0.3em; line-height: 1.4; }
+.narrated-explainer .narration-closer-look-relations { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; }
+.narrated-explainer .narration-closer-look-relation-line { fill: none; stroke-width: 3; }
+.narrated-explainer .narration-closer-look-relation--call .narration-closer-look-relation-line { stroke: var(--nja-cyan); }
+.narrated-explainer .narration-closer-look-relation--call .narration-closer-look-relation-head { fill: var(--nja-cyan); }
+.narrated-explainer .narration-closer-look-relation--dependency .narration-closer-look-relation-line { stroke: var(--nja-text); stroke-dasharray: 7 5; }
+.narrated-explainer .narration-closer-look-relation--dependency .narration-closer-look-relation-head { fill: var(--nja-bg); stroke: var(--nja-text); stroke-width: 2.5; stroke-linejoin: round; }
+.narrated-explainer .narration-closer-look-relation.is-active .narration-closer-look-relation-line { stroke-width: 4.5; }
+.narrated-explainer .narration-closer-look-relation.is-dim path { opacity: 0.3; }
+.narrated-explainer .narration-closer-look-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.6em; margin-top: 1.2em; }
+
+/* Handouts and reading views: the same look as a block after its cue, every step shown. */
+.narrated-explainer .narration-closer-look--static { margin: 1em 0; border: 2px solid var(--nja-line); border-left: 6px solid var(--nja-accent); border-radius: 6px; }
+.narrated-explainer .narration-closer-look-static-title { margin: 0 0 0.3em; font-size: 1.25em; line-height: 1.3; color: inherit; }
+.narrated-explainer .narration-closer-look-static-title .narration-closer-look-eyebrow { display: inline-flex; margin-right: 0.4em; font-size: 0.75em; vertical-align: 0.1em; }
+.narrated-explainer .narration-closer-look-step-list { margin: 0.8em 0 1.2em; padding-left: 1.4em; line-height: 1.55; }
+.narrated-explainer .narration-closer-look-step-list li + li { margin-top: 0.45em; }
+
+@media (max-width: 640px) {
+  .narrated-explainer .narration-closer-look { padding: 0.9em 0.8em 1em; }
+  .narrated-explainer .narration-closer-look-head-actions { grid-column: 1 / -1; grid-row: auto; order: 5; margin-top: 0.7em; }
+  .narrated-explainer .narration-closer-look-step-text { margin-bottom: 1em; }
+  .narrated-explainer .narration-closer-look-code-bar { margin-bottom: 1em; }
+  .narrated-explainer .narration-closer-look-language { margin-left: 0; }
+  .narrated-explainer .narration-closer-look-languages { gap: 1em; padding-right: 0; }
+  .narrated-explainer .narration-closer-look-relations { display: none; }
+  .narrated-explainer .narration-closer-look-group-tab { position: static; margin: -0.4em -0.4em 0.4em; padding: 0.3em 0.5em; border: 0; border-bottom: 2px solid var(--nja-line); border-radius: 0; }
+  .narrated-explainer .narration-closer-look-file-name { display: block; margin-left: 0; }
+  .narrated-explainer .narration-closer-look-file .nja-code-line { width: max-content; min-width: 100%; grid-template-columns: 1.8em max-content; }
+  .narrated-explainer .narration-closer-look-file .nja-line-source { white-space: pre; overflow-wrap: normal; }
+}
+
+@media screen {
+  html.dark-mode:not(.print-light-mode) .narrated-explainer .narration-closer-look-offer { box-shadow: 0 0.15em 0.7em rgba(0, 0, 0, 0.65); }
+  /* The page inverts every SVG in .post-content for dark mode; these already use theme colors. */
+  html.dark-mode .narrated-explainer :is(.narration-closer-look-relations, .narration-closer-look-icon, .narration-closer-look-swatch) { filter: none; }
+}
+@media (forced-colors: active) {
+  .narrated-explainer .narration-closer-look-relation :is(.narration-closer-look-relation-line, .narration-closer-look-relation-head) { stroke: CanvasText; }
+}
+@media print {
+  /* Arrows are laid out for the screen; on paper the steps carry the relations in words. */
+  .narrated-explainer :is(.narration-closer-look-offer, .vn-timeline-looks, .narration-closer-look-language, .narration-closer-look-legend, .narration-closer-look-relations) { display: none; }
+  .narrated-explainer .narration-closer-look-code-bar { margin-bottom: 0.5em; }
+  .narrated-explainer .narration-closer-look-languages { padding-right: 0; gap: 1em; }
+  .narrated-explainer .narration-closer-look-group-tab { position: static; margin: -0.4em -0.4em 0.4em; padding: 0.3em 0.5em; border: 0; border-bottom: 2px solid var(--nja-line); border-radius: 0; }
+  .narrated-explainer .narration-closer-look-file pre { overflow: visible; }
+  .narrated-explainer .narration-closer-look-file .nja-line-source { white-space: pre-wrap; }
+  .narrated-explainer .narration-closer-look-group { break-inside: avoid; }
+}

@@ -303,6 +303,44 @@ scenes:
           rightly stays.
         step: Fetching — a guard stays
         note: tick() spends energy, then moves to Napping or Following.
+        closer_look:
+          title: The state being left picks the next
+          notice: >-
+            Follow one tick through three objects: the game only sends it, Dog only forwards it, and
+            Fetching decides which state answers the next request.
+          code: transition
+          groups:
+            - {id: game, label: "Client: the game"}
+            - {id: dog, label: "«Context» Dog"}
+            - {id: fetching, label: "«Concrete State» Fetching"}
+          relations:
+            - {kind: call, from: fetching.transition, to: dog.set_state, label: [calls setState ↑, during tick]}
+          steps:
+            - question: Who sends the input?
+              focus: [game.throw, game.tick]
+              text: >-
+                The game throws a ball, then calls <code>tick()</code>. It never names a state and never
+                asks which one the dog is in; it only sends inputs.
+            - question: Who answers?
+              focus: [dog.forward, fetching.tick]
+              text: >-
+                Dog forwards the request to its current state object and passes itself along. The shared
+                Fetching object stores nothing about this dog; the parameter tells it which dog to
+                change.
+            - question: Who picks the next state?
+              focus: [fetching.guard, fetching.transition, dog.set_state]
+              relation: call
+              text: >-
+                Fetching spends the dog's energy, and the guard on that data chooses the successor. Its
+                <code>setState</code> call replaces Dog's one state reference while Fetching is still
+                running, and Fetching finishes by returning its reaction. <strong>The state being left
+                decides what comes next.</strong>
+            - question: What does the next tick reach?
+              focus: [game.next, dog.field]
+              text: >-
+                The game's next line is the same call, but the state field now refers to Following,
+                which answers: trots beside you. Neither the game nor Dog chose this transition; the
+                price is that Fetching must know its successors.
         visual: >-
           The Fetching class is marked, including its energy check and two setState calls. The
           Fetching row of the table is marked.

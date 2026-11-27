@@ -1,0 +1,60 @@
+{%- comment -%}
+  One closer look: title, notice, steps, its content, and (in the player) the
+  way back to the narration. Steps carry their focus anchors, relation, and
+  removed group as data attributes, so js/narration-closer-look-view.js needs
+  nothing but this markup. Content is chosen by the look's content kind
+  (`code` today); a new kind adds its include below.
+  Params: topic, id (unique prefix), scene, cue,
+  mode ('player', a hidden panel that replaces the picture; or 'static', a
+  block in handouts and reading views), heading (static mode: 'h4' or 'h5').
+{%- endcomment -%}
+{%- assign look = include.cue.closer_look -%}
+{%- capture look_id %}{{ include.id }}-look-{{ include.scene.id }}-{{ include.cue.id }}{% endcapture -%}
+{%- if include.mode == 'static' -%}
+{%- assign look_heading = include.heading | default: 'h4' -%}
+<section class="narration-closer-look narration-closer-look--static" data-closer-look-static aria-labelledby="{{ look_id }}-title">
+  <{{ look_heading }} id="{{ look_id }}-title" class="narration-closer-look-static-title"><span class="narration-closer-look-eyebrow">{% include narration-closer-look-icon.html %}Closer look</span> {{ look.title }}</{{ look_heading }}>
+  <p class="narration-closer-look-notice">{{ look.notice }}</p>
+  <ol class="narration-closer-look-step-list">
+    {%- for step in look.steps %}
+    <li data-closer-look-step-text data-focus="{{ step.focus | join: ' ' }}" data-relation="{{ step.relation }}" data-remove="{{ step.remove }}"><strong>{{ step.question }}</strong> {{ step.text }}</li>
+    {%- endfor %}
+  </ol>
+  {%- if look.code %}
+  {% include narration-closer-look-code.html topic=include.topic look=look %}
+  {%- endif %}
+</section>
+{%- unless closer_look_view_loaded %}
+{%- assign closer_look_view_loaded = true %}
+<script src="{{ '/js/narration-closer-look-view.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+{%- endunless %}
+{%- else -%}
+<section class="narration-closer-look" data-closer-look="{{ include.scene.id }}/{{ include.cue.id }}" aria-labelledby="{{ look_id }}-title" data-fullscreen-scroll hidden>
+  <div class="narration-closer-look-head">
+    <p class="narration-closer-look-eyebrow">{% include narration-closer-look-icon.html %}Closer look</p>
+    <div class="narration-closer-look-head-actions">
+      <button type="button" class="narration-closer-look-continue" data-closer-look-action="continue"><span aria-hidden="true">▶</span> <span data-closer-look-continue-label>Continue narration</span> <span class="narration-closer-look-time" data-closer-look-continue-time></span></button>
+      <button type="button" class="narration-closer-look-close" data-closer-look-action="close" aria-label="Close the closer look and stay paused">{% include player-icon.html name='close' %}</button>
+    </div>
+    <h3 id="{{ look_id }}-title" tabindex="-1">{{ look.title }}</h3>
+    <p class="narration-closer-look-notice">{{ look.notice }}</p>
+  </div>
+  <div class="narration-closer-look-steps" role="group" aria-label="Steps through the example">
+    {%- for step in look.steps %}
+    <button type="button" aria-pressed="false" data-closer-look-step><span class="narration-closer-look-step-number" aria-hidden="true">{{ forloop.index }}</span>{{ step.question }}</button>
+    {%- endfor %}
+  </div>
+  <div class="narration-closer-look-step-texts" aria-live="polite">
+    {%- for step in look.steps %}
+    <p class="narration-closer-look-step-text" data-closer-look-step-text data-focus="{{ step.focus | join: ' ' }}" data-relation="{{ step.relation }}" data-remove="{{ step.remove }}" hidden><span class="narration-closer-look-step-number" aria-hidden="true">{{ forloop.index }}</span><span>{{ step.text }}</span></p>
+    {%- endfor %}
+  </div>
+  {%- if look.code %}
+  {% include narration-closer-look-code.html topic=include.topic look=look %}
+  {%- endif %}
+  <div class="narration-closer-look-foot">
+    <button type="button" class="narration-closer-look-replay" data-closer-look-action="replay">Replay the explanation <span class="narration-closer-look-time" data-closer-look-replay-time></span></button>
+    <button type="button" class="narration-closer-look-continue" data-closer-look-action="continue"><span aria-hidden="true">▶</span> <span data-closer-look-continue-label>Continue narration</span> <span class="narration-closer-look-time" data-closer-look-continue-time></span></button>
+  </div>
+</section>
+{%- endif -%}

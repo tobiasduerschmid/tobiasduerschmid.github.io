@@ -1,0 +1,205 @@
+# Code for the Node.js lesson's closer looks (scripts/narration/closer-look.js).
+# A look's `code: <name>` uses the blocks `<name>_<group>` in every language.
+# Focus keys name line numbers; lines stay within 60 characters, and Python
+# is fully type-hinted.
+python:
+  label: Python
+  blocks:
+    ready_program:
+      file: main.py
+      source: |
+        import asyncio
+        from asyncio import Future
+        from pathlib import Path
+
+        def on_file(read: Future[str]) -> None:
+            print(read.result())
+
+        async def main() -> None:
+            loop = asyncio.get_running_loop()
+            read = loop.run_in_executor(
+                None, Path("note.txt").read_text, "utf8")
+            read.add_done_callback(on_file)
+            print("Next")
+            await read  # keep main alive until the read ends
+
+        asyncio.run(main())
+      focus: {handler: [5, 6], start: [10, 11, 12], next: [13]}
+    ready_loop:
+      file: event_loop_sketch.py
+      source: |
+        # A simplified view of an asyncio event loop.
+        from collections import deque
+        from typing import Callable
+
+        Callback = Callable[[], None]
+
+        class EventLoop:
+            def __init__(self) -> None:
+                self.ready: deque[Callback] = deque()
+
+            # A worker thread calls this when its read ends.
+            def call_soon_threadsafe(
+                self, callback: Callback
+            ) -> None:
+                self.ready.append(callback)
+
+            def run(self, main: Callback) -> None:
+                main()  # your current code runs first
+                while self.has_pending_work():
+                    self.wait_for_finished_work()
+                    while self.ready:
+                        callback = self.ready.popleft()
+                        callback()  # runs to completion
+      focus: {queue: [9], post: [12, 13, 14, 15], first: [18], run: [22, 23]}
+java:
+  label: Java
+  blocks:
+    ready_program:
+      file: Main.java
+      source: |
+        import java.util.concurrent.CompletableFuture;
+
+        public class Main {
+            static void onFile(String text) {
+                System.out.println(text);
+            }
+
+            public static void main(String[] args)
+                    throws InterruptedException {
+                EventLoop loop = new EventLoop();
+                loop.run(() -> {
+                    CompletableFuture
+                        .supplyAsync(() -> readText("note.txt"))
+                        .thenAccept(text -> loop.post(
+                            () -> onFile(text)));
+                    System.out.println("Next");
+                });
+            }
+            // readText wraps Files.readString (not shown).
+        }
+      focus: {handler: [4, 5, 6], start: [12, 13, 14, 15], next: [16]}
+    ready_loop:
+      file: EventLoop.java
+      source: |
+        import java.util.concurrent.BlockingQueue;
+        import java.util.concurrent.LinkedBlockingQueue;
+
+        // A minimal event loop: one thread runs every callback.
+        public class EventLoop {
+            private final BlockingQueue<Runnable> ready =
+                new LinkedBlockingQueue<>();
+
+            // Worker threads call this when their read ends.
+            public void post(Runnable callback) {
+                ready.add(callback);
+            }
+
+            public void run(Runnable main)
+                    throws InterruptedException {
+                main.run(); // your current code runs first
+                while (hasPendingWork()) {
+                    Runnable callback = ready.take(); // waits
+                    callback.run(); // runs to completion
+                }
+            }
+        }
+      focus: {queue: [6, 7], post: [10, 11, 12], first: [16], run: [18, 19]}
+cpp:
+  label: C++
+  blocks:
+    ready_program:
+      file: main.cpp
+      source: |
+        #include <future>
+        #include <iostream>
+        #include <string>
+        #include "event_loop.h"
+        #include "read_text.h"
+
+        void onFile(const std::string& text) {
+            std::cout << text << '\n';
+        }
+
+        int main() {
+            EventLoop loop;
+            std::future<void> read;
+            loop.run([&] {
+                read = std::async(std::launch::async, [&] {
+                    std::string text = readText("note.txt");
+                    loop.post([text] { onFile(text); });
+                });
+                std::cout << "Next\n";
+            });
+        }
+      focus: {handler: [7, 8, 9], start: [15, 16, 17, 18], next: [19]}
+    ready_loop:
+      file: event_loop.h
+      source: |
+        #pragma once
+        #include <deque>
+        #include <functional>
+        #include <mutex>
+
+        // A minimal event loop: one thread runs every callback.
+        class EventLoop {
+        public:
+            // Worker threads call this when their read ends.
+            void post(std::function<void()> callback) {
+                std::lock_guard lock(mutex);
+                ready.push_back(callback);
+            }
+            void run(const std::function<void()>& main) {
+                main();  // your current code runs first
+                while (hasPendingWork()) {
+                    auto callback = takeReady();  // waits
+                    callback();  // runs to completion
+                }
+            }
+        private:
+            std::mutex mutex;
+            std::deque<std::function<void()>> ready;
+        };
+      focus: {queue: [23], post: [10, 11, 12, 13], first: [15], run: [17, 18]}
+typescript:
+  label: TypeScript
+  blocks:
+    ready_program:
+      file: main.ts
+      source: |
+        import { readFile } from "node:fs";
+
+        function onFile(error: Error | null, text: string): void {
+          if (error) {
+            console.error(error);
+            return;
+          }
+          console.log(text);
+        }
+
+        readFile("note.txt", "utf8", onFile);
+        console.log("Next");
+      focus: {handler: [3, 4, 5, 6, 7, 8, 9], start: [11], next: [12]}
+    ready_loop:
+      file: event-loop-sketch.ts
+      source: |
+        // A simplified view of Node's event loop.
+        type Callback = () => void;
+        const ready: Callback[] = [];
+
+        // libuv calls this when a file read has finished.
+        export function makeReady(callback: Callback): void {
+          ready.push(callback);
+        }
+
+        export function runEventLoop(script: Callback): void {
+          script(); // your current code runs first
+          while (hasPendingWork()) {
+            waitForFinishedWork(); // calls makeReady
+            while (ready.length > 0) {
+              const callback = ready.shift()!;
+              callback(); // runs to completion
+            }
+          }
+        }
+      focus: {queue: [3], post: [6, 7, 8], first: [11], run: [15, 16]}

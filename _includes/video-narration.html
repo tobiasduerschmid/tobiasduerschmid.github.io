@@ -71,7 +71,7 @@
           <span class="vn-gesture-feedback" aria-hidden="true" hidden></span>
           <noscript><p>{{ first_cue.visual | escape }}</p></noscript>
         </div>
-        {% include narration-player-check.html id=player_id %}
+        {% include narration-player-check.html topic=include.topic id=player_id %}
         <div class="nja-narration vn-captions" id="{{ topic }}-video-captions" role="region" aria-label="Narration" tabindex="0"><p>{{ first_cue.text }}</p></div>
       </div>
       <p class="vn-phone-tip">Tip: turn your phone sideways for a bigger picture.</p>

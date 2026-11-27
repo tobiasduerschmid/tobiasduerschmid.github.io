@@ -244,6 +244,38 @@ python:
         self_effects: 32
         order: 35
         extend: 53
+    change_robot:
+      file: delivery_robot.py
+      source: |
+        class DeliveryRobot:
+            state: State
+            pin: str
+
+            def enter_pin(self, code: str) -> None:
+                if self.state is not State.WAITING:
+                    return  # no matching transition: ignored
+                if code == self.pin:  # [pin matches]
+                    self.state = State.UNLOCKED
+
+            def battery_low(self) -> None:  # when(battery < 15%)
+                if self.state is State.DRIVING:
+                    self.state = State.RETURNING
+      focus: {pin_event: [5], guard: [8, 9], handler: [11], react: [12, 13]}
+    change_battery:
+      file: battery_sensor.py
+      source: |
+        class BatterySensor:
+            def __init__(self, robot: DeliveryRobot) -> None:
+                self.robot: DeliveryRobot = robot
+                self.low: bool = False
+
+            def reading(self, percent: float) -> None:
+                # Runs for every new reading, not for one event.
+                now_low = percent < 15
+                if now_low and not self.low:  # false → true
+                    self.robot.battery_low()
+                self.low = now_low
+      focus: {watch: [6, 7, 8], crossing: [9], fire: [10]}
 java:
   label: Java
   filename: DeliveryRobotDemo.java
@@ -492,6 +524,48 @@ java:
         self_effects: 32
         order: 35
         extend: 58
+    change_robot:
+      file: DeliveryRobot.java
+      source: |
+        class DeliveryRobot {
+            private State state = State.DRIVING;
+            private final String pin;
+
+            void enterPin(String code) {
+                if (state != State.WAITING) return;  // ignored
+                if (code.equals(pin)) {  // [pin matches]
+                    state = State.UNLOCKED;
+                }
+            }
+
+            void batteryLow() {  // when(battery < 15%)
+                if (state == State.DRIVING) {
+                    state = State.RETURNING;
+                }
+            }
+        }
+      focus: {pin_event: [5], guard: [7, 8], handler: [12], react: [13, 14]}
+    change_battery:
+      file: BatterySensor.java
+      source: |
+        class BatterySensor {
+            private final DeliveryRobot robot;
+            private boolean low = false;
+
+            BatterySensor(DeliveryRobot robot) {
+                this.robot = robot;
+            }
+
+            void reading(double percent) {
+                // Runs for every new reading, not for one event.
+                boolean nowLow = percent < 15;
+                if (nowLow && !low) {  // false → true
+                    robot.batteryLow();
+                }
+                low = nowLow;
+            }
+        }
+      focus: {watch: [9, 10, 11], crossing: [12], fire: [13]}
 cpp:
   label: C++
   filename: delivery_robot.cpp
@@ -737,6 +811,51 @@ cpp:
         lid_behaviors: 52
         self_effects: 61
         order: 64
+    change_robot:
+      file: delivery_robot.h
+      source: |
+        class DeliveryRobot {
+        public:
+            void enterPin(const std::string& code) {
+                if (state_ != State::Waiting) return;  // ignored
+                if (code == pin_) {  // [pin matches]
+                    state_ = State::Unlocked;
+                }
+            }
+
+            void batteryLow() {  // when(battery < 15%)
+                if (state_ == State::Driving) {
+                    state_ = State::Returning;
+                }
+            }
+
+        private:
+            std::string pin_;
+            State state_ = State::Driving;
+        };
+      focus: {pin_event: [3], guard: [5, 6], handler: [10], react: [11, 12]}
+    change_battery:
+      file: battery_sensor.h
+      source: |
+        class BatterySensor {
+        public:
+            explicit BatterySensor(DeliveryRobot& robot)
+                : robot_(robot) {}
+
+            void reading(double percent) {
+                // Runs for every new reading, not for one event.
+                bool nowLow = percent < 15;
+                if (nowLow && !low_) {  // false → true
+                    robot_.batteryLow();
+                }
+                low_ = nowLow;
+            }
+
+        private:
+            DeliveryRobot& robot_;
+            bool low_ = false;
+        };
+      focus: {watch: [6, 7, 8], crossing: [9], fire: [10]}
 typescript:
   label: TypeScript
   filename: delivery-robot.ts
@@ -971,3 +1090,42 @@ typescript:
         self_effects: 29
         order: 32
         extend: 51
+    change_robot:
+      file: delivery-robot.ts
+      source: |
+        class DeliveryRobot {
+          state: State = "Driving";
+          private readonly pin: string;
+
+          enterPin(code: string): void {
+            if (this.state !== "Waiting") return;  // ignored
+            if (code === this.pin) {  // [pin matches]
+              this.state = "Unlocked";
+            }
+          }
+
+          batteryLow(): void {  // when(battery < 15%)
+            if (this.state === "Driving") {
+              this.state = "Returning";
+            }
+          }
+        }
+      focus: {pin_event: [5], guard: [7, 8], handler: [12], react: [13, 14]}
+    change_battery:
+      file: battery-sensor.ts
+      source: |
+        class BatterySensor {
+          private low = false;
+
+          constructor(private readonly robot: DeliveryRobot) {}
+
+          reading(percent: number): void {
+            // Runs for every new reading, not for one event.
+            const nowLow = percent < 15;
+            if (nowLow && !this.low) {  // false → true
+              this.robot.batteryLow();
+            }
+            this.low = nowLow;
+          }
+        }
+      focus: {watch: [6, 7, 8], crossing: [9], fire: [10]}

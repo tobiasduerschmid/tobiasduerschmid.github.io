@@ -58,6 +58,7 @@
         {% endfor %}
       </div>
       <p class="np-reading-note"><strong>Notice:</strong> {{ cue.note | escape }}</p>
+      {% if cue.closer_look %}{% capture closer_reading_id %}{{ include.topic }}-reading{% endcapture %}{% include narration-closer-look.html topic=include.topic id=closer_reading_id scene=scene cue=cue mode='static' heading='h5' %}{% endif %}
     </section>
     {% endfor %}
     <p class="nja-takeaway">{{ scene.takeaway | escape }}</p>

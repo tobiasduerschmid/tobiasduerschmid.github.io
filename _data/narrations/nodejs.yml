@@ -184,6 +184,44 @@ scenes:
           view of Node's queues.
         step: Completion is ready, not an interruption
         note: The event loop schedules ready callbacks when JavaScript can run them.
+        closer_look:
+          title: Ready callbacks wait their turn
+          notice: >-
+            A finished read only queues onFile; the loop calls it after the code already running
+            has returned.
+          code: ready
+          groups:
+            - {id: program, label: "Your program"}
+            - {id: loop, label: "Event loop, simplified"}
+          relations:
+            - {kind: call, from: loop.run, to: program.handler, label: [calls onFile ↑, when the thread is free]}
+          steps:
+            - question: What does the read call return?
+              focus: [program.start, program.next]
+              text: >-
+                The call starts the read, hands over <code>onFile</code>, and returns at once,
+                without the text. The next line prints <code>Next</code> while the file is still
+                being read.
+            - question: Where does a finished read go?
+              focus: [loop.post, loop.queue]
+              text: >-
+                When the read finishes, the worker does not call <code>onFile</code>. It only puts
+                the callback in <code>ready</code>, the queue of work waiting for the JavaScript
+                thread. <strong>Ready is not running.</strong>
+            - question: Who calls onFile, and when?
+              focus: [loop.first, loop.run, program.handler]
+              relation: call
+              text: >-
+                Only the loop calls a ready callback, and only after the code before it has
+                returned: first your whole program, then one callback at a time, each to
+                completion. <strong>A ready callback never interrupts running code.</strong>
+            - question: What if the current code runs long?
+              focus: [program.next, loop.first, loop.queue]
+              text: >-
+                Suppose a long calculation followed the line that prints <code>Next</code>. The read
+                could finish early, yet <code>onFile</code> would wait in <code>ready</code> until
+                that calculation returned. The read overlaps with your code; callbacks still take
+                turns on one thread.
         visual: >-
           The file has finished. An onFile function token appears in a separate ready area with the
           file result. It has not entered the JavaScript thread yet.

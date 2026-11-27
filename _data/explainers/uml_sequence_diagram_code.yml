@@ -136,6 +136,51 @@ python:
         check: [19]
         opt: [20, 21]
         beep: [22]
+    waits_probe:
+      file: probe.py
+      source: |
+        class Probe:
+            sfx: SoundPlayer
+            crystals: int
+
+            def scan_all(self, rocks: list[Asteroid]) -> None:
+                self.sfx.play("ping")
+                power = self.scan_power()
+                scanned = 0
+                for rock in rocks:
+                    unscanned = rock.scan(power)
+                    if unscanned == 0:
+                        self.crystals += rock.collect_sample()
+                        scanned += 1
+                    else:
+                        rock.tag(2)
+                # ... then the star map and the chime
+      focus: {play: [6], scan_call: [10], branch: [11], tag_call: [15]}
+    waits_rock:
+      file: asteroid.py
+      source: |
+        class Asteroid:
+            unscanned: int
+            tagged: int
+
+            def scan(self, power: int) -> int:
+                self.unscanned = max(0, self.unscanned - power)
+                return self.unscanned
+
+            def tag(self, passes: int) -> None:
+                self.tagged = passes
+      focus: {scan: [5], reply: [7], tag: [9, 10]}
+    waits_sfx:
+      file: sound_player.py
+      source: |
+        class SoundPlayer:
+            def __init__(self) -> None:
+                self.queued: list[str] = []
+
+            def play(self, sound: str) -> None:
+                # Queue the sound; the audio thread plays it later.
+                self.queued.append(sound)
+      focus: {play: [5], later: [6, 7]}
 java:
   label: Java
   filename: Mission.java
@@ -318,6 +363,56 @@ java:
         check: [28]
         opt: [29, 30, 31]
         beep: [33]
+    waits_probe:
+      file: Probe.java
+      source: |
+        class Probe {
+            void scanAll(List<Asteroid> rocks) {
+                sfx.play("ping");
+                int power = scanPower();
+                int scanned = 0;
+                for (Asteroid rock : rocks) {
+                    int unscanned = rock.scan(power);
+                    if (unscanned == 0) {
+                        crystals += rock.collectSample();
+                        scanned++;
+                    } else {
+                        rock.tag(2);
+                    }
+                }
+                // ... then the star map and the chime
+            }
+        }
+      focus: {play: [3], scan_call: [7], branch: [8], tag_call: [12]}
+    waits_rock:
+      file: Asteroid.java
+      source: |
+        class Asteroid {
+            int unscanned;
+            int tagged = 0;
+
+            int scan(int power) {
+                unscanned = Math.max(0, unscanned - power);
+                return unscanned;
+            }
+
+            void tag(int passes) {
+                tagged = passes;
+            }
+        }
+      focus: {scan: [5], reply: [7], tag: [10, 11, 12]}
+    waits_sfx:
+      file: SoundPlayer.java
+      source: |
+        class SoundPlayer {
+            final List<String> queued = new ArrayList<>();
+
+            void play(String sound) {
+                // Queue the sound; the audio thread plays it later.
+                queued.add(sound);
+            }
+        }
+      focus: {play: [4], later: [5, 6]}
 cpp:
   label: C++
   filename: probe.cpp
@@ -497,6 +592,59 @@ cpp:
         check: [23]
         opt: [24, 25, 26]
         beep: [28]
+    waits_probe:
+      file: probe.h
+      source: |
+        class Probe {
+        public:
+            void scanAll(const std::vector<Asteroid*>& rocks) {
+                sfx.play("ping");
+                int power = scanPower();
+                std::size_t scanned = 0;
+                for (Asteroid* rock : rocks) {
+                    int unscanned = rock->scan(power);
+                    if (unscanned == 0) {
+                        crystals += rock->collectSample();
+                        ++scanned;
+                    } else {
+                        rock->tag(2);
+                    }
+                }
+                // ... then the star map and the chime
+            }
+        };
+      focus: {play: [4], scan_call: [8], branch: [9], tag_call: [13]}
+    waits_rock:
+      file: asteroid.h
+      source: |
+        class Asteroid {
+        public:
+            int scan(int power) {
+                unscanned = std::max(0, unscanned - power);
+                return unscanned;
+            }
+
+            void tag(int passes) {
+                tagged = passes;
+            }
+
+            int unscanned;
+            int tagged = 0;
+        };
+      focus: {scan: [3], reply: [5], tag: [8, 9, 10]}
+    waits_sfx:
+      file: sound_player.h
+      source: |
+        class SoundPlayer {
+        public:
+            void play(const std::string& sound) {
+                // Queue the sound; the audio thread plays it later.
+                queued.push_back(sound);
+            }
+
+            std::vector<std::string> queued;
+        };
+      focus: {play: [3], later: [4, 5]}
 typescript:
   label: TypeScript
   filename: probe.ts
@@ -671,3 +819,53 @@ typescript:
         check: [28]
         opt: [29, 30, 31]
         beep: [33]
+    waits_probe:
+      file: probe.ts
+      source: |
+        class Probe {
+          scanAll(rocks: Asteroid[]): void {
+            this.sfx.play("ping");
+            const power = this.scanPower();
+            let scanned = 0;
+            for (const rock of rocks) {
+              const unscanned = rock.scan(power);
+              if (unscanned === 0) {
+                this.crystals += rock.collectSample();
+                scanned += 1;
+              } else {
+                rock.tag(2);
+              }
+            }
+            // ... then the star map and the chime
+          }
+        }
+      focus: {play: [3], scan_call: [7], branch: [8], tag_call: [12]}
+    waits_rock:
+      file: asteroid.ts
+      source: |
+        class Asteroid {
+          unscanned: number;
+          tagged = 0;
+
+          scan(power: number): number {
+            this.unscanned = Math.max(0, this.unscanned - power);
+            return this.unscanned;
+          }
+
+          tag(passes: number): void {
+            this.tagged = passes;
+          }
+        }
+      focus: {scan: [5], reply: [7], tag: [10, 11, 12]}
+    waits_sfx:
+      file: sound-player.ts
+      source: |
+        class SoundPlayer {
+          readonly queued: string[] = [];
+
+          play(sound: string): void {
+            // Queue the sound; the audio thread plays it later.
+            this.queued.push(sound);
+          }
+        }
+      focus: {play: [4], later: [5, 6]}

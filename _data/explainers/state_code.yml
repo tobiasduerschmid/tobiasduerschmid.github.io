@@ -152,6 +152,44 @@ python:
         first_throw: [1, 2]
         second_throw: [3]
         tick: [4]
+    transition_game:
+      file: game.py
+      source: |
+        def play(dog: Dog) -> None:
+            print(dog.throw_ball())
+            print(dog.tick())
+            print(dog.tick())
+      focus: {throw: [2], tick: [3], next: [4]}
+    transition_dog:
+      file: dog.py
+      source: |
+        class Dog:
+            FULL_ENERGY: int = 2
+
+            def __init__(self) -> None:
+                self.energy: int = Dog.FULL_ENERGY
+                self._state: DogState = FOLLOWING
+
+            # throw_ball() and whistle() forward the same way.
+            def tick(self) -> str:
+                return self._state.tick(self)
+
+            def set_state(self, state: DogState) -> None:
+                self._state = state
+      focus: {field: [6], forward: [9, 10], set_state: [12, 13]}
+    transition_fetching:
+      file: states.py
+      source: |
+        class Fetching(DogState):
+            # throw_ball() and whistle() never change the state.
+            def tick(self, dog: Dog) -> str:
+                dog.energy -= 1
+                if dog.energy == 0:
+                    dog.set_state(NAPPING)
+                    return "brings the ball back and naps"
+                dog.set_state(FOLLOWING)
+                return "brings the ball back"
+      focus: {tick: [3], guard: [4, 5], transition: [6, 8], reaction: [7, 9]}
 java:
   label: Java
   filename: StateDemo.java
@@ -310,6 +348,53 @@ java:
         first_throw: [3, 4]
         second_throw: [5]
         tick: [6]
+    transition_game:
+      file: Game.java
+      source: |
+        final class Game {
+            static void play(Dog dog) {
+                System.out.println(dog.throwBall());
+                System.out.println(dog.tick());
+                System.out.println(dog.tick());
+            }
+        }
+      focus: {throw: [3], tick: [4], next: [5]}
+    transition_dog:
+      file: Dog.java
+      source: |
+        final class Dog {
+            static final int FULL_ENERGY = 2;
+            int energy = FULL_ENERGY;
+            private DogState state = Following.INSTANCE;
+
+            // throwBall() and whistle() forward the same way.
+            String tick() {
+                return state.tick(this);
+            }
+
+            void setState(DogState next) {
+                state = next;
+            }
+        }
+      focus: {field: [4], forward: [7, 8], set_state: [11, 12]}
+    transition_fetching:
+      file: Fetching.java
+      source: |
+        final class Fetching implements DogState {
+            static final DogState INSTANCE = new Fetching();
+
+            // throwBall() and whistle() never change the state.
+            public String tick(Dog dog) {
+                dog.energy--;
+                if (dog.energy == 0) {
+                    dog.setState(Napping.INSTANCE);
+                    return "brings the ball back and naps";
+                }
+                dog.setState(Following.INSTANCE);
+                return "brings the ball back";
+            }
+        }
+      focus: {tick: [5], guard: [6, 7], transition: [8, 11], reaction: [9, 12]}
 cpp:
   label: C++
   filename: state_demo.cpp
@@ -464,6 +549,47 @@ cpp:
         first_throw: [2, 3]
         second_throw: [4]
         tick: [5]
+    transition_game:
+      file: game.cpp
+      source: |
+        void play(Dog& dog) {
+            std::cout << dog.throwBall() << '\n';
+            std::cout << dog.tick() << '\n';
+            std::cout << dog.tick() << '\n';
+        }
+      focus: {throw: [2], tick: [3], next: [4]}
+    transition_dog:
+      file: dog.h
+      source: |
+        class Dog {
+            const DogState* state = &following();
+
+        public:
+            static constexpr int fullEnergy = 2;
+            int energy = fullEnergy;
+
+            // throwBall() and whistle() forward the same way.
+            std::string tick() { return state->tick(*this); }
+
+            void setState(const DogState& next) { state = &next; }
+        };
+      focus: {field: [2], forward: [9], set_state: [11]}
+    transition_fetching:
+      file: states.cpp
+      source: |
+        struct Fetching : DogState {
+            // throwBall() and whistle() never change the state.
+            std::string tick(Dog& dog) const override {
+                dog.energy--;
+                if (dog.energy == 0) {
+                    dog.setState(napping());
+                    return "brings the ball back and naps";
+                }
+                dog.setState(following());
+                return "brings the ball back";
+            }
+        };
+      focus: {tick: [3], guard: [4, 5], transition: [6, 9], reaction: [7, 10]}
 typescript:
   label: TypeScript
   filename: state-demo.ts
@@ -614,3 +740,46 @@ typescript:
         first_throw: [1, 2]
         second_throw: [3]
         tick: [4]
+    transition_game:
+      file: game.ts
+      source: |
+        function play(dog: Dog): void {
+          console.log(dog.throwBall());
+          console.log(dog.tick());
+          console.log(dog.tick());
+        }
+      focus: {throw: [2], tick: [3], next: [4]}
+    transition_dog:
+      file: dog.ts
+      source: |
+        class Dog {
+          static readonly FULL_ENERGY = 2;
+          energy = Dog.FULL_ENERGY;
+          private state: DogState = FOLLOWING;
+
+          // throwBall() and whistle() forward the same way.
+          tick(): string {
+            return this.state.tick(this);
+          }
+
+          setState(next: DogState): void {
+            this.state = next;
+          }
+        }
+      focus: {field: [4], forward: [7, 8], set_state: [11, 12]}
+    transition_fetching:
+      file: states.ts
+      source: |
+        class Fetching implements DogState {
+          // throwBall() and whistle() never change the state.
+          tick(dog: Dog): string {
+            dog.energy--;
+            if (dog.energy === 0) {
+              dog.setState(NAPPING);
+              return "brings the ball back and naps";
+            }
+            dog.setState(FOLLOWING);
+            return "brings the ball back";
+          }
+        }
+      focus: {tick: [3], guard: [4, 5], transition: [6, 9], reaction: [7, 10]}

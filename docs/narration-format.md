@@ -550,3 +550,86 @@ reference; the source loader exports `entry.study`. These fields do not change
 the speech fingerprint. See [the schema and runtime contract](narration-study.md).
 All players share prediction holds and searchable review. Keep topic scripts
 limited to visuals; do not reimplement these learning controls per lesson.
+
+## Closer looks
+
+A closer look is an optional worked example that a lesson offers during one
+cue, for an idea that is important or counter-intuitive (the first one shows
+the Layers lesson's callback in code: calls go up, imports point down). While
+that cue plays, a **See it in code** offer sits at the picture's top right (in
+a row under the picture on phones), and a code-shaped marker stays on its own
+timeline row. Opening it (click, tap, the marker, or <kbd>E</kbd> with focus
+in the player) pauses the narration and puts the panel where the picture was;
+**Continue narration** resumes from the same moment, **Replay the
+explanation** plays the cue again, and Escape or the close button returns to
+the paused picture. Playing or seeking elsewhere leaves it. Ignoring it costs
+nothing: the narration never stops for a closer look.
+
+Author it on the cue, beside the speech. It is outside the speech fingerprint,
+so adding or editing one never requires rendering audio again:
+
+```yaml
+- id: not_uses
+  say: >- …
+  closer_look:
+    title: Calls go up, imports point down      # names the idea; offer and panel title
+    notice: One collision, two relations: …     # one sentence: what to look for
+    offer: See it in code                       # optional; this is the default
+    code: callbacks                             # content kind and name, below
+    groups:                                     # top to bottom, as the lesson's view draws them
+      - {id: game, label: "«layer» Game rules"}
+      - {id: engine, label: "«layer» Engine"}
+    relations:                                  # optional arrows between anchors
+      - {kind: call, from: engine.call, to: game.handler, label: [calls ↑, at run time]}
+      - {kind: dependency, from: game.imports, to: engine.contract, label: [imports ↓, dependency]}
+    steps:                                      # questions the learner can step through
+      - question: Who calls whom?
+        focus: [engine.call, game.handler]      # anchors to highlight, as group.focus
+        relation: call                          # optional: the relation this step is about
+        text: At run time, … <strong>Control flows up.</strong>
+      - question: Remove a layer
+        focus: [game.imports]
+        remove: game                            # optional: show this group deleted
+        text: Delete <code>game/</code>: …
+```
+
+`code: <name>` uses `_data/explainers/<id>_code.yml`, the four-language code
+format of the pattern lessons. Every language has one block per group, named
+`<name>_<group>`: one file (`file`, `source`, `focus`) or several under
+`files`. `focus` maps keys to line numbers, and each anchor a look names must
+exist in every language. Lines are at most 60 characters, so no line wraps in
+the desktop panel, and Python is fully type-hinted. Step text may use
+`<code>`, `<strong>`, and `<em>`. `scripts/narration/closer-look.js` checks all
+of this when the lesson compiles and names the lesson, cue, language, and
+block of any problem.
+
+The same look appears after its cue in the reading and print views, the
+chapter transcript, and the lesson notes, with every step shown and a code
+language select that changes that page only. In the player, the select follows
+and saves the site's code language (`sebook-code-language`).
+
+Ownership:
+
+- `scripts/narration/closer-look.js` validates looks (`compileCloserLooks`) and
+  lists them (`closerLookAnchors`).
+- `_includes/narration-closer-looks.html` renders the offer and the player's
+  panels beside the knowledge check; `narration-closer-look.html` renders one
+  look (`mode: player` or `static`); `narration-closer-look-code.html` and
+  `narration-closer-look-file.html` render code content with Rouge.
+- `js/narration-closer-look.js` owns the offer, opening, pausing, and resuming
+  for every kind (created by `NarrationPlayer`); `js/narration-timeline.js`
+  draws the markers (`looks`, `onLook`); `js/narration-closer-look-view.js`
+  presents steps, anchors, languages, and relations from the markup alone.
+- `css/narration-closer-look.css` owns the presentation in light, dark, and
+  print, and is one of the shared narration styles.
+
+Extension points: a new content kind adds a validator to `CONTENT` in
+`scripts/narration/closer-look.js`, a branch for it in
+`_includes/narration-closer-look.html` (beside `look.code`), and an include
+that marks its anchors with `data-closer-look-focus="group.key"`. The offer,
+steps, and player behavior work unchanged; the view's language switching
+(`[data-code-language]`) and relation lanes (measured from `pre` blocks) are
+code-specific, so a kind without them shows steps and highlights only. A new relation kind adds its name to `RELATION_KINDS`, its
+arrowhead to `RELATION_HEADS` in the view, and its line style in the CSS.
+Tests: `scripts/tests/narration-closer-look.test.js` and
+`tests/narration-closer-look.spec.js`.

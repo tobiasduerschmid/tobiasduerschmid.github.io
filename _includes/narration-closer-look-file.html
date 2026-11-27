@@ -1,0 +1,6 @@
+{%- comment -%}One file of a closer look's code, highlighted line by line. Params: file, language, group, first.{%- endcomment -%}
+{%- assign closer_lines = include.file.source | highlight_code_lines: include.language -%}
+<figure class="narration-closer-look-file">
+  <figcaption{% if include.first %} class="vn-hidden-label"{% endif %}>{{ include.file.file }}</figcaption>
+  <pre tabindex="0" aria-label="{{ include.file.file | escape }}"><code>{% for line in closer_lines %}{% assign line_number = forloop.index %}{% capture line_focus %}{% for entry in include.file.focus %}{% if entry[1] contains line_number %} {{ include.group }}.{{ entry[0] }}{% endif %}{% endfor %}{% endcapture %}{% assign line_focus = line_focus | strip %}<span class="nja-code-line" data-line="{{ line_number }}"{% if line_focus != '' %} data-closer-look-focus="{{ line_focus }}"{% endif %}><span class="nja-line-number" aria-hidden="true">{{ line_number }}</span><span class="nja-line-source">{{ line }}</span></span>{% endfor %}</code></pre>
+</figure>

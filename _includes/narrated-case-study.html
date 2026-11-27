@@ -43,7 +43,7 @@
       </section>
       {% endfor %}
     </div>
-    {% include narration-player-check.html id=case_id text_only=case_text_only %}
+    {% include narration-player-check.html topic=include.topic id=case_id text_only=case_text_only %}
     <div class="nja-narration vn-captions" id="{{ case_id }}-captions" role="region" aria-label="Narration" tabindex="0"><p>{{ case_story.scenes.first.cues.first.text | escape }}</p></div>
     </div>
     </div>
@@ -64,7 +64,7 @@
   <div class="case-reading-actions" data-narration-reading-actions hidden><button type="button" data-narration-action="read">Read at my own pace</button><button type="button" data-narration-action="print">Print the case study</button></div>
   <details class="nja-transcript" open>
     <summary>Complete transcript, diagrams, and decision explanations (contains later findings)</summary>
-    {% include narrated-case-study-reading.html story=case_story prefix=case_id %}
+    {% include narrated-case-study-reading.html story=case_story prefix=case_id topic=include.topic %}
   </details>
   {% include narration-data.html topic=include.topic %}
 </section>

@@ -1,0 +1,3 @@
+{%- comment -%}Sets closer_look_count to the number of closer looks in a lesson. Params: topic.{%- endcomment -%}
+{%- assign closer_look_count = 0 -%}
+{%- for closer_count_scene in site.data.narration_lessons[include.topic].story.scenes -%}{%- for closer_count_cue in closer_count_scene.cues -%}{%- if closer_count_cue.closer_look -%}{%- assign closer_look_count = closer_look_count | plus: 1 -%}{%- endif -%}{%- endfor -%}{%- endfor -%}

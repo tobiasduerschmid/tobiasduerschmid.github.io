@@ -357,6 +357,48 @@ scenes:
           this example.
         step: Client code connects the objects
         note: "Registered Observers: Preview, CharacterCount, SaveButton."
+        closer_look:
+          title: Only the client names the views
+          notice: >-
+            The Subject's loop calls every view at run time, yet only the client code imports a
+            concrete view; the Subject names nothing but the Observer contract.
+          code: composition
+          groups:
+            - {id: app, label: "Client code"}
+            - {id: subject, label: "«Subject» and the Observer contract"}
+            - {id: views, label: "«Concrete Observer» views"}
+          relations:
+            - {kind: call, from: subject.call, to: views.update, label: [calls update ↓, at run time]}
+            - {kind: dependency, from: views.imports, to: subject.contract, label: [imports ↑, the contract]}
+          steps:
+            - question: Who names the concrete views?
+              focus: [app.imports, app.attach]
+              text: >-
+                Only the client code imports <code>Preview</code> and <code>CharacterCount</code>,
+                creates them, and attaches them. It is the one place that knows which views this editor
+                has.
+            - question: What does the notification loop know?
+              focus: [subject.registry, subject.call]
+              relation: call
+              text: >-
+                The Subject stores its registrations as <code>Observer</code> references and calls
+                <code>update</code> on each. At run time that call reaches a Preview and a
+                CharacterCount, yet no line of the Subject names either class. <strong>Dispatch picks
+                each reaction.</strong>
+            - question: Which way do the imports point?
+              focus: [views.imports, views.implements, subject.contract]
+              relation: dependency
+              text: >-
+                Each view imports the Observer contract and implements it; nothing in
+                <code>editor/</code> imports <code>views/</code>. <strong>The call goes from the Subject
+                to the views, but the dependency points from the views to the contract.</strong>
+            - question: Remove the views
+              focus: [app.imports]
+              remove: views
+              text: >-
+                Delete <code>views/</code>: the Subject and the Document still compile, their loop
+                unchanged, and only the client fails at its imports. A new view works the same way in
+                reverse: one new Observer class plus one attach call in the client.
         visual: >-
           The three attach calls are marked. The editor illustration is empty, the count is zero,
           and Save is disabled. Subject is highlighted in the solution diagram beside the code.

@@ -492,6 +492,46 @@ scenes:
           while join runs.
         step: "join(invite: Invite, nickname: String): Member"
         note: The invite arrives as a parameter, is used once, and is never stored.
+        closer_look:
+          title: Stored, owned, or only used
+          notice: >-
+            Where a class appears in Server's code decides its line: a field it stores is an
+            association, while a parameter it only uses is a dependency.
+          code: uses
+          groups:
+            - {id: server, label: Server}
+            - {id: invite, label: Invite}
+          relations:
+            - {kind: dependency, from: server.param, to: invite.header, label: [needs ↓, dependency]}
+            - {kind: call, from: server.call, to: invite.redeem, label: [calls ↓, while join runs]}
+          steps:
+            - question: What does Server keep?
+              focus: [server.stored, server.owned]
+              text: >-
+                Both lists are fields, so both lines are associations, with numbers at their ends.
+                The two fields look alike; only the design rule that deleting a server deletes its
+                channels makes the channel line a <strong>composition</strong>. In C++,
+                <code>unique_ptr</code> shows that rule in the code.
+            - question: Where does Invite appear?
+              focus: [server.param, invite.header]
+              relation: dependency
+              text: >-
+                Only in the parameter list of <code>join</code>. When <code>join</code> returns,
+                nothing in Server refers to the invite any more, so the line is a
+                <strong>dependency</strong>: dashed, with no numbers.
+            - question: Doesn't the call make a link?
+              focus: [server.call, invite.redeem]
+              relation: call
+              text: >-
+                No. <code>join</code> calls <code>redeem</code>, but a link is a reference an
+                object stores, not one it uses for a moment. Using another class, even calling it,
+                is still a dependency.
+            - question: Change Invite
+              focus: [server.param, server.call]
+              text: >-
+                Rename <code>redeem</code>, and only <code>join</code> has to change; the fields,
+                the constructor, and every other operation stay as they are. That is all a
+                dependency claims: if the supplier changes, the client <em>may</em> have to change.
         visual: >-
           The join operation is marked in the code. A UML diagram shows Server, highlighted, with
           its join operation, beside Invite and Member.

@@ -454,6 +454,46 @@ scenes:
           screen.
         step: The model knows only its list
         note: The model's list of dependents is the Observer pattern.
+        closer_look:
+          title: The model never names a view
+          notice: >-
+            The change announcement travels from the dataset up to every view, yet every import and
+            reference points down at the model, which knows only its list of Observers.
+          code: dependencies
+          groups:
+            - {id: screen, label: "«View» and «Controller»"}
+            - {id: model, label: "«Model» Dataset"}
+          relations:
+            - {kind: call, from: model.call, to: screen.update, label: [calls update ↑, at run time]}
+            - {kind: dependency, from: screen.imports, to: model.role, label: [imports ↓, the model]}
+          steps:
+            - question: What does the model know about the screen?
+              focus: [model.registry, model.contract]
+              text: >-
+                Dataset keeps a list of <code>Observer</code> references, and Observer declares only
+                <code>update</code>. No line of the model names a table, a chart, or a controller.
+            - question: How does an edit reach the views?
+              focus: [screen.change, model.set, model.call, screen.update]
+              relation: call
+              text: >-
+                TableController calls <code>setMinutes</code>; the dataset stores the minutes and calls
+                <code>update</code> on everything on its list. At run time that call reaches each view,
+                which asks for <code>rows()</code> and redraws. <strong>The announcement goes up, and it
+                carries no data.</strong>
+            - question: Which way do the dependencies point?
+              focus: [screen.imports, screen.reads, model.rows]
+              relation: dependency
+              text: >-
+                The view imports the model's classes and reads its rows, and the controller calls the
+                model directly. <strong>Every dependency points at the model</strong>, against the
+                direction of the announcement.
+            - question: Replace the screen
+              focus: [model.role]
+              remove: screen
+              text: >-
+                Delete the views and controllers: the model still builds and passes its tests, and a
+                phone version brings new ones for the same dataset. The reverse does not hold: change
+                the model's interface, and every view and controller must change.
         visual: >-
           A class diagram of the roles. Model notifies any number of Observers; View implements
           Observer, reads the Model, and creates its Controller; Controller changes the Model and

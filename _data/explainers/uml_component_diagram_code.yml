@@ -1,0 +1,186 @@
+# Code for the component-diagram lesson's closer looks (scripts/narration/closer-look.js).
+# The lesson itself shows no code; a look's `code: <name>` uses the blocks
+# `<name>_<group>` in every language. Focus keys name line numbers; lines stay
+# within 60 characters, and Python is fully type-hinted.
+python:
+  label: Python
+  blocks:
+    offers_service:
+      file: service/alert_service.py
+      source: |
+        from service.alert_db import AlertDB
+        from shared.contracts import TextMessages, Watches
+
+
+        class AlertService(Watches):
+            def __init__(self, texts: TextMessages,
+                         db: AlertDB) -> None:
+                self.texts: TextMessages = texts
+                self.db: AlertDB = db
+
+            def create(self, phone: str, course: str) -> None:
+                self.db.save_watch(phone, course)
+            # cancel(...) deletes the watch the same way
+
+            def seat_opened(self, course: str) -> None:
+                for phone in self.db.watchers(course):
+                    self.texts.send(phone, f"Seat open: {course}")
+      focus: {imports: [2], provides: [5], answers: [11], requires: [6, 8], request: [17]}
+    offers_contracts:
+      file: shared/contracts.py
+      source: |
+        from abc import ABC, abstractmethod
+
+
+        class Watches(ABC):
+            @abstractmethod
+            def create(self, phone: str, course: str) -> None: ...
+
+            @abstractmethod
+            def cancel(self, phone: str, course: str) -> None: ...
+
+
+        class TextMessages(ABC):
+            @abstractmethod
+            def send(self, phone: str, text: str) -> None: ...
+      focus: {watches: [4, 5, 6, 8, 9], text_messages: [12, 13, 14], send: [14]}
+java:
+  label: Java
+  blocks:
+    offers_service:
+      file: service/AlertService.java
+      source: |
+        import shared.TextMessages;
+        import shared.Watches;
+
+        public class AlertService implements Watches {
+            private final TextMessages texts;
+            private final AlertDB db;
+
+            public AlertService(TextMessages texts, AlertDB db) {
+                this.texts = texts;
+                this.db = db;
+            }
+
+            @Override
+            public void create(String phone, String course) {
+                db.saveWatch(phone, course);
+            }
+            // cancel(...) deletes the watch the same way
+
+            public void seatOpened(String course) {
+                for (String phone : db.watchers(course))
+                    texts.send(phone, "Seat open: " + course);
+            }
+        }
+      focus: {imports: [1, 2], provides: [4], answers: [14], requires: [5, 8], request: [21]}
+    offers_contracts:
+      files:
+        - file: shared/Watches.java
+          source: |
+            package shared;
+
+            public interface Watches {
+                void create(String phone, String course);
+                void cancel(String phone, String course);
+            }
+          focus: {watches: [3, 4, 5, 6]}
+        - file: shared/TextMessages.java
+          source: |
+            package shared;
+
+            public interface TextMessages {
+                void send(String phone, String text);
+            }
+          focus: {text_messages: [3, 4, 5], send: [4]}
+cpp:
+  label: C++
+  blocks:
+    offers_service:
+      file: service/alert_service.h
+      source: |
+        #pragma once
+        #include "service/alert_db.h"
+        #include "shared/contracts.h"
+
+        class AlertService : public Watches {
+        public:
+            AlertService(TextMessages& texts, AlertDB& db)
+                : texts(texts), db(db) {}
+
+            void create(const std::string& phone,
+                        const std::string& course) override {
+                db.saveWatch(phone, course);
+            }
+            // cancel(...) deletes the watch the same way
+
+            void seatOpened(const std::string& course) {
+                for (const auto& phone : db.watchers(course))
+                    texts.send(phone, "Seat open: " + course);
+            }
+
+        private:
+            TextMessages& texts;
+            AlertDB& db;
+        };
+      focus: {imports: [3], provides: [5], answers: [10, 11], requires: [7, 22], request: [18]}
+    offers_contracts:
+      file: shared/contracts.h
+      source: |
+        #pragma once
+        #include <string>
+
+        class Watches {
+        public:
+            virtual ~Watches() = default;
+            virtual void create(const std::string& phone,
+                                const std::string& course) = 0;
+            virtual void cancel(const std::string& phone,
+                                const std::string& course) = 0;
+        };
+
+        class TextMessages {
+        public:
+            virtual ~TextMessages() = default;
+            virtual void send(const std::string& phone,
+                              const std::string& text) = 0;
+        };
+      focus: {watches: [4, 5, 6, 7, 8, 9, 10, 11], text_messages: [13, 14, 15, 16, 17, 18], send: [16, 17]}
+typescript:
+  label: TypeScript
+  blocks:
+    offers_service:
+      file: service/alert-service.ts
+      source: |
+        import type { TextMessages, Watches } from "../shared";
+        import type { AlertDB } from "./alert-db";
+
+        export class AlertService implements Watches {
+          constructor(
+            private readonly texts: TextMessages,
+            private readonly db: AlertDB,
+          ) {}
+
+          create(phone: string, course: string): void {
+            this.db.saveWatch(phone, course);
+          }
+          // cancel(...) deletes the watch the same way
+
+          seatOpened(course: string): void {
+            for (const phone of this.db.watchers(course))
+              this.texts.send(phone, `Seat open: ${course}`);
+          }
+        }
+      focus: {imports: [1], provides: [4], answers: [10], requires: [6], request: [17]}
+    offers_contracts:
+      file: shared/index.ts
+      source: |
+        export interface Watches {
+          create(phone: string, course: string): void;
+          cancel(phone: string, course: string): void;
+        }
+
+        export interface TextMessages {
+          send(phone: string, text: string): void;
+        }
+      focus: {watches: [1, 2, 3, 4], text_messages: [6, 7, 8], send: [7]}

@@ -1,0 +1,161 @@
+# Code for the Cloudflare 2019 lesson's closer looks (scripts/narration/closer-look.js).
+# A look's `code: <name>` uses the blocks `<name>_<group>` in every language.
+# Focus keys name line numbers; lines stay within 60 characters, and Python
+# is fully type-hinted. The pattern is the lesson's fixed-start teaching
+# model (two skips, then an equals sign), not Cloudflare's production rule.
+python:
+  label: Python
+  blocks:
+    skips_rule:
+      file: waf/rule.py
+      source: |
+        import re
+
+        # Teaching model of the rule's core, not the real rule:
+        # two skips over any characters, then an equals sign.
+        SKIPS_THEN_EQUALS: re.Pattern[str] = re.compile(r".*.*=")
+
+        def inspect(text: str) -> bool:
+            # match() keeps the starting position fixed.
+            return SKIPS_THEN_EQUALS.match(text) is not None
+      focus: {pattern: [5], match: [9]}
+    skips_search:
+      file: waf/backtrack.py
+      source: |
+        def backtrack(text: str) -> tuple[bool, int]:
+            """The search a backtracking engine runs for .*.*="""
+            checks = 0
+            n = len(text)
+            for first in range(n, -1, -1):  # longest first
+                rest = n - first
+                for second in range(rest, -1, -1):
+                    checks += 1  # one candidate equals check
+                    at = first + second
+                    if at < n and text[at] == "=":
+                        return True, checks
+            return False, checks  # absent
+      focus: {first: [5], second: [6, 7], count: [3, 8], check: [9, 10, 11], absent: [12]}
+java:
+  label: Java
+  blocks:
+    skips_rule:
+      file: waf/Rule.java
+      source: |
+        package waf;
+
+        import java.util.regex.Pattern;
+
+        final class Rule {
+            // Teaching model of the rule's core, not the real
+            // rule: two skips over any characters, then "=".
+            static final Pattern SKIPS_THEN_EQUALS =
+                Pattern.compile(".*.*=");
+
+            static boolean inspect(String text) {
+                // lookingAt() keeps the starting position fixed.
+                return SKIPS_THEN_EQUALS.matcher(text).lookingAt();
+            }
+        }
+      focus: {pattern: [8, 9], match: [13]}
+    skips_search:
+      file: waf/Backtrack.java
+      source: |
+        package waf;
+
+        final class Backtrack {
+            record Result(boolean found, int checks) {}
+            /** The search a backtracking engine runs for .*.*= */
+            static Result backtrack(String text) {
+                int checks = 0;
+                int n = text.length();
+                for (int first = n; first >= 0; first--) {
+                    int rest = n - first;
+                    for (int second = rest; second >= 0; second--) {
+                        checks++;  // one candidate equals check
+                        int at = first + second;
+                        if (at < n && text.charAt(at) == '=')
+                            return new Result(true, checks);
+                    }
+                }
+                return new Result(false, checks);  // absent
+            }
+        }
+      focus: {first: [9], second: [10, 11], count: [7, 12], check: [13, 14, 15], absent: [18]}
+cpp:
+  label: C++
+  blocks:
+    skips_rule:
+      file: waf/rule.h
+      source: |
+        #pragma once
+        #include <regex>
+        #include <string>
+
+        // Teaching model of the rule's core, not the real rule:
+        // two skips over any characters, then an equals sign.
+        inline const std::regex skipsThenEquals(".*.*=");
+
+        inline bool inspect(const std::string& text) {
+            // match_continuous keeps the starting position fixed.
+            return std::regex_search(text, skipsThenEquals,
+                std::regex_constants::match_continuous);
+        }
+      focus: {pattern: [7], match: [11, 12]}
+    skips_search:
+      file: waf/backtrack.h
+      source: |
+        #pragma once
+        #include <string>
+
+        struct Result { bool found; int checks; };
+
+        // The search a backtracking engine runs for .*.*=
+        inline Result backtrack(const std::string& text) {
+            int checks = 0;
+            const int n = static_cast<int>(text.size());
+            for (int first = n; first >= 0; --first) {
+                const int rest = n - first;
+                for (int second = rest; second >= 0; --second) {
+                    ++checks;  // one candidate equals check
+                    const int at = first + second;
+                    if (at < n && text[at] == '=')
+                        return {true, checks};
+                }
+            }
+            return {false, checks};  // absent
+        }
+      focus: {first: [10], second: [11, 12], count: [8, 13], check: [14, 15, 16], absent: [19]}
+typescript:
+  label: TypeScript
+  blocks:
+    skips_rule:
+      file: waf/rule.ts
+      source: |
+        // Teaching model of the rule's core, not the real rule:
+        // two skips over any characters, then an equals sign.
+        export const SKIPS_THEN_EQUALS = /^.*.*=/;
+
+        export function inspect(text: string): boolean {
+          // ^ keeps the starting position fixed.
+          return SKIPS_THEN_EQUALS.test(text);
+        }
+      focus: {pattern: [3], match: [7]}
+    skips_search:
+      file: waf/backtrack.ts
+      source: |
+        // The search a backtracking engine runs for .*.*=
+        export function backtrack(text: string) {
+          let checks = 0;
+          const n = text.length;
+          for (let first = n; first >= 0; first--) {
+            const rest = n - first;
+            for (let second = rest; second >= 0; second--) {
+              checks++; // one candidate equals check
+              const at = first + second;
+              if (at < n && text[at] === "=")
+                return { found: true, checks };
+            }
+          }
+          return { found: false, checks }; // absent
+        }
+      focus: {first: [5], second: [6, 7], count: [3, 8], check: [9, 10, 11], absent: [14]}
