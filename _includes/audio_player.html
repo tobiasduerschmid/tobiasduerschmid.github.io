@@ -38,7 +38,8 @@ Why this exists (WCAG 2.2 §1.2.1, WCAG 3 §2.1):
     {%- assign _next_label = 'Next section' -%}
 {%- endif -%}
 
-<div class="cap{% if include.narration %} cap--narrated{% endif %}" role="region" aria-label="Audio player">
+<div class="cap-slot">
+  <div class="cap{% if include.narration %} cap--narrated{% endif %}" role="region" aria-label="Audio player">
     <audio class="cap__audio" preload="metadata"
         {%- if include.transcript or include.transcript_url %} aria-describedby="{{ _transcript_id }}"{% endif -%}>
         <source src="{{ _audio_src | relative_url | escape }}" type="audio/mpeg">
@@ -49,35 +50,54 @@ Why this exists (WCAG 2.2 §1.2.1, WCAG 3 §2.1):
 
     <!-- Top Row: Timeline -->
     <div class="cap__top-row">
-        <span class="cap__time cap__time--cur" aria-label="Current time">0:00</span>
-        <div class="cap__progress-wrap">
-            <input class="cap__progress" type="range" min="0" max="100" step="0.1" value="0"
-                aria-label="Seek audio position">
+        {%- if _chapters.size > 0 %}
+        <output class="cap__chapter-title" aria-label="Current section" aria-live="off">{{ _chapters.first.title | escape }}</output>
+        {%- else %}
+        <span class="cap__chapter-title">Read aloud</span>
+        {%- endif %}
+        <div class="cap__clock">
+            <span class="cap__time cap__time--cur" aria-label="Current time">0:00</span>
+            <span aria-hidden="true">/</span>
+            <span class="cap__time cap__time--dur" aria-label="Total duration">--:--</span>
         </div>
-        <span class="cap__time cap__time--dur" aria-label="Total duration">--:--</span>
+        <div class="cap__progress-wrap">
+            <div class="cap__progress-track" aria-hidden="true"></div>
+            <input class="cap__progress" type="range" min="0" max="100" step="0.1" value="0"
+                aria-label="Seek audio position" aria-valuetext="0:00">
+            {%- if _chapters.size > 0 %}
+            <span class="cap__section-preview" id="{{ _chapter_id }}-preview" role="tooltip" hidden>
+                <strong class="cap__preview-title"></strong>
+                <span class="cap__preview-time"></span>
+            </span>
+            {%- endif %}
+        </div>
     </div>
 
     <!-- Bottom Row: Controls, Speeds, Volume -->
     <div class="cap__bottom-row">
         <div class="cap__transport" role="group" aria-label="Playback controls">
             <button type="button" class="cap__skip-btn" data-skip="-15" data-original-title="Back 15s" aria-label="Skip back 15 seconds">
-                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span aria-hidden="true">15</span>
+                {% include player-icon.html name='back' %}<span aria-hidden="true">15</span>
             </button>
             <button type="button" class="cap__ctrl-btn cap__ctrl-btn--prev" data-original-title="{{ _previous_label }}" aria-label="{{ _previous_label }}">
-                <i class="fa-solid fa-backward-step" aria-hidden="true"></i>
+                {% include player-icon.html name='previous' %}
             </button>
             <button type="button" class="cap__play-btn" data-original-title="Play / Pause" aria-label="Play" aria-pressed="false">
-                <i class="fa-solid fa-play" aria-hidden="true"></i>
+                {% include player-icon.html name='play' %}
             </button>
             <button type="button" class="cap__ctrl-btn cap__ctrl-btn--next" data-original-title="{{ _next_label }}" aria-label="{{ _next_label }}">
-                <i class="fa-solid fa-forward-step" aria-hidden="true"></i>
+                {% include player-icon.html name='next' %}
             </button>
             <button type="button" class="cap__skip-btn" data-skip="15" data-original-title="Forward 15s" aria-label="Skip forward 15 seconds">
-                <i class="fa-solid fa-rotate-right" aria-hidden="true"></i><span aria-hidden="true">15</span>
+                {% include player-icon.html name='forward' %}<span aria-hidden="true">15</span>
+            </button>
+            <button type="button" class="cap__more-controls" aria-label="Player settings" data-original-title="Player settings" aria-expanded="false"
+                aria-controls="{{ _player_id }}-speeds {{ _player_id }}-volume{% if _chapters.size > 0 %} {{ _chapter_id }}-jump{% endif %}">
+                {% include player-icon.html name='settings' %}
             </button>
         </div>
 
-        <div class="cap__speeds" role="group" aria-label="Playback speed">
+        <div class="cap__speeds" id="{{ _player_id }}-speeds" role="group" aria-label="Playback speed">
             <button type="button" class="cap__speed-btn" data-speed="0.5" aria-label="0.5x playback speed" aria-pressed="false">0.5x</button>
             <button type="button" class="cap__speed-btn" data-speed="0.75" aria-label="0.75x playback speed" aria-pressed="false">0.75x</button>
             <button type="button" class="cap__speed-btn is-active" data-speed="1" aria-label="1x normal playback speed" aria-pressed="true">1x</button>
@@ -85,9 +105,9 @@ Why this exists (WCAG 2.2 §1.2.1, WCAG 3 §2.1):
             <button type="button" class="cap__speed-btn" data-speed="2" aria-label="2x playback speed" aria-pressed="false">2x</button>
         </div>
 
-        <div class="cap__volume">
+        <div class="cap__volume" id="{{ _player_id }}-volume">
             <button type="button" class="cap__vol-btn" data-original-title="Mute" aria-label="Mute" aria-pressed="false">
-                <i class="fa-solid fa-volume-low cap__vol-icon" aria-hidden="true"></i>
+                {% include player-icon.html name='sound' %}
             </button>
             <input class="cap__volume-slider" type="range" min="0" max="1" step="0.05" value="1"
                 aria-label="Volume">
@@ -95,16 +115,16 @@ Why this exists (WCAG 2.2 §1.2.1, WCAG 3 §2.1):
     </div>
 
     {%- if _chapters.size > 0 %}
-    <form class="cap__chapter-jump">
+    <div class="cap__chapter-jump" id="{{ _chapter_id }}-jump">
         <label for="{{ _chapter_id }}">Section</label>
         <select id="{{ _chapter_id }}" name="chapter">
             {% for chapter in _chapters -%}
             <option value="{{ chapter.start }}">{{ chapter.title | escape }}</option>
             {% endfor -%}
         </select>
-        <button type="submit">Jump to section</button>
-    </form>
+    </div>
     {%- endif %}
+  </div>
 </div>
 
 {%- if include.narration %}
