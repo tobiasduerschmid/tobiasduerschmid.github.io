@@ -2,9 +2,10 @@
 (function () {
   'use strict';
 
-  function bind({ player, audio, listen, hideWhileHovered = false }) {
+  function bind({ player, audio, listen, hideWhileHovered = false, extraControls = [] }) {
     const screen = player.querySelector('.song-player-screen');
     const controls = player.querySelector('.song-player-controls');
+    const containsControl = target => controls.contains(target) || extraControls.some(region => region.contains(target));
     const idleDelay = 3000;
     const pointersDown = new Set();
     let fullscreen = false;
@@ -27,7 +28,7 @@
       // Range inputs can match :focus-visible after a mouse click, and media
       // shortcuts can give pointer-focused buttons that state too. Only actual
       // keyboard navigation should pin the toolbar for the rest of playback.
-      const usingControl = controls.contains(focused) && keyboardNavigation;
+      const usingControl = containsControl(focused) && keyboardNavigation;
       const settingsOpen = controls.querySelector('[aria-expanded="true"]');
       const tooltipOpen = controls.querySelector('[role="tooltip"]:not([hidden])');
       return fullscreen && !audio.paused && !audio.ended && !audio.seeking
@@ -48,7 +49,7 @@
       }
       // Pointer activation may leave focus on a toolbar button. Keep subsequent
       // shortcuts scoped to the player without hiding a focused control.
-      if (controls.contains(document.activeElement)) screen.focus({ preventScroll: true });
+      if (containsControl(document.activeElement)) screen.focus({ preventScroll: true });
       clearTimer();
       screen.classList.add('are-controls-hidden');
     }
@@ -105,7 +106,7 @@
     });
     listen(screen, 'focusin', (event) => {
       // Assistive technology may move focus without a preceding Tab event.
-      if (controls.contains(event.target) && event.target !== pointerFocusTarget) keyboardNavigation = true;
+      if (containsControl(event.target) && event.target !== pointerFocusTarget) keyboardNavigation = true;
       reveal();
     });
     listen(screen, 'focusout', (event) => {

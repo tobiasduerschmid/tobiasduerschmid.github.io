@@ -78,7 +78,15 @@ shares (`_includes/narration-player-controls.html`, see
 back and forward 5 seconds, previous and next scene, and time; the code
 language when there is code, mute, volume, captions (CC), settings (scene,
 speed, caption size, landscape in full screen, and this player's "Animate
-visuals" and knowledge check), and full screen.
+visuals" and knowledge check), and full screen. The compact bar stays at the
+bottom in both modes, with checks and closer looks sharing one marker lane.
+Outside fullscreen, a synchronized play/pause shortcut sits at the upper left
+beside the scene header. Settings open above the bottom bar.
+On phones the header uses smaller text (at least 16px), two horizontally
+scrolling navigation rows, and a compact title and task. In touch fullscreen
+the header hides with the playback bar and releases its height to the picture.
+A tap reveals both without pausing; keyboard focus in navigation keeps them
+visible. Desktop fullscreen navigation remains visible during playback.
 
 The controls behave like the music player's because they reuse its modules
 through `js/narration-player-controls.js`:

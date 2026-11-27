@@ -1,4 +1,4 @@
-/* Closer looks: the offer beside the picture, the timeline marker row, and
+/* Closer looks: the offer beside the picture, the timeline markers, and
    the panel that takes the picture's place (js/narration-closer-look.js).
    Colors are the narration theme tokens (--nja-*), which switch for dark mode
    and print light. Text inherits the player's paragraph size. */
@@ -34,8 +34,7 @@
   .narrated-explainer .narration-closer-look-key { display: none; }
 }
 
-/* Timeline: closer looks have their own marker row, shaped unlike check dots. */
-.narrated-explainer .vn-timeline-looks { position: relative; min-width: 0; height: 24px; margin: 0.15em 12px 0; }
+/* Timeline: closer looks share the check lane, with a distinct code icon. */
 .narrated-explainer .nja-controls .vn-timeline-look {
   position: absolute; top: 0; display: grid; place-items: center;
   width: 24px; height: 24px; min-width: 24px; min-height: 24px; padding: 2px;
@@ -43,6 +42,7 @@
 }
 .narrated-explainer .nja-controls .vn-timeline-look .narration-closer-look-icon { width: 15px; height: 15px; }
 .narrated-explainer .nja-controls .vn-timeline-look:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
+.narrated-explainer .nja-controls .vn-timeline-look.is-grouped { box-shadow: 2px 2px 0 var(--nja-chrome), 3px 3px 0 var(--nja-muted); }
 
 /* The panel takes the picture's place while the narration is paused. */
 .narrated-explainer .narration-closer-look { padding: 1.1em 1.4em 1.3em; color: var(--nja-text); background: var(--nja-bg); }
@@ -135,7 +135,7 @@
 }
 @media print {
   /* Arrows are laid out for the screen; on paper the steps carry the relations in words. */
-  .narrated-explainer :is(.narration-closer-look-offer, .vn-timeline-looks, .narration-closer-look-language, .narration-closer-look-legend, .narration-closer-look-relations) { display: none; }
+  .narrated-explainer :is(.narration-closer-look-offer, .vn-timeline-look, .narration-closer-look-language, .narration-closer-look-legend, .narration-closer-look-relations) { display: none; }
   .narrated-explainer .narration-closer-look-code-bar { margin-bottom: 0.5em; }
   .narrated-explainer .narration-closer-look-languages { padding-right: 0; gap: 1em; }
   .narrated-explainer .narration-closer-look-group-tab { position: static; margin: -0.4em -0.4em 0.4em; padding: 0.3em 0.5em; border: 0; border-bottom: 2px solid var(--nja-line); border-radius: 0; }

@@ -88,7 +88,15 @@ test('Escape closes the look, keeps the narration paused, and returns to the off
 
 test('the timeline marker opens the look at its cue from anywhere', async ({ page }) => {
   const player = await openLayers(page);
-  await player.getByRole('button', { name: `Closer look: ${TITLE}, at ${clock(cue.start)}` }).click();
+  const name = `Closer look: ${TITLE}, at ${clock(cue.start)}`;
+  const marker = player.getByRole('group', { name: 'Knowledge checks and closer looks', exact: true })
+    .getByRole('button', { name });
+  const grouped = await marker.getAttribute('aria-expanded') !== null;
+  await marker.click();
+  if (grouped) {
+    await player.getByRole('region', { name: 'Choose a knowledge check or closer look', exact: true })
+      .getByRole('button', { name, exact: true }).click();
+  }
   await expect(panel(player)).toBeVisible();
   expect(Number(await position(player).inputValue())).toBeCloseTo(cue.start, 0);
   await expect(panel(player).getByRole('button', { name: `Continue narration (${clock(cue.start)})` }).first()).toBeVisible();
@@ -189,7 +197,8 @@ test('a lesson without closer looks shows no offer or marker', async ({ page }) 
   const player = page.getByRole('region', { name: 'Scrum in one sprint', exact: true });
   await expect(player.getByRole('button', { name: 'Play narration', exact: true })).toBeVisible();
   await expect(player.locator('[data-closer-look-offer]')).toHaveCount(0);
-  await expect(player.getByRole('group', { name: 'Open a closer look' })).toBeHidden();
+  await expect(player.getByRole('group', { name: 'Knowledge checks and closer looks', exact: true })
+    .getByRole('button', { name: /Closer look:/ })).toHaveCount(0);
 });
 
 for (const [view, url] of [['lesson notes', '/SEBook/architectural_styles/layers/notes/'], ['reading view', '/SEBook/architectural_styles/layers/read/']]) {

@@ -136,7 +136,10 @@
     const cc = root.querySelector('.vn-cc');
     const feedback = root.querySelector('.vn-gesture-feedback');
     const listen = (target, type, handler, options) => target.addEventListener(type, handler, options);
-    const visibility = audio ? window.SongControlsVisibility.bind({ player: root, audio, listen, hideWhileHovered: true }) : null;
+    const visibility = audio ? window.SongControlsVisibility.bind({
+      player: root, audio, listen, hideWhileHovered: true,
+      extraControls: Array.from(root.querySelectorAll('.vn-scenes')),
+    }) : null;
     let feedbackTimer = 0;
 
     const togglePlayback = () => root.querySelector('[data-action="play"]').click();
@@ -184,6 +187,23 @@
     if (audio) {
       listen(speed, 'change', () => window.NarrationPreferences.set({ speed: Number(speed.value) }));
       bindSound(root, audio, listen);
+      const inlinePlay = root.querySelector('.vn-inline-play');
+      if (inlinePlay) {
+        const syncInlinePlay = () => {
+          const label = audio.paused ? 'Play lesson' : 'Pause lesson';
+          inlinePlay.classList.toggle('is-playing', !audio.paused);
+          inlinePlay.setAttribute('aria-label', label);
+          inlinePlay.title = label;
+          inlinePlay.setAttribute('data-original-title', label);
+        };
+        inlinePlay.hidden = false;
+        listen(inlinePlay, 'click', togglePlayback);
+        for (const type of ['play', 'pause', 'ended']) listen(audio, type, syncInlinePlay);
+        listen(root, 'narration-fullscreenchange', event => {
+          if (event.detail.active && document.activeElement === inlinePlay) video.focus({ preventScroll: true });
+        });
+        syncInlinePlay();
+      }
     }
     const picture = root.querySelector('.vn-picture-control');
     if (picture && audio) {

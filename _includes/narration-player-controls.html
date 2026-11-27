@@ -1,7 +1,7 @@
 {%- comment -%}
   The control bar of every narration player. It is the song player's bar
   (_layouts/song-player.html) with the narration's choices: the same icons
-  (player-icon.html) and layout, with the position line above playback on the
+  (player-icon.html), with a compact timeline above playback on the
   left and the view on the right, and the same settings panel, which floats
   over the player (js/song-video/settings-panel.js). Its song-player class
   hooks give every player the song player's keyboard shortcuts and full-screen
@@ -29,8 +29,8 @@
   <div class="vn-timeline-segments" aria-hidden="true"></div>
   <label class="nja-seek-label vn-seek-label"><span class="vn-hidden-label">{{ include.seek_label }}</span><input type="range" min="0" max="{{ include.duration | default: 1 }}" step="0.01" value="0" aria-valuetext="0:00" class="nja-seek" aria-keyshortcuts="ArrowLeft ArrowRight 0 1 2 3 4 5 6 7 8 9"></label>
   </div>
-  <div class="vn-timeline-checks" role="group" aria-label="Jump to a knowledge check" hidden></div>
-  <div class="vn-timeline-looks" role="group" aria-label="Open a closer look" hidden><template>{% include narration-closer-look-icon.html %}</template></div>
+  <div class="vn-timeline-markers" role="group" aria-label="Knowledge checks and closer looks" hidden></div>
+  <template class="vn-timeline-look-icon">{% include narration-closer-look-icon.html %}</template>
   <span class="vn-timeline-tooltip" id="{{ include.id }}-timeline-tooltip" role="tooltip" hidden><strong class="vn-preview-title"></strong><span class="vn-preview-time"></span></span>
   <section class="vn-check-menu" id="{{ include.id }}-check-menu" role="region" aria-label="Choose a knowledge check" hidden>
     <div class="vn-check-menu-heading"><strong>Knowledge checks</strong><button type="button" class="vn-check-close" aria-label="Close knowledge checks">{% include player-icon.html name='close' %}</button></div>

@@ -350,13 +350,20 @@ shares its modules. Rules that came from review:
 - While a knowledge check is open, the control bar steps aside so the quiz
   has the room; the quiz's own buttons continue the narration, and Esc still
   leaves full screen.
-- Inline controls sit above the picture. The timeline separates scenes by
+- The compact control bar stays below the picture and captions, including
+  outside fullscreen. Inline players also have a synchronized play/pause
+  shortcut at the upper left, with space reserved in the header. The timeline separates scenes by
   duration, previews names and timestamps on hover and keyboard seeking, and
-  places clickable check dots at section ends. Nearby dots share a choice list
+  places check dots and code-shaped closer-look markers in one lane. Nearby markers share a choice list
   on narrow screens rather than overlapping touch targets. Single-question checks retain answer feedback
   then Continue narration resumes directly, without results or review screens.
   Multi-question summaries retain results. Fullscreen chrome starts a fresh
   idle period on every entry path; a stationary pointer does not prevent hiding.
+- Mobile headers use compact text (at least 16px) and two horizontally
+  scrolling navigation rows, retaining the title and task inline. Only on
+  touch devices does fullscreen navigation hide with idle playback controls,
+  freeing its height for the picture. A tap reveals both without pausing;
+  keyboard focus in the header pins them. Desktop navigation stays visible.
 - **After the final knowledge-check quiz, transition to the chapter's song
   video when one is present.** Scrum hands off to *Inspect and Adapt: a Scrum
   musical*. Follow the shared [narration-to-song completion rule](../narration-authoring/SKILL.md#transition-from-narration-to-the-chapter-song),
