@@ -1,0 +1,417 @@
+{
+  "duration": 985.86,
+  "voice": "drama3-female6",
+  "speed": 1,
+  "speech_sha256": "4128edb79ede9d3401f01f220ed7e02bbead1875273c19feb82d2a82b566667c",
+  "scenes": [
+    {
+      "id": "intro",
+      "start": 0.0,
+      "cues": [
+        {
+          "id": "dinner",
+          "start": 0.0,
+          "end": 15.17,
+          "speech_end": 14.62
+        },
+        {
+          "id": "missing",
+          "start": 15.17,
+          "end": 30.2,
+          "speech_end": 29.65
+        },
+        {
+          "id": "after",
+          "start": 30.2,
+          "end": 44.67,
+          "speech_end": 44.12
+        },
+        {
+          "id": "target",
+          "start": 44.67,
+          "end": 59.45,
+          "speech_end": 56.95
+        }
+      ],
+      "end": 59.45
+    },
+    {
+      "id": "cycle",
+      "start": 59.45,
+      "cues": [
+        {
+          "id": "tdd",
+          "start": 59.45,
+          "end": 78.18,
+          "speech_end": 77.63
+        },
+        {
+          "id": "loop",
+          "start": 78.18,
+          "end": 96.75,
+          "speech_end": 96.2
+        },
+        {
+          "id": "runner",
+          "start": 96.75,
+          "end": 117.61,
+          "speech_end": 115.11
+        }
+      ],
+      "end": 117.61
+    },
+    {
+      "id": "list",
+      "start": 117.61,
+      "cues": [
+        {
+          "id": "spec",
+          "start": 117.61,
+          "end": 133.34,
+          "speech_end": 132.79
+        },
+        {
+          "id": "cards",
+          "start": 133.34,
+          "end": 149.87,
+          "speech_end": 149.32
+        },
+        {
+          "id": "one",
+          "start": 149.87,
+          "end": 168.15,
+          "speech_end": 165.65
+        }
+      ],
+      "end": 168.15
+    },
+    {
+      "id": "starter",
+      "start": 168.15,
+      "cues": [
+        {
+          "id": "first_test",
+          "start": 168.15,
+          "end": 186.8,
+          "speech_end": 186.25
+        },
+        {
+          "id": "red",
+          "start": 186.8,
+          "end": 206.54,
+          "speech_end": 202.54
+        },
+        {
+          "id": "fake",
+          "start": 206.54,
+          "end": 227.25,
+          "speech_end": 226.7
+        },
+        {
+          "id": "why_fake",
+          "start": 227.25,
+          "end": 243.93,
+          "speech_end": 241.43
+        }
+      ],
+      "end": 243.93
+    },
+    {
+      "id": "triangulate",
+      "start": 243.93,
+      "cues": [
+        {
+          "id": "second_test",
+          "start": 243.93,
+          "end": 263.55,
+          "speech_end": 259.55
+        },
+        {
+          "id": "red2",
+          "start": 263.55,
+          "end": 280.58,
+          "speech_end": 280.03
+        },
+        {
+          "id": "generalize",
+          "start": 280.58,
+          "end": 303.58,
+          "speech_end": 301.08
+        }
+      ],
+      "end": 303.58
+    },
+    {
+      "id": "leftover",
+      "start": 303.58,
+      "cues": [
+        {
+          "id": "bill",
+          "start": 303.58,
+          "end": 322.31,
+          "speech_end": 321.76
+        },
+        {
+          "id": "predict",
+          "start": 322.31,
+          "end": 342.77,
+          "speech_end": 338.77
+        },
+        {
+          "id": "red3",
+          "start": 342.77,
+          "end": 359.88,
+          "speech_end": 359.33
+        },
+        {
+          "id": "obvious",
+          "start": 359.88,
+          "end": 378.3,
+          "speech_end": 375.8
+        }
+      ],
+      "end": 378.3
+    },
+    {
+      "id": "refactor",
+      "start": 378.3,
+      "cues": [
+        {
+          "id": "smell",
+          "start": 378.3,
+          "end": 395.19,
+          "speech_end": 394.64
+        },
+        {
+          "id": "tidy",
+          "start": 395.19,
+          "end": 415.16,
+          "speech_end": 414.61
+        },
+        {
+          "id": "done",
+          "start": 415.16,
+          "end": 436.58,
+          "speech_end": 434.08
+        }
+      ],
+      "end": 436.58
+    },
+    {
+      "id": "rules_red",
+      "start": 436.58,
+      "cues": [
+        {
+          "id": "test_first",
+          "start": 436.58,
+          "end": 456.57,
+          "speech_end": 456.02
+        },
+        {
+          "id": "test_first_why",
+          "start": 456.57,
+          "end": 476.58,
+          "speech_end": 476.03
+        },
+        {
+          "id": "watch",
+          "start": 476.58,
+          "end": 501.36,
+          "speech_end": 497.36
+        },
+        {
+          "id": "liar",
+          "start": 501.36,
+          "end": 520.45,
+          "speech_end": 519.9
+        },
+        {
+          "id": "watch_why",
+          "start": 520.45,
+          "end": 539.5,
+          "speech_end": 538.95
+        },
+        {
+          "id": "message",
+          "start": 539.5,
+          "end": 558.68,
+          "speech_end": 556.18
+        }
+      ],
+      "end": 558.68
+    },
+    {
+      "id": "rules_green",
+      "start": 558.68,
+      "cues": [
+        {
+          "id": "smallest",
+          "start": 558.68,
+          "end": 578.69,
+          "speech_end": 578.14
+        },
+        {
+          "id": "debugging",
+          "start": 578.69,
+          "end": 595.26,
+          "speech_end": 594.71
+        },
+        {
+          "id": "step_size",
+          "start": 595.26,
+          "end": 610.83,
+          "speech_end": 610.28
+        },
+        {
+          "id": "step_cost",
+          "start": 610.83,
+          "end": 626.2,
+          "speech_end": 625.65
+        },
+        {
+          "id": "strict",
+          "start": 626.2,
+          "end": 645.41,
+          "speech_end": 644.86
+        },
+        {
+          "id": "on_green",
+          "start": 645.41,
+          "end": 662.94,
+          "speech_end": 662.39
+        },
+        {
+          "id": "slip",
+          "start": 662.94,
+          "end": 678.37,
+          "speech_end": 677.82
+        },
+        {
+          "id": "two_hats",
+          "start": 678.37,
+          "end": 698.68,
+          "speech_end": 698.13
+        },
+        {
+          "id": "cleanup",
+          "start": 698.68,
+          "end": 714.11,
+          "speech_end": 713.56
+        },
+        {
+          "id": "limit",
+          "start": 714.11,
+          "end": 730.63,
+          "speech_end": 728.13
+        }
+      ],
+      "end": 730.63
+    },
+    {
+      "id": "benefits",
+      "start": 730.63,
+      "cues": [
+        {
+          "id": "more_tests",
+          "start": 730.63,
+          "end": 748.76,
+          "speech_end": 748.21
+        },
+        {
+          "id": "safety_net",
+          "start": 748.76,
+          "end": 765.09,
+          "speech_end": 764.54
+        },
+        {
+          "id": "docs",
+          "start": 765.09,
+          "end": 781.22,
+          "speech_end": 780.67
+        },
+        {
+          "id": "small_units",
+          "start": 781.22,
+          "end": 804.38,
+          "speech_end": 801.88
+        }
+      ],
+      "end": 804.38
+    },
+    {
+      "id": "costs",
+      "start": 804.38,
+      "cues": [
+        {
+          "id": "time",
+          "start": 804.38,
+          "end": 823.69,
+          "speech_end": 823.14
+        },
+        {
+          "id": "discipline",
+          "start": 823.69,
+          "end": 842.36,
+          "speech_end": 841.81
+        },
+        {
+          "id": "limits",
+          "start": 842.36,
+          "end": 865.12,
+          "speech_end": 862.62
+        }
+      ],
+      "end": 865.12
+    },
+    {
+      "id": "evidence",
+      "start": 865.12,
+      "cues": [
+        {
+          "id": "versus_after",
+          "start": 865.12,
+          "end": 884.37,
+          "speech_end": 883.82
+        },
+        {
+          "id": "steady",
+          "start": 884.37,
+          "end": 903.16,
+          "speech_end": 902.61
+        },
+        {
+          "id": "practice",
+          "start": 903.16,
+          "end": 922.2,
+          "speech_end": 919.7
+        }
+      ],
+      "end": 922.2
+    },
+    {
+      "id": "summary",
+      "start": 922.2,
+      "cues": [
+        {
+          "id": "recap_cycle",
+          "start": 922.2,
+          "end": 943.09,
+          "speech_end": 942.54
+        },
+        {
+          "id": "recap_rules",
+          "start": 943.09,
+          "end": 964.26,
+          "speech_end": 963.71
+        },
+        {
+          "id": "recap_consequences",
+          "start": 964.26,
+          "end": 985.86,
+          "speech_end": 983.36
+        }
+      ],
+      "end": 985.86
+    }
+  ]
+}

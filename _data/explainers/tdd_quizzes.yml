@@ -1,0 +1,368 @@
+# One knowledge check per section: each question puts the section's central
+# idea to work on a new program, never on the bill splitter, and its
+# distractors are the wrong reasoning a partial understanding produces, in
+# the lesson's own words. Every key, and every reason to reject a distractor,
+# is said in the narration before its check (audit: design/review.md). Keys
+# sit in irregular positions; the player, print, and notes views show the
+# options in this order. The summary asks seven questions about one new
+# program (a study app's letter_grade function), under `questions`.
+intro:
+  question: >-
+    A teammate finishes a discount function, runs it once on one shopping cart, and saves the
+    printed result as the expected value of a new test. What can this test show?
+  options:
+    - That the discount is the correct amount for that cart
+    - That the function still returns what it returned today
+    - That carts of every size get the right discount
+  correct_index: 1
+  explanation: >-
+    The expected value came from the code, so the test can only confirm what the code already does,
+    like the test that saved ten dollars each from the bill splitter's own output.
+  option_feedback:
+    0: >-
+      Nobody worked out the right amount: the expected value is whatever the code printed. If the
+      code is wrong for this cart, the test agrees with it.
+    2: >-
+      The test runs one cart. Like the thirty-dollar bill for three people, one convenient case says
+      nothing about the cases that were never tried.
+cycle:
+  question: >-
+    Building a password checker, a developer writes the checking code, then a test for it, sees the
+    test pass, and tidies the code. Measured against the test-driven development cycle, what did the
+    developer never see?
+  options:
+    - A test that passes
+    - A cleanup with every test passing
+    - A test that fails before the code exists
+  correct_index: 2
+  explanation: >-
+    The cycle starts with red: one small test, written and watched failing before the code. Here the
+    code came first, so the test was never seen to fail.
+  option_feedback:
+    0: >-
+      The test did pass. What is missing comes before that: the test was never seen failing, which
+      is the red step.
+    1: >-
+      The developer tidied the code while the test passed, which is the refactor step. The step that
+      was skipped is the failing test at the start.
+list:
+  question: >-
+    A developer using test-driven development for a bus-fare calculator turns all nine lines of the
+    test list into tests, and only then starts on the code. What trouble does that invite?
+  options:
+    - Many failing tests at once, rewritten when the design changes
+    - A test list with no room left for new ideas
+    - A slower runner, since nine tests take longer to run
+  correct_index: 0
+  explanation: >-
+    The test list holds cases in plain words. Test-driven development turns one line at a time into
+    a test; writing them all first leaves many tests red at once and forces rewrites when the first
+    passing test changes the design.
+  option_feedback:
+    1: >-
+      The list stays open: new ideas go on it at any time. The trouble is in turning every line
+      into a test before any code exists.
+    2: >-
+      Nine small tests still run in moments. The cost is that all nine are red together, and get
+      rewritten when the first passing test changes the design.
+starter:
+  question: >-
+    You test-drive a function is_leap_year. Its first test expects 2024 to be a leap year, and it is
+    red because the function does not exist. Which next step is Fake It?
+  options:
+    - Write the full leap-year rule for 4, 100, and 400
+    - Add tests for 1900 and 2000 before any code
+    - Return true for any year the function is given
+  correct_index: 2
+  explanation: >-
+    Fake It returns exactly the value the one failing test expects. Green then proves that the test,
+    the runner, and the function are wired up, and the code promises nothing that no test checked.
+  option_feedback:
+    0: >-
+      That is far more code than one test describes: the rules for 100 and 400 would be written
+      with no test to check them.
+    1: >-
+      Adding more tests leaves the first one red. Test-driven development takes one test at a time:
+      make this one pass first.
+triangulate:
+  question: >-
+    A function shipping_cost passes its only test by returning the constant 500. In test-driven
+    development, which next test makes you Triangulate, that is, replace the constant with a
+    calculation?
+  options:
+    - A second order that also costs 500
+    - A second order whose expected cost is 900
+    - The first order again, run a second time
+  correct_index: 1
+  explanation: >-
+    Triangulate generalizes only when a second example forces it. An expected cost of 900 cannot be
+    met by the constant 500, so the code has to compute.
+  option_feedback:
+    0: >-
+      A constant of 500 already satisfies an order that costs 500, so this test would pass without
+      any change and force nothing.
+    2: >-
+      Running the same example twice adds no second example. The constant passes it both times.
+leftover:
+  question: >-
+    Before any code exists, you write a test for a function that seats 10 guests at 3 tables. What
+    does writing the test's expected result force you to decide?
+  options:
+    - How the function loops over the guests
+    - How many tests the function will need
+    - Which table gets the tenth guest
+  correct_index: 2
+  explanation: >-
+    To write the expected result you have to state the right answer yourself, including where the
+    leftover goes, just as the bill test forced the decision about who pays the extra cents.
+  option_feedback:
+    0: >-
+      The expected result says what the function returns, not how it computes it. The loop is the
+      code's business and can change later.
+    1: >-
+      The number of tests comes from the test list. One expected result settles one case: how 10
+      guests end up at 3 tables.
+refactor:
+  question: >-
+    After a green bar, a developer renames a variable in a tax function and replaces a
+    fill-then-patch loop with one clear rule. All tests still pass. What have the tests just shown?
+  options:
+    - The tested behavior did not change
+    - The function is correct for all inputs
+    - The new code runs faster than before
+  correct_index: 0
+  explanation: >-
+    Refactoring changes how the code is written, not what it does. Rerunning the passing tests shows
+    that the behavior they check survived the change.
+  option_feedback:
+    1: >-
+      Tests speak only for the cases they check. A line still open on the test list, like zero
+      people in the bill splitter, is not covered by a green bar.
+    2: >-
+      The tests compare results with expected values. They measure nothing about speed, and
+      refactoring aims at clearer code, not faster code.
+rules_red:
+  question: >-
+    A music app's shuffle must never play the same song twice in a row. Using test-driven
+    development, you add a test for that rule, and it passes before you write any code for the
+    rule. What does the rule "watch it fail" tell you to do?
+  options:
+    - Move on, since a passing test shows the rule works
+    - Find out why the test passes, before coding
+    - Write the code for the rule and keep the test as is
+  correct_index: 1
+  explanation: >-
+    A new test should fail until its behavior exists. One that passes at once may check too little,
+    like the test that counted three shares and ignored the amounts, so fix the test first.
+  option_feedback:
+    0: >-
+      No code for the rule exists yet, so the green bar cannot come from the rule working. It shows
+      that the test does not detect the missing behavior.
+    2: >-
+      A test that passed without the code will also pass if the code is wrong. Until it has failed
+      once, it has proven nothing.
+rules_green:
+  question: >-
+    A test for a new coupon rule is red. While making it pass, a developer also renames three
+    functions and reorders a class. Now five tests fail. Which rule of test-driven development
+    would have kept the cause easy to find?
+  options:
+    - "Refactor on green: change structure only while tests pass"
+    - "Watch it fail: see each new test fail before the code"
+    - "Test first: no code until a test for it has failed"
+  correct_index: 0
+  explanation: >-
+    Renaming and reordering are structure changes. Made on red, together with the coupon code, they
+    leave no way to tell from a failure whether structure or behavior broke.
+  option_feedback:
+    1: >-
+      The coupon test was red, so it had been seen failing. The trouble began afterward, when
+      cleanup was mixed into making it pass.
+    2: >-
+      The test did come first here. What went wrong is that structure and behavior changed in the
+      same step.
+benefits:
+  question: >-
+    A team adopts test-driven development and lists what they expect from it. Which expectation does
+    the evidence support most firmly?
+  options:
+    - Documentation that stays true with no upkeep
+    - A cleaner overall architecture
+    - More tests than if they tested afterward
+  correct_index: 2
+  explanation: >-
+    The most consistent finding is that test-driven development produces more tests. It also tends
+    to yield small, testable units, but whether it improves overall design is still debated.
+  option_feedback:
+    0: >-
+      Tests document how to call the code only while they are kept current. Stale tests document
+      the past, so this benefit depends on upkeep.
+    1: >-
+      Overall design is exactly the benefit the lesson calls debated. Small steps do not, by
+      themselves, shape the large structure.
+costs:
+  question: >-
+    Which of these tasks is the poorest fit for test-driven development?
+  options:
+    - Computing late fees for overdue library books
+    - Tuning a photo filter until portraits look natural
+    - Parsing dates typed as month, day, and year
+  correct_index: 1
+  explanation: >-
+    Test-driven development needs a check that is automated and gives the same verdict every run.
+    "Looks natural" has no exact right answer to assert, like recognizing images.
+  option_feedback:
+    0: >-
+      A late fee is an exact number for a given due date and return date, so a test can state it
+      before the code exists.
+    2: >-
+      Each typed date has one exact parsed result, and bad input has a defined error, so every case
+      can be a small test.
+evidence:
+  question: >-
+    A blog post claims that studies prove writing the test first is what makes code better. Which
+    reply matches the evidence on test-driven development?
+  options:
+    - Test first beat testing right after in most experiments
+    - Strict test first is what most developers practice
+    - Short, steady cycles tracked quality more than test order
+  correct_index: 2
+  explanation: >-
+    Compared with writing each test right after a small piece of code, experiments mostly find no
+    clear difference. In a study of professionals, quality and productivity went with short, steady
+    cycles, not with test order.
+  option_feedback:
+    0: >-
+      The clear wins came against teams that tested late or barely at all. Against a test written
+      right after each small piece of code, experiments mostly find no clear difference.
+    1: >-
+      Strict test-driven development is rare in practice; most developers let tests guide them more
+      loosely. How common a practice is also says nothing about what makes code better.
+summary:
+  questions:
+    - question: >-
+        You start a letter_grade(points) function for a study app with test-driven development,
+        and your test list has five lines. What do you do first?
+      options:
+        - Turn all five lines into tests, then write the function
+        - Turn one line into a test, such as 95 points gives A
+        - Write the function for all letters, then test each one
+      correct_index: 1
+      explanation: >-
+        Test-driven development turns one line of the test list at a time into a test, starting
+        with an easy one, and makes it pass before taking the next.
+      option_feedback:
+        0: >-
+          The test list holds the cases; it is not a pile of tests to write up front. Five red tests
+          at once mean a wall of red, and rewrites when the design shifts.
+        2: >-
+          Code first is the order that let the bill splitter's test copy the code's answer. Here the
+          test states the right grade before any code exists.
+    - question: >-
+        The test "95 points gives A" is red because letter_grade does not exist. In test-driven
+        development, what is the smallest step to green?
+      options:
+        - Return A for any number of points
+        - Write the cutoffs for all five letters
+        - Add a test for 85 points first
+      correct_index: 0
+      explanation: >-
+        Fake It: return exactly what the one test expects. The code then handles the one case a
+        test describes and promises nothing more.
+      option_feedback:
+        1: >-
+          Four of the five cutoffs would have no test, so no test would notice if one were wrong.
+          Smallest step writes only what the failing test needs.
+        2: >-
+          A second test while the first is still red breaks the rhythm of one test at a time. Get
+          to green first.
+    - question: >-
+        letter_grade returns A for everything, and its one test passes. Which next test forces a
+        real calculation, as in Triangulate?
+      options:
+        - 100 points gives A
+        - 85 points gives B
+        - 91 points gives A
+      correct_index: 1
+      explanation: >-
+        Triangulate generalizes only when a second example cannot be met by the constant. A test
+        expecting B fails against "always A" and forces a comparison.
+      option_feedback:
+        0: >-
+          The constant A already satisfies 100 points. The test would pass at once and force no
+          change.
+        2: >-
+          91 points still expects A, which the constant returns. Only an example with a different
+          expected grade breaks the fake.
+    - question: >-
+        You add a test named "A starts at 90 points" that only checks that the result is a single
+        letter. It passes at once. What does the rule "watch it fail" tell you?
+      options:
+        - The cutoff at 90 points already works
+        - No more code is needed for the cutoff
+        - This test cannot detect a wrong cutoff
+      correct_index: 2
+      explanation: >-
+        A new test that never fails has proven nothing. This one accepts any letter, so it would
+        stay green whatever the cutoff is; state the exact expected grade and watch it fail.
+      option_feedback:
+        0: >-
+          The test never looks at which letter comes back, so its green bar says nothing about the
+          cutoff, just as counting three shares said nothing about the cents.
+        1: >-
+          The test passed without checking the behavior it is named for. The code may still be
+          wrong at 90; the test has to be strengthened first.
+    - question: >-
+        While making "85 points gives B" pass, you think of plus and minus grades. What does
+        test-driven development tell you to do with that idea?
+      options:
+        - Add a line to the test list and finish this test
+        - Add the plus and minus code while you are in the function
+        - Write all plus and minus tests before continuing
+      correct_index: 0
+      explanation: >-
+        New ideas go on the test list. Smallest step means writing only enough code to pass the
+        failing test, so the idea waits for its own red test.
+      option_feedback:
+        1: >-
+          No test asks for plus and minus grades yet, so no test would notice if that code were
+          wrong, like the tip parameter in the bill splitter.
+        2: >-
+          That would interrupt the current red test with a pile of new red ones. The list keeps the
+          idea safe until its turn.
+    - question: >-
+        letter_grade works as a chain of five conditions, and every test passes. You want to
+        replace the chain with a lookup table. When should you make this change, and how?
+      options:
+        - Together with the next feature, to save a test run
+        - After the next test turns red, while fixing it
+        - Now, changing only structure, then rerunning the tests
+      correct_index: 2
+      explanation: >-
+        Refactor on green: change structure only while every test passes, and change nothing else
+        with it. If a test then fails, the one edit is the cause.
+      option_feedback:
+        0: >-
+          With structure and behavior changing together, a failing test no longer tells you which
+          change broke it.
+        1: >-
+          On red, the cleanup is mixed into making a test pass, so a failure could come from either
+          change.
+    - question: >-
+        Your team adopts test-driven development for the study app. Which expectation is realistic,
+        given the evidence?
+      options:
+        - Faster delivery than before, from the first week
+        - More tests and a safety net, for more time up front
+        - No further need for other testing or design work
+      correct_index: 1
+      explanation: >-
+        Test-driven development reliably yields more tests and a regression safety net, and it
+        costs time up front and a learning curve. Its benefits follow short, steady cycles.
+      option_feedback:
+        0: >-
+          The costs include time up front and a learning curve; newcomers often find strict
+          test-driven development slow at first.
+        2: >-
+          Test-driven development has limits: qualities such as response time and security, and big
+          designs that cannot grow one small test at a time, need other techniques.

@@ -90,8 +90,11 @@ If you only remember eight things:
 7. **Finish the words, then let learners inspect the picture before every quiz.** Every
    identifier or symbol the TTS mangles gets a `pronunciations` entry. Give the last cue before
    each knowledge check, including the summary quiz, `pause_after: 2.5` or longer. Keep its
-   completed slide visible throughout that silence; the player opens the check 0.3 s before
-   the boundary, leaving at least two seconds to look after speech finishes at normal speed.
+   completed slide visible throughout that silence; the player pauses the audio right after
+   the last word, holds the slide silently, and opens the check 0.3 s before the boundary,
+   leaving at least two seconds to look after speech finishes at normal speed. The early
+   pause is what keeps a device's audio buffer (Bluetooth, AirPlay, 2x speed) from playing
+   the next section's first syllable before the check; see the `video-narration` skill.
 8. **Sources are shown, never read aloud; history is left out.** The spoken narration (and
    its captions), the quizzes, and the lesson summary teach concepts: they never name authors,
    books, dates, or places, and never say "the book says" or "as X observes". State the idea and
@@ -349,7 +352,8 @@ needed). Server setup, the render environment, and review are in
   Drama 3 reads words in context, so Kokoro-era phonetic respellings are not needed.
 - **Every quiz needs a short viewing pause after the final word.** On the last cue of every
   section with a knowledge check (including the final summary quiz), author `pause_after: 2.5`
-  or longer. The player stops 0.3 s before the section boundary, so this leaves 2.2 s to inspect
+  or longer. The player pauses the audio just after the last word and opens the check 0.3 s
+  before the section boundary, so this leaves 2.2 s to inspect
   the completed slide at normal speed (1.1 s at 2x), while stopping before the next section's
   first word. The default 0.55 s pause leaves only 0.25 s and is insufficient before a quiz.
   Keep the final picture complete and visible from `speech_end` through the pause; do not

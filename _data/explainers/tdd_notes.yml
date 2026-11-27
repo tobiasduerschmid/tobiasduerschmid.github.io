@@ -1,0 +1,190 @@
+# Key points for the printable notes of the Test-Driven Development video
+# narration (docs/narration-format.md, "Editable lesson notes and PDF export").
+# One entry per cue, keyed by <scene id>-<cue id>: one to four short bullets in
+# note form, with **bold** key terms. They live apart from the script, so
+# editing a bullet never changes the narration's audio fingerprint.
+intro-dinner:
+  - "**Example:** Split the bill, a feature in a group-chat app"
+  - "Dinner for three; the bill is $80.00"
+intro-missing:
+  - "Each share: $26.66; together: $79.98"
+  - "**Two cents** vanish on every such bill"
+intro-after:
+  - "The tests were green: written after the code, from its own output"
+  - "A test written afterward tends to **confirm the code**"
+intro-target:
+  - "**Target painted around the arrow:** the code's answer lands first"
+  - "The test is drawn around that answer, so it always looks like a hit"
+cycle-tdd:
+  - "**Test-driven development (TDD):** a small automated test before the code"
+  - "The test states the need; it cannot copy an answer"
+  - "Draw the target first; the code must hit it"
+cycle-loop:
+  - "**Red:** one small test, watched failing"
+  - "**Green:** just enough code to pass"
+  - "**Refactor:** clean up while all tests pass"
+  - "A turn of the cycle takes minutes"
+cycle-runner:
+  - "The **test runner** runs the tests and reports red or green"
+  - "pytest, JUnit, GoogleTest, Jest: same cycle in each language"
+list-spec:
+  - "**split(cents, people)** returns one share per person, in cents"
+  - "Whole cents keep every amount exact"
+list-cards:
+  - "**Test list:** every case, in plain words, before any code"
+  - "One person; even split; leftover cents; zero people"
+  - "The list remembers, so attention stays on one case"
+list-one:
+  - "**One test at a time:** never all tests first"
+  - "All at once: many red tests, then rewrites"
+  - "New ideas go on the list; begin with the easiest"
+starter-first_test:
+  - "**Starter test:** split(3000, 1) gives [3000]"
+  - "Writing the call designs the **interface**: name, inputs, result"
+starter-red:
+  - "First red: split does not exist"
+  - "A failed build counts as red"
+  - "**Predict:** the least code that makes this test pass?"
+starter-fake:
+  - "**Fake It:** return the constant [3000]"
+  - "One test describes one case; the code covers exactly that"
+starter-why_fake:
+  - "Green proves the wiring: test, runner, function"
+  - "Nothing untested is promised"
+triangulate-second_test:
+  - "Second test: split(3000, 3) gives [1000, 1000, 1000]"
+  - "**Predict:** the code still returns a constant; what does the runner report?"
+triangulate-red2:
+  - "Result: 1 failed, 1 passed"
+  - "An **assertion failure** shows expected against actual"
+triangulate-generalize:
+  - "**Triangulate:** generalize when a second example demands it"
+  - "New code: whole-cent share, once per person"
+  - "Tests grow specific; code grows general"
+leftover-bill:
+  - "Third test uses the real bill: 8000 cents, 3 people"
+  - "Expected value forces a decision: **who pays the extra cents?**"
+  - "Decision: the first people pay one cent more"
+leftover-predict:
+  - "Expected: [2667, 2667, 2666]"
+  - "**Predict:** what does divide-and-repeat return, and what is its sum?"
+leftover-red3:
+  - "Actual: [2666, 2666, 2666], sum 7998; 1 failed, 2 passed"
+  - "The bug appears at the desk, not at dinner"
+  - "You computed the expected shares before the code could"
+leftover-obvious:
+  - "**Obvious Implementation:** you know the code, so write it"
+  - "Add one cent per leftover cent, from the front"
+refactor-smell:
+  - "The code fills, then patches: correct but unclear"
+  - "**Refactor:** change structure, keep behavior; allowed on green"
+refactor-tidy:
+  - "Two names: **share** and **extra**"
+  - "One rule: share, plus one cent for the first extra people; still green"
+refactor-done:
+  - "One full cycle per line: red, green, refactor"
+  - "Every finished line leaves a test behind"
+  - "Open line: **zero people** (your turn)"
+rules_red-test_first:
+  - "**Rule 1, Test first:** write the test before any code for the behavior"
+  - "A test written afterward copies the code's output: a target painted around the arrow"
+  - "The expected answer must come from the requirement"
+rules_red-test_first_why:
+  - "Postponed tests get dropped under deadlines; a first test already exists"
+  - "The call is designed from the caller's side"
+  - "**Cost:** you need to know the intended behavior; if unsure, explore first"
+rules_red-watch:
+  - "**Rule 2, Watch it fail:** see each new test fail, for the expected reason"
+  - "Before the fix, a teammate's test checks only the number of shares: green"
+  - "**Predict:** is that good news?"
+rules_red-liar:
+  - "The test ignores the amounts, so it **cannot detect** the missing cents"
+  - "Like a smoke alarm with no battery: silent either way"
+  - "Watching a test fail **tests the test**"
+rules_red-watch_why:
+  - "**Red before, green after:** the test detects the behavior you added"
+  - "An alarm's test button proves the alarm works"
+  - "A new test green at once: the behavior exists, or the test is too weak"
+rules_red-message:
+  - "Read the failure message before fixing"
+  - "**Right reason:** expected and actual values differ"
+  - "Wrong reason (typo, missing file): repair the test first"
+rules_green-smallest:
+  - "**Rule 3, Smallest step:** only enough code for the failing test"
+  - "Example: a tip parameter no test asks for"
+  - "Untested code can be wrong while every test stays green"
+rules_green-debugging:
+  - "Every passing run is a **checkpoint**, a save point"
+  - "A surprising red: the cause is in the latest few lines; undo them"
+rules_green-step_size:
+  - "**Step size is a gear:** Fake It low, Obvious Implementation high"
+  - "After a surprising red, shift down to smaller steps"
+rules_green-step_cost:
+  - "**Cost:** small steps feel slow, and design still needs thought while refactoring"
+  - "Ideas such as the tip wait on the test list"
+rules_green-strict:
+  - "**Three laws of TDD:** the strictest form, a line or two at a time"
+  - "Training wheels: practice tiny steps, then widen them"
+rules_green-on_green:
+  - "**Rule 4, Refactor on green:** structure changes only while all tests pass"
+  - "Refactoring walks a tightrope; passing tests are the **safety net**"
+rules_green-slip:
+  - "A slip (<= for <) turns all three tests red"
+  - "One edit, one cause: undo"
+rules_green-two_hats:
+  - "Green before and after a cleanup: the checked behavior survived"
+  - "On red, structure and behavior change together: the cause is hidden"
+  - "**Two hats:** add behavior or restructure, never both at once"
+rules_green-cleanup:
+  - "Skipping cleanup: fakes and patches accumulate into a shaky tower"
+  - "A trusted suite makes cleanup safe enough to do"
+rules_green-limit:
+  - "**Limit:** green vouches only for checked behavior"
+  - "Tests are a flashlight: unlit code can hide a bug"
+benefits-more_tests:
+  - "**More tests:** each behavior arrives with its test"
+  - "The most consistent finding in TDD studies"
+benefits-safety_net:
+  - "**Regression safety net:** old tests rerun after every change"
+  - "It is what makes refactoring safe"
+benefits-docs:
+  - "**Executable documentation:** tests show how to call the code"
+  - "Only as long as the tests are kept current"
+benefits-small_units:
+  - "**Small, testable units:** callable alone, clear inputs and outputs"
+  - "Studies: smaller, simpler units; overall design benefit is **debated**"
+costs-time:
+  - "**Time up front**"
+  - "Four industrial case studies: defect density 40-90% lower"
+  - "Managers estimated 15-35% more development time; not a general law"
+costs-discipline:
+  - "**A learning curve:** hard and slow at first"
+  - "**Tests to maintain:** tests are code"
+  - "Tests of internals break when you refactor"
+costs-limits:
+  - "**Limits:** needs automated, fast, repeatable checks"
+  - "Poor fit: no exact right answer (image recognition)"
+  - "Poor fit: response time, availability, security"
+  - "Poor fit: big designs that cannot grow test by test"
+evidence-versus_after:
+  - "TDD against a test right after each small piece: mostly no clear difference"
+  - "Clear gains appear against late or scarce testing"
+evidence-steady:
+  - "Quality and productivity tracked **short, steady cycles**, not test order"
+  - "Test first ensures the test exists and has failed once"
+evidence-practice:
+  - "Strict TDD is **rare**; most developers use tests more loosely"
+  - "Keep: a test per behavior, small steps, frequent runs, cleanup on green"
+summary-recap_cycle:
+  - "Problem: a test written afterward confirmed the bug"
+  - "Cycle: red, green, refactor; cases from a test list, one by one"
+summary-recap_rules:
+  - "**Test first:** expected values from the requirement, not the code"
+  - "**Watch it fail:** proof that the test can catch the bug"
+  - "**Smallest step:** each line tested; failures stay near their cause"
+  - "**Refactor on green:** each cleanup checked against every test"
+summary-recap_consequences:
+  - "Gives: more tests, a safety net, small testable units"
+  - "Costs: time, learning curve, test maintenance; needs fast, exact checks"
+  - "Benefits follow short, steady cycles"
+  - "Next: test-drive the zero-people case"

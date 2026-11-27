@@ -6,11 +6,15 @@ layout: sebook
 <link rel="stylesheet" href="/css/song-video.css">
 <link rel="stylesheet" href="/css/print-light.css">
 
-**Start with the song.** *Red, Green, Refactor* is a six-minute music video in which Test leads and Code follows through the TDD cycle. It previews the three rules of TDD, why you watch a new test fail first, the red–green–refactor steps on a growing `MyStack`, arrange–act–assert, choosing test cases at boundaries and bad inputs, fast and repeatable tests, regression tests, and the test pyramid. Captions are on by default.
+**Start with the narrated lesson.** *Two cents short* follows one small feature, splitting a dinner bill in a group-chat app, through test-driven development: a test list, then red, green, and refactor, one test at a time, in Python with pytest, Java with JUnit, C++ with GoogleTest, or TypeScript with Jest. It explains why each of four rules matters, and what TDD gives you, what it costs, and what the evidence leaves open. Its last knowledge check continues to the song.
+
+{% include narration.html topic="tdd" %}
+
+**Then the song.** *Red, Green, Refactor* is a six-minute music video in which Test leads and Code follows through the TDD cycle. It previews the three rules of TDD, why you watch a new test fail first, the red–green–refactor steps on a growing `MyStack`, arrange–act–assert, choosing test cases at boundaries and bad inputs, fast and repeatable tests, regression tests, and the test pyramid. Captions are on by default.
 
 Before you press play, predict: you write `def pop(self): return self.elements[-1]` and a test that only checks `assert stack.pop() == 3`. Does the test pass, and what bug can it miss?
 
-{% include song-video.html song=site.data.songs.red_green_refactor id="tdd-song" %}
+{% include song-video.html song=site.data.songs.red_green_refactor id="tdd-song" narration="tdd-video" %}
 
 # Introduction
 

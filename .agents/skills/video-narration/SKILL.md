@@ -157,12 +157,27 @@ same edit as the choreography.
 **Always leave time to look before a quiz.** Give the last cue of every section
 with a knowledge check, including the summary quiz, `pause_after: 2.5` or
 longer. Finish all spoken words and complete the picture by `speech_end`, then
-hold it visibly through the silence. The player opens the quiz 0.3 s before
-the section boundary, so 2.5 s of rendered silence leaves 2.2 s to inspect the
-slide at normal speed (1.1 s at 2x). The ordinary 0.55 s cue pause leaves only
-0.25 s and is insufficient. Regenerate the audio, captions, and timing
-together; a delayed overlay over ongoing speech does not provide this pause.
-Never trim speech or start the next section's words before the check.
+hold it visibly through the silence. The player pauses the audio right after
+the last word (`speech_end` + 0.35 s), holds the finished picture in silence,
+and opens the quiz 0.3 s before the section boundary, so 2.5 s of rendered
+silence leaves 2.2 s to inspect the slide at normal speed (1.1 s at 2x). The
+ordinary 0.55 s cue pause leaves only 0.25 s and is insufficient. Regenerate
+the audio, captions, and timing together; a delayed overlay over ongoing speech
+does not provide this pause. Never trim speech or start the next section's
+words before the check.
+
+**No sound may reach a check or a prediction from the speech after it.** Audio
+a browser has handed to the output keeps playing after `pause()`: a quarter
+second or more on Bluetooth headphones, seconds over AirPlay, and twice the
+media at 2x. When the player paused 0.3 s before the boundary, learners heard
+the next section's first syllable just as the quiz opened (TDD narration, Nov
+2026). `js/narration-transport.js` therefore pauses every automatic stop
+(knowledge checks and prediction holds) in the silence right after the spoken
+words and opens what follows on a timer; keep it that way. Never move a stop
+back toward the boundary, never shorten `pause_after` below 2.5 s before a
+check, and keep `tests/narration-check-stop.spec.js` asserting that more than a
+second of the final silence stays unplayed. An "it stopped before the boundary"
+oracle is too weak: it passes while a device's buffer plays the next word.
 
 ## 2. Animation
 
@@ -207,6 +222,29 @@ from building.
   as a shape, such as a topic, never carries one. Say which end is the
   component at the call site; never infer it from coordinates, which can
   coincide with another picture's shapes.
+- A lesson whose topic needs code in several languages draws that code on the
+  stage, not in a code panel, so the video keeps one style (the Test-Driven
+  Development lesson: Python with pytest, Java with JUnit 5, C++ with
+  GoogleTest, TypeScript with Jest). Declare `languages` in the visual
+  package's `resources` and keep every card and runner line in
+  `<topic>_code.yml` (its `stage` part), which the stage page embeds as
+  `#narration-code`. Draw each piece once per language marked
+  `data-code-variant` (`ArchKit.code` takes `lines` per language; the song kit
+  highlights each language); the stage shows the viewer's language from the
+  player's Code control (`data-code-language`), and the notes' stills follow
+  the notes' own select. Keep speech and `visual` language-neutral, run every
+  stage check in every language (card heights differ: Java is usually the
+  tallest), and verify each card and runner line by compiling and running it
+  in its framework.
+- A piece of the picture may act as a pointer shortcut for a player setting
+  (the TDD lesson's runner cards switch the code language): mark it
+  `data-stage-choice="code-language"` and `data-stage-value="<language>"`,
+  give it a hover style for `is-pointed`, and keep the same setting in the
+  player's controls, because the stage is hidden from assistive technology
+  and cannot take focus. The play button over the picture hands such clicks
+  to the frame (`picture-click`, `VideoNarrationStage.choiceAt`; see
+  `docs/video-narration.md`). Test it with a real mouse click at the piece's
+  spot, and check that the click neither plays, pauses, nor skips.
 - Paper pieces (`card`, `note`, `speech`, `checklist`) are as wide as `w`
   plus padding; `listCard` is exactly `w`. Leave room for a raised, lit card.
 - Stamps do not shake the stage, and nothing large changes brightness quickly
@@ -221,6 +259,20 @@ from building.
   cue, so keep them light: merge every shape of one paint into one path
   (`ArchKit.shape`), and give tiny copies, such as tokens in a pipe, a flat
   silhouette tier. Count the stage's elements per cue before and after.
+- Give each abstract idea one metaphor picture and reuse it wherever the idea
+  acts (the TDD lesson: a target painted around the arrow, a smoke alarm's
+  test button, game checkpoints, a tightrope above the safety net of tests),
+  so the picture, not a bullet list, carries the idea. Make it large where it
+  carries the cue. The speech links every metaphor picture to its concept in
+  passing, as the picture appears, in words that sound like ordinary speech
+  ("it's like a smoke alarm with no battery", "the code's answer came first,
+  and the test was drawn around it"); a subtle link is fine, an explanation of
+  the picture or an added pause is not. A picture the speech never mentions
+  leaves the viewer to guess why it is there. Keep such pictures in a topic art module
+  (`js/video-narration/<topic>-art.js`, see `docs/tdd-narration.md`): one
+  function per picture, states as classes on its root, moving parts as groups
+  with a CSS pivot, and no text, ids, gradients, filters, or clip paths,
+  because the notes page copies the stage for every cue.
 
 ## 3. No overlaps, no occlusion, visible gaps
 

@@ -59,6 +59,57 @@
   syncTheme();
   if (host) new MutationObserver(syncTheme).observe(host, { attributes: true, attributeFilter: ['class'] });
 
+  // A lesson with code in several languages draws each code piece in every
+  // language; the stage shows the viewer's (data-code-language). It follows
+  // the code-language preference of the page that embeds the frame (or of
+  // this page, on the notes), and shows the lesson's default until then.
+  function followCodeLanguage() {
+    const languages = story.languages;
+    if (!Array.isArray(languages) || !languages.length) return;
+    const fallback = story.default_language || languages[0];
+    stage.dataset.codeLanguage = fallback;
+    let preferences = window.SEBookCodePreferences;
+    try {
+      if (!preferences && window.parent !== window) preferences = window.parent.SEBookCodePreferences;
+    } catch (error) { /* cross-origin host */ }
+    if (!preferences) return;
+    const unsubscribe = preferences.subscribe(() => {
+      stage.dataset.codeLanguage = preferences.choose(languages, fallback);
+    });
+    window.addEventListener('pagehide', unsubscribe, { once: true });
+  }
+  followCodeLanguage();
+
+  // The picture's own controls: an element marked data-stage-choice (the
+  // setting it picks, such as code-language) and data-stage-value (its value)
+  // answers a click on the picture. The page that embeds the frame covers
+  // the picture with its play button, so it asks for the choice under a
+  // point (in this frame's coordinates) and applies it; keyboard users have
+  // the same setting in the player's controls. Only a control the picture
+  // shows now counts: one still to come is in place but transparent.
+  function shown(element) {
+    for (let node = element; node && node !== stage.parentElement; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) < 0.5) return false;
+    }
+    return true;
+  }
+  function controlAt(x, y) {
+    return [...stage.querySelectorAll('[data-stage-choice]')].reverse().find((element) => {
+      const box = element.getBoundingClientRect();
+      return x >= box.left && x <= box.right && y >= box.top && y <= box.bottom && shown(element);
+    }) || null;
+  }
+  function choiceAt(x, y) {
+    const control = controlAt(x, y);
+    return control ? { setting: control.dataset.stageChoice, value: control.dataset.stageValue } : null;
+  }
+  /** Marks the control under the pointer (is-pointed); a null point, off the picture, marks none. */
+  function point(x, y) {
+    const control = x === null ? null : controlAt(x, y);
+    stage.querySelectorAll('[data-stage-choice]').forEach(element => element.classList.toggle('is-pointed', element === control));
+  }
+
   let scene = null;
   const ready = window.SongScene.loadFonts().then(() => {
     scene = window.SongScene.build(stage, songStoryboard(), stage.dataset.topic);
@@ -121,5 +172,7 @@
     /** Poses every picture at `time`, in narration seconds. Call after ready. */
     seek: time => scene.seek(time),
     still,
+    choiceAt,
+    point,
   };
 })();

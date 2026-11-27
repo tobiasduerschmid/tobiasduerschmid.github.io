@@ -1,0 +1,1077 @@
+# Edit speech and teaching text here. Visual state lives in ../narration_visuals/tdd.json.
+# Sources for every claim: docs/tdd-narration.md.
+# Speech is language-neutral: every code card and runner line on the stage exists in
+# Python + pytest, Java + JUnit 5, C++ + GoogleTest, and TypeScript + Jest (design/code.md).
+version: 1
+id: tdd
+kind: video
+title: Two cents short
+lesson:
+  name: Test-Driven Development
+  summary: >-
+    Follow one small feature, splitting a dinner bill in a group-chat app, through
+    <strong>test-driven development</strong>: a test list, then red, green, and refactor, one test
+    at a time, in Python, Java, C++, or TypeScript. Learn four rules and the failure each one
+    prevents, and what TDD reliably gives you, what it costs, and what the evidence leaves open.
+  prerequisites: >-
+    Assumes you can write a function and a simple automated test (an assertion that compares a
+    result with an expected value) in one programming language.
+  chapter: /SEBook/testing/tdd.html
+  views: /SEBook/testing/tdd
+  parts:
+    - Motivation
+    - Example
+    - Rules
+    - Consequences
+  parts_label: Part of the lesson
+  complete_examples: >-
+    The complete example finishes the test list: it adds the fourth cycle, zero people, which the
+    video leaves to you. Amounts are whole cents. The first people in the list pay the leftover
+    cents, one cent each.
+speech:
+  voice: drama3-female6
+  speed: 1
+  pronunciations:
+    TDD: T D D
+    pytest: pie test
+    JUnit: J unit
+    GoogleTest: Google Test
+    C++: C plus plus
+media:
+  audio: /assets/audio/tdd-narration.mp3
+  captions: /assets/narration/tdd-narration.vtt
+  script: /assets/narration/tdd-narration.txt
+scenes:
+  - id: intro
+    part: Motivation
+    outline: Two cents short
+    label: "Motivation: two cents short"
+    title: Friday night, two cents short
+    purpose: Meet the feature this lesson builds, and the bug its tests missed.
+    takeaway: >-
+      A test written after the code tends to confirm what the code already does, so it can stay
+      green while the code is wrong.
+    cues:
+      - id: dinner
+        say: >-
+          Friday night, ramen on Sawtelle with Priya and Mateo. You pay the eighty-dollar bill, then
+          open the group chat. Last night you built a new feature for the chat app your team is
+          making: split the bill. One tap, and everyone sees their share.
+        step: Split the bill
+        note: A group-chat feature splits a dinner bill among friends.
+        visual: >-
+          Friday's dinner from above: a wooden table with three bowls of tonkotsu ramen, each with
+          noodles, half an egg, chashu, nori, and scallions, a plate of gyoza, three glasses of
+          matcha soda, and chopsticks. A receipt on the table reads Sawtelle Ramen, 3 guests, Total
+          $80.00. Beside the table, a phone shows a group chat named Ramen crew, with Priya, Mateo,
+          and You. Your message reads I paid, splitting it now, above a button labeled Split the
+          bill. A sticker reads Built last night.
+      - id: missing
+        say: >-
+          The app tells each of you to pay twenty-six dollars and sixty-six cents. The three shares
+          add up to seventy-nine ninety-eight. Two cents are gone. Tonight it's two cents. But
+          every bill that doesn't divide evenly will come up short.
+        step: Two cents are gone
+        note: Three shares of $26.66 add up to $79.98, not $80.00.
+        visual: >-
+          The chat shows a bill card: $80.00 split 3 ways, with three rows, Priya $26.66, Mateo
+          $26.66, and You $26.66, and a sum line, Total of shares $79.98. On the receipt, Total
+          $80.00 is circled. Two copper cents roll off the edge of the table, and a red sticker
+          reads 2 cents missing.
+      - id: after
+        say: >-
+          And your tests were green. You wrote them after the code: you tried thirty dollars for
+          three people, saw ten dollars each, and saved that as the test. A test written after
+          the code tends to confirm what the code already does.
+        step: The test copied the code
+        note: The test was written after the code, from the code's own output.
+        source: >-
+          Edwards and Shams 2014 (student tests follow the happy path); Beck, Canon TDD, 2023
+          (copying computed values into expected values defeats double checking); Spacco and Pugh
+          2006 (students test after the code unless the process is assessed).
+        visual: >-
+          Two editor cards, one above the other. The first, labeled Code: written first, shows the
+          split function. An arrow down reads then the test, from the code's output. The second,
+          labeled Test: written after, shows the one test: split with 3000 and 3 expects [1000,
+          1000, 1000], with a green tag, Passed. Beside them, a small picture of a wooden wall with
+          an arrow stuck in it, and a note: The expected value came from the code.
+      - id: target
+        say: >-
+          That's like shooting an arrow first and then painting the target around wherever it
+          landed. The code's answer came first, and the test was drawn around it, so of course
+          it looks like a hit. So let's flip the order.
+        pause_after: 2.5
+        step: "A target painted around the arrow"
+        note: "Testing after the code paints the target around the arrow: it always looks like a hit."
+        source: >-
+          Beck, Canon TDD, 2023 (copying computed values into expectations defeats double
+          checking); CS 35L lecture 9, slide 19 (testing after development).
+        visual: >-
+          The code cards leave, and the picture of the wall grows large: around the arrow, the rings
+          of a target are painted on one by one, the paint still wet and a brush below, labeled A
+          test written after the code: a target painted around the arrow. The note The expected
+          value came from the code stays, and a sticker reads Flip the order.
+  - id: cycle
+    part: Motivation
+    outline: The cycle
+    label: "Motivation: red, green, refactor"
+    title: Red, green, refactor
+    purpose: See what test-driven development is, and the three steps of its cycle.
+    takeaway: >-
+      Test-driven development writes a small failing test first (red), then just enough code to pass
+      it (green), then cleans up while every test passes (refactor), in turns of minutes.
+    cues:
+      - id: tdd
+        say: >-
+          Test-driven development, TDD for short, flips that order. Before you write a piece of
+          code, you write a small automated test that says what the code should do. The test
+          comes from what you need, not from the code's answer. This time, you draw the target
+          first, and the code has to hit it.
+        step: Test-driven development
+        note: Write a small automated test before the code it tests.
+        source: >-
+          Beck 2002, Preface (write new code only if an automated test has failed); CS 35L lecture
+          9, slide 20 (TDD puts testing first).
+        visual: >-
+          A title card reads Test-driven development (TDD): write a small automated test before the
+          code it tests. Below it, two cards, Code and Test, swap places under the label First the
+          test, then the code: Test, labeled Says what the code should do, then Code, labeled Has to
+          hit the test. Beside them, a large archery target appears on its stand first; then an
+          arrow flies in and lands in the gold.
+      - id: loop
+        say: >-
+          TDD runs in a short cycle with three steps. Red: write one small test and watch it fail.
+          Green: write just enough code to make it pass. Refactor: clean up the code while every
+          test still passes. Then the next test. One turn takes minutes.
+        step: The cycle
+        note: "Red, green, refactor: one turn takes minutes."
+        source: >-
+          Beck 2002, Preface (red, green, refactor); CS 35L lecture 9, slides 20 and 22 (the TDD
+          mantra).
+        visual: >-
+          A cycle of three stations joined by arrows, each arrow in the color of the step it leads
+          to. Red, a red disc with a cross: write one small test, watch it fail. Green, a green disc
+          with a check: just enough code to pass. Refactor, a blue disc with a broom: clean up,
+          tests still pass. An arrow leads from Refactor back to Red, labeled next test. In the
+          middle, a stopwatch above the label One turn: minutes.
+      - id: runner
+        say: >-
+          Red and green come from the test runner, the tool that runs your tests and reports the
+          result. Each language here has one: pytest for Python, JUnit for Java, GoogleTest for C++,
+          Jest for TypeScript. Switch the code to your language anytime: the cycle stays the same.
+        pause_after: 2.5
+        step: The test runner
+        note: Each language's test runner reports red or green.
+        visual: >-
+          The cycle becomes a strip at the top: Red, Green, Refactor, and an arrow back labeled next
+          test. Under it, four runner cards, each with a red line and a green line as that tool
+          prints them. Python, pytest: 1 failed, 1 passed, and 2 passed. Java, JUnit 5: 1 tests
+          failed, and 2 tests successful. C++, GoogleTest: FAILED 1 test, and PASSED 2 tests.
+          TypeScript, Jest: Tests: 1 failed, 1 passed, and Tests: 2 passed. The card of the viewer's
+          language is outlined, with the label Your language. A label reads Same cycle in every
+          language.
+  - id: list
+    part: Example
+    outline: Test list
+    label: "Example: the test list"
+    title: Write the list before the code
+    purpose: Start the feature with a test list, and learn why its lines become tests one at a time.
+    takeaway: >-
+      A test list names every case in plain words; you turn one line at a time into a test, and new
+      ideas go on the list.
+    cues:
+      - id: spec
+        say: >-
+          Here's the job. Split takes two numbers: the bill in cents, and how many people share it.
+          It returns a list with each person's share, also in cents. Cents are whole numbers, so
+          every amount in the code and in the tests is exact.
+        step: What split does
+        note: Split takes a bill in cents and a number of people, and returns each share.
+        visual: >-
+          The split function drawn as a coin-sorting machine with a name plate reading split. Tags
+          above it read Bill in cents: 8000, and People: 3; copper cents pour into its hopper, and
+          three empty trays wait at its output, labeled A list of shares, one per person. The phone
+          beside it shows $80.00 with the label 8000 cents. A note with a copper cent reads Whole
+          cents: every amount is exact.
+      - id: cards
+        say: >-
+          Before any code, write a test list: every case you can think of, in plain words. One
+          person pays it all. An even split. Leftover cents. Zero people. The list holds the cases,
+          so your head is free for the one you're working on.
+        step: The test list
+        note: A test list names every case you can think of, before any code.
+        source: >-
+          Beck 2002, chapter 25, Test List; Beck, Canon TDD, 2023, step 1.
+        visual: >-
+          A spiral-bound notepad titled Test list appears large in the middle of the desk, and four
+          lines write themselves: One person pays it all, Even split, Leftover cents, and Zero
+          people, each with an empty checkbox. A note reads Plain words, no code yet. Then the
+          notepad moves to the side.
+      - id: one
+        say: >-
+          The list is not a pile of tests to write up front. Write them all first, and you'd face a
+          wall of red, and rewrite them when the design shifts. TDD means one test at a time. New
+          ideas go on the list. Start with the easiest line.
+        pause_after: 2.5
+        step: One test at a time
+        note: Turn one line into a test, make it pass, then take the next.
+        source: >-
+          Beck, Canon TDD, 2023 (turning every list item into a test first is a mistake: the first
+          passing test may force rework of the others, and a long stretch without green is
+          demoralizing); Beck 2002, chapter 25, Test List.
+        visual: >-
+          The test list stays at the side. On the left, a status board of twelve lamps lights up all
+          red, under a red stamp reading Not all tests first, with crumpled drafts beside it and a
+          label: A wall of red, and rewrites when the design shifts. Below, one test card, with an
+          arrow from the test list, is labeled One test at a time. Under the list, a tag reads Start
+          here, and the first line, One person pays it all, is marked as the current line.
+  - id: starter
+    part: Example
+    outline: Fake It
+    label: "Example: first red, first green"
+    title: First red, first green
+    purpose: Write the first test, watch it fail, and make it pass with the least code.
+    takeaway: >-
+      A starter test picks the easiest case; Fake It passes it with a constant, which proves the
+      test and runner work and promises nothing that no test has checked.
+    cues:
+      - id: first_test
+        say: >-
+          The easiest line is the starter test: one person pays it all. The test calls split with
+          three thousand cents and one person, and expects a list holding one share: three thousand.
+          Look what you just designed: the name, the inputs, and the result, all from the caller's
+          side.
+        step: The starter test
+        note: The first test already designs the function's name, inputs, and result.
+        source: >-
+          Beck 2002, chapter 26, Starter Test; Fowler, Test Driven Development (writing the test
+          first makes you think about the interface before the implementation).
+        visual: >-
+          A test card in the viewer's language shows one test, one person pays it all: it calls
+          split with 3000 and 1 and expects the list [3000]. Under it, three tags: Name: split,
+          Inputs: 3000, 1, and Result: [3000]. On the test list, One person pays it all is marked as
+          the current line. No code card exists yet: its place shows a dashed outline labeled No
+          code yet. The runner at the bottom reads no tests run yet.
+      - id: red
+        say: >-
+          Run it. Red: there is no split yet. In some languages the test fails when it runs; in
+          others the code won't even build. Both count as red. Now predict: what is the least code
+          you could write to turn this one test green?
+        prediction: true
+        pause_after: 4
+        step: Predict the smallest step
+        note: What is the least code that turns this test green?
+        source: >-
+          CS 35L lecture 9, slides 20 and 24 (a small test that fails, and perhaps doesn't even
+          compile at first); Martin 2008, chapter 9 (a compile failure counts as a failure).
+        visual: >-
+          The test card stays. The runner, a terminal window along the bottom, turns red, its signal
+          light red, with a cross icon and the word Red, and shows the viewer's runner's own message
+          that split does not exist: an import error in pytest, cannot find symbol in Java,
+          undeclared identifier in C++, no exported member in TypeScript. A note with a red signal
+          light reads Not building counts as red. The dashed code outline holds a question mark and
+          the label Least code to pass?
+      - id: fake
+        say: >-
+          Return a list holding three thousand. A constant, and nothing else. This move is
+          called Fake It. Run the test: green. Yes, it looks like cheating, a storefront on a
+          movie set with nothing behind the door. But one test only describes one case, and this
+          code handles exactly that case.
+        step: Fake It
+        note: Fake It returns exactly the value the one test expects.
+        source: >-
+          Beck 2002, chapter 28, Fake It ('Til You Make It); CS 35L lecture 9, slide 29 (the
+          simplest implementation that passes the test).
+        visual: >-
+          A code card appears under the test card: the split function, whose body returns the
+          constant list [3000], with that line highlighted. A note with a film-set storefront, only
+          a front propped up by wooden braces, reads Fake It: a constant, a front with nothing
+          behind it. The runner turns green, its signal light green, with a check icon, the word
+          Green, and the runner's line for 1 passed.
+      - id: why_fake
+        say: >-
+          Fake It buys two things. Green now tells you the test, the runner, and the function are
+          wired up correctly. And the code promises nothing that no test has checked. The fake won't
+          survive the next test. Cross off the first line.
+        pause_after: 2.5
+        step: Why fake it
+        note: A fast green proves the wiring; the code claims no more than is tested.
+        source: >-
+          Beck 2002, chapter 28, Fake It (a green bar tells you where you stand; one concrete
+          example keeps the scope under control).
+        visual: >-
+          The test card, the code card, and the green runner stay. Two notes appear: one with a plug
+          pushed into a lit wall socket, Green proves the wiring: test, runner, function; and
+          Nothing untested is promised. On the test list, One person pays it all is checked and
+          struck through, and the current-line marker moves to Even split.
+  - id: triangulate
+    part: Example
+    outline: Triangulate
+    label: "Example: a second example"
+    title: A second example forces real code
+    purpose: Add a second test that the constant cannot pass, and generalize the code.
+    takeaway: >-
+      Triangulate generalizes only when a second example forces it: as tests get more specific, the
+      code gets more general.
+    cues:
+      - id: second_test
+        say: >-
+          Next line: an even split. The new test calls split with three thousand cents and three
+          people, and expects one thousand, three times. The code still returns its constant.
+          Predict: when you run both tests, what will the runner report?
+        prediction: true
+        pause_after: 4
+        step: Predict the runner
+        note: The code returns a constant. What does the runner report for two tests?
+        visual: >-
+          The test card shows a second test, even split: it calls split with 3000 and 3 and expects
+          [1000, 1000, 1000]. The code card still returns the constant [3000], with that line
+          highlighted. The runner is gray, with a question mark and two test rows still waiting: one
+          person pays it all, and even split.
+      - id: red2
+        say: >-
+          One failed, one passed. The old test is still green. The new one is red, and this time the
+          runner shows an assertion failure: expected three shares of one thousand, got a single
+          three thousand. That message is the difference you now have to close.
+        step: An assertion fails
+        note: The new test fails on an assertion that shows expected and actual values.
+        visual: >-
+          The runner turns red with a cross icon and the runner's line for 1 failed, 1 passed. Its
+          test rows show one person pays it all, passed, with a check, and even split, failed, with
+          a cross, and its failure detail shows the runner's message: expected [1000, 1000, 1000],
+          got [3000]. A note with a magnifying glass reads The gap to close: expected against got.
+      - id: generalize
+        say: >-
+          No constant can satisfy both tests. That is Triangulate: you generalize only when a
+          second example forces you to, the way a second sighting pins down a point. So divide
+          the cents among the people and repeat that share for each. Run: two green. As tests
+          get more specific, code gets more general.
+        pause_after: 2.5
+        step: Triangulate
+        note: Triangulate generalizes when a second example forces it.
+        source: >-
+          Beck 2002, chapter 28, Triangulate; Martin 2014, The Cycles of TDD (as the tests get more
+          specific, the code gets more generic).
+        visual: >-
+          In the code card, the constant line is struck out and removed, and a new line takes its
+          place: the whole-number share, cents divided by people, repeated once per person. A note
+          with two survey flags whose sightlines meet at a star reads Triangulate: two examples pin
+          down one general rule. The runner turns green with a check and the runner's line for 2
+          passed. On the test list, Even split is checked and struck through, and the current-line
+          marker moves to Leftover cents.
+  - id: leftover
+    part: Example
+    outline: Leftover cents
+    label: "Example: the leftover cents"
+    title: Friday's bill becomes a test
+    purpose: Turn the bill that went wrong into a test, and see what writing it first forces you to decide.
+    takeaway: >-
+      Writing the expected result first forces a decision the code never asked for, who pays the
+      leftover cents, and that test catches the bug at your desk.
+    cues:
+      - id: bill
+        say: >-
+          Next line: leftover cents. Use Friday's bill: eight thousand cents, three people. To write
+          the expected result, you must answer a question the old code never asked: who pays the
+          extra cents? You decide: one extra cent each, starting with the first person in the list.
+        step: Who pays the extra cents?
+        note: The expected value forces a decision about the leftover cents.
+        visual: >-
+          The receipt, Total $80.00, 3 guests, slides in beside the test card. The test card shows
+          the start of a third test, first people pay the extra cent: it calls split with 8000 and
+          3, and its expected value is an empty slot with a question mark. A gold note with a stack
+          of copper cents asks Who pays the extra cents? and a second note answers Decision: the
+          first people pay 1 cent more.
+      - id: predict
+        say: >-
+          So the test expects twenty-six sixty-seven, twenty-six sixty-seven, and twenty-six
+          sixty-six. The code still divides and repeats. Predict: what does split return for eight
+          thousand cents and three people, and what do those shares add up to?
+        prediction: true
+        pause_after: 4
+        step: Predict the shares
+        note: The code divides and repeats. What does it return for 8000 cents and 3 people?
+        visual: >-
+          The test's expected value fills in: [2667, 2667, 2666], and a label on the test card reads
+          Sums to 8000. Below, the code card still shows the share, cents divided by people,
+          repeated per person. Beside them, a card labeled split(8000, 3) returns holds [?, ?, ?]
+          and Sum ?
+      - id: red3
+        say: >-
+          Twenty-six sixty-six, three times: seven thousand nine hundred ninety-eight. One failed,
+          two passed. There's Friday's bug, caught at your desk. The test could catch it because you
+          worked out the right shares yourself, before any code could suggest an answer.
+        step: Friday's bug, in red
+        note: The test fails with three shares of 2666, which sum to 7998.
+        visual: >-
+          The card fills: split(8000, 3) returns [2666, 2666, 2666], Sum 7998. The runner turns red
+          with a cross and the runner's line for 1 failed, 2 passed, and its failure detail shows
+          the runner's message: expected [2667, 2667, 2666], got [2666, 2666, 2666]. A red note with
+          a beetle reads Friday's bug, caught at your desk.
+      - id: obvious
+        say: >-
+          This time you know exactly what to type, so type it. That's Obvious Implementation. Fill
+          in every share as before, then add one cent to each of the first people until the leftover
+          cents are used up. Run all three tests: green.
+        pause_after: 2.5
+        step: Obvious Implementation
+        note: When you know what to type, type it.
+        source: >-
+          Beck 2002, chapter 28, Obvious Implementation.
+        visual: >-
+          In the code card, the old line leaves and new lines appear below the share: a loop that
+          adds one cent to each of the first people, once per leftover cent. The test card folds to
+          its title, 3 tests. A note with a brass key turning in a lock reads Obvious
+          Implementation: you know what to type. The runner turns green with a check and the
+          runner's line for 3 passed. The card now reads split(8000, 3) returns [2667, 2667, 2666],
+          Sum 8000. On the test list, Leftover cents is checked and struck through.
+  - id: refactor
+    part: Example
+    outline: Refactor
+    label: "Example: refactor on green"
+    title: Clean up while it's green
+    purpose: Improve the code's structure without changing its behavior, with the tests as proof.
+    takeaway: >-
+      Refactoring changes how the code is written, not what it does; rerunning the passing tests
+      shows that the tested behavior survived.
+    cues:
+      - id: smell
+        say: >-
+          Green, but look at the code. It fills in every share, then goes back and patches some of
+          them. It works, yet it reads like a repair. Now that all tests pass, you may refactor:
+          change how the code is written without changing what it does.
+        step: Refactor
+        note: Refactoring changes structure, not behavior.
+        source: >-
+          CS 35L lecture 9, slides 20 and 21 (make the design cleaner while not changing the
+          functionality); Fowler 2018, Refactoring, chapter 2.
+        visual: >-
+          The code card shows the passing version, with the fill line and the patching loop
+          highlighted, and two tags under it: Fill every share, and Then patch some. A gold note
+          with a bandage reads Reads like a repair. The runner is green, 3 passed. A blue note with
+          a broom reads Refactor: change the structure, not the behavior.
+      - id: tidy
+        say: >-
+          Say it the way you'd explain it to a friend. Name two values: share, and extra for the
+          leftover cents. Then build the list: everyone pays the share, and with two cents left
+          over, the first two people pay one cent more. Run the tests: still three green. Those
+          tests were your safety net.
+        step: Name it, then rebuild it
+        note: Two named values and one rule replace the fill-and-patch code.
+        visual: >-
+          The code card changes in place: the fill and patch lines are struck out and removed, and
+          new lines take their place: two named values, share and extra, and one line that builds
+          the list, share plus one cent for the first extra people. Tags read share and extra:
+          named, and Tests unchanged; the test card above stays folded, 3 tests. The runner reads
+          running the tests, then turns green with a check: 3 passed. Beside the code, a student on
+          a tightrope above a circus net appears, labeled Refactoring and Safety net of tests.
+      - id: done
+        say: >-
+          That's the cycle: red, green, and refactor when the code needs it. Three lines are crossed
+          off, and each one left a test behind that keeps checking. One line remains: zero people.
+          That cycle is yours. Next: the rules behind what you just did, and why each one exists.
+        pause_after: 2.5
+        step: Three cycles done
+        note: Each finished line leaves a test that keeps checking.
+        visual: >-
+          The cycle of Red, Green, and Refactor returns, with a check on each station. The test list
+          shows three lines checked and struck through, One person pays it all, Even split, and
+          Leftover cents, and one open line, Zero people, with a marker reading Your turn. Under the
+          list, three tags each read test with a check, above the label 3 tests keep checking, and
+          the runner is green: 3 passed.
+  - id: rules_red
+    part: Rules
+    outline: Test first, watch it fail
+    label: "Rules: test first, and watch it fail"
+    title: Why the test comes first, and why it must fail
+    purpose: Learn the two rules about tests, why each exists, and what each costs.
+    takeaway: >-
+      Test first takes the expected answer from the requirement instead of the code, and gets the
+      test written; watch it fail proves the test can detect the behavior it is about.
+    cues:
+      - id: test_first
+        say: >-
+          Rule one: test first. Write the test for a behavior before any code for it. Last night's
+          test came after the code: you ran it and saved its answer as the expected one.
+          That's painting the target around the arrow. Test first draws the target from the
+          requirement, and the code has to hit it.
+        step: "Rule 1: Test first"
+        note: The test for a behavior comes before any code for it.
+        source: >-
+          Beck 2002, Preface (write new code only if an automated test has failed); Beck, Canon
+          TDD, 2023 (copying computed values into expectations defeats double checking); Martin
+          2008, chapter 9, The Three Laws of TDD (first law).
+        visual: >-
+          A violet banner across the top reads Rule 1, Test first: write the test for a behavior
+          before any code for it. Two large pictures stand side by side. On the left, labeled Test
+          after: target painted around the arrow, an arrow is stuck in a wooden wall and the rings
+          of a target are painted around it, the paint still wet, a brush below, over a red tag:
+          Expected: the code's answer. On the right, labeled Test first: target from the
+          requirement, a target stands on its stand first; then an arrow flies in and hits the gold,
+          over a green tag: Expected: the requirement.
+      - id: test_first_why
+        say: >-
+          Test first pays off twice more. A test planned for later tends to get dropped under a
+          deadline; one written first already exists. And it designs the call from the caller's
+          side. The cost: you must know what the code should do. If you don't, explore with
+          throwaway code, then start over test first.
+        step: Why test first, and its cost
+        note: The test exists, the call is designed first; unsure what you want? Explore, then restart.
+        source: >-
+          Beck 2002, chapter 25, Test First (under stress, tests written afterward get skipped);
+          George and Williams 2004 and Janzen and Saiedian 2008 (test-last control groups often
+          wrote few or no tests); Fowler, Test Driven Development (interface before
+          implementation); Wells 1999, Create a Spike Solution, and Beck 2002, chapter 26, Do Over
+          (explore with throwaway code).
+        visual: >-
+          The violet banner, Rule 1, Test first, stays. Three notes stand side by side, each with a
+          large picture above its words. A desk calendar with a circled date: A test written first
+          already exists; tests planned for later get dropped. A plug pushed into a lit socket: The
+          call is designed first, from the caller's side. A gold note with a crumpled paper ball:
+          Cost: know what it should do. Unsure? Explore with throwaway code first.
+      - id: watch
+        say: >-
+          Rule two: watch it fail. Run every new test and see it fail, for the reason you expect,
+          before you write the code. Rewind to before the fix. A teammate tests leftover cents by
+          checking only that split returns three shares for Friday's bill. On the old code, it's
+          green. Predict: good news?
+        prediction: true
+        pause_after: 4
+        step: "Rule 2: Watch it fail"
+        note: A new test passes before any code changes. Is that good news?
+        source: >-
+          Beck 2002, Part I (run all tests and see the new one fail); CS 35L lecture 9, slide 24
+          (watching the test fail is testing the test); Freeman and Pryce 2009, chapter 5.
+        visual: >-
+          A red rule plaque with an alarm emblem reads Rule 2, Watch it fail. A test card labeled A
+          teammate's test shows a test, leftover cents, that checks only that split with 8000 and 3
+          returns 3 shares. Below it, the code file, folded to its title, is labeled Old code,
+          before the fix. The runner turns green, 3 passed. Beside them, a smoke alarm on a kitchen
+          ceiling glows green and stays quiet, and a dashed box asks Good news?
+      - id: liar
+        say: >-
+          Bad news. The old code still loses two cents, and this test passes anyway. It counts
+          the shares but never checks the amounts, so it can't tell broken code from fixed code.
+          It's like a smoke alarm with no battery: quiet whether there's smoke or not. Watching
+          it fail tests the test.
+        step: A test that cannot fail
+        note: The test counts shares and ignores amounts, so it cannot detect the bug.
+        source: >-
+          CS 35L lecture 9, slides 14 and 24 (weak versus strong assertions; testing the test);
+          Beck, Canon TDD, 2023 (double checking creates much of the validation value of TDD).
+        closer_look:
+          title: A test that cannot fail
+          notice: >-
+            Two tests of the same call run against the same unchanged code: the one that counts the
+            shares passes, and the one that states the shares fails.
+          code: weak_test
+          groups:
+            - {id: tests, label: "Tests: two checks of one call"}
+            - {id: code, label: "Code: unchanged, still loses cents"}
+          steps:
+            - question: What does the weak test check?
+              focus: [tests.weak]
+              text: >-
+                Only that <code>split(8000, 3)</code> returns three shares. Any three numbers would
+                satisfy it: 2666 three times, or 0 three times.
+            - question: Why is it green?
+              focus: [tests.weak, code.divide]
+              text: >-
+                The unchanged code returns three shares of 2666. Three shares is all the test asks
+                for, so it passes while <strong>two cents are still missing</strong>.
+            - question: What does the strong test check?
+              focus: [tests.strong, code.divide]
+              text: >-
+                The exact shares, 2667, 2667, 2666. Against the same code it fails:
+                <strong>red before the fix</strong>, which shows that it can detect the missing
+                cents.
+            - question: Break the code on purpose
+              focus: [code.divide, tests.strong]
+              text: >-
+                Change the division to return 1 cent per person. The weak test stays green; the
+                strong test turns red. A test earns trust by failing when the behavior is wrong.
+        visual: >-
+          The teammate's test card has its check highlighted. A row under the code reads split(8000,
+          3) returns [2666, 2666, 2666], Sum 7998, and smoke rises from a pan toward the quiet smoke
+          alarm. Then the code makes way, the alarm grows to fill the picture, and its battery hangs
+          out of its open hatch, with red tags under it: Counts 3 shares, ignores the amounts, and
+          Cannot fail. Beside it, a card repeats split(8000, 3) returns [2666, 2666, 2666], Sum
+          7998, and a note reads Watching it fail tests the test. The runner stays green, 3 passed,
+          with a warning tag: Green, bug still there.
+      - id: watch_why
+        say: >-
+          Red on the old code, then green after the fix: that pair shows the test detects the
+          behavior you added. Same reason you press a smoke alarm's test button: to hear that it
+          can go off. So when a brand-new test passes at once, stop: the behavior already
+          exists, or the test checks too little.
+        step: Red, then green
+        note: Red before the fix and green after it prove the test can detect the behavior.
+        source: >-
+          Beck 2002, Part I (see the new test fail, then make it pass); Martin 2005, The Sensitivity
+          Problem (test and code check each other, like dual-entry bookkeeping); CS 35L lecture 9,
+          slide 24 (testing the test).
+        visual: >-
+          The red plaque, Rule 2, Watch it fail, stays. Two pictures of the same smoke alarm stand
+          side by side. On the left, smoke rises, the alarm's light is red, and sound waves spread
+          from it as its test button is pressed; a red tag reads Old code: Red. On the right, there
+          is no smoke and the alarm glows green; a green tag reads After the fix: Green. A label
+          reads Red, then green: the test detects the behavior you added, and a note reads Press the
+          test button: you hear it can go off. A gold note with a magnifying glass reads A brand-new
+          test passes at once? Stop. The behavior already exists, or the test checks too little.
+      - id: message
+        say: >-
+          So read the red before you fix it. Expected twenty-six sixty-seven, got twenty-six
+          sixty-six: the right failure, for the right reason. If the message complains about a typo
+          or a missing file, the test isn't checking your behavior yet. Fix the test first.
+        pause_after: 2.5
+        step: Red for the right reason
+        note: Read the failure; it should name the missing behavior.
+        source: >-
+          Freeman and Pryce 2009, chapter 5, Watch the Test Fail (check that the failure message is
+          the expected one).
+        visual: >-
+          The red plaque, Rule 2, Watch it fail, stays, with a magnifying glass under it. Two
+          failure notes stand one above the other. The first, with a green check and the label Right
+          reason, shows the runner's message for the strong test: expected [2667, 2667, 2666], got
+          [2666, 2666, 2666]. The second, with a red cross and the label Wrong reason, shows the
+          runner's message about a misspelled name, splt, and the instruction Fix the test first.
+  - id: rules_green
+    part: Rules
+    outline: Smallest step, refactor on green
+    label: "Rules: smallest step, and refactor on green"
+    title: Why steps stay small, and cleanup waits for green
+    purpose: Learn the two rules about code, why each exists, and what each costs.
+    takeaway: >-
+      Smallest step keeps every line checked by a test and every failure close to its cause;
+      refactor on green keeps structure changes separate from behavior changes, and is only as
+      safe as the tests.
+    cues:
+      - id: smallest
+        say: >-
+          Rule three: smallest step. Write only enough code to pass the failing test. While fixing
+          the leftover cents, you're tempted to add a tip parameter: the app will need it someday.
+          But no test asks for a tip, so no test checks it. If the tip math were wrong, every test
+          would still be green.
+        step: "Rule 3: Smallest step"
+        note: Only enough code to pass the failing test; untested code is unchecked code.
+        source: >-
+          Martin 2008, chapter 9, The Three Laws of TDD (third law); CS 35L lecture 9, slide 26
+          (code beyond what the test needs has no test to say whether it is correct).
+        visual: >-
+          A green rule plaque with a flag emblem reads Rule 3, Smallest step: only enough code to
+          pass the failing test. The code card shows the passing split function with the lines that
+          mention a tip marked as added and highlighted: a tip parameter and a line that adds the
+          tip. A red tag under it reads No test asks for this, and a red note with a beetle reads A
+          wrong tip: still green. No test checks it. The test list beside it has no line about tips.
+          The runner is green, 3 passed, with a warning tag: Green, tip math unchecked.
+      - id: debugging
+        say: >-
+          Small steps also keep debugging short. Each green is a checkpoint, like a save point in a
+          game. When a red surprises you, the cause sits in the few lines since the last green: undo
+          them, and you're back on green. No hunting through an afternoon of changes.
+        step: Every green is a checkpoint
+        note: A surprising red points at the few lines since the last green.
+        source: >-
+          Martin 2005, The Three Rules of TDD (a minute ago all the code worked); Beck 2002,
+          Preface (TDD controls the gap between decision and feedback).
+        visual: >-
+          A green banner across the top reads Rule 3, Smallest step: only enough code to pass the
+          failing test. Below it, a wide side-scrolling game level climbs in six small steps, and a
+          green checkpoint flag rises on each landing while a small character hops from flag to
+          flag, under a tag: Each green: a checkpoint. After the last flag the character falls into
+          a gap marked with a red cross, and a dashed arrow carries it back to the last flag, under
+          a blue tag: Undo: back on green. Below the level, a row of runner results reads Green,
+          Green, Red, underlined and labeled The cause is in here: a few lines, and a label reads No
+          hunting through an afternoon of changes.
+      - id: step_size
+        say: >-
+          You pick the step size the way you'd pick a gear: Fake It is low gear, for when you're
+          unsure; Obvious Implementation is high gear, for when you're sure. After a surprising
+          red, shift down, and take smaller steps until green feels routine.
+        step: You choose the step size
+        note: Shift step size with confidence; small steps cost speed and still need design thought.
+        source: >-
+          Beck 2002, chapter 28 (Fake It, Triangulate, Obvious Implementation: choose the step by
+          confidence, and shift down after a surprising red) and Test List (new ideas go on the
+          list); Ousterhout 2021, chapter 19 (TDD is too incremental and leaves no obvious time for
+          design).
+        visual: >-
+          The green banner, Rule 3, Smallest step, stays. A large car gear shifter moves from first
+          gear to third and back to first. Tags beside it read 1 Fake It: unsure; 2 Triangulate: a
+          second example; 3 Obvious Implementation: sure; and After a surprise: shift down. The test
+          list stands in the side column.
+      - id: step_cost
+        say: >-
+          Tiny steps do have a cost. They can feel like moving at a snail's pace, and they won't
+          design the code for you: much of that thinking happens when you refactor. And the tip
+          isn't lost. It waits on the test list until someone actually needs it.
+        step: "What small steps cost"
+        note: "Small steps feel slow and still need design thought; ideas wait on the test list."
+        source: >-
+          Ousterhout 2021, chapter 19 (TDD is too incremental and leaves no obvious time for
+          design); Beck 2002, Test List (new ideas go on the list).
+        visual: >-
+          The gear shifter stays. Below it, a gold note with a snail reads Tiny steps can feel slow,
+          and a blue note with a broom reads Design thinking happens when you refactor. The test
+          list gains a new line, Tip parameter.
+      - id: strict
+        say: >-
+          The strictest form keeps every step tiny: only enough of a test to fail, then only enough
+          code to pass, a line or two at a time. It's known as the three laws of TDD. Treat it like
+          training wheels: practice tiny steps first, then widen them as you gain confidence.
+        step: The three laws of TDD
+        note: The three laws are the strictest step size; use them as training.
+        source: >-
+          Martin 2008, chapter 9, The Three Laws of TDD; Martin 2014, The Cycles of TDD (the laws
+          codify line-by-line steps); Martin 2007 (following them perfectly does not always make
+          sense); CS 35L lecture 9, slide 41 (not a dogma).
+        visual: >-
+          A card titled The three laws of TDD, the strictest form, lists: 1, No production code
+          unless a test fails. 2, Only enough of a test to fail; not compiling counts. 3, Only
+          enough code to pass that test. Beside it, a child's bicycle with training wheels, labeled
+          Training wheels: practice tiny steps, then widen them; then the training wheels come off
+          and lie on the grass. Below, a step-size scale from Small steps to Large steps marks Three
+          laws, a line or two; Fake It, unsure; Triangulate, a second example; and Obvious
+          Implementation, sure.
+      - id: on_green
+        say: >-
+          Rule four: refactor on green. Change the structure of code only while every test
+          passes, and change nothing else at the same time. Refactoring is a bit like walking a
+          tightrope, with your passing tests as the safety net underneath: if you slip, they
+          catch you.
+        step: "Rule 4: Refactor on green"
+        note: Change structure only while every test passes, and nothing else with it.
+        source: >-
+          Beck 2002, Preface (eliminate duplication) and chapter 11; Fowler 2018, Refactoring,
+          chapter 2, The Two Hats; CS 35L lecture 9, slides 27 and 35.
+        visual: >-
+          A blue banner across the top reads Rule 4, Refactor on green: change structure only while
+          every test passes. Below it, a large circus picture appears: a student walks a tightrope,
+          rearranging code windows, labeled Refactoring, above a safety net labeled Safety net of
+          tests, with the three passing tests along its edge, One person, Even split, and Extra
+          cent, each with a green check. The runner is green, 3 passed.
+      - id: slip
+        say: >-
+          Say that during the cleanup you type less-than-or-equal where less-than belongs. You
+          slip, and the net catches you: all three tests turn red at once. One edit, one cause.
+          Undo it, and you're back on the rope.
+        step: "The net catches a slip"
+        note: "A slip during cleanup turns all three tests red: one edit, one cause, so undo it."
+        source: >-
+          Beck 2002, chapter 11 (back out to green first); Fowler 2018, Refactoring, chapter 2
+          (with self-testing code, a refactoring slip shows at once).
+        visual: >-
+          A dark card reads Typed <= where < belongs, and the walker wobbles. The net catches the
+          slip and dips, the three tests along it turn red with crosses, and the runner turns red
+          with a cross and the runner's line for 3 failed, its detail showing expected [1000, 1000,
+          1000], got [1001, 1000, 1000]. Tags read All three tests: red; One edit, one cause; and
+          Undo it: back on the rope. Then the walker stands steady again, the tests turn green, and
+          the runner is green, 3 passed.
+      - id: two_hats
+        say: >-
+          Green before and after a cleanup means every tested behavior survived. On red, cleanup
+          is a gamble: with structure and behavior changing together, a failure can't tell you
+          which one broke. So wear one hat at a time: the hard hat when you add behavior, the
+          cleaning cap when you restructure, never both.
+        step: One hat at a time
+        note: Add behavior or restructure, never both; mixed changes hide the cause.
+        source: >-
+          Fowler 2018, Refactoring, chapter 2, The Two Hats (Beck's metaphor: adding function or
+          restructuring, never both at once); Beck, Canon TDD, 2023 (mixing refactoring into making
+          a test pass is a mistake); Beck 2002, chapter 11 (back out to green first).
+        visual: >-
+          The blue banner, Rule 4, Refactor on green, stays. A large picture shows two hats on pegs:
+          a yellow hard hat with a plus lifts when the tag Add behavior appears, then a blue cap
+          with a broom lifts when the tag Restructure appears, beside a red tag: Never both at once.
+          On the right, tags read Green, Cleanup, and Green: behavior kept, and a red note with two
+          tumbling dice reads On red, cleanup is a gamble: which one broke it, structure or
+          behavior?
+      - id: cleanup
+        say: >-
+          Skipping cleanup is a common way TDD goes wrong: every quick green leaves a fake or a
+          patch behind, and they pile up into a shaky tower. With a safety net of tests under
+          you, cleaning up feels safe enough that you'll actually do it.
+        step: Clean up, within the tests' reach
+        note: Skipped cleanup piles up; refactoring is only as safe as the tests.
+        source: >-
+          Fowler, Test Driven Development (neglecting the refactoring step is the most common way
+          to get TDD wrong); Romano et al. 2017 and Aniche and Gerosa 2010 (developers often skip
+          refactoring); Martin 2005, The Three Rules of TDD (a trusted suite removes the fear of
+          cleaning); Just et al. 2014 (tests catch only what they check).
+        visual: >-
+          The blue banner, Rule 4, Refactor on green, stays. On the left, a tower of code blocks,
+          many patched with bandages, grows and starts to sway, labeled Skipped cleanup: patches
+          pile up. Beside it, the large circus picture: the student walks the tightrope, labeled
+          Refactoring, above the net labeled Safety net of tests, with One person, Even split, and
+          Extra cent checked along its edge, labeled A safety net of tests makes cleanup safe enough
+          to do.
+      - id: limit
+        say: >-
+          One limit, though: green proves only what the tests check. Tests work like a
+          flashlight. They light up the code they cover, and a bug sitting in the dark stays
+          hidden. So a refactoring is only as safe as its tests.
+        pause_after: 2.5
+        step: "Only as safe as the tests"
+        note: "Green proves only what the tests check: a flashlight shows only what it shines on."
+        source: >-
+          Just et al. 2014 (a test suite catches only the faults it checks); Fowler,
+          TestCoverage (coverage shows what tests run, not what they check).
+        visual: >-
+          The blue banner, Rule 4, Refactor on green, stays. A large picture shows a flashlight
+          lighting part of a page of code at night: in the beam, three lines carry green checks; in
+          the dark part, a beetle sits unseen. Beside it, a label reads Limit: green proves only
+          what the tests check, and tags read Lit: the code the tests cover; A bug in the dark stays
+          hidden; and Only as safe as its tests.
+  - id: benefits
+    part: Consequences
+    outline: What you get
+    label: "Consequences: what TDD gives you"
+    title: What TDD gives you
+    purpose: See the benefits TDD delivers, and which of them the evidence supports.
+    takeaway: >-
+      TDD reliably yields more tests, a regression safety net, executable documentation while the
+      tests are kept current, and small, testable units; an overall design benefit is debated.
+    cues:
+      - id: more_tests
+        say: >-
+          Now the consequences. First: more tests. In TDD, every behavior arrives with a test,
+          because the test came first. This is the most consistent finding in studies of TDD:
+          developers who work this way end up with more tests than those who test afterward.
+        step: More tests
+        note: The most consistent finding is that TDD produces more tests.
+        source: >-
+          Erdogmus, Morisio, and Torchiano 2005; Fucci et al. 2018; Baldassarre et al. 2021; Janzen
+          and Saiedian 2008; Karac and Turhan 2018.
+        visual: >-
+          A green card titled What you get gets its first item: More tests, every behavior arrives
+          with its test. Beside it, two piles of test cards, each card with a check, stand on one
+          shelf: Test first, a pile of five, and Test after, a pile of two. A tag reads Most
+          consistent finding.
+      - id: safety_net
+        say: >-
+          Second: a regression safety net. Every passing test stays in the suite and runs again
+          after each change. Change split next month, and seconds later you know whether Friday's
+          bill still adds up. That net is what makes refactoring safe.
+        step: A regression safety net
+        note: Passing tests stay and rerun after every change.
+        source: >-
+          Fowler, Self Testing Code; Beck 2002, Preface (a passing test stays passing, like a
+          ratchet); CS 35L lecture 9, slide 27.
+        visual: >-
+          A second item joins What you get: Regression safety net, old tests rerun after every
+          change. Beside it, a large circus picture: a student walks a tightrope with a code window
+          in each hand, labeled Refactoring, high above a net labeled Safety net of tests, with the
+          three passing tests checked along its edge: One person, Even split, and Extra cent. The
+          walker wobbles as a tag reads Next month's change, and a green tag reads 3 passed, seconds
+          later. A label reads That net makes refactoring safe.
+      - id: docs
+        say: >-
+          Third: executable documentation. The tests show how to call split and what it promises.
+          Unlike a comment, a test fails when it stops being true. But that holds only while you
+          keep the tests current: stale tests document the past.
+        step: Executable documentation
+        note: Tests show how to call the code, as long as they are kept current.
+        source: >-
+          Martin 2005, The Three Rules of TDD (tests as design documents); CS 35L lecture 9, slide
+          40; Romano et al. 2017 (observed developers rarely kept tests up to date).
+        visual: >-
+          A third item joins What you get: Executable documentation, shows how to call the code.
+          Beside it, an open manual with a play button and a green check seal, labeled Runs, and
+          fails when it stops being true, and a yellowed note under a cobweb, labeled Stale tests
+          document the past.
+      - id: small_units
+        say: >-
+          Fourth: small, testable units. To write the test first, you need code you can call on
+          its own, with clear inputs and outputs. Studies find that test-first code comes in
+          smaller, simpler units, more like separate bricks than one big tangle. Whether TDD
+          improves a system's overall design is still debated.
+        pause_after: 2.5
+        step: Small, testable units
+        note: Test-first code comes in smaller, simpler units; overall design is debated.
+        source: >-
+          Janzen and Saiedian 2008 (smaller, simpler, more highly tested units; lower coupling and
+          higher cohesion not confirmed); Shull et al. 2010 (no consistent effect on internal
+          quality); Hansson 2014 (test-induced design damage).
+        visual: >-
+          A fourth item joins What you get: Small, testable units, callable on its own. Beside it, a
+          stack of toy bricks with one brick lifted off, labeled Small units, each callable on its
+          own, and a tangled ball of cables, labeled Not one big tangle. Below them, a card with a
+          question mark reads Better overall design? Debated.
+  - id: costs
+    part: Consequences
+    outline: Costs and limits
+    label: "Consequences: costs and limits"
+    title: What TDD costs, and where it stops
+    purpose: See the costs of TDD and the kinds of work it does not fit.
+    takeaway: >-
+      TDD costs time up front, a learning curve, and tests to maintain, and it needs checks that are
+      automated, fast, and give the same verdict on every run.
+    cues:
+      - id: time
+        say: >-
+          TDD has costs. First: time up front. In four industrial case studies, teams using TDD had
+          forty to ninety percent fewer defects per line of code before release than similar teams.
+          The price: their managers estimated fifteen to thirty-five percent more development time.
+        step: Time up front
+        note: Four industrial case studies report fewer defects, at more development time.
+        source: >-
+          Nagappan, Maximilien, Bhat, and Williams 2008, Table 3 (four teams at IBM and Microsoft;
+          not randomized; comparison projects differ in size).
+        visual: >-
+          A card titled What you get lists the four gains. Under it, a pink card titled What it
+          costs gets its first item: Time up front, 15 to 35% more time, managers' estimate. Beside
+          them, a card titled Four industrial case studies shows each finding as a band on a scale
+          from 0 to 100%: Pre-release defect density, with a bug icon, a green band from 40 to 90%,
+          40 to 90% lower; and Development time, with a timer icon, a red band from 15 to 35%, 15 to
+          35% higher. A tag reads 4 teams, not a general law. Below, an hourglass runs, labeled Time
+          up front.
+      - id: discipline
+        say: >-
+          Second: a learning curve. Strict TDD is hard to follow at first, and newcomers often find
+          it slow. Third: tests to maintain. Tests are code. A test that checks how split works
+          inside, instead of what it returns, breaks on every refactoring.
+        step: A learning curve, and tests to maintain
+        note: TDD is hard at first, and tests are code that must be maintained.
+        source: >-
+          Papis et al. 2022 (a considerable entry barrier); Romano et al. 2019 (novices' reactions);
+          Čaušević, Sundmark, and Punnekkat 2011 (adoption barriers); Meszaros 2007, Fragile Test; CS 35L lecture 9, slide 15 (test
+          behavior, not internals).
+        visual: >-
+          Two more items join What it costs: A learning curve, hard to follow at first; and Tests to
+          maintain, tests are code. Beside them, a mountain with a winding trail to a flag on its
+          summit, labeled A learning curve, and two test cards: one labeled Checks what split
+          returns, with a green check and Survives refactoring; one labeled Checks how split works
+          inside, with a red cross and Breaks on refactoring.
+      - id: limits
+        say: >-
+          And TDD has limits. It needs a check that's automated, fast, and gives the same
+          verdict every run. It struggles without an exact right answer, as in recognizing
+          images, and with qualities like response time and security. And big designs don't grow
+          test by test: taller towers never reach the moon.
+        pause_after: 2.5
+        step: Limits
+        note: TDD needs automated, fast, repeatable checks with an exact expected answer.
+        source: >-
+          Beck 2002, Preface (not sufficient for security and concurrency); Fowler, Eradicating
+          Non-Determinism in Tests; Barr et al. 2015 (the oracle problem); CS 35L lecture 9, slide
+          42; Martin 2014 (stepping back to the architecture is a separate, slower cycle).
+        visual: >-
+          A card titled TDD needs a check that is lists Automated, Fast, and Same verdict every run,
+          each with a check icon. Below, under the label A poor fit, three pictures: an instant
+          photo of a fluffy animal that could be a cat or a fox, labeled No exact right answer:
+          recognizing images; a speed gauge, labeled Qualities: response time, security; and a night
+          sky where a row of ever taller towers stays far below the moon while a rocket waits on its
+          pad, labeled Big designs: not one small test at a time.
+  - id: evidence
+    part: Consequences
+    outline: The evidence
+    label: "Consequences: what the evidence says"
+    title: What the evidence says
+    purpose: Weigh what studies of TDD show, and decide what to keep from it.
+    takeaway: >-
+      Against testing right after each small piece of code, experiments mostly find no clear
+      difference; benefits track short, steady cycles more than test order, and strict TDD is rare.
+    cues:
+      - id: versus_after
+        say: >-
+          So does test-first beat test-after? Controlled experiments have put TDD on the scale
+          against writing each test right after a small piece of code. Mostly, the scale stays
+          level, for quality and speed alike. It tips toward TDD against teams that tested late,
+          or barely at all.
+        step: Test first versus test right after
+        note: Against tests written right after small pieces of code, results are mixed.
+        source: >-
+          Santos et al. 2021 (a family of 12 experiments); Tosun et al. 2017; Fucci et al. 2016;
+          Rafique and Mišić 2013 (meta-analysis: small quality effect, depends on the baseline);
+          counterexample Papis et al. 2022.
+        visual: >-
+          A card titled What do experiments compare? heads two balance scales. On the left, TDD
+          against a test right after each small piece: the pans, labeled TDD and Test right after,
+          hang level, and a tag reads Mostly level: no clear difference. On the right, TDD against
+          testing late, or barely at all: the scale tips toward the pan labeled TDD, away from the
+          pan labeled Testing late, and a green tag reads Tips toward TDD. A sticker reads Depends
+          on the comparison.
+      - id: steady
+        say: >-
+          What tracks the benefits is the rhythm, a steady beat like a metronome's. In a study
+          of professional developers, quality and productivity went with short, steady cycles,
+          not with whether the test came first. Writing the test first mainly guarantees that
+          the test gets written, and that it can fail.
+        step: Short, steady cycles
+        note: Quality and productivity tracked short, steady cycles, not test order.
+        source: >-
+          Fucci, Erdogmus, Turhan, Oivo, and Juristo 2017 (39 professionals: granularity and
+          uniformity mattered; sequencing did not); Karac and Turhan 2018.
+        visual: >-
+          A metronome ticks beside two timelines of work. The first, Short, steady cycles, shows
+          many small, even red, green, refactor turns, with an arrow up labeled Went with quality
+          and productivity. The second, Long, uneven cycles, shows a few large, irregular turns.
+          Under them a card reads Test first or test after? No important difference in this study. A
+          note reads Test first: the test gets written, and has failed once.
+      - id: practice
+        say: >-
+          And in practice, strict TDD is rare: most developers let tests guide them more loosely. So
+          hold realistic expectations. Keep what the evidence supports: a test for every behavior,
+          small steps, constant test runs, and cleanup on green.
+        pause_after: 2.5
+        step: Realistic expectations
+        note: Strict TDD is rare; keep the practices the evidence supports.
+        source: >-
+          Beller et al. 2019 (2,443 developers: 1.7% followed strict TDD); Karac and Turhan 2018,
+          p. 84 (realistic expectations rather than worship or discard).
+        visual: >-
+          A card reads Strict TDD is rare: of 2,443 developers observed in their editors, 1.7%
+          followed it strictly, above a crowd of 100 small figures in which 2 are lit, labeled About
+          2 in 100. Beside it, a checklist titled Keep what the evidence supports: A test for every
+          behavior; Small steps; Run the tests constantly; Clean up on green.
+  - id: summary
+    label: Summary
+    title: Red, green, refactor, and why
+    purpose: Recall the cycle, the four rules with the failures they prevent, and the consequences.
+    takeaway: >-
+      TDD turns a test list into code one failing test at a time; four rules keep the tests honest
+      and the steps small, and the benefits follow short, steady cycles.
+    cues:
+      - id: recap_cycle
+        say: >-
+          Let's recap. A test written after the code confirmed Friday's bug. Test-driven development
+          flips the order, in a short cycle: red, a small failing test; green, just enough code;
+          refactor, cleanup while everything passes. A test list holds the cases, and you take them
+          one at a time.
+        step: The cycle
+        note: A test list, then red, green, refactor, one test at a time.
+        visual: >-
+          The phone with the bill of $80.00 carries the red sticker 2 cents missing, above the
+          picture of a target painted around an arrow, labeled Test after. Beside it, the cycle of
+          Red, Green, and Refactor. The test list stands next to the cycle with three lines checked
+          and Zero people open, and a tag under it reads One at a time.
+      - id: recap_rules
+        say: >-
+          Four rules, and the reason for each. Test first: the target comes from the
+          requirement, not the code. Watch it fail: proof the test can catch the bug. Smallest
+          step: a checkpoint after every step, so failures stay near their cause. Refactor on
+          green: cleanup checked by the safety net of tests.
+        step: Four rules
+        note: Each rule prevents one failure.
+        visual: >-
+          Four rule plaques in a row, each with its picture and its reason, each reason marked with
+          a green check. Rule 1, Test first: an arrow in the gold of a target; The target comes from
+          the requirement. Rule 2, Watch it fail: a smoke alarm sounding as its test button is
+          pressed; Proof the test can catch the bug. Rule 3, Smallest step: a game level with a
+          checkpoint flag on every step; A checkpoint after every step. Rule 4, Refactor on green:
+          the tightrope walker above the net; Cleanup checked by the safety net of tests. A label
+          reads Each rule, and the reason it exists.
+      - id: recap_consequences
+        say: >-
+          TDD gives you more tests, a regression safety net, and small, testable units. It costs
+          time up front, a learning curve, and tests to maintain, and it needs fast, exact checks.
+          Its benefits follow short, steady cycles. Your turn: zero people is still on the list.
+        pause_after: 2.5
+        step: Consequences
+        note: Benefits, costs, limits, and what the evidence supports.
+        visual: >-
+          A brass balance scale hangs level between two cards. On its left, the green card What you
+          get: More tests; Regression safety net; Executable documentation; Small, testable units.
+          On its right, the pink card What it costs: Time up front; A learning curve; Tests to
+          maintain. Under the scale, tags read Needs fast, exact checks; Benefits follow short,
+          steady cycles; and Your turn: Zero people.

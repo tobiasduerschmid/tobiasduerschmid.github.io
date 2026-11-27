@@ -1,0 +1,761 @@
+# Code for the Test-Driven Development video narration (docs/tdd-narration.md).
+# Every card and runner line was compiled and run with pytest 8.4, JUnit 5.11,
+# GoogleTest 1.18 with gMock, and Jest 29 with ts-jest; the runner lines are
+# verbatim (an ellipsis marks lines left out). Per language:
+#   label, filename, note: the complete example in the control bar and transcript
+#   blocks: the complete example (tests, then bill) and the closer look weak_test
+#   stage: what the animated stage draws in this language: file names, the code
+#     cards by name, the test names, and the runner bar's lines per step
+
+python:
+  label: "Python · pytest"
+  filename: "test_bill.py, then bill.py"
+  note: "The tests come first, then the code they drove; each part starts with its file name."
+  blocks:
+    tests:
+      source: |
+        # test_bill.py
+        import pytest
+
+        from bill import split
+
+
+        def test_one_person_pays_it_all() -> None:
+            assert split(3000, 1) == [3000]
+
+
+        def test_even_split() -> None:
+            assert split(3000, 3) == [1000, 1000, 1000]
+
+
+        def test_first_people_pay_extra_cent() -> None:
+            assert split(8000, 3) == [2667, 2667, 2666]
+
+
+        def test_zero_people_is_rejected() -> None:
+            with pytest.raises(ValueError):
+                split(3000, 0)
+    bill:
+      source: |
+        # bill.py
+        def split(cents: int, people: int) -> list[int]:
+            if people < 1:
+                raise ValueError("people must be at least 1")
+            share, extra = divmod(cents, people)
+            return [share + 1 if i < extra else share
+                    for i in range(people)]
+    weak_test_tests:
+      file: "test_bill.py"
+      source: |
+        from bill import split
+
+
+        def test_leftover_cents() -> None:
+            assert len(split(8000, 3)) == 3
+
+
+        def test_first_people_pay_extra_cent() -> None:
+            assert split(8000, 3) == [2667, 2667, 2666]
+      focus: {weak: [4, 5], strong: [8, 9]}
+    weak_test_code:
+      file: "bill.py"
+      source: |
+        def split(cents: int, people: int) -> list[int]:
+            return [cents // people] * people
+      focus: {divide: [2]}
+  stage:
+    runner: "pytest"
+    files: {tests: "test_bill.py", code: "bill.py"}
+    tests:
+      one: "test_one_person_pays_it_all"
+      even: "test_even_split"
+      extra: "test_first_people_pay_extra_cent"
+      weak: "test_leftover_cents"
+    cards:
+      test_one_person:
+        - "def test_one_person_pays_it_all() -> None:"
+        - "    assert split(3000, 1) == [3000]"
+      fake_it:
+        - "def split(cents: int, people: int) -> list[int]:"
+        - "    return [3000]"
+      test_even:
+        - "def test_even_split() -> None:"
+        - "    assert split(3000, 3) == [1000, 1000, 1000]"
+      general:
+        - "def split(cents: int, people: int) -> list[int]:"
+        - "    return [cents // people] * people"
+      test_extra_cent:
+        - "def test_first_people_pay_extra_cent() -> None:"
+        - "    assert split(8000, 3) == [2667, 2667, 2666]"
+      fill_patch:
+        - "def split(cents: int, people: int) -> list[int]:"
+        - "    shares = [cents // people] * people"
+        - "    for i in range(cents % people):"
+        - "        shares[i] += 1"
+        - "    return shares"
+      refactored:
+        - "def split(cents: int, people: int) -> list[int]:"
+        - "    share, extra = divmod(cents, people)"
+        - "    return [share + 1 if i < extra else share"
+        - "            for i in range(people)]"
+      test_weak:
+        - "def test_leftover_cents() -> None:"
+        - "    assert len(split(8000, 3)) == 3"
+      tip:
+        - "def split(cents: int, people: int,"
+        - "          tip_percent: int = 0) -> list[int]:"
+        - "    cents += cents * tip_percent // 100"
+        - "    shares = [cents // people] * people"
+        - "    for i in range(cents % people):"
+        - "        shares[i] += 1"
+        - "    return shares"
+      slip:
+        - "def split(cents: int, people: int) -> list[int]:"
+        - "    share, extra = divmod(cents, people)"
+        - "    return [share + 1 if i <= extra else share"
+        - "            for i in range(people)]"
+      test_typo:
+        - "def test_first_people_pay_extra_cent() -> None:"
+        - "    assert splt(8000, 3) == [2667, 2667, 2666]"
+    steps:
+      sample_red: "1 failed, 1 passed in 0.02s"
+      sample_green: "2 passed in 0.01s"
+      s1_red:
+        status: "1 error in 0.06s"
+        detail:
+          - "ImportError: cannot import name 'split'"
+          - "from 'bill'"
+      s1_green:
+        status: "1 passed in 0.01s"
+      s2_red:
+        status: "1 failed, 1 passed in 0.02s"
+        detail:
+          - "assert [3000] == [1000, 1000, 1000]"
+      s2_green:
+        status: "2 passed in 0.01s"
+      s3_red:
+        status: "1 failed, 2 passed in 0.02s"
+        detail:
+          - "assert [2666, 2666, 2666] =="
+          - "       [2667, 2667, 2666]"
+      s3_green:
+        status: "3 passed in 0.01s"
+      typo:
+        detail:
+          - "NameError: name 'splt' is not defined"
+      slip:
+        status: "3 failed in 0.02s"
+        detail:
+          - "assert [1001, 1000, 1000] =="
+          - "       [1000, 1000, 1000]"
+
+java:
+  label: "Java · JUnit 5"
+  filename: "BillTest.java, then Bill.java"
+  note: "The tests come first, then the code they drove; each part starts with its file name."
+  blocks:
+    tests:
+      source: |
+        // BillTest.java
+        import static org.junit.jupiter.api.Assertions.assertEquals;
+        import static org.junit.jupiter.api.Assertions.assertThrows;
+
+        import java.util.List;
+        import org.junit.jupiter.api.Test;
+
+        class BillTest {
+            @Test
+            void onePersonPaysItAll() {
+                assertEquals(List.of(3000),
+                             Bill.split(3000, 1));
+            }
+
+            @Test
+            void evenSplit() {
+                assertEquals(List.of(1000, 1000, 1000),
+                             Bill.split(3000, 3));
+            }
+
+            @Test
+            void firstPeoplePayExtraCent() {
+                assertEquals(List.of(2667, 2667, 2666),
+                             Bill.split(8000, 3));
+            }
+
+            @Test
+            void zeroPeopleIsRejected() {
+                assertThrows(IllegalArgumentException.class,
+                             () -> Bill.split(3000, 0));
+            }
+        }
+    bill:
+      source: |
+        // Bill.java
+        import java.util.List;
+        import java.util.stream.IntStream;
+
+        final class Bill {
+            static List<Integer> split(int cents,
+                                       int people) {
+                if (people < 1) {
+                    throw new IllegalArgumentException(
+                        "people must be at least 1");
+                }
+                int share = cents / people;
+                int extra = cents % people;
+                return IntStream.range(0, people)
+                    .map(i -> i < extra ? share + 1 : share)
+                    .boxed()
+                    .toList();
+            }
+        }
+    weak_test_tests:
+      file: "BillTest.java"
+      source: |
+        class BillTest {
+            @Test
+            void leftoverCents() {
+                assertEquals(3, Bill.split(8000, 3).size());
+            }
+
+            @Test
+            void firstPeoplePayExtraCent() {
+                assertEquals(List.of(2667, 2667, 2666),
+                             Bill.split(8000, 3));
+            }
+        }
+      focus: {weak: [2, 3, 4, 5], strong: [7, 8, 9, 10, 11]}
+    weak_test_code:
+      file: "Bill.java"
+      source: |
+        final class Bill {
+            static List<Integer> split(int cents, int people) {
+                return Collections.nCopies(people, cents / people);
+            }
+        }
+      focus: {divide: [3]}
+  stage:
+    runner: "JUnit 5"
+    files: {tests: "BillTest.java", code: "Bill.java"}
+    tests:
+      one: "onePersonPaysItAll()"
+      even: "evenSplit()"
+      extra: "firstPeoplePayExtraCent()"
+      weak: "leftoverCents()"
+    cards:
+      test_one_person:
+        - "@Test"
+        - "void onePersonPaysItAll() {"
+        - "    assertEquals(List.of(3000),"
+        - "                 Bill.split(3000, 1));"
+        - "}"
+      fake_it:
+        - "static List<Integer> split(int cents,"
+        - "                           int people) {"
+        - "    return List.of(3000);"
+        - "}"
+      test_even:
+        - "@Test"
+        - "void evenSplit() {"
+        - "    assertEquals(List.of(1000, 1000, 1000),"
+        - "                 Bill.split(3000, 3));"
+        - "}"
+      general:
+        - "static List<Integer> split(int cents,"
+        - "                           int people) {"
+        - "    return Collections.nCopies(people,"
+        - "                               cents / people);"
+        - "}"
+      test_extra_cent:
+        - "@Test"
+        - "void firstPeoplePayExtraCent() {"
+        - "    assertEquals(List.of(2667, 2667, 2666),"
+        - "                 Bill.split(8000, 3));"
+        - "}"
+      fill_patch:
+        - "static List<Integer> split(int cents,"
+        - "                           int people) {"
+        - "    Integer[] shares = new Integer[people];"
+        - "    Arrays.fill(shares, cents / people);"
+        - "    for (int i = 0; i < cents % people; i++) {"
+        - "        shares[i]++;"
+        - "    }"
+        - "    return List.of(shares);"
+        - "}"
+      refactored:
+        - "static List<Integer> split(int cents,"
+        - "                           int people) {"
+        - "    int share = cents / people;"
+        - "    int extra = cents % people;"
+        - "    return IntStream.range(0, people)"
+        - "        .map(i -> i < extra ? share + 1 : share)"
+        - "        .boxed()"
+        - "        .toList();"
+        - "}"
+      test_weak:
+        - "@Test"
+        - "void leftoverCents() {"
+        - "    assertEquals(3, Bill.split(8000, 3).size());"
+        - "}"
+      tip:
+        - "// split(cents, people) as before"
+        - ""
+        - "static List<Integer> split(int cents,"
+        - "                           int people,"
+        - "                           int tipPercent) {"
+        - "    int tip = cents * tipPercent / 100;"
+        - "    return split(cents + tip, people);"
+        - "}"
+      slip:
+        - "static List<Integer> split(int cents,"
+        - "                           int people) {"
+        - "    int share = cents / people;"
+        - "    int extra = cents % people;"
+        - "    return IntStream.range(0, people)"
+        - "        .map(i -> i <= extra ? share + 1 : share)"
+        - "        .boxed()"
+        - "        .toList();"
+        - "}"
+      test_typo:
+        - "@Test"
+        - "void firstPeoplePayExtraCent() {"
+        - "    assertEquals(List.of(2667, 2667, 2666),"
+        - "                 Bill.splt(8000, 3));"
+        - "}"
+    steps:
+      sample_red: "[         1 tests failed          ]"
+      sample_green: "[         2 tests successful      ]"
+      s1_red:
+        status: "1 error"
+        build: true
+        runner: "javac"
+        detail:
+          - "error: cannot find symbol"
+          - "symbol:   method split(int,int)"
+      s1_green:
+        status: "[         1 tests successful      ]"
+      s2_red:
+        status: "[         1 tests failed          ]"
+        detail:
+          - "expected: <[1000, 1000, 1000]>"
+          - "but was: <[3000]>"
+      s2_green:
+        status: "[         2 tests successful      ]"
+      s3_red:
+        status: "[         1 tests failed          ]"
+        detail:
+          - "expected: <[2667, 2667, 2666]>"
+          - "but was: <[2666, 2666, 2666]>"
+      s3_green:
+        status: "[         3 tests successful      ]"
+      typo:
+        runner: "javac"
+        detail:
+          - "error: cannot find symbol"
+          - "symbol:   method splt(int,int)"
+      slip:
+        status: "[         3 tests failed          ]"
+        detail:
+          - "expected: <[1000, 1000, 1000]>"
+          - "but was: <[1001, 1000, 1000]>"
+
+cpp:
+  label: "C++ · GoogleTest"
+  filename: "bill_test.cpp, then bill.h, then bill.cpp"
+  note: "The tests come first, then the code they drove; each part starts with its file name."
+  blocks:
+    tests:
+      source: |
+        // bill_test.cpp
+        #include "bill.h"
+
+        #include <stdexcept>
+
+        #include <gmock/gmock.h>
+        #include <gtest/gtest.h>
+
+        using ::testing::ElementsAre;
+
+        TEST(SplitTest, OnePersonPaysItAll) {
+            EXPECT_THAT(split(3000, 1),
+                        ElementsAre(3000));
+        }
+
+        TEST(SplitTest, EvenSplit) {
+            EXPECT_THAT(split(3000, 3),
+                        ElementsAre(1000, 1000, 1000));
+        }
+
+        TEST(SplitTest, FirstPeoplePayExtraCent) {
+            EXPECT_THAT(split(8000, 3),
+                        ElementsAre(2667, 2667, 2666));
+        }
+
+        TEST(SplitTest, ZeroPeopleIsRejected) {
+            EXPECT_THROW(split(3000, 0),
+                         std::invalid_argument);
+        }
+    bill:
+      source: |
+        // bill.h
+        #pragma once
+        #include <vector>
+
+        std::vector<int> split(int cents, int people);
+
+        // bill.cpp
+        #include "bill.h"
+
+        #include <stdexcept>
+
+        std::vector<int> split(int cents, int people) {
+            if (people < 1) {
+                throw std::invalid_argument(
+                    "people must be at least 1");
+            }
+            const int share = cents / people;
+            const int extra = cents % people;
+            std::vector<int> shares;
+            for (int i = 0; i < people; ++i) {
+                shares.push_back(i < extra ? share + 1
+                                           : share);
+            }
+            return shares;
+        }
+    weak_test_tests:
+      file: "bill_test.cpp"
+      source: |
+        TEST(SplitTest, LeftoverCents) {
+            EXPECT_EQ(split(8000, 3).size(), 3u);
+        }
+
+        TEST(SplitTest, FirstPeoplePayExtraCent) {
+            EXPECT_THAT(split(8000, 3),
+                        ElementsAre(2667, 2667, 2666));
+        }
+      focus: {weak: [1, 2, 3], strong: [5, 6, 7, 8]}
+    weak_test_code:
+      file: "bill.cpp"
+      source: |
+        std::vector<int> split(int cents, int people) {
+            return std::vector<int>(people, cents / people);
+        }
+      focus: {divide: [2]}
+  stage:
+    runner: "GoogleTest"
+    files: {tests: "bill_test.cpp", code: "bill.cpp"}
+    tests:
+      one: "SplitTest.OnePersonPaysItAll"
+      even: "SplitTest.EvenSplit"
+      extra: "SplitTest.FirstPeoplePayExtraCent"
+      weak: "SplitTest.LeftoverCents"
+    cards:
+      test_one_person:
+        - "TEST(SplitTest, OnePersonPaysItAll) {"
+        - "    EXPECT_THAT(split(3000, 1),"
+        - "                ElementsAre(3000));"
+        - "}"
+      fake_it:
+        - "std::vector<int> split(int cents, int people) {"
+        - "    return {3000};"
+        - "}"
+      test_even:
+        - "TEST(SplitTest, EvenSplit) {"
+        - "    EXPECT_THAT(split(3000, 3),"
+        - "                ElementsAre(1000, 1000, 1000));"
+        - "}"
+      general:
+        - "std::vector<int> split(int cents, int people) {"
+        - "    return std::vector<int>(people,"
+        - "                            cents / people);"
+        - "}"
+      test_extra_cent:
+        - "TEST(SplitTest, FirstPeoplePayExtraCent) {"
+        - "    EXPECT_THAT(split(8000, 3),"
+        - "                ElementsAre(2667, 2667, 2666));"
+        - "}"
+      fill_patch:
+        - "std::vector<int> split(int cents, int people) {"
+        - "    std::vector<int> shares(people,"
+        - "                            cents / people);"
+        - "    for (int i = 0; i < cents % people; ++i) {"
+        - "        ++shares[i];"
+        - "    }"
+        - "    return shares;"
+        - "}"
+      refactored:
+        - "std::vector<int> split(int cents, int people) {"
+        - "    const int share = cents / people;"
+        - "    const int extra = cents % people;"
+        - "    std::vector<int> shares;"
+        - "    for (int i = 0; i < people; ++i) {"
+        - "        shares.push_back(i < extra ? share + 1"
+        - "                                   : share);"
+        - "    }"
+        - "    return shares;"
+        - "}"
+      test_weak:
+        - "TEST(SplitTest, LeftoverCents) {"
+        - "    EXPECT_EQ(split(8000, 3).size(), 3u);"
+        - "}"
+      tip:
+        - "std::vector<int> split(int cents, int people,"
+        - "                       int tip_percent) {"
+        - "    cents += cents * tip_percent / 100;"
+        - "    std::vector<int> shares(people,"
+        - "                            cents / people);"
+        - "    for (int i = 0; i < cents % people; ++i) {"
+        - "        ++shares[i];"
+        - "    }"
+        - "    return shares;"
+        - "}"
+      slip:
+        - "std::vector<int> split(int cents, int people) {"
+        - "    const int share = cents / people;"
+        - "    const int extra = cents % people;"
+        - "    std::vector<int> shares;"
+        - "    for (int i = 0; i < people; ++i) {"
+        - "        shares.push_back(i <= extra ? share + 1"
+        - "                                    : share);"
+        - "    }"
+        - "    return shares;"
+        - "}"
+      test_typo:
+        - "TEST(SplitTest, FirstPeoplePayExtraCent) {"
+        - "    EXPECT_THAT(splt(8000, 3),"
+        - "                ElementsAre(2667, 2667, 2666));"
+        - "}"
+    steps:
+      sample_red: "[  FAILED  ] 1 test, listed below:"
+      sample_green: "[  PASSED  ] 2 tests."
+      s1_red:
+        status: "1 error generated."
+        build: true
+        runner: "clang++"
+        detail:
+          - "error: use of undeclared identifier"
+          - "'split'"
+      s1_green:
+        status: "[  PASSED  ] 1 test."
+      s2_red:
+        status: "[  FAILED  ] 1 test, listed below:"
+        detail:
+          - "Expected: has 3 elements where"
+          - "element #0 is equal to 1000, …"
+          - "  Actual: { 3000 }, which has 1 element"
+      s2_green:
+        status: "[  PASSED  ] 2 tests."
+      s3_red:
+        status: "[  FAILED  ] 1 test, listed below:"
+        detail:
+          - "  Actual: { 2666, 2666, 2666 },"
+          - "whose element #0 (2666) isn't equal"
+          - "to 2667"
+      s3_green:
+        status: "[  PASSED  ] 3 tests."
+      typo:
+        runner: "clang++"
+        detail:
+          - "error: use of undeclared identifier"
+          - "'splt'; did you mean 'split'?"
+      slip:
+        status: "[  FAILED  ] 3 tests, listed below:"
+        detail:
+          - "  Actual: { 1001, 1000, 1000 },"
+          - "whose element #0 (1001) isn't equal"
+          - "to 1000"
+
+typescript:
+  label: "TypeScript · Jest"
+  filename: "bill.test.ts, then bill.ts"
+  note: "The tests come first, then the code they drove; each part starts with its file name."
+  blocks:
+    tests:
+      source: |
+        // bill.test.ts
+        import { split } from './bill';
+
+        test('one person pays it all', () => {
+          expect(split(3000, 1)).toEqual([3000]);
+        });
+
+        test('even split', () => {
+          expect(split(3000, 3))
+            .toEqual([1000, 1000, 1000]);
+        });
+
+        test('first people pay the extra cent', () => {
+          expect(split(8000, 3))
+            .toEqual([2667, 2667, 2666]);
+        });
+
+        test('zero people is rejected', () => {
+          expect(() => split(3000, 0))
+            .toThrow(RangeError);
+        });
+    bill:
+      source: |
+        // bill.ts
+        export function split(
+          cents: number, people: number
+        ): number[] {
+          if (people < 1) {
+            throw new RangeError('people must be at least 1');
+          }
+          const share = Math.floor(cents / people);
+          const extra = cents % people;
+          return Array.from({ length: people },
+            (_, i) => (i < extra ? share + 1 : share));
+        }
+    weak_test_tests:
+      file: "bill.test.ts"
+      source: |
+        import { split } from './bill';
+
+        test('leftover cents', () => {
+          expect(split(8000, 3)).toHaveLength(3);
+        });
+
+        test('first people pay the extra cent', () => {
+          expect(split(8000, 3)).toEqual([2667, 2667, 2666]);
+        });
+      focus: {weak: [3, 4, 5], strong: [7, 8, 9]}
+    weak_test_code:
+      file: "bill.ts"
+      source: |
+        export function split(
+          cents: number, people: number
+        ): number[] {
+          return new Array<number>(people)
+            .fill(Math.floor(cents / people));
+        }
+      focus: {divide: [4, 5]}
+  stage:
+    runner: "Jest"
+    files: {tests: "bill.test.ts", code: "bill.ts"}
+    tests:
+      one: "one person pays it all"
+      even: "even split"
+      extra: "first people pay the extra cent"
+      weak: "leftover cents"
+    cards:
+      test_one_person:
+        - "test('one person pays it all', () => {"
+        - "  expect(split(3000, 1)).toEqual([3000]);"
+        - "});"
+      fake_it:
+        - "export function split("
+        - "  cents: number, people: number"
+        - "): number[] {"
+        - "  return [3000];"
+        - "}"
+      test_even:
+        - "test('even split', () => {"
+        - "  expect(split(3000, 3))"
+        - "    .toEqual([1000, 1000, 1000]);"
+        - "});"
+      general:
+        - "export function split("
+        - "  cents: number, people: number"
+        - "): number[] {"
+        - "  return new Array<number>(people)"
+        - "    .fill(Math.floor(cents / people));"
+        - "}"
+      test_extra_cent:
+        - "test('first people pay the extra cent', () => {"
+        - "  expect(split(8000, 3))"
+        - "    .toEqual([2667, 2667, 2666]);"
+        - "});"
+      fill_patch:
+        - "export function split("
+        - "  cents: number, people: number"
+        - "): number[] {"
+        - "  const shares = new Array<number>(people)"
+        - "    .fill(Math.floor(cents / people));"
+        - "  for (let i = 0; i < cents % people; i++) {"
+        - "    shares[i] += 1;"
+        - "  }"
+        - "  return shares;"
+        - "}"
+      refactored:
+        - "export function split("
+        - "  cents: number, people: number"
+        - "): number[] {"
+        - "  const share = Math.floor(cents / people);"
+        - "  const extra = cents % people;"
+        - "  return Array.from({ length: people },"
+        - "    (_, i) => (i < extra ? share + 1 : share));"
+        - "}"
+      test_weak:
+        - "test('leftover cents', () => {"
+        - "  expect(split(8000, 3)).toHaveLength(3);"
+        - "});"
+      tip:
+        - "export function split("
+        - "  cents: number, people: number, tipPercent = 0"
+        - "): number[] {"
+        - "  cents += Math.floor(cents * tipPercent / 100);"
+        - "  const shares = new Array<number>(people)"
+        - "    .fill(Math.floor(cents / people));"
+        - "  for (let i = 0; i < cents % people; i++) {"
+        - "    shares[i] += 1;"
+        - "  }"
+        - "  return shares;"
+        - "}"
+      slip:
+        - "export function split("
+        - "  cents: number, people: number"
+        - "): number[] {"
+        - "  const share = Math.floor(cents / people);"
+        - "  const extra = cents % people;"
+        - "  return Array.from({ length: people },"
+        - "    (_, i) => (i <= extra ? share + 1 : share));"
+        - "}"
+      test_typo:
+        - "test('first people pay the extra cent', () => {"
+        - "  expect(splt(8000, 3))"
+        - "    .toEqual([2667, 2667, 2666]);"
+        - "});"
+    steps:
+      sample_red: "Tests:       1 failed, 1 passed, 2 total"
+      sample_green: "Tests:       2 passed, 2 total"
+      s1_red:
+        status: "Tests:       0 total"
+        build: true
+        detail:
+          - "error TS2305: Module '\"./bill\"'"
+          - "has no exported member 'split'."
+      s1_green:
+        status: "Tests:       1 passed, 1 total"
+      s2_red:
+        status: "Tests:       1 failed, 1 passed, 2 total"
+        detail:
+          - "- Expected  - 3"
+          - "+ Received  + 1"
+          - "-   1000,"
+          - "-   1000,"
+          - "-   1000,"
+          - "+   3000,"
+      s2_green:
+        status: "Tests:       2 passed, 2 total"
+      s3_red:
+        status: "Tests:       1 failed, 2 passed, 3 total"
+        detail:
+          - "-   2667,"
+          - "-   2667,"
+          - "+   2666,"
+          - "+   2666,"
+          - "    2666,"
+      s3_green:
+        status: "Tests:       3 passed, 3 total"
+      typo:
+        detail:
+          - "error TS2552: Cannot find name 'splt'."
+          - "Did you mean 'split'?"
+      slip:
+        status: "Tests:       3 failed, 3 total"
+        detail:
+          - "-   1000,"
+          - "+   1001,"
+          - "    1000,"
+          - "    1000,"

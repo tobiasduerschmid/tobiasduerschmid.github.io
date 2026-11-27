@@ -27,6 +27,12 @@
     });
     listen(button, 'click', (event) => {
       if (event.detail === 0) { cancel(); toggle(); return; } // Native keyboard/assistive activation.
+      // A control drawn in the picture (a runner card that picks the code
+      // language) may claim the click first: a listener for the cancelable
+      // `picture-click` event calls preventDefault, and the click neither
+      // toggles playback nor counts toward a double click.
+      const claim = new CustomEvent('picture-click', { bubbles: true, cancelable: true, detail: { clientX: event.clientX, clientY: event.clientY } });
+      if (!button.dispatchEvent(claim)) { cancel(); revealedByTouch = false; return; }
       const revealOnly = revealedByTouch;
       revealedByTouch = false;
       const side = sideOf(event);

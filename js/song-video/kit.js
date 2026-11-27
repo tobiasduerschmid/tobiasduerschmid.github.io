@@ -127,10 +127,16 @@
     compass: [['circle', { cx: 12, cy: 12, r: 9 }], ['path', { d: 'M12 6.2l2.3 5.8-2.3 5.8-2.3-5.8z' }], ['path', { d: 'M12 1.8v1.6M12 20.6v1.6M1.8 12h1.6M20.6 12h1.6' }]],
     hardhat: [['path', { d: 'M4.6 16a7.4 7.4 0 0 1 14.8 0' }], ['path', { d: 'M2.6 16h18.8v2.6H2.6z' }], ['path', { d: 'M10.2 8.9l.8 4.1M13.8 8.9l-.8 4.1' }]],
     target: [['circle', { cx: 12, cy: 12, r: 9 }], ['circle', { cx: 12, cy: 12, r: 5.4 }], ['circle', { cx: 12, cy: 12, r: 1.8 }]],
+    // A beetle from above: a bug in the code. Head, shell with its seam, three legs a side, antennae.
+    bug: [['circle', { cx: 12, cy: 6.6, r: 2.1 }], ['rect', { x: 7.2, y: 8.8, width: 9.6, height: 11.6, rx: 4.8 }], ['path', { d: 'M12 9.4v10.4M7.2 12.4H4.4M7.2 15.6H4.2M7.6 18.6l-2.4 1.6M16.8 12.4h2.8M16.8 15.6h3M16.4 18.6l2.4 1.6M10.6 4.8 9.2 2.8M13.4 4.8l1.4-2' }]],
+    // A smoke alarm on the ceiling, sounding: the dome, its lamp, and a sound wave on each side.
+    alarm: [['path', { d: 'M3 4.5h18' }], ['path', { d: 'M5.5 4.5v1.8a6.5 6.5 0 0 0 13 0V4.5' }], ['circle', { cx: 12, cy: 8.4, r: 1.1 }], ['path', { d: 'M4.2 14.6a8.5 8.5 0 0 0 3.2 3.6M19.8 14.6a8.5 8.5 0 0 1-3.2 3.6M3 18.4a12 12 0 0 0 3.6 3M21 18.4a12 12 0 0 1-3.6 3' }]],
     flag: [['path', { d: 'M5 21V3.6' }], ['path', { d: 'M5 4.4h11.6l-2.2 3.6 2.2 3.6H5' }]],
     book: [['path', { d: 'M12 6.6C10 5 7.1 4.5 3.4 5v13.2c3.7-.5 6.6 0 8.6 1.5 2-1.5 4.9-2 8.6-1.5V5C16.9 4.5 14 5 12 6.6z' }], ['path', { d: 'M12 6.6v13.1' }]],
     ship: [['path', { d: 'M3 16.4h18l-2.7 4H5.7z' }], ['path', { d: 'M12 2.8v13.6' }], ['path', { d: 'M12 4.2l6.4 10H12zM10.8 7.2l-4.8 7h4.8z' }]],
     code: [['path', { d: 'M8.4 7.2L3.6 12l4.8 4.8M15.6 7.2l4.8 4.8-4.8 4.8M13.6 4.8l-3.2 14.4' }]],
+    broom: [['path', { d: 'M20 3.5l-7.4 8.2' }], ['path', { d: 'M10.6 10.2l4.6 4.2-3.6 6.3c-2.9-.5-6-2.6-7.6-5.4z' }], ['path', { d: 'M6.6 17.2l3.2-2.4M9.3 19.6l2.4-3' }]],
+    balance: [['path', { d: 'M12 4v15.5M7.5 20h9M4.5 7.5h15' }], ['path', { d: 'M4.5 7.5L2 13a2.5 2.5 0 0 0 5 0zM19.5 7.5L17 13a2.5 2.5 0 0 0 5 0z' }]],
   };
 
   function icon(name, className) {
@@ -502,6 +508,53 @@
     return runs;
   }
 
+  const JAVA_KEYWORDS = new Set(['class', 'interface', 'record', 'enum', 'extends', 'implements', 'public', 'private', 'protected', 'static', 'final', 'void', 'int', 'long', 'double', 'boolean', 'char', 'var', 'return', 'new', 'import', 'package', 'if', 'else', 'for', 'while', 'throw', 'throws', 'try', 'catch', 'true', 'false', 'null', 'this']);
+  const CPP_KEYWORDS = new Set(['class', 'struct', 'namespace', 'using', 'public', 'private', 'protected', 'static', 'const', 'constexpr', 'auto', 'void', 'int', 'long', 'double', 'bool', 'char', 'return', 'new', 'if', 'else', 'for', 'while', 'throw', 'try', 'catch', 'true', 'false', 'nullptr', 'this', 'std']);
+  const TYPESCRIPT_KEYWORDS = new Set([...JAVASCRIPT_KEYWORDS, 'type', 'interface', 'implements', 'extends', 'private', 'public', 'readonly', 'number', 'string', 'boolean', 'void', 'as', 'throw']);
+  const C_FAMILY_TOKEN = /(\/\/.*$)|(^\s*#\s*\w+.*$)|('(?:\\.|[^'])*'|"(?:\\.|[^"])*"|`[^`]*`)|(@\w+)|(\b\d+(?:\.\d+)?[LlFf]?\b)|(\b[A-Za-z_$][\w$]*\b)|(\s+)|(.)/g;
+
+  /**
+   * Splits one line of a C-family language into [text, tone] runs, in the
+   * Python highlighter's tones: keywords, strings, numbers, comments,
+   * annotations and preprocessor lines (deco), types, and calls. An
+   * all-caps name before "(" is a call too (GoogleTest's TEST, EXPECT_EQ).
+   */
+  function highlightCFamily(source, keywords) {
+    const runs = [];
+    let previous = '';
+    let previousTone = null;
+    for (const match of source.matchAll(C_FAMILY_TOKEN)) {
+      const [text, comment, directive, string, annotation, number, word] = match;
+      let tone = null;
+      if (comment) tone = 'cm';
+      else if (directive) tone = 'deco';
+      else if (string) tone = 'str';
+      else if (annotation) tone = 'deco';
+      else if (number) tone = 'num';
+      else if (word) {
+        const calls = source[match.index + word.length] === '(';
+        if (keywords.has(word)) tone = 'kw';
+        else if (calls && /^[A-Z][A-Z0-9_]+$/.test(word)) tone = 'call';
+        else if (previous === 'class' || previous === 'struct' || previous === 'interface' || /^[A-Z]/.test(word)) tone = 'cls';
+        // A name after a type ("void even_split(", "List<Long> split(") declares a function.
+        else if (calls) tone = (previousTone === 'kw' || previousTone === 'cls') && previous !== 'return' && previous !== 'new' ? 'fn' : 'call';
+        previous = word;
+        previousTone = tone;
+      } else if (text.trim() && !/^[<>,\]\[]$/.test(text)) previousTone = null;
+      runs.push([text, tone]);
+    }
+    return runs;
+  }
+  const highlightJava = source => highlightCFamily(source, JAVA_KEYWORDS);
+  const highlightCpp = source => highlightCFamily(source, CPP_KEYWORDS);
+  const highlightTypeScript = source => highlightCFamily(source, TYPESCRIPT_KEYWORDS);
+  const HIGHLIGHTERS = { python: highlightPython, java: highlightJava, cpp: highlightCpp, typescript: highlightTypeScript, javascript: highlightJavaScript };
+
+  /** Splits one line of code in `language` (python, java, cpp, typescript, javascript) into [text, tone] runs. */
+  function highlight(language, source) {
+    return (HIGHLIGHTERS[language] || highlightPython)(source);
+  }
+
   const SQL_KEYWORDS = new Set(['select', 'from', 'where', 'and', 'or', 'not', 'insert', 'into', 'values', 'update', 'set', 'delete', 'drop', 'table', 'like', 'null', 'order', 'by']);
   const SQL_TOKEN = /(--.*$)|('[^']*'|"[^"]*")|(@\d+|\?|\$\d+)|(\b\d+(?:\.\d+)?\b)|(\*)|(\b[A-Za-z_]\w*\b)|(\s+)|(.)/g;
 
@@ -850,6 +903,6 @@
   window.SongKit = {
     el, svg, place, icon, scene, sticker, stamp, kinetic, badge, terminal,
     station, chip, flyIn, flow, polaroid, typewriter, scramble, pin,
-    highlightPython, highlightJavaScript, highlightSql, highlightHtml, writeCode, graph, timeStone, confetti, fall, backdrop, themes,
+    highlightPython, highlightJavaScript, highlightJava, highlightCpp, highlightTypeScript, highlight, highlightSql, highlightHtml, writeCode, graph, timeStone, confetti, fall, backdrop, themes,
   };
 })();

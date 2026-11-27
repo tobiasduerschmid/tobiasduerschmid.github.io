@@ -426,10 +426,15 @@ and verification screenshots outside the repository.
   or text-only session from the presence of authored media. Both support scene
   and cue navigation, refresh, pause, and fullscreen; audio sessions also expose
   play and time seeking. Unchecked scenes play continuously. A checked scene
-  stops 0.3 s before its boundary, inside the last cue's silence: a timer due
-  at the next check's stop point is armed from the start of playback, because
-  a background tab runs no animation frames and `timeupdate` is too coarse at
-  higher speeds (`tests/narration-check-stop.spec.js`). The audio and captions
+  pauses its audio right after the last word (`speech_end` + 0.35 s), holds the
+  finished picture silently, and opens its check 0.3 s before its boundary;
+  a prediction cue does the same before its reveal prompt. Pausing early keeps
+  audio already buffered by the output (Bluetooth, AirPlay, higher speeds) from
+  playing the next speech before the check. Play during that silent hold opens
+  the check at once, and a seek elsewhere cancels it. A timer due at the next
+  check's stop point is armed from the start of playback, because a background
+  tab runs no animation frames and `timeupdate` is too coarse at higher speeds
+  (`tests/narration-check-stop.spec.js`). The audio and captions
   URLs carry `?v=` and the speech fingerprint, so no cache pairs a page's timing
   with an older rendering; audio whose length differs from the timing makes
   the player ask for a reload. Printing opens the transcript and its nested

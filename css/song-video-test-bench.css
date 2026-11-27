@@ -1,0 +1,104 @@
+/*
+ * The "test bench" stage theme (js/song-video/test-bench.js): a lab notebook
+ * page on a laboratory bench, for lessons on testing and quality assurance.
+ * Only the backdrop. The page is the surface every picture is drawn on; its
+ * brightest color (under the desk lamp) is the "wall" (--bg) against which
+ * the stage tests measure text, so body text and colored ink keep at least
+ * 4.5:1 everywhere on it. The ruling and ink sketches stay faint, and the
+ * colored objects (petri dish, test tubes, pH strip and key) keep to the
+ * page's right edge. Dark values here; the light palette (also used in print) follows
+ * the site's light mode in css/video-narration-stage.css.
+ */
+
+.theme-test-bench {
+  --tb-bench: #03080a;
+  --tb-paper: #0d2026;
+  --tb-paper-edge: #08151a;
+  --tb-lamp: rgba(150, 220, 230, 0.05);
+  --tb-shade: rgba(0, 6, 9, 0.42);
+  --tb-rule: rgba(120, 200, 210, 0.085);
+  --tb-rule-major: rgba(120, 200, 210, 0.15);
+  --tb-margin: rgba(255, 110, 110, 0.3);
+  --tb-hole-edge: rgba(150, 210, 220, 0.16);
+  --tb-ink: rgba(165, 222, 232, 0.2);
+  --tb-glass: rgba(200, 235, 242, 0.42);
+  --tb-glint: rgba(255, 255, 255, 0.3);
+  --tb-liquid-opacity: 0.62;
+  --tb-stopper: #8a6a4a;
+  --tb-agar: rgba(235, 205, 130, 0.1);
+  --tb-colony-opacity: 0.6;
+  --tb-strip: #c9d4d2;
+  --tb-key-opacity: 0.62;
+  /* The page's brightest color, at the middle of the lamp's pool. */
+  --bg: #142a30;
+  background: var(--tb-paper-edge);
+  /* A word stays whole on this fixed stage; boxes are sized to fit it. */
+  overflow-wrap: normal;
+}
+
+.tb-room {
+  overflow: hidden;
+}
+
+/* The page: lit from the upper left, and a little darker toward its edges. */
+.tb-paper {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 44% 52% at 30% 24%, var(--tb-lamp), transparent 72%),
+    radial-gradient(ellipse 88% 84% at 50% 42%, var(--tb-paper) 0%, var(--tb-paper) 50%, var(--tb-paper-edge) 100%);
+}
+
+.tb-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 75% 70% at 50% 46%, transparent 62%, var(--tb-shade) 100%);
+  pointer-events: none;
+}
+
+.tb-art {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The ruling: graph paper, the margin's red double line, and punched holes. */
+.tb-rule { stroke: var(--tb-rule); stroke-width: 1; }
+.tb-rule--major { stroke: var(--tb-rule-major); }
+.tb-margin { stroke: var(--tb-margin); stroke-width: 1.5; }
+.tb-hole { fill: var(--tb-bench); stroke: var(--tb-hole-edge); stroke-width: 1.5; }
+
+/* Ink sketches: earlier experiments, faint so they stay behind the lesson.
+   Ticks, crosses, and the circled outlier stay in this one ink, never red
+   or green, so no mark of the sketches reads as a verdict on the lesson's
+   words. */
+.tb-ink { stroke: var(--tb-ink); stroke-width: 1.8; }
+.tb-ink--fine { stroke-width: 1.3; }
+.tb-ink--dash { stroke-width: 1.5; stroke-dasharray: 5 6; }
+
+/* Glassware and the colored objects at the page's right edge. */
+.tb-glass { stroke: var(--tb-glass); stroke-width: 1.6; }
+.tb-glint { stroke: var(--tb-glint); stroke-width: 1.6; }
+.tb-liquid { stroke: none; opacity: var(--tb-liquid-opacity); }
+.tb-liquid--red { fill: #e5484d; }
+.tb-liquid--green { fill: #30a46c; }
+.tb-liquid--blue { fill: #3e7be0; }
+.tb-stopper { fill: var(--tb-stopper); stroke: none; opacity: 0.7; }
+.tb-agar { fill: var(--tb-agar); stroke: none; }
+.tb-colony { stroke: none; opacity: var(--tb-colony-opacity); }
+.tb-colony--green { fill: #30a46c; }
+.tb-colony--red { fill: #e5484d; }
+
+.tb-swatch,
+.tb-strip { stroke: none; opacity: var(--tb-key-opacity); }
+.tb-swatch--0 { fill: #e5484d; }
+.tb-swatch--1 { fill: #f76b15; }
+.tb-swatch--2 { fill: #ffc53d; }
+.tb-swatch--3 { fill: #46a758; }
+.tb-swatch--4 { fill: #12a594; }
+.tb-swatch--5 { fill: #3e7be0; }
+.tb-swatch--6 { fill: #8e4ec6; }
+.tb-strip { fill: var(--tb-strip); }

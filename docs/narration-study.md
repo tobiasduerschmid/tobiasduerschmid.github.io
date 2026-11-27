@@ -12,7 +12,9 @@ player and cue IDs for all these interactions.
 
 - **Pause and predict** is enabled by default in player settings. After the
   prediction's speech and authored pause, playback waits for **Reveal
-  explanation**. Seeking elsewhere clears the hold. Turning the mode off
+  explanation**. The audio itself pauses right after the spoken prompt, and the
+  authored pause passes in silence with the picture held, so no device buffer
+  plays the answer's first word. Seeking elsewhere clears the hold. Turning the mode off
   restores continuous playback through prediction cues. The reader hides the
   following explanation in a disclosure; print shows the answer. The standalone
   reader opens answers for printing and restores the reader's disclosure choices

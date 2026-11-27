@@ -21,6 +21,12 @@ Layers (`layers.md`), and Pipes and Filters (`pipes_and_filters.md`). Each of
 those teaches its style as motivation, rules, and consequences; their teaching
 design and sources are in `docs/publish-subscribe-narration.md`,
 `docs/layered-style-narration.md`, and `docs/pipes-and-filters-narration.md`.
+Test-Driven Development (`SEBook/testing/tdd.md`) is animated on the test
+bench, the backdrop for testing and quality assurance (a lab notebook page
+on a laboratory bench, with sketches of experiments and test tubes in the
+cycle's colors, as the blueprint is architecture's and the post-it wall is
+process's), and draws its code on the stage in four languages
+(`docs/tdd-narration.md`).
 
 Use a video narration for a topic that is explained with pictures and
 structured text rather than one evolving code example (processes,
@@ -171,6 +177,33 @@ Code panels work as in the pattern lessons: the storyboard lists `languages`,
 `default_language`, and `example_order`, `<topic>_code.yml` holds the blocks, a
 scene names its `code` block, and cues name a `focus` key. The language control,
 complete examples, and code panel appear only for lessons with `languages`.
+
+An animated lesson can instead draw its code on the stage, so the video keeps
+one style. The stage page embeds `<topic>_code.yml` (`#narration-code`), and a
+kit draws each code piece once per language, marking each copy
+`data-code-variant="<language>"`. `js/video-narration-stage.js` sets the
+stage's `data-code-language` from the shared code-language preference (the
+player's Code control) and keeps following it; `css/video-narration-stage.css`
+shows only the matching copies. The notes' own language select relabels the
+stills it copied. The architecture kit's code cards take one `lines` list per
+language for this (`ArchKit.code`), and the song kit highlights Python, Java,
+C++, TypeScript, and JavaScript (`SongKit.highlight(language, line)`). The
+Test-Driven Development lesson draws all its code this way.
+
+A piece of the picture can also be a control: mark it `data-stage-choice`
+(the setting it picks; `code-language` is the one a player applies) and
+`data-stage-value` (the value). The player's play button covers the
+picture, so its click gesture (`js/song-video/gestures.js`) first dispatches
+a cancelable `picture-click` event; `js/video-narration.js` asks the frame
+for the control under the point (`VideoNarrationStage.choiceAt`, which counts
+only a control the picture shows now) and, for a code language, sets the
+bar's Code select, so the preference, its announcement, and the stage follow
+as they do for the select. A claimed click neither toggles playback nor
+counts toward a double-click skip. Pointing at a control marks it
+`is-pointed` (`VideoNarrationStage.point`) for a hover style. The stage is
+hidden from assistive technology, so a picture control is only a pointer
+shortcut: the same setting must also be in the player's controls. The TDD
+lesson's runner cards switch the code language this way.
 
 ## The animated stage
 

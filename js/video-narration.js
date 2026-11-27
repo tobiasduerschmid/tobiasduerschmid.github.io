@@ -44,6 +44,14 @@
     else load();
     audio.addEventListener('play', load, { once: true });
 
+    // A point on the page in the frame's own coordinates. Portrait full
+    // screen turns the video a quarter clockwise (`rotated`), frame included.
+    function framePoint(clientX, clientY, rotated) {
+      const box = frame.getBoundingClientRect();
+      if (rotated) return [(clientY - box.top) * (frame.clientWidth / box.height), (box.right - clientX) * (frame.clientHeight / box.width)];
+      return [(clientX - box.left) * (frame.clientWidth / box.width), (clientY - box.top) * (frame.clientHeight / box.height)];
+    }
+
     return {
       pose(time, description) {
         wanted = time;
@@ -53,7 +61,42 @@
           posed = time;
         }
       },
+      /** The picture control (VideoNarrationStage.choiceAt) under a point on the page, or null. */
+      choiceAt(clientX, clientY, rotated) {
+        return stage && stage.choiceAt ? stage.choiceAt(...framePoint(clientX, clientY, rotated)) : null;
+      },
+      /** Marks the picture control under a point as pointed at; null clears it. */
+      point(clientX, clientY, rotated) {
+        if (!stage || !stage.point) return;
+        if (clientX === null) stage.point(null, null);
+        else stage.point(...framePoint(clientX, clientY, rotated));
+      },
     };
+  }
+
+  /**
+   * Clicks on a control drawn in the picture: a runner card picks its code
+   * language. The play button over the picture announces each pointer click
+   * (picture-click, js/song-video/gestures.js); a click on a control is taken
+   * here and goes through the bar's Code select, so the site's preference,
+   * the announcement, and the stage all follow as they do for the select.
+   */
+  function bindPictureChoices(root, animation, languageSelect) {
+    const picture = root.querySelector('.vn-picture-control');
+    const video = root.querySelector('[data-vn-video]');
+    if (!picture || !languageSelect) return;
+    const rotated = () => Boolean(video && video.classList.contains('is-rotated'));
+    const languages = Array.from(languageSelect.options, option => option.value);
+    picture.addEventListener('picture-click', (event) => {
+      const choice = animation.choiceAt(event.detail.clientX, event.detail.clientY, rotated());
+      if (!choice || choice.setting !== 'code-language' || !languages.includes(choice.value)) return;
+      event.preventDefault();
+      if (languageSelect.value === choice.value) return;
+      languageSelect.value = choice.value;
+      languageSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    picture.addEventListener('pointermove', event => animation.point(event.clientX, event.clientY, rotated()));
+    picture.addEventListener('pointerleave', () => animation.point(null, null, false));
   }
 
   function createRenderer(root, { story, timing, examples }) {
@@ -62,6 +105,7 @@
     const panels = Object.fromEntries(Array.from(screen.querySelectorAll('[data-vn-panel]'), panel => [panel.dataset.vnPanel, panel]));
     const animation = panels.animation ? animationStage(panels.animation, root.querySelector('audio')) : null;
     const languageSelect = root.querySelector('[data-setting="language"]');
+    if (animation) bindPictureChoices(root, animation, languageSelect);
     let lastCue = null;
     let lastLanguage = null;
     let lastDiagramKey = null;

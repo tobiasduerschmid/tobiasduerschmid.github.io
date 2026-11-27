@@ -111,13 +111,13 @@
   // Code
   // ------------------------------------------------------------------
 
-  /** One line of highlighted Python. */
-  function codeLine(parent, code, className = '') {
+  /** One line of highlighted code (Python unless `language` names another). */
+  function codeLine(parent, code, className = '', language = 'python') {
     const line = el('div', `code-line ak-code-text${className ? ` ${className}` : ''}`, parent);
     // The statement after its indentation, so a mark under it skips the indent.
     const indent = code.match(/^\s*/)[0];
     if (indent) line.append(document.createTextNode(indent));
-    kit.writeCode(el('span', 'ak-code-statement', line), kit.highlightPython(code.slice(indent.length)));
+    kit.writeCode(el('span', 'ak-code-statement', line), kit.highlight(language, code.slice(indent.length)));
     return line;
   }
 
@@ -129,13 +129,38 @@
    * line in later; `smellAt` underlines its statement with a red wavy line,
    * as an editor flags a problem. Returns the card and its rows (light them
    * with WallKit.lit).
+   *
+   * For a lesson in several languages, `lines` (and `title`) map each
+   * language to its own lines: the card draws every variant, each marked
+   * data-code-variant, and the stage shows the viewer's language
+   * (data-code-language, video-narration-stage.css). Then `rows` maps each
+   * language to its rows.
    */
   function code(parent, { x, y, w, title, lines, at, until, tagsAt, how = 'rise', gutter = false }) {
     const node = staged(parent, 'code-card ak-code', x, y);
     node.style.width = `${w}px`;
+    if (!Array.isArray(lines)) {
+      const rows = {};
+      for (const [language, variantLines] of Object.entries(lines)) {
+        const variant = el('div', 'ak-code-variant', node);
+        variant.dataset.codeVariant = language;
+        const variantTitle = title && typeof title === 'object' ? title[language] : title;
+        if (variantTitle) el('div', 'code-card-title ak-code-title', variant, variantTitle);
+        rows[language] = codeRows(variant, variantLines, { tagsAt, gutter, language });
+      }
+      show(node, at, until, how);
+      return { node, rows };
+    }
     if (title) el('div', 'code-card-title ak-code-title', node, title);
+    const rows = codeRows(node, lines, { tagsAt, gutter, language: 'python' });
+    show(node, at, until, how);
+    return { node, rows };
+  }
+
+  /** A code card's body: its rows, each with an optional gutter tag, diff sign, and timing. */
+  function codeRows(node, lines, { tagsAt, gutter, language }) {
     const body = el('div', `ak-code-body${gutter ? ' ak-code-body--gutter' : ''}`, node);
-    const rows = lines.map(({ code: source, tag, tone, iconName, at: lineAt, kind, smellAt }, i) => {
+    return lines.map(({ code: source, tag, tone, iconName, at: lineAt, kind, smellAt }, i) => {
       const row = el('div', `ak-code-row${kind ? ` ak-code-row--${kind}` : ''}`, body);
       if (gutter) {
         const cell = el('span', 'ak-code-gutter', row);
@@ -146,7 +171,7 @@
         }
       }
       if (kind) el('span', 'ak-code-sign', row, kind === 'added' ? '+' : '-');
-      codeLine(row, source);
+      codeLine(row, source, '', language);
       if (smellAt !== undefined) track(row, 'is-', [{ at: smellAt, state: 'smell' }]);
       if (lineAt !== undefined) {
         row.classList.add('is-staged');
@@ -154,8 +179,6 @@
       }
       return row;
     });
-    show(node, at, until, how);
-    return { node, rows };
   }
 
   // ------------------------------------------------------------------

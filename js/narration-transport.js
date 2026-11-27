@@ -6,9 +6,19 @@
   // Media clocks quantize timestamps; a sub-millisecond roundoff is not a previous cue.
   const TIME_EPSILON = 0.001;
   // A section's audio ends with its last cue's silence, and the next section's
-  // speech starts right at the boundary. Checks run once per frame and output is
-  // buffered, so stop inside that silence rather than at the boundary itself.
+  // speech starts right at the boundary. A check (or a prediction's reveal)
+  // opens this long before that boundary, after the authored viewing pause.
   const SECTION_END_LEAD = 0.3;
+  // Audio a browser has already handed to the output keeps playing after
+  // pause(): tens of milliseconds on speakers, a quarter second or more on
+  // Bluetooth headphones, seconds over AirPlay, and twice as much media at
+  // double speed. Pausing 0.3 s before the boundary let the next section's
+  // first syllable through. So every automatic stop pauses the audio right
+  // after the last spoken word (speech is trimmed to within 0.08 s of the
+  // voice, and MP3 decoding may shift it by 0.05 s), holds the finished picture
+  // silently through the rest of the authored pause, and only then opens the
+  // check or the prediction.
+  const SPEECH_TAIL = 0.35;
   // A rendering's audio and timing differ in length by a few encoder frames; a
   // larger difference means the audio comes from another rendering of the speech.
   const DURATION_TOLERANCE = 0.75;
@@ -230,6 +240,8 @@
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
     let stopTimer = 0;
+    // A stop in the silence after the last word: { at, timer, open } until what follows opens.
+    let silentHold = null;
     // Set once the audio turns out to come from another rendering; the warning outlives starting playback.
     let staleAudio = false;
     let position = 0;
@@ -242,7 +254,7 @@
     });
     const predictionBoundaries = timing.scenes.flatMap((scene, sceneIndex) => scene.cues.flatMap((cue, cueIndex) => (
       storyboard.scenes[sceneIndex].cues[cueIndex].prediction
-        ? [{ sceneIndex, cueIndex, end: cue.end, time: Math.max(cue.start, cue.end - SECTION_END_LEAD) }] : []
+        ? [{ sceneIndex, cueIndex, end: cue.end, ...stopWindow(cue) }] : []
     )));
 
     let motionPreference;
@@ -285,9 +297,15 @@
       labelControl(playButton, audio.paused ? 'Play narration' : 'Pause narration', 'is-playing', !audio.paused);
     }
 
-    // Stops at the end of a checked section and opens its check.
+    // Stops in the silence right after a checked section's last word, holds
+    // its finished picture through the rest of the viewing pause, then opens
+    // its check.
     function stopAtCheck(index) {
       disarmStop();
+      holdSilently(stopWindow(timing.scenes[index].cues.at(-1)).open, () => openCheck(index));
+    }
+
+    function openCheck(index) {
       audio.pause();
       // Keep the completed section on screen while its checkpoint is open.
       audio.currentTime = Math.max(0, timing.scenes[index].end - 0.002);
@@ -295,22 +313,49 @@
       options.onSectionEnd(index);
     }
 
+    // Pauses where the audio is now, a moment after the last word, and calls
+    // `open` once the clock would have reached `openAt`: the rest of the
+    // authored pause passes in silence, with the finished picture on screen.
+    function holdSilently(openAt, open) {
+      cancelSilentHold();
+      audio.pause();
+      render(audio.currentTime);
+      const wait = Math.max(0, openAt - audio.currentTime) / (audio.playbackRate || 1);
+      silentHold = { at: audio.currentTime, open, timer: setTimeout(finishSilentHold, wait * 1000) };
+    }
+
+    function finishSilentHold() {
+      const hold = silentHold;
+      cancelSilentHold();
+      if (hold) hold.open();
+    }
+
+    function cancelSilentHold() {
+      if (!silentHold) return;
+      clearTimeout(silentHold.timer);
+      silentHold = null;
+    }
+
     function renderPlayback(time) {
-      const boundary = currentScene >= 0 ? timing.scenes[currentScene].end : Infinity;
-      const checkAt = options.shouldCheck(currentScene) ? boundary - SECTION_END_LEAD : Infinity;
+      const checked = currentScene >= 0 && options.shouldCheck(currentScene);
+      const checkAt = checked ? stopWindow(timing.scenes[currentScene].cues.at(-1)).stop : Infinity;
       // Consider crossed cues, too: a delayed animation frame must never show
       // an answer before stopping at the prediction that precedes it.
       const hold = prediction && predictionBoundaries.find(cue => cue.end > position + TIME_EPSILON
-        && cue.time <= Math.min(time, checkAt) + TIME_EPSILON && prediction.shouldHold(cue));
+        && cue.stop <= Math.min(time, checkAt) + TIME_EPSILON && prediction.shouldHold(cue));
       if (hold) {
         const resumePlayback = !audio.paused;
         audio.pause();
-        audio.currentTime = hold.time;
-        render(hold.time);
-        prediction.hold({ ...hold, resumePlayback });
+        // A late frame may have crossed into the answer; return to the prediction's silence.
+        if (audio.currentTime > hold.open) audio.currentTime = hold.open;
+        holdSilently(hold.open, () => {
+          audio.pause();
+          render(audio.currentTime);
+          prediction.hold({ ...hold, time: audio.currentTime, resumePlayback });
+        });
         return true;
       }
-      if (options.shouldCheck(currentScene) && time + TIME_EPSILON >= boundary - SECTION_END_LEAD) {
+      if (checked && time + TIME_EPSILON >= checkAt) {
         stopAtCheck(currentScene);
         return true;
       }
@@ -319,13 +364,21 @@
       return false;
     }
 
-    // The first check the learner will stop at whose stop point lies at or
-    // after `time`.
+    // Where an automatic stop pauses the audio (just after the cue's last
+    // word) and when it opens what follows (SECTION_END_LEAD before its end).
+    function stopWindow(cue) {
+      const open = Math.max(cue.start, cue.end - SECTION_END_LEAD);
+      const stop = Number.isFinite(cue.speech_end) ? Math.max(cue.start, Math.min(open, cue.speech_end + SPEECH_TAIL)) : open;
+      return { stop, open };
+    }
+
+    // The first check the learner will stop at whose section has not ended
+    // by `time`: playback that starts inside a check's silence stops at once.
     function nextStop(time) {
       return options.checkScenes
         .filter(index => options.shouldCheck(index))
-        .map(index => ({ index, at: timing.scenes[index].end - SECTION_END_LEAD }))
-        .filter(stop => stop.at + TIME_EPSILON >= time)
+        .map(index => ({ index, at: stopWindow(timing.scenes[index].cues.at(-1)).stop, end: timing.scenes[index].end }))
+        .filter(stop => stop.end > time + TIME_EPSILON)
         .sort((a, b) => a.at - b.at)[0] || null;
     }
 
@@ -383,6 +436,8 @@
     }
 
     async function play() {
+      // Play during a silent hold skips the rest of the pause to the check or the prediction.
+      if (silentHold) { finishSilentHold(); return; }
       if (options.canPlay && !options.canPlay()) return;
       // A player may close a detour (such as a closer look) when playback resumes.
       if (options.onPlay) options.onPlay();
@@ -453,7 +508,11 @@
     });
     audio.addEventListener('pause', () => { stopFrames(); disarmStop(); updatePlayButton(); });
     // A new position or speed moves the stop.
-    audio.addEventListener('seeking', disarmStop);
+    audio.addEventListener('seeking', () => {
+      disarmStop();
+      // A seek away from a silent hold cancels it; the hold's own position does not.
+      if (silentHold && Math.abs(audio.currentTime - silentHold.at) > 0.01) cancelSilentHold();
+    });
     audio.addEventListener('seeked', armStop);
     audio.addEventListener('ratechange', () => { disarmStop(); armStop(); });
     audio.addEventListener('waiting', stopFrames);

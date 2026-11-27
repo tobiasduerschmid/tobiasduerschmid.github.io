@@ -1,7 +1,9 @@
 {%- comment -%}
   What a page needs to build a video narration's animated stage: its styles
   (part="styles", in the head) or its data and scripts (part="scripts", after
-  the #stage element). The stage frame and the printable notes share this list.
+  the #stage element). The data includes the lesson's code (<topic>_code.yml),
+  when it has any, for a stage that draws code in several languages. The
+  stage frame and the printable notes share this list.
   Params: topic, part.
 {%- endcomment -%}
 {%- assign vn_lesson = site.data.video_narrations[include.topic] -%}
@@ -14,7 +16,11 @@
   <link rel="stylesheet" href="{{ '/css/video-narration-stage.css' | relative_url }}?v={{ site.asset_version }}">
 {%- else -%}
   {%- capture vn_timing_key %}{{ include.topic }}_timing{% endcapture %}
-  <script type="application/json" id="narration-storyboard">{{ site.data.explainers[include.topic] | jsonify | replace: '<', '<' }}</script>
+  <script type="application/json" id="narration-storyboard">{{ site.data.explainers[include.topic] | jsonify | replace: '<', '\u003c' }}</script>
+  {%- capture vn_code_key %}{{ include.topic }}_code{% endcapture %}
+  {%- if site.data.explainers[vn_code_key] %}
+  <script type="application/json" id="narration-code">{{ site.data.explainers[vn_code_key] | jsonify | replace: '<', '\u003c' }}</script>
+  {%- endif %}
   <script type="application/json" id="narration-timing">{{ site.data.explainers[vn_timing_key] | jsonify }}</script>
   <script src="{{ '/js/song-video/timeline.js' | relative_url }}?v={{ site.asset_version }}"></script>
   <script src="{{ '/js/song-video/kit.js' | relative_url }}?v={{ site.asset_version }}"></script>

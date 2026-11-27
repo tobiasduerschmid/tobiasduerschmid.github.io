@@ -1,0 +1,213 @@
+WEBVTT
+
+intro-1
+00:00:00.000 --> 00:00:15.170
+Friday night, ramen on Sawtelle with Priya and Mateo. You pay the eighty-dollar bill, then open the group chat. Last night you built a new feature for the chat app your team is making: split the bill. One tap, and everyone sees their share.
+
+intro-2
+00:00:15.170 --> 00:00:30.200
+The app tells each of you to pay twenty-six dollars and sixty-six cents. The three shares add up to seventy-nine ninety-eight. Two cents are gone. Tonight it's two cents. But every bill that doesn't divide evenly will come up short.
+
+intro-3
+00:00:30.200 --> 00:00:44.670
+And your tests were green. You wrote them after the code: you tried thirty dollars for three people, saw ten dollars each, and saved that as the test. A test written after the code tends to confirm what the code already does.
+
+intro-4
+00:00:44.670 --> 00:00:59.450
+That's like shooting an arrow first and then painting the target around wherever it landed. The code's answer came first, and the test was drawn around it, so of course it looks like a hit. So let's flip the order.
+
+cycle-1
+00:00:59.450 --> 00:01:18.180
+Test-driven development, TDD for short, flips that order. Before you write a piece of code, you write a small automated test that says what the code should do. The test comes from what you need, not from the code's answer. This time, you draw the target first, and the code has to hit it.
+
+cycle-2
+00:01:18.180 --> 00:01:36.750
+TDD runs in a short cycle with three steps. Red: write one small test and watch it fail. Green: write just enough code to make it pass. Refactor: clean up the code while every test still passes. Then the next test. One turn takes minutes.
+
+cycle-3
+00:01:36.750 --> 00:01:57.610
+Red and green come from the test runner, the tool that runs your tests and reports the result. Each language here has one: pytest for Python, JUnit for Java, GoogleTest for C++, Jest for TypeScript. Switch the code to your language anytime: the cycle stays the same.
+
+list-1
+00:01:57.610 --> 00:02:13.340
+Here's the job. Split takes two numbers: the bill in cents, and how many people share it. It returns a list with each person's share, also in cents. Cents are whole numbers, so every amount in the code and in the tests is exact.
+
+list-2
+00:02:13.340 --> 00:02:29.870
+Before any code, write a test list: every case you can think of, in plain words. One person pays it all. An even split. Leftover cents. Zero people. The list holds the cases, so your head is free for the one you're working on.
+
+list-3
+00:02:29.870 --> 00:02:48.150
+The list is not a pile of tests to write up front. Write them all first, and you'd face a wall of red, and rewrite them when the design shifts. TDD means one test at a time. New ideas go on the list. Start with the easiest line.
+
+starter-1
+00:02:48.150 --> 00:03:06.800
+The easiest line is the starter test: one person pays it all. The test calls split with three thousand cents and one person, and expects a list holding one share: three thousand. Look what you just designed: the name, the inputs, and the result, all from the caller's side.
+
+starter-2
+00:03:06.800 --> 00:03:26.540
+Run it. Red: there is no split yet. In some languages the test fails when it runs; in others the code won't even build. Both count as red. Now predict: what is the least code you could write to turn this one test green?
+
+starter-3
+00:03:26.540 --> 00:03:47.250
+Return a list holding three thousand. A constant, and nothing else. This move is called Fake It. Run the test: green. Yes, it looks like cheating, a storefront on a movie set with nothing behind the door. But one test only describes one case, and this code handles exactly that case.
+
+starter-4
+00:03:47.250 --> 00:04:03.930
+Fake It buys two things. Green now tells you the test, the runner, and the function are wired up correctly. And the code promises nothing that no test has checked. The fake won't survive the next test. Cross off the first line.
+
+triangulate-1
+00:04:03.930 --> 00:04:23.550
+Next line: an even split. The new test calls split with three thousand cents and three people, and expects one thousand, three times. The code still returns its constant. Predict: when you run both tests, what will the runner report?
+
+triangulate-2
+00:04:23.550 --> 00:04:40.580
+One failed, one passed. The old test is still green. The new one is red, and this time the runner shows an assertion failure: expected three shares of one thousand, got a single three thousand. That message is the difference you now have to close.
+
+triangulate-3
+00:04:40.580 --> 00:05:03.580
+No constant can satisfy both tests. That is Triangulate: you generalize only when a second example forces you to, the way a second sighting pins down a point. So divide the cents among the people and repeat that share for each. Run: two green. As tests get more specific, code gets more general.
+
+leftover-1
+00:05:03.580 --> 00:05:22.310
+Next line: leftover cents. Use Friday's bill: eight thousand cents, three people. To write the expected result, you must answer a question the old code never asked: who pays the extra cents? You decide: one extra cent each, starting with the first person in the list.
+
+leftover-2
+00:05:22.310 --> 00:05:42.770
+So the test expects twenty-six sixty-seven, twenty-six sixty-seven, and twenty-six sixty-six. The code still divides and repeats. Predict: what does split return for eight thousand cents and three people, and what do those shares add up to?
+
+leftover-3
+00:05:42.770 --> 00:05:59.880
+Twenty-six sixty-six, three times: seven thousand nine hundred ninety-eight. One failed, two passed. There's Friday's bug, caught at your desk. The test could catch it because you worked out the right shares yourself, before any code could suggest an answer.
+
+leftover-4
+00:05:59.880 --> 00:06:18.300
+This time you know exactly what to type, so type it. That's Obvious Implementation. Fill in every share as before, then add one cent to each of the first people until the leftover cents are used up. Run all three tests: green.
+
+refactor-1
+00:06:18.300 --> 00:06:35.190
+Green, but look at the code. It fills in every share, then goes back and patches some of them. It works, yet it reads like a repair. Now that all tests pass, you may refactor: change how the code is written without changing what it does.
+
+refactor-2
+00:06:35.190 --> 00:06:55.160
+Say it the way you'd explain it to a friend. Name two values: share, and extra for the leftover cents. Then build the list: everyone pays the share, and with two cents left over, the first two people pay one cent more. Run the tests: still three green. Those tests were your safety net.
+
+refactor-3
+00:06:55.160 --> 00:07:16.580
+That's the cycle: red, green, and refactor when the code needs it. Three lines are crossed off, and each one left a test behind that keeps checking. One line remains: zero people. That cycle is yours. Next: the rules behind what you just did, and why each one exists.
+
+rules_red-1
+00:07:16.580 --> 00:07:36.570
+Rule one: test first. Write the test for a behavior before any code for it. Last night's test came after the code: you ran it and saved its answer as the expected one. That's painting the target around the arrow. Test first draws the target from the requirement, and the code has to hit it.
+
+rules_red-2
+00:07:36.570 --> 00:07:56.580
+Test first pays off twice more. A test planned for later tends to get dropped under a deadline; one written first already exists. And it designs the call from the caller's side. The cost: you must know what the code should do. If you don't, explore with throwaway code, then start over test first.
+
+rules_red-3
+00:07:56.580 --> 00:08:21.360
+Rule two: watch it fail. Run every new test and see it fail, for the reason you expect, before you write the code. Rewind to before the fix. A teammate tests leftover cents by checking only that split returns three shares for Friday's bill. On the old code, it's green. Predict: good news?
+
+rules_red-4
+00:08:21.360 --> 00:08:40.450
+Bad news. The old code still loses two cents, and this test passes anyway. It counts the shares but never checks the amounts, so it can't tell broken code from fixed code. It's like a smoke alarm with no battery: quiet whether there's smoke or not. Watching it fail tests the test.
+
+rules_red-5
+00:08:40.450 --> 00:08:59.500
+Red on the old code, then green after the fix: that pair shows the test detects the behavior you added. Same reason you press a smoke alarm's test button: to hear that it can go off. So when a brand-new test passes at once, stop: the behavior already exists, or the test checks too little.
+
+rules_red-6
+00:08:59.500 --> 00:09:18.680
+So read the red before you fix it. Expected twenty-six sixty-seven, got twenty-six sixty-six: the right failure, for the right reason. If the message complains about a typo or a missing file, the test isn't checking your behavior yet. Fix the test first.
+
+rules_green-1
+00:09:18.680 --> 00:09:38.690
+Rule three: smallest step. Write only enough code to pass the failing test. While fixing the leftover cents, you're tempted to add a tip parameter: the app will need it someday. But no test asks for a tip, so no test checks it. If the tip math were wrong, every test would still be green.
+
+rules_green-2
+00:09:38.690 --> 00:09:55.260
+Small steps also keep debugging short. Each green is a checkpoint, like a save point in a game. When a red surprises you, the cause sits in the few lines since the last green: undo them, and you're back on green. No hunting through an afternoon of changes.
+
+rules_green-3
+00:09:55.260 --> 00:10:10.830
+You pick the step size the way you'd pick a gear: Fake It is low gear, for when you're unsure; Obvious Implementation is high gear, for when you're sure. After a surprising red, shift down, and take smaller steps until green feels routine.
+
+rules_green-4
+00:10:10.830 --> 00:10:26.200
+Tiny steps do have a cost. They can feel like moving at a snail's pace, and they won't design the code for you: much of that thinking happens when you refactor. And the tip isn't lost. It waits on the test list until someone actually needs it.
+
+rules_green-5
+00:10:26.200 --> 00:10:45.410
+The strictest form keeps every step tiny: only enough of a test to fail, then only enough code to pass, a line or two at a time. It's known as the three laws of TDD. Treat it like training wheels: practice tiny steps first, then widen them as you gain confidence.
+
+rules_green-6
+00:10:45.410 --> 00:11:02.940
+Rule four: refactor on green. Change the structure of code only while every test passes, and change nothing else at the same time. Refactoring is a bit like walking a tightrope, with your passing tests as the safety net underneath: if you slip, they catch you.
+
+rules_green-7
+00:11:02.940 --> 00:11:18.370
+Say that during the cleanup you type less-than-or-equal where less-than belongs. You slip, and the net catches you: all three tests turn red at once. One edit, one cause. Undo it, and you're back on the rope.
+
+rules_green-8
+00:11:18.370 --> 00:11:38.680
+Green before and after a cleanup means every tested behavior survived. On red, cleanup is a gamble: with structure and behavior changing together, a failure can't tell you which one broke. So wear one hat at a time: the hard hat when you add behavior, the cleaning cap when you restructure, never both.
+
+rules_green-9
+00:11:38.680 --> 00:11:54.110
+Skipping cleanup is a common way TDD goes wrong: every quick green leaves a fake or a patch behind, and they pile up into a shaky tower. With a safety net of tests under you, cleaning up feels safe enough that you'll actually do it.
+
+rules_green-10
+00:11:54.110 --> 00:12:10.630
+One limit, though: green proves only what the tests check. Tests work like a flashlight. They light up the code they cover, and a bug sitting in the dark stays hidden. So a refactoring is only as safe as its tests.
+
+benefits-1
+00:12:10.630 --> 00:12:28.760
+Now the consequences. First: more tests. In TDD, every behavior arrives with a test, because the test came first. This is the most consistent finding in studies of TDD: developers who work this way end up with more tests than those who test afterward.
+
+benefits-2
+00:12:28.760 --> 00:12:45.090
+Second: a regression safety net. Every passing test stays in the suite and runs again after each change. Change split next month, and seconds later you know whether Friday's bill still adds up. That net is what makes refactoring safe.
+
+benefits-3
+00:12:45.090 --> 00:13:01.220
+Third: executable documentation. The tests show how to call split and what it promises. Unlike a comment, a test fails when it stops being true. But that holds only while you keep the tests current: stale tests document the past.
+
+benefits-4
+00:13:01.220 --> 00:13:24.380
+Fourth: small, testable units. To write the test first, you need code you can call on its own, with clear inputs and outputs. Studies find that test-first code comes in smaller, simpler units, more like separate bricks than one big tangle. Whether TDD improves a system's overall design is still debated.
+
+costs-1
+00:13:24.380 --> 00:13:43.690
+TDD has costs. First: time up front. In four industrial case studies, teams using TDD had forty to ninety percent fewer defects per line of code before release than similar teams. The price: their managers estimated fifteen to thirty-five percent more development time.
+
+costs-2
+00:13:43.690 --> 00:14:02.360
+Second: a learning curve. Strict TDD is hard to follow at first, and newcomers often find it slow. Third: tests to maintain. Tests are code. A test that checks how split works inside, instead of what it returns, breaks on every refactoring.
+
+costs-3
+00:14:02.360 --> 00:14:25.120
+And TDD has limits. It needs a check that's automated, fast, and gives the same verdict every run. It struggles without an exact right answer, as in recognizing images, and with qualities like response time and security. And big designs don't grow test by test: taller towers never reach the moon.
+
+evidence-1
+00:14:25.120 --> 00:14:44.370
+So does test-first beat test-after? Controlled experiments have put TDD on the scale against writing each test right after a small piece of code. Mostly, the scale stays level, for quality and speed alike. It tips toward TDD against teams that tested late, or barely at all.
+
+evidence-2
+00:14:44.370 --> 00:15:03.160
+What tracks the benefits is the rhythm, a steady beat like a metronome's. In a study of professional developers, quality and productivity went with short, steady cycles, not with whether the test came first. Writing the test first mainly guarantees that the test gets written, and that it can fail.
+
+evidence-3
+00:15:03.160 --> 00:15:22.200
+And in practice, strict TDD is rare: most developers let tests guide them more loosely. So hold realistic expectations. Keep what the evidence supports: a test for every behavior, small steps, constant test runs, and cleanup on green.
+
+summary-1
+00:15:22.200 --> 00:15:43.090
+Let's recap. A test written after the code confirmed Friday's bug. Test-driven development flips the order, in a short cycle: red, a small failing test; green, just enough code; refactor, cleanup while everything passes. A test list holds the cases, and you take them one at a time.
+
+summary-2
+00:15:43.090 --> 00:16:04.260
+Four rules, and the reason for each. Test first: the target comes from the requirement, not the code. Watch it fail: proof the test can catch the bug. Smallest step: a checkpoint after every step, so failures stay near their cause. Refactor on green: cleanup checked by the safety net of tests.
+
+summary-3
+00:16:04.260 --> 00:16:25.860
+TDD gives you more tests, a regression safety net, and small, testable units. It costs time up front, a learning curve, and tests to maintain, and it needs fast, exact checks. Its benefits follow short, steady cycles. Your turn: zero people is still on the list.

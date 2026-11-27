@@ -1,0 +1,877 @@
+/*
+ * The look of the Test-Driven Development narration's illustrations
+ * (js/video-narration/tdd-art.js). Flat fills, fine ink, light from the top
+ * left. Objects keep their colors in light and dark mode, and print keeps
+ * them as vector art; only cast shadows follow the mode. States are classes
+ * on each picture's root, never transitions, so every moment is a still.
+ */
+
+.ta-art { display: block; width: 100%; height: 100%; overflow: visible; }
+.ta-ink { fill: none; stroke: #1b1e28; stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+.ta-ink-fine { fill: none; stroke: #1b1e28; stroke-width: 1.3; stroke-linejoin: round; stroke-linecap: round; }
+.ta-shadow { fill: rgba(60, 40, 10, 0.16); }
+html.dark-mode .ta-shadow { fill: rgba(0, 0, 0, 0.45); }
+
+/* ------------------------------------------------------------------
+   The dinner, the money, and the example's moves
+   ------------------------------------------------------------------ */
+
+/* Paints for the TDD narration's story illustrations (story.js). Fixed
+ * colors in both themes; states are classes on the root <svg>. */
+
+/* Copper cents (coin, coinStack, rollingCoins, splitMachine). */
+.ta-story-copper { fill: #d98a4e; }
+.ta-story-copper-field { fill: #cd7c41; }
+.ta-story-copper-top { fill: #e39a5e; }
+.ta-story-copper-shade { fill: #a45e2b; }
+.ta-story-copper-light { fill: none; stroke: #f4b884; stroke-width: 1.5; stroke-linecap: round; }
+.ta-coin-stack .ta-story-copper-light { fill: #f4b884; stroke: none; }
+.ta-story-copper-emboss { fill: #e9a36a; }
+.ta-story-copper-emboss-shade { fill: #9a5524; }
+.ta-story-copper-vein { fill: none; stroke: #a45e2b; stroke-width: 1; stroke-linecap: round; }
+.ta-story-copper-reed { fill: none; stroke: #a45e2b; stroke-width: 0.9; stroke-linecap: round; }
+.ta-story-glint { fill: #ffe3c2; }
+.ta-rolling-speed { fill: none; stroke: #1b1e28; stroke-width: 1.6; stroke-linecap: round; }
+html.dark-mode .ta-rolling-speed { stroke: #e8ecf4; }
+
+/* The ramen table. */
+.ta-table-edge { fill: #a86a33; }
+.ta-table-wood { fill: #d99a5b; }
+.ta-table-plank { fill: #e2a868; }
+.ta-table-wood-light { fill: none; stroke: #f0bd85; stroke-width: 2.4; stroke-linecap: round; }
+.ta-table-seam { fill: none; stroke: #a86a33; stroke-width: 1.5; }
+.ta-table-grain { fill: none; stroke: #b9783c; stroke-width: 1.2; stroke-linecap: round; }
+.ta-table-bowl { fill: #3646ad; }
+.ta-table-bowl-shade { fill: #232e7d; }
+.ta-table-bowl-light { fill: none; stroke: #8494ee; stroke-width: 2.2; stroke-linecap: round; }
+.ta-table-bowl-band { fill: none; stroke: #fffdf6; stroke-width: 1.8; }
+.ta-table-bowl-inside { fill: #f7f1e1; }
+.ta-table-bowl-inside-shade { fill: #cfc5ae; }
+.ta-table-broth { fill: #edcf94; }
+.ta-table-broth-light { fill: none; stroke: #fbecc8; stroke-width: 2; stroke-linecap: round; }
+.ta-table-broth-shade { fill: #d2ad6c; }
+.ta-table-noodle-shade { fill: none; stroke: #c2852a; stroke-width: 4.2; stroke-linecap: round; stroke-linejoin: round; }
+.ta-table-noodle { fill: none; stroke: #fff1bd; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.ta-table-oil { fill: #f59b2c; }
+.ta-table-nori { fill: #1f3d2c; }
+.ta-table-nori-light { fill: none; stroke: #3f7352; stroke-width: 1.2; stroke-linecap: round; }
+.ta-table-egg { fill: #fffdf6; }
+.ta-table-yolk { fill: #ff9a26; }
+.ta-table-yolk-light { fill: #ffd27a; }
+.ta-table-chashu { fill: #b9603f; }
+.ta-table-chashu-edge { fill: #e39a82; }
+.ta-table-chashu-fat { fill: none; stroke: #fbe3d2; stroke-width: 2.2; stroke-linecap: round; }
+.ta-table-naruto { fill: #fffdf6; }
+.ta-table-naruto-swirl { fill: none; stroke: #f0649a; stroke-width: 1.7; stroke-linecap: round; }
+.ta-table-scallion { fill: #d6f2b8; stroke: #3f9a35; stroke-width: 1.5; }
+.ta-table-sesame { fill: #fff3c8; }
+.ta-table-rest { fill: #1fb5a8; }
+.ta-table-stick { fill: #f6e2b0; }
+.ta-table-stick-end { fill: #8b2f2a; }
+.ta-table-plate { fill: #fffdf6; }
+.ta-table-plate-shade { fill: #ece6d6; }
+.ta-table-gyoza { fill: #fbe9bd; }
+.ta-table-gyoza-brown { fill: #e08e36; }
+.ta-table-gyoza-dark { fill: #b9651f; }
+.ta-table-soy { fill: #3a1f12; }
+.ta-table-glass { fill: #e4f4fa; }
+.ta-table-soda { fill: #9ccf4a; }
+.ta-table-soda-shade { fill: #6fa52e; }
+.ta-table-soda-foam { fill: #e2f5b4; }
+.ta-table-ice { fill: rgba(255, 255, 255, 0.72); }
+.ta-table-straw { fill: #ff8a3d; }
+.ta-table-straw-stripe { fill: none; stroke: #fffdf6; stroke-width: 1.6; }
+.ta-table-highlight { fill: none; stroke: #ffffff; stroke-width: 1.8; stroke-linecap: round; }
+
+/* The split machine. */
+.ta-machine-body { fill: #1fb5a8; }
+.ta-machine-body-light { fill: #8fe3db; }
+.ta-machine-body-shade { fill: #11877d; }
+.ta-machine-lid { fill: #38cdbf; }
+.ta-machine-base { fill: #11877d; }
+.ta-machine-metal { fill: #d6dce6; }
+.ta-machine-metal-light { fill: #f4f7fb; }
+.ta-machine-metal-shade { fill: #9aa6b8; }
+.ta-machine-dark { fill: #3b4458; }
+.ta-machine-strut { fill: none; stroke: #6b7689; stroke-width: 3; stroke-linecap: round; }
+.ta-machine-brass { fill: #e2b441; }
+.ta-machine-brass-shade { fill: #a67c12; }
+.ta-machine-plate { fill: #fffdf6; }
+.ta-machine-face { fill: #fffdf6; }
+.ta-machine-face-shade { fill: #ded6c2; }
+.ta-machine-window { fill: #0d5f58; }
+.ta-machine-tray { fill: #ffc83d; }
+.ta-machine-tray-inside { fill: #a67c12; }
+.ta-machine-tray-light { fill: #ffe69c; }
+.ta-machine-tray-shade { fill: #d89b00; }
+.ta-machine-rivet { fill: #c9f3ee; }
+.ta-machine-glint { fill: none; stroke: #ffffff; stroke-width: 1.8; stroke-linecap: round; }
+.ta-machine-hand { fill: #ff8a3d; }
+.ta-machine-hand-shade { fill: #d4621d; }
+.ta-machine-dial-hand { transform-box: view-box; transform-origin: 230px 140px; }
+.ta-split-machine:not(.is-pouring) .ta-machine-pour { display: none; }
+
+/* Fake It: the film-set front. */
+.ta-facade-wood { fill: #d99a5b; }
+.ta-facade-wood-shade { fill: #a86a33; }
+.ta-facade-bag { fill: #dcc694; }
+.ta-facade-bag-shade { fill: #b39a63; }
+.ta-facade-wall { fill: #8b5cf6; }
+.ta-facade-wall-shade { fill: #6435d0; }
+.ta-facade-cream { fill: #fffdf6; }
+.ta-facade-glass { fill: #bfe3ff; }
+.ta-facade-glint { fill: #ffffff; }
+.ta-facade-door { fill: #ffc83d; }
+.ta-facade-door-shade { fill: #d89b00; }
+.ta-facade-awning { fill: #ff8a3d; }
+.ta-facade-awning-pale { fill: #fff3e0; }
+
+/* Green proves the wiring: plug and socket. */
+.ta-plug-plate { fill: #fffdf6; }
+.ta-plug-plate-shade { fill: #dcd4c0; }
+.ta-plug-outlet { fill: #ece6d6; }
+.ta-plug-hole { fill: #2b3140; }
+.ta-plug-bezel { fill: #d6dce6; }
+.ta-plug-lamp { fill: #23a55a; }
+.ta-plug-lamp-light { fill: #c8f7da; }
+.ta-plug-ray { fill: none; stroke: #23a55a; stroke-width: 1.8; stroke-linecap: round; }
+.ta-plug-cable-ink { fill: none; stroke: #1b1e28; stroke-width: 8.2; stroke-linecap: round; }
+.ta-plug-cable { fill: none; stroke: #4b5566; stroke-width: 5.4; stroke-linecap: round; }
+.ta-plug-cable-light { fill: none; stroke: #9aa6b8; stroke-width: 1.3; stroke-linecap: round; }
+.ta-plug-body { fill: #ff8a3d; }
+.ta-plug-body-light { fill: #ffc29a; }
+.ta-plug-body-shade { fill: #d4621d; }
+
+/* Triangulate: stakes, sightlines, and a star pin. */
+.ta-triangulate-base { fill: none; stroke: #1b1e28; stroke-width: 1.3; stroke-dasharray: 2 4; stroke-linecap: round; opacity: 0.55; }
+.ta-triangulate-sight { fill: none; stroke: #1b1e28; stroke-width: 1.8; stroke-dasharray: 5 4; stroke-linecap: round; }
+.ta-triangulate-grass { fill: #7cc66a; }
+.ta-triangulate-grass-shade { fill: #4f9a43; }
+.ta-triangulate-wood { fill: #f0bd85; }
+.ta-triangulate-wood-shade { fill: #d99a5b; }
+.ta-triangulate-flag-a { fill: #ff8a3d; }
+.ta-triangulate-flag-b { fill: #1fb5a8; }
+.ta-triangulate-flag-shade { fill: rgba(27, 30, 40, 0.2); }
+.ta-triangulate-needle { fill: #d6dce6; }
+.ta-triangulate-star { fill: #ffc83d; }
+.ta-triangulate-star-light { fill: #ffe69c; }
+.ta-triangulate-star-shade { fill: #d89b00; }
+
+/* Obvious Implementation: key and padlock. */
+.ta-keylock-shackle-ink { fill: none; stroke: #1b1e28; stroke-width: 9.6; stroke-linecap: round; }
+.ta-keylock-shackle-metal { fill: none; stroke: #d6dce6; stroke-width: 6.8; stroke-linecap: round; }
+.ta-keylock-shackle-light { fill: none; stroke: #f4f7fb; stroke-width: 1.6; stroke-linecap: round; }
+.ta-keylock-brass { fill: #e2b441; fill-rule: evenodd; }
+.ta-keylock-brass-shade { fill: #a67c12; }
+.ta-keylock-brass-light { fill: none; stroke: #f6dc8a; stroke-width: 1.4; stroke-linecap: round; }
+.ta-keylock-body { fill: #8b5cf6; }
+.ta-keylock-body-light { fill: #cdb9ff; }
+.ta-keylock-body-shade { fill: #6435d0; }
+.ta-keylock-metal { fill: #d6dce6; }
+.ta-keylock-metal-shade { fill: #9aa6b8; }
+.ta-keylock-dark { fill: #2b3140; }
+.ta-keylock-key { transform-box: view-box; transform-origin: 56px 63px; }
+.ta-keylock-shackle { transform-box: view-box; transform-origin: 94px 42px; }
+.ta-key-lock.is-turned .ta-keylock-key { transform: translate(12px, 0); }
+.ta-key-lock.is-turned .ta-keylock-shackle { transform: translate(0, -5px) rotate(22deg); }
+.ta-key-lock.is-turned .ta-keylock-motion { display: none; }
+
+/* A wall of red: the status board. */
+.ta-board-frame { fill: #9aa6b8; }
+.ta-board-frame-light { fill: #d6dce6; }
+.ta-board-frame-shade { fill: #6b7689; }
+.ta-board-panel { fill: #2b3140; }
+.ta-board-panel-shade { fill: #1b1e28; }
+.ta-board-bezel { fill: #d6dce6; }
+.ta-board-bezel-shade { fill: #9aa6b8; }
+.ta-board-screw { fill: #f4f7fb; }
+.ta-board-glass { fill: #5d6677; }
+.ta-board-glass-shade { fill: #454d5d; }
+.ta-board-glass-core { fill: #737d90; }
+.ta-board-glass-spark { fill: #aab3c4; }
+.ta-status-board.is-red .ta-board-glass { fill: #e5484d; }
+.ta-status-board.is-red .ta-board-glass-shade { fill: #b42a2f; }
+.ta-status-board.is-red .ta-board-glass-core { fill: #ff8f8f; }
+.ta-status-board.is-red .ta-board-glass-spark { fill: #ffffff; }
+
+/* The tear-off calendar. */
+.ta-calendar-back { fill: #8b5cf6; }
+.ta-calendar-back-shade { fill: #6435d0; }
+.ta-calendar-stack { fill: #ece6d6; }
+.ta-calendar-page { fill: #fffdf6; }
+.ta-calendar-head { fill: #ff8a3d; }
+.ta-calendar-head-light { fill: #ffc29a; }
+.ta-calendar-cell { fill: #dcd4c0; }
+.ta-calendar-next { fill: #f6f1e4; }
+.ta-calendar-flap { fill: #ece6d6; }
+.ta-calendar-flap-light { fill: #fffdf6; }
+.ta-calendar-marker { fill: none; stroke: #e5484d; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.ta-calendar-ring { fill: none; stroke: #9aa6b8; stroke-width: 2.4; stroke-linecap: round; }
+
+/* The crumpled paper ball. */
+.ta-crumpled-light { fill: #fffdf6; }
+.ta-crumpled-mid { fill: #ece6d6; }
+.ta-crumpled-dark { fill: #d6cdb8; }
+.ta-crumpled-deep { fill: #bdb39b; }
+
+/* ------------------------------------------------------------------
+   Rule one, test first, and rule two, watch it fail
+   ------------------------------------------------------------------ */
+
+/* Fixed colors in both modes; states are classes on the root <svg>. */
+
+/* ---- archery: range ---- */
+.ta-archery-sky { fill: #bfe3ff; }
+.ta-archery-haze { fill: #dcf0ff; }
+.ta-archery-cloud { fill: #ffffff; }
+.ta-archery-cloud-shade { fill: #d3e9fb; }
+.ta-archery-hedge { fill: #4f9a43; }
+.ta-archery-hedge-light { fill: #7cc66a; }
+.ta-archery-hedge-shade { fill: #3b8034; }
+.ta-archery-grass { fill: #7cc66a; }
+.ta-archery-grass-light { fill: #9bd889; }
+.ta-archery-tuft { fill: none; stroke: #3f8a38; stroke-width: 1.5; stroke-linecap: round; }
+
+/* ---- archery: wall, stand, straw ---- */
+.ta-archery-wood { fill: #d99a5b; }
+.ta-archery-wood-light { fill: #e7ae72; }
+.ta-archery-wood-shade { fill: #c2824a; }
+.ta-archery-wood-edge { fill: #f3c592; }
+.ta-archery-grain { fill: none; stroke: #8a5428; stroke-width: 1.1; stroke-linecap: round; }
+.ta-archery-nail { fill: #4b3320; }
+.ta-archery-straw { fill: #f0cd6c; }
+.ta-archery-straw-shade { fill: #cc9c38; }
+.ta-archery-straw-line { fill: none; stroke: #a67c12; stroke-width: 1.2; }
+.ta-archery-face-shade { fill: rgba(27, 30, 40, 0.13); }
+
+/* ---- archery: target paint ---- */
+.ta-archery-paint-gold { fill: #ffc83d; }
+.ta-archery-paint-red { fill: #e5484d; }
+.ta-archery-paint-blue { fill: #3a7bf0; }
+.ta-archery-paint-black { fill: #2d3140; }
+.ta-archery-paint-white { fill: #fffdf6; }
+.ta-archery-sheen { fill: none; stroke: rgba(255, 255, 255, 0.55); stroke-width: 2.2; stroke-linecap: round; }
+
+/* ---- archery: arrow, brush, can ---- */
+.ta-archery-shaft { fill: #f0bd85; }
+.ta-archery-vane { fill: #1fb5a8; }
+.ta-archery-vane-light { fill: #8fe3db; }
+.ta-archery-nock { fill: #ff8a3d; }
+.ta-archery-point { fill: #d6dce6; }
+.ta-archery-hole { fill: #1b1e28; }
+.ta-archery-metal { fill: #d6dce6; }
+.ta-archery-metal-light { fill: #f4f7fb; }
+.ta-archery-label { fill: #ff8a3d; }
+.ta-archery-can-shade { fill: rgba(27, 30, 40, 0.2); }
+.ta-archery-can-light { fill: rgba(255, 255, 255, 0.5); }
+.ta-archery-handle { fill: #8b5cf6; }
+.ta-archery-handle-light { fill: #cdb9ff; }
+.ta-archery-bristle { fill: #c58648; }
+
+.ta-archery-ring-1, .ta-archery-ring-2, .ta-archery-ring-3, .ta-archery-ring-4, .ta-archery-ring-5 {
+  transform-box: view-box; transform-origin: 160px 95px;
+}
+.ta-archery-brush { transform-box: view-box; transform-origin: 117.7px 169.8px; }
+.ta-archery-mode-painted .ta-archery-arrow { transform-box: view-box; transform-origin: 160px 95px; }
+.ta-archery-mode-first .ta-archery-arrow { transform-box: view-box; transform-origin: 199px 90px; }
+.ta-archery-flight { transform-box: view-box; transform-origin: 102px 90px; }
+.ta-archery:not(.is-flying) .ta-archery-flight { display: none; }
+.ta-archery-mode-first:not(.is-hit) .ta-archery-arrow { display: none; }
+.ta-archery-mode-first.is-hit .ta-archery-flight { display: none; }
+
+/* ---- alarm: room ---- */
+.ta-alarm-ceiling { fill: #f7f2e7; }
+.ta-alarm-wall { fill: #ffdc9e; }
+.ta-alarm-wall-shade { fill: #f0c684; }
+.ta-alarm-tile { fill: #8fe3db; }
+.ta-alarm-tile-deep { fill: #56c9bd; }
+.ta-alarm-grout { fill: none; stroke: #f1fbf9; stroke-width: 1.5; }
+.ta-alarm-stove { fill: #d6dce6; }
+.ta-alarm-stove-lip { fill: #9aa6b8; }
+
+/* ---- alarm: pan ---- */
+.ta-alarm-iron { fill: #2b303d; }
+.ta-alarm-iron-light { fill: #6b7690; }
+.ta-alarm-flame { fill: #ff8a3d; }
+.ta-alarm-flame-core { fill: #ffe69c; }
+.ta-alarm-copper { fill: #d98a4e; }
+.ta-alarm-copper-shade { fill: #a45e2b; }
+.ta-alarm-copper-light { fill: #f4b884; }
+.ta-alarm-pan-inside { fill: #3a4152; }
+.ta-alarm-pan-floor { fill: #545c72; }
+.ta-alarm-egg { fill: #fffdf6; }
+.ta-alarm-yolk { fill: #ffc83d; }
+.ta-alarm-metal { fill: #c3cad6; }
+
+/* ---- alarm: smoke and sound ---- */
+.ta-alarm-smoke-edge { fill: #8d95a5; }
+.ta-alarm-smoke-body { fill: #c5cad4; }
+.ta-alarm-smoke-light { fill: #e6e9ee; }
+.ta-alarm-smoke-curl { fill: none; stroke: #8d95a5; stroke-width: 1.5; stroke-linecap: round; }
+.ta-alarm-wave { fill: none; stroke: #e5484d; stroke-width: 3.4; stroke-linecap: round; }
+
+/* ---- alarm: the device ---- */
+.ta-alarm-side { fill: #e9ecf1; }
+.ta-alarm-side-shade { fill: #cbd1dc; }
+.ta-alarm-slot { fill: none; stroke: #4b5566; stroke-width: 2.4; stroke-linecap: round; }
+.ta-alarm-face { fill: #fffdf6; }
+.ta-alarm-face-shade { fill: #dfe3ea; }
+.ta-alarm-led-bezel { fill: #4b5566; }
+.ta-alarm-led { fill: #7d8697; }
+.ta-alarm-led-glint { fill: #aab2c0; }
+.ta-alarm.is-silent .ta-alarm-led { fill: #23a55a; }
+.ta-alarm.is-silent .ta-alarm-led-glint { fill: #c9f7da; }
+.ta-alarm.is-sounding .ta-alarm-led { fill: #e5484d; }
+.ta-alarm.is-sounding .ta-alarm-led-glint { fill: #ffd0d0; }
+.ta-alarm.is-dead .ta-alarm-led { fill: #2b303d; }
+.ta-alarm.is-dead .ta-alarm-led-glint { fill: #59627a; }
+.ta-alarm-button-side { fill: #11877d; }
+.ta-alarm-button-top { fill: #5fd3c8; }
+.ta-alarm-button-glint { fill: #d5f7f3; }
+.ta-alarm-press-mark { fill: none; stroke: #d4621d; stroke-width: 2.4; stroke-linecap: round; }
+.ta-alarm-hole { fill: #2b303d; }
+.ta-alarm-door { fill: #dfe3ea; }
+.ta-alarm-wire-dark { fill: none; stroke: #1b1e28; stroke-width: 1.7; stroke-linecap: round; }
+.ta-alarm-wire-gold { fill: none; stroke: #d89b00; stroke-width: 1.7; stroke-linecap: round; }
+.ta-alarm-battery-cap { fill: #2b303d; }
+.ta-alarm-battery { fill: #343a4c; }
+.ta-alarm-battery-light { fill: rgba(255, 255, 255, 0.3); }
+.ta-alarm-bolt { fill: #ffc83d; }
+
+.ta-alarm-waves { transform-box: view-box; transform-origin: 150px 40px; }
+.ta-alarm-smoke { transform-box: view-box; transform-origin: 150px 140px; }
+.ta-alarm-press, .ta-alarm-button { transform-box: view-box; transform-origin: 150px 46px; }
+.ta-alarm-hatch { transform-box: view-box; transform-origin: 128px 58px; }
+.ta-alarm:not(.is-sounding) .ta-alarm-waves { display: none; }
+.ta-alarm:not(.has-smoke) .ta-alarm-smoke { display: none; }
+.ta-alarm:not(.is-pressed) .ta-alarm-press { display: none; }
+.ta-alarm.is-pressed .ta-alarm-button { display: none; }
+.ta-alarm:not(.is-dead) .ta-alarm-hatch { display: none; }
+.ta-alarm.is-dead .ta-alarm-hatch-seam { display: none; }
+
+/* ---- bug ---- */
+.ta-bug-leg-ink { fill: none; stroke: #1b1e28; stroke-width: 5.2; stroke-linecap: round; stroke-linejoin: round; }
+.ta-bug-leg { fill: none; stroke: #b39dff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.ta-bug-rim { fill: #a98bff; }
+.ta-bug-head { fill: #3d2a94; }
+.ta-bug-shell { fill: #8b5cf6; }
+.ta-bug-shell-shade { fill: #6435d0; }
+.ta-bug-gloss { fill: #e0d4ff; }
+.ta-bug-eye { fill: #fffdf6; }
+
+/* ---- flashlight ---- */
+.ta-flashlight-night { fill: #0f1533; }
+.ta-flashlight-desk { fill: #1b2450; }
+.ta-flashlight-desk-edge { fill: #303d78; }
+.ta-flashlight-moon { fill: #ffe69c; }
+.ta-flashlight-desk-glow { fill: #4a3f58; }
+.ta-flashlight-desk-lit { fill: #b98445; }
+.ta-flashlight-shade { fill: rgba(4, 6, 20, 0.5); }
+.ta-flashlight-page { fill: #3a4374; }
+.ta-flashlight-code { fill: #5b66a0; }
+.ta-flashlight-page-glow { fill: #9a98b8; }
+.ta-flashlight-page-lit { fill: #fff5d2; }
+.ta-flashlight-code-violet { fill: #8b5cf6; }
+.ta-flashlight-code-text { fill: #2d3350; }
+.ta-flashlight-code-teal { fill: #11877d; }
+.ta-flashlight-code-orange { fill: #ff8a3d; }
+.ta-flashlight-code-gutter { fill: #c2b89c; }
+.ta-flashlight-check { fill: none; stroke: #23a55a; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.ta-flashlight-barrel { fill: #ff8a3d; }
+.ta-flashlight-barrel-light { fill: #ffc29a; }
+.ta-flashlight-barrel-shade { fill: #d4621d; }
+.ta-flashlight-metal { fill: #d6dce6; }
+.ta-flashlight-metal-shade { fill: #9aa6b8; }
+.ta-flashlight-switch { fill: #2b303d; }
+.ta-flashlight-button { fill: #1fb5a8; }
+.ta-flashlight-lens { fill: #fff3a6; }
+.ta-flashlight-bug { transform-box: view-box; transform-origin: 190px 167px; }
+.ta-flashlight-bug-leg-ink { fill: none; stroke: #141936; stroke-width: 5.2; stroke-linecap: round; stroke-linejoin: round; }
+.ta-flashlight-bug-leg { fill: none; stroke: #7069b4; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.ta-flashlight-bug-rim { fill: #7069b4; }
+.ta-flashlight-bug-head { fill: #2a2560; }
+.ta-flashlight-bug-shell { fill: #5a4fa8; }
+.ta-flashlight-bug-shell-shade { fill: #40377f; }
+.ta-flashlight-bug-gloss { fill: #8a84c8; }
+.ta-flashlight-bug-eye { fill: #9a98b8; }
+.ta-flashlight-bug-line { fill: none; stroke: #141936; stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+
+/* ---- magnifier ---- */
+.ta-magnifier-wood { fill: #d99a5b; }
+.ta-magnifier-wood-light { fill: #f0bd85; }
+.ta-magnifier-wood-shade { fill: #a86a33; }
+.ta-magnifier-metal { fill: #d6dce6; }
+.ta-magnifier-lens { fill: #d3ecff; }
+.ta-magnifier-lens-shade { fill: #a6d3f7; }
+.ta-magnifier-rim-shade { fill: none; stroke: #9aa6b8; stroke-width: 4.6; }
+.ta-magnifier-rim-light { fill: none; stroke: #f8fafd; stroke-width: 1.6; stroke-linecap: round; }
+.ta-magnifier-glint { fill: none; stroke: #ffffff; stroke-width: 2.6; stroke-linecap: round; }
+
+/* ---- stopwatch ---- */
+.ta-stopwatch-metal { fill: #d6dce6; }
+.ta-stopwatch-metal-shade { fill: #9aa6b8; }
+.ta-stopwatch-metal-stem { fill: #b4bdcb; }
+.ta-stopwatch-rim-light { fill: none; stroke: #f8fafd; stroke-width: 1.8; stroke-linecap: round; }
+.ta-stopwatch-gold { fill: #ffc83d; }
+.ta-stopwatch-face { fill: #fffdf6; }
+.ta-stopwatch-face-shade { fill: #dfe3ea; }
+.ta-stopwatch-tick { fill: none; stroke: #1b1e28; stroke-width: 2.2; stroke-linecap: round; }
+.ta-stopwatch-needle { fill: #ff8a3d; }
+.ta-stopwatch-hub { fill: #2b303d; }
+.ta-stopwatch-hub-light { fill: #9aa6b8; }
+.ta-stopwatch-hand { transform-box: view-box; transform-origin: 35px 48px; }
+
+/* ---- trafficLight ---- */
+.ta-trafficLight-metal { fill: #d6dce6; }
+.ta-trafficLight-metal-shade { fill: #9aa6b8; }
+.ta-trafficLight-bevel { fill: #8793ad; }
+.ta-trafficLight-housing { fill: #2b303d; }
+.ta-trafficLight-socket { fill: #151821; }
+.ta-trafficLight-red { fill: #5e2a30; }
+.ta-trafficLight-green { fill: #1e4a35; }
+.ta-trafficLight-red-glint, .ta-trafficLight-green-glint { display: none; }
+.ta-trafficLight-visor { fill: #aab4c6; }
+.ta-trafficLight.is-red .ta-trafficLight-red { fill: #e5484d; }
+.ta-trafficLight.is-red .ta-trafficLight-red-glint { display: inline; fill: #ffc2c2; }
+.ta-trafficLight.is-green .ta-trafficLight-green { fill: #23a55a; }
+.ta-trafficLight.is-green .ta-trafficLight-green-glint { display: inline; fill: #b5f2cd; }
+
+/* ------------------------------------------------------------------
+   Rule three, smallest step, and rule four, refactor on green
+   ------------------------------------------------------------------ */
+
+/* "Smallest step" and "refactor on green". Fixed colors in both modes;
+ * states are classes on each root <svg>. */
+
+/* ---- checkpoints (panel) ---- */
+.ta-cp-sky { fill: #bfe3ff; }
+.ta-cp-cloud { fill: #ffffff; }
+.ta-cp-cloud-shade { fill: #9ccff5; }
+.ta-cp-hill-far { fill: #9ccff5; }
+.ta-cp-hill { fill: #a8de98; }
+.ta-cp-hill-light { fill: #c9efbd; }
+.ta-cp-pit { fill: #7a4a26; }
+.ta-cp-pit-deep { fill: #3a2430; }
+.ta-cp-spike { fill: #d6dce6; }
+.ta-cp-spike-light { fill: #f4f7fb; }
+.ta-cp-earth { fill: #d99a5b; }
+.ta-cp-earth-shade { fill: #c28348; }
+.ta-cp-stone { fill: #f0bd85; }
+.ta-cp-seam { fill: none; stroke: #a86a33; stroke-width: 1.3; stroke-linecap: round; }
+.ta-cp-grass { fill: #4fb04a; }
+.ta-cp-grass-light { fill: #a8de98; }
+.ta-cp-pennant { fill: #23a55a; }
+.ta-cp-pennant-shade { fill: #167a40; }
+.ta-cp-dash { fill: none; stroke: #1b1e28; stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 6.5 5.5; }
+.ta-cp-arrowhead { fill: #1b1e28; stroke: #1b1e28; stroke-width: 1.6; stroke-linejoin: round; }
+.ta-cp-x { fill: #e5484d; }
+.ta-cp-x-light { fill: #ff9a9a; }
+.ta-cp-player-body { fill: #ff8a3d; }
+.ta-cp-player-foot { fill: #d4621d; }
+.ta-cp-player-light { fill: #ffc29a; }
+.ta-cp-player-eye { fill: #ffffff; }
+.ta-cp-player-pupil { fill: #1b1e28; }
+.ta-cp-flag, .ta-cp-player, .ta-cp-fall, .ta-cp-respawn { transform-box: view-box; }
+.ta-cp-flag-1 { transform-origin: 84px 162px; }
+.ta-cp-flag-2 { transform-origin: 142px 150px; }
+.ta-cp-flag-3 { transform-origin: 200px 138px; }
+.ta-cp-flag-4 { transform-origin: 258px 126px; }
+.ta-cp-flag-5 { transform-origin: 316px 114px; }
+.ta-cp-flag-6 { transform-origin: 374px 102px; }
+.ta-cp-player { transform-origin: 352px 102px; }
+.ta-cp-fall { transform-origin: 427px 92px; }
+.ta-cp-respawn { transform-origin: 388px 54px; }
+
+/* ---- gearShifter (panel) ---- */
+.ta-gear-console { fill: #2c313d; }
+.ta-gear-console-light { fill: #363c4a; }
+.ta-gear-stitch { fill: none; stroke: #f6dc8a; stroke-width: 1.3; stroke-linecap: round; stroke-dasharray: 4.5 3.5; }
+.ta-gear-plate { fill: #d6dce6; }
+.ta-gear-plate-light { fill: #f4f7fb; }
+.ta-gear-plate-shade { fill: #8793a6; }
+.ta-gear-plate-sheen { fill: #eaeef4; }
+.ta-gear-slot-edge { fill: none; stroke: #7c8799; stroke-width: 17; stroke-linecap: round; stroke-linejoin: round; }
+.ta-gear-slot { fill: none; stroke: #1f232c; stroke-width: 12.6; stroke-linecap: round; stroke-linejoin: round; }
+.ta-gear-slot-shine { fill: none; stroke: #f4f7fb; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+.ta-gear-screw { fill: #9aa6b8; }
+.ta-gear-dot { fill: #1b1e28; }
+.ta-gear-cast { fill: rgba(20, 24, 34, 0.3); }
+.ta-gear-boot { fill: #8a5428; }
+.ta-gear-boot-light { fill: #b3753c; }
+.ta-gear-boot-shade { fill: #643a1a; }
+.ta-gear-thread { fill: none; stroke: #f6dc8a; stroke-width: 1.1; stroke-linecap: round; stroke-dasharray: 2.4 2; }
+.ta-gear-shaft-edge { fill: none; stroke: #1b1e28; stroke-width: 8.4; stroke-linecap: round; }
+.ta-gear-shaft { fill: none; stroke: #d6dce6; stroke-width: 5.2; stroke-linecap: round; }
+.ta-gear-shaft-light { fill: none; stroke: #ffffff; stroke-width: 1.4; stroke-linecap: round; }
+.ta-gear-collar { fill: #d6dce6; }
+.ta-gear-knob { fill: #8b5cf6; }
+.ta-gear-knob-shade { fill: #6435d0; }
+.ta-gear-knob-light { fill: #e3d8ff; }
+.ta-gear-knob-mark { fill: none; stroke: #ffffff; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ta-gear-lever { transform-box: view-box; transform-origin: 64px 80px; }
+.ta-gear.is-gear-2 .ta-gear-lever { transform: translate(0, 68px); }
+.ta-gear.is-gear-3 .ta-gear-lever { transform: translate(64px, 0); }
+
+/* ---- bike (panel) ---- */
+.ta-bike-sky { fill: #bfe3ff; }
+.ta-bike-cloud { fill: #ffffff; }
+.ta-bike-hedge { fill: #4f9a43; }
+.ta-bike-grass { fill: #7cc66a; }
+.ta-bike-grass-light { fill: #a8de98; }
+.ta-bike-path { fill: #f3d9a4; }
+.ta-bike-path-shade { fill: #dcb97c; }
+.ta-bike-tuft { fill: none; stroke: #4f9a43; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.ta-bike-trunk { fill: #a86a33; }
+.ta-bike-trunk-shade { fill: #8a5428; }
+.ta-bike-leaf-edge { fill: none; stroke: #1b1e28; stroke-width: 4.4; }
+.ta-bike-leaf { fill: #2fa35a; }
+.ta-bike-leaf-shade { fill: #1f8246; }
+.ta-bike-leaf-light { fill: #6fcf7f; }
+.ta-bike-spoke { fill: none; stroke: #f4f7fb; stroke-width: 1; }
+.ta-bike-rim { fill: none; stroke: #d6dce6; stroke-width: 1.8; }
+.ta-bike-tyre { fill: none; stroke: #2b303b; stroke-width: 5; }
+.ta-bike-tyre-light { fill: none; stroke: #6b7689; stroke-width: 1.5; stroke-linecap: round; }
+.ta-bike-tube-edge { fill: none; stroke: #1b1e28; stroke-width: 8.2; stroke-linecap: round; stroke-linejoin: round; }
+.ta-bike-tube { fill: none; stroke: #ff8a3d; stroke-width: 4.6; stroke-linecap: round; stroke-linejoin: round; }
+.ta-bike-tube-light { fill: none; stroke: #ffd2ad; stroke-width: 1.3; stroke-linecap: round; }
+.ta-bike-metal-edge { fill: none; stroke: #1b1e28; stroke-width: 5.8; stroke-linecap: round; stroke-linejoin: round; }
+.ta-bike-metal { fill: none; stroke: #d6dce6; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.ta-bike-arm-edge { fill: none; stroke: #1b1e28; stroke-width: 6.2; stroke-linecap: round; }
+.ta-bike-arm { fill: none; stroke: #d6dce6; stroke-width: 3.2; stroke-linecap: round; }
+.ta-bike-dark { fill: #2b303b; }
+.ta-bike-dark-light { fill: #6b7689; }
+.ta-bike-brass { fill: #e2b441; }
+.ta-bike-basket { fill: #f0bd85; }
+.ta-bike-basket-rim { fill: #d99a5b; }
+.ta-bike-weave { fill: none; stroke: #a86a33; stroke-width: 1.1; stroke-linecap: round; }
+.ta-bike-tw { fill: #1fb5a8; }
+.ta-bike-tw-side { fill: #11877d; }
+.ta-bike-tw-hub { fill: #ffe69c; }
+.ta-bike-training, .ta-bike-loose { transform-box: view-box; }
+.ta-bike-training { transform-origin: 108px 134px; }
+.ta-bike-loose { transform-origin: 248px 184px; }
+.ta-bike:not(.is-free) .ta-bike-loose { display: none; }
+.ta-bike.is-free .ta-bike-training { display: none; }
+
+/* ---- hats (panel) ---- */
+.ta-hats-wall { fill: #bdece4; }
+.ta-hats-wall-light { fill: #d3f4ee; }
+.ta-hats-wood { fill: #d99a5b; }
+.ta-hats-wood-light { fill: #f0bd85; }
+.ta-hats-wood-shade { fill: #a86a33; }
+.ta-hats-grain { fill: none; stroke: #8a5428; stroke-width: 1; stroke-linecap: round; }
+.ta-hats-yellow { fill: #ffc83d; }
+.ta-hats-yellow-shade { fill: #d89b00; }
+.ta-hats-yellow-light { fill: #ffe69c; }
+.ta-hats-plus { fill: #23a55a; }
+.ta-hats-plus-light { fill: #86e3ac; }
+.ta-hats-blue { fill: #3a7bf0; }
+.ta-hats-blue-shade { fill: #2457c5; }
+.ta-hats-blue-light { fill: #7fabff; }
+.ta-hats-patch { fill: #fffdf6; }
+.ta-hats-straw { fill: #ffc83d; }
+.ta-hats-hat { transform-box: view-box; }
+.ta-hats-hard { transform-origin: 92px 64px; }
+.ta-hats-cap { transform-origin: 228px 66px; }
+.ta-hats.is-build .ta-hats-hard { transform: translate(-3px, -21px) rotate(-8deg); }
+.ta-hats.is-tidy .ta-hats-cap { transform: translate(3px, -21px) rotate(8deg); }
+.ta-hats.is-build .ta-hats-cap,
+.ta-hats.is-tidy .ta-hats-hard { opacity: 0.34; }
+.ta-hats:not(.is-build) .ta-hats-knob-hard,
+.ta-hats:not(.is-tidy) .ta-hats-knob-cap { display: none; }
+
+/* Motion marks on the mat: a mid grey that reads on the light and the dark mat. */
+.ta-r2-mark { fill: none; stroke: #8a93a6; stroke-width: 1.7; stroke-linecap: round; }
+
+/* ---- dice (spot) ---- */
+.ta-dice-top { fill: #ff9a9a; }
+.ta-dice-left { fill: #f2686c; }
+.ta-dice-right { fill: #e5484d; }
+.ta-dice-pip { fill: #ffffff; }
+
+/* ---- bandage (spot, and the tower's patches) ---- */
+.ta-bandage-strip { fill: #f4b884; }
+.ta-bandage-shade { fill: #dd975c; }
+.ta-bandage-light { fill: #ffd9b6; }
+.ta-bandage-pad { fill: #ffecd9; }
+.ta-bandage-hole { fill: #a45e2b; }
+
+/* ---- tower (spot) ---- */
+.ta-tower-teal { fill: #1fb5a8; }
+.ta-tower-orange { fill: #ff8a3d; }
+.ta-tower-violet { fill: #9a70f7; }
+.ta-tower-gold { fill: #ffc83d; }
+.ta-tower-sheen { fill: rgba(255, 255, 255, 0.4); }
+.ta-tower-bar { fill: rgba(255, 255, 255, 0.88); }
+.ta-tower-bar-dark { fill: rgba(27, 30, 40, 0.42); }
+.ta-tower-block, .ta-tower-sway { transform-box: view-box; }
+.ta-tower-block-1 { transform-origin: 100px 246px; }
+.ta-tower-block-2 { transform-origin: 93px 214px; }
+.ta-tower-block-3 { transform-origin: 101.2px 181.8px; }
+.ta-tower-block-4 { transform-origin: 97.3px 149.6px; }
+.ta-tower-block-5 { transform-origin: 107.8px 118.4px; }
+.ta-tower-block-6 { transform-origin: 116.2px 87.2px; }
+.ta-tower-sway-1 { transform-origin: 100px 246px; }
+.ta-tower-sway-2 { transform-origin: 93px 214px; }
+.ta-tower-sway-3 { transform-origin: 101.2px 181.8px; }
+.ta-tower-sway-4 { transform-origin: 97.3px 149.6px; }
+.ta-tower.is-teeter .ta-tower-sway { transform: rotate(4deg); }
+.ta-tower:not(.is-teeter) .ta-tower-wobble { display: none; }
+
+/* ---- broom (spot) ---- */
+.ta-broom-handle-edge { fill: none; stroke: #1b1e28; stroke-width: 9; stroke-linecap: round; }
+.ta-broom-handle { fill: none; stroke: #d99a5b; stroke-width: 5.2; stroke-linecap: round; }
+.ta-broom-handle-light { fill: none; stroke: #f0bd85; stroke-width: 1.5; stroke-linecap: round; }
+.ta-broom-wood { fill: #d99a5b; }
+.ta-broom-wood-light { fill: #f0bd85; }
+.ta-broom-straw { fill: #ffc83d; }
+.ta-broom-straw-shade { fill: #e9ac1c; }
+.ta-broom-strand { fill: none; stroke: #b98300; stroke-width: 1.1; stroke-linecap: round; }
+.ta-broom-metal { fill: #d6dce6; }
+.ta-broom-dust-edge { fill: none; stroke: #1b1e28; stroke-width: 2.6; }
+.ta-broom-dust { fill: #ece6d6; }
+.ta-broom-dust-shade { fill: #cfc5ad; stroke: #cfc5ad; stroke-width: 1.3; stroke-linecap: round; }
+.ta-broom-spark { fill: #ffc83d; }
+
+/* ---- snail (spot) ---- */
+.ta-snail-slime { fill: #8fe3db; opacity: 0.75; }
+.ta-snail-body { fill: #ffe69c; }
+.ta-snail-body-shade { fill: #ecc75e; }
+.ta-snail-shell { fill: #ff8a3d; }
+.ta-snail-shell-shade { fill: #d4621d; }
+.ta-snail-shell-light { fill: #ffc29a; }
+.ta-snail-eye { fill: #ffffff; }
+.ta-snail-pupil { fill: #1b1e28; }
+
+/* ------------------------------------------------------------------
+   What TDD gives, what it costs, its limits, and the evidence
+   ------------------------------------------------------------------ */
+
+/* Illustrations of the "consequences" scenes (Test-Driven Development narration).
+ * Fixed colors in both themes; states are classes on the root <svg>. */
+
+/* Safety net (panel) */
+.ta-safetynet-red { fill: #e5484d; }
+.ta-safetynet-cream { fill: #fff3d6; }
+.ta-safetynet-seam { fill: none; stroke: #b42a2f; stroke-width: 1; opacity: 0.55; }
+.ta-safetynet-shade { fill: rgba(60, 14, 30, 0.2); }
+.ta-safetynet-gold { fill: #ffc83d; }
+.ta-safetynet-gold-shade { fill: #d89b00; }
+.ta-safetynet-floor { fill: #e9b377; }
+.ta-safetynet-curb { fill: #6435d0; }
+.ta-safetynet-cast { fill: rgba(70, 30, 10, 0.22); }
+.ta-safetynet-glow { fill: rgba(255, 240, 170, 0.26); }
+.ta-safetynet-pool { fill: rgba(255, 244, 205, 0.6); }
+.ta-safetynet-pole { fill: #fffdf6; }
+.ta-safetynet-pole-band { fill: #1fb5a8; }
+.ta-safetynet-brass { fill: #e2b441; }
+.ta-safetynet-wood { fill: #d99a5b; }
+.ta-safetynet-wood-light { fill: #f0bd85; }
+.ta-safetynet-rope-ink { fill: none; stroke: #1b1e28; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.ta-safetynet-rope { fill: none; stroke: #fff3d6; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.ta-safetynet-bar-ink { fill: none; stroke: #1b1e28; stroke-width: 8; stroke-linecap: round; }
+.ta-safetynet-bar { fill: none; stroke: #d99a5b; stroke-width: 4.6; stroke-linecap: round; }
+.ta-safetynet-mesh { fill: none; stroke: #4a2c1c; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
+.ta-safetynet:not(.is-caught) .ta-safetynet-net-caught,
+.ta-safetynet.is-caught .ta-safetynet-net-taut { display: none; }
+
+/* Safety net: tightrope walker (options.walker) */
+.ta-safetynet-walker { transform-box: view-box; transform-origin: 262px 110.5px; }
+.ta-safetynet.is-wobble .ta-safetynet-walker { transform: rotate(8deg); }
+.ta-safetynet:not(.is-wobble) .ta-safetynet-wobble { display: none; }
+.ta-safetynet-skin { fill: #e3a878; }
+.ta-safetynet-skin-shade { fill: #c4835a; }
+.ta-safetynet-skin-line { fill: none; stroke: #9a5a34; stroke-width: 0.7; stroke-linecap: round; }
+.ta-safetynet-hair { fill: #3b2a20; }
+.ta-safetynet-eye { fill: #fffdf6; }
+.ta-safetynet-pupil { fill: #1b1e28; }
+.ta-safetynet-face-line { fill: none; stroke: #1b1e28; stroke-width: 0.85; stroke-linecap: round; stroke-linejoin: round; }
+.ta-safetynet-jersey { fill: #2774ae; }
+.ta-safetynet-jersey-shade { fill: #1b5687; }
+.ta-safetynet-jersey-light { fill: #4f97cf; }
+.ta-safetynet-fold { fill: none; stroke: #1b5687; stroke-width: 0.9; stroke-linecap: round; }
+.ta-safetynet-walker .ta-safetynet-gold { fill: #ffd100; }
+.ta-safetynet-pants { fill: #2b3350; }
+.ta-safetynet-pants-light { fill: #46527c; }
+.ta-safetynet-shoe { fill: #f4f7fb; }
+.ta-safetynet-sole { fill: #3a4254; }
+.ta-safetynet-window { fill: #fffdf6; }
+.ta-safetynet-window-bar { fill: #d6dce6; }
+.ta-safetynet-window-dot { fill: #7f8a9c; }
+.ta-safetynet-code-violet { fill: #8b5cf6; }
+.ta-safetynet-code-teal { fill: #1fb5a8; }
+.ta-safetynet-code-orange { fill: #ff8a3d; }
+.ta-safetynet-swap { fill: none; stroke: #1b1e28; stroke-width: 1.8; stroke-linecap: round; stroke-dasharray: 3.4 3; }
+.ta-safetynet-swap-head { fill: #1b1e28; }
+
+/* Balance scale */
+.ta-scale-wood { fill: #a86a33; }
+.ta-scale-wood-light { fill: #d99a5b; }
+.ta-scale-wood-shade { fill: #8a5428; }
+.ta-scale-brass { fill: #e2b441; }
+.ta-scale-brass-light { fill: #f6dc8a; }
+.ta-scale-brass-shade { fill: #a67c12; }
+.ta-scale-plate { fill: #fffdf6; }
+.ta-scale-pointer { fill: #4b5566; }
+.ta-scale-chain-ink { fill: none; stroke: #1b1e28; stroke-width: 5.2; stroke-linecap: round; stroke-dasharray: 4.6 3.4; }
+.ta-scale-chain { fill: none; stroke: #f6dc8a; stroke-width: 2.8; stroke-linecap: round; stroke-dasharray: 4.6 3.4; }
+.ta-scale-beam { transform-box: view-box; transform-origin: 300px 34px; }
+.ta-scale-pan-left { transform-box: view-box; transform-origin: 130px 34px; }
+.ta-scale-pan-right { transform-box: view-box; transform-origin: 470px 34px; }
+.ta-scale.is-left .ta-scale-beam { transform: rotate(-7deg); }
+.ta-scale.is-left .ta-scale-pan-left { transform: translate(1.27px, 20.72px); }
+.ta-scale.is-left .ta-scale-pan-right { transform: translate(-1.27px, -20.72px); }
+.ta-scale.is-right .ta-scale-beam { transform: rotate(7deg); }
+.ta-scale.is-right .ta-scale-pan-left { transform: translate(1.27px, -20.72px); }
+.ta-scale.is-right .ta-scale-pan-right { transform: translate(-1.27px, 20.72px); }
+
+/* Moonshot (panel) */
+.ta-moonshot-sky { fill: #1c2054; }
+.ta-moonshot-sky-mid { fill: #2b3287; }
+.ta-moonshot-sky-low { fill: #4450b5; }
+.ta-moonshot-star { fill: #fff3c4; }
+.ta-moonshot-moon { fill: #fff1b8; }
+.ta-moonshot-moon-shade { fill: #e6cc78; }
+.ta-moonshot-crater { fill: #d9bd66; }
+.ta-moonshot-ground { fill: #2a7a58; }
+.ta-moonshot-ground-light { fill: #4f9a43; }
+.ta-moonshot-teal { fill: #1fb5a8; }
+.ta-moonshot-teal-shade { fill: #11877d; }
+.ta-moonshot-orange { fill: #ff8a3d; }
+.ta-moonshot-orange-shade { fill: #d4621d; }
+.ta-moonshot-violet { fill: #8b5cf6; }
+.ta-moonshot-violet-shade { fill: #6435d0; }
+.ta-moonshot-pale { fill: #d6dce6; }
+.ta-moonshot-pale-shade { fill: #9aa6b8; }
+.ta-moonshot-window { fill: #ffe69c; }
+.ta-moonshot-window-dark { fill: rgba(27, 30, 40, 0.42); }
+.ta-moonshot-crane { fill: none; stroke: #ffc83d; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.ta-moonshot-course { fill: none; stroke: #fff3c4; stroke-width: 1.8; stroke-linecap: round; stroke-dasharray: 0.1 5; }
+.ta-moonshot-gantry { fill: none; stroke: #9aa6b8; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ta-moonshot-cast { fill: rgba(8, 20, 30, 0.35); }
+.ta-moonshot-pad { fill: #4b5566; }
+.ta-moonshot-pad-light { fill: #9aa6b8; }
+.ta-moonshot-hull { fill: #f4f7fb; }
+.ta-moonshot-hull-shade { fill: #c3ccd9; }
+.ta-moonshot-fin { fill: #ff8a3d; }
+.ta-moonshot-fin-shade { fill: #d4621d; }
+.ta-moonshot-nozzle { fill: #4b5566; }
+.ta-moonshot-port { fill: #1fb5a8; }
+
+/* Hourglass */
+.ta-hourglass-wood { fill: #d99a5b; }
+.ta-hourglass-wood-light { fill: #f0bd85; }
+.ta-hourglass-wood-shade { fill: #a86a33; }
+.ta-hourglass-glass { fill: rgba(220, 240, 252, 0.82); }
+.ta-hourglass-sand { fill: #ffc83d; }
+.ta-hourglass-sand-shade { fill: #d89b00; }
+.ta-hourglass-sand-light { fill: #ffe69c; }
+.ta-hourglass-shine { fill: none; stroke: #ffffff; stroke-width: 2; stroke-linecap: round; }
+.ta-hourglass:not(.is-run) .ta-hourglass-sand-run,
+.ta-hourglass.is-run .ta-hourglass-sand-start { display: none; }
+
+/* Metronome */
+.ta-metronome-wood { fill: #d99a5b; }
+.ta-metronome-wood-light { fill: #f0bd85; }
+.ta-metronome-wood-shade { fill: #a86a33; }
+.ta-metronome-grain { fill: none; stroke: #8a5428; stroke-width: 1; stroke-linecap: round; }
+.ta-metronome-panel { fill: #fffdf6; }
+.ta-metronome-panel-shade { fill: #ece6d6; }
+.ta-metronome-metal { fill: #d6dce6; }
+.ta-metronome-brass { fill: #e2b441; }
+.ta-metronome-brass-light { fill: #f6dc8a; }
+.ta-metronome-brass-shade { fill: #a67c12; }
+.ta-metronome-arm { transform-box: view-box; transform-origin: 54px 118px; }
+
+/* Bricks */
+.ta-bricks-violet { fill: #a384fa; }
+.ta-bricks-violet-light { fill: #cdb9ff; }
+.ta-bricks-violet-shade { fill: #8b5cf6; }
+.ta-bricks-teal { fill: #2cc7b9; }
+.ta-bricks-teal-light { fill: #8fe3db; }
+.ta-bricks-teal-shade { fill: #159a8e; }
+.ta-bricks-gold { fill: #ffc83d; }
+.ta-bricks-gold-light { fill: #ffe69c; }
+.ta-bricks-gold-shade { fill: #d89b00; }
+.ta-bricks-orange { fill: #ff8a3d; }
+.ta-bricks-orange-light { fill: #ffc29a; }
+.ta-bricks-orange-shade { fill: #d4621d; }
+
+/* Tangle */
+.ta-tangle-core { fill: #4b5566; }
+.ta-tangle-cable-ink { fill: none; stroke: #1b1e28; stroke-width: 6.8; stroke-linecap: round; stroke-linejoin: round; }
+.ta-tangle-gold, .ta-tangle-teal, .ta-tangle-violet, .ta-tangle-orange { fill: none; stroke-width: 4.2; stroke-linecap: round; stroke-linejoin: round; }
+.ta-tangle-gold { stroke: #ffc83d; }
+.ta-tangle-teal { stroke: #1fb5a8; }
+.ta-tangle-violet { stroke: #a384fa; }
+.ta-tangle-orange { stroke: #ff8a3d; }
+.ta-tangle-plug { fill: #d6dce6; }
+.ta-tangle-metal { fill: #f6dc8a; }
+
+/* Manual */
+.ta-manual-cover { fill: #1fb5a8; }
+.ta-manual-cover-shade { fill: #159a8e; }
+.ta-manual-paper { fill: #fffdf6; }
+.ta-manual-paper-shade { fill: #ece6d6; }
+.ta-manual-bar { fill: #c9c2b2; }
+.ta-manual-head { fill: #ff8a3d; }
+.ta-manual-code { fill: #2a3148; }
+.ta-manual-code-teal { fill: #8fe3db; }
+.ta-manual-code-gold { fill: #ffc83d; }
+.ta-manual-code-violet { fill: #cdb9ff; }
+.ta-manual-play { fill: #8b5cf6; }
+.ta-manual-white { fill: #fffdf6; }
+.ta-manual-seal { fill: #23a55a; }
+.ta-manual-check { fill: none; stroke: #fffdf6; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.ta-manual-ring { fill: #d6dce6; }
+
+/* Stale note */
+.ta-stalenote-paper { fill: #f3dfa0; }
+.ta-stalenote-age { fill: #e6c97c; }
+.ta-stalenote-under { fill: #d3b566; }
+.ta-stalenote-line { fill: #cfb26a; }
+.ta-stalenote-stain { fill: none; stroke: #c9a257; stroke-width: 1.6; stroke-linecap: round; }
+.ta-stalenote-web { fill: none; stroke: #8792a4; stroke-width: 1.1; stroke-linecap: round; }
+.ta-stalenote-dust { fill: #9a8f7a; }
+
+/* Mountain */
+.ta-mountain-sky { fill: #bfe3ff; }
+.ta-mountain-sun { fill: #ffc83d; }
+.ta-mountain-cloud { fill: #ffffff; }
+.ta-mountain-rock { fill: #b59cfb; }
+.ta-mountain-rock-shade { fill: #8b62f6; }
+.ta-mountain-snow { fill: #ffffff; }
+.ta-mountain-snow-shade { fill: #d5dcf2; }
+.ta-mountain-trail { fill: none; stroke: #fffdf6; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 5 4.4; }
+.ta-mountain-grass { fill: #5fae50; }
+.ta-mountain-grass-light { fill: #7cc66a; }
+.ta-mountain-pine { fill: #2f8f52; }
+.ta-mountain-pine-light { fill: #4fb56d; }
+.ta-mountain-trunk { fill: #a86a33; }
+.ta-mountain-flag { fill: #ff8a3d; }
+
+/* Photo */
+.ta-photo-paper { fill: #fffdf6; }
+.ta-photo-sky { fill: #bfe3ff; }
+.ta-photo-cloud { fill: #ffffff; }
+.ta-photo-hill { fill: #a8de98; }
+.ta-photo-meadow { fill: #7cc66a; }
+.ta-photo-grass { fill: #4f9a43; }
+.ta-photo-fur { fill: #ff8a3d; }
+.ta-photo-fur-shade { fill: #d4621d; }
+.ta-photo-cream { fill: #fff3d6; }
+.ta-photo-tip { fill: #5a3320; }
+.ta-photo-flower { fill: #ffc83d; }
+
+/* Gauge */
+.ta-gauge-bezel { fill: #d6dce6; }
+.ta-gauge-bezel-light { fill: #f4f7fb; }
+.ta-gauge-bezel-shade { fill: #9aa6b8; }
+.ta-gauge-face { fill: #fffdf6; }
+.ta-gauge-green { fill: #23a55a; }
+.ta-gauge-gold { fill: #ffc83d; }
+.ta-gauge-red { fill: #e5484d; }
+.ta-gauge-pointer { fill: #1b1e28; }
+.ta-gauge-hub { fill: #4b5566; }
+.ta-gauge-hub-light { fill: #9aa6b8; }
+.ta-gauge-needle { transform-box: view-box; transform-origin: 60px 64px; }

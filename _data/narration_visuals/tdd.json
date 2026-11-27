@@ -1,0 +1,222 @@
+{
+  "version": 1,
+  "presentation": {
+    "animation": {
+      "page": "/assets/video-narration/tdd.html",
+      "theme": "test-bench",
+      "styles": [
+        "/css/song-video-test-bench.css",
+        "/css/video-narration-wall-kit.css",
+        "/css/video-narration-arch-kit.css",
+        "/css/video-narration-tdd-art.css",
+        "/css/video-narration-tdd.css"
+      ],
+      "scripts": [
+        "/js/song-video/test-bench.js",
+        "/js/video-narration/wall-kit.js",
+        "/js/video-narration/arch-kit.js",
+        "/js/video-narration/tdd-art.js",
+        "/js/video-narration/tdd-kit.js",
+        "/js/video-narration/tdd.js"
+      ]
+    }
+  },
+  "resources": {
+    "languages": [
+      "python",
+      "java",
+      "cpp",
+      "typescript"
+    ],
+    "default_language": "python",
+    "example_order": [
+      "tests",
+      "bill"
+    ]
+  },
+  "scenes": {
+    "intro": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "dinner": {},
+        "missing": {},
+        "after": {},
+        "target": {}
+      }
+    },
+    "cycle": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "tdd": {},
+        "loop": {},
+        "runner": {}
+      }
+    },
+    "list": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "spec": {},
+        "cards": {},
+        "one": {}
+      }
+    },
+    "starter": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "first_test": {},
+        "red": {},
+        "fake": {},
+        "why_fake": {}
+      }
+    },
+    "triangulate": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "second_test": {},
+        "red2": {},
+        "generalize": {}
+      }
+    },
+    "leftover": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "bill": {},
+        "predict": {},
+        "red3": {},
+        "obvious": {}
+      }
+    },
+    "refactor": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "smell": {},
+        "tidy": {},
+        "done": {}
+      }
+    },
+    "rules_red": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "test_first": {},
+        "test_first_why": {},
+        "watch": {},
+        "liar": {},
+        "watch_why": {},
+        "message": {}
+      }
+    },
+    "rules_green": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "smallest": {},
+        "debugging": {},
+        "step_size": {},
+        "step_cost": {},
+        "strict": {},
+        "on_green": {},
+        "slip": {},
+        "two_hats": {},
+        "cleanup": {},
+        "limit": {}
+      }
+    },
+    "benefits": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "more_tests": {},
+        "safety_net": {},
+        "docs": {},
+        "small_units": {}
+      }
+    },
+    "costs": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "time": {},
+        "discipline": {},
+        "limits": {}
+      }
+    },
+    "evidence": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "versus_after": {},
+        "steady": {},
+        "practice": {}
+      }
+    },
+    "summary": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "recap_cycle": {},
+        "recap_rules": {},
+        "recap_consequences": {}
+      }
+    }
+  }
+}

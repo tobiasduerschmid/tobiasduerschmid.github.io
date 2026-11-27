@@ -176,3 +176,46 @@
 :is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-lettering { fill: rgba(30, 79, 156, 0.4); }
 :is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-mote { background: rgba(30, 79, 156, 0.3); }
 :is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-vignette { background: radial-gradient(ellipse at 50% 45%, transparent 60%, rgba(30, 60, 110, 0.1) 100%); }
+
+/* The test bench (theme test-bench, js/song-video/test-bench.js) in daylight,
+   and in print: a white lab-notebook page with pale green-gray ruling, so
+   the light palette's dark text keeps at least 4.5:1 even at the page's
+   darker edges (--bg). No vignette: the edges stay paper-light. */
+:is(html:not(.dark-mode), html.print-light-mode) .theme-test-bench {
+  --tb-bench: #b9c5c1;
+  --tb-paper: #fcfdf9;
+  --tb-paper-edge: #f0f4ef;
+  --tb-lamp: rgba(255, 249, 228, 0.65);
+  --tb-shade: transparent;
+  --tb-rule: rgba(40, 135, 115, 0.11);
+  --tb-rule-major: rgba(40, 135, 115, 0.21);
+  --tb-margin: rgba(214, 60, 60, 0.38);
+  --tb-hole-edge: rgba(60, 90, 85, 0.3);
+  --tb-ink: rgba(30, 88, 98, 0.24);
+  --tb-glass: rgba(40, 88, 98, 0.45);
+  --tb-glint: rgba(255, 255, 255, 0.9);
+  --tb-liquid-opacity: 0.5;
+  --tb-stopper: #a07a52;
+  --tb-agar: rgba(225, 185, 90, 0.16);
+  --tb-colony-opacity: 0.55;
+  --tb-strip: #ffffff;
+  --tb-key-opacity: 0.55;
+  --bg: #f0f4ef;
+}
+
+:is(html:not(.dark-mode), html.print-light-mode) .theme-test-bench .tb-strip {
+  stroke: rgba(40, 88, 98, 0.3);
+  stroke-width: 1;
+}
+
+/* A lesson in several code languages draws each code piece once per
+   language (data-code-variant) and shows the stage's language
+   (data-code-language, from the viewer's code-language preference; Python
+   until one is known). A matching variant keeps its own display. */
+.stage:not([data-code-language]) [data-code-variant]:not([data-code-variant="python"]),
+.stage[data-code-language="python"] [data-code-variant]:not([data-code-variant="python"]),
+.stage[data-code-language="java"] [data-code-variant]:not([data-code-variant="java"]),
+.stage[data-code-language="cpp"] [data-code-variant]:not([data-code-variant="cpp"]),
+.stage[data-code-language="typescript"] [data-code-variant]:not([data-code-variant="typescript"]) {
+  display: none !important;
+}

@@ -232,7 +232,10 @@ for (const speed of [1, 2]) {
     await page.addInitScript(() => {
       const pause = HTMLMediaElement.prototype.pause;
       HTMLMediaElement.prototype.pause = function recordPause() {
-        if (window.pausedAt === null) window.pausedAt = this.currentTime;
+        if (window.pausedAt === null) {
+          window.pausedAt = this.currentTime;
+          window.pausedWall = performance.now();
+        }
         return pause.call(this);
       };
     });
@@ -247,7 +250,7 @@ for (const speed of [1, 2]) {
       const end = timing.scenes[index].end;
       const speechEnd = timing.scenes[index].cues.at(-1).speech_end;
       await seek(page, speechEnd - 0.5);
-      await page.evaluate(() => { window.pausedAt = null; });
+      await page.evaluate(() => { window.pausedAt = null; window.pausedWall = null; });
       await animation.getByRole('button', { name: 'Play narration' }).click();
       await expect(animation.locator('audio')).toHaveJSProperty('playbackRate', speed);
       const questions = questionsOf(scene.id);
@@ -260,14 +263,19 @@ for (const speed of [1, 2]) {
       }
       const kind = questions.length > 1 ? 'Summary quiz' : 'Knowledge check';
       const quiz = animation.getByRole('region', { name: `${index + 1}. ${scene.label} — ${kind}`, exact: true });
-      await expect.poll(() => animation.locator('audio').evaluate(audio => audio.currentTime),
-        { intervals: [50, 100] }).toBeGreaterThan(speechEnd + 0.75);
+      // The audio stops in the silence right after the last word: audio that a
+      // device has already buffered (Bluetooth, AirPlay) plays on after a pause,
+      // so a stop near the boundary let the next section's first syllable out.
+      await expect.poll(() => page.evaluate(() => window.pausedAt), { intervals: [50, 100] }).not.toBeNull();
+      const pausedAt = await page.evaluate(() => window.pausedAt);
+      expect(pausedAt - speechEnd, `${scene.id}: stops right after the last word`).toBeLessThan(0.6);
+      expect(end - pausedAt, `${scene.id}: leaves the silence before the next section unplayed`).toBeGreaterThan(1.5);
+      // The finished picture holds through the viewing pause before the check covers it.
       await expect(animation.getByRole('group', { name: scene.cues.at(-1).visual, exact: true })).toBeVisible();
       await expect(quiz).toBeHidden();
       await expect(quiz).toBeVisible();
-      const pausedAt = await page.evaluate(() => window.pausedAt);
-      expect(pausedAt - speechEnd, `${scene.id}: time to inspect the picture after the last word`).toBeGreaterThanOrEqual(2);
-      expect(pausedAt, `${scene.id}: stops before the next section's speech`).toBeLessThan(end - 0.1);
+      const heldFor = await page.evaluate(() => (performance.now() - window.pausedWall) / 1000);
+      expect(pausedAt - speechEnd + heldFor * speed, `${scene.id}: time to inspect the picture after the last word`).toBeGreaterThanOrEqual(2);
       await expect(animation.locator('audio')).toHaveJSProperty('paused', true);
       for (const question of questions) {
         await expect(quiz.getByText(question.question, { exact: true })).toBeVisible();

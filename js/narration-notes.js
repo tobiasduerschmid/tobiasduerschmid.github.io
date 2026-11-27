@@ -78,6 +78,11 @@
       root.querySelectorAll('[data-notes-language]').forEach(panel => {
         panel.hidden = panel.dataset.notesLanguage !== language.value;
       });
+      // A video lesson's stills are copies of its stage: each shows its code
+      // in the chosen language (data-code-variant, video-narration-stage.css).
+      root.querySelectorAll('.vn-note-still .stage').forEach(still => {
+        still.dataset.codeLanguage = language.value;
+      });
     };
     language.addEventListener('change', () => {
       if (preferences) preferences.set(language.value);

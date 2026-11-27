@@ -311,6 +311,10 @@ representative saved PDFs and keep verification artifacts outside the repo.
 1. Edit `say`, `speech.pronunciations`, and pauses in the YAML. Captions retain
    written English; pronunciation replacements affect TTS only. Keep at least
    2.5 seconds of viewing silence before section checks, including the summary.
+   The shared transport pauses the audio right after a checked section's (or a
+   prediction's) last word and opens the check or reveal prompt on a timer, so
+   no output buffer can play the next speech first; never pause near the
+   boundary instead (see `video-narration`, "No sound may reach a check").
 2. Run `node scripts/narration.js compile <id>` and
    `python3 scripts/render-explainer-narration.py --topic <id> --check`.
    These validate without loading a speech engine or writing media.

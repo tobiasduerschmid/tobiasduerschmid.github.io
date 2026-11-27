@@ -1,7 +1,9 @@
-// A knowledge check stops the narration before the next section is heard.
-// The stop must hold where the player gets the fewest chances to notice the
-// boundary: in a background tab, which runs no animation frames and updates
-// media time only a few times a second, and at high speed. The audio and
+// A knowledge check stops the narration before the next section is heard,
+// even through an output that buffers audio past a pause: the audio stops in
+// the silence right after the section's last word. The stop must hold where
+// the player gets the fewest chances to notice the boundary: in a background
+// tab, which runs no animation frames and updates media time only a few times
+// a second, and at high speed. The audio and
 // captions are versioned by the speech they carry, so a browser or CDN never
 // pairs a page's timing with an older rendering, and a page whose audio comes
 // from another rendering says so instead of pausing mid-sentence.
@@ -44,7 +46,10 @@ for (const index of checked.slice(0, 3)) {
     await expect(player(page).getByRole('region', { name: /— (Knowledge check|Summary quiz)$/ })).toBeVisible();
     const furthestPlayed = await player(page).locator('audio').evaluate(audio => Math.max(
       ...Array.from({ length: audio.played.length }, (_, i) => audio.played.end(i))));
-    expect(furthestPlayed).toBeLessThanOrEqual(boundary);
+    // Audio that a device has already buffered (Bluetooth, AirPlay) plays on
+    // after pause(), so the stop must leave the section's final silence
+    // unplayed, not end a few frames before the next section's first word.
+    expect(boundary - furthestPlayed).toBeGreaterThan(1);
   });
 }
 
