@@ -87,7 +87,7 @@ visuals, or `_data/explainers/<id>_*` companions). A page names one with
 Players compose shared chrome from `_includes/narration-player-*.html`; add
 or change a common control there, never in one player. Every player wraps its
 stage, checkpoint, and captions in one video (`.vn-video` > `.vn-surface` >
-`.vn-frame`) and begins the surface with `narration-player-controls.html`: one thin bar
+`.vn-frame`) and ends the surface with `narration-player-controls.html`: one thin bar
 that is the song player's, with its icons (`player-icon.html`, shared with
 `_layouts/song-player.html`), its layout, and its floating settings panel
 (`js/song-video/settings-panel.js`), which holds the scene, speed, caption
@@ -133,17 +133,29 @@ the bar overlay its lower edge. Mark scrolling panels
 `js/narration-diagram.js` is the one diagram copier for lessons and case
 studies.
 
-Inline controls precede the picture in document order; fullscreen keeps its
-bottom overlay. Every fullscreen entry starts a fresh idle period, including
+The bar follows the picture and captions in document order and stays at the
+bottom in both modes; settings open above it. Inline players also include
+`narration-player-start.html`, a synchronized play/pause button at the upper
+left with space reserved in the scene header. Hide that shortcut in fullscreen
+and while a check, closer look, or prediction replaces the picture.
+Every fullscreen entry starts a fresh idle period, including
 keyboard and viewport fallback entry. Narration chrome hides with a stationary
 pointer, while actual keyboard navigation, visible timeline labels, open settings/pickers, and dragging
 keep controls visible. Checks close settings; fullscreen continuation returns
 focus to the video so hiding resumes. Playlist layout is independent.
+Video headers use compact, horizontally scrolling rows on phones. In touch
+fullscreen only, the header shares the bar's idle state and collapses when
+hidden to enlarge the picture. `SongControlsVisibility` accepts `extraControls`
+so keyboard focus in that navigation keeps both surfaces visible. A first tap
+reveals them without pausing; desktop fullscreen navigation stays visible.
 `js/narration-timeline.js` supplies duration-proportional scene segments, scene
 labels with timestamps on hover/keyboard seeking, a current-chapter label, and
 accessible check buttons at boundaries. Adapters pass `checkScenes` to the
-transport. Close markers share a dot that opens a named choice list, retaining
-24px targets and one row at phone widths. `js/narration-quiz.js` adapts the shared quiz next action:
+transport. Checks and closer looks share one chronological marker lane.
+Nearby markers share a button that opens a named choice list, retaining
+24px targets without overlaps even at phone widths or the end of the timeline.
+Code-shaped markers distinguish closer looks; grouped markers have a stacked
+outline. `js/narration-quiz.js` adapts the shared quiz next action:
 one-question feedback leads directly to Continue narration (or the final
 action), for correct and incorrect answers; multi-question checks keep results.
 `NarrationQuiz.create` owns the shared panel, current attempt, feedback,
@@ -377,7 +389,7 @@ A **closer look** is an optional worked example on one cue, for an idea that
 is important or counter-intuitive, such as the Layers lesson's "control flow
 and dependency are different relations". While the cue plays, a **See it in
 code** offer shows at the picture's top right (a row under the picture on
-phones) and a marker stays on its own timeline row. Opening it (click, marker,
+phones) and a code-shaped marker shares the timeline's check lane. Opening it (click, marker,
 or <kbd>E</kbd>) pauses the narration and puts the panel where the picture
 was; **Continue narration** resumes at the same moment. The schema, behavior,
 and file ownership are in

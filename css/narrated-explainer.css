@@ -122,7 +122,7 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-syntax {
 /* The control bar draws the song player's controls (css/song-player.css) in
    the narration's theme colors: borderless icon buttons that light up under
    the pointer, a round gold play button, and accent-colored pressed states. */
-.narrated-explainer .nja-controls { padding: 0.4em 0.75em 0.75em; background: var(--nja-chrome); border-top: 1px solid var(--nja-line); }
+.narrated-explainer .nja-controls { padding: 0 0.6em 0.35em; background: var(--nja-chrome); border-top: 1px solid var(--nja-line); }
 .narrated-explainer .nja-controls button { display: grid; place-items: center; flex: 0 0 auto; width: 2.75em; height: 2.75em; padding: 0.4em; font: inherit; color: var(--nja-text); background: transparent; border: 2px solid transparent; border-radius: 0.35em; cursor: pointer; }
 .narrated-explainer .nja-controls button:hover:not(:disabled) { background: var(--nja-hover); border-color: var(--nja-line); }
 .narrated-explainer .nja-controls button:disabled { opacity: 0.5; cursor: default; }
@@ -164,37 +164,37 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-controls .vn-play
 .narrated-explainer .nja-seek-label { display: block; margin: 0; color: var(--nja-text); font: inherit; }
 .narrated-explainer .nja-seek { display: block; width: 100%; height: 1.75em; margin: 0; accent-color: var(--nja-accent); cursor: pointer; }
 
-/* Chapter progress uses a thin, continuous rail. Checkpoints occupy one quiet
-   lane below it so scrubbing and the 24px check targets never overlap. */
+/* Chapter progress uses a thin, continuous rail. Checks and closer looks
+   share one lane; their 24px targets never overlap each other or scrubbing. */
 .narrated-explainer .vn-timeline { position: relative; min-width: 0; }
-.narrated-explainer .vn-timeline-track { position: relative; display: flex; align-items: center; height: 28px; margin-inline: 12px; }
+.narrated-explainer .vn-timeline-track { position: relative; display: flex; align-items: center; height: 24px; margin-inline: 12px; }
 .narrated-explainer .vn-timeline-track .nja-seek-label { width: 100%; }
 .narrated-explainer .vn-timeline-segments { position: absolute; inset: 50% 0 auto; display: flex; height: 4px; transform: translateY(-50%); pointer-events: none; }
 .narrated-explainer .vn-timeline-segments > span { flex-basis: 0; min-width: 0; background: linear-gradient(to right, var(--nja-accent) var(--segment-progress, 0%), var(--nja-line) var(--segment-progress, 0%)); transition: transform 120ms ease; }
 .narrated-explainer .vn-timeline-segments > .is-previewed { transform: scaleY(2); }
-.narrated-explainer .vn-timeline .nja-seek { position: relative; height: 28px; appearance: none; -webkit-appearance: none; background: transparent; }
+.narrated-explainer .vn-timeline .nja-seek { position: relative; height: 24px; appearance: none; -webkit-appearance: none; background: transparent; }
 .narrated-explainer .vn-timeline .nja-seek::-webkit-slider-runnable-track { height: 4px; background: transparent; border: 0; }
 .narrated-explainer .vn-timeline .nja-seek::-moz-range-track { height: 4px; background: transparent; border: 0; }
 .narrated-explainer .vn-timeline .nja-seek::-moz-range-progress { background: transparent; }
 .narrated-explainer .vn-timeline .nja-seek::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border: 2px solid var(--nja-chrome); border-radius: 50%; background: var(--nja-accent); }
 .narrated-explainer .vn-timeline .nja-seek::-moz-range-thumb { width: 10px; height: 10px; border: 2px solid var(--nja-chrome); border-radius: 50%; background: var(--nja-accent); }
-.narrated-explainer .vn-timeline-checks { position: relative; min-width: 0; height: 24px; margin: 0 12px; }
+.narrated-explainer .vn-timeline-markers { position: relative; min-width: 0; height: 24px; margin: 0 12px; }
 .narrated-explainer .nja-controls .vn-timeline-check { position: absolute; top: 0; width: 24px; height: 24px; min-width: 24px; min-height: 24px; padding: 0; border: 0; border-radius: 50%; }
-.narrated-explainer .vn-timeline-check::before { content: ''; width: 10px; height: 10px; border: 2px solid var(--nja-muted); border-radius: 50%; background: var(--nja-chrome); transform: translateY(-6px); }
-.narrated-explainer .vn-timeline-check.is-grouped::before { box-shadow: 4px 0 0 -1px var(--nja-chrome), 5px 0 0 0 var(--nja-muted); transform: translate(-2px, -6px); }
+.narrated-explainer .vn-timeline-check::before { content: ''; width: 10px; height: 10px; border: 2px solid var(--nja-muted); border-radius: 50%; background: var(--nja-chrome); }
+.narrated-explainer .vn-timeline-check.is-grouped::before { box-shadow: 4px 0 0 -1px var(--nja-chrome), 5px 0 0 0 var(--nja-muted); transform: translateX(-2px); }
 .narrated-explainer .vn-timeline-check:is(:hover, :focus-visible)::before { background: var(--nja-accent); border-color: var(--nja-accent); }
 .narrated-explainer .vn-timeline-tooltip { position: absolute; z-index: 8; bottom: 100%; display: grid; gap: 0.2em; width: max-content; max-width: min(24em, 100%); box-sizing: border-box; padding: 0.65em 0.85em; border: 1px solid var(--nja-line); border-radius: 8px; color: var(--nja-text); background: var(--nja-bg); box-shadow: 0 4px 18px rgb(0 0 0 / 18%); font: inherit; line-height: 1.4; overflow-wrap: anywhere; pointer-events: auto; }
 .narrated-explainer .vn-preview-time { color: var(--nja-muted); font-variant-numeric: tabular-nums; }
 .narrated-explainer .nja-player:has(.vn-timeline-tooltip:not([hidden])) { overflow: visible; }
 .narrated-explainer .vn-current-chapter { flex: 1; min-width: 6em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nja-text); font-weight: 600; }
 .narrated-explainer .vn-current-chapter::before { content: '›'; margin-right: 0.6em; color: var(--nja-muted); }
-.narrated-explainer .vn-check-menu { position: absolute; z-index: 9; top: 100%; right: 0; width: min(28em, 100%); max-height: min(24em, 60vh); overflow: auto; overscroll-behavior: contain; padding: 0.6em; border: 1px solid var(--nja-line); border-radius: 10px; background: var(--nja-bg); color: var(--nja-text); box-shadow: 0 6px 24px rgb(0 0 0 / 20%); }
+.narrated-explainer .vn-check-menu { position: absolute; z-index: 9; bottom: calc(100% + 0.25em); right: 0; width: min(28em, 100%); max-height: min(24em, 60vh); overflow: auto; overscroll-behavior: contain; padding: 0.6em; border: 1px solid var(--nja-line); border-radius: 10px; background: var(--nja-bg); color: var(--nja-text); box-shadow: 0 6px 24px rgb(0 0 0 / 20%); }
 .narrated-explainer .vn-check-menu-heading { display: flex; align-items: center; justify-content: space-between; gap: 1em; padding-left: 0.65em; }
 .narrated-explainer .vn-check-choices { display: grid; gap: 0.25em; }
 .narrated-explainer .nja-controls .vn-check-choice { display: flex; justify-content: space-between; gap: 1em; width: 100%; height: auto; padding: 0.65em; text-align: left; line-height: 1.4; border-radius: 6px; }
 .narrated-explainer .vn-check-time { flex-shrink: 0; color: var(--nja-muted); font-variant-numeric: tabular-nums; }
 .narrated-explainer .vn-video.is-fullscreen .vn-check-menu { top: auto; bottom: 100%; }
-.narrated-explainer :is(.vn-timeline-tooltip, .vn-timeline-checks, .vn-check-menu)[hidden] { display: none; }
+.narrated-explainer :is(.vn-timeline-tooltip, .vn-timeline-markers, .vn-check-menu)[hidden] { display: none; }
 @container (max-width: 1100px) {
   .narrated-explainer .vn-controls:has(.vn-language) .vn-current-chapter { display: none; }
 }
@@ -241,25 +241,43 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .vn-settings { box-sha
 .narrated-explainer .vn-video.is-fullscreen > .vn-song-frame { height: 100% !important; }
 .narrated-explainer.is-showing-song > .nja-player > :is(.nja-explanation, .nja-takeaway) { display: none; }
 .narrated-explainer .vn-video:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
-.narrated-explainer .vn-surface { display: flex; flex-direction: column; }
+.narrated-explainer .vn-surface { display: flex; flex-direction: column; container-type: inline-size; }
 .narrated-explainer .vn-frame { position: relative; display: flex; flex-direction: column; overflow: hidden; background: var(--nja-panel); }
 .narrated-explainer .vn-frame > .nja-stage:not(.vn-screen) { background: var(--nja-bg); }
 .narrated-explainer .vn-check-exit { display: none; }
+/* Inline playback stays at the upper left, with space reserved in the scene
+   heading. The full transport follows the frame in document order. */
+.narrated-explainer .vn-inline-play { position: absolute; z-index: 3; top: 1.4em; left: 1.4em; display: grid; place-items: center; width: 2.2em; height: 2.2em; min-width: 44px; min-height: 44px; padding: 0.4em; font: inherit; color: var(--nja-ink); background: var(--nja-accent-fill); border: 2px solid var(--nja-ink); border-radius: 50%; cursor: pointer; }
+.narrated-explainer .vn-inline-play:hover { background: #ffdf55; }
+.narrated-explainer .vn-inline-play:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
+.narrated-explainer .vn-inline-play svg { width: 1.3em; height: 1.3em; fill: currentColor; stroke: none; filter: none; }
+html.dark-mode .narrated-explainer .vn-inline-play svg { filter: none; }
+.narrated-explainer .vn-inline-play .song-player-pause-icon,
+.narrated-explainer .vn-inline-play.is-playing .song-player-play-icon { display: none; }
+.narrated-explainer .vn-inline-play.is-playing .song-player-pause-icon { display: initial; }
+.narrated-explainer.is-enhanced .vn-video:not(.is-fullscreen):has(.vn-inline-play) .nja-scene-meta { margin-inline-start: max(3.1em, 56px); }
+.narrated-explainer .vn-video.is-fullscreen .vn-inline-play,
+.narrated-explainer .vn-video:has(:is(.narration-check, .narration-closer-look, .narration-prediction):not([hidden])) .vn-inline-play { display: none; }
 /* Captions sit under the picture, at a size the viewer chooses. */
 .narrated-explainer .vn-captions.nja-narration { min-height: 5.6em; padding: 0.8em 1.2em; border-top: 1px solid var(--nja-line); font-size: calc(1em * var(--vn-caption-scale, 1)); }
 .narrated-explainer .vn-captions:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: -3px; }
 .narrated-explainer .vn-video.are-captions-off .vn-captions { display: none; }
 /* The control bar: the position line, then playback on the left and the view on the right. */
 .narrated-explainer .vn-hidden-label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.narrated-explainer .vn-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5em 1em; padding-top: 0.25em; }
-.narrated-explainer .vn-toolbar-group { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35em; min-width: 0; }
+.narrated-explainer .vn-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.25em 0.6em; }
+.narrated-explainer .vn-toolbar-group { display: flex; flex-wrap: wrap; align-items: center; gap: 0.15em; min-width: 0; }
+.narrated-explainer .vn-toolbar button { width: 2em; height: 2em; min-width: 36px; min-height: 36px; padding: 0.15em; }
+.narrated-explainer .vn-toolbar .vn-play { width: 2.2em; height: 2.2em; min-width: 40px; min-height: 40px; }
+.narrated-explainer .vn-toolbar svg { width: 1.2em; height: 1.2em; }
+.narrated-explainer .vn-toolbar .vn-skip svg { width: 1.6em; height: 1.6em; }
+.narrated-explainer .vn-toolbar .vn-skip span { top: 50%; transform: translateY(-35%); }
 /* View controls stay at the right edge, also when the toolbar wraps. */
 .narrated-explainer .vn-view-controls { margin-inline-start: auto; }
-.narrated-explainer .vn-volume { width: 5em; min-width: 3em; height: 2.75em; margin: 0 0.35em 0 0; accent-color: var(--nja-accent); cursor: pointer; }
+.narrated-explainer .vn-volume { width: 3.5em; min-width: 3em; height: 2em; min-height: 36px; margin: 0 0.35em 0 0; accent-color: var(--nja-accent); cursor: pointer; }
 .narrated-explainer .nja-controls .vn-cc { font-weight: 700; }
 /* A lesson's code language stays in the bar, labeled, beside the view controls. */
 .narrated-explainer .vn-language { display: inline-flex; align-items: center; gap: 0.4em; margin: 0 0.35em 0 0; color: var(--nja-text); font: inherit; white-space: nowrap; }
-.narrated-explainer .vn-language select { max-width: 11em; min-height: 2.5em; padding: 0.25em 0.4em; font: inherit; color: var(--nja-text); background: var(--nja-input); border: 1px solid var(--nja-line); border-radius: 0.35em; cursor: pointer; }
+.narrated-explainer .vn-language select { max-width: 11em; min-height: 36px; padding: 0.15em 0.4em; font: inherit; color: var(--nja-text); background: var(--nja-input); border: 1px solid var(--nja-line); border-radius: 0.35em; cursor: pointer; }
 /* While a checkpoint is open, the control bar steps aside so the checkpoint
    has the room; the checkpoint's own buttons continue the narration. The
    selector follows the checkpoint's hidden attribute at once, so a player
@@ -270,27 +288,32 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .vn-settings { box-sha
    every control stays reachable while it is open; it scrolls on its own. */
 .narrated-explainer .nja-controls { position: relative; }
 .narrated-explainer .vn-settings { position: absolute; z-index: 6; right: 0.5em; bottom: calc(100% + 0.5em); box-sizing: border-box; width: min(24em, calc(100% - 1em)); max-height: min(30em, 70vh); overflow: auto; overscroll-behavior: contain; margin: 0; padding: 0.5em 1em 0.25em; color: var(--nja-text); background: var(--nja-bg); border: 1px solid var(--nja-line); border-radius: 0.75em; box-shadow: 0 0.5em 2em rgba(11, 15, 26, 0.25); }
-.narrated-explainer .vn-video:not(.is-fullscreen) .vn-controls { z-index: 4; border-top: 0; border-bottom: 1px solid var(--nja-line); }
-.narrated-explainer .vn-video:not(.is-fullscreen) .vn-settings { top: calc(100% + 0.25em); bottom: auto; }
+.narrated-explainer .vn-controls { z-index: 4; }
 .narrated-explainer .vn-settings-heading { display: flex; justify-content: space-between; align-items: center; gap: 1em; }
 .narrated-explainer .vn-settings .nja-settings > label { padding-block: 0.75em; border-top: 1px solid var(--nja-line); }
 .narrated-explainer .vn-settings .nja-settings > .nja-motion { padding-block: 0.5em; }
 /* A settings action carries words, so it keeps a visible button outline. */
 .narrated-explainer .vn-settings .nja-settings button { display: block; width: auto; height: auto; min-height: 2.75em; margin-block: 0.75em; padding: 0.4em 0.8em; border-color: var(--nja-line); background: var(--nja-chrome); }
 /* A narrow player keeps the same controls at a compact size (targets of at
-   least 36px), flowing in their order: the transport, then the clock beside
-   the code language, then the view buttons. Phones set the volume with their
+   least 36px). Phones set the volume with their
    own buttons (and iOS ignores a page's volume), so the volume slider gives
    way; mute stays. */
 @container (max-width: 520px) {
   .narrated-explainer .vn-toolbar { justify-content: flex-start; gap: 0.3em 0.25em; }
   .narrated-explainer .vn-toolbar-group { display: contents; }
-  .narrated-explainer .vn-toolbar button { width: 2.2em; height: 2.2em; min-width: 36px; min-height: 36px; padding: 0.25em; }
-  .narrated-explainer .vn-toolbar .vn-play { width: 2.4em; height: 2.4em; }
-  .narrated-explainer .vn-toolbar .vn-skip svg { width: 1.65em; height: 1.65em; }
-  .narrated-explainer .vn-toolbar .vn-skip span { top: 0.62em; }
   .narrated-explainer .vn-toolbar .nja-time { margin-inline: 0.3em; }
   .narrated-explainer .vn-volume { display: none; }
+}
+/* At phone widths the first row is play, skips, and time; the second is
+   scene navigation and view controls. Extra text size falls back to wrapping
+   above so a six-column grid can never squeeze the readable controls. */
+@container (min-width: 14em) and (max-width: 520px) {
+  .narrated-explainer .vn-toolbar { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: center; }
+  .narrated-explainer .vn-toolbar .nja-time { grid-column: span 3; margin: 0; text-align: right; }
+  .narrated-explainer .vn-toolbar .vn-track,
+  .narrated-explainer .vn-view-controls > :not(.vn-language) { order: 1; }
+  .narrated-explainer .vn-toolbar .vn-language { grid-column: 1 / -1; order: 2; margin: 0.25em 0 0; }
+  .narrated-explainer .vn-toolbar .case-step-actions { grid-column: 1 / -1; }
 }
 
 /* Full screen. The outer element owns full screen and focus; the inner surface
@@ -326,21 +349,8 @@ html.has-viewport-fullscreen .narrated-explainer .vn-video.is-viewport-fullscree
 .narrated-explainer .vn-video.is-fullscreen .vn-check-exit:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
 .narrated-explainer .vn-video.is-fullscreen .vn-captions { grid-area: 2 / 1; z-index: 3; align-self: end; justify-self: center; width: min(60em, calc(100% - 1em)); min-height: 0; max-height: min(5em, 40%); overflow-y: auto; margin-bottom: 0.35em; padding: 0.3em 0.6em; background: var(--nja-bg); border: 1px solid var(--nja-line); border-radius: 5px; color: var(--nja-text); font-size: calc(1em * var(--vn-caption-scale, 1)); line-height: 1.4; text-align: center; }
 .narrated-explainer .vn-video.is-fullscreen .vn-captions p { margin: 0 auto; color: var(--nja-text); line-height: inherit; }
-.narrated-explainer .vn-video.is-fullscreen .vn-controls { grid-area: 3 / 1; z-index: 4; min-height: 0; padding: 0 0.6em 0.4em; overflow: visible; }
-/* Full screen keeps the bar thin: the same controls at a compact size, with
-   targets of at least 32px. The settings panel keeps its place over the
-   lower right, now of the whole screen, above the caption overlay. */
-.narrated-explainer .vn-video.is-fullscreen .nja-seek { height: 24px; margin: 0; }
-.narrated-explainer .vn-video.is-fullscreen .vn-toolbar { gap: 0.25em 0.5em; padding-top: 0; }
-.narrated-explainer .vn-video.is-fullscreen .vn-toolbar-group { gap: 0.15em; }
-.narrated-explainer .vn-video.is-fullscreen .vn-toolbar button { width: 2em; height: 2em; min-width: 32px; min-height: 32px; padding: 0.15em; }
-.narrated-explainer .vn-video.is-fullscreen .vn-toolbar .vn-play { width: 2.2em; height: 2.2em; }
-.narrated-explainer .vn-video.is-fullscreen .vn-toolbar svg { width: 1.15em; height: 1.15em; }
-.narrated-explainer .vn-video.is-fullscreen .vn-toolbar .vn-skip svg { width: 1.6em; height: 1.6em; }
-.narrated-explainer .vn-video.is-fullscreen .vn-toolbar .vn-skip span { top: 0.54em; }
-.narrated-explainer .vn-video.is-fullscreen .nja-time { margin-inline: 0.3em; }
-.narrated-explainer .vn-video.is-fullscreen .vn-volume { width: 3em; height: 32px; }
-.narrated-explainer .vn-video.is-fullscreen .vn-language select { min-height: 32px; padding-block: 0.1em; }
+.narrated-explainer .vn-video.is-fullscreen .vn-controls { grid-area: 3 / 1; min-height: 0; overflow: visible; }
+/* The compact bar and its settings keep the same layout in both modes. */
 .narrated-explainer .vn-video.is-fullscreen .vn-controls { transition: opacity 180ms ease, visibility 0s; }
 .narrated-explainer .vn-video.is-fullscreen.are-controls-hidden .vn-controls { opacity: 0; visibility: hidden; pointer-events: none; transition-delay: 0s, 180ms; }
 .narrated-explainer .vn-video.is-fullscreen.are-controls-hidden { cursor: none; }
@@ -425,6 +435,7 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .narration-note-action
 }
 @media (max-width: 520px) {
   .narrated-explainer .nja-stage, .narrated-explainer .nja-narration { padding: 0.85em; }
+  .narrated-explainer .vn-inline-play { top: 0.85em; left: 0.85em; }
   .narrated-explainer .nja-controls { padding-inline: 0.5em; }
   .narrated-explainer .narration-check { padding: 0.85em; }
   .narrated-explainer .narration-check .quiz-container { padding: 0.65em; }

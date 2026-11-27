@@ -526,11 +526,16 @@ and verification screenshots outside the repository.
   native seek slider, with the current chapter beside the clock. Hover or
   keyboard seeking previews the scene and timestamp above the rail; Escape
   dismisses the label. Check dots are labeled buttons at section boundaries.
-  Close checks share a dot that opens their titled choices and timestamps,
-  preserving 24px targets and a single row on narrow screens. The adapter
+  Checks and closer looks share one chronological lane. Nearby markers share
+  a button that opens their titled choices and timestamps, preserving 24px
+  targets without overlaps on narrow screens or at the end of the rail. The adapter
   supplies `checkScenes` to the transport; clicking a dot pauses, seeks to that
   section's end, and opens its check through the existing section-end callback.
-- Inline players place controls first in document order, above the picture.
+- Players place controls after the picture and captions in document order,
+  at the bottom in both modes. Settings open above the bar. Inline players
+  add `narration-player-start.html`: a synchronized play/pause shortcut at the
+  upper left, with header space reserved for it. It hides in fullscreen and
+  while a check, closer look, or prediction replaces the picture.
   Fullscreen keeps the bottom overlay and begins a fresh idle period for every
   entry path. A stationary pointer does not pin narration chrome; keyboard
   navigation, visible timeline labels, open settings/pickers, dragging, paused playback, and buffering
@@ -564,8 +569,8 @@ A closer look is an optional worked example that a lesson offers during one
 cue, for an idea that is important or counter-intuitive (the first one shows
 the Layers lesson's callback in code: calls go up, imports point down). While
 that cue plays, a **See it in code** offer sits at the picture's top right (in
-a row under the picture on phones), and a code-shaped marker stays on its own
-timeline row. Opening it (click, tap, the marker, or <kbd>E</kbd> with focus
+a row under the picture on phones), and a code-shaped marker shares the
+timeline's knowledge-check lane. Nearby stops open a choice list. Opening it (click, tap, the marker, or <kbd>E</kbd> with focus
 in the player) pauses the narration and puts the panel where the picture was;
 **Continue narration** resumes from the same moment, **Replay the
 explanation** plays the cue again, and Escape or the close button returns to

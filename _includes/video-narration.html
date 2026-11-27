@@ -3,7 +3,7 @@
   cue by cue, an animated stage drawn with the song-video engine in a
   same-origin frame, or a structured-text slide, an ArchUML diagram, or code
   for lessons whose storyboard has `slides`, `diagrams`, or `languages`;
-  captions follow and controls precede it, and full screen fills the screen
+  captions and controls follow it, and full screen fills the screen
   with the video. One knowledge check ends each section.
   Params: topic (a key of the compiled site.data.video_narrations view and _data/explainers).
   Docs: docs/video-narration.md.
@@ -36,7 +36,7 @@
         {% capture video_settings %}{% if lesson.animation %}<label class="nja-motion"><input type="checkbox" data-setting="motion" checked> Animate visuals</label>{% endif %}
           <button type="button" class="np-review-check" data-review-check>Knowledge check</button>{% endcapture %}
         {% capture video_view %}{% if explainer.languages %}{% include narration-player-language.html id=topic languages=explainer.languages default=explainer.default_language examples=examples %}{% endif %}{% endcapture %}
-        {% include narration-player-controls.html id=player_id duration=timing.duration seek_label="Narration position" scenes=explainer.scenes view=video_view settings=video_settings %}
+        {% include narration-player-start.html %}
       <div class="vn-scenes" tabindex="0" role="region" aria-label="Scene navigation">
         {% for scene in explainer.scenes %}
         <div class="nja-scene vn-scene" data-scene="{{ scene.id }}"{% unless forloop.first %} hidden{% endunless %}>
@@ -75,6 +75,7 @@
         <div class="nja-narration vn-captions" id="{{ topic }}-video-captions" role="region" aria-label="Narration" tabindex="0"><p>{{ first_cue.text }}</p></div>
       </div>
       <p class="vn-phone-tip">Tip: turn your phone sideways for a bigger picture.</p>
+      {% include narration-player-controls.html id=player_id duration=timing.duration seek_label="Narration position" scenes=explainer.scenes view=video_view settings=video_settings %}
       </div>
     </div>
     <div class="nja-explanation"><strong class="nja-step">{{ first_cue.step }}</strong><p class="nja-note">{{ first_cue.note | escape }}</p></div>

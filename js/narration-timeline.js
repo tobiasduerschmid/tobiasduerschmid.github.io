@@ -10,7 +10,8 @@
     if (!timeline) return { update() {} }; // Cached markup without a timeline.
     const seek = timeline.querySelector('.nja-seek');
     const segments = timeline.querySelector('.vn-timeline-segments');
-    const markers = timeline.querySelector('.vn-timeline-checks');
+    const markers = timeline.querySelector('.vn-timeline-markers');
+    if (!markers) return { update() {} };
     const tooltip = timeline.querySelector('[role="tooltip"]');
     const chapter = root.querySelector('.vn-current-chapter');
     const menu = timeline.querySelector('.vn-check-menu');
@@ -23,6 +24,13 @@
 
     const label = index => story.scenes[index].label;
     const clock = time => `${Math.floor(time / 60)}:${String(Math.floor(time % 60)).padStart(2, '0')}`;
+    const stops = [
+      ...checkScenes.map(index => ({ id: `check-${index}`, type: 'check', index,
+        title: `Knowledge check: ${label(index)}`, time: timing.scenes[index].end })),
+      ...looks.map((look, index) => ({ id: `look-${index}`, type: 'look', look,
+        title: `Closer look: ${look.title}`, time: look.time })),
+    ].sort((a, b) => a.time - b.time);
+    const stopLabel = stop => stop.type === 'look' ? `${stop.title}, at ${clock(stop.time)}` : stop.title;
     function sceneAt(time) {
       let index = 0;
       while (index + 1 < timing.scenes.length && timing.scenes[index + 1].start <= time) index++;
@@ -50,28 +58,33 @@
       if (restoreFocus) trigger.focus({ preventScroll: true });
       hideLabel();
     }
-    function openCheck(index) {
+    function openStop(stop) {
       closeMenu(false);
       hideLabel();
-      onCheck(index);
+      if (stop.type === 'check') onCheck(stop.index);
+      else onLook(stop.look);
     }
-    function openMenu(button, indices) {
+    function openMenu(button, entries) {
       closeMenu(false);
       hideLabel();
       menuTrigger = button;
       button.setAttribute('aria-expanded', 'true');
-      choices.replaceChildren(...indices.map(index => {
+      const checksOnly = entries.every(stop => stop.type === 'check');
+      menu.setAttribute('aria-label', checksOnly ? 'Choose a knowledge check' : 'Choose a knowledge check or closer look');
+      menu.querySelector('strong').textContent = checksOnly ? 'Knowledge checks' : 'Explore this point';
+      closeButton.setAttribute('aria-label', checksOnly ? 'Close knowledge checks' : 'Close timeline choices');
+      choices.replaceChildren(...entries.map(stop => {
         const choice = document.createElement('button');
         choice.type = 'button';
         choice.className = 'vn-check-choice';
-        choice.setAttribute('aria-label', `Knowledge check: ${label(index)}`);
+        choice.setAttribute('aria-label', stopLabel(stop));
         const title = document.createElement('span');
-        title.textContent = label(index);
+        title.textContent = checksOnly ? label(stop.index) : stop.title;
         const time = document.createElement('span');
         time.className = 'vn-check-time';
-        time.textContent = clock(timing.scenes[index].end);
+        time.textContent = clock(stop.time);
         choice.append(title, time);
-        choice.addEventListener('click', () => openCheck(index));
+        choice.addEventListener('click', () => openStop(stop));
         return choice;
       }));
       menu.hidden = false;
@@ -92,87 +105,57 @@
       segments.appendChild(segment);
     }
 
-    // Dense checkpoints share a dot with an explicit choice list. The timeline
-    // stays a single quiet row at phone widths, with full-size touch targets.
+    // Checks and closer looks share one lane. Nearby stops share a choice
+    // list instead of overlapping targets, including at the very end of a
+    // narrow timeline. Both kinds remain in chronological keyboard order.
     function layoutMarkers() {
-      if (!checkScenes.length) return;
+      if (!stops.length) return;
       const width = markers.clientWidth;
       if (!width) return;
       const groups = [];
-      for (const index of checkScenes) {
-        const x = Math.max(12, Math.min(width - 12, timing.scenes[index].end / timing.duration * width));
+      for (const stop of stops) {
+        const x = Math.max(12, Math.min(width - 12, stop.time / timing.duration * width));
         const previous = groups.at(-1);
-        if (previous && x - previous.x < 28) previous.indices.push(index);
-        else groups.push({ x, indices: [index] });
+        if (previous && x - previous.x < 28) previous.entries.push(stop);
+        else groups.push({ x, entries: [stop] });
       }
-      const layout = JSON.stringify(groups);
+      const layout = JSON.stringify(groups.map(({ x, entries }) => [x, entries.map(stop => stop.id)]));
       if (layout === markerLayout) return;
       markerLayout = layout;
       const focused = menuTrigger || (markers.contains(document.activeElement) ? document.activeElement : null);
-      const focusedScene = focused ? Number(focused.dataset.checkSceneIndex) : null;
+      const focusedStop = focused?.dataset.timelineStop;
       closeMenu(false);
-      markers.replaceChildren(...groups.map(({ x, indices }) => {
+      markers.replaceChildren(...groups.map(({ x, entries }) => {
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = 'vn-timeline-check';
-        button.dataset.checkSceneIndex = String(indices[0]);
+        const hasLook = entries.some(stop => stop.type === 'look');
+        button.className = hasLook ? 'vn-timeline-look' : 'vn-timeline-check';
+        if (hasLook) button.append(timeline.querySelector('.vn-timeline-look-icon').content.cloneNode(true));
+        button.dataset.timelineStop = entries[0].id;
         button.style.left = `${x - 12}px`;
-        const title = indices.length === 1 ? `Knowledge check: ${label(indices[0])}` : `${indices.length} knowledge checks: ${indices.map(label).join(', ')}`;
+        const groupTitle = `${entries.length} ${hasLook ? 'timeline stops' : 'knowledge checks'}`;
+        const title = entries.length === 1 ? stopLabel(entries[0]) : `${groupTitle}: ${entries.map(stopLabel).join(', ')}`;
         button.setAttribute('aria-label', title);
-        if (indices.length > 1) {
+        if (entries.length > 1) {
           button.classList.add('is-grouped');
           button.setAttribute('aria-expanded', 'false');
           button.setAttribute('aria-controls', menu.id);
         }
-        const preview = () => showLabel(indices.length > 1 ? `${indices.length} knowledge checks` : title,
-          timing.scenes[indices[0]].end, markers.offsetLeft + x);
+        const preview = () => showLabel(entries.length > 1 ? groupTitle : title,
+          entries[0].time, markers.offsetLeft + x);
         button.addEventListener('pointerenter', preview);
         button.addEventListener('focus', preview);
-        button.addEventListener('click', () => indices.length === 1 ? openCheck(indices[0]) : openMenu(button, indices));
+        button.addEventListener('click', () => entries.length === 1 ? openStop(entries[0]) : openMenu(button, entries));
         return button;
       }));
-      if (focusedScene !== null) {
-        const index = groups.findIndex(group => group.indices.includes(focusedScene));
+      if (focusedStop) {
+        const index = groups.findIndex(group => group.entries.some(stop => stop.id === focusedStop));
         markers.children[index]?.focus({ preventScroll: true });
       }
     }
-    markers.hidden = !checkScenes.length;
+    markers.hidden = !stops.length;
     new ResizeObserver(layoutMarkers).observe(markers);
     layoutMarkers();
-
-    // Closer looks get their own row, so a marker never covers a check dot.
-    const lookRow = timeline.querySelector('.vn-timeline-looks');
-    if (lookRow && looks.length) {
-      lookRow.hidden = false;
-      const icon = lookRow.querySelector('template').content;
-      const lookButtons = looks.map(look => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'vn-timeline-look';
-        const title = `Closer look: ${look.title}`;
-        button.setAttribute('aria-label', `${title}, at ${clock(look.time)}`);
-        button.append(icon.cloneNode(true));
-        const preview = () => showLabel(title, look.time, lookRow.offsetLeft + button.offsetLeft + 12);
-        button.addEventListener('pointerenter', preview);
-        button.addEventListener('focus', preview);
-        button.addEventListener('click', () => { hideLabel(); onLook(look); });
-        return button;
-      });
-      lookRow.replaceChildren(...lookButtons);
-      const layoutLooks = () => {
-        const width = lookRow.clientWidth;
-        if (!width) return;
-        let previous = -Infinity;
-        lookButtons.forEach((button, index) => {
-          // Keep 24-pixel targets apart when two looks are close together.
-          const x = Math.max(12, Math.min(width - 12, Math.max(previous + 26, looks[index].time / timing.duration * width)));
-          button.style.left = `${x - 12}px`;
-          previous = x;
-        });
-      };
-      new ResizeObserver(layoutLooks).observe(lookRow);
-      layoutLooks();
-    }
 
     seek.addEventListener('pointermove', event => {
       if (event.pointerType === 'touch') return;

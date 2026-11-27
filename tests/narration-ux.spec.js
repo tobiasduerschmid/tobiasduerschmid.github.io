@@ -3,7 +3,7 @@ const { readFileSync } = require('node:fs');
 const yaml = require('js-yaml');
 const { loadLesson } = require('../scripts/narration/source');
 const { a11yCheckpoint } = require('./a11y-helpers');
-const { openPlayerSettings } = require('./helpers/narration-player');
+const { openPlayerSettings, setSiteTheme } = require('./helpers/narration-player');
 
 const topics = ['scrum', 'strategy', 'nodejs', 'therac25'];
 const lessons = topics.map(topic => ({ topic, ...loadLesson(topic) }));
@@ -42,11 +42,27 @@ async function open(page, lesson) {
 }
 
 for (const lesson of lessons) {
-  test(`${lesson.topic}: inline controls precede the picture and the timeline names scenes`, async ({ page }) => {
+  test(`${lesson.topic}: bottom controls and the top playback shortcut stay synchronized`, async ({ page }) => {
     const player = await open(page, lesson);
     const position = player.getByRole('slider', { name: /position/ });
-    const picture = player.getByRole('region', { name: 'Narration', exact: true });
-    expect((await position.boundingBox()).y).toBeLessThan((await picture.boundingBox()).y);
+    const captions = await player.getByRole('region', { name: 'Narration', exact: true }).boundingBox();
+    const host = await player.locator('[data-vn-video]').boundingBox();
+    const bar = await player.locator('.vn-controls').boundingBox();
+    expect(bar.y).toBeGreaterThanOrEqual(captions.y + captions.height - 1);
+    expect(bar.y + bar.height).toBeCloseTo(host.y + host.height, 0);
+    const shortcut = player.getByRole('button', { name: 'Play lesson', exact: true });
+    const shortcutBox = await shortcut.boundingBox();
+    expect(shortcutBox.y - host.y).toBeLessThan(60);
+    expect(shortcutBox.x - host.x).toBeLessThan(60);
+    expect(shortcutBox.width).toBeGreaterThanOrEqual(44);
+    expect(shortcutBox.height).toBeGreaterThanOrEqual(44);
+    await shortcut.click();
+    await expect(player.getByRole('button', { name: 'Pause lesson', exact: true })).toBeVisible();
+    await player.getByRole('button', { name: 'Pause narration', exact: true }).click();
+    await expect(shortcut).toBeVisible();
+    await player.getByRole('button', { name: 'Play narration', exact: true }).click();
+    await player.getByRole('button', { name: 'Pause lesson', exact: true }).press('Space');
+    await expect(player.getByRole('button', { name: 'Play narration', exact: true })).toBeVisible();
     const timing = JSON.parse(readFileSync(`_data/explainers/${lesson.topic}_timing.json`, 'utf8'));
     const time = (timing.scenes[1].start + timing.scenes[1].end) / 2;
     await position.scrollIntoViewIfNeeded();
@@ -56,8 +72,89 @@ for (const lesson of lessons) {
     await expect(player.getByRole('tooltip')).toContainText(/\d+:\d{2}/);
     await position.fill(time.toFixed(2));
     await expect(position).toHaveAttribute('aria-valuetext', new RegExp(lesson.story.scenes[1].label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    await shortcut.press('f');
+    await expect(shortcut).toBeHidden();
+    await expect(player.locator('[data-vn-video]')).toBeFocused();
+    await player.getByRole('button', { name: 'Exit full screen', exact: true }).click();
+    await expect(shortcut).toBeVisible();
   });
 }
+
+for (const dark of [false, true]) {
+  for (const width of [1440, 320]) {
+    test(`the compact bar stays at the bottom with readable controls at ${width}px in ${dark ? 'dark' : 'light'} mode`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      const player = await open(page, loadLesson('blood_groups'));
+      await setSiteTheme(page, dark);
+      const video = player.locator('[data-vn-video]');
+      const bar = player.locator('.vn-controls');
+      const markers = player.getByRole('group', { name: 'Knowledge checks and closer looks', exact: true });
+      for (const fullscreen of [false, true]) {
+        if (fullscreen) await player.getByRole('button', { name: 'Enter full screen', exact: true }).click();
+        await expect.poll(() => video.evaluate(element => {
+          const bounds = element.getBoundingClientRect();
+          const bar = element.querySelector('.vn-controls').getBoundingClientRect();
+          return Math.abs(bar.bottom - bounds.bottom);
+        })).toBeLessThan(0.5);
+        const controls = await bar.boundingBox();
+        // A desktop bar uses at most 110px; narrow layouts may wrap their
+        // full-size controls, but must never overflow or add empty lanes.
+        expect(controls.height).toBeLessThanOrEqual(width > 1000 ? 110 : 150);
+        const targets = await markers.getByRole('button').evaluateAll(buttons => buttons.map(button => {
+          const { x, y, width, height } = button.getBoundingClientRect();
+          return { x, y, width, height };
+        }));
+        expect(targets.length).toBeGreaterThan(0);
+        for (const [index, target] of targets.entries()) {
+          expect(target.width).toBeGreaterThanOrEqual(24);
+          expect(target.height).toBeGreaterThanOrEqual(24);
+          expect(target.x).toBeGreaterThanOrEqual(controls.x);
+          expect(target.x + target.width).toBeLessThanOrEqual(controls.x + controls.width);
+          if (index) {
+            expect(target.x).toBeGreaterThanOrEqual(targets[index - 1].x + targets[index - 1].width);
+            expect(target.y).toBeCloseTo(targets[0].y, 0);
+          }
+        }
+        const shortcut = player.getByRole('button', { name: 'Play lesson', exact: true });
+        if (fullscreen) await expect(shortcut).toBeHidden();
+        else await expect(shortcut).toBeVisible();
+        await a11yCheckpoint(page, `compact ${fullscreen ? 'fullscreen' : 'inline'} bar`, {
+          include: '#blood_groups-video .vn-controls, #blood_groups-video .vn-inline-play', feature: 'narration-ux',
+        });
+        await player.getByRole('button', { name: 'Player settings', exact: true }).click();
+        const settings = player.getByRole('region', { name: 'Player settings', exact: true });
+        const panel = await settings.boundingBox();
+        const currentBar = await bar.boundingBox();
+        expect(panel.y + panel.height).toBeLessThanOrEqual(currentBar.y);
+        await settings.getByRole('button', { name: 'Close settings', exact: true }).click();
+      }
+      await player.getByRole('button', { name: 'Exit full screen', exact: true }).click();
+      await expect(player.getByRole('button', { name: 'Play lesson', exact: true })).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    });
+  }
+}
+
+test('a shared timeline group offers both checks and closer looks by keyboard', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  const player = await open(page, loadLesson('layered_style'));
+  const marker = player.getByRole('group', { name: 'Knowledge checks and closer looks', exact: true })
+    .getByRole('button', { name: /^\d+ timeline stops:.*Knowledge check:.*Closer look:|^\d+ timeline stops:.*Closer look:.*Knowledge check:/ }).first();
+  await marker.press('Space');
+  const menu = player.getByRole('region', { name: 'Choose a knowledge check or closer look', exact: true });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole('button', { name: /^Knowledge check:/ }).first()).toBeVisible();
+  const look = menu.getByRole('button', { name: /^Closer look:/ }).first();
+  await expect(look).toBeVisible();
+  const title = (await look.getAttribute('aria-label')).replace(/^Closer look: /, '').replace(/, at \d+:\d+$/, '');
+  await a11yCheckpoint(page, 'mixed timeline choices', { include: '#layered_style-video .vn-controls', feature: 'narration-ux' });
+  await page.keyboard.press('Escape');
+  await expect(marker).toBeFocused();
+  await marker.press('Enter');
+  await look.press('Space');
+  await expect(player.getByRole('region', { name: title, exact: true })).toBeVisible();
+  await expect(player.getByRole('button', { name: 'Play lesson', exact: true })).toBeHidden();
+});
 
 for (const topic of ['scrum', 'strategy']) {
   const lesson = lessons.find(item => item.topic === topic);
@@ -101,7 +198,7 @@ for (const mode of ['native pointer', 'native keyboard', 'native external', 'fal
     await expect(exit).toBeHidden({ timeout: 7000 });
     await page.keyboard.press('Tab');
     await expect(player.getByRole('slider', { name: /position/ })).toBeVisible();
-    await expect(player.getByRole('slider', { name: /position/ })).toBeFocused();
+    await expect.poll(() => player.evaluate(element => element.contains(document.activeElement))).toBe(true);
 
     await player.getByRole('button', { name: 'Knowledge check: Context: one task, many algorithms', exact: true }).click();
     const check = player.getByRole('region', { name: /— Knowledge check$/ });

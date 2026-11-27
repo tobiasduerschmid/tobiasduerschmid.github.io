@@ -89,12 +89,12 @@ for (const lesson of lessons) {
 
     // Explicit review still works when automatic segment checks are skipped.
     const firstLabel = lesson.story.scenes[lesson.checks[0]].label;
-    const marker = player.getByRole('group', { name: 'Jump to a knowledge check', exact: true })
+    const marker = player.getByRole('group', { name: 'Knowledge checks and closer looks', exact: true })
       .getByRole('button', { name: new RegExp(firstLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) });
     const grouped = await marker.getAttribute('aria-expanded') !== null;
     await marker.click();
     if (grouped) {
-      await player.getByRole('region', { name: 'Choose a knowledge check', exact: true })
+      await player.getByRole('region', { name: /^Choose a knowledge check/ })
         .getByRole('button', { name: `Knowledge check: ${firstLabel}`, exact: true }).click();
     }
     await expect(check).toBeVisible();
