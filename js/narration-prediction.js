@@ -20,6 +20,7 @@
     let held = null;
     let releasedKey = null;
     let shownKey = null;
+    let enabled = setting.checked;
 
     function clear() {
       if (held) status.textContent = '';
@@ -29,7 +30,7 @@
     }
 
     function shouldHold(frame) {
-      return setting.checked && storyboard.scenes[frame.sceneIndex].cues[frame.cueIndex].prediction
+      return enabled && storyboard.scenes[frame.sceneIndex].cues[frame.cueIndex].prediction
         && keyOf(frame) !== releasedKey;
     }
 
@@ -53,10 +54,16 @@
     });
     // These are ordinary buttons/checkboxes, not song-player shortcuts.
     panel.addEventListener('keydown', event => { if (event.key !== 'Escape') event.stopPropagation(); });
-    setting.addEventListener('change', () => {
+    setting.addEventListener('change', () => window.NarrationPreferences.set({ predictions: setting.checked }));
+    window.NarrationPreferences.subscribe(preferences => {
+      setting.checked = preferences.predictions;
+      if (enabled === preferences.predictions) return;
+      enabled = preferences.predictions;
       clear();
-      onToggle(setting.checked);
-      if (!setting.checked) status.textContent = 'Pause and predict is off for this visit.';
+      // Initial preferences arrive before the transport has presented a cue.
+      if (shownKey === null) return;
+      onToggle(enabled);
+      if (!enabled) status.textContent = 'Pause and predict is off.';
     });
 
     return {

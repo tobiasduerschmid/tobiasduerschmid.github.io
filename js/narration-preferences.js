@@ -5,6 +5,7 @@
 
   const key = 'sebook-narration-preferences';
   const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+  const captionSizes = [1, 1.25, 1.5, 2];
   const listeners = new Set();
 
   function normalize(value) {
@@ -12,6 +13,12 @@
       captions: typeof value?.captions === 'boolean' ? value.captions : true,
       speed: speeds.includes(value?.speed) ? value.speed : 1,
       finalCheckOnly: value?.finalCheckOnly === true,
+      captionSize: captionSizes.includes(value?.captionSize) ? value.captionSize : 1,
+      landscape: typeof value?.landscape === 'boolean' ? value.landscape : true,
+      predictions: typeof value?.predictions === 'boolean' ? value.predictions : true,
+      motion: typeof value?.motion === 'boolean' ? value.motion : null,
+      volume: typeof value?.volume === 'number' && value.volume >= 0 && value.volume <= 1 ? value.volume : 1,
+      muted: value?.muted === true,
     };
   }
 
@@ -32,8 +39,7 @@
   let current = parse(lastCookie);
 
   function apply(next) {
-    if (next.captions === current.captions && next.speed === current.speed
-      && next.finalCheckOnly === current.finalCheckOnly) return;
+    if (Object.keys(next).every(key => next[key] === current[key])) return;
     current = next;
     listeners.forEach(listener => listener({ ...current }));
   }
@@ -70,6 +76,7 @@
 
   window.addEventListener('focus', refresh);
   window.addEventListener('pageshow', refresh);
+  window.cookieStore?.addEventListener('change', refresh);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') refresh();
   });

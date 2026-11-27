@@ -83,7 +83,13 @@ info_nav_title: "Browser storage"
       </tr>
       <tr data-storage="cookie" data-key="sebook-narration-preferences">
         <td class="storage-key">sebook-narration-preferences</td>
-        <td>Closed-caption visibility, playback speed, and whether to pause only for the final knowledge check, shared by every narration player. Defaults: captions on, 1x speed, and all knowledge checks. Saved for one year when changed in a player or <a href="{{ '/settings/' | relative_url }}">My Settings</a>; scoped to every path on this site, with SameSite=Lax and Secure on HTTPS.</td>
+        <td>Every narration's shared playback and display preferences: captions and caption size, speed, volume and mute, landscape layout, prediction pauses, animation, and whether to pause only for the final knowledge check. Defaults: captions on at 100%, 1x speed, full volume, unmuted, landscape and predictions on, system motion preference, and all knowledge checks. Saved for one year when changed in a player or <a href="{{ '/settings/' | relative_url }}">My Settings</a>; scoped to every path on this site, with SameSite=Lax and Secure on HTTPS. Scene navigation stays specific to each lesson.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="cookie" data-key="sebook-code-language">
+        <td class="storage-key">sebook-code-language</td>
+        <td>Your shared code language across SE Book examples, UML labs, and narration players, reading views, and print views. Defaults to Python; unsupported languages use a fallback without changing the saved choice. Saved for one year, with Path=/, SameSite=Lax, and Secure on HTTPS. Earlier localStorage choices move here automatically when cookies are available. Code edits are not stored.</td>
         <td class="status-cell"></td>
         <td class="action-cell"></td>
       </tr>
@@ -242,7 +248,7 @@ info_nav_title: "Browser storage"
     <tbody>
       <tr data-storage="localStorage" data-key="sebook-code-language">
         <td class="storage-key">sebook-code-language</td>
-        <td>Your shared code language across SE Book examples, UML labs, and narrated design-pattern and UML lessons (Observer, State, Strategy, Model-View-Controller, Composite, UML class diagrams, UML sequence diagrams, UML state machine diagrams). Saved when you choose a language, follow a language-specific lesson link, or change it in <a href="{{ '/settings/' | relative_url }}">My Settings</a>. Unset defaults to Python; examples without your language use a supported fallback. Code edits are not stored in this preference.</td>
+        <td>Legacy code-language preference. Automatically moved to the cookie of the same name and removed after a successful migration. New choices use the cookie; the profile sync extension retires this older localStorage copy.</td>
         <td class="status-cell"></td>
         <td class="action-cell"></td>
       </tr>
