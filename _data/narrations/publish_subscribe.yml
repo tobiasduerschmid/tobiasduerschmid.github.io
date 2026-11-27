@@ -9,10 +9,13 @@ lesson:
   summary: >-
     Follow Mochi, a campus delivery robot, as its camera stops calling every program by name and
     starts publishing to a topic. Learn the four rules of the <strong>publish-subscribe</strong>
-    style, and what they buy and cost: extensibility and run-time flexibility, paid for in
-    robustness and understandability.
+    style, and what they buy and cost: extensibility, run-time flexibility, modifiability, and
+    availability, paid for in robustness, understandability, testability, and performance.
   prerequisites: >-
-    Assumes you have written functions that call each other and passed a function as a callback.
+    Assumes you have written functions that call each other and passed a function as a callback,
+    and that you have seen <a href="/SEBook/software_architecture.html#architectural-views">module
+    views and component-and-connector views</a>, as in the
+    <a href="/SEBook/uml_component_diagram.html">UML component diagrams</a> lesson.
   chapter: /SEBook/architectural_styles/pubsub.html
   views: /SEBook/architectural_styles/pubsub
   parts:
@@ -65,11 +68,12 @@ scenes:
         step: Six programs
         note: The camera's frames feed several of the robot's programs.
         visual: >-
-          A C&C view frame titled inside Mochi, with a key: program, a component. Six programs
-          appear as UML components, each with a line about its job: Camera driver, 30 frames a
-          second; Obstacle detector, finds people and scooters; Planner, picks the path; Motor
-          controller, turns the wheels; Logger, records the trip; and Operator dashboard, shows the
-          camera's view. A drawing of Mochi sits below the frame.
+          A C&C view frame titled inside Mochi, with a key: program, a component, and a note under its
+          tab spelling out C&C: component-and-connector. Six programs appear as UML components, each
+          with a line about its job: Camera driver, 30 frames a second; Obstacle detector, finds people
+          and scooters; Planner, picks the path; Motor controller, turns the wheels; Logger, records the
+          trip; and Operator dashboard, shows the camera's view. A drawing of Mochi sits below the
+          frame.
       - id: ticket
         say: >-
           You've just joined Mochi's software team, and your first ticket sounds easy. Campus
@@ -84,10 +88,9 @@ scenes:
           components is not known a priori, or may even change over time.
         visual: >-
           A badge reads You, with the tag New on the Mochi team. A card reads Ticket 1: Count
-          pedestrians, for campus planning: how crowded the main walkway gets, from the camera's
-          frames. A C&C view frame titled Who has wanted the frames, with a key: program, holds
-          three components: Logger, last year; Dashboard, this spring; and Pedestrian counter, now,
-          highlighted as new.
+          pedestrians, for campus planning: how crowded the main walkway gets, from the camera's frames.
+          A second card, Who has wanted the frames, lists Logger, last year; Dashboard, this spring; and
+          Pedestrian counter, now: your ticket.
   - id: direct_calls
     part: Motivation
     outline: Direct calls
@@ -109,10 +112,11 @@ scenes:
           CMU 17-655 lecture 12, Call-Return Styles: in blocking call-return, the caller waits until
           the invoked service completes, and elements know the identity of the elements they rely on.
         visual: >-
-          A C&C view frame titled direct calls, with a key: program, and call, waits for the return.
-          A Python code card titled camera.py shows a loop: while True, frame = sensor.read(), then
-          detector.find_obstacles(frame), logger.save(frame), and dashboard.show(frame). As each
-          call is named, its line lights up and a call arrow runs from it to the component it calls:
+          A C&C view frame titled direct calls, with a key: program, and call, waits for the return. The
+          Camera driver component holds a Python code card titled camera.py with a loop: while True,
+          frame = sensor.read(), then detector.find_obstacles(frame), logger.save(frame), and
+          dashboard.show(frame). As each call is named, its line lights up and a call arrow runs from a
+          port on the camera's edge, level with the line, to the port of the component it calls:
           Obstacle detector, Logger, and Operator dashboard. A sticker reads Each call waits for its
           return.
       - id: edit_camera
@@ -129,8 +133,9 @@ scenes:
         visual: >-
           A new component, Pedestrian counter, appears below the three called components, marked Not
           connected yet. A new line types into the camera.py loop, counter.count(frame), and a call
-          arrow joins it to the counter, now marked Called from the loop. A red stamp reads Edit
-          camera.py, and red stickers read Retest the camera and Redeploy the camera.
+          arrow runs from a new port on the Camera driver to the counter, now marked Called from the
+          loop. A red stamp reads Edit camera.py, and red stickers read Retest the camera and Redeploy
+          the camera.
       - id: freeze
         say: >-
           It gets worse. Last week the dashboard's server hung, so the call to show a frame never
@@ -140,11 +145,11 @@ scenes:
         step: One slow listener stalls all
         note: A blocking call to a hung receiver stops the sender, and everything after it.
         visual: >-
-          The direct-calls C&C view again: the camera.py loop's line dashboard.show(frame) is lit,
-          and its call arrow runs to the Operator dashboard, which turns grey: Server not
-          responding. The Obstacle detector reads No new frames, and frame tokens pile up beside the
-          lit line. On a strip of the main walkway, Mochi rolls up to a tour group and stops,
-          stamped Frozen. A sticker reads One slow listener stalls all.
+          The direct-calls C&C view again: in the Camera driver component, the camera.py loop's line
+          dashboard.show(frame) is lit, and its call arrow runs from the camera's port to the Operator
+          dashboard, which turns grey: Server not responding. The Obstacle detector reads No new frames,
+          and frame tokens pile up beside the call. On a strip of the main walkway, Mochi rolls up to a
+          tour group and stops, stamped Frozen. A sticker reads One slow listener stalls all.
       - id: need
         say: >-
           So here's what you need. The camera should announce each frame once, without knowing who
@@ -196,10 +201,11 @@ scenes:
           CS 130 lecture 17, slide 18 (nh.subscribe("topic_name", 10, callback)); Bass et al. 2013,
           section 13.2, Publish-Subscribe Pattern.
         visual: >-
-          Below the topic, three subscriber components appear, Obstacle detector, Logger, and
-          Dashboard, each attached from the channel to its own port and each with its own row of
-          queue slots. Frame copies travel along the topic and down into every subscriber. A callout reads
-          Its own queue, and a code card shows node.subscribe("/camera/image", 10, on_frame).
+          Below the topic, three subscriber components appear, Obstacle detector, Logger, and Dashboard.
+          Each is attached to the channel through its own queue of ten slots, drawn on the attachment:
+          an arrow runs from the channel into the queue, and another from the queue to the subscriber's
+          port. Frame copies travel along the topic and into every queue. A callout reads Its own queue,
+          and a code card shows node.subscribe("/camera/image", 10, on_frame).
       - id: counter_joins
         say: >-
           Now revisit the ticket. The pedestrian counter subscribes to the same topic, and that is
@@ -210,15 +216,15 @@ scenes:
         closer_look:
           title: The camera never names a subscriber
           notice: >-
-            The camera names only a topic; the topic keeps the subscribers and runs their callbacks,
-            so adding the counter touches no camera code.
+            The camera names only a topic. The topic keeps one inbox per subscriber, and each
+            subscriber drains its own, so adding the counter touches no camera code.
           code: subscribe
           groups:
             - {id: camera, label: "Publisher: Camera driver"}
             - {id: topic, label: "«topic» Messaging infrastructure"}
             - {id: counter, label: "Subscriber: Pedestrian counter"}
           relations:
-            - {kind: call, from: topic.deliver, to: counter.callback, label: [calls ↓, at run time]}
+            - {kind: call, from: topic.drain, to: counter.callback, label: [calls ↓, at run time]}
             - {kind: dependency, from: counter.subscribe, to: topic.subscribe, label: [subscribes ↑, by topic name]}
           steps:
             - question: What does the camera name?
@@ -228,20 +234,22 @@ scenes:
                 <code>/camera/image</code>. No detector, logger, dashboard, or counter appears
                 anywhere in the camera driver.
             - question: Who calls the counter?
-              focus: [topic.publish, topic.deliver, counter.callback]
+              focus: [topic.publish, topic.drain, counter.callback]
               relation: call
               text: >-
-                <code>publish()</code> only puts a copy of the frame in every subscriber's queue and
-                returns, so the camera never waits. Later, the infrastructure's
-                <code>deliver()</code> takes the frame from the counter's queue and runs its
-                callback. <strong>The camera never calls the counter.</strong>
+                <code>publish()</code> only puts the frame in every subscriber's queue and returns,
+                so the camera never waits. The infrastructure runs each inbox's
+                <code>drain()</code> on that subscriber's own thread (in TypeScript, its own async
+                task), which takes the frames from the queue and runs the callback. <strong>The
+                camera never calls the counter.</strong> A full queue drops its oldest frame, so a
+                stuck counter stalls only its own inbox.
             - question: Who keeps the list?
               focus: [counter.subscribe, topic.subscribe, topic.inboxes]
               relation: dependency
               text: >-
-                The counter registers its callback under the topic's name, and the topic files it in a
-                new inbox. The counter names the topic, not the camera, and the list of subscribers
-                lives in the topic, not in the publisher.
+                The counter registers its callback and a queue size of 10 under the topic's name, and
+                the topic files them in a new inbox. The counter names the topic, not the camera, and
+                the list of subscribers lives in the topic, not in the publisher.
             - question: Add or remove the counter
               focus: [counter.subscribe]
               remove: counter
@@ -250,9 +258,9 @@ scenes:
                 empty either way. Only the topic's list changes, at run time, one inbox shorter or
                 longer.
         visual: >-
-          The Pedestrian counter slides in as a fourth subscriber component, attached to the same
-          topic with its own queue, and frame copies start reaching it too. Its count rises from
-          Counted: 3 to Counted: 7. A green sticker reads 0 lines changed.
+          The Pedestrian counter slides in as a fourth subscriber component, attached to the same topic
+          through its own queue, and frame copies start reaching it too. Its count rises from Counted: 3
+          to Counted: 7. A green sticker reads 0 lines changed.
       - id: both_roles
         say: >-
           A component may play both roles. The detector subscribes to camera images and publishes
@@ -267,17 +275,17 @@ scenes:
           Fairbanks 2010, section 14.11.
         visual: >-
           Mochi as a chain, in a C&C view whose key reads component, «topic» connector, and publish,
-          deliver. The Camera driver publishes into the /camera/image topic, and the Obstacle
-          detector, the Logger, and the Dashboard are attached below it as subscribers. The detector
-          publishes into /obstacles, which the Planner subscribes to; the Planner publishes into
-          /cmd_vel, which the Motor controller subscribes to. Every attachment runs between a
-          component's port and a topic's channel. Callouts read Topic to component and, in red, No direct
-          calls.
+          deliver. The Camera driver publishes into the /camera/image topic, and the Obstacle detector,
+          the Logger, and the Dashboard are attached below it as subscribers. The detector publishes
+          into /obstacles, which the Planner below it subscribes to. On one line at the bottom, the
+          Planner publishes into /drive_commands, which delivers to the Motor controller. Every
+          attachment runs straight between a component's port and a topic's channel. Callouts read Topic
+          to component and, in red, No direct calls.
   - id: ignorance
     part: Rules
     outline: Ignorance
     label: "Rules: neither side knows the other"
-    title: Rules one and two, mutual ignorance
+    title: Publisher and subscriber ignorance
     purpose: Learn the two ignorance rules, and how they set the style apart from the Observer pattern.
     takeaway: >-
       Publishers don't rely on who listens, subscribers don't rely on who published, and only the
@@ -295,11 +303,12 @@ scenes:
           CS 130 lecture 17, slide 23 (Publisher Ignorance); Bass et al. 2013, section 13.2 (the
           correctness of the producer cannot depend on the recipients).
         visual: >-
-          Rule card 1, Publisher ignorance: don't rely on who listens, or whether anyone does. Below
-          it, a C&C view frame shows the same publisher twice: under Five subscribers, the Camera
-          driver publishes into /camera/image with five small subscriber components attached; under
-          No subscribers, the same camera publishes into the same topic, and a label reads Nobody
-          subscribed. A green sticker reads Same camera code in both.
+          Rule card 1, Publisher ignorance: don't rely on who listens, or whether anyone does. A label
+          beside it reads These rules are the style's constraints. Below, a C&C view frame shows the
+          same publisher twice: under Five subscribers, the Camera driver publishes into /camera/image
+          with five small subscriber components attached; under No subscribers, the same camera
+          publishes into the same topic, and a label reads Nobody subscribed. A green sticker reads Same
+          camera code in both.
       - id: subscriber_rule
         say: >-
           Rule two, subscriber ignorance: a subscriber must not rely on the identity of the
@@ -319,29 +328,34 @@ scenes:
           green label reads Publishers stay replaceable.
       - id: observer
         say: >-
-          The Observer pattern resembles this, with one important difference. Observer operates
-          between objects within one program: the subject keeps its own list of observers and calls
-          each one. In publish-subscribe, neither side holds a reference to the other. The topic
-          maintains the list, and it may even run in another process or on another machine.
+          The Observer pattern resembles this, with one difference. Observer is a design pattern
+          for objects: the subject keeps its own list of observers and calls each one.
+          Publish-subscribe is an architectural style, independent of the programming paradigm. In
+          the topic-based form shown here, the topic keeps the list, possibly on another machine.
         pause_after: 2.5
         step: Not quite Observer
-        note: In Observer the subject holds its observers; here only the topic does.
+        note: Observer is a pattern for objects; publish-subscribe is a style for any paradigm.
         source: >-
-          Buschmann, Henney, and Schmidt 2007 (POSA5), p. 68 (Observer implemented with
-          publisher-subscriber middleware decouples the subject completely); Buschmann et al. 1996,
-          p. 341 (Event Channel variant).
+          CS 130 lecture 16, slide 39 notes (architectural styles are programming
+          paradigm-independent, while the Observer pattern assumes object-oriented programming);
+          Buschmann et al. 1996, pp. 339–341 (Publisher-Subscriber, also known as Observer: the
+          publisher keeps the registry; the Event Channel variant places a channel between them);
+          Bass et al. 2013, section 13.2 (list-based publish-subscribe: every publisher keeps its
+          subscription list).
         visual: >-
-          Two frames side by side. Observer pattern, a C&C view with a key reading object and
-          call: the object subject: Subject keeps observers = [a, b, c] and notify(), and call
-          arrows run straight from it to three objects, a, b, and c: Observer, labeled The subject
-          calls each one. Publish-subscribe, a C&C view: a Publisher component over the «topic»
-          channel events, over a Subscriber component, each attached only to the topic, with a
-          callout under the channel: Keeps the list. A sticker reads No reference either way.
+          Two frames side by side. On the left, a paper frame labeled Object diagram: Observer: the
+          object subject: Subject keeps observers = [a, b, c] and notify(), and call arrows run
+          straight down from it to three objects, a, b, and c: Observer; a label reads Keeps the list,
+          calls each one. On the right, a C&C view titled topic-based form, with a key reading
+          component, topic, and event: a Publisher component over the «topic» channel events, over a
+          Subscriber component, each attached only to the topic, and a callout on the channel reads
+          Keeps the list. Labels under the frames read Design pattern: objects, and Architectural
+          style: any paradigm.
   - id: one_way
     part: Rules
     outline: One way
     label: "Rules: one way, no waiting"
-    title: Rules three and four, one way and asynchronous
+    title: One-way propagation and asynchronous publishing
     purpose: Learn why publishing returns no answer and never blocks.
     takeaway: >-
       Events flow one way with no return value, and publishing never waits; a slow subscriber only
@@ -353,7 +367,7 @@ scenes:
           back, so publishing returns no value. The rule exists because a publisher that awaited an
           answer would again depend on its subscribers. The camera cannot ask whether anyone saw an
           obstacle; any answer travels as a new event on another topic.
-        step: "Rule 3: one way"
+        step: "Rule 3: one-way propagation"
         note: Publishing returns nothing; any answer is a new event on another topic.
         source: CS 130 lecture 17, slide 23 (One-Way Propagation; there are no return values).
         visual: >-
@@ -364,21 +378,27 @@ scenes:
           /obstacles topic.
       - id: async
         say: >-
-          Rule four, asynchronous publishing: a publisher never blocks. Publishing places a copy of
-          the frame in each subscriber's queue and returns immediately, so no subscriber can delay
-          the publisher. Each subscriber drains its own queue at its own pace, while the camera
-          continues at thirty frames a second.
-        step: "Rule 4: asynchronous"
+          Rule four, asynchronous publishing: in this style, a publisher never blocks. Publishing
+          places a copy of the frame in each subscriber's queue and returns immediately, so no
+          subscriber can delay the publisher. Each subscriber drains its own queue at its own pace,
+          while the camera continues at thirty frames a second.
+        step: "Rule 4: asynchronous publishing"
         note: Publishing returns at once; each subscriber drains its own queue.
         source: >-
           CS 130 lecture 17, slide 23 (Asynchronous: the sender does not block); CMU 17-655 lecture
-          11, Message Passing (asynchronous messages require buffering).
+          11, Message Passing (asynchronous messages require buffering; synchronous delivery, where
+          the sender waits, is the less common sub-pattern); Clements et al. 2010, Table 4.5 and
+          pp. 175–176 (document the conditions under which an announcer is blocked; some systems
+          block it until every subscriber has been notified).
         visual: >-
-          Rule card 4, Asynchronous: the publisher never waits; publish() returns at once. In a C&C
-          view frame, the Camera driver, 30 frames a second, publishes into /camera/image, and
-          frames flow to three subscriber components: Detector, Logger, and Dashboard. Each has a
-          queue of ten slots that fills and drains at its own pace, the dashboard's the fullest. A
-          callout beside the camera reads publish() returns.
+          Rule card 4, Asynchronous publishing: the publisher never waits; publish() returns at
+          once. A note pinned beside it reads Some event systems notify synchronously; then a slow
+          subscriber does stall the publisher. In a C&C view frame, the Camera driver, 30 frames a
+          second, publishes into /camera/image. Each of three subscriber components, Detector,
+          Logger, and Dashboard, is attached to the topic through its own queue of ten slots,
+          drawn on the attachment between the channel and the subscriber's port. The queues fill
+          and drain at their own pace, the dashboard's the fullest. A callout beside the camera
+          reads publish() returns.
       - id: predict_hang
         say: >-
           Now replay last week's disaster. The dashboard's server hangs again, and its callback
@@ -404,8 +424,8 @@ scenes:
           CS 130 lecture 17, slide 18 (queue size 10 in nh.subscribe); ROS subscriber queues discard
           the oldest messages when full.
         visual: >-
-          On the walkway strip, Mochi drives on. The Detector's and the Logger's queues keep
-          draining, while the Dashboard's queue fills all ten slots, and a red label reads Full:
+          On the walkway strip, Mochi drives on. The Detector's and the Logger's queues keep draining,
+          while the Dashboard's queue fills all ten slots, and a red label reads Dashboard's queue full:
           oldest dropped. A green sticker reads Slow subscriber hurts only itself.
   - id: buys
     part: Consequences
@@ -414,8 +434,9 @@ scenes:
     title: Add, swap, and plug in while it runs
     purpose: Connect each benefit of the style to the rule that produces it.
     takeaway: >-
-      Publisher ignorance makes adding subscribers free, subscriber ignorance makes swapping
-      publishers free, and connections can change while the system runs.
+      Publisher ignorance promotes extensibility and run-time flexibility, subscriber ignorance
+      promotes modifiability, and one-way, asynchronous publishing promotes availability through
+      fault isolation.
     cues:
       - id: extensibility
         say: >-
@@ -428,7 +449,7 @@ scenes:
           CS 130 lecture 17, slide 22 (easier to add new publishers and subscribers:
           extensibility); Fairbanks 2010, section 14.11.
         visual: >-
-          A quality card reads Extensibility, promoted, wired to Rule card 1, Publisher ignorance.
+          A quality card reads Extensibility, promoted, wired to the rule card Publisher ignorance.
           In a C&C view frame, the Camera driver publishes into /camera/image and a Battery sensor
           into /battery. New subscriber components drop in under the topics one after another, each
           marked Just subscribes: Pedestrian counter, Research recorder, and Battery monitor. A
@@ -446,30 +467,37 @@ scenes:
           flexibility); CS 130 lecture 15, slide 26 (flexible connection via late binding).
         visual: >-
           A quality card reads Run-time flexibility, promoted, beside a clock that runs through an
-          afternoon, from 1:00 p.m. to 4:40 p.m., and Rule card 1. In a C&C view frame, the Camera
+          afternoon, from 1:00 p.m. to 4:40 p.m., and the rule card Publisher ignorance. In a C&C view
+          frame, the Camera
           driver publishes into /camera/image. Below the topic, the Operator dashboard switches from
           Not subscribed to Subscribed, attached to the topic, when an operator opens it, and to
           Unsubscribed when it closes; the Research recorder switches to Subscribed for an
           experiment.
       - id: swap
         say: >-
-          Third, replaceability and fault isolation. Because of subscriber ignorance, any publisher
-          can be replaced by one that sends the same events, such as the laser detector. And because
-          publishing never waits, a slow or crashed subscriber cannot stall the others. Each benefit
-          follows directly from one of the four rules.
+          Third, modifiability. Because of subscriber ignorance, a publisher can be replaced by any
+          other that sends the same events, such as the laser detector, without changing a
+          subscriber. Fourth, availability through fault isolation: under one-way propagation and
+          asynchronous publishing, a slow or crashed subscriber cannot stall the others, which keep
+          running.
         pause_after: 2.5
-        step: Each benefit has a rule behind it
-        note: Add subscribers, swap publishers, isolate slow subscribers, each thanks to a rule.
+        step: Modifiability and availability
+        note: Replace a publisher without touching subscribers; a crashed subscriber stalls no one.
         source: >-
-          CMU 17-655 lecture 11, Quality Attribute Considerations 3 (modifiability promoted since
-          elements work independently); CS 130 lecture 16, slide 19 notes (the constraints give the
-          style its power).
+          CS 130 lecture 15, slides 20 and 25 (modifiability: a part can be replaced without
+          affecting the rest of the system); CMU 17-655 lecture 11, Quality Attribute
+          Considerations 3 (modifiability promoted since elements work independently); CS 130
+          lecture 17, slide 6 (availability: the ability of a system to mask or repair faults);
+          CS 130 lecture 16, slide 19 notes (the constraints give the style its power).
         visual: >-
-          A card titled Each benefit follows from a rule lists Add subscribers freely: Rule 1,
-          publisher ignorance; Replace publishers freely: Rule 2, subscriber ignorance; and A slow
-          subscriber can't stall others: Rule 4, asynchronous. Below, in a C&C view frame, the Laser
-          detector is marked Swapped in, same events, and the Operator dashboard is marked Crashed:
-          no one stalls. A banner reads Rule of the style: The benefits come from the rules.
+          Two quality cards over one C&C view. The card Modifiability: replace a publisher,
+          promoted, carries the label From subscriber ignorance; the card Availability: fault
+          isolation, promoted, carries the label From one-way propagation and asynchronous publishing.
+          Under the first card, the Laser
+          detector, marked Swapped in, same events, publishes into /obstacles, and the Planner below
+          it turns green: Nothing changed. Under the second, the Camera driver publishes into
+          /camera/image; of its two subscribers, the Dashboard is marked Crashed, while the Detector
+          is marked Still receiving.
   - id: nobody_listens
     part: Consequences
     outline: Nobody listening
@@ -494,9 +522,9 @@ scenes:
         visual: >-
           A diff card, detector.py, tidy names, changes advertise("/obstacle_list") to
           advertise("/obstacles"). Green readouts say Code review: Approved, Build: Compiles, and
-          Launch: Starts. In a C&C view frame, the Obstacle detector publishes into a lit /obstacles
-          topic, while the Planner, marked Subscribes: /obstacle_list, stays attached to the old
-          topic, now empty.
+          Launch: Starts. In a C&C view frame, the Obstacle detector, marked Publishes: /obstacles,
+          publishes down into a lit /obstacles topic. Beside it, the old /obstacle_list topic is now
+          empty, and the Planner below it, marked Subscribes: /obstacle_list, stays attached to it.
       - id: predict_rename
         say: >-
           So predict. On the next delivery, a skateboarder cuts across Mochi's path, and the
@@ -507,8 +535,9 @@ scenes:
         step: Predict the delivery
         note: A skateboarder cuts across. What does the planner do? What reports an error?
         visual: >-
-          The detector reads Found: skateboard, and an event token travels into /obstacles. A
-          walkway strip shows Mochi with a skateboarder ahead. Dashed boxes ask Planner? and Errors?
+          The diff card and readouts make way for a walkway strip, where Mochi meets a skateboarder. The
+          detector reads Found: skateboard, and an event token travels into /obstacles. Dashed boxes ask
+          Planner? and Errors?
       - id: silent
         say: >-
           The planner does nothing: it never learns of the skateboard. And no component reports an
@@ -521,15 +550,16 @@ scenes:
           CS 130 lecture 17, slides 19 and 20 and their notes (the bug stayed in the repository for
           two months; the topic implementation was functionally correct).
         visual: >-
-          The event sits in /obstacles with no subscriber, and a red sticker reads Nobody's
-          listening. The Planner reads Hears nothing: goes straight. On the walkway, Mochi rolls
-          toward the skateboarder, and readouts say Error log: 0 errors and Bumper: Stop!
+          The event sits in /obstacles, and a red sticker right under that topic reads Nobody's
+          listening; above /obstacle_list, a red label reads Nobody publishes here. The Planner reads
+          Hears nothing: goes straight. On the walkway, Mochi rolls toward the skateboarder, and
+          readouts say Error log: 0 errors and Bumper: Stop!
       - id: robustness
         say: >-
           What still couples the components? Each topic's name, and its events' format and meaning;
-          change one, and every subscriber must follow or quietly fail. That is the cost to
-          robustness: a direct call fails loudly when its receiver is missing, but under publisher
-          ignorance and one-way propagation, a publisher never learns who received an event.
+          change one, and every subscriber must follow, or fail silently. That costs robustness: a
+          direct call to a missing receiver returns an error, but under publisher ignorance and
+          one-way propagation, a publisher never learns who received an event.
         pause_after: 2.5
         step: What still couples them
         note: Topic names and event formats and meanings are the shared contract; delivery is never confirmed.
@@ -541,7 +571,8 @@ scenes:
         visual: >-
           A card titled What still couples them lists Topic name: /obstacles, Event format:
           Obstacle(x, y, kind), and Event meaning: x and y in meters. A quality card reads
-          Robustness, inhibited, labeled From Rules 1 and 3. Two C&C view frames compare: direct
+          Robustness, inhibited, labeled From publisher ignorance and one-way propagation. Two C&C
+          view frames compare: direct
           call, where a Sender calls a Receiver that is down and the readout says Receiver missing:
           Call failed: error; and publish, where a Publisher publishes into an empty topic, events,
           and the readout says No subscriber: Delivered to 0, no error.
@@ -550,10 +581,11 @@ scenes:
     outline: Who talks to whom
     label: "Consequences: harder to follow"
     title: Who talks to whom?
-    purpose: See why publish-subscribe systems are harder to understand, test, and time.
+    purpose: See why publish-subscribe systems are harder to understand, test, and keep fast.
     takeaway: >-
-      The flow of events is spread across subscriptions, notification order isn't fixed, and the
-      extra hop adds latency; teams make the flow visible again on purpose.
+      Understandability suffers because the flow of events is spread across subscriptions,
+      testability because notification order isn't fixed, and performance because every event
+      passes through the topic; teams make the flow visible again on purpose.
     cues:
       - id: scattered
         say: >-
@@ -567,28 +599,31 @@ scenes:
           CS 130 lecture 17, slide 22 (direct communication is easier to understand); Fairbanks 2010,
           section 14.11 (a diagram of components on one bus hides who talks to whom).
         visual: >-
-          A search panel queries /camera/image and finds 5 programs subscribe: detector.py,
-          logger.py, dashboard.py, counter.py, and recorder.py. Beside it, a C&C view frame with a
-          key reading component and topic shows six components, Camera, Detector, Planner, Logger,
-          Counter, and Motor, all attached to one topic, events, three above and three below, and a
-          sticker asks Who talks to whom? Rule card 1 sits above a quality card: Understandability,
-          inhibited.
+          A search panel queries /camera/image and finds 5 programs subscribe: detector.py, logger.py,
+          dashboard.py, counter.py, and recorder.py. Beside it, a C&C view frame with a key reading
+          component and topic shows six components, Camera, Detector, Planner, Logger, Counter, and
+          Motor, all attached to one topic, events, three above and three below, and a sticker asks Who
+          talks to whom? The rule cards Publisher ignorance and Subscriber ignorance sit above a
+          quality card: Understandability, inhibited.
       - id: order
         say: >-
-          Asynchronous publishing also complicates reasoning about timing. When several subscribers
-          receive the same event, the order of notification is not fixed, and each queue drains at
-          its own pace. A test that passes today may fail tomorrow, so teams trace events at run
-          time to observe what actually happened.
-        step: No fixed order
-        note: Notification order isn't fixed, so tests and timing are harder to reason about.
+          Asynchronous publishing also inhibits testability. When several subscribers receive the
+          same event, the order of notification is not fixed, and each queue drains at its own
+          pace. A test that passes today may fail tomorrow, so teams trace events at run time to
+          observe what actually happened.
+        step: Testability
+        note: Notification order isn't fixed, so a test's outcome can change from run to run.
         source: >-
-          CMU 17-655 lecture 11 (the order of notification is non-deterministic; tracing events from
-          announcement to receipt can be difficult).
+          CMU 17-655 lecture 11, Quality Attribute Considerations 2 (testing event systems can be a
+          challenge: tracing events from announcement to receipt is difficult, and the order of
+          execution depends on many factors); CS 130 lecture 17, slide 6 (testability: the ease
+          with which software can be made to demonstrate its faults through testing).
         visual: >-
-          Rule card 4, Asynchronous. Two cards list the order in which subscribers got the same
-          event: Run 1, Logger, Planner, Dashboard; Run 2, Planner, Dashboard, Logger. Readouts say
-          Today: Test passed and Tomorrow: Test failed. An Event trace lists each delivery with its
-          time: frame 812 published, then received by the Planner, then by the Logger.
+          The rule card Asynchronous publishing, wired to a quality card: Testability, inhibited.
+          Two cards list the order in which subscribers got the same camera frame: Run 1, Logger,
+          Detector, Dashboard; Run 2, Detector, Dashboard, Logger. Readouts say Today: Test passed
+          and Tomorrow: Test failed. An Event trace lists each delivery with its time: frame 812
+          published, then received by the Detector, then by the Logger.
       - id: visible
         say: >-
           Teams therefore restore the visibility of the flow. They design topic names and event
@@ -601,29 +636,36 @@ scenes:
           CMU 17-655 lecture 11, Event Binding and Structure (event structure must be designed early
           because changing it after implementation is costly).
         visual: >-
-          A card titled Topic list: who publishes, who subscribes lists /camera/image: Camera driver
-          to Detector, Logger, Dashboard, and Counter; /obstacles: Detector to Planner; and
-          /cmd_vel: Planner to Motor controller. A checklist, Make the flow visible, ticks off
-          Design names and formats early, Keep the topic list current, and Test programs together,
-          and a readout says Detector + Planner: Integration test passed.
+          Two C&C views, before and after. Before: one bus, the same six components, Camera, Detector,
+          Planner, Logger, Counter, and Motor, each attached to one topic, events, with plain lines.
+          After: named topics, with directed attachments: the Camera publishes into /camera/image, which
+          delivers to the Detector, the Logger, and the Counter; the Detector publishes into /obstacles,
+          which delivers to the Planner; and the Planner publishes into /drive_commands, which delivers
+          to the Motor. Labels read Names and formats designed early, and Detector + Planner: tested
+          together.
       - id: latency
         say: >-
-          Third, latency. Every message takes a detour through the connector's infrastructure, which
-          adds delay compared with a direct call. If that infrastructure is a single central broker,
-          it also becomes a single point of failure: when it fails, every conversation stops at
-          once.
+          The fourth cost is performance. Every message passes through an intermediary, the
+          connector's infrastructure, which adds latency compared with a direct call. And if that
+          infrastructure is one central broker, it also puts availability at risk: the broker
+          becomes a single point of failure, and when it fails, every topic stops at once.
         pause_after: 2.5
-        step: Latency and a single point of failure
-        note: The extra hop adds latency; one central broker can fail for everyone.
+        step: Performance and a single point of failure
+        note: The topic in between adds latency; one central broker can fail for everyone.
         source: >-
-          Bass et al. 2013, section 13.2 (publish-subscribe adds a layer of indirection and latency;
-          a failed connector is a single point of failure).
+          Bass et al. 2013, section 13.2 (publish-subscribe adds a layer of indirection, which adds
+          latency at the cost of runtime performance; a failed connector is a single point of
+          failure); CS 130 lecture 17, slide 6 (performance is measured via latency, throughput,
+          and jitter); Clements et al. 2010, Table 4.5 (the event distributor may be viewed as a
+          connector or as a component).
         visual: >-
-          A C&C view frame with a key reading component and connector. The Camera driver and the
-          Obstacle detector are joined by a short connector labeled «call». A longer path runs down
-          through a Broker component and back up, labeled + latency, and a quality card reads
-          Latency, inhibited. The Broker turns grey, marked Down, with the sticker Single point of
-          failure and the label Broker down: every topic stops.
+          Two C&C views, one above the other. Direct call: the Camera driver calls the Obstacle
+          detector through a straight «call» connector. Through a topic: the Camera driver
+          publishes into the «topic» channel /camera/image, which delivers to the Obstacle
+          detector, all on one line, and a label reads + latency. A callout on the channel reads
+          Realized by one broker process. A quality card reads Performance: latency, inhibited, and
+          a red label reads Availability at risk: one central broker. A cross strikes the channel,
+          with the sticker Single point of failure and the label Broker down: every topic stops.
   - id: when
     part: Consequences
     outline: Publish or call?
@@ -639,17 +681,17 @@ scenes:
           When, then, should a component not publish? When the sender requires an answer or a
           guarantee of completion. Consider the emergency stop. If the safety monitor merely
           published brake now and nobody received it, Mochi would keep moving. That command is
-          therefore a direct call, which fails loudly if the motor controller is unavailable.
+          therefore a direct call, which returns an error if the motor controller is unavailable.
         step: The brake is a call
-        note: Commands that need a guarantee go as direct calls, which fail loudly.
+        note: Commands that need a guarantee go as direct calls, which report a missing receiver.
         source: >-
           Bass et al. 2013, section 13.2 (delivery is not guaranteed because the sender cannot know
           if a receiver is listening; unsuitable for hard real-time deadlines).
         visual: >-
-          A C&C view frame with a key reading component, topic, and call. A Safety monitor component
-          reads Brake now! A dashed red attachment sends it toward a /brake topic, labeled Did
-          anyone hear it?, and a red cross stops it. Instead, a green «call» connector joins the
-          Safety monitor directly to the Motor controller, shown in code as motor.stop(), which
+          A C&C view frame with a key reading component, topic, call, and publish, unheard. A Safety
+          monitor component reads Brake now! A dashed red attachment sends it toward a /brake topic,
+          labeled Did anyone hear it?, and a red cross stops it. Instead, a green «call» connector joins
+          the Safety monitor directly to the Motor controller, shown in code as motor.stop(), which
           waits for a reply, and the controller answers Reply: stopped. A sticker reads Needs a
           guarantee: call directly.
       - id: rule_of_thumb
@@ -671,19 +713,23 @@ scenes:
         say: >-
           In practice, the infrastructure is rarely built from scratch. Robot middleware, messaging
           protocols for small devices, and event-streaming platforms all implement this style, with
-          its trade-offs built in. Selecting one means accepting extensibility and flexibility,
-          together with the costs to robustness and understandability that accompany them.
+          its trade-offs built in. Selecting one means accepting extensibility, run-time
+          flexibility, modifiability, and availability, together with the costs to robustness,
+          understandability, testability, and performance.
         pause_after: 2.5
         step: Frameworks package the trade-off
         note: Adopting a publish-subscribe framework adopts the style's trade-offs.
         source: >-
-          CS 130 lecture 17, slide 24 (DDS in ROS 2, MQTT for resource-constrained IoT devices,
-          Apache Kafka for high-throughput event streaming).
+          CS 130 lecture 17, slide 24, and lecture 15, slide 32 (DDS, the Data Distribution
+          Service, in the Robot Operating System 2; MQTT, Message Queuing Telemetry Transport, for
+          resource-constrained IoT devices; Apache Kafka for high-throughput event streaming).
         visual: >-
-          Three cards: Robot middleware, DDS, used in ROS 2; Tiny-device messaging, MQTT; and Event
-          streaming, Apache Kafka. Below them, a quality card reads Extensibility, run-time
-          flexibility, promoted, and another reads Robustness, understandability, inhibited. A
-          sticker reads Pick a framework, pick its trade-off.
+          Three cards: Robot middleware, Data Distribution Service (DDS), used in Robot Operating
+          System 2 (ROS 2); Tiny-device messaging, Message Queuing Telemetry Transport (MQTT); and
+          Event streaming, Apache Kafka. Below them, a quality card reads Extensibility, run-time
+          flexibility, modifiability, availability, promoted, and another reads Robustness,
+          understandability, testability, performance, inhibited. A sticker reads Pick a
+          framework, pick its trade-off.
   - id: in_practice
     part: In practice
     outline: Real-world examples
@@ -691,8 +737,8 @@ scenes:
     title: Real-world examples
     purpose: Recognize publish-subscribe in systems from many domains, and explain why the style fits them.
     takeaway: >-
-      Publish-subscribe fits systems whose consumers come and go without changing the producers;
-      each pays for the missing delivery receipt in its own way.
+      Publish-subscribe fits systems whose subscribers come and go without changing the
+      publishers; each pays for the missing delivery receipt in its own way.
     cues:
       - id: phone_chat
         say: >-
@@ -720,7 +766,8 @@ scenes:
         visual: >-
           Two C&C view frames, each with a key reading component, topic, and event. Android, phones:
           the Connectivity service publishes to the topic AIRPLANE_MODE, delivered to Messaging app,
-          Music app, and Navigation app, labeled Rule 1: no idea who listens. Slack, team chat: the
+          Music app, and Navigation app, labeled Publisher ignorance: no idea who listens. Slack, team
+          chat: the
           Slack web app publishes to the topic #cs130, delivered to gateways in the US, Europe, and
           Asia, labeled Channel server fans out to gateways.
       - id: games_feeds
@@ -750,7 +797,7 @@ scenes:
           Two C&C view frames. Roblox, games: Game server 1 publishes to the topic Announcements,
           delivered to game servers 2, 3, and 4, labeled in red Best effort: no guarantee. Kafka at
           LinkedIn: Front-end services publish to the topic page views, delivered to Live services,
-          Hadoop and the warehouse, and A new team, labeled New teams, no producer change.
+          Hadoop and the warehouse, and A new team, labeled New teams, no publisher change.
       - id: home_grid
         say: >-
           In smart homes, a temperature sensor publishes its readings over MQTT, and a dashboard, a
@@ -784,13 +831,15 @@ scenes:
           repeat, then heartbeat.
       - id: common_thread
         say: >-
-          Most of these systems need what publisher and subscriber ignorance provide: consumers that
-          come and go without any change to the producers. Each also pays for publisher ignorance
-          and one-way propagation, since no publisher learns who received an event; Roblox accepts
-          the loss, LinkedIn keeps a replayable log, and substations repeat every message.
+          Most of these systems need what publisher and subscriber ignorance provide: subscribers
+          that come and go without any change to the publishers. Each also pays for publisher
+          ignorance and one-way propagation, since no publisher learns who received an event; Roblox
+          accepts the loss, LinkedIn keeps a replayable log, and substations repeat every message.
         pause_after: 2.5
         step: What they share
-        note: Rules 1 and 2 let consumers change freely; missing receipts are handled in different ways.
+        note: >-
+          Publisher ignorance and subscriber ignorance let subscribers change freely; missing receipts
+          are handled in different ways.
         source: >-
           Roblox MessagingService (best effort, not guaranteed); Kreps, Narkhede, and Rao 2011
           (consumers rewind offsets to re-consume data; a producer's acknowledgements come from
@@ -798,8 +847,9 @@ scenes:
           GOOSE messages and heartbeats); MQTT 5.0 (a server may tell a publisher that nobody
           subscribed, but never who did).
         visual: >-
-          Rule cards 1 and 2 sit over a card titled Consumers come and go, listing Android apps,
-          Slack gateways, LinkedIn teams, and smart-home tools. Rule cards 1 and 3 sit over a pink
+          The rule cards Publisher ignorance and Subscriber ignorance sit over a card titled Subscribers
+          come and go, listing Android apps, Slack gateways, LinkedIn teams, and smart-home tools. The
+          rule cards Publisher ignorance and One-way propagation sit over a pink
           card titled No receipt: three answers: Roblox: accept the loss; LinkedIn: a replayable
           log; Substations: repeat it.
   - id: summary
@@ -807,8 +857,9 @@ scenes:
     title: Announce, don't call
     purpose: Recall the problem, the parts, the four rules, and the trade-offs.
     takeaway: >-
-      A topic between publishers and subscribers, plus four rules, buys extensibility and run-time
-      flexibility at the price of robustness and understandability.
+      A topic between publishers and subscribers, plus four rules, buys extensibility, run-time
+      flexibility, modifiability, and availability at the price of robustness, understandability,
+      testability, and performance.
     cues:
       - id: recap_problem
         say: >-
@@ -819,41 +870,49 @@ scenes:
         step: The problem and the parts
         note: Direct calls couple senders to receivers; a topic sits between them instead.
         visual: >-
-          Two frames. Before: direct calls, with the camera.py loop calling every listener and two
-          red labels, Each new listener: edit the camera, and One slow listener: the robot froze.
-          After: a C&C view, where the Camera driver publishes into the /camera/image topic and four
-          subscriber components, Detector, Logger, Dashboard, and Counter, are each attached below
-          it.
+          Two frames, one above the other. Before: direct calls, with the camera.py loop calling every
+          listener and two red labels, Each new listener: edit the camera, and One slow listener: the
+          robot froze. After: a C&C view, where the Camera driver publishes into the /camera/image topic
+          and four subscriber components, Detector, Logger, Dashboard, and Counter, are attached in one
+          row below it.
       - id: recap_rules
         say: >-
-          Four rules give the style its power: publishers do not rely on who listens, subscribers do
-          not rely on who published, information flows one way, and publishing never waits. The
-          ignorance rules promote extensibility and replaceability, even while the system runs.
-          One-way, asynchronous publishing promotes fault isolation: a slow subscriber cannot stall
-          the rest.
-        step: Four rules
-        note: Publisher ignorance, subscriber ignorance, one way, and asynchronous.
+          Four rules give the style its power: publisher ignorance, subscriber ignorance, one-way
+          propagation, and asynchronous publishing. Publisher ignorance promotes extensibility and
+          run-time flexibility: subscribers join freely, even while the system runs. Subscriber
+          ignorance promotes modifiability: publishers can be replaced. And one-way, asynchronous
+          publishing promotes availability through fault isolation: a slow subscriber stalls only
+          itself.
+        step: Four rules, four benefits
+        note: Each promoted quality follows from a rule.
         visual: >-
-          Four rule cards line up: Rule 1, Publisher ignorance; Rule 2, Subscriber ignorance; Rule
-          3, One-way propagation; and Rule 4, Asynchronous. Brackets read Rules 1 and 2 and Rules 3
-          and 4, and promoted quality cards sit under the rules they follow from: Extensibility and
-          Replaceability under Rules 1 and 2, Fault isolation under Rules 3 and 4. A sticker reads
-          Add, swap, and plug in while it runs.
+          Four rule cards line up, each named: Publisher ignorance, Subscriber ignorance, One-way
+          propagation, and Asynchronous publishing. Promoted quality cards sit under the rules they
+          follow from: Extensibility and Run-time flexibility under Publisher ignorance;
+          Modifiability: replace a publisher under Subscriber ignorance; and, under a bracket reading
+          Both together that spans One-way propagation and Asynchronous publishing, Availability:
+          fault isolation. A sticker reads Add, swap,
+          and plug in while it runs.
       - id: recap_costs
         say: >-
-          The same rules inhibit three qualities. Robustness: nobody confirms delivery, so a renamed
+          The style also inhibits four qualities. Robustness: nobody confirms delivery, so a renamed
           topic fails silently. Understandability: to find who receives an event, one must search
-          every component. Latency: every event passes through the infrastructure, which adds delay.
+          every component. Testability: notification order isn't fixed, so a passing test may fail
+          tomorrow. Performance: every event passes through the infrastructure, which adds latency.
         step: What it costs
-        note: It inhibits robustness, understandability, and latency.
+        note: Robustness, understandability, testability, and performance are inhibited.
         visual: >-
-          A balance with two pans in the quality cards' colors, each quality with the rule it
-          follows from and why. The green Promoted pan lists Extensibility, Rule 1: add a
-          subscriber, change no publisher; Replaceability, Rule 2: swap a publisher that sends the
-          same events; and Fault isolation, Rules 3, 4: a slow subscriber stalls no one else. The
-          pink Inhibited pan fills: Robustness, Rules 1, 3: nobody confirms delivery;
-          Understandability, Rules 1, 2: finding receivers means searching every component; and
-          Latency: every event passes through the infrastructure.
+          A balance with two pans in the quality cards' colors. Under each quality, chips name the
+          rules it follows from, and a line says why. The green Promoted pan lists Extensibility,
+          from Publisher ignorance: add a subscriber, change no publisher; Run-time flexibility, from
+          Publisher ignorance: subscribe while the system runs; Modifiability: replace a publisher,
+          from Subscriber ignorance: same events, no subscriber edits; and Availability: fault
+          isolation, from One-way propagation and Asynchronous publishing: a slow subscriber stalls no
+          one else. The pink Inhibited pan fills: Robustness, from Publisher ignorance and One-way
+          propagation: nobody confirms delivery; Understandability, from Publisher ignorance and
+          Subscriber ignorance: search every component for receivers; Testability, from Asynchronous
+          publishing: notification order isn't fixed; and Performance: latency, with the chip Topic in
+          between: every event goes via an intermediary.
       - id: recap_choice
         say: >-
           So choose per message. Publish facts that many components may want; call directly when you

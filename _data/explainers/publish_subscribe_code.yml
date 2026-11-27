@@ -2,7 +2,11 @@
 # A look's `code: <name>` uses the blocks `<name>_<group>` in every language.
 # Focus keys name line numbers; lines stay within 60 characters, and Python
 # is fully type-hinted. The messaging infrastructure is a minimal in-process
-# sketch of the lesson's node.advertise / node.subscribe API.
+# sketch of the lesson's node.advertise / node.subscribe API: each subscriber
+# has its own bounded inbox that drops its oldest message when full, and the
+# infrastructure drains each inbox on that subscriber's own thread (in
+# TypeScript, its own async task), so a stuck callback stalls only its own
+# inbox.
 python:
   label: Python
   blocks:
@@ -27,26 +31,33 @@ python:
             from typing import Callable, Generic, TypeVar
 
             T = TypeVar("T")
-            Inbox = tuple[deque[T], Callable[[T], None]]
+
+            class Inbox(Generic[T]):
+                def __init__(self, size: int,
+                             callback: Callable[[T], None]) -> None:
+                    # Full, the queue drops its oldest message.
+                    self.queue: deque[T] = deque(maxlen=size)
+                    self.callback: Callable[[T], None] = callback
+
+                def put(self, message: T) -> None:
+                    self.queue.append(message)
+
+                def drain(self) -> None:  # on its subscriber's thread
+                    while self.queue:
+                        self.callback(self.queue.popleft())
 
             class Topic(Generic[T]):
                 def __init__(self) -> None:
                     self.inboxes: list[Inbox[T]] = []
 
                 def publish(self, message: T) -> None:
-                    for queue, _ in self.inboxes:
-                        queue.append(message)
-
-                def deliver(self) -> None:  # run by the infrastructure
-                    for queue, callback in self.inboxes:
-                        while queue:
-                            callback(queue.popleft())
-          focus: {inboxes: [9], publish: [11, 12, 13], deliver: [15, 16, 17, 18]}
+                    for inbox in self.inboxes:
+                        inbox.put(message)
+          focus: {inboxes: [22], publish: [24, 25, 26], drain: [16, 17, 18]}
         - file: pubsub/node.py
           source: |
-            from collections import deque
             from typing import Any, Callable
-            from pubsub.topic import Topic
+            from pubsub.topic import Inbox, Topic
 
             class Node:
                 def __init__(self) -> None:
@@ -55,11 +66,11 @@ python:
                 def advertise(self, name: str) -> Topic[Any]:
                     return self.topics.setdefault(name, Topic())
 
-                def subscribe(self, name: str,
+                def subscribe(self, name: str, size: int,
                               callback: Callable[[Any], None]) -> None:
-                    topic = self.advertise(name)
-                    topic.inboxes.append((deque(), callback))
-          focus: {subscribe: [12, 13, 14, 15]}
+                    inbox: Inbox[Any] = Inbox(size, callback)
+                    self.advertise(name).inboxes.append(inbox)
+          focus: {subscribe: [11, 12, 13, 14]}
     subscribe_counter:
       file: counter/pedestrians.py
       source: |
@@ -76,7 +87,7 @@ python:
 
         def start(node: Node) -> None:
             counter = PedestrianCounter()
-            node.subscribe("/camera/image", counter.on_frame)
+            node.subscribe("/camera/image", 10, counter.on_frame)
       focus: {callback: [9, 10], subscribe: [14]}
 java:
   label: Java
@@ -107,29 +118,34 @@ java:
             package pubsub;
 
             import java.util.*;
+            import java.util.concurrent.BlockingDeque;
             import java.util.function.Consumer;
 
             public class Topic<T> {
-                record Inbox<T>(Queue<T> queue,
-                                Consumer<T> callback) {}
+                record Inbox<T>(BlockingDeque<T> queue,
+                                Consumer<T> callback) {
+                    void put(T message) {  // full: drop the oldest
+                        while (!queue.offerLast(message))
+                            queue.pollFirst();
+                    }
+                    void drain() {  // on its subscriber's thread
+                        for (T m; (m = queue.pollFirst()) != null; )
+                            callback.accept(m);
+                    }
+                }
                 final List<Inbox<T>> inboxes = new ArrayList<>();
 
                 public void publish(T message) {
-                    for (Inbox<T> in : inboxes) in.queue().add(message);
-                }
-
-                void deliver() {  // run by the infrastructure
-                    for (Inbox<T> in : inboxes)
-                        while (!in.queue().isEmpty())
-                            in.callback().accept(in.queue().poll());
+                    for (Inbox<T> inbox : inboxes) inbox.put(message);
                 }
             }
-          focus: {inboxes: [9], publish: [11, 12, 13], deliver: [15, 16, 17, 18, 19]}
+          focus: {inboxes: [19], publish: [21, 22, 23], drain: [14, 15, 16, 17]}
         - file: pubsub/Node.java
           source: |
             package pubsub;
 
             import java.util.*;
+            import java.util.concurrent.LinkedBlockingDeque;
             import java.util.function.Consumer;
 
             public class Node {
@@ -142,12 +158,14 @@ java:
                         name, n -> new Topic<T>());
                 }
 
-                public <T> void subscribe(String name, Consumer<T> cb) {
+                public <T> void subscribe(String name, int size,
+                                          Consumer<T> cb) {
+                    var queue = new LinkedBlockingDeque<T>(size);
                     this.<T>advertise(name).inboxes.add(
-                        new Topic.Inbox<>(new ArrayDeque<>(), cb));
+                        new Topic.Inbox<>(queue, cb));
                 }
             }
-          focus: {subscribe: [16, 17, 18, 19]}
+          focus: {subscribe: [17, 18, 19, 20, 21, 22]}
     subscribe_counter:
       file: counter/PedestrianCounter.java
       source: |
@@ -165,10 +183,11 @@ java:
 
             public static void start(Node node) {
                 var counter = new PedestrianCounter();
-                node.subscribe("/camera/image", counter::onFrame);
+                node.subscribe("/camera/image", 10,
+                               counter::onFrame);
             }
         }
-      focus: {callback: [9, 10, 11], subscribe: [15]}
+      focus: {callback: [9, 10, 11], subscribe: [15, 16]}
 cpp:
   label: C++
   blocks:
@@ -192,31 +211,52 @@ cpp:
         - file: pubsub/topic.h
           source: |
             #pragma once
+            #include <cstddef>
             #include <deque>
             #include <functional>
-            #include <utility>
+            #include <memory>
+            #include <mutex>
             #include <vector>
 
             template <typename T>
-            struct Topic {
-                using Callback = std::function<void(const T&)>;
-                std::vector<std::pair<std::deque<T>, Callback>> inboxes;
-                void publish(const T& message) {
-                    for (auto& [queue, _] : inboxes)
-                        queue.push_back(message);
+            using Callback = std::function<void(const T&)>;
+
+            template <typename T>
+            struct Inbox {
+                std::size_t size;
+                Callback<T> callback;
+                std::deque<T> queue;
+                std::mutex lock;
+                void put(const T& message) {  // full: drop the oldest
+                    std::lock_guard guard(lock);
+                    if (queue.size() == size) queue.pop_front();
+                    queue.push_back(message);
                 }
-                void deliver() {  // run by the infrastructure
-                    for (auto& [queue, callback] : inboxes)
-                        for (; !queue.empty(); queue.pop_front())
-                            callback(queue.front());
+                void drain() {  // on its subscriber's thread
+                    std::deque<T> taken;
+                    {
+                        std::lock_guard guard(lock);
+                        taken.swap(queue);
+                    }
+                    for (const T& message : taken) callback(message);
                 }
             };
-          focus: {inboxes: [10], publish: [11, 12, 13, 14], deliver: [15, 16, 17, 18, 19]}
+
+            template <typename T>
+            struct Topic {
+                std::vector<std::shared_ptr<Inbox<T>>> inboxes;
+                void publish(const T& message) {
+                    for (auto& inbox : inboxes) inbox->put(message);
+                }
+            };
+          focus: {inboxes: [35], publish: [36, 37, 38], drain: [23, 24, 25, 26, 27, 28, 29]}
         - file: pubsub/node.h
           source: |
             #pragma once
             #include <any>
+            #include <cstddef>
             #include <map>
+            #include <memory>
             #include <string>
             #include "pubsub/topic.h"
 
@@ -230,11 +270,12 @@ cpp:
                 }
                 template <typename T>
                 void subscribe(const std::string& name,
-                               typename Topic<T>::Callback cb) {
-                    advertise<T>(name).inboxes.push_back({{}, cb});
+                               std::size_t size, Callback<T> cb) {
+                    advertise<T>(name).inboxes.push_back(
+                        std::make_shared<Inbox<T>>(size, cb));
                 }
             };
-          focus: {subscribe: [15, 16, 17, 18, 19]}
+          focus: {subscribe: [17, 18, 19, 20, 21, 22]}
     subscribe_counter:
       file: counter/pedestrians.h
       source: |
@@ -253,7 +294,7 @@ cpp:
         };
 
         inline void start(Node& node, PedestrianCounter& counter) {
-            node.subscribe<Frame>("/camera/image",
+            node.subscribe<Frame>("/camera/image", 10,
                 [&counter](const Frame& f) { counter.onFrame(f); });
         }
       focus: {callback: [10, 11, 12], subscribe: [16, 17]}
@@ -282,30 +323,42 @@ typescript:
       files:
         - file: pubsub/topic.ts
           source: |
-            export type Callback<T> = (message: T) => void;
-            type Inbox<T> = { queue: T[]; callback: Callback<T> };
+            export type Callback<T> =
+              (message: T) => void | Promise<void>;
+
+            export class Inbox<T> {
+              private readonly queue: T[] = [];
+
+              constructor(
+                private readonly size: number,
+                private readonly callback: Callback<T>,
+              ) {}
+
+              put(message: T): void { // full: drop the oldest
+                if (this.queue.length === this.size) {
+                  this.queue.shift();
+                }
+                this.queue.push(message);
+              }
+
+              async drain(): Promise<void> { // its own async task
+                while (this.queue.length > 0) {
+                  await this.callback(this.queue.shift()!);
+                }
+              }
+            }
 
             export class Topic<T> {
               readonly inboxes: Inbox<T>[] = [];
 
               publish(message: T): void {
-                for (const inbox of this.inboxes) {
-                  inbox.queue.push(message);
-                }
-              }
-
-              deliver(): void { // run by the infrastructure
-                for (const { queue, callback } of this.inboxes) {
-                  for (const message of queue.splice(0)) {
-                    callback(message);
-                  }
-                }
+                for (const inbox of this.inboxes) inbox.put(message);
               }
             }
-          focus: {inboxes: [5], publish: [7, 8, 9, 10, 11], deliver: [13, 14, 15, 16, 17, 18, 19]}
+          focus: {inboxes: [27], publish: [29, 30, 31], drain: [19, 20, 21, 22, 23]}
         - file: pubsub/node.ts
           source: |
-            import { type Callback, Topic } from "./topic";
+            import { type Callback, Inbox, Topic } from "./topic";
 
             export class Node {
               private topics = new Map<string, Topic<any>>();
@@ -317,12 +370,16 @@ typescript:
                 return this.topics.get(name)!;
               }
 
-              subscribe<T>(name: string, callback: Callback<T>): void {
-                const topic = this.advertise<T>(name);
-                topic.inboxes.push({ queue: [], callback });
+              subscribe<T>(
+                name: string,
+                size: number,
+                callback: Callback<T>,
+              ): void {
+                const inbox = new Inbox<T>(size, callback);
+                this.advertise<T>(name).inboxes.push(inbox);
               }
             }
-          focus: {subscribe: [13, 14, 15, 16]}
+          focus: {subscribe: [13, 14, 15, 16, 17, 18, 19, 20]}
     subscribe_counter:
       file: counter/pedestrians.ts
       source: |
@@ -340,7 +397,7 @@ typescript:
 
         export function start(node: Node): void {
           const counter = new PedestrianCounter();
-          node.subscribe<Frame>("/camera/image", (frame) => {
+          node.subscribe<Frame>("/camera/image", 10, (frame) => {
             counter.onFrame(frame);
           });
         }

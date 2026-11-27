@@ -203,8 +203,8 @@ in_practice:
       Calling each app directly ties every sensor to every app, so each new app would mean editing
       the sensors, as Mochi's camera loop once did.
     2: >-
-      Rule one says a publisher must not rely on the presence of subscribers; checking who is
-      running would tie the sensors to the apps again.
+      Publisher ignorance says a publisher must not rely on the presence of subscribers; checking
+      who is running would tie the sensors to the apps again.
 summary:
   questions:
     - question: >-
@@ -225,6 +225,26 @@ summary:
         2: >-
           A slow receiver hurting only itself is what publishing buys. With direct calls, the gate
           waits for billing.
+    - question: >-
+        The garage keeps its direct calls but makes each one asynchronous, so the gate no longer
+        waits. Which original problem remains?
+      options:
+        - A hung receiver still stops the gate
+        - The gate can no longer tell its receivers apart
+        - Each new receiver still means editing the gate
+      correct_index: 2
+      explanation: >-
+        Not waiting is a different property from not knowing who listens. Asynchronous calls stop a
+        slow receiver from stalling the gate, but the gate still calls each receiver by name, so a new
+        receiver still means a new call in the gate's code. Publisher ignorance is what removes that
+        edit.
+      option_feedback:
+        0: >-
+          A call that doesn't wait can't be stalled by a hung receiver; that is the one problem the
+          change does solve.
+        1: >-
+          Asynchronous calls still name their receivers, so the gate knows each one exactly as
+          before. Not waiting doesn't make the gate ignorant of who listens.
     - question: >-
         The garage team redesigns the gate to publish "car entered" to a topic. Which code must the
         gate no longer contain?
@@ -307,8 +327,8 @@ summary:
       correct_index: 1
       explanation: >-
         Opening the exit gate is a request that needs a guarantee that it happened, so it goes as a
-        direct call that fails loudly. A freed space and an exit time are facts that programs might
-        want, so they are published.
+        direct call, which returns an error when it fails. A freed space and an exit time are facts
+        that programs might want, so they are published.
       option_feedback:
         0: >-
           A freed space is a fact the signs, an app, and a log may all want; nobody needs to answer

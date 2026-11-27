@@ -141,6 +141,12 @@
   letter-spacing: 0.16em;
 }
 
+/* Lettering that the drawing covers hides, so no fragment reads as a label
+   (drafting-room.js, data-lettering="yield"). */
+.dr-lettering.is-covered {
+  opacity: 0;
+}
+
 /* Drafting tools in the same white linework. */
 .dr-tool-body,
 .dr-roll-body {

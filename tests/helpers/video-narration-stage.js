@@ -168,13 +168,13 @@ function stageContrastProblems() {
 
 // Finds UML diagrams (js/video-narration/uml-kit.js) on show that break the
 // notation: a frame whose tab doesn't state its view after the UML keyword
-// that matches it (cmp: C&C view, pkg: module view, deployment: allocation
-// view), a frame with no key, and a note whose contents paint a background of
-// their own, which would hide its outline (a note's paper is the note's own
-// background, under its outline).
+// that matches it (cmp: C&C view, or its full name on a view's first frame;
+// pkg: module view; deployment: allocation view), a frame with no key, and a
+// note whose contents paint a background of their own, which would hide its
+// outline (a note's paper is the note's own background, under its outline).
 function diagramNotationProblems() {
   const stageNode = document.getElementById('stage');
-  const VIEWS = { cmp: 'C&C view', pkg: 'Module view', deployment: 'Allocation view' };
+  const VIEWS = { cmp: ['C&C view', 'Component-and-connector (C&C) view'], pkg: ['Module view'], deployment: ['Allocation view'] };
   const shown = (node) => {
     for (let n = node; n && n !== stageNode; n = n.parentElement) {
       const style = getComputedStyle(n);
@@ -186,7 +186,7 @@ function diagramNotationProblems() {
     const keyword = frame.querySelector('.uk-frame-keyword')?.textContent.trim();
     const name = frame.querySelector('.uk-frame-name')?.textContent.trim() || '';
     const found = [];
-    if (!VIEWS[keyword] || !name.startsWith(VIEWS[keyword])) found.push(`tab names no view: ${keyword} ${name}`);
+    if (!VIEWS[keyword] || !VIEWS[keyword].some((view) => name.startsWith(view))) found.push(`tab names no view: ${keyword} ${name}`);
     if (!frame.querySelector('.uk-key .uk-key-item')) found.push(`no key: ${keyword} ${name}`);
     return found;
   });

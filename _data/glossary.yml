@@ -63,6 +63,11 @@
   description: A tree representation of source code structure used by compilers, interpreters, linters, refactoring tools, and code-analysis systems.
   related: [CST, EBNF]
 
+- term: AUTOSAR
+  definition: AUTomotive Open System ARchitecture
+  description: A partnership of car makers and suppliers, and the standard it publishes for the software of a car's electronic control units. Its layered architecture states which layers may use which, and hides each microcontroller behind an abstraction layer.
+  related: [ECU]
+
 - term: AT
   definition: Application and Technology
   description: In module blood groups (software categories), code that knows both the application domain and a concrete technology, as opposed to A (application only), T (technology only), and 0 (neither). AT code changes whenever either one changes and can rarely be reused, so designs keep it small; its harmless, translate-only form is called R.
@@ -92,6 +97,11 @@
   definition: Extended Backus–Naur Form
   description: A notation for grammar productions with sequences, alternatives, optional parts, and repetition. A grammar defines valid syntax; explicit tree-building rules determine its abstract syntax trees.
   related: [AST, CST, RegEx]
+
+- term: C&C
+  definition: Component-and-Connector
+  description: A kind of architectural view that shows a system as it runs, its components (such as processes or services) and the connectors through which they interact (such as calls, pipes, or topics), as opposed to a module view of its code.
+  related: [UML]
 
 - term: CAP
   definition: Consistency, Availability, Partition tolerance
@@ -218,6 +228,11 @@
   description: A programming style that attempts an operation and handles a specific expected exception if it fails. Keep the protected operation narrow so unrelated failures are not hidden.
   related: [LBYL]
 
+- term: ECU
+  definition: Electronic Control Unit
+  description: A small embedded computer in a car that controls one function, such as the engine or the brakes. Software layers hide each ECU's hardware, so the functions above it can move to another ECU.
+  related: [AUTOSAR]
+
 - term: EMV2
   definition: Error Model Annex version 2
   description: An AADL annex for describing errors, propagation, and related fault-modeling assumptions used in architecture safety and dependability analyses.
@@ -252,6 +267,15 @@
   description: An ordering policy where the item that has waited the longest is processed first, as in a queue.
   related: [LIFO]
 
+- term: fps
+  definition: frames per second
+  description: How many images a game or video draws each second. At 60 fps, each frame has about 16.7 milliseconds.
+  related: [ms]
+
+- term: FM
+  definition: Frequency Modulation
+  description: Carrying a signal, such as broadcast radio audio, in small changes to a carrier wave's frequency. In the Pipes and Filters lesson, GNU Radio's FM demodulator filter recovers the audio.
+
 - term: GC
   definition: Garbage Collection
   description: Automatic memory management that reclaims objects no longer reachable by a program, reducing manual allocation errors at the cost of runtime overhead.
@@ -262,10 +286,19 @@
   description: A lock in standard CPython builds that generally permits one thread at a time to execute Python bytecode. It does not replace application synchronization; optional free-threaded builds can disable it.
   related: [CPU, I/O]
 
+- term: GNU
+  definition: GNU's Not Unix
+  description: A free-software project whose name is a recursive acronym. GNU Radio, a toolkit for software-defined radio, builds receivers as flowgraphs of signal-processing blocks connected by streams.
+
 - term: GoF
   definition: Gang of Four
   description: The four authors of the 1994 book "Design Patterns" — Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides — and, by extension, the catalog of 23 object-oriented design patterns the book described.
   related: [OOP, MVC]
+
+- term: GOOSE
+  definition: Generic Object Oriented Substation Event
+  description: An IEC 61850 message that a protection relay multicasts to other relays in a power substation. It is published without acknowledgement, so the sender repeats each message and then sends periodic heartbeats.
+  related: [IEC]
 
 - term: GPS
   definition: Global Positioning System
@@ -334,6 +367,11 @@
   definition: Integrated Development Environment
   description: A programming environment that combines editing, running, debugging, navigation, and project tooling into one application.
   related: [CLI, UI]
+
+- term: IEC
+  definition: International Electrotechnical Commission
+  description: The standards body behind IEC 61850, the standard for communication in electrical substations, which defines GOOSE messages.
+  related: [GOOSE]
 
 - term: INVEST
   definition: Independent, Negotiable, Valuable, Estimable, Small, Testable
@@ -455,7 +493,7 @@
 
 - term: MQTT
   definition: MQ Telemetry Transport
-  description: A lightweight publish-subscribe messaging protocol for small, resource-constrained devices such as sensors. The name began as MQ Telemetry Transport, after IBM's MQ message-queuing products; the standard now uses MQTT as its name.
+  description: A lightweight publish-subscribe messaging protocol for small, resource-constrained devices such as sensors. The name began as MQ Telemetry Transport, after IBM's MQ message-queuing products, and is often spelled out as Message Queuing Telemetry Transport, as in the name of the standards committee that maintains it; the standard now uses MQTT as its name.
   related: [DDS]
 
 - term: MB
@@ -463,10 +501,19 @@
   description: A decimal unit of data size equal to one million bytes. Download progress on this site uses decimal megabytes.
   related: [GB]
 
+- term: ms
+  definition: millisecond
+  description: One thousandth of a second, the usual unit for frame times, latencies, and response times.
+  related: [fps]
+
 - term: MVC
   definition: Model-View-Controller
   description: A user-interface architecture that separates the data and business rules (the Model), the presentation (the View), and the input handling and orchestration (the Controller).
   related: [GoF, OOP]
+
+- term: NASA
+  definition: National Aeronautics and Space Administration
+  description: The United States space agency. Its core Flight System is a layered framework for spacecraft software, whose apps run unchanged on a desktop during testing and in orbit.
 
 - term: NAT
   definition: Network Address Translation
@@ -616,6 +663,11 @@
   description: A color model that represents colors as combinations of red, green, and blue light, commonly used for screens and CSS colors.
   related: [CSS]
 
+- term: RNA
+  definition: Ribonucleic Acid
+  description: The molecule a cell copies from its genes. RNA sequencing measures which genes are active; nf-core's RNA-sequencing pipeline runs its reads through a chain of tools such as FastQC, Trim Galore!, STAR, and Salmon.
+  related: [STAR]
+
 - term: ROS
   definition: Robot Operating System
   description: An open-source framework of libraries and tools for building robot software, not an operating system in the usual sense. Its programs exchange messages through publish-subscribe topics; ROS 2 delivers them over DDS.
@@ -705,6 +757,11 @@
   definition: Server-Side Request Forgery
   description: A web security vulnerability in which an attacker makes a server send requests to addresses the attacker chooses. The forged requests carry the server's network position and trust, so they can reach systems the attacker cannot reach directly.
   related: [CSRF, HTTP]
+
+- term: STAR
+  definition: Spliced Transcripts Alignment to a Reference
+  description: A tool that aligns RNA-sequencing reads to a reference genome. In nf-core's RNA-sequencing pipeline it is one filter in the chain, between trimming and quantification.
+  related: [RNA]
 
 - term: SUT
   definition: System Under Test
@@ -801,6 +858,11 @@
   definition: V8 JavaScript engine
   description: Google's JavaScript engine used by Chrome and Node.js. It compiles and runs JavaScript, including just-in-time optimization.
   related: [JS, JIT]
+
+- term: VFS
+  definition: Virtual File System
+  description: A layer that offers one interface to files whatever the underlying file system or operating system. In SQLite it is the bottom layer, so porting SQLite or simulating a failing disk means replacing only that layer.
+  related: [OS]
 
 - term: VIP
   definition: Very Important Person

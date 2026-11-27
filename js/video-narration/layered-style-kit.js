@@ -41,33 +41,39 @@
    * One layer: a UML package stereotyped «layer», with chips for the modules
    * inside it. `y` is its body's top; its tab stands above. states = [{ at,
    * state }] repaints it (changed, same, new, lit). `tone` thin draws it
-   * without its contents (a small blank tab, the name inside); wrong edges it
-   * in red.
+   * without its contents (a small blank tab, the name inside); slim does the
+   * same but keeps «layer» before the name; wrong edges it in red.
    */
   function floor(parent, { x, y, w, h = 54, name, items = [], at, until, how = 'rise', states = [], tone }) {
-    // A layer drawn without its contents leaves out the stereotype too, to fit a narrow stack.
+    // A thin layer leaves out the stereotype too, to fit a narrow stack.
+    const blank = tone === 'thin' || tone === 'slim';
     return uml.pkg(parent, {
       x, y, w, h, name, stereotype: tone === 'thin' ? undefined : 'layer', items, states, at, until, how,
-      tab: tone === 'thin' ? 'blank' : 'name', variant: tone === 'wide' ? 'wrong' : undefined,
+      tab: blank ? 'blank' : 'name', variant: tone === 'wide' ? 'wrong' : undefined,
     });
   }
 
   /**
    * A stack of layers from the top down (floors = [{ name, items, tone, at,
-   * until, states }]): `y` is the top of the first layer's tab. Returns the
-   * layers and their geometry: top(i) and bottom(i) of each body, mid(i),
-   * and the stack's height. `thin` draws every layer without its contents.
+   * until, states, x, w }]): `y` is the top of the first layer's tab. A layer
+   * may give its own `x` and `w`, so a straight arrow can pass beside a
+   * shorter one. Returns the layers and their geometry: top(i) and bottom(i)
+   * of each body, mid(i), left(i) and right(i), and the stack's height.
+   * `thin` (or `slim`) draws every layer without its contents.
    */
-  function building(parent, { x, y, w, floors, h = 54, gap = LAYER_GAP, at, until, step = 0.15, thin = false }) {
-    const tab = thin ? uml.BLANK_TAB : uml.TAB;
+  function building(parent, { x, y, w, floors, h = 54, gap = LAYER_GAP, at, until, step = 0.15, thin = false, slim = false }) {
+    const tab = thin || slim ? uml.BLANK_TAB : uml.TAB;
     const pitch = tab + h + gap;
     const top = (i) => y + tab + i * pitch;
+    const tone = slim ? 'slim' : thin ? 'thin' : undefined;
     const nodes = floors.map((spec, i) => floor(parent, {
-      x, y: top(i), w, h, at: spec.at ?? at + 0.1 + i * step, until: spec.until ?? until, ...spec, tone: spec.tone ?? (thin ? 'thin' : undefined),
+      x, y: top(i), w, h, at: spec.at ?? at + 0.1 + i * step, until: spec.until ?? until, ...spec, tone: spec.tone ?? tone,
     }));
+    const left = (i) => floors[i].x ?? x;
     return {
       floors: nodes, x, y, w, h, gap, tab, pitch,
       top, mid: (i) => top(i) + h / 2, bottom: (i) => top(i) + h,
+      left, right: (i) => left(i) + (floors[i].w ?? w),
       height: floors.length * pitch - gap,
     };
   }

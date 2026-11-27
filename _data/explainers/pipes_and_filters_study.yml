@@ -1,0 +1,481 @@
+# Study companion for the Pipes and Filters video narration (docs/narration-study.md):
+# a review cue and a fresh retry for every knowledge-check question, one diagram
+# exercise on the photo desk's pipeline, and one paired comparison of two frames
+# under a change request. It never enters the speech fingerprint.
+version: 1
+reviews:
+  intro:
+    - scene: intro
+      cue: steps
+      retry:
+        type: single
+        question: Which job has the same shape as the student paper's photo desk?
+        options:
+          - Classmates vote on a club logo, and the leader counts the votes
+          - Every uploaded lecture video is trimmed, captioned, then published
+          - Many students edit one wiki page over a semester
+        correct_index: 1
+        explanation: >-
+          Like each game photo, each lecture video passes through the same fixed series of steps on
+          its way from upload to publication.
+        option_feedback:
+          0: >-
+            Counting combines all the votes into one result; no series of steps handles each vote
+            on its own.
+          2: >-
+            Many people change one shared page over time; no stream of items flows through fixed
+            steps.
+  monolith:
+    - scene: monolith
+      cue: midnight
+      retry:
+        type: single
+        question: >-
+          A lab's script converts all 200 microscope images to grayscale and saves a folder, then
+          measures all 200 and saves another folder. Why does the first measurement come so late?
+        options:
+          - Converting one image to grayscale is slow
+          - No step passes an image on until it finishes all 200
+          - The folders hold more images than the script needs
+        correct_index: 1
+        explanation: >-
+          When each step runs on the whole batch before the next one starts, the first image is
+          measured only after every image is converted, the photo desk's midnight problem.
+        option_feedback:
+          0: >-
+            Even a fast conversion leaves the first image waiting for all 200 to be converted. The
+            order of work causes the wait.
+          2: >-
+            The number of files isn't the problem; each step simply finishes the whole batch before
+            it hands anything on.
+  filters:
+    - scene: filters
+      cue: pipe
+      retry:
+        type: single
+        question: In a pipes-and-filters system for sensor readings, which part is a pipe?
+        options:
+          - A part that converts each reading to Celsius
+          - A part that keeps only one reading per second
+          - A buffered link that hands readings on in order
+        correct_index: 2
+        explanation: >-
+          A pipe carries items from one filter's output port to the next filter's input port: one
+          way, in order, and unchanged. It may hold a few items in its buffer.
+        option_feedback:
+          0: >-
+            Converting changes every reading, which is a filter's job, even though it passes each
+            one on.
+          1: >-
+            Dropping readings changes the stream, so that part is a filter, even though it keeps
+            the rest in order.
+  alone:
+    - scene: alone
+      cue: independent
+      retry:
+        type: single
+        question: >-
+          A pipes-and-filters system's Resize filter needs a target width. Which design keeps
+          Resize independent of the other filters?
+        options:
+          - The pipeline builder passes the width to Resize as its parameter
+          - Resize reads the width from a config object that all filters edit
+          - Resize asks the next filter which width it expects
+        correct_index: 0
+        explanation: >-
+          Under independence, settings arrive as each filter's own parameters, so the filter shares
+          no state and can be reused or moved.
+        option_feedback:
+          1: >-
+            A config object that every filter edits is shared state outside the pipes, which ties
+            the filters together.
+          2: >-
+            Asking a neighbor means knowing who it is, which breaks agnosticism and ties Resize to
+            one pipeline.
+  stream:
+    - scene: stream
+      cue: incremental
+      retry:
+        type: single
+        question: >-
+          A pipes-and-filters system's compression filter collects a whole hour of sensor readings
+          before it writes anything. Which rule does it bend?
+        options:
+          - Independence
+          - Agnosticism
+          - Incremental processing
+          - Acyclic flow
+        correct_index: 2
+        explanation: >-
+          A filter should pass each item on as it arrives. Collecting the whole hour first stalls
+          every filter after it, the way a batch does.
+        option_feedback:
+          0: >-
+            Holding its own input shares nothing with other filters. The problem is that nothing
+            leaves until the hour is over.
+          1: >-
+            The filter names no neighbor. What it bends is passing each item on as it arrives.
+          3: >-
+            Nothing flows backward; the filter simply holds everything until the end.
+  order:
+    - scene: order
+      cue: cut_logo
+      retry:
+        type: single
+        question: >-
+          A music app's pipes-and-filters system has two filters, "Fade out the last 5 seconds" and
+          "Trim silence at the end". Which statement is right?
+        options:
+          - Their order can't matter, since each filter is independent
+          - Trimming after the fade can cut part of the fade away
+          - Each filter should check which filter ran before it
+        correct_index: 1
+        explanation: >-
+          Independent filters can still give different results in another order: the fade makes
+          the end quiet, so trimming silence afterward can cut into it. The pipeline builder
+          chooses the order.
+        option_feedback:
+          0: >-
+            Independence means filters share no state, not that order is irrelevant, just as
+            cropping after the watermark cut the logo.
+          2: >-
+            Filters must not know their neighbors. Choosing the order is the pipeline builder's job.
+  buys:
+    - scene: buys
+      cue: reuse
+      retry:
+        type: single
+        question: >-
+          A weather service's "Convert to Celsius" filter reads and writes readings in a common
+          format. Another team's pipes-and-filters system passes that same format. What does reusing
+          the filter there take?
+        options:
+          - Inserting it with pipes, without changing its code
+          - Changing it to call the other team's next filter
+          - Bringing along the filters that surround it now
+        correct_index: 0
+        explanation: >-
+          A filter that shares no state, names no neighbor, and speaks the common format works
+          wherever that format flows, like the robotics club's copy of the denoise filter.
+        option_feedback:
+          1: >-
+            A filter mustn't name its neighbors. The pipeline builder connects it with pipes, and
+            its code stays the same.
+          2: >-
+            The filter never depended on its neighbors, so they don't need to come along.
+  costs:
+    - scene: costs
+      cue: slider
+      retry:
+        type: single
+        question: >-
+          A pipes-and-filters system turns lecture recordings into captioned slides. The lecturer
+          wants to drag a slider that re-times captions on slides already published and see each
+          change at once. Why is this hard in this style?
+        options:
+          - Filters can't take a timing setting as a parameter
+          - Pipes can carry video but not captions
+          - Each drag would send published slides back upstream
+        correct_index: 2
+        explanation: >-
+          A live change to items already published would loop them back into earlier filters, a
+          feedback loop that acyclic flow forbids. Interfaces that update as the user drags fit this
+          style poorly.
+        option_feedback:
+          0: >-
+            Filters do take parameters, like the brighten filter's dial. The trouble is reprocessing
+            items that have already left the pipeline.
+          1: >-
+            Pipes carry whatever the filters write. The trouble is the direction the change has to
+            travel: back upstream.
+  limits:
+    - scene: limits
+      cue: best_shot
+      retry:
+        type: single
+        question: >-
+          A pipes-and-filters system processes a stream of purchase records. Which new filter would
+          leave the filters after it idle until all of the day's records are in?
+        options:
+          - One that masks each card number in a record
+          - One that converts each price to dollars
+          - One that ranks the day's ten biggest purchases
+        correct_index: 2
+        explanation: >-
+          Ranking the ten biggest purchases needs every record of the day before it can output
+          anything, like sort or the best shot of a burst; everything downstream waits.
+        option_feedback:
+          0: >-
+            Masking needs only the record at hand, so each record moves on right away.
+          1: >-
+            Converting a price needs only that record, so nothing waits for the rest of the day.
+  in_practice:
+    - scene: in_practice
+      cue: common_thread
+      retry:
+        type: single
+        question: >-
+          In a pipes-and-filters audio system, a Mix stage reads and writes a volume table that an
+          earlier stage also writes. Which benefit does Mix give up?
+        options:
+          - Passing each sample on as soon as it arrives
+          - Being moved or reused without the shared table
+          - Keeping data flowing one way only
+        correct_index: 1
+        explanation: >-
+          Sharing a table bends independence: Mix depends on state outside its pipes, so it can be
+          moved or reused only together with that table. A bent rule costs exactly the benefit it
+          provided.
+        option_feedback:
+          0: >-
+            Each sample still moves on as soon as Mix finishes it. The loss comes from the shared
+            table outside the pipes.
+          2: >-
+            Writing a shared table sends nothing back to an earlier stage, so the flow stays one
+            way. The loss comes from sharing state outside the pipes.
+  summary:
+    - scene: monolith
+      cue: midnight
+      retry:
+        type: single
+        question: >-
+          A club's script resizes all 400 photos, then labels all 400, then posts them. When does
+          the first photo appear?
+        options:
+          - Only after every step has finished all 400
+          - Right after it alone is resized and labeled
+          - Before the others if it is the smallest photo
+        correct_index: 0
+        explanation: >-
+          When each step finishes the whole batch first, nothing is posted until every step has
+          processed every photo, the photo desk's midnight problem.
+        option_feedback:
+          1: >-
+            In a batch, a step finishes all 400 before the next starts, so the first photo waits
+            for every other photo.
+          2: >-
+            Size doesn't change the order of work: no photo moves on until its step has finished
+            the whole batch.
+    - scene: alone
+      cue: independent
+      retry:
+        type: single
+        question: >-
+          In a pipes-and-filters system, a Resize filter writes the chosen size into a global
+          variable, and a later Watermark filter reads it to scale its logo. Which rule does this
+          break?
+        options:
+          - Independence
+          - Agnosticism
+          - Acyclic flow
+        correct_index: 0
+        explanation: >-
+          Filters must share no state and talk only through pipes. The global ties Resize and
+          Watermark together, so neither can be reused or reordered alone.
+        option_feedback:
+          1: >-
+            Neither filter names the other. The problem is the global they share outside the pipes.
+          2: >-
+            The size travels forward, from an earlier filter to a later one, so there's no loop.
+            The filters share state outside the pipes.
+    - scene: alone
+      cue: agnostic
+      retry:
+        type: single
+        question: >-
+          In a pipes-and-filters system, a Compress filter checks whether the next filter is Upload
+          and skips a step if it is. What's wrong with that?
+        options:
+          - Nothing, as long as the pipes keep the items in order
+          - It slows the pipeline, since every check takes time
+          - It knows its neighbor, so it can't be moved or reused freely
+        correct_index: 2
+        explanation: >-
+          A filter must not know who sits upstream or downstream; that ignorance is what lets the
+          pipeline builder move it or reuse it anywhere.
+        option_feedback:
+          0: >-
+            Keeping order is the pipes' job, but a filter that depends on its neighbor breaks the
+            moment that neighbor changes.
+          1: >-
+            Speed isn't the issue; knowing the next filter ties Compress to this one pipeline.
+    - scene: buys
+      cue: change
+      retry:
+        type: single
+        question: >-
+          A pipes-and-filters system adds a "Remove duplicates" filter between Load and Sort. What
+          else has to change?
+        options:
+          - Sort, so that it expects deduplicated input
+          - Only one new pipe; no other filter changes
+          - Load, so that it sends data to the new filter
+        correct_index: 1
+        explanation: >-
+          Inserting a filter takes the new filter and one new pipe, like the photo desk's
+          Straighten filter; its neighbors still read and write the same format.
+        option_feedback:
+          0: >-
+            The new filter reads and writes the same format, so Sort sees the data it always
+            expected.
+          2: >-
+            Load doesn't know its neighbors. The pipeline builder connects the new filter with a
+            pipe; Load's code stays the same.
+    - scene: costs
+      cue: errors
+      retry:
+        type: single
+        question: >-
+          In a pipes-and-filters system that sends billing emails, the Format filter crashes
+          midway, and the operator restarts the whole pipeline. What can go wrong?
+        options:
+          - The pipes deliver the emails in a scrambled order
+          - Some customers get the same email twice
+          - The crash damages the customer records upstream
+        correct_index: 1
+        explanation: >-
+          No component knows which items already made it out, so a restart can repeat work.
+          Robustness, here error handling, is the style's weak spot.
+        option_feedback:
+          0: >-
+            Pipes keep items in order. The trouble is that nobody knows which emails were already
+            sent, so a restart can repeat some.
+          2: >-
+            Data flows one way, and filters never change their input. What goes wrong is repeated
+            work.
+    - scene: limits
+      cue: when
+      retry:
+        type: single
+        question: Which job fits pipes and filters best?
+        options:
+          - A shared whiteboard where a team drags notes around
+          - A spreadsheet that recalculates as the user types
+          - Turning each incoming support email into a tagged ticket
+        correct_index: 2
+        explanation: >-
+          Pipes and filters fits streams of items through steps that need no shared state; each
+          email passes through the same independent steps to become a ticket.
+        option_feedback:
+          0: >-
+            Dragging notes is interactive work on shared data, which this style fits badly.
+          1: >-
+            Recalculating as the user types needs instant feedback on shared cells, which this style
+            fits badly.
+exercises:
+  - id: straighten-and-thumbnail
+    title: Straighten every shot, and branch off a thumbnail
+    scene: order
+    cue: roles
+    prompt: >-
+      As the pipeline builder, take two requests at once. The editor wants tilted shots straightened
+      right after the crop, and the front page wants a small thumbnail of every published photo.
+      Insert a Straighten filter, and branch the stream so a new Thumbnail filter, feeding a
+      front-page sink, receives every finished photo too. Keep every pipe one way, from an output
+      port to an input port. Preview draws your diagram; it does not check the design.
+    type: component
+    starter: |
+      @startuml
+      component Camera <<source>> {
+        portout "out" as cam_out
+      }
+      component Denoise <<filter>> {
+        portin "in" as dn_in
+        portout "out" as dn_out
+      }
+      component Brighten <<filter>> {
+        portin "in" as br_in
+        portout "out" as br_out
+      }
+      component Crop <<filter>> {
+        portin "in" as cr_in
+        portout "out" as cr_out
+      }
+      component BlurFaces <<filter>> {
+        portin "in" as bl_in
+        portout "out" as bl_out
+      }
+      component Watermark <<filter>> {
+        portin "in" as wm_in
+        portout "out" as wm_out
+      }
+      component Gallery <<sink>> {
+        portin "in" as gal_in
+      }
+      cam_out --> dn_in : <<pipe>>
+      dn_out --> br_in : <<pipe>>
+      br_out --> cr_in : <<pipe>>
+      cr_out --> bl_in : <<pipe>>
+      bl_out --> wm_in : <<pipe>>
+      wm_out --> gal_in : <<pipe>>
+      @enduml
+    solution: |
+      @startuml
+      component Camera <<source>> {
+        portout "out" as cam_out
+      }
+      component Denoise <<filter>> {
+        portin "in" as dn_in
+        portout "out" as dn_out
+      }
+      component Brighten <<filter>> {
+        portin "in" as br_in
+        portout "out" as br_out
+      }
+      component Crop <<filter>> {
+        portin "in" as cr_in
+        portout "out" as cr_out
+      }
+      component Straighten <<filter>> {
+        portin "in" as st_in
+        portout "out" as st_out
+      }
+      component BlurFaces <<filter>> {
+        portin "in" as bl_in
+        portout "out" as bl_out
+      }
+      component Watermark <<filter>> {
+        portin "in" as wm_in
+        portout "web" as wm_out
+        portout "thumbs" as wm_thumbs
+      }
+      component Gallery <<sink>> {
+        portin "in" as gal_in
+      }
+      component Thumbnail <<filter>> {
+        portin "in" as th_in
+        portout "out" as th_out
+      }
+      component FrontPage <<sink>> {
+        portin "in" as fp_in
+      }
+      cam_out --> dn_in : <<pipe>>
+      dn_out --> br_in : <<pipe>>
+      br_out --> cr_in : <<pipe>>
+      cr_out --> st_in : <<pipe>>
+      st_out --> bl_in : <<pipe>>
+      bl_out --> wm_in : <<pipe>>
+      wm_out --> gal_in : <<pipe>>
+      wm_thumbs --> th_in : <<pipe>>
+      th_out --> fp_in : <<pipe>>
+      @enduml
+    checks:
+      - Straighten sits between Crop and Blur faces, joined by two pipes, and no existing filter's ports or job changed apart from the branch point.
+      - Every photo still reaches the gallery, and a branch after Watermark, a second output port or a separate tee filter, feeds Thumbnail.
+      - Every pipe runs from an output port to an input port, and none leads back to an earlier filter, so the flow stays acyclic.
+      - Placing the branch before Watermark is also valid if thumbnails should carry no logo; say which you chose and why.
+comparisons:
+  - id: new-step-batch-or-pipeline
+    title: A new step in the batch script and in the pipeline
+    question: >-
+      The editor wants a Straighten step after the crop. Compare the batch script that published
+      nothing until midnight with the pipeline that puts the catch online in seconds. What does the
+      new step cost each design, in edits and in how long a photo waits, and when would the batch
+      script still be good enough?
+    before: {scene: monolith, cue: midnight, label: "Batch script: nothing online until midnight"}
+    after: {scene: stream, cue: seconds, label: "Pipeline: the catch online in seconds"}
+    consequences:
+      - In the batch script, the new step means surgery on one file with shared globals, and every photo waits about 20 minutes longer.
+      - In the pipeline, the builder inserts one filter and one new pipe; each photo waits about half a second longer, and throughput holds unless Straighten becomes the slowest filter.
+      - The new filter adds one more decode and encode of the agreed format, so each step the pipeline gains adds a little latency.
+      - For a job nobody waits on, such as a nightly archive, the simpler batch script can be good enough.

@@ -24,11 +24,11 @@ Four rules give the style its power, and each exists for a reason. Rule one, pub
 
 Rule two, subscriber ignorance: a subscriber must not rely on the identity of the publisher. The planner subscribes to obstacles, not to the detector. The rule exists so that publishers remain replaceable: when the team substitutes a laser-based detector that publishes the same obstacles topic, the planner is unaffected.
 
-The Observer pattern resembles this, with one important difference. Observer operates between objects within one program: the subject keeps its own list of observers and calls each one. In publish subscribe, neither side holds a reference to the other. The topic maintains the list, and it may even run in another process or on another machine.
+The Observer pattern resembles this, with one difference. Observer is a design pattern for objects: the subject keeps its own list of observers and calls each one. Publish-subscribe is an architectural style, independent of the programming paradigm. In the topic-based form shown here, the topic keeps the list, possibly on another machine.
 
 Rule three, one-way propagation: information flows from publisher to subscriber and never back, so publishing returns no value. The rule exists because a publisher that awaited an answer would again depend on its subscribers. The camera cannot ask whether anyone saw an obstacle; any answer travels as a new event on another topic.
 
-Rule four, asynchronous publishing: a publisher never blocks. Publishing places a copy of the frame in each subscriber's queue and returns immediately, so no subscriber can delay the publisher. Each subscriber drains its own queue at its own pace, while the camera continues at thirty frames a second.
+Rule four, asynchronous publishing: in this style, a publisher never blocks. Publishing places a copy of the frame in each subscriber's queue and returns immediately, so no subscriber can delay the publisher. Each subscriber drains its own queue at its own pace, while the camera continues at thirty frames a second.
 
 Now replay last week's disaster. The dashboard's server hangs again, and its callback stops returning. Predict: what happens to Mochi this time? And what happens to the frames meant for the dashboard?
 
@@ -38,7 +38,7 @@ Now the consequences, each traceable to a rule. First, extensibility. Campus pla
 
 Second, run-time flexibility. Since publishers do not rely on who is listening, connections can be established late, while the robot runs. When an operator opens the dashboard, it subscribes to the camera topic; when the operator closes it, it unsubscribes. The recorder joins only during experiments, and Mochi never restarts.
 
-Third, replaceability and fault isolation. Because of subscriber ignorance, any publisher can be replaced by one that sends the same events, such as the laser detector. And because publishing never waits, a slow or crashed subscriber cannot stall the others. Each benefit follows directly from one of the four rules.
+Third, modifiability. Because of subscriber ignorance, a publisher can be replaced by any other that sends the same events, such as the laser detector, without changing a subscriber. Fourth, availability through fault isolation: under one-way propagation and asynchronous publishing, a slow or crashed subscriber cannot stall the others, which keep running.
 
 The same rules also impose costs. A teammate renames a topic: the detector now publishes to obstacles instead of obstacle list, but the planner still subscribes to the old name. Everything compiles, and every component starts. Read in isolation, each file looks correct, and the change is approved.
 
@@ -46,21 +46,21 @@ So predict. On the next delivery, a skateboarder cuts across Mochi's path, and t
 
 The planner does nothing: it never learns of the skateboard. And no component reports an error. The detector publishes into a topic that nobody reads, and by publisher ignorance, it cannot detect this. Only the safety bumper stops Mochi. A renamed topic of this kind remained hidden for two months in a popular self-driving framework.
 
-What still couples the components? Each topic's name, and its events' format and meaning; change one, and every subscriber must follow or quietly fail. That is the cost to robustness: a direct call fails loudly when its receiver is missing, but under publisher ignorance and one-way propagation, a publisher never learns who received an event.
+What still couples the components? Each topic's name, and its events' format and meaning; change one, and every subscriber must follow, or fail silently. That costs robustness: a direct call to a missing receiver returns an error, but under publisher ignorance and one-way propagation, a publisher never learns who received an event.
 
 The second cost is understandability, the flip side of publisher and subscriber ignorance. The camera's old loop listed every receiver in one place. Now, to determine who receives frames, one must search every component for the topic's name. A diagram of boxes on one bus shows only that any component might communicate with any other.
 
-Asynchronous publishing also complicates reasoning about timing. When several subscribers receive the same event, the order of notification is not fixed, and each queue drains at its own pace. A test that passes today may fail tomorrow, so teams trace events at run time to observe what actually happened.
+Asynchronous publishing also inhibits testability. When several subscribers receive the same event, the order of notification is not fixed, and each queue drains at its own pace. A test that passes today may fail tomorrow, so teams trace events at run time to observe what actually happened.
 
 Teams therefore restore the visibility of the flow. They design topic names and event formats early, as carefully as any interface. They maintain a list of the publishers and subscribers of each topic. And they test publishers and subscribers together, not only each file in isolation.
 
-Third, latency. Every message takes a detour through the connector's infrastructure, which adds delay compared with a direct call. If that infrastructure is a single central broker, it also becomes a single point of failure: when it fails, every conversation stops at once.
+The fourth cost is performance. Every message passes through an intermediary, the connector's infrastructure, which adds latency compared with a direct call. And if that infrastructure is one central broker, it also puts availability at risk: the broker becomes a single point of failure, and when it fails, every topic stops at once.
 
-When, then, should a component not publish? When the sender requires an answer or a guarantee of completion. Consider the emergency stop. If the safety monitor merely published brake now and nobody received it, Mochi would keep moving. That command is therefore a direct call, which fails loudly if the motor controller is unavailable.
+When, then, should a component not publish? When the sender requires an answer or a guarantee of completion. Consider the emergency stop. If the safety monitor merely published brake now and nobody received it, Mochi would keep moving. That command is therefore a direct call, which returns an error if the motor controller is unavailable.
 
 A useful rule of thumb follows. Publish facts that many components may want, such as a new camera frame, the battery level, or arrival at a building. Call directly for requests that require a reply or a guarantee, such as stopping the motors or charging a card. Most real systems, Mochi included, combine both.
 
-In practice, the infrastructure is rarely built from scratch. Robot middleware, messaging protocols for small devices, and event-streaming platforms all implement this style, with its trade-offs built in. Selecting one means accepting extensibility and flexibility, together with the costs to robustness and understandability that accompany them.
+In practice, the infrastructure is rarely built from scratch. Robot middleware, messaging protocols for small devices, and event-streaming platforms all implement this style, with its trade-offs built in. Selecting one means accepting extensibility, run-time flexibility, modifiability, and availability, together with the costs to robustness, understandability, testability, and performance.
 
 Publish-subscribe runs much of the software you use every day. When you switch on airplane mode, Android publishes one broadcast, and every app that registered for it reacts, though the code that sends it never names those apps. When you post in Slack, a channel server pushes the message to every subscribed gateway.
 
@@ -68,12 +68,12 @@ Game servers in Roblox publish announcements to topics that subscribed servers u
 
 In smart homes, a temperature sensor publishes its readings over M Q T T, and a dashboard, a heating automation, and a logger subscribe without the sensor knowing them. In power substations, protection relays publish trip messages that other relays receive within milliseconds; since nobody acknowledges them, each relay keeps repeating its message.
 
-Most of these systems need what publisher and subscriber ignorance provide: consumers that come and go without any change to the producers. Each also pays for publisher ignorance and one-way propagation, since no publisher learns who received an event; Roblox accepts the loss, LinkedIn keeps a replayable log, and substations repeat every message.
+Most of these systems need what publisher and subscriber ignorance provide: subscribers that come and go without any change to the publishers. Each also pays for publisher ignorance and one-way propagation, since no publisher learns who received an event; Roblox accepts the loss, LinkedIn keeps a replayable log, and substations repeat every message.
 
 Let's recap. Mochi's camera once called every listener by name, so each new listener meant editing the camera, and one slow listener froze the robot. Publish-subscribe places a topic, a connector, between the components: publishers announce events to it, and the infrastructure delivers them to every subscriber's queue.
 
-Four rules give the style its power: publishers do not rely on who listens, subscribers do not rely on who published, information flows one way, and publishing never waits. The ignorance rules promote extensibility and replaceability, even while the system runs. One-way, asynchronous publishing promotes fault isolation: a slow subscriber cannot stall the rest.
+Four rules give the style its power: publisher ignorance, subscriber ignorance, one-way propagation, and asynchronous publishing. Publisher ignorance promotes extensibility and run-time flexibility: subscribers join freely, even while the system runs. Subscriber ignorance promotes modifiability: publishers can be replaced. And one-way, asynchronous publishing promotes availability through fault isolation: a slow subscriber stalls only itself.
 
-The same rules inhibit three qualities. Robustness: nobody confirms delivery, so a renamed topic fails silently. Understandability: to find who receives an event, one must search every component. Latency: every event passes through the infrastructure, which adds delay.
+The style also inhibits four qualities. Robustness: nobody confirms delivery, so a renamed topic fails silently. Understandability: to find who receives an event, one must search every component. Testability: notification order isn't fixed, so a passing test may fail tomorrow. Performance: every event passes through the infrastructure, which adds latency.
 
 So choose per message. Publish facts that many components may want; call directly when you need an answer or a guarantee. Next time you write a call, ask who is listening, and whether you need to know.

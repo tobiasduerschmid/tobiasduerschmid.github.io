@@ -33,121 +33,121 @@ stack-2
 What makes a lower level simpler? Each level offers an abstraction: it says what to do and hides how. Physics knows bodies and speeds, not squirrels; graphics knows images and positions, not physics; the device knows only bytes. The lower the level, the less it knows of the game, and the more programs it serves.
 
 stack-3
-00:02:28.160 --> 00:02:49.710
-Grouping the code by these levels yields layers. A layer is a cohesive set of modules at one level of abstraction that offers services to the layer above. Layers belong to the module view, so each one is drawn as a UML package. Pearl Dash has four: game rules, engine, platform, and drivers.
+00:02:28.160 --> 00:02:50.610
+Grouping code by level yields layers. A layer is a cohesive set of modules at one level of abstraction that offers services to the layer above. Layers belong to the module view, so each is drawn as a package in UML, the Unified Modeling Language. Pearl Dash has four: game rules, engine, platform, and drivers.
 
 stack-4
-00:02:49.710 --> 00:03:12.930
+00:02:50.610 --> 00:03:13.830
 Each layer translates one request from above into several simpler requests below. Jump becomes apply an upward push. The engine turns that push into new positions and a draw call, and the platform turns the draw call into commands for the graphics chip. Each layer thus acts as a virtual machine for the layer above.
 
 allowed-1
-00:03:12.930 --> 00:03:31.640
+00:03:13.830 --> 00:03:32.540
 The style's rules are stated as an allowed-to-use relation, a dependency drawn as a dashed arrow between layers. A module uses another if its own correctness depends on the presence and correctness of the other. The relation fixes, before anyone writes an import, which layers may depend on which.
 
 allowed-2
-00:03:31.640 --> 00:03:54.210
-Three rules define the style. Rule one, exactly one layer: every module belongs to a single layer. Rule two, next lower layer: a layer may use only its own layer or the next lower layer. Rule three: at least two layers, usually more. So no layer may use a layer above it.
+00:03:32.540 --> 00:03:55.710
+Three rules define the style. Rule one, exactly one layer: every module belongs to a single layer. Rule two has two parts. Never up, the golden rule: no layer may use a layer above it. Next lower layer: a layer uses only its own layer or the one below. Rule three: at least two layers.
 
 allowed-3
-00:03:54.210 --> 00:04:14.120
-Why these rules? Under the next-lower-layer rule, a layer depends only on the interface of the layer below, so a change inside a layer stays hidden from the layers above while its interface holds. And since no layer uses one above it, lower layers know nothing of the game, and other programs can reuse them.
+00:03:55.710 --> 00:04:17.715
+Why these rules? Exactly one layer: the tangled jump function sat on all four levels, so no usage rule could apply to it. Never up: lower layers depend on nothing above them, so other programs can reuse them. Next lower layer: a layer depends only on the interface below, so changes behind it stay hidden.
 
 allowed-4
-00:04:14.120 --> 00:04:32.500
+00:04:17.715 --> 00:04:36.095
 Test the rules. The engine detects that the squirrel touched a pearl, and the score should increase. A teammate proposes that the engine import the game's score module and add a point. Predict: does this violate a rule? And what would it cost?
 
 allowed-5
-00:04:32.500 --> 00:04:53.560
-It violates the next-lower-layer rule, which never permits an upward use. The engine would depend on Pearl Dash's scoring, so the second game could not reuse it. Worse, the two layers would depend on each other: a cycle, in which a change to either may break the other. The layering would be lost.
+00:04:36.095 --> 00:04:55.475
+Yes, it violates the never-up rule. The engine would depend on Pearl Dash's scoring, so the second game could not reuse it. Worse, the two layers would depend on each other: a cycle, in which a change to either may break the other. The layering would be lost.
 
 callbacks-1
-00:04:53.560 --> 00:05:13.030
+00:04:55.475 --> 00:05:14.945
 Yet the score must still increase. The standard solution is a callback. The engine defines an interface for what it can report, a collision listener, and the game registers an implementation at startup. When the squirrel touches a pearl, the engine invokes whatever was registered, without knowing that it belongs to Pearl Dash.
 
 callbacks-2
-00:05:13.030 --> 00:05:37.350
+00:05:14.945 --> 00:05:39.265
 Is this an upward use? No. Control flows upward, but the engine's correctness does not depend on what the handler does; its responsibility ends when it reports the collision. The dependency still points down: the game depends on the engine's listener interface, never the reverse. Control flow and dependency are different relations.
 
 relaxed-1
-00:05:37.350 --> 00:05:59.300
+00:05:39.265 --> 00:06:01.215
 Strictness varies. In strict layering, a layer may use only the layer directly below; in relaxed layering, it may use any lower layer. A strict design may still permit a few skips, such as game rules calling the platform directly. Such layer bridging must be documented as an exception, because each bridge weakens portability.
 
 relaxed-2
-00:05:59.300 --> 00:06:18.470
+00:06:01.215 --> 00:06:20.385
 Layers must also be distinguished from tiers. Layers group code in the module view, and all four layers of Pearl Dash run together on one console. A tier groups running components, usually by the machine they run on, and a component may talk only within its tier or to an adjacent tier.
 
 relaxed-3
-00:06:18.470 --> 00:06:40.330
+00:06:20.385 --> 00:06:42.245
 Pearl Dash's online leaderboard has three tiers. The game on the console is the presentation tier. It calls a leaderboard service on a cloud server, the logic tier, and only that service reads and writes scores in a database, the data tier. Each tier can then be secured, scaled, and changed on its own.
 
 port-1
-00:06:40.330 --> 00:06:59.390
+00:06:42.245 --> 00:07:01.305
 Return to the publisher's request, now with the layered game. The console has a different graphics chip, buttons, and a different sound system. Predict: which of the four layers must change for the console, and which remain exactly as they are?
 
 port-2
-00:06:59.390 --> 00:07:18.940
+00:07:01.305 --> 00:07:20.855
 Only the bottom two. The drivers come with the console, and the team writes a new platform layer on top of them that offers the same interface. Under the next-lower-layer rule, the engine depends only on that interface, so it is unaffected, and the game rules do not change at all. This quality is portability.
 
 port-3
-00:07:18.940 --> 00:07:40.710
+00:07:20.855 --> 00:07:42.625
 The next-lower-layer rule also promotes modifiability: replacing the engine's physics with a faster implementation of the same interface changes only the engine. And the never-up rule promotes reusability: the engine and platform know nothing about Pearl Dash, so the team's second game, a skateboard racer, can build on them unchanged.
 
 port-4
-00:07:40.710 --> 00:08:02.720
+00:07:42.625 --> 00:08:04.635
 The same structure underlies everyday networking. A chat message descends a layered protocol stack: the application protocol, the transport layer, the internet layer, and the link layer. The chat application works over Wi-Fi, cable, or cellular data, because only the bottom layer differs and every layer above depends only on its interface.
 
 port-5
-00:08:02.720 --> 00:08:22.900
+00:08:04.635 --> 00:08:24.815
 Layering also supports the division of labor and testability. Gameplay changes stay in the game rules, engine work in the engine, and the sound fix in the platform. And because the game rules depend only on the engine's interface, they can be tested on a laptop against a fake engine, with no console.
 
 costs-1
-00:08:22.900 --> 00:08:46.050
+00:08:24.815 --> 00:08:47.965
 The rules also carry costs. First, performance. A game renders sixty frames a second, leaving about sixteen milliseconds per frame. Under the next-lower-layer rule, every request crosses all four layers, and each layer translates and copies data on the way down. In the pearl storm level, with five hundred pearls, the frame rate drops.
 
 costs-2
-00:08:46.050 --> 00:09:07.100
+00:08:47.965 --> 00:09:09.015
 A tempting remedy bends the next-lower-layer rule with a bridge: the pearl-drawing code bypasses the engine and platform and calls the laptop's graphics driver directly. The frame rate recovers, but that code now depends on the laptop's driver, so it must be rewritten for the console. The bridge trades portability for performance.
 
 costs-3
-00:09:07.100 --> 00:09:30.060
+00:09:09.015 --> 00:09:31.975
 Second, up-front cost. Layering requires design effort before it pays off: someone must choose the levels, design each interface, and enforce the rules when a deadline invites shortcuts. For a weekend jam, a single file was adequate. For a game that must run on two devices for years, the investment is worth it.
 
 leaks-1
-00:09:30.060 --> 00:09:50.810
+00:09:31.975 --> 00:09:52.725
 Layers can also leak. On the console, the new platform layer has exactly the same interface, but it draws many small images more slowly. Nothing above it changed, yet the pearl storm stutters. An interface includes more than its function signatures: it also includes the timing on which the layers above implicitly rely.
 
 leaks-2
-00:09:50.810 --> 00:10:14.390
+00:09:52.725 --> 00:10:16.305
 Finally, granularity. With too few layers, such as one combined engine-and-platform layer, porting to the console reaches deep into the engine. With too many, every frame pays for additional hand-offs, and each feature requires edits across six layers. Choose levels that change for different reasons and at different rates.
 
 in_practice-1
-00:10:14.390 --> 00:10:38.200
+00:10:16.305 --> 00:10:40.115
 Layering is everywhere in practice. Every message you send descends the Internet's four layers, and the standards themselves note where information deliberately leaks between them. Android stacks apps, a framework, native libraries, a hardware abstraction layer, and the Linux kernel, so a new camera chip needs a new hardware module and driver, not new apps.
 
 in_practice-2
-00:10:38.200 --> 00:11:00.970
+00:10:40.115 --> 00:11:02.885
 Chrome's code forbids upward includes, and an automated check rejects any that appear; the layer that renders pages reports upward only through interfaces it defines. SQLite, the database engine in every smartphone, reaches the operating system through one bottom layer, so porting it, or simulating a failing disk in a test, replaces only that layer.
 
 in_practice-3
-00:11:00.970 --> 00:11:23.560
+00:11:02.885 --> 00:11:25.475
 Many car makers follow AUTOSAR, whose rules state which layers may use which and forbid bypassing the layer that hides the microcontroller, except in a complex-driver layer for timing-critical devices. NASA's core Flight System hides the flight computer behind one platform layer, so its apps run unchanged on a desktop during testing and in orbit.
 
 in_practice-4
-00:11:23.560 --> 00:11:48.700
+00:11:25.475 --> 00:11:50.615
 Most of these systems layer for the same reason: hardware, operating systems, and vendors change independently of the programs above them, and a stable interface confines each change to the layer below. Yet most relax the next-lower-layer rule: Chromium and SQLite let a layer skip down, while AUTOSAR, Android, and NASA document each exception.
 
 summary-1
-00:11:48.700 --> 00:12:09.410
+00:11:50.615 --> 00:12:11.325
 Let's recap. Pearl Dash began as a ball of mud: game rules, physics, and device calls on the same lines, so porting meant rewriting nearly every file. Layering groups modules into packages by level of abstraction, from game rules down to drivers, and each layer serves as a virtual machine for the one above.
 
 summary-2
-00:12:09.410 --> 00:12:31.820
-The rules: every module belongs to exactly one layer; a layer uses only its own layer or the one directly below, or any lower one if relaxed; and nothing uses a layer above. Upward news travels through callbacks that the lower layer defines. Layers organize code in a module view; tiers are running components.
+00:12:11.325 --> 00:12:35.495
+The rules. Exactly one layer: every module belongs to one. Never up: nothing uses a layer above. Next lower layer: only your own layer or the one below, or any lower one if relaxed. At least two layers. News travels up through callbacks the lower layer defines. Layers group code; tiers group running components.
 
 summary-3
-00:12:31.820 --> 00:12:54.590
+00:12:35.495 --> 00:12:58.265
 Because each layer depends only on the interface of the layer below, layering promotes three qualities. Portability: a new platform changes only the bottom layers. Modifiability: a change stays behind one layer's interface. Reusability: lower layers never depend on the layers above, so other applications can reuse them.
 
 summary-4
-00:12:54.590 --> 00:13:19.130
-The same rules inhibit performance: every request crosses every layer, and each crossing costs time. Layering also has an up-front cost: the levels and their interfaces must be designed first. A bridge buys back performance at the price of portability. Next time you write an import, ask: is it from the next lower layer?
+00:12:58.265 --> 00:13:21.765
+The same rules inhibit performance: every request crosses every layer, and each crossing costs time. Layering also has an up-front cost: the levels and their interfaces must be designed first. A bridge buys back performance at the price of portability. Next time you write an import, ask: does it point up?

@@ -86,6 +86,10 @@ html body.vn-notes-page {
 .vn-check-prompt { margin: 0.2em 0 0; color: var(--vn-notes-muted); font-size: 0.9em; }
 .vn-check .vn-note-lines { flex: 1 0 auto; height: calc(3 * var(--vn-notes-line-gap)); }
 
+/* A video lesson's closer look carries its own explainer scope, which must
+   add no spacing: the look's own margin separates it from its cue. */
+.vn-notes .vn-note-look { margin: 0; }
+
 .vn-notes-answers ol { margin: 0.6em 0 0; padding-left: 1.6em; }
 .vn-notes-answers li { margin: 0 0 0.8em; }
 .vn-notes-answers p { margin: 0.2em 0; }

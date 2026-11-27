@@ -26,11 +26,11 @@ direct_calls-need:
   - "That is the **publish-subscribe** style"
 topic-publisher:
   - "**Topic:** a named channel that the messaging infrastructure runs"
-  - "**C&C view:** programs are **components**; the topic is the **connector**"
+  - "**C&C (component-and-connector) view:** programs are **components**; the topic is the **connector**"
   - "**Publisher:** sends each event to the topic once, names no receiver"
 topic-subscribers:
   - "**Subscriber:** registers for a topic with a **callback**"
-  - "Each subscriber has its own **message queue**; every queue gets a copy"
+  - "Its own **message queue** sits between the topic and the callback; every queue gets a copy"
 topic-counter_joins:
   - "The counter just subscribes: zero lines of the camera change"
   - "The publisher's code is the same for any number of subscribers"
@@ -40,19 +40,23 @@ topic-both_roles:
 ignorance-publisher_rule:
   - "**Rule 1, publisher ignorance:** don't rely on whether or which subscribers exist"
   - "Why: add or drop subscribers with no edits to the publisher"
+  - "The style's rules are what architects call its **constraints**"
 ignorance-subscriber_rule:
   - "**Rule 2, subscriber ignorance:** subscribe to the event, not its source"
   - "Why: publishers stay **replaceable**; a laser detector swaps in unnoticed"
 ignorance-observer:
-  - "**Observer:** the subject keeps a list of observers and calls them"
-  - "Publish-subscribe: only the topic keeps the list, maybe in another process"
+  - "**Observer:** a design pattern of objects; each subject keeps and calls its own observers"
+  - "**Publish-subscribe:** an architectural style for any programming paradigm, not only objects"
+  - "Topic-based form: the list lives in the topic, maybe on another machine"
+  - "Some books call Observer itself Publisher-Subscriber"
 one_way-no_return:
   - "**Rule 3, one-way propagation:** publishing returns no value"
   - "Why: awaiting an answer would make the publisher depend on subscribers"
   - "Answers, if any, become **new events** on other topics"
 one_way-async:
-  - "**Rule 4, asynchronous:** publish() returns at once; it never blocks"
+  - "**Rule 4, asynchronous publishing:** publish() returns at once; it never blocks"
   - "Every subscriber empties its queue at its own speed; the camera never waits"
+  - "Scope: some event systems notify synchronously, and there a slow subscriber stalls the publisher"
 one_way-predict_hang:
   - "**Predict:** the dashboard hangs again. What happens to Mochi and its frames?"
 one_way-hurts_itself:
@@ -61,14 +65,13 @@ one_way-hurts_itself:
   - "A slow subscriber hurts only itself"
 buys-extensibility:
   - "**Extensibility** (promoted): new subscribers join, no publisher changes"
-  - "It comes from rule 1, publisher ignorance"
+  - "It comes from publisher ignorance"
 buys-late_binding:
-  - "**Run-time flexibility** (promoted, Rule 1): connections are made while the system runs"
+  - "**Run-time flexibility** (promoted, from publisher ignorance): connections are made while the system runs"
   - "Subscribe and unsubscribe at any time; nothing restarts"
 buys-swap:
-  - "Swap a publisher for one sending the same events (rule 2)"
-  - "A slow or crashed subscriber can't stall others (rule 4)"
-  - "Each benefit comes from a rule"
+  - "**Modifiability: replace a publisher** (promoted, from subscriber ignorance): same events, no subscriber edits"
+  - "**Availability: fault isolation** (promoted, from one-way propagation and asynchronous publishing): crashed subscribers stall no one"
 nobody_listens-rename:
   - "A tidy rename: the detector publishes to a new topic name"
   - "The planner keeps the old name; everything compiles and starts"
@@ -79,50 +82,51 @@ nobody_listens-silent:
   - "A real self-driving framework hid such a bug for two months"
 nobody_listens-robustness:
   - "Still shared: each **topic's name**, its **event format**, and what events mean"
-  - "A direct call fails loudly; publishing never learns who got the event"
-  - "**Robustness** (inhibited): Rules 1 and 3 leave delivery unconfirmed"
+  - "Direct call, missing receiver: an error. Publish: no error and no receipt"
+  - "**Robustness** (inhibited): publisher ignorance and one-way propagation leave delivery unconfirmed"
 who_talks-scattered:
-  - "**Understandability** (inhibited, Rules 1 and 2): receivers spread across many files"
+  - "**Understandability** (inhibited, from publisher ignorance and subscriber ignorance): receivers spread across many files"
   - "A bus diagram hides who talks to whom"
 who_talks-order:
-  - "Rule 4: notification order isn't fixed; queues drain at different paces"
+  - "**Testability** (inhibited, from asynchronous publishing): notification order isn't fixed; queues drain at different paces"
   - "Tests can be flaky; trace events at run time"
 who_talks-visible:
+  - "Before: one bus hides who talks to whom; after: named topics, directed attachments"
   - "Design topic names and event formats early, like any interface"
   - "Keep a topic list; test programs together"
 who_talks-latency:
-  - "The extra hop through the infrastructure adds **latency**"
-  - "One central broker is a **single point of failure**"
+  - "**Performance: latency** (inhibited): every event passes through the topic in between"
+  - "One central broker: a **single point of failure**, a risk to **availability**"
 when-brake:
   - "Need an answer or a guarantee? Use a **direct call**"
-  - "Emergency stop: a call that fails loudly, not an event"
+  - "Emergency stop: a call, which reports a missing receiver; not an event"
 when-rule_of_thumb:
   - "Publish **facts** many may want: frames, battery level, arrivals"
   - "Call for **requests** needing a reply: stop motors, charge a card"
 when-frameworks:
-  - "Frameworks package the style: DDS (ROS 2), MQTT, Apache Kafka"
-  - "Choosing one adopts its trade-offs"
+  - "Frameworks package the style: **DDS** (Data Distribution Service) in ROS 2, **MQTT**, Apache Kafka"
+  - "Choosing one adopts the style's whole trade-off"
 in_practice-phone_chat:
   - "**Android broadcasts:** the sending code never names the apps that listen"
   - "**Slack:** a channel server fans each message out to subscribed gateways"
 in_practice-games_feeds:
   - "**Roblox:** cross-server announcements, usually within seconds, best effort only"
-  - "**Kafka at LinkedIn:** new consumers need no producer change; logs allow replay"
+  - "**Kafka at LinkedIn:** new teams subscribe with no publisher change; logs allow replay"
 in_practice-home_grid:
   - "**Smart home (MQTT):** each new tool is one more subscription"
   - "**Substations (GOOSE):** no acknowledgment, so relays repeat each trip message"
 in_practice-common_thread:
-  - "Rules 1 and 2: **consumers change** without touching producers"
-  - "No receipt (Rules 1, 3): **accept loss, replay a log, or repeat**"
+  - "Publisher ignorance and subscriber ignorance: **subscribers change** without touching publishers"
+  - "No receipt, from publisher ignorance and one-way propagation: **accept loss, replay a log, or repeat**"
 summary-recap_problem:
   - "Direct calls coupled the camera to every receiver"
   - "A topic sits between publishers and subscribers' queues"
 summary-recap_rules:
-  - "Four rules: publisher ignorance, subscriber ignorance, one-way, asynchronous"
-  - "**Extensibility** and **replaceability** from Rules 1 and 2, even at run time"
-  - "**Fault isolation** from Rules 3 and 4: a slow subscriber stalls no one"
+  - "Four rules: publisher ignorance, subscriber ignorance, one-way propagation, asynchronous publishing"
+  - "Publisher ignorance: **extensibility**, **run-time flexibility**; subscriber ignorance: **modifiability**"
+  - "One-way propagation and asynchronous publishing: **availability** through fault isolation"
 summary-recap_costs:
-  - "**Inhibited:** robustness, understandability, and latency"
-  - "Unconfirmed delivery; receivers found only by searching; delay per event"
+  - "**Inhibited:** robustness, understandability, testability, and performance (latency)"
+  - "Unconfirmed delivery; receivers found by searching; no fixed order; a hop per event"
 summary-recap_choice:
   - "Facts many may want: publish. Requests needing an answer: call"

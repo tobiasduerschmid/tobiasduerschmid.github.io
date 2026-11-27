@@ -14,19 +14,19 @@ Consider the jump again: its lines belong to different levels of abstraction. Ju
 
 What makes a lower level simpler? Each level offers an abstraction: it says what to do and hides how. Physics knows bodies and speeds, not squirrels; graphics knows images and positions, not physics; the device knows only bytes. The lower the level, the less it knows of the game, and the more programs it serves.
 
-Grouping the code by these levels yields layers. A layer is a cohesive set of modules at one level of abstraction that offers services to the layer above. Layers belong to the module view, so each one is drawn as a U M L package. Pearl Dash has four: game rules, engine, platform, and drivers.
+Grouping code by level yields layers. A layer is a cohesive set of modules at one level of abstraction that offers services to the layer above. Layers belong to the module view, so each is drawn as a package in U M L, the Unified Modeling Language. Pearl Dash has four: game rules, engine, platform, and drivers.
 
 Each layer translates one request from above into several simpler requests below. Jump becomes apply an upward push. The engine turns that push into new positions and a draw call, and the platform turns the draw call into commands for the graphics chip. Each layer thus acts as a virtual machine for the layer above.
 
 The style's rules are stated as an allowed-to-use relation, a dependency drawn as a dashed arrow between layers. A module uses another if its own correctness depends on the presence and correctness of the other. The relation fixes, before anyone writes an import, which layers may depend on which.
 
-Three rules define the style. Rule one, exactly one layer: every module belongs to a single layer. Rule two, next lower layer: a layer may use only its own layer or the next lower layer. Rule three: at least two layers, usually more. So no layer may use a layer above it.
+Three rules define the style. Rule one, exactly one layer: every module belongs to a single layer. Rule two has two parts. Never up, the golden rule: no layer may use a layer above it. Next lower layer: a layer uses only its own layer or the one below. Rule three: at least two layers.
 
-Why these rules? Under the next-lower-layer rule, a layer depends only on the interface of the layer below, so a change inside a layer stays hidden from the layers above while its interface holds. And since no layer uses one above it, lower layers know nothing of the game, and other programs can reuse them.
+Why these rules? Exactly one layer: the tangled jump function sat on all four levels, so no usage rule could apply to it. Never up: lower layers depend on nothing above them, so other programs can reuse them. Next lower layer: a layer depends only on the interface below, so changes behind it stay hidden.
 
 Test the rules. The engine detects that the squirrel touched a pearl, and the score should increase. A teammate proposes that the engine import the game's score module and add a point. Predict: does this violate a rule? And what would it cost?
 
-It violates the next-lower-layer rule, which never permits an upward use. The engine would depend on Pearl Dash's scoring, so the second game could not reuse it. Worse, the two layers would depend on each other: a cycle, in which a change to either may break the other. The layering would be lost.
+Yes, it violates the never-up rule. The engine would depend on Pearl Dash's scoring, so the second game could not reuse it. Worse, the two layers would depend on each other: a cycle, in which a change to either may break the other. The layering would be lost.
 
 Yet the score must still increase. The standard solution is a callback. The engine defines an interface for what it can report, a collision listener, and the game registers an implementation at startup. When the squirrel touches a pearl, the engine invokes whatever was registered, without knowing that it belongs to Pearl Dash.
 
@@ -68,8 +68,8 @@ Most of these systems layer for the same reason: hardware, operating systems, an
 
 Let's recap. Pearl Dash began as a ball of mud: game rules, physics, and device calls on the same lines, so porting meant rewriting nearly every file. Layering groups modules into packages by level of abstraction, from game rules down to drivers, and each layer serves as a virtual machine for the one above.
 
-The rules: every module belongs to exactly one layer; a layer uses only its own layer or the one directly below, or any lower one if relaxed; and nothing uses a layer above. Upward news travels through callbacks that the lower layer defines. Layers organize code in a module view; tiers are running components.
+The rules. Exactly one layer: every module belongs to one. Never up: nothing uses a layer above. Next lower layer: only your own layer or the one below, or any lower one if relaxed. At least two layers. News travels up through callbacks the lower layer defines. Layers group code; tiers group running components.
 
 Because each layer depends only on the interface of the layer below, layering promotes three qualities. Portability: a new platform changes only the bottom layers. Modifiability: a change stays behind one layer's interface. Reusability: lower layers never depend on the layers above, so other applications can reuse them.
 
-The same rules inhibit performance: every request crosses every layer, and each crossing costs time. Layering also has an up-front cost: the levels and their interfaces must be designed first. A bridge buys back performance at the price of portability. Next time you write an import, ask: is it from the next lower layer?
+The same rules inhibit performance: every request crosses every layer, and each crossing costs time. Layering also has an up-front cost: the levels and their interfaces must be designed first. A bridge buys back performance at the price of portability. Next time you write an import, ask: does it point up?

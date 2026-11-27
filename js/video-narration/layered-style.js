@@ -13,13 +13,19 @@
  * a frame that names its view and carries a key: each layer a UML package
  * stereotyped «layer» with its modules inside, the game rules on top and the
  * device's drivers at the bottom; the allowed-to-use relation is a dashed
- * dependency arrow; tiers are nodes in an allocation view. A rule of the
- * style is a numbered rule card that arrives as its cue begins and stays up
- * while the scene applies it; every consequence is a quality card that says
- * Promoted or Inhibited in words, beside the rule it follows from. Stamps
- * never shake the stage, and nothing large changes brightness quickly
- * (WCAG 2.3.1). Layout: the 960x540 picture body; nothing readable within
- * 12px of an edge.
+ * dependency arrow; a documented exception (a layer bridge) is an amber
+ * dashed arrow labeled «bridge», and a forbidden use a red one struck by a
+ * cross; tiers are dashed boundaries over running components. Every line is
+ * straight: an arrow that skips a layer runs down its own lane beside the
+ * shorter layers it passes. A rule of the style is a numbered rule card that
+ * arrives as the narrator names it; Rule 2 has two named parts, never up and
+ * next lower layer. Only a rule's definition cards (where the rules are
+ * defined, and the recap that restates them) carry its number; every later
+ * card, chip, tag, and note names the rule or part it means. Every consequence is a quality card that says Promoted or Inhibited
+ * in words, beside the rule it follows from; a benefit or a cost that is not
+ * a quality is a note or a card of its own. Stamps never shake the stage,
+ * and nothing large changes brightness quickly (WCAG 2.3.1). Layout: the
+ * 960x540 picture body; nothing readable within 12px of an edge.
  */
 (function () {
   'use strict';
@@ -32,30 +38,45 @@
     callbacks: { kind: 'Rule', name: 'News travels up', iconName: 'arrowUp' },
     relaxed: { kind: 'Rule', name: 'Strict, relaxed, not tiers', iconName: 'list' },
     port: { kind: 'Promotes', name: 'Portability, modifiability, reuse', iconName: 'sparkle' },
-    costs: { kind: 'Inhibits', name: 'Performance and up-front cost', iconName: 'timer' },
+    costs: { kind: 'Inhibits', name: 'Performance', iconName: 'timer' },
     leaks: { kind: 'Trade-off', name: 'When layers leak', iconName: 'warning' },
     in_practice: { kind: 'In practice', name: 'Real-world examples', iconName: 'globe' },
     summary: { kind: 'Recap', name: 'Down, never up', iconName: 'check' },
   };
-
-  /** The three rules, as their cards name them. */
-  const RULES = {
-    1: { name: 'Exactly one layer', text: 'Every module belongs to exactly one layer.' },
-    2: { name: 'Next lower layer', text: 'Use only your own layer or the next lower layer.' },
-    3: { name: 'At least two layers', text: 'Usually three or more.' },
+  /**
+   * Headings for cues whose subject is not their scene's: a prediction keeps
+   * a neutral heading until its answer, and a cost that is not a quality is
+   * named as a trade-off.
+   */
+  const HEADINGS = {
+    console: { kind: 'Example', name: 'Back to the console request', iconName: 'gamepad' },
+    bridge: { kind: 'Trade-off', name: 'Bridging a layer', iconName: 'link' },
+    upfront: { kind: 'Trade-off', name: 'Up-front cost and payoff', iconName: 'timer' },
   };
+
+  /**
+   * The style's rules, as their cards name them. Rule 2 has two named parts:
+   * never up, which no layering relaxes, and next lower layer, which relaxed
+   * layering widens to any lower layer.
+   */
+  const RULE_ONE = { n: 1, name: 'Exactly one layer', text: 'Every module belongs to one layer.' };
+  const RULE_THREE = { n: 3, name: 'At least two layers', text: 'Usually three or more.' };
+  const NEVER_UP = { n: 2, name: 'Never up', aside: 'the golden rule', text: 'No layer uses a layer above.' };
+  const NEXT_LOWER = { n: 2, name: 'Next lower layer', text: 'Your own layer or the one below.' };
+  const NEXT_LOWER_RELAXED = { ...NEXT_LOWER, text: 'Your own layer or the one below. If relaxed, any lower layer.' };
 
   /** Pearl Dash's four layers, from the top down. */
   const PEARL_DASH = [
     { name: 'Game rules', items: ['Squirrel', 'Pearls', 'Score', 'Levels'] },
     { name: 'Engine', items: ['Physics', 'Collisions', 'Scene drawing'] },
     { name: 'Platform', items: ['Graphics', 'Sound', 'Input'] },
-    { name: 'Drivers', items: ['Laptop GPU', 'Keyboard', 'Sound card'] },
+    { name: 'Drivers', items: ['Graphics chip', 'Keyboard', 'Sound card'] },
   ];
   /** The keys of the module views. */
   const KEY_LAYERS = [['package', 'layer'], ['module', 'module']];
-  const KEY_USES = [['package', 'layer'], ['dependency', 'allowed to use']];
-  const KEY_EXAMPLE = [['package', 'layer, uses the one below']];
+  const KEY_EXAMPLE = [['package', 'layer, may use lower layers']];
+  /** The width of a thin layer's blank tab (css/video-narration-uml-kit.css). */
+  const BLANK_TAB_W = 44;
 
   /** The stage's line id for each cue ('scene/cue' to 'scene-n'), from the storyboard. */
   function lineIds() {
@@ -67,6 +88,7 @@
 
   window.SongChoreographies = window.SongChoreographies || {};
   window.SongChoreographies.layered_style = function choreograph({ song, kit, layers }) {
+    const { fx } = window.Timeline;
     const wall = window.WallKit;
     const arch = window.ArchKit;
     const uml = window.UmlKit;
@@ -81,42 +103,62 @@
     const end = (cue) => song.line(line(cue)).end;
     const at = (cue, word) => song.mark(line(cue), word);
 
-    /** One picture from the start of cue `from` to the end of cue `to`, headed by its scene's topic. */
-    function picture(from, to = from) {
+    /**
+     * One picture from the start of cue `from` to the end of cue `to`, headed
+     * by its scene's topic, or by `headings` in turn (each after the first
+     * from its `at`).
+     */
+    function picture(from, to = from, headings = [TOPICS[from.split('/')[0]]]) {
       const node = kit.scene(content, begin(from), end(to), { exit: 'fade' });
-      wall.topicTag(node, { ...TOPICS[from.split('/')[0]], at: begin(from) + 0.15 });
+      headings.forEach((heading, i) => {
+        const tag = wall.topicTag(node, { ...heading, at: i === 0 ? begin(from) + 0.15 : heading.at });
+        if (headings[i + 1]) fx.fadeOut(tag, headings[i + 1].at - 0.3, 0.3);
+      });
       return wall.body(node);
     }
     const sticker = (parent, text, options) => kit.sticker(parent, text, { rotate: -3, ...options });
     const stamp = (parent, text, options) => kit.stamp(parent, text, { shake: false, from: 1.8, ...options });
-    /** Rule n's card; `full` adds its one-line statement. */
-    const rule = (parent, n, { full = false, ...options }) => arch.rule(parent, { n, name: RULES[n].name, text: full ? RULES[n].text : undefined, ...options });
+    /** A rule's own definition card, with its number; `full` adds its one-line statement. */
+    const rule = (parent, spec, { full = false, ...options }) => arch.rule(parent, { n: spec.n, name: spec.name, text: full ? spec.text : undefined, ...options });
+    /**
+     * A card that refers back to a rule, or to one named part of Rule 2, by
+     * its name alone: only a rule's definition card carries its number.
+     */
+    const ruleRef = (parent, spec, { full = false, ...options }) => arch.rule(parent, { name: spec.name, text: full ? spec.text : undefined, ...options });
+    /** Rule 2 in its two named parts; card.parts[0] is never up, card.parts[1] next lower layer. */
+    const ruleTwo = (parent, { relaxed = false, ...options }) => arch.rule(parent, { n: 2, parts: [NEVER_UP, relaxed ? NEXT_LOWER_RELAXED : NEXT_LOWER], ...options });
 
     /**
      * Pearl Dash's layers at the standard place on the right, in a module
      * view frame whose key sits at its bottom: bodies at 86, 176, 266, 356.
      */
-    function pearlDash(parent, { x = 480, y = 54, w = 456, at: when, floors = PEARL_DASH, step = 0.15, key = KEY_LAYERS, frameAt } = {}) {
+    function pearlDash(parent, { x = 480, y = 54, w = 456, h = 50, gap = 8, at: when, floors = PEARL_DASH, step = 0.15, key = KEY_LAYERS, frameAt } = {}) {
       uml.frame(parent, { view: 'module', x: x - 32, y: y - 44, w: w + 46, h: 448, key, keyAt: 'bottom', at: frameAt ?? when - 0.1 });
-      return ls.building(parent, { x, y, w, h: 50, gap: 8, at: when, step, floors });
+      return ls.building(parent, { x, y, w, h, gap, at: when, step, floors });
+    }
+    /** The middle of the gap between layer i's body and layer i + 1's. */
+    const gapMid = (house, i) => (house.bottom(i) + house.top(i + 1)) / 2;
+    /**
+     * An allowed-to-use dependency between neighboring layers, straight
+     * through the gap between them at `x` (by default `lane` steps left of
+     * the stack's right end).
+     */
+    function useArrow(parent, house, from, to, { x, lane = 0, kind = 'dependency', ...options }) {
+      const across = x ?? house.x + house.w - 70 - lane * 90;
+      const [upper, lower] = from < to ? [from, to] : [to, from];
+      const ends = [house.bottom(upper), house.top(lower)];
+      const points = from < to ? [[across, ends[0]], [across, ends[1]]] : [[across, ends[1]], [across, ends[0]]];
+      return uml.connector(parent, { points, kind, ...options });
     }
     /**
-     * An allowed-to-use dependency from layer `from` to layer `to`: between
-     * neighbors it runs through the gap between them, `lane` steps left of
-     * the stack's right end; a longer one, or one drawn `outside`, runs
-     * outside the stack on `side`, `lane` steps out.
+     * A dependency that skips layers, straight down the lane at `x` beside
+     * the shorter layers it passes, from the bottom of layer `from` to the
+     * top of layer `to`, or to its tab where the lane meets a thin layer's tab.
      */
-    function useArrow(parent, house, from, to, { lane = 0, side = 'left', outside = false, kind = 'dependency', ...options }) {
-      if (Math.abs(to - from) === 1 && !outside) {
-        const x = house.x + house.w - 70 - lane * 90;
-        const [upper, lower] = from < to ? [from, to] : [to, from];
-        const ends = [house.bottom(upper), house.top(lower)];
-        const points = from < to ? [[x, ends[0]], [x, ends[1]]] : [[x, ends[1]], [x, ends[0]]];
-        return uml.connector(parent, { points, kind, ...options });
-      }
-      const edge = side === 'left' ? house.x : house.x + house.w;
-      const out = side === 'left' ? edge - 16 - lane * 12 : edge + 16 + lane * 12;
-      return uml.connector(parent, { points: [[edge, house.mid(from)], [out, house.mid(from)], [out, house.mid(to)], [edge, house.mid(to)]], kind, ...options });
+    function skipArrow(parent, house, from, to, { x, kind = 'dependency', ...options }) {
+      const onTab = house.tab === uml.BLANK_TAB && x < house.left(to) + BLANK_TAB_W;
+      const target = house.top(to) - (onTab ? house.tab : 0);
+      return uml.connector(parent, { points: [[x, house.bottom(from)], [x, target]], kind, ...options });
     }
 
     // ----------------------------------------------------------------
@@ -194,7 +236,7 @@
 
     // ----------------------------------------------------------------
     // Rules: the stack as a module view, who may use whom, callbacks,
-    // strictness, and tiers in an allocation view
+    // strictness, and tiers
     // ----------------------------------------------------------------
 
     function stack() {
@@ -228,7 +270,7 @@
       const house2 = pearlDash(c, { at: begin(translate) + 0.1, step: 0.05 });
       // Each layer's request sits level with its layer, in one column, tied to the layer by a dotted
       // line and handed down to the next request by an arrow.
-      const requests = [['jump()', 'jump'], ['push(squirrel, up)', 'push'], ['draw(sprite, x, y)', 'draw'], ['3 GPU commands', 'commands']];
+      const requests = [['jump()', 'jump'], ['push(squirrel, up)', 'push'], ['draw(sprite, x, y)', 'draw'], ['3 chip commands', 'commands']];
       const chip = { x: 40, w: 300, half: 18 };
       requests.forEach(([text, word], i) => {
         arch.tag(c, { x: chip.x, y: house2.mid(i) - chip.half, w: chip.w, text, mono: true, tone: 'gold', at: at(translate, word) });
@@ -245,60 +287,90 @@
       const predict = 'allowed/predict_upward';
       const cost = 'allowed/upward_cost';
       const a = picture(uses, cost);
-      const house = pearlDash(a, { at: begin(uses) + 0.1, step: 0.05, key: [['package', 'layer'], ['dependency', 'may use'], ['banned', 'may not use']] });
-      [0, 1, 2].forEach((i) => useArrow(a, house, i, i + 1, { at: at(uses, 'dashed') + i * 0.15 }));
+      // Lower layers and wider gaps than elsewhere, so an arrow between two layers has room to be struck out.
+      const house = pearlDash(a, { h: 44, gap: 20, at: begin(uses) + 0.1, step: 0.05, key: [['package', 'layer'], ['dependency', 'may use'], ['forbidden', 'may not use']] });
+      const downX = house.x + house.w - 36;
+      [0, 1, 2].forEach((i) => useArrow(a, house, i, i + 1, { x: downX, at: at(uses, 'dashed') + i * 0.15 }));
+      // The relation's type, named once where it first appears, beside its arrow, clear of the next layer's tab.
+      uml.label(a, { x: downX - 10 - 186, y: gapMid(house, 1) - 13, text: 'allowed to use', at: at(uses, 'dashed') + 0.6 });
       wall.listCard(a, { x: 24, y: 60, w: 410, title: 'Allowed to use', text: 'Which layers may use which: each dashed arrow.', iconName: 'arrowDown', at: at(uses, 'allowed'), until: begin(rules) + 0.2 });
       wall.listCard(a, { x: 24, y: 236, w: 410, title: 'A uses B', text: 'A is correct only if B is present and correct.', iconName: 'link', at: at(uses, 'module'), until: begin(rules) + 0.2 });
 
-      // The three rules arrive as their cue begins and stay up through the prediction and its answer.
-      const cards = [1, 2, 3].map((n, i) => rule(a, n, { full: true, x: 24, y: 8 + i * 112, w: 410, at: begin(rules) + 0.3 + i * 0.3 }));
-      wall.lit(cards[1], [[begin(why), end(why)], [at(cost, 'violates'), end(cost)]]);
+      // The three rules arrive as the narrator names them and stay up through the prediction and its
+      // answer; a note says what the books call them.
+      const one = rule(a, RULE_ONE, { full: true, x: 24, y: 6, w: 410, at: at(rules, 'exactly') - 0.3 });
+      const two = ruleTwo(a, { x: 24, y: 93, w: 410, at: at(rules, 'never') - 0.3 });
+      rule(a, RULE_THREE, { full: true, x: 24, y: 284, w: 410, at: at(rules, 'least') - 0.3 });
+      // The lesson's word for what architects call constraints, said once where the rules first appear.
+      arch.tag(a, { x: 24, y: 380, text: 'These rules are the style’s constraints', tone: 'gold', at: at(rules, 'rules'), until: begin(why) });
+
+      // Each reason lights the rule it explains, in the order of the cards.
+      wall.lit(one, [[at(why, 'exactly'), at(why, 'never')]]);
+      wall.lit(two.parts[0], [[at(why, 'never'), at(why, 'next')], [at(cost, 'violates'), end(cost)]]);
+      wall.lit(two.parts[1], [[at(why, 'next'), end(why)]]);
       wall.listCard(a, {
-        x: 24, y: 348, w: 410, title: 'Why these rules?', iconName: 'question', at: begin(why) + 0.2, until: end(why),
-        items: [{ text: 'A layer sees only the interface below', at: at(why, 'interface') }, { text: 'Changes inside stay hidden', at: at(why, 'hidden') }, { text: 'Lower layers serve any program', at: at(why, 'reuse') }],
+        x: 24, y: 371, w: 410, title: 'Why these rules?', at: begin(why) + 0.2, until: end(why),
+        items: [
+          { text: 'A module on four levels fits no rule', at: at(why, 'apply') },
+          { text: 'Lower layers serve any program', at: at(why, 'reuse') },
+          { text: 'Changes hide behind the interface', at: at(why, 'hidden') },
+        ],
       });
 
-      kit.sticker(a, 'Collision!', { x: 24, y: 352, at: at(predict, 'touched'), until: end(predict), variant: 'gold', iconName: 'sparkle', rotate: 4 });
-      useArrow(a, house, 1, 0, { lane: 2, tone: 'red', at: at(predict, 'import') });
-      arch.tag(a, { x: 24, y: 406, text: '«use»: engine imports score.py?', mono: true, tone: 'red', at: at(predict, 'import') });
-      wall.slot(a, { x: 24, y: 450, w: 300, h: 66, text: 'Allowed?', at: at(predict, 'predict'), until: begin(cost) + 0.2 });
+      // The proposed import: a red dependency up through the first gap, its type beside it.
+      const upX = house.x + house.w - 250;
+      kit.sticker(a, 'Collision!', { x: 24, y: 374, at: at(predict, 'touched'), until: end(predict), variant: 'gold', iconName: 'sparkle', rotate: 4 });
+      useArrow(a, house, 1, 0, { x: upX, tone: 'red', at: at(predict, 'import') });
+      uml.label(a, { x: upX + 24, y: gapMid(house, 0) - 13, text: 'use', tone: 'red', at: at(predict, 'import') + 0.2 });
+      arch.tag(a, { x: 24, y: 428, text: 'Engine imports score.py?', tone: 'red', at: at(predict, 'import'), until: begin(cost) + 0.2 });
+      wall.slot(a, { x: 24, y: 474, w: 300, h: 50, text: 'Allowed?', at: at(predict, 'predict'), until: begin(cost) + 0.2 });
 
-      stamp(a, 'Never up', { x: 40, y: 452, at: at(cost, 'upward'), color: 'red', rotate: -5, small: true });
-      sticker(a, 'A cycle', { x: 24, y: 350, at: at(cost, 'cycle'), variant: 'red', iconName: 'loop' });
-      arch.tag(a, { x: 180, y: 356, text: 'Each depends on the other', tone: 'red', at: at(cost, 'cycle') + 0.2 });
-      arch.tag(a, { x: 250, y: 488, text: 'Second game: can’t reuse it', tone: 'red', at: at(cost, 'reuse') });
+      // The answer: never up forbids it, so the arrow is struck out; what it would have cost.
+      arch.cross(a, { x: upX, y: gapMid(house, 0) + 6, size: 28, at: at(cost, 'violates') }).classList.add('ls-cross');
+      sticker(a, 'A cycle', { x: 24, y: 374, at: at(cost, 'cycle'), variant: 'red', iconName: 'loop' });
+      arch.tag(a, { x: 24, y: 430, text: 'Each depends on the other', tone: 'red', at: at(cost, 'cycle') + 0.2 });
+      arch.tag(a, { x: 24, y: 480, text: 'Second game: can’t reuse it', tone: 'red', at: at(cost, 'reuse') });
     }
 
     function callbacks() {
       const callback = 'callbacks/callback';
       const notUses = 'callbacks/not_uses';
       const a = picture(callback, notUses);
-      // A module view with the two layers that matter opened up: the game's handler class inside Game rules,
-      // the engine's interface inside Engine. Platform and Drivers stay closed below them.
-      uml.frame(a, { view: 'module', x: 8, y: 6, w: 944, h: 470, key: [['package', 'layer'], ['interface', 'class, interface'], ['realize', 'implements'], ['control', 'run-time call']], at: begin(callback) + 0.05 });
-      // Each class sits inside its layer's body with room around it; its operation fits one line.
+      // A module view with the two layers that matter opened up: the game's handler class inside Game
+      // rules; the engine's interface and the Engine class that calls it inside Engine. Platform and
+      // Drivers stay closed below, one under the other, as vertical order is the relation.
+      uml.frame(a, { view: 'module', x: 8, y: 6, w: 944, h: 470, key: [['package', 'layer'], ['interface', 'class'], ['realize', 'implements'], ['control', 'call'], ['association', 'association']], at: begin(callback) + 0.05 });
       const x = 420;
       const w = 516;
-      const box = { x: 612, w: 300, handlerY: 96, handlerBottom: 186, listenerY: 266 };
-      ls.floor(a, { x, y: 82, w, h: 130, name: 'Game rules', at: begin(callback) + 0.1 });
-      ls.floor(a, { x, y: 252, w, h: 140, name: 'Engine', at: begin(callback) + 0.15 });
-      ls.floor(a, { x, y: 428, w: 244, h: 40, name: 'Platform', tone: 'thin', at: begin(callback) + 0.2 });
-      ls.floor(a, { x: x + 272, y: 428, w: 244, h: 40, name: 'Drivers', tone: 'thin', at: begin(callback) + 0.25 });
-      uml.classBox(a, { x: box.x, y: box.handlerY, w: box.w, name: 'PearlHandler', lines: ['on_collision(a, b)'], at: at(callback, 'implementation') });
-      uml.classBox(a, { x: box.x, y: box.listenerY, w: box.w, name: 'CollisionListener', stereotype: 'interface', lines: ['on_collision(a, b)'], at: at(callback, 'interface') });
-      uml.connector(a, { from: [box.x + 260, box.handlerBottom], to: [box.x + 260, box.listenerY], kind: 'realize', at: at(callback, 'registers') });
-      arch.tag(a, { x: 24, y: 70, text: 'The engine defines the interface', tone: 'cyan', at: at(callback, 'defines') });
-      arch.tag(a, { x: 24, y: 120, text: 'The game registers a handler', at: at(callback, 'registers') });
+      ls.floor(a, { x, y: 78, w, h: 94, name: 'Game rules', at: begin(callback) + 0.1 });
+      ls.floor(a, { x, y: 248, w, h: 116, name: 'Engine', at: begin(callback) + 0.15 });
+      ls.floor(a, { x, y: 384, w, h: 30, name: 'Platform', tone: 'thin', at: begin(callback) + 0.2 });
+      ls.floor(a, { x, y: 434, w, h: 30, name: 'Drivers', tone: 'thin', at: begin(callback) + 0.25 });
+      const handler = { x: 590, y: 83, w: 330, bottom: 166 };
+      const contract = { x: 436, y: 253, w: 260 };
+      const engine = { x: 740, y: 268, w: 180 };
+      const realizeX = 620;
+      const callX = 890;
+      uml.classBox(a, { x: engine.x, y: engine.y, w: engine.w, name: 'Engine', lines: ['step()'], at: begin(callback) + 0.3 });
+      uml.classBox(a, { x: contract.x, y: contract.y, w: contract.w, name: 'CollisionListener', stereotype: 'interface', lines: ['on_collision(a, b)'], at: at(callback, 'interface') });
+      // The engine holds the listeners registered with it.
+      uml.connector(a, { from: [engine.x, 308], to: [contract.x + contract.w, 308], kind: 'association', at: at(callback, 'interface') + 0.3 });
+      uml.classBox(a, { x: handler.x, y: handler.y, w: handler.w, name: 'PearlHandler', lines: ['on_collision(a, b)'], at: at(callback, 'implementation') });
+      uml.connector(a, { from: [realizeX, handler.bottom], to: [realizeX, contract.y], kind: 'realize', at: at(callback, 'registers') });
+      uml.callout(a, { x: 24, y: 104, w: 330, text: 'The game registers a handler', to: [handler.x, 122], at: at(callback, 'registers') + 0.2 });
+      uml.callout(a, { x: 24, y: 290, w: 360, text: 'The engine defines the interface', to: [contract.x, 308], at: at(callback, 'defines') });
       arch.readout(a, {
-        x: 24, y: 180, w: 300, label: 'Pearl Dash', iconName: 'gamepad', at: at(callback, 'touches'),
+        x: 24, y: 210, w: 300, label: 'Pearl Dash', iconName: 'gamepad', at: at(callback, 'touches'),
         values: [{ at: -1, text: 'Score 1,240' }, { at: at(callback, 'invokes'), text: 'Score 1,250', state: 'ok' }],
       });
-      // At run time the engine calls up into whatever was registered.
-      uml.connector(a, { from: [box.x + 70, box.listenerY], to: [box.x + 70, box.handlerBottom], kind: 'flow', tone: 'cyan', at: at(callback, 'invokes') - 0.2 });
-      arch.token(a, { kind: 'event', path: [[box.x + 70, box.listenerY - 8], [box.x + 70, box.handlerBottom + 10]], at: at(callback, 'invokes'), duration: 0.6, until: at(callback, 'invokes') + 1.2 });
+      // At run time the engine's step() calls up into whatever was registered.
+      uml.connector(a, { from: [callX, engine.y], to: [callX, handler.bottom], kind: 'flow', tone: 'cyan', at: at(callback, 'invokes') - 0.2 });
+      arch.token(a, { kind: 'event', path: [[callX, engine.y - 8], [callX, handler.bottom + 10]], at: at(callback, 'invokes'), duration: 0.6, until: at(callback, 'invokes') + 1.2 });
 
-      arch.tag(a, { x: 24, y: 260, text: 'Control: up, at run time', tone: 'cyan', at: at(notUses, 'control') });
-      arch.tag(a, { x: 24, y: 310, text: 'Dependency: down, game → engine', tone: 'gold', at: at(notUses, 'dependency') });
+      // Each relation named on its own arrow, in the gap between the two layers.
+      const labelY = (handler.bottom + 6 + 248 - 32) / 2 - 13;
+      uml.label(a, { x: callX - 10 - 186, y: labelY, text: '«call» at run time', stereotype: false, at: at(notUses, 'control') });
+      uml.label(a, { x: realizeX - 10 - 300, y: labelY, text: 'implements: the dependency', stereotype: false, at: at(notUses, 'dependency') });
       sticker(a, 'Two different relations', { x: 24, y: 400, at: at(notUses, 'relations'), variant: 'green', iconName: 'check' });
     }
 
@@ -306,40 +378,50 @@
       const strictness = 'relaxed/strictness';
       const a = picture(strictness);
       const names = PEARL_DASH.map(({ name }) => ({ name }));
-      const stackOf = (x, when) => ls.building(a, { x, y: 104, w: 210, h: 46, gap: 12, thin: true, at: when, step: 0.08, floors: names });
-      uml.frame(a, { view: 'module', title: 'strict layering', x: 8, y: 6, w: 452, h: 438, key: [['package', 'layer'], ['dependency', 'may use']], keyAt: 'bottom', at: at(strictness, 'strict') - 0.3 });
+      const stackAt = (x, floors, when) => ls.building(a, { x, y: 104, w: 340, h: 46, gap: 12, thin: true, at: when, step: 0.08, floors });
+      uml.frame(a, { view: 'module', title: 'strict layering', x: 8, y: 6, w: 452, h: 438, key: [['package', 'layer'], ['dependency', 'may use'], ['bridge', 'bridge']], keyAt: 'bottom', at: at(strictness, 'strict') - 0.3 });
       uml.frame(a, { view: 'module', title: 'relaxed layering', x: 500, y: 6, w: 452, h: 438, key: [['package', 'layer'], ['dependency', 'may use']], keyAt: 'bottom', at: at(strictness, 'relaxed') - 0.3 });
-      const strict = stackOf(232, at(strictness, 'strict'));
-      const relax = stackOf(600, at(strictness, 'relaxed'));
+      // Strict: a shorter Engine leaves the lane its documented bridge runs down.
+      const strict = stackAt(96, [names[0], { ...names[1], w: 170 }, names[2], names[3]], at(strictness, 'strict'));
+      // Relaxed: offset layers leave a straight lane for every skip to any lower layer.
+      const relax = stackAt(560, [names[0], { ...names[1], w: 160 }, { ...names[2], x: 610, w: 210 }, names[3]], at(strictness, 'relaxed'));
       arch.tag(a, { x: 24, y: 52, text: 'Only the layer directly below', at: at(strictness, 'directly') });
       arch.tag(a, { x: 516, y: 52, text: 'Any lower layer', at: at(strictness, 'any') });
       [0, 1, 2].forEach((i) => {
-        useArrow(a, strict, i, i + 1, { at: at(strictness, 'directly') + i * 0.1 });
-        useArrow(a, relax, i, i + 1, { at: at(strictness, 'relaxed') + 0.3 + i * 0.1 });
+        useArrow(a, strict, i, i + 1, { x: 200, at: at(strictness, 'directly') + i * 0.1 });
+        useArrow(a, relax, i, i + 1, { x: 670, at: at(strictness, 'relaxed') + 0.3 + i * 0.1 });
       });
-      // Relaxed layering allows any lower layer, so its skips need no exception.
-      useArrow(a, relax, 0, 2, { side: 'right', at: at(strictness, 'any') });
-      useArrow(a, relax, 1, 3, { side: 'right', lane: 1, at: at(strictness, 'any') + 0.2 });
-      // A strict design's documented exception: a bridge outside the strict stack's other side.
-      useArrow(a, strict, 0, 2, { side: 'left', tone: 'red', at: at(strictness, 'platform') });
-      arch.tag(a, { x: 24, y: strict.mid(1) - 18, text: 'Layer bridging', tone: 'red', at: at(strictness, 'bridging') });
-      wall.note(a, { x: 470, y: 452, w: 330, text: 'Each bridge: a documented exception', tone: 'cyan', tilt: -1, at: at(strictness, 'documented') });
+      skipArrow(a, relax, 0, 2, { x: 780, at: at(strictness, 'any') });
+      skipArrow(a, relax, 1, 3, { x: 585, at: at(strictness, 'any') + 0.15 });
+      skipArrow(a, relax, 0, 3, { x: 870, at: at(strictness, 'any') + 0.3 });
+      // A strict design's documented exception: an amber bridge, its type beside it.
+      skipArrow(a, strict, 0, 2, { x: 410, tone: 'amber', at: at(strictness, 'platform') });
+      uml.label(a, { x: 286, y: strict.mid(1) - 13, text: 'bridge', tone: 'amber', at: at(strictness, 'platform') + 0.2 });
+      wall.note(a, { x: 24, y: 452, w: 396, text: 'Layer bridging: a documented exception', tone: 'cyan', tilt: -1, at: at(strictness, 'documented') });
 
+      // Layers in a module view beside tiers in an allocation view: each tier a dashed boundary
+      // around the machine whose running components it groups.
       const tiers = 'relaxed/tiers';
       const b = picture(tiers);
-      uml.frame(b, { view: 'module', x: 8, y: 6, w: 436, h: 470, key: [['package', 'layer']], keyAt: 'bottom', at: at(tiers, 'layers2') - 0.4 });
-      arch.tag(b, { x: 24, y: 52, text: 'Layers: code, grouped before it runs', at: at(tiers, 'module') });
-      const code = ls.building(b, { x: 60, y: 100, w: 300, h: 46, gap: 12, thin: true, at: at(tiers, 'layers2'), step: 0.08, floors: names });
-      uml.frame(b, { view: 'allocation', x: 476, y: 6, w: 476, h: 470, key: [['node', 'node'], ['component', 'component'], ['link', 'network']], keyAt: 'bottom', at: at(tiers, 'tier') - 0.6 });
-      arch.tag(b, { x: 492, y: 52, text: 'Tiers: running components, by machine', at: at(tiers, 'tier') });
-      uml.node(b, { x: 496, y: 120, w: 196, h: 200, name: 'Console', stereotype: 'device', at: at(tiers, 'console') });
-      uml.component(b, { x: 508, y: 186, w: 172, h: 120, name: 'Pearl Dash', lines: ['all four layers'], at: at(tiers, 'console') + 0.2 });
-      arch.wire(b, { from: [code.x + code.w + 14, code.mid(1)], to: [490, 220], tone: 'gold', at: at(tiers, 'console') + 0.3 });
-      uml.node(b, { x: 740, y: 120, w: 196, h: 200, name: 'Server', stereotype: 'device', at: at(tiers, 'machine') });
-      uml.component(b, { x: 752, y: 186, w: 172, h: 86, name: 'Leaderboard', at: at(tiers, 'machine') + 0.2 });
-      uml.connector(b, { from: [692, 220], to: [740, 220], kind: 'link', at: at(tiers, 'machine') + 0.3 });
-      uml.label(b, { x: 650, y: 336, text: 'network', at: at(tiers, 'machine') + 0.4 });
-      arch.tag(b, { x: 492, y: 400, text: 'Talk within a tier or to the next', at: at(tiers, 'adjacent') });
+      uml.frame(b, { view: 'module', x: 8, y: 6, w: 236, h: 470, key: [['package', 'layer']], keyAt: 'bottom', at: at(tiers, 'layers2') - 0.4 });
+      arch.tag(b, { x: 22, y: 52, text: 'Layers group code', at: at(tiers, 'module') });
+      const code = ls.building(b, { x: 34, y: 100, w: 180, h: 46, gap: 12, thin: true, at: at(tiers, 'layers2'), step: 0.08, floors: names });
+      uml.frame(b, { view: 'allocation', title: 'where components run', x: 268, y: 6, w: 684, h: 470, key: [['node', 'node'], ['component', 'component'], ['boundary', 'tier'], ['link', 'network']], keyAt: 'bottom', at: at(tiers, 'tier') - 0.6 });
+      arch.tag(b, { x: 284, y: 52, text: 'Tiers group running components, by machine', at: at(tiers, 'tier') });
+      uml.boundary(b, { x: 370, y: 100, w: 226, h: 280, name: 'Presentation', stereotype: 'tier', at: at(tiers, 'console') - 0.2 });
+      uml.node(b, { x: 384, y: 152, w: 196, h: 210, name: 'Console', stereotype: 'device', at: at(tiers, 'console') });
+      uml.component(b, { x: 396, y: 214, w: 172, name: 'Pearl Dash', lines: ['all four layers'], variant: 'compact', at: at(tiers, 'console') + 0.2 });
+      // The layers' code runs together on the console.
+      const runY = (code.bottom(1) + code.top(2)) / 2;
+      arch.wire(b, { from: [code.x + code.w + 10, runY], to: [384, runY], tone: 'gold', at: at(tiers, 'console') + 0.3 });
+      uml.label(b, { x: 280, y: runY - 34, text: 'run on', stereotype: false, at: at(tiers, 'console') + 0.5 });
+      uml.boundary(b, { x: 736, y: 100, w: 204, h: 280, name: 'Logic', stereotype: 'tier', at: at(tiers, 'machine') - 0.2 });
+      uml.node(b, { x: 750, y: 152, w: 172, h: 210, name: 'Server', stereotype: 'device', at: at(tiers, 'machine') });
+      uml.component(b, { x: 760, y: 214, w: 152, name: 'Leaderboard', variant: 'compact', at: at(tiers, 'machine') + 0.2 });
+      // The communication path joins the nodes' outer faces; its name sits just above it, between the tiers.
+      uml.connector(b, { from: [592, 330], to: [750, 330], kind: 'link', at: at(tiers, 'machine') + 0.3 });
+      uml.label(b, { x: 603, y: 298, text: 'network', at: at(tiers, 'machine') + 0.4 });
+      arch.tag(b, { x: 284, y: 394, text: 'Talk within a tier or to the next', at: at(tiers, 'adjacent') });
 
       // A three-tier system as a C&C view with tier boundaries laid over it, presentation on top, each
       // tier calling only the one below; beside it, what a tier is and what tiers buy.
@@ -354,7 +436,7 @@
         x: 24, y: 252, w: 370, title: 'Each tier, on its own', iconName: 'check', at: at(threeTiers, 'secured'),
         items: [{ text: 'Secured' }, { text: 'Scaled', at: at(threeTiers, 'scaled') }, { text: 'Changed', at: at(threeTiers, 'changed') }],
       });
-      uml.frame(c, { view: 'cnc', title: 'three-tier leaderboard', x: 416, y: 6, w: 536, h: 470, key: [['component', 'component'], ['boundary', 'tier'], ['call', 'call']], keyAt: 'bottom', at: begin(threeTiers) + 0.1 });
+      uml.frame(c, { view: 'cnc', fullName: true, x: 416, y: 6, w: 536, h: 470, key: [['component', 'component'], ['boundary', 'tier'], ['call', 'call']], keyAt: 'bottom', at: begin(threeTiers) + 0.1 });
       const tier = { x: 434, w: 500, h: 104, pitch: 140, top: 48 };
       const part = { w: 220, h: 84, inset: 20, drop: 10 };
       const tierSpecs = [
@@ -383,43 +465,47 @@
     function port() {
       const predict = 'port/predict_console';
       const portability = 'port/portability';
-      const a = picture(predict, portability);
+      // The prediction keeps a neutral heading; the quality it promotes is named with the answer.
+      const a = picture(predict, portability, [HEADINGS.console, { ...TOPICS.port, at: begin(portability) + 0.15 }]);
       const consoleFloors = [
         ...PEARL_DASH.slice(0, 2).map((spec) => ({ ...spec, states: [{ at: at(portability, 'rules'), state: 'same' }] })),
         { ...PEARL_DASH[2], until: at(portability, 'writes') },
         { ...PEARL_DASH[3], until: at(portability, 'drivers') },
       ];
       const house = pearlDash(a, { at: begin(predict) + 0.1, step: 0.05, floors: consoleFloors });
-      ls.floor(a, { x: 480, y: house.top(2), w: 456, h: 50, name: 'Platform for the console', items: ['draw()', 'play()', 'buttons()'], at: at(portability, 'writes'), how: 'slide', states: [{ at: at(portability, 'writes'), state: 'new' }] });
-      ls.floor(a, { x: 480, y: house.top(3), w: 456, h: 50, name: 'Console drivers', items: ['Console GPU', 'Buttons', 'Speaker'], at: at(portability, 'drivers'), how: 'slide', states: [{ at: at(portability, 'drivers'), state: 'new' }] });
-      ls.gameScreen(a, { x: 24, y: 24, w: 360, device: 'console', at: at(predict, 'console') });
+      // The console's layers keep the modules' names; their operations are the interface, written beside them.
+      ls.floor(a, { x: 480, y: house.top(2), w: 456, h: 50, name: 'Platform for the console', items: PEARL_DASH[2].items, at: at(portability, 'writes'), how: 'slide', states: [{ at: at(portability, 'writes'), state: 'new' }] });
+      ls.floor(a, { x: 480, y: house.top(3), w: 456, h: 50, name: 'Console drivers', items: ['Graphics chip', 'Buttons', 'Speaker'], at: at(portability, 'drivers'), how: 'slide', states: [{ at: at(portability, 'drivers'), state: 'new' }] });
       // The change request itself, so the question has its facts on screen.
       wall.listCard(a, {
-        x: 24, y: 196, w: 360, title: 'The publisher’s request', text: 'Pearl Dash on our handheld console, by spring', iconName: 'envelope',
+        x: 24, y: 24, w: 380, title: 'The publisher’s request', text: 'Pearl Dash on our handheld console, by spring', iconName: 'envelope',
         at: at(predict, 'request'), until: begin(portability) + 0.2,
         items: [{ text: 'Different graphics chip', at: at(predict, 'graphics') }, { text: 'Buttons, not a keyboard', at: at(predict, 'buttons') }, { text: 'Different sound system', at: at(predict, 'sound') }],
       });
+      ls.gameScreen(a, { x: 24, y: 340, w: 360, device: 'console', at: at(predict, 'console') });
       [0, 1, 2, 3].forEach((i) => wall.slot(a, { x: 396, y: house.top(i), w: 44, h: 50, text: '?', at: at(predict, 'predict') + i * 0.1, until: begin(portability) + 0.2 }));
-      rule(a, 2, { x: 24, y: 262, w: 380, at: begin(portability) + 0.3 });
-      arch.quality(a, { x: 24, y: 326, w: 300, name: 'Portability', at: at(portability, 'portability') });
-      arch.tag(a, { x: 24, y: 400, text: 'Same interface: draw(), play(), buttons()', at: at(portability, 'interface') });
-      stamp(a, 'Unchanged', { x: 60, y: 446, at: at(portability, 'unaffected'), color: 'green', rotate: -4, small: true });
+      ruleRef(a, NEXT_LOWER, { x: 24, y: 24, w: 410, at: begin(portability) + 0.3 });
+      arch.quality(a, { x: 24, y: 82, w: 200, name: 'Portability', at: at(portability, 'portability') });
+      // The stamp judges the two green layers, so it sits beside them, between their rows.
+      stamp(a, 'Unchanged', { x: 206, y: 158, at: at(portability, 'unaffected'), color: 'green', rotate: -4, small: true });
+      wall.note(a, { x: 24, y: 252, w: 386, text: 'Same interface: draw(), play(), buttons()', tone: 'cyan', tilt: -1, at: at(portability, 'interface') });
 
       const modify = 'port/modify_reuse';
       const b = picture(modify);
       uml.frame(b, { view: 'module', x: 8, y: 6, w: 944, h: 344, key: [['package', 'layer'], ['module', 'module'], ['dependency', 'may use']], at: begin(modify) + 0.05 });
       ls.floor(b, { x: 40, y: 82, w: 400, h: 50, name: 'Pearl Dash rules', items: ['Squirrel', 'Pearls'], at: begin(modify) + 0.1 });
       ls.floor(b, { x: 520, y: 82, w: 400, h: 50, name: 'Skateboard racer rules', items: ['Board', 'Laps'], at: at(modify, 'skateboard'), how: 'slide', states: [{ at: at(modify, 'skateboard'), state: 'new' }] });
-      ls.floor(b, { x: 40, y: 182, w: 880, h: 50, name: 'Engine', items: ['Faster physics', 'Collisions', 'Scene drawing'], at: begin(modify) + 0.2, states: [{ at: at(modify, 'replacing'), state: 'changed' }] });
+      // The engine gets new insides behind the same interface (yellow, as a replaced part; pink means inhibited).
+      ls.floor(b, { x: 40, y: 182, w: 880, h: 50, name: 'Engine', items: ['Faster physics', 'Collisions', 'Scene drawing'], at: begin(modify) + 0.2, states: [{ at: at(modify, 'replacing'), state: 'new' }] });
       ls.floor(b, { x: 40, y: 282, w: 880, h: 50, name: 'Platform', items: ['Graphics', 'Sound', 'Input'], at: begin(modify) + 0.3 });
       uml.connector(b, { from: [360, 132], to: [360, 182], kind: 'dependency', at: begin(modify) + 0.3 });
       uml.connector(b, { from: [840, 132], to: [840, 182], kind: 'dependency', at: at(modify, 'skateboard') + 0.3 });
       uml.connector(b, { from: [600, 232], to: [600, 282], kind: 'dependency', at: begin(modify) + 0.35 });
-      rule(b, 2, { x: 24, y: 366, w: 260, at: begin(modify) + 0.3 });
+      ruleRef(b, NEXT_LOWER, { x: 24, y: 366, w: 260, at: begin(modify) + 0.3 });
       arch.quality(b, { x: 300, y: 366, w: 300, name: 'Modifiability', at: at(modify, 'modifiability') });
-      arch.tag(b, { x: 24, y: 442, text: 'Never up', tone: 'red', at: at(modify, 'never') });
-      arch.quality(b, { x: 300, y: 432, w: 300, name: 'Reusability', at: at(modify, 'reusability') });
-      wall.note(b, { x: 660, y: 380, w: 276, text: 'The lower the layer, the more programs share it', tone: 'cyan', tilt: -1, at: at(modify, 'unchanged') });
+      ruleRef(b, NEVER_UP, { x: 24, y: 446, w: 260, at: at(modify, 'never') });
+      arch.quality(b, { x: 300, y: 446, w: 300, name: 'Reusability', at: at(modify, 'reusability') });
+      wall.note(b, { x: 640, y: 368, w: 276, text: 'The lower the layer, the more programs share it', tone: 'cyan', tilt: -1, at: at(modify, 'unchanged') });
 
       const everyday = 'port/everyday';
       const c = picture(everyday);
@@ -443,14 +529,17 @@
       const teamTest = 'port/team_test';
       const d = picture(teamTest);
       const house4 = pearlDash(d, { at: begin(teamTest) + 0.1, step: 0.05 });
-      // Each team's card is level with the layer it works in, from the layer's tab to the foot of its body.
+      // Each team's card is level with the layer it works in.
       [['Gameplay', 'gamepad', 0, 'gameplay'], ['Engine team', 'gear', 1, 'engine'], ['Sound', 'chip', 2, 'sound']].forEach(([role, iconName, i, word]) => {
-        arch.card(d, { x: 200, y: house4.top(i) - house4.tab, w: 232, h: house4.tab + house4.h, title: role, iconName, at: at(teamTest, word) });
+        arch.card(d, { x: 232, y: house4.top(i) - 7, w: 200, title: role, iconName, at: at(teamTest, word) });
       });
-      arch.readout(d, { x: 24, y: 346, w: 408, label: 'Game rules on a fake engine', iconName: 'check', at: at(teamTest, 'tested'), values: [{ at: -1, text: 'Test passed, no console', state: 'ok' }] });
-      // Side by side, one height, though only one name wraps.
-      arch.quality(d, { x: 24, y: 432, w: 199, h: 88, name: 'Division of labor', at: at(teamTest, 'labor') });
-      arch.quality(d, { x: 233, y: 432, w: 199, h: 88, name: 'Testability', at: at(teamTest, 'testability') });
+      // Exactly one layer lets each team own its layer: a benefit, not a quality attribute.
+      ruleRef(d, RULE_ONE, { x: 24, y: 8, w: 410, at: at(teamTest, 'labor') - 0.3 });
+      wall.note(d, { x: 24, y: 120, w: 176, text: 'Benefit: division of labor', tone: 'green', tilt: -1, at: at(teamTest, 'labor') });
+      arch.readout(d, { x: 24, y: 340, w: 408, label: 'Game rules on a fake engine', iconName: 'check', at: at(teamTest, 'tested'), values: [{ at: -1, text: 'Test passed, no console', state: 'ok' }] });
+      // The game rules see only the engine's interface, so a fake engine can stand in for it.
+      ruleRef(d, NEXT_LOWER, { x: 24, y: 406, w: 410, at: at(teamTest, 'testability') - 0.3 });
+      arch.quality(d, { x: 24, y: 464, w: 260, name: 'Testability', at: at(teamTest, 'testability') });
     }
 
     // ----------------------------------------------------------------
@@ -466,17 +555,21 @@
         steps: [{ at: -1, ms: 12.5 }, { at: at(overhead, 'crosses'), ms: 15.8 }, { at: at(overhead, 'storm'), ms: 21.3 }],
       });
       [0, 1, 2, 3, 4].forEach((i) => arch.token(a, { kind: 'event', path: [[house.x - 18, house.mid(0)], [house.x - 18, house.mid(3)]], at: at(overhead, 'crosses') + i * 0.6, duration: 1.6, until: at(overhead, 'crosses') + i * 0.6 + 1.6 }));
-      rule(a, 2, { x: 24, y: 220, w: 380, at: begin(overhead) + 0.4 });
+      ruleRef(a, NEXT_LOWER, { x: 24, y: 220, w: 380, at: begin(overhead) + 0.4 });
       arch.tag(a, { x: 24, y: 290, text: 'Every request crosses all four layers', tone: 'gold', at: at(overhead, 'crosses') });
       arch.tag(a, { x: 24, y: 336, text: 'Each layer translates and copies', tone: 'gold', at: at(overhead, 'translates') });
       arch.quality(a, { x: 24, y: 400, w: 330, name: 'Performance', effect: 'inhibited', at: at(overhead, 'drops') });
 
+      // The bridge runs straight down a lane beside the shorter Engine and Platform, in a bridge's amber.
       const bridge = 'costs/bridge';
-      const b = picture(bridge);
-      const house2 = pearlDash(b, { at: begin(bridge) + 0.1, step: 0.05, key: [['package', 'layer'], ['banned', 'bridge']] });
-      useArrow(b, house2, 0, 3, { side: 'left', tone: 'red', at: at(bridge, 'bypasses') });
-      rule(b, 2, { x: 24, y: 24, w: 380, at: begin(bridge) + 0.2, crackAt: at(bridge, 'bends') });
-      arch.tag(b, { x: 24, y: 96, text: 'Bridge: pearl drawing → laptop driver', tone: 'red', at: at(bridge, 'bypasses') + 0.2 });
+      const b = picture(bridge, bridge, [HEADINGS.bridge]);
+      const bridgeFloors = [PEARL_DASH[0], { ...PEARL_DASH[1], w: 432 }, { ...PEARL_DASH[2], w: 432 }, PEARL_DASH[3]];
+      const house2 = pearlDash(b, { at: begin(bridge) + 0.1, step: 0.05, floors: bridgeFloors, key: [['package', 'layer'], ['bridge', 'bridge']] });
+      const laneX = house2.x + house2.w - 12;
+      skipArrow(b, house2, 0, 3, { x: laneX, tone: 'amber', at: at(bridge, 'bypasses') });
+      uml.label(b, { x: laneX - 10 - 112, y: gapMid(house2, 0) - 13, text: 'bridge', tone: 'amber', at: at(bridge, 'bypasses') + 0.2 });
+      ruleRef(b, NEXT_LOWER, { x: 24, y: 24, w: 380, at: begin(bridge) + 0.2, crackAt: at(bridge, 'bends') }).classList.add('ls-rule--edge-crack');
+      arch.tag(b, { x: 24, y: 96, text: 'Bridge: pearl drawing → laptop driver', tone: 'amber', at: at(bridge, 'bypasses') + 0.2 });
       ls.frameBar(b, {
         x: 24, y: 150, w: 400, at: begin(bridge) + 0.2,
         steps: [{ at: -1, ms: 21.3 }, { at: at(bridge, 'recovers'), ms: 15.1 }],
@@ -485,14 +578,15 @@
       arch.quality(b, { x: 24, y: 384, w: 280, name: 'Performance', at: at(bridge, 'trades') + 0.2 });
       arch.quality(b, { x: 24, y: 456, w: 280, name: 'Portability', effect: 'inhibited', at: at(bridge, 'trades') });
 
-      const upfront = 'costs/upfront';
-      const c = picture(upfront);
       // The cost in design effort against the qualities it pays for; the payoff side sinks.
+      const upfront = 'costs/upfront';
+      const c = picture(upfront, upfront, [HEADINGS.upfront]);
       arch.tradeoff(c, {
         x: 480, y: 130, beam: 520, h: 220, at: begin(upfront) + 0.1,
         pans: [
           {
-            w: 330, title: 'Up-front cost', effect: 'inhibited', at: at(upfront, 'cost'),
+            // A cost, not an inhibited quality: the pan keeps the cost side's color but drops the quality arrow.
+            w: 330, title: 'Up-front cost', effect: 'inhibited', iconName: 'timer', at: at(upfront, 'cost'),
             items: [{ name: 'Choose the levels', at: at(upfront, 'levels') }, { name: 'Design each interface', at: at(upfront, 'interface') }, { name: 'Enforce the rules', at: at(upfront, 'enforce') }],
           },
           {
@@ -510,7 +604,7 @@
       const a = picture(leak);
       pearlDash(a, {
         at: begin(leak) + 0.1, step: 0.05,
-        floors: [PEARL_DASH[0], PEARL_DASH[1], { name: 'Platform for the console', items: ['draw()', 'play()', 'buttons()'], states: [{ at: at(leak, 'slowly'), state: 'changed' }] }, { name: 'Console drivers', items: ['Console GPU', 'Buttons', 'Speaker'] }],
+        floors: [PEARL_DASH[0], PEARL_DASH[1], { name: 'Platform for the console', items: PEARL_DASH[2].items, states: [{ at: at(leak, 'slowly'), state: 'changed' }] }, { name: 'Console drivers', items: ['Graphics chip', 'Buttons', 'Speaker'] }],
       });
       ls.gameScreen(a, {
         x: 24, y: 24, w: 400, device: 'console', at: begin(leak) + 0.2,
@@ -522,19 +616,20 @@
       const granularity = 'leaks/granularity';
       const b = picture(granularity);
       uml.frame(b, { view: 'module', x: 8, y: 6, w: 944, h: 448, key: [['package', 'layer']], at: at(granularity, 'few') - 0.4 });
-      ls.building(b, { x: 30, y: 104, w: 300, h: 84, gap: 12, at: at(granularity, 'few'), step: 0.1, floors: [{ name: 'Game rules' }, { name: 'Engine and platform', tone: 'wide' }] });
-      arch.tag(b, { x: 30, y: 52, text: 'Too few', tone: 'red', at: at(granularity, 'few') });
+      ls.building(b, { x: 24, y: 104, w: 320, h: 84, gap: 12, at: at(granularity, 'few'), step: 0.1, floors: [{ name: 'Game rules' }, { name: 'Engine and platform', tone: 'wide' }] });
+      arch.tag(b, { x: 24, y: 52, text: 'Too few', tone: 'red', at: at(granularity, 'few') });
+      // Six layers, as the narration counts them, where four would do.
       ls.building(b, {
-        x: 360, y: 96, w: 240, h: 28, gap: 4, thin: true, at: at(granularity, 'many'), step: 0.06,
-        floors: ['Rules', 'Logic', 'Engine', 'Scene', 'Render', 'Platform', 'Bridge', 'Drivers'].map((name) => ({ name })),
+        x: 368, y: 100, w: 240, h: 34, gap: 8, thin: true, at: at(granularity, 'many'), step: 0.06,
+        floors: ['Rules', 'Logic', 'Engine', 'Scene', 'Platform', 'Drivers'].map((name) => ({ name })),
       });
-      arch.tag(b, { x: 360, y: 52, text: 'Too many', tone: 'red', at: at(granularity, 'many') });
+      arch.tag(b, { x: 368, y: 52, text: 'Too many', tone: 'red', at: at(granularity, 'many') });
       ls.building(b, {
-        x: 640, y: 104, w: 290, h: 48, gap: 6, at: at(granularity, 'choose'), step: 0.1,
+        x: 632, y: 104, w: 300, h: 48, gap: 6, at: at(granularity, 'choose'), step: 0.1,
         floors: [{ name: 'Game rules', items: ['Gameplay ideas'] }, { name: 'Engine', items: ['Engine tech'] }, { name: 'Platform', items: ['Device APIs'] }, { name: 'Drivers', items: ['Hardware'] }],
       });
-      arch.tag(b, { x: 640, y: 52, text: 'Just right', tone: 'green', at: at(granularity, 'choose') });
-      wall.note(b, { x: 300, y: 462, w: 380, text: 'Split where things change for different reasons, at different speeds', tone: 'cyan', tilt: -1, at: at(granularity, 'reasons') });
+      arch.tag(b, { x: 632, y: 52, text: 'Just right', tone: 'green', at: at(granularity, 'choose') });
+      wall.note(b, { x: 24, y: 462, w: 380, text: 'Split where things change for different reasons, at different speeds', tone: 'cyan', tilt: -1, at: at(granularity, 'reasons') });
     }
 
 
@@ -543,16 +638,16 @@
     // ----------------------------------------------------------------
 
     /**
-     * A real system as a small module view: its layers from the top down,
-     * each drawn without its contents, in a frame titled with the system and
-     * its domain; adjacency means "may use the layer below", as the key says.
-     * `lit` marks the layer the cue is about; the rule that makes the style
-     * fit is written underneath. Returns the stack's geometry.
+     * A real system as a small module view: its «layer» packages from the top
+     * down, each drawn without its contents, in a frame titled with the
+     * system and its domain; adjacency means a layer may use lower layers, as
+     * the key says. `lit` marks the layer the cue is about; the rule that
+     * makes the style fit is written underneath. Returns the stack's geometry.
      */
-    function example(parent, { x, title, layers: names, lit = -1, why, whyTone = 'green', w = 412, indent = 24, key = KEY_EXAMPLE, at }) {
+    function example(parent, { x, title, layers: names, lit = -1, why, whyTone = 'green', w = 430, indent = 14, gap = 12, key = KEY_EXAMPLE, at }) {
       uml.frame(parent, { view: 'module', title, x, y: 6, w: 460, h: 472, key, keyAt: 'bottom', at });
       const house = ls.building(parent, {
-        x: x + indent, y: 50, w, h: 34, gap: 12, thin: true, at: at + 0.15, step: 0.12,
+        x: x + indent, y: 50, w, h: 34, gap, slim: true, at: at + 0.15, step: 0.12,
         floors: names.map((name, i) => ({ name, states: i === lit ? [{ at: at + 0.9, state: 'new' }] : [] })),
       });
       if (why) arch.tag(parent, { x: x + 16, y: 404, text: why, tone: whyTone, at: at + 0.9 });
@@ -563,23 +658,20 @@
       const net = 'in_practice/network_phone';
       const a = picture(net);
       example(a, { x: 8, title: 'TCP/IP · networking', layers: ['Application: HTTP, DNS', 'Transport: TCP, UDP', 'Internet: IP', 'Link'], lit: 3, why: 'Apps reuse transports; links change below', at: at(net, 'message') - 0.4 });
-      example(a, { x: 492, title: 'Android · phones', layers: ['Apps', 'Java API framework', 'Native libraries, runtime', 'Hardware abstraction layer', 'Linux kernel'], lit: 3, why: 'New chip: a new HAL module', at: at(net, 'android') });
+      example(a, { x: 492, title: 'Android · phones', layers: ['Apps', 'Java API framework', 'Native libraries, runtime', 'Hardware abstraction layer', 'Linux kernel'], lit: 3, why: 'New chip: a new hardware module', at: at(net, 'android') });
 
       const browser = 'in_practice/browser_database';
       const b = picture(browser);
-      // The rejected upward include runs outside the stack on the right, struck through; the note
-      // on how content still reaches up leads around the stack's left side.
+      // The rejected upward include runs straight up through the gap between content and chrome, struck
+      // out; how content does reach up is written underneath, naming the layer it is about.
       const chrome = example(b, {
-        x: 8, title: 'Chrome · browsers', layers: ['chrome: browser features', 'content: web platform', 'Blink and lower libraries'],
-        w: 316, indent: 44, key: [['package', 'layer'], ['banned', 'may not use']], why: 'A build check rejects upward includes', whyTone: 'red', at: at(browser, 'chromes') - 0.4,
+        x: 8, title: 'Chrome · browsers', layers: ['chrome: browser features', 'content: web platform', 'Blink and lower libraries'], gap: 56,
+        key: [['package', 'layer'], ['forbidden', 'may not use']], why: 'A build check rejects upward includes', whyTone: 'red', at: at(browser, 'chromes') - 0.4,
       });
-      useArrow(b, chrome, 1, 0, { outside: true, side: 'right', lane: 1, tone: 'red', at: at(browser, 'upward') });
-      arch.cross(b, { x: chrome.x + chrome.w + 28, y: (chrome.mid(0) + chrome.mid(1)) / 2, size: 28, at: at(browser, 'rejects') });
-      const noteY = chrome.bottom(2) + 30;
-      uml.callout(b, {
-        x: chrome.x - 8, y: noteY, w: 364, text: 'Up only via content’s interfaces', at: at(browser, 'interfaces'),
-        via: [[chrome.x - 22, noteY + 18], [chrome.x - 22, chrome.mid(1)]], to: [chrome.x, chrome.mid(1)],
-      });
+      const upX = chrome.x + chrome.w - 80;
+      useArrow(b, chrome, 1, 0, { x: upX, tone: 'red', at: at(browser, 'upward') });
+      arch.cross(b, { x: upX, y: gapMid(chrome, 0) + 8, size: 30, at: at(browser, 'rejects') }).classList.add('ls-cross');
+      arch.tag(b, { x: 24, y: 354, text: 'content reports up only via its interfaces', at: at(browser, 'interfaces') });
       example(b, { x: 492, title: 'SQLite · databases', layers: ['Interface', 'SQL compiler', 'Virtual machine', 'B-tree', 'Pager', 'OS interface (VFS)'], lit: 5, why: 'Swap the bottom to port, or to test', at: at(browser, 'sqlite') });
 
       const car = 'in_practice/car_spacecraft';
@@ -590,12 +682,12 @@
 
       const thread = 'in_practice/common_thread';
       const d = picture(thread);
-      rule(d, 2, { full: true, x: 24, y: 20, w: 600, at: begin(thread) + 0.3 });
+      ruleRef(d, NEXT_LOWER, { full: true, x: 24, y: 20, w: 600, at: begin(thread) + 0.3 });
       wall.listCard(d, {
         x: 24, y: 140, w: 512, title: 'Change stays below the interface', iconName: 'stack', at: at(thread, 'interface'),
         items: [{ text: 'Internet: the link layer' }, { text: 'Android: the hardware abstraction layer' }, { text: 'SQLite: the OS interface' }, { text: 'NASA: the platform layer' }],
       });
-      // Rule 2 as these systems keep it: never up, but skipping down, or documented exceptions.
+      // Next lower layer as these systems keep it: never up, but skipping down, or documented exceptions.
       wall.listCard(d, {
         x: 560, y: 140, w: 376, title: 'Relaxed in practice', iconName: 'link', at: at(thread, 'relax'),
         items: [
@@ -620,41 +712,47 @@
       arch.token(a, { kind: 'event', path: [[house.x - 18, house.mid(0)], [house.x - 18, house.mid(3)]], at: at(problem, 'virtual'), duration: 1.6 });
       arch.tag(a, { x: 30, y: 420, text: 'Ball of mud: rewrite to port', tone: 'red', at: at(problem, 'rewriting') });
 
+      // The rule cards in the order the narrator names them, Rule 2 in its two named parts.
       const rules = 'summary/recap_rules';
       const b = picture(rules);
-      [[1, 'exactly'], [2, 'below'], [3, 'above']].forEach(([n, word], i) => {
-        rule(b, n, { full: true, x: 24, y: 14 + i * 104, w: 560, at: at(rules, word) - 0.6 });
-      });
-      sticker(b, 'Never up', { x: 640, y: 40, at: at(rules, 'nothing'), variant: 'red', iconName: 'arrowUp' });
-      ls.socket(b, { x: 24, y: 340, w: 400, name: 'CollisionListener', text: 'news goes up by callback', at: at(rules, 'callbacks') });
-      wall.note(b, { x: 620, y: 320, w: 316, text: 'Layers: code, a module view. Tiers: running components.', tone: 'cyan', tilt: -1, at: at(rules, 'tiers') });
+      rule(b, RULE_ONE, { full: true, x: 24, y: 14, w: 560, at: at(rules, 'exactly') - 0.4 });
+      const two = ruleTwo(b, { relaxed: true, x: 24, y: 104, w: 560, at: at(rules, 'never') - 0.4 });
+      wall.lit(two.parts[0], [[at(rules, 'never'), at(rules, 'next')]]);
+      wall.lit(two.parts[1], [[at(rules, 'next'), at(rules, 'least')]]);
+      rule(b, RULE_THREE, { full: true, x: 24, y: 320, w: 560, at: at(rules, 'least') - 0.4 });
+      ls.socket(b, { x: 24, y: 410, w: 320, name: 'CollisionListener', text: 'on_collision(a, b)', at: at(rules, 'callbacks') });
+      arch.tag(b, { x: 362, y: 444, text: 'News goes up by callback', at: at(rules, 'callbacks') + 0.3 });
+      wall.note(b, { x: 620, y: 104, w: 300, text: 'Layers group code. Tiers group running components.', tone: 'cyan', tilt: -1, at: at(rules, 'tiers') });
 
-      // Each quality arrives as the narration names it, with the rule it follows from and why.
+      // Each quality arrives as the narration names it, with the part of the rules it follows from and
+      // why; the up-front cost is a cost, not a quality, and stands apart from the pans.
       const tradeoff = 'summary/recap_tradeoff';
       const costs = 'summary/recap_costs';
       const c = picture(tradeoff, costs);
+      // Each pan item is three lines (name, rule chips, why), so the balance hangs high; the cost, the
+      // bridge, and the closing question stack under the shorter pan, clear of the post's foot.
       arch.tradeoff(c, {
-        x: 480, y: 76, beam: 480, h: 330, at: begin(tradeoff) + 0.1,
+        x: 480, y: 40, beam: 480, at: begin(tradeoff) + 0.1,
         pans: [
           {
             w: 440, title: 'Promoted', at: begin(tradeoff) + 0.2,
             items: [
-              { name: 'Portability', rule: 'Rule 2', why: 'A new platform changes only the bottom layers', at: at(tradeoff, 'portability') },
-              { name: 'Modifiability', rule: 'Rule 2', why: 'A change stays behind a layer’s interface', at: at(tradeoff, 'modifiability') },
-              { name: 'Reusability', rule: 'Rule 2', why: 'Lower layers never depend on upper ones', at: at(tradeoff, 'reusability') },
+              { name: 'Portability', rule: 'Next lower layer', why: 'A new platform changes only the bottom layers', at: at(tradeoff, 'portability') },
+              { name: 'Modifiability', rule: 'Next lower layer', why: 'A change stays behind a layer’s interface', at: at(tradeoff, 'modifiability') },
+              { name: 'Reusability', rule: 'Never up', why: 'Lower layers never depend on upper ones', at: at(tradeoff, 'reusability') },
             ],
           },
           {
             w: 440, title: 'Inhibited', effect: 'inhibited', at: begin(costs) + 0.1,
             items: [
-              { name: 'Performance', rule: 'Rule 2', why: 'Every request crosses every layer', at: at(costs, 'performance') },
-              { name: 'Up-front cost', why: 'Levels and interfaces come before features', at: at(costs, 'front') },
+              { name: 'Performance', rule: 'Next lower layer', why: 'Every request crosses every layer', at: at(costs, 'performance') },
             ],
           },
         ],
       });
-      arch.tag(c, { x: 270, y: 14, text: 'A bridge: performance back, portability lost', tone: 'red', at: at(costs, 'bridge') });
-      sticker(c, 'Is that import from the next lower layer?', { x: 300, y: 480, at: at(costs, 'import'), variant: 'gold', iconName: 'question' });
+      arch.card(c, { x: 500, y: 254, w: 440, title: 'Cost: up front', sub: 'Levels and interfaces come before features', iconName: 'timer', at: at(costs, 'front') });
+      arch.tag(c, { x: 478, y: 384, text: 'A bridge: performance back, portability lost', tone: 'amber', at: at(costs, 'bridge') });
+      sticker(c, 'Does that import point up?', { x: 500, y: 434, at: at(costs, 'import'), variant: 'gold', iconName: 'question' });
     }
 
     intro();

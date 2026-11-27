@@ -2,10 +2,12 @@
   A video narration's stage element, empty until js/video-narration-stage.js
   builds the topic's choreography on it: its topic, its theme, and the sheet
   lettering a theme may print (the drafting room's title block). Drifting
-  dust is off: a lesson's backdrop holds still so it never distracts. Shared by
-  the stage frame and the printable notes. Params: topic.
+  dust is off: a lesson's backdrop holds still so it never distracts. The
+  sheet's lettering yields: a word the picture covers hides, so no fragment
+  reads as a label. Shared by the stage frame and the printable notes.
+  Params: topic.
 {%- endcomment -%}
 {%- assign vn_stage_lesson = site.data.video_narrations[include.topic] -%}
-<div class="stage" id="stage" aria-hidden="true" data-topic="{{ include.topic }}" data-theme="{{ vn_stage_lesson.animation.theme | default: 'studio' }}" data-dust="off"
+<div class="stage" id="stage" aria-hidden="true" data-topic="{{ include.topic }}" data-theme="{{ vn_stage_lesson.animation.theme | default: 'studio' }}" data-dust="off" data-lettering="yield"
   {%- if vn_stage_lesson.animation.sheet_title %} data-sheet-title="{{ vn_stage_lesson.animation.sheet_title | escape }}"{% endif %}
   {%- if vn_stage_lesson.animation.sheet_subtitle %} data-sheet-subtitle="{{ vn_stage_lesson.animation.sheet_subtitle | escape }}"{% endif %}></div>

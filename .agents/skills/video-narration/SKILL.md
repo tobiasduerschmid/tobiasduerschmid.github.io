@@ -139,7 +139,15 @@ layers", not "a new device". A metaphor can introduce an idea, but the
 recap and trade-off pictures name each quality and its reason plainly, in
 the order the picture lists them. An architecture lesson's trade-off is
 `ArchKit.tradeoff`: pans colored like the quality cards, each quality with
-the rule it follows from and why.
+the rules it follows from and why.
+
+Refer to a rule by its name, never its number, in speech and on screen:
+chips, captions, tags, heading strips, notes, and quiz feedback say
+"Independence" or "Never up", not "Rule 1" or "Rules 1, 2". Only the rule's
+own definition keeps its number: the card where the rule is defined and
+the sentence that defines it ("Rule one, independence: ..."). Cards that
+show a rule again elsewhere are named only (`ArchKit.rule` without `n`), and
+a trade-off item passes `rule` as one name or an array of names.
 
 Write each cue as 30 to 55 spoken words. Give every cue a `visual` that
 describes what is on screen, including its words, because it is the screen's

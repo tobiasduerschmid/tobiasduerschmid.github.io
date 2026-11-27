@@ -45,22 +45,29 @@ monolith:
       Even instant saves wouldn't help: the first song still waits until every step has finished all
       500 songs.
 filters:
-  question: In the pipes-and-filters style, which statement describes a pipe?
+  question: >-
+    In a pipes-and-filters system, a team adds a part between two filters that drops duplicate
+    photos and sorts the rest by time. What is that part?
   options:
-    - It holds every item until the filter before it has finished all its input
-    - It carries items one way, in order, without changing them
-    - It decides which filter should get each item next
+    - A pipe, since it sits between two filters
+    - A filter, since it changes and reorders the items
+    - A pipe, as long as it buffers only a few photos
+    - A filter, since it holds photos in a buffer
   correct_index: 1
   explanation: >-
-    A pipe carries the stream from one filter's output to the next filter's input, one way, in
-    order, and never changes it; it may hold a few items in a buffer.
+    A pipe carries the stream from one filter's output port to the next filter's input port: one
+    way, in order, and unchanged. A part that drops duplicates and reorders the rest transforms the
+    stream, so it is a filter.
   option_feedback:
     0: >-
-      That's the batch script's folder. A pipe holds only a few items in a buffer and passes each one
-      on, in order.
+      Sitting between two filters doesn't make a part a pipe. A pipe only carries items, in order
+      and unchanged; this part removes some and reorders the others.
     2: >-
-      A pipe joins one filter's output to the next filter's input. It carries items along that
-      connection; it doesn't pick where they go.
+      A pipe's small buffer holds items without changing them. Dropping and reordering items is a
+      transformation, which is a filter's job.
+    3: >-
+      Pipes buffer items too, so holding photos doesn't make a part a filter. What makes this one a
+      filter is that it changes the stream.
 alone:
   question: >-
     A log-cleaning pipeline's filter needs a threshold setting. Which way keeps that filter reusable
@@ -181,23 +188,24 @@ limits:
       Translating a code needs only the line at hand, so each line moves on right away.
 in_practice:
   question: >-
-    A video site's upload pipeline decodes each frame, draws a watermark, picks the best thumbnail
-    among all frames, then encodes and publishes. Which step bends the incremental rule?
+    In a pipes-and-filters graphics pipeline, the last stage reads and writes a depth buffer that
+    earlier draws also wrote. Which benefit does that stage give up?
   options:
-    - Drawing the watermark on each frame
-    - Picking the best thumbnail among all frames
-    - Encoding each frame for the web
-  correct_index: 1
+    - Being moved or reused without that buffer
+    - Passing each pixel on as soon as it arrives
+    - Keeping data flowing one way only
+  correct_index: 0
   explanation: >-
-    To pick the best thumbnail, that filter must see every frame before it can emit anything, just
-    as sort and the genome report wait for all their input.
+    Sharing a buffer bends independence: the stage depends on state outside its pipes, so it can be
+    moved or reused only together with that buffer. A bent rule costs exactly the benefit it
+    provided.
   option_feedback:
-    0: >-
-      The watermark goes onto each frame as it arrives, so that filter can pass every frame on right
-      away.
+    1: >-
+      Each pixel still moves on as soon as the stage finishes it. The loss comes from the shared
+      buffer: the stage now depends on state outside its pipes.
     2: >-
-      Each frame can be encoded and passed on as soon as it arrives; nothing waits for the whole
-      video.
+      Reading what earlier draws wrote sends nothing back to an earlier stage, so the flow stays one
+      way. The loss comes from sharing state outside the pipes.
 summary:
   questions:
     - question: >-
@@ -283,8 +291,8 @@ summary:
       correct_index: 2
       explanation: >-
         Filters share no state, so no single place knows which episodes made it out and which were
-        still in pipes. A restart can repeat work, the way it could post some photos twice. Error
-        handling is the style's weak spot.
+        still in pipes. A restart can repeat work, the way it could post some photos twice.
+        Robustness, here error handling, is the style's weak spot.
       option_feedback:
         0: >-
           Pipes keep items in order. The trouble is that nobody knows which episodes already made it

@@ -47,6 +47,7 @@
       "cues": {
         "script": {},
         "midnight": {},
+        "one_loop": {},
         "change_requests": {}
       }
     },
@@ -99,6 +100,7 @@
       },
       "cues": {
         "order_matters": {},
+        "cut_logo": {},
         "roles": {}
       }
     },

@@ -20,7 +20,7 @@ questions:
         Layer bridging is calling a non-adjacent *lower* layer downward. The problem here is *direction* (upward), not *distance*. An adapter on the Domain layer would still leave the repository depending upward.
       3: |
         Tiering is about runtime deployment to machines. The violation is at design time in the import graph — moving to separate processes only converts an in-process upward dependency into a cross-process upward dependency.
-    explanation: "**The golden rule of layered architecture: lower layers must never use upper layers.** Even a single upward import creates a cycle that invalidates the layering and ruins portability. The standard escape for upward notification is callbacks / Observer / Pub-Sub: the upper layer registers a listener; the lower layer triggers it without holding a static reference to anything above. Control flows upward; compile-time dependency stays downward."
+    explanation: "**The golden rule of layered architecture, also called never up: lower layers must never use upper layers.** Even a single upward import creates a cycle that invalidates the layering and ruins portability. The standard escape for upward notification is callbacks / Observer / Pub-Sub: the upper layer registers a listener; the lower layer triggers it without holding a static reference to anything above. Control flows upward; compile-time dependency stays downward."
 
   - id: 2
     difficulty: advanced

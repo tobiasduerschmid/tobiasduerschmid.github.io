@@ -187,30 +187,18 @@
 .ps-phone-words { display: flex; flex-direction: column; font-size: 20px; font-weight: 700; line-height: 1.2; }
 .ps-phone-words b { font-size: 22px; font-weight: 900; }
 
-/* Boxes on one bus: who talks to whom is not drawn. */
-.ps-bus { position: absolute; display: flex; flex-direction: column; gap: 26px; }
-.ps-bus-line { display: block; height: 10px; border-radius: 5px; background: var(--vn-line); }
-.ps-bus-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.ps-bus-box {
-  position: relative;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: #fdfbf3;
-  color: #0b0f1a;
-  font-size: 20px;
-  font-weight: 800;
-  text-align: center;
-  box-shadow: var(--vn-paper-shadow);
-}
-/* Each box joins the bus by its own short line, in the gap between them. */
-.ps-bus-box::after { content: ''; position: absolute; left: 50%; width: 4px; height: 26px; margin-left: -2px; background: var(--vn-line); }
-.ps-bus-row--above .ps-bus-box::after { top: 100%; }
-.ps-bus-row--below .ps-bus-box::after { bottom: 100%; }
-
-/* A subscriber, too small to name: one person on a paper disk. */
-.ps-sub-chip { position: absolute; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: #fdfbf3; color: #0b4a7a; box-shadow: var(--vn-paper-shadow); }
-.ps-sub-chip svg { width: 32px; height: 32px; }
-
-/* The topic as its own process, and an event trace in code type. */
-.ps-process { border-style: dashed; }
+/* An event trace in code type. */
 .ps-trace .sk-list-item { font-family: var(--font-mono); font-size: 20px; font-weight: 600; }
+
+/* An object in the Observer comparison's object diagram: UML underlines an
+   instance's name, which tells it apart from a class or a component. */
+.ps-object .uk-name { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+
+/* A label given a width wraps into balanced lines: a quality's rules, named
+   as on their cards, can be longer than one line. */
+.ak-label.ps-label-wrap { white-space: normal; text-wrap: balance; }
+
+/* The recap's pans list each quality's rules by name, in chips under the
+   quality; tighter rows keep both full pans on the stage. */
+.ak-pan-item { padding-top: 5px; }
+.ak-pan-item + .ak-pan-item { margin-top: 5px; }

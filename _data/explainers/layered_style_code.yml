@@ -63,7 +63,8 @@ java:
 
             @Override
             public void onCollision(Body a, Body b) {
-                if (a.is("squirrel") && b.is("pearl"))
+                if ((a.is("squirrel") && b.is("pearl"))
+                        || (a.is("pearl") && b.is("squirrel")))
                     score.add(10);
             }
 
@@ -71,7 +72,7 @@ java:
                 engine.register(new PearlHandler(score));
             }
         }
-      focus: {imports: [3, 4, 5], implements: [7], handler: [13, 14, 15, 16], start: [18, 19, 20]}
+      focus: {imports: [3, 4, 5], implements: [7], handler: [13, 14, 15, 16, 17], start: [19, 20, 21]}
     callbacks_engine:
       files:
         - file: engine/CollisionListener.java
@@ -112,13 +113,15 @@ cpp:
       source: |
         #pragma once
         #include "engine/engine.h"
+        #include "game/score.h"
 
         class PearlHandler : public CollisionListener {
         public:
             explicit PearlHandler(Score& score) : score(score) {}
 
             void onCollision(Body& a, Body& b) override {
-                if (a.is("squirrel") && b.is("pearl"))
+                if ((a.is("squirrel") && b.is("pearl"))
+                        || (a.is("pearl") && b.is("squirrel")))
                     score.add(10);
             }
 
@@ -129,7 +132,7 @@ cpp:
         inline void start(Engine& engine, PearlHandler& pearls) {
             engine.registerListener(pearls);
         }
-      focus: {imports: [2], implements: [4], handler: [8, 9, 10, 11], start: [17, 18, 19]}
+      focus: {imports: [2], implements: [5], handler: [9, 10, 11, 12, 13], start: [19, 20, 21]}
     callbacks_engine:
       file: engine/engine.h
       source: |
@@ -164,14 +167,17 @@ typescript:
     callbacks_game:
       file: game/pearl-rules.ts
       source: |
-        import type { Body } from "../engine";
-        import { CollisionListener, Engine } from "../engine";
+        import type {
+          Body, CollisionListener, Engine,
+        } from "../engine";
+        import type { Score } from "./score";
 
         export class PearlHandler implements CollisionListener {
           constructor(private score: Score) {}
 
           onCollision(a: Body, b: Body): void {
-            if (a.is("squirrel") && b.is("pearl"))
+            if ((a.is("squirrel") && b.is("pearl"))
+                || (a.is("pearl") && b.is("squirrel")))
               this.score.add(10);
           }
         }
@@ -179,11 +185,13 @@ typescript:
         export function start(engine: Engine, score: Score) {
           engine.register(new PearlHandler(score));
         }
-      focus: {imports: [1, 2], implements: [4], handler: [7, 8, 9, 10], start: [13, 14, 15]}
+      focus: {imports: [1, 2, 3], implements: [6], handler: [9, 10, 11, 12, 13], start: [16, 17, 18]}
     callbacks_engine:
       file: engine/index.ts
       source: |
         import type { Body } from "./body";
+
+        export type { Body };
 
         export interface CollisionListener {
           onCollision(a: Body, b: Body): void;
@@ -202,4 +210,4 @@ typescript:
                 listener.onCollision(a, b);
           }
         }
-      focus: {imports: [1], contract: [3, 4, 5], register: [10, 11, 12], call: [17]}
+      focus: {imports: [1, 3], contract: [5, 6, 7], register: [12, 13, 14], call: [19]}

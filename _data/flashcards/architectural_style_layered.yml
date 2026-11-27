@@ -17,13 +17,13 @@ cards:
   - id: 3
     difficulty: basic
     question: "What is the **golden rule** of layered architecture?"
-    answer: "A **lower layer must never use an upper layer**. Upward dependencies create cycles, invalidate the layering, and turn the architecture into a 'big ball of mud'."
+    answer: "A **lower layer must never use an upper layer** (never up). Upward dependencies create cycles, invalidate the layering, and turn the architecture into a 'big ball of mud'."
     explanation: "This rule has no exceptions in a clean layered system. The standard escape for upward notification is callbacks / Observer / Pub-Sub — control flows upward through a registered listener while compile-time dependency stays downward."
 
   - id: 4
     difficulty: basic
     question: "Distinguish **layers** from **tiers**."
-    answer: "**Layers** are a *module-style* concept: design-time abstraction strata in the source code (e.g., Presentation / Domain / Repository). **Tiers** are a *component-and-connector* or *allocation-style* concept: runtime deployment to separate processes or machines (e.g., app-server tier vs. database tier). One tier usually hosts multiple layers."
+    answer: "**Layers** are a *module-style* concept: design-time abstraction strata in the source code (e.g., Presentation / Domain / Repository). **Tiers** are a *component-and-connector* or *allocation-style* concept: groupings of running components, usually by the machine they run on (e.g., app-server tier vs. database tier). One tier usually hosts multiple layers."
     explanation: "This is the single most common terminology error in software architecture. Calling deployment tiers 'layers' obscures whether you control dependency direction (layers) or where things run (tiers). A single physical web server frequently runs four or more layers in one tier."
 
   - id: 5

@@ -37,7 +37,8 @@ const position = player => player.getByRole('slider', { name: 'Narration positio
 const offer = player => player.getByRole('button', { name: `See it in code: ${TITLE}` });
 const panel = player => player.getByRole('region', { name: TITLE });
 async function seek(player, seconds) {
-  await position(player).fill(String(seconds));
+  // The position slider steps in whole seconds.
+  await position(player).fill(String(Math.round(seconds)));
 }
 
 test('the offer shows only while its cue plays', async ({ page }) => {

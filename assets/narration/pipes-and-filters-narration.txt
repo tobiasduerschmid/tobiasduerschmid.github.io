@@ -2,9 +2,11 @@ Fourth quarter, rivalry game, and the stadium is shaking. Your roommate shoots f
 
 Every photo needs the same steps. Remove the noise from shooting at night. Brighten it. Crop it to the action. Blur the faces of fans in the stands, for privacy. Stamp the paper's watermark. Then publish it to the website. You're the one who keeps the photo desk's code running.
 
-Here's the photo desk's script. Step one denoises all three thousand photos and saves them in a folder. Step two reads that folder, brightens every photo, and saves another folder. And so on, until the last step uploads everything. It all lives in one file, sharing a dozen global settings.
+Here's the photo desk's script. Step one denoises all three thousand photos and saves them in a folder. Step two reads that folder, brightens every photo, and saves another. And so on, until the last step uploads everything. This design is called batch sequential. It all lives in one file, sharing a dozen global settings.
 
 The camera finishes at ten p.m., and each step takes the script twenty minutes for the whole batch, so no photo goes online until every step has finished every photo: at midnight. The second-quarter catch waits behind three thousand others, five folders fill with in-between files, and fans post blurry phone shots instead.
+
+The quick fix is one loop that sends each photo through every step before starting the next. Photos now appear early. But it's still one file with shared settings: no step can be reused, reordered, or given its own processor core. Pipes and filters, this lesson's style, offers all four.
 
 And change hurts too. The editor wants a new step that straightens tilted shots, right after the crop. The robotics club wants your denoiser for its robot's camera. Both mean surgery on one giant file, where every step reads the same global settings. You need steps that work alone and pass each photo on.
 
@@ -12,7 +14,7 @@ The pipes-and-filters style rebuilds the job as a chain of small programs called
 
 Filters are joined by pipes, the connectors of this view. A pipe carries data from one filter's output port to the next filter's input port: in one direction, in order, and unchanged. Its small buffer decouples neighboring filters, so a fast producer and a slower consumer need not proceed in lockstep.
 
-The chain begins at a source, which feeds in photos as the camera uploads them, and ends at a sink, the website gallery. In between, a filter enriches data, as Watermark adds a logo; refines it, as Denoise removes noise; or transforms it, from a raw file into a web image.
+The chain begins at a source, which feeds in photos as the camera uploads them, and ends at a sink, the website gallery. Source and sink are the system's boundary with the outside world. A chain without branches, like this one, is called a pipeline.
 
 These parts obey four rules, and each rule protects a property. Rule one, independence: filters share no state; they interact only through pipes. The global settings therefore become parameters of each filter. Because a filter depends on nothing outside its ports, it can be understood, tested, and reused in isolation.
 
@@ -20,29 +22,31 @@ Rule two, agnosticism: a filter must not know which filters come before or after
 
 Agnosticism has one precondition: neighboring filters must agree on the type of data that flows between them. Here, every pipe carries an image in one common file format. Because each filter accepts and produces that same type, any filter can follow any other, and the composition remains well formed.
 
-Rule three, incremental processing: a filter transforms each item as it arrives and passes it on immediately, rather than waiting for the complete batch. As a result, the filters run concurrently: while Watermark stamps photo one, Blur faces processes photo two, and Crop processes photo three.
+Rule three, incremental processing: a filter transforms each item as it arrives and passes it on immediately, rather than waiting for the complete batch. As a result, the filters can all work at the same time: while Watermark stamps photo one, Blur faces can process photo two, and Crop photo three.
 
 Replay game night with the pipeline. Each filter takes about half a second per photo, and the camera uploads photos as they're shot. Predict: when does the second-quarter catch reach the website now?
 
-Within seconds. The photo passes through five filters at about half a second each, and reaches the gallery while the crowd is still cheering. This is the purpose of incremental processing: it lowers the delay until the first result and keeps all five filters busy, so the line keeps pace with the camera.
+Within seconds. The photo passes through five filters at about half a second each, and reaches the gallery while the crowd is still cheering. This is the purpose of incremental processing: it lowers the delay until the first result and keeps all five filters busy, so the pipeline keeps pace with the camera.
 
-Rule four, acyclic flow: data moves in one direction, from the source to the sink, and no filter sends items back upstream. This constraint makes the pipeline easy to reason about. Its overall behavior is simply the composition of its filters: watermark of blur of crop of brighten of denoise of the raw shot.
+Rule four, acyclic flow: data moves one way, from source to sink. Streams may split at a tee and merge at a join, but never loop back upstream. Together with independence and agnosticism, this promotes understandability: the pipeline's behavior is the composition of its filters, watermark of blur of crop, and so on.
 
-Although filters are independent, their order still determines the result, because function composition is not commutative. Placing Crop after Watermark can cut the logo off the edge, just as adding one and then doubling differs from doubling and then adding one. The same filters in a different order form a different pipeline.
+Every pipe carries the same format, so any order of filters connects. But does order change the result? Predict: Watermark stamps the paper's logo in a corner, and Crop trims the edges. Does the photo come out the same if Crop runs after Watermark instead of before?
 
-The rules therefore separate two responsibilities. A filter developer implements one filter against its input and output types, without knowledge of the surrounding line. The pipeline builder selects the filters and their order. To straighten tilted shots, the builder inserts a new filter after Crop, and no existing filter is modified.
+Not necessarily. Placing Crop after Watermark can cut the logo off the edge. Although the filters are independent, their order still determines the result, because function composition is not commutative: adding one and then doubling differs from doubling and then adding one. The same filters in a different order form a different pipeline.
+
+The rules therefore separate two responsibilities. A filter developer implements one filter against its input and output types, without knowledge of the surrounding pipeline. The pipeline builder selects the filters and their order. To straighten tilted shots, the builder inserts a new filter after Crop, and no existing filter is modified.
 
 Now the consequences, each of which follows from a rule. First, reusability. The robotics club inserts your denoise filter into its own pipeline, and it works unchanged. Independence guarantees that it shares no state with your other filters, and agnosticism guarantees that it never referred to its neighbors.
 
 Second, modifiability and extensibility. Inserting Straighten required one new filter and one new pipe, and replacing Brighten with an auto-exposure filter of the same type changed nothing else, because no filter names its neighbors. Testability follows: since a filter shares no state, a test can feed it a known photo and check its output.
 
-Third, throughput, which follows from incremental processing. Because each filter passes every item on immediately, all filters work on different photos at once. In an allocation view that assigns each filter to its own processor core, the line completes up to five times as many photos per minute. The slowest filter sets the pace.
+Third, performance, measured as throughput, which follows from incremental processing: filters can work on different photos at the same time. In an allocation view that gives each filter its own processor core, the pipeline completes up to five times as many photos per minute. The slowest filter sets the pace.
 
-The same rules also inhibit some qualities. First, interactivity. The editor wants a brightness slider that updates every photo live, but each adjustment would have to travel back upstream to Brighten. Acyclic flow forbids such feedback loops: data flows only from source to sink. Interactive tools therefore fit this style poorly.
+The style also inhibits some qualities. First, interactive usability. The editor wants a brightness slider that updates every photo live, including photos already published. Each drag would send those photos from the gallery back into Brighten: a feedback loop. Acyclic flow forbids it, so interfaces that update as the user drags fit this style poorly.
 
-Second, latency. Under independence, filters share nothing except the data in the pipes, so each filter must decode the image, perform its one task, and encode a new file for the next pipe. Five filters mean five decodes and five encodes: each photo takes longer than in one program, and repeated encoding degrades quality.
+Second, performance, measured as latency. So that any filter can follow any other, every pipe carries the same file format, and each filter must decode the image, perform its one task, and encode a new file. Five filters mean five decodes and five encodes: each photo takes longer than in one program.
 
-Third, error handling. Midway through the game, one corrupted photo crashes Blur faces. Which photos have left the line, and which remain in the pipes? Under independence and agnosticism, no filter holds shared state or knows its neighbors, so no component knows the global state. A restart may publish some photos twice.
+Third, robustness: error handling. One corrupted photo crashes Blur faces. Which photos have left the pipeline, and which remain in the pipes? Under independence and agnosticism, no filter shares state or knows its neighbors, so no component knows the global state, and recovery is hard: a restart may publish some photos twice.
 
 Some computations cannot be incremental. To keep only the best shot of each burst of ten, a filter must buffer all ten before it emits one, and a sort filter must read its entire input before producing any output. Downstream filters remain idle meanwhile, and the pipeline degrades toward a batch.
 
@@ -54,12 +58,12 @@ Pipes and filters appears beyond the photo desk. In a Unix shell, agnostic one-j
 
 Elasticsearch passes every document's text through an analyzer: character filters, a tokenizer, and token filters that can lowercase and stem words. By default the same chain processes each full-text query, so a search for running shoes can find a running shoe. Fraud detectors on Apache Flink judge each card payment as it streams in.
 
-Software radios turn antenna samples into music through a channel filter, a demodulator, and an audio filter, and Guh-noo Radio has long enforced acyclic flow: its flowgraphs may contain no loops. Genomics labs run Nextflow pipelines for RNA sequencing, in which steps share no state, so each step can be tested and reused alone.
+Software radios turn antenna samples into music through a channel filter, a demodulator, and an audio filter, and G'noo Radio has long enforced acyclic flow: its flowgraphs may contain no loops. Genomics labs run Nextflow pipelines for RNA sequencing, in which steps share no state, so each step can be tested and reused alone.
 
-These systems share the workload the four rules assume: a stream of items transformed by independent steps. Where a step cannot obey them, the system bends a rule and pays for it: sort and the Q C report wait for all their input, and the graphics card's last stage reads and writes shared buffers.
+These systems share the workload the four rules assume: a stream of items transformed by independent steps. Where a step cannot obey them, the system bends a rule and pays for it: sort and the quality-control report wait for all their input, and the graphics card's last stage reads and writes shared buffers.
 
 Let's recap. The photo desk's script ran each step on all three thousand photos, saved folders of in-between files, and published nothing until midnight. Pipes and filters decomposes the job into filters, components that each perform one transformation, joined by pipes, connectors that carry a stream from a source to a sink.
 
-Four rules give the style its power: filters share no state, ignore their neighbors, pass each item on immediately, and send data one way only. Independence and agnosticism promote reusability and modifiability; incremental processing promotes throughput; and acyclic flow promotes simple reasoning: the line's behavior is the composition of its filters.
+Four rules give the style its power. Independence and agnosticism, no shared state and no named neighbors, promote reusability and testability, modifiability and extensibility. Joined by acyclic flow, they promote understandability: the pipeline's behavior is the composition of its filters. Incremental processing promotes performance, measured as throughput.
 
-The same rules inhibit three qualities. Interactivity: acyclic flow forbids feedback upstream. Latency: under independence, every filter decodes and re-encodes each item. Error handling: no filter knows the global state when one fails. Next time you write one giant loop over a list, ask: could each step be its own filter?
+The style inhibits three qualities. Interactive usability: acyclic flow forbids feedback upstream. Performance, measured as latency: every filter decodes and re-encodes the agreed format. Robustness: no component knows the global state to recover from a failure. Next time you write one giant loop over a list, ask: could each step be its own filter?

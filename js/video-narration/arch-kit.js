@@ -162,14 +162,32 @@
   // Rules and qualities: the same cards in every style's lesson
   // ------------------------------------------------------------------
 
-  /** A rule of the style: its number, its name, and the rule in a short line. `crackAt` breaks it. */
-  function rule(parent, { x, y, w = 330, n, name, text, at, until, how = 'drop', crackAt }) {
-    const node = staged(parent, 'ak-rule', x, y);
+  /**
+   * A rule of the style: its number, its name, and the rule in a short line.
+   * Only a rule's own definition card carries its number; a card that refers
+   * back to a rule later in the lesson leaves out `n` and shows the name.
+   * A rule made of named parts passes `parts` ([{ name, aside, text }])
+   * instead of a name: each part's name, with an optional `aside` (another
+   * name it goes by), over its own line. node.parts holds the parts, so a
+   * cue can light one at a time (WallKit.lit). `crackAt` breaks it.
+   */
+  function rule(parent, { x, y, w = 330, n, name, text, parts, at, until, how = 'drop', crackAt }) {
+    const node = staged(parent, `ak-rule${parts ? ' ak-rule--parts' : ''}`, x, y);
     node.style.width = `${w}px`;
     const head = el('div', 'ak-rule-head', node);
-    el('span', 'ak-rule-number', head, `Rule ${n}`);
-    el('b', 'ak-rule-name', head, name);
+    if (n !== undefined) el('span', 'ak-rule-number', head, `Rule ${n}`);
+    if (name) el('b', 'ak-rule-name', head, name);
     if (text) el('p', 'ak-rule-text', node, text);
+    if (parts) {
+      node.parts = parts.map((part) => {
+        const block = el('div', 'ak-rule-part', node);
+        const line = el('div', 'ak-rule-part-head', block);
+        el('b', 'ak-rule-name', line, part.name);
+        if (part.aside) el('span', 'ak-rule-aside', line, part.aside);
+        if (part.text) el('p', 'ak-rule-text', block, part.text);
+        return block;
+      });
+    }
     if (crackAt !== undefined) {
       const crack = svg('svg', { class: 'ak-rule-crack is-staged', viewBox: '0 0 100 40', preserveAspectRatio: 'none', 'aria-hidden': 'true' }, node);
       svg('path', { d: 'M0 22 L18 14 L30 26 L46 10 L60 24 L74 12 L86 22 L100 16' }, crack);
@@ -364,23 +382,31 @@
   /**
    * One pan of a trade-off: a card in its quality cards' color (promoted
    * green, inhibited pink) headed by its arrow and title, listing each
-   * quality by name with the rule it follows from (`rule`, e.g. 'Rule 2',
-   * optional) and, under it, why the rule yields it, in the quality's own
-   * terms. Each item arrives at its `at`, when the narration names it.
+   * quality by name with the rules it follows from (`rule`: a rule's name,
+   * or an array of names, as on the rule cards, never a rule number;
+   * optional) and, under it, why the rules yield it, in the quality's own
+   * terms. Each item arrives at its `at`, when the narration names it. A pan
+   * that weighs something other than a quality, such as a cost, passes its
+   * own `iconName` in place of the promoted or inhibited arrow.
    */
-  function tradePan(parent, { w, h, title, effect = 'promoted', items, at, how = 'pop' }) {
+  function tradePan(parent, { w, h, title, effect = 'promoted', iconName, items, at, how = 'pop' }) {
     const node = staged(parent, `ak-pan ak-pan--${effect}`, 0, 0);
     node.style.width = `${w}px`;
     if (h) node.style.minHeight = `${h}px`;
     const head = el('div', 'ak-pan-head', node);
-    el('span', 'ak-quality-icon', head).append(icon(effect === 'promoted' ? 'arrowUp' : 'arrowDown'));
+    el('span', 'ak-quality-icon', head).append(icon(iconName || (effect === 'promoted' ? 'arrowUp' : 'arrowDown')));
     el('b', 'ak-pan-title', head, title);
     const list = el('ul', 'ak-pan-items', node);
     items.forEach(({ name, rule: from, why, at: when = at }) => {
       const item = el('li', 'ak-pan-item is-staged', list);
       const line = el('span', 'ak-pan-line', item);
       el('b', 'ak-pan-name', line, name);
-      if (from) el('span', 'ak-pan-rule', line, from);
+      // One chip per rule, named as on its card, on a line under the name.
+      const rules = [].concat(from || []);
+      if (rules.length) {
+        const chips = el('span', 'ak-pan-rules', line);
+        rules.forEach((ruleName) => el('span', 'ak-pan-rule', chips, ruleName));
+      }
       if (why) el('span', 'ak-pan-why', item, why);
       fx.rise(item, when, { distance: 10, duration: 0.3 });
     });

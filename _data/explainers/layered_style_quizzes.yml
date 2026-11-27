@@ -9,23 +9,23 @@
 # `questions`.
 intro:
   question: >-
-    A campus radio app's team gets three requests. Which one is platform porting, like moving Pearl
-    Dash to the handheld console?
+    Which project raises the same question as Pearl Dash's move to the handheld console?
   options:
-    - Running the app on smart speakers with no screen and a different audio system
-    - Building a podcast app on the radio app's existing audio code
-    - Stopping teammates from breaking each other's changes in shared files
+    - A fitness app that must also run on a watch with a different sensor API
+    - A fitness app that needs a new workout type on the same phone
+    - A fitness app whose server needs more capacity
   correct_index: 0
   explanation: >-
-    Platform porting moves the same program onto a different platform, here a different audio system
-    and no screen, like Pearl Dash's console with its own graphics chip, buttons, and sound system.
+    Pearl Dash must run on a device with a different graphics chip, buttons, and sound system. A
+    watch with a different sensor API raises the same question: how much of the code must change to
+    run the same program on different hardware?
   option_feedback:
     1: >-
-      Building a second product on the same code is reuse, like the publisher's second game on
-      Pearl Dash's tech. Platform porting runs the same app on a different device.
+      A new workout type is a new feature on the same device. Pearl Dash's question is about running
+      the same game on different hardware.
     2: >-
-      That's the team problem from Pearl Dash: everyone editing the same files at night. Platform
-      porting is about running on a different device.
+      More server capacity is about load. The console request is about the same program meeting a
+      different graphics chip, buttons, and sound system.
 tangle:
   question: >-
     A fitness app's 25 workout screens each call the phone's step-sensor API directly. The team moves
@@ -67,21 +67,23 @@ stack:
       rules use it, the way Pearl Dash's game rules use the engine.
 allowed:
   question: >-
-    A strictly layered banking app has Screens on top, then Services, then Data access, then the
-    database driver. Which dependency breaks the style's rules?
+    A layered banking app has Screens, Services, Data access, and a database driver, from top to
+    bottom. Data access imports a Screens helper to show an error dialog. What is lost?
   options:
-    - Services calls Data access to load an account
-    - Data access imports a Screens helper to show an error dialog
-    - Screens calls Services to transfer money
-  correct_index: 1
+    - Screens can no longer use Services
+    - Nothing, as long as the helper stays small
+    - Data access can't be reused by an app with other screens
+  correct_index: 2
   explanation: >-
-    No layer may use a layer above it. Data access importing a Screens helper is an upward use: the
-    lower layer would depend on this one app's screens, and the two layers would form a cycle.
+    The import breaks never up: Data access now depends on this app's Screens, so another app with
+    other screens can't reuse it, and the two layers depend on each other in a cycle.
   option_feedback:
     0: >-
-      Services uses the layer directly below it, which is exactly what strict layering allows.
-    2: >-
-      Screens uses the layer directly below it, which is exactly what strict layering allows.
+      Screens still uses Services, the layer below it, as before. What changed is a new use that
+      points up, from Data access to Screens.
+    1: >-
+      Size doesn't matter: any use of a layer above makes the lower layer depend on it. Data access
+      is now correct only if these Screens are present and correct.
 callbacks:
   question: >-
     A weather app's sensor layer sits below its display layer and must tell the display about each
@@ -105,22 +107,23 @@ relaxed:
   question: >-
     A video app's architects let each layer use only the layer directly below, except for one call
     from the top layer straight to the codec layer, which they record as an exception. What does this
-    describe?
+    exception cost?
   options:
-    - Relaxed layering, since one layer skips another
-    - A broken layering, since no layer may ever skip one
-    - Strict layering with one layer bridge
-  correct_index: 2
+    - Nothing; the call still points down
+    - Replacing the codec layer now means editing the top layer
+    - Every layer may now skip, so the design is relaxed
+  correct_index: 1
   explanation: >-
-    Where only the next layer down is allowed, a recorded skip is a layer bridge. The design stays
-    strict, with one documented exception, and the call still points down.
+    The recorded skip is a layer bridge in a strict design. The top layer now depends on the codec
+    layer directly, so a new codec layer, say for a different device, touches the top layer too: the
+    bridge gives up some portability.
   option_feedback:
     0: >-
-      Relaxed layering lets every layer use any lower layer. Here only the next layer down is allowed,
-      with one recorded exception: a bridge in a strict design.
-    1: >-
-      A strict design may allow a few skips, each documented as an exception. Only a use that goes up
-      is never allowed.
+      Pointing down keeps the layers free of cycles, but the top layer now depends on the codec layer
+      directly, so it is exposed to that layer's changes.
+    2: >-
+      One recorded exception is a bridge in a strict design. The other layers still use only the layer
+      directly below.
 port:
   question: >-
     A layered smart thermostat has Comfort rules on top, then Control, then a Hardware layer, then
@@ -225,19 +228,19 @@ summary:
         next?
       options:
         - The platform layer, beside audio output and the network
-        - Every layer, so each can decide quickly
+        - The playback engine, since it plays the songs
         - The top layer, with the listening features such as playlists
       correct_index: 2
       explanation: >-
-        Choosing the next song is a listening idea, the most abstract kind of code, so it belongs in
-        the top layer. Every module belongs to exactly one layer.
+        Choosing the next song is a listening idea, the most abstract kind of code in this app, so it
+        belongs in the top layer, above the playback engine and the platform.
       option_feedback:
         0: >-
           The platform layer offers device-level services like audio output; deciding what to play
           is a higher, more abstract idea.
         1: >-
-          Every module belongs to exactly one layer; spreading one decision over all of them breaks
-          that rule.
+          The engine plays whatever song it is handed. Choosing which song comes next is a listening
+          idea, more abstract than playback, so it belongs in the layer above.
     - question: >-
         The music app's playback engine, below the listening layer, must tell the playlist screen
         that a song has ended. What keeps the layers intact?
@@ -292,5 +295,5 @@ summary:
           Skipping down keeps the layers free of cycles, but it isn't free: the bridged code now
           depends on one specific audio API.
         2: >-
-          Tiers are separate running processes; a layer calling an audio API directly is still part of
-          the same app.
+          A tier groups running components, usually by the machine they run on. A layer calling an
+          audio API directly still runs in the same app on the same phone.

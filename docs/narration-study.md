@@ -1,9 +1,12 @@
 # Study tools for narrated lessons
 
 The shared player supports **Pause and predict**, searchable review, and
-question-specific review. The four UML lessons and Observer, State, Strategy,
-and MVC also ship editable diagram exercises and paired design comparisons.
-Use the same player and cue IDs for all these interactions.
+question-specific review. The four UML lessons, Observer, State, Strategy, and
+MVC, and the three architectural-style videos (Publish-Subscribe, Layered
+style, Pipes and Filters) also ship editable diagram exercises and paired
+design comparisons. In a video narration a comparison frame shows its cue's
+step, note, and picture description rather than a stage still. Use the same
+player and cue IDs for all these interactions.
 
 ## Learner behavior
 

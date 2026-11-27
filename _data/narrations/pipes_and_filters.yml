@@ -9,12 +9,13 @@ lesson:
   summary: >-
     Follow game-day photos through a student newspaper's pipeline, from the sideline camera to the
     website, and learn the rules of the <strong>pipes-and-filters</strong> style: independent
-    filters that transform a stream and pass it on through pipes. See what the rules buy, reuse,
-    easy recombination, and throughput, and what they cost in interactivity, latency, and error
-    handling.
+    filters that transform a stream and pass it on through pipes. See what the style buys, reuse,
+    easy change, understandability, and throughput, and what it costs in interactive usability,
+    latency, and robustness.
   prerequisites: >-
     Assumes you have written a loop that processes a list of items and passed one function's
-    result into another function.
+    result into another function, and that you have seen module views and
+    <a href="/SEBook/uml_component_diagram.html">component-and-connector views</a>.
   chapter: /SEBook/architectural_styles/pipes_and_filters.html
   views: /SEBook/architectural_styles/pipes_and_filters
   parts:
@@ -27,8 +28,7 @@ speech:
   voice: drama3-female6
   speed: 1
   pronunciations:
-    GNU: Guh-noo
-    QC: Q C
+    GNU: G'noo
 media:
   audio: /assets/audio/pipes-and-filters-narration.mp3
   captions: /assets/narration/pipes-and-filters-narration.vtt
@@ -79,14 +79,15 @@ scenes:
     purpose: See what goes wrong when one program runs each step on the whole batch.
     takeaway: >-
       A single script that finishes each step for every photo before the next step starts delays
-      every result, clutters folders, and can't be reused or rearranged.
+      every result and clutters folders; a loop over the photos brings results early, but no step
+      can yet be reused, reordered, or run on its own core.
     cues:
       - id: script
         say: >-
           Here's the photo desk's script. Step one denoises all three thousand photos and saves them
-          in a folder. Step two reads that folder, brightens every photo, and saves another folder.
-          And so on, until the last step uploads everything. It all lives in one file, sharing a
-          dozen global settings.
+          in a folder. Step two reads that folder, brightens every photo, and saves another. And so
+          on, until the last step uploads everything. This design is called batch sequential. It
+          all lives in one file, sharing a dozen global settings.
         step: One script, step by step
         note: Each step finishes the whole batch and saves a folder before the next starts.
         source: >-
@@ -96,8 +97,9 @@ scenes:
           A Python code card titled process_all.py: for photo in all_photos, save(denoise(photo),
           "step1/"); for photo in folder("step1/"), save(brighten(photo), "step2/"); a comment for
           crop, blur faces, and watermark; then upload(folder("step5/")). Folder cards appear one
-          after another, step1/ to step5/, each holding 3,000 files, and a card titled Shared global
-          settings lists SETTINGS, LAST_BRIGHTNESS, and FACES_FOUND.
+          after another, step1/ to step5/, each holding 3,000 files. A card titled Shared global
+          settings lists SETTINGS, LAST_BRIGHTNESS, and FACES_FOUND, and a label reads Batch
+          sequential: each step finishes all photos first.
       - id: midnight
         say: >-
           The camera finishes at ten p.m., and each step takes the script twenty minutes for the
@@ -116,6 +118,27 @@ scenes:
           its first photo. A readout says Touchdown catch, 2nd quarter: waits behind 3,000 others;
           another says In-between files: 5 folders, 15,000. A sticker reads Fans posted blurry
           shots.
+      - id: one_loop
+        say: >-
+          The quick fix is one loop that sends each photo through every step before starting the
+          next. Photos now appear early. But it's still one file with shared settings: no step can
+          be reused, reordered, or given its own processor core. Pipes and filters, this lesson's
+          style, offers all four.
+        step: One loop per photo
+        note: A loop per photo publishes early, but its steps still can't be reused, reordered, or parallelized.
+        source: >-
+          CMU 17-655 lecture 10, Pipe-and-Filter vs. Batch Sequential (incremental processing
+          delivers early results; independent filters can be reused, recombined, and run
+          concurrently); CS 130 lecture 15, slides 20 and 21 (reusability, modifiability, and
+          throughput from filters deployed as separate threads or processes).
+        visual: >-
+          A table compares three designs in four rows: Photos online early, Reuse a step, Reorder
+          steps, and One core per step. The Batch script column reads No in every row. The One loop
+          per photo column reads Yes for Photos online early and No in the other three rows. The
+          Pipes and filters column reads Yes in every row. Below the table, a Python code card titled
+          process_all.py reads: for photo in camera_uploads(), photo = brighten(denoise(photo)), a
+          comment for crop, blur faces, and watermark, then upload(photo), which reads SETTINGS
+          too.
       - id: change_requests
         say: >-
           And change hurts too. The editor wants a new step that straightens tilted shots, right
@@ -141,7 +164,7 @@ scenes:
     purpose: Learn the parts of the pipes-and-filters style by rebuilding the photo desk.
     takeaway: >-
       Filters transform a stream of data item by item; pipes carry the stream between them, from a
-      source to a sink.
+      source to a sink. A chain without branches is a pipeline.
     cues:
       - id: filter
         say: >-
@@ -156,12 +179,13 @@ scenes:
           writes the result into an output stream); CS 130 lecture 17, slide 16 (each filter does only
           one thing).
         visual: >-
-          A UML diagram frame labeled cmp, C&C view, with a key: «filter» component, port, «pipe»
-          connector. Inside, five components stereotyped «filter», each with the component icon, an
-          input port on its left edge, and an output port on its right: Denoise, Brighten, Crop,
-          Blur faces, and Watermark. Callouts point at Brighten, Filter: a component; at Denoise's
-          left port, Input port; and at its right port, Output port. A label reads A filter reads a
-          stream, transforms each item, writes a stream.
+          A UML diagram frame labeled cmp, Component-and-connector (C&C) view, with a key along its
+          bottom: «filter» component, port, «pipe» connector. Inside, five components stereotyped «filter», each with the component icon
+          above its stereotype and ports low on its sides: Denoise, Brighten, Crop, Blur faces, and
+          Watermark; Denoise's input port is on its top edge and Watermark's output port on its
+          bottom edge. Callouts point at Crop, Filter: a
+          component; at Brighten's left port, Input port; and at its right port, Output port. A
+          label reads A filter reads a stream, transforms each item, writes a stream.
       - id: pipe
         say: >-
           Filters are joined by pipes, the connectors of this view. A pipe carries data from one
@@ -176,27 +200,27 @@ scenes:
           al. 1996, Pipes and Filters, Dynamics, scenario IV (a buffering pipe synchronizes adjacent
           filters: the reader waits on an empty buffer, the writer on a full one).
         visual: >-
-          Connectors appear between the filters, each running from an output port to the next input
-          port and ending in an arrowhead, and small photos slide along them left to right. A
-          callout on the second connector reads Pipe: a connector, and a label reads A pipe: one
-          way, in order, unchanged, buffered.
+          Connectors appear between the filters, each running straight from an output port to the
+          next input port and ending in an arrowhead, and small photos ride along just above them,
+          left to right. A callout on the second connector reads Pipe: a connector,
+          and a label reads A pipe: one way, in order, unchanged, buffered.
       - id: source_sink
         say: >-
           The chain begins at a source, which feeds in photos as the camera uploads them, and ends
-          at a sink, the website gallery. In between, a filter enriches data, as Watermark adds a
-          logo; refines it, as Denoise removes noise; or transforms it, from a raw file into a web
-          image.
+          at a sink, the website gallery. Source and sink are the system's boundary with the
+          outside world. A chain without branches, like this one, is called a pipeline.
         pause_after: 2.5
         step: Source and sink
-        note: A source feeds the line, a sink consumes it; filters enrich, refine, or transform.
+        note: A source feeds the pipeline and a sink consumes it; a chain without branches is a pipeline.
         source: >-
-          Buschmann et al. 1996, Pipes and Filters, Structure (data source, data sink; a filter
-          enriches, refines, or transforms its input); CMU 17-655 lecture 10.
+          Buschmann et al. 1996, Pipes and Filters, Structure (data source, data sink); CMU 17-655
+          lecture 10; Clements et al. 2010, Table 4.1 (a specialization may restrict the filters to
+          a linear sequence, sometimes called a pipeline).
         visual: >-
-          A component stereotyped «source», Camera uploads, sends a pipe down and into Denoise's
-          input port, and a pipe runs from Watermark's output port down to a component stereotyped
-          «sink», Website gallery. Three labels read Enrich: Watermark adds the logo; Refine:
-          Denoise removes noise; and Transform: raw file to web image.
+          A component stereotyped «source», Camera uploads, sits above Denoise and sends a straight
+          pipe down into Denoise's top input port; a straight pipe runs down from Watermark's bottom
+          output port to a component stereotyped «sink», Website gallery. Two labels read Source and
+          sink: the system's boundary, and A pipeline: a chain without branches.
   - id: alone
     part: Rules
     outline: Working alone
@@ -220,11 +244,11 @@ scenes:
           interact only via pipes); CS 130 lecture 17, slide 17 (configuration parameters increase
           reusability).
         visual: >-
-          Rule card 1, Independence: no shared state; filters interact only through pipes. Below it,
-          in a C&C view frame with its key, photos flow along the line of five filters, and Brighten
-          has a dial below it, amount=1.3. A card titled Shared global settings is struck by a red
-          cross, a green sticker reads Parameters, not globals, and a label reads Testable and
-          reusable alone.
+          Rule card 1, Independence: no shared state; filters interact only through pipes. Beside
+          it, a label reads These rules are the style's constraints. Below, in a C&C view frame with
+          its key, photos flow along the pipeline of five filters, and Brighten has a dial below
+          it, amount=1.3. A card titled Shared global settings is struck by a red cross, a green
+          sticker reads Parameters, not globals, and a label reads Testable and reusable alone.
       - id: agnostic
         say: >-
           Rule two, agnosticism: a filter must not know which filters come before or after it. Blur
@@ -240,7 +264,10 @@ scenes:
           title: Blur faces never names its neighbors
           notice: >-
             Each filter sees only the stream it receives and the stream it returns; only the
-            pipeline builder knows which filter feeds which.
+            pipeline builder knows which filter feeds which. Here each filter is a function in one
+            process that transforms a lazy stream, so a pipe is just the stream passed between them.
+            As separate programs, the same filters would exchange encoded files through
+            operating-system pipes and could run on separate cores.
           code: agnostic
           groups:
             - {id: builder, label: "Pipeline builder"}
@@ -274,9 +301,9 @@ scenes:
         visual: >-
           Rule card 2, Agnosticism, joins Rule 1 at the top: a filter doesn't know its neighbors,
           item in, item out. In a C&C view frame, a large Blur faces component, marked Knows: in,
-          out, sits between dashed Crop and Watermark components, each marked Unknown. Photos slide
-          in and out along pipes labeled A photo arrives and A photo leaves, and a sticker reads
-          Insert, remove, reorder.
+          out, sits between two grey filters named only with a question mark, each marked Unknown.
+          Photos slide in and out along pipes labeled A photo arrives and A photo leaves, and a
+          sticker reads Insert, remove, reorder.
       - id: common_format
         say: >-
           Agnosticism has one precondition: neighboring filters must agree on the type of data that
@@ -290,10 +317,10 @@ scenes:
           Clements et al. 2010, Table 4.1 (connected filters must agree on the type of data); CS 130
           lecture 17, slide 16 (pipes have simple interfaces, such as 2D pixel graphics).
         visual: >-
-          Both rule cards stay at the top. In a C&C view frame, the line of five filters carries
-          photos, labeled Every pipe carries: Image (JPEG). Below it, the same filters in a new
-          order, Brighten, Denoise, Watermark, Crop, and Blur faces, still pass photos along,
-          labeled Any order still connects.
+          Both rule cards stay at the top. In a C&C view frame, the pipeline of five filters carries
+          photos, and a card titled One agreed format reads Every pipe carries Image (JPEG). Below
+          it, the same filters in a new order, Crop, Denoise, Brighten, Blur faces, and Watermark,
+          still pass photos along, labeled Any order still connects.
   - id: stream
     part: Rules
     outline: Streams
@@ -301,24 +328,28 @@ scenes:
     title: Pass each photo on right away
     purpose: Learn why filters process items one at a time, and why data flows one way.
     takeaway: >-
-      Each filter passes each item on as soon as it's done, so all filters work at once and results
-      arrive early; data flows one way, from source to sink, without loops.
+      Each filter passes each item on as soon as it's done, so filters can work at once and results
+      arrive early; data flows one way, from source to sink, branching and joining but never
+      looping.
     cues:
       - id: incremental
         say: >-
           Rule three, incremental processing: a filter transforms each item as it arrives and passes
           it on immediately, rather than waiting for the complete batch. As a result, the filters
-          run concurrently: while Watermark stamps photo one, Blur faces processes photo two, and
-          Crop processes photo three.
-        step: "Rule 3: incremental"
+          can all work at the same time: while Watermark stamps photo one, Blur faces can process
+          photo two, and Crop photo three.
+        step: "Rule 3: incremental processing"
         note: Each filter passes each item on as soon as it's done.
         source: >-
           CMU 17-655 lecture 10, Pipe-and-Filter 2 (incrementally read, transform, and write data);
-          Fairbanks 2010, section 14.8.
+          Fairbanks 2010, section 14.8; CS 130 lecture 15, slide 21 and Buschmann et al. 1996,
+          Pipes and Filters, Solution and Consequences (filters deployed as separate threads or
+          processes can run in parallel; the gain depends on how they run).
         visual: >-
-          Rule card 3, Incremental: pass each item on as soon as it is done. In a C&C view frame,
-          all five filters turn cyan, each marked Busy, with photo numbers beneath them, from Photo
-          5 at Denoise to Photo 1 at Watermark, while photos keep sliding along the pipes.
+          Rule card 3, Incremental processing: pass each item on as soon as it is done. In a C&C
+          view frame, all five filters turn cyan, each marked Busy, with photo numbers beneath them,
+          from Photo 5 at Denoise to Photo 1 at Watermark, while photos keep sliding along the
+          pipes.
       - id: predict_online
         say: >-
           Replay game night with the pipeline. Each filter takes about half a second per photo, and
@@ -329,46 +360,51 @@ scenes:
         step: Predict the catch
         note: Five filters, half a second each. When does the catch reach the website?
         visual: >-
-          Rule card 3 stays up over the busy line. Below it are the Touchdown catch photo, a dashed
+          Rule card 3 stays up over the busy pipeline. Below it are the Touchdown catch photo, a dashed
           box asking On the website when?, and a scoreboard reading 2nd quarter, 9:12.
       - id: seconds
         say: >-
           Within seconds. The photo passes through five filters at about half a second each, and
           reaches the gallery while the crowd is still cheering. This is the purpose of incremental
           processing: it lowers the delay until the first result and keeps all five filters busy, so
-          the line keeps pace with the camera.
+          the pipeline keeps pace with the camera.
         step: Seconds, not hours
-        note: Results arrive seconds after their input, because every filter works at once.
+        note: Results arrive seconds after their input, because no filter waits for the whole batch.
         source: >-
           Buschmann et al. 1996, Pipes and Filters, Solution (a filter consumes and delivers data
           incrementally to achieve low latency and enable parallel processing).
         visual: >-
           The catch hops along the pipes, filter by filter. A readout says Shot to website: 2.5
-          seconds, a website card shows the catch, captioned 2nd quarter, and a label reads Rule 3:
-          first result early, all filters busy.
+          seconds, a website card shows the catch, captioned 2nd quarter, and a label reads
+          Incremental processing: first result early, all filters busy.
       - id: acyclic
         say: >-
-          Rule four, acyclic flow: data moves in one direction, from the source to the sink, and no
-          filter sends items back upstream. This constraint makes the pipeline easy to reason about.
-          Its overall behavior is simply the composition of its filters: watermark of blur of crop
-          of brighten of denoise of the raw shot.
+          Rule four, acyclic flow: data moves one way, from source to sink. Streams may split at a
+          tee and merge at a join, but never loop back upstream. Together with independence and
+          agnosticism, this promotes understandability: the pipeline's behavior is the composition
+          of its filters, watermark of blur of crop, and so on.
         pause_after: 2.5
-        step: "Rule 4: acyclic"
+        step: "Rule 4: acyclic flow"
         note: Data flows one way, without loops, so the output is a composition of filters.
         source: >-
           CS 130 lecture 16, slide 18 (acyclic pathways from a stream source to a data sink); Clements
-          et al. 2010, section 4.2.1 (the overall computation is the functional composition of the
-          filters' computations).
+          et al. 2010, Table 4.1 and section 4.2.1 (specializations restrict the graph to an acyclic
+          one; because pipes buffer and filters don't know their neighbors, the overall computation
+          is the functional composition of the filters' computations, which simplifies reasoning);
+          Buschmann et al. 1996, Pipes and Filters, Variants (tee and join pipelines; feedback
+          loops make the computation hard to explain).
         visual: >-
-          Rule card 4, Acyclic, joins Rule 3: data flows one way, from source to sink, without
-          loops. Under the line, a dashed red connector trying to run back from Watermark to Crop is
-          struck by a cross, with a callout: A pipe back upstream: forbidden. A code card reads
-          photo = watermark(blur(crop(brighten(denoise(raw))))), labeled The pipeline's behavior: a
-          composition of its filters.
+          Rule card 4, Acyclic flow, joins Rule 3: one way, source to sink; tees and joins are fine,
+          loops are not. Under the pipeline, a dashed red connector trying to run back from
+          Watermark to Crop is struck by a cross, with a callout: A pipe back upstream: forbidden.
+          A code card titled The pipeline's behavior reads photo =
+          watermark(blur(crop(brighten(denoise(raw))))), and a quality card reads
+          Understandability, promoted, beside a label: From independence, agnosticism, and acyclic
+          flow.
   - id: order
     part: Rules
     outline: Order
-    label: "Rules: building the line"
+    label: "Rules: building the pipeline"
     title: Same filters, different order
     purpose: See why filter order matters, and who decides it.
     takeaway: >-
@@ -377,25 +413,38 @@ scenes:
     cues:
       - id: order_matters
         say: >-
-          Although filters are independent, their order still determines the result, because
-          function composition is not commutative. Placing Crop after Watermark can cut the logo off
-          the edge, just as adding one and then doubling differs from doubling and then adding one.
-          The same filters in a different order form a different pipeline.
+          Every pipe carries the same format, so any order of filters connects. But does order
+          change the result? Predict: Watermark stamps the paper's logo in a corner, and Crop trims
+          the edges. Does the photo come out the same if Crop runs after Watermark instead of
+          before?
+        prediction: true
+        pause_after: 4
+        step: Predict the order
+        note: Crop trims edges; Watermark stamps a corner logo. Does their order change the photo?
+        visual: >-
+          In a C&C view frame, two short pipelines: Crop, then Watermark, then a «sink» Website;
+          and Watermark, then Crop, then a «sink» Website. Beside each Website, a dashed box asks
+          Result?
+      - id: cut_logo
+        say: >-
+          Not necessarily. Placing Crop after Watermark can cut the logo off the edge. Although the
+          filters are independent, their order still determines the result, because function
+          composition is not commutative: adding one and then doubling differs from doubling and
+          then adding one. The same filters in a different order form a different pipeline.
         step: Order matters
         note: Composing the same filters in another order can change the output.
         source: >-
           CMU 17-655 lecture 10, Pipe-and-Filter 4a (the order of filters in a pipeline does matter:
           add one then double differs from double then add one).
         visual: >-
-          In a C&C view frame, two short lines: Crop, then Watermark, which ends in a photo with the
-          paper's logo in its corner; and Watermark, then Crop, whose photo has the logo cut in
-          half, stamped Logo cut off. A code card shows 3, add 1, double, equals 8, and 3, double,
-          add 1, equals 7.
+          The same frame: the photo from Crop, then Watermark, keeps the paper's logo in its
+          corner; the photo from Watermark, then Crop, has the logo cut in half, stamped Logo cut
+          off. A code card shows 3, add 1, double, equals 8, and 3, double, add 1, equals 7.
       - id: roles
         say: >-
           The rules therefore separate two responsibilities. A filter developer implements one
-          filter against its input and output types, without knowledge of the surrounding line. The
-          pipeline builder selects the filters and their order. To straighten tilted shots, the
+          filter against its input and output types, without knowledge of the surrounding pipeline.
+          The pipeline builder selects the filters and their order. To straighten tilted shots, the
           builder inserts a new filter after Crop, and no existing filter is modified.
         pause_after: 2.5
         step: Two jobs
@@ -405,9 +454,10 @@ scenes:
           developer).
         visual: >-
           Two badges: Filter developer, tagged One filter, its input and output types; and Pipeline
-          builder, tagged Picks the filters and their order. Below, in a C&C view frame, a new
-          Straighten filter drops into the line between Crop and Blur faces, marked New, while
-          Brighten, Crop, Blur faces, and Watermark turn green, marked Unchanged.
+          builder, tagged Picks the filters and their order. Below, in a C&C view frame titled
+          photo desk, after Denoise, a new Straighten filter drops into the pipeline between Crop
+          and Blur faces, marked New, while Brighten, Crop, Blur faces, and Watermark turn green,
+          marked Unchanged.
   - id: buys
     part: Consequences
     outline: What it buys
@@ -430,11 +480,11 @@ scenes:
           CS 130 lecture 15, slide 20 (decoupling of filters and a universal interface promote
           reusability); Bass et al. 2013, section 13.2.
         visual: >-
-          A quality card, Reusability, promoted, beside compact rule cards for Rule 1, Independence,
-          and Rule 2, Agnosticism. Two C&C view frames: the photo desk's line, with photos flowing;
-          and the robotics club's line: a «source» Robot camera, Denoise marked Unchanged, Detect
-          obstacles, and a «sink» Steer. A label reads Rules 1 and 2: no shared state, no named
-          neighbors.
+          A quality card, Reusability, promoted, beside compact rule cards for Independence and
+          Agnosticism. Two C&C view frames: the photo desk's pipeline, with photos
+          flowing; and the robotics club's pipeline: a «source» Robot camera, Denoise marked
+          Unchanged, Detect obstacles, and a «sink» Steer. Below them, a label reads Independence and
+          agnosticism: no shared state, no named neighbors.
       - id: change
         say: >-
           Second, modifiability and extensibility. Inserting Straighten required one new filter and
@@ -447,96 +497,100 @@ scenes:
           CS 130 lecture 15, slide 20 (extensibility: insert a filter; modifiability: replace a filter
           without affecting the rest).
         visual: >-
-          Quality cards read Modifiability and Extensibility, promoted, beside rule cards for Rule 2
-          and Rule 1. In a C&C view frame, Brighten is replaced by Auto-exposure, marked Swapped in,
-          in a line with Crop, a new Straighten filter marked Inserted, and Blur faces. A readout
+          Quality cards read Modifiability and Extensibility, promoted, beside rule cards for
+          Agnosticism and Independence. In a C&C view frame, Brighten is replaced by Auto-exposure, marked Swapped in,
+          in a pipeline with Crop, a new Straighten filter marked Inserted, and Blur faces. A readout
           says Test, Blur faces alone: in, 3 faces; out, 3 blurred; passed. A sticker reads Changed
           nothing else, and a quality card reads Testability, promoted.
       - id: throughput
         say: >-
-          Third, throughput, which follows from incremental processing. Because each filter passes
-          every item on immediately, all filters work on different photos at once. In an allocation
-          view that assigns each filter to its own processor core, the line completes up to five
-          times as many photos per minute. The slowest filter sets the pace.
+          Third, performance, measured as throughput, which follows from incremental processing:
+          filters can work on different photos at the same time. In an allocation view that gives
+          each filter its own processor core, the pipeline completes up to five times as many photos
+          per minute. The slowest filter sets the pace.
         pause_after: 2.5
-        step: Throughput
-        note: Filters run in parallel on different items; the slowest one sets the pace.
+        step: "Performance: throughput"
+        note: On their own cores, filters work on different items at once; the slowest one sets the pace.
         source: >-
           CS 130 lecture 15, slide 21 (deploying active filters as separate threads or processes
           allows parallel processing); Clements et al. 2010, Table 4.1 (improving throughput with
           parallelization); Buschmann et al. 1996, Pipes and Filters, Consequences (parallel gains
           are often smaller than hoped). A pipeline's rate is limited by its slowest stage.
         visual: >-
-          A quality card reads Performance: throughput, promoted, beside Rule 3, Incremental. An
-          allocation view frame, labeled deployment, with a key: five nodes stereotyped «core», Core
-          1 to Core 5, each holding one busy filter: Denoise, Brighten, Crop, Blur faces, and
-          Watermark. A readout changes from One program: 30 photos per minute to The line: up to
-          150, a label reads The slowest filter sets the pace, and a card titled Each benefit
-          follows from a rule lists Reusability: Rules 1 and 2; Modifiability, testability: Rules 1
-          and 2, one format; and Throughput: Rule 3.
+          A quality card reads Performance: throughput, promoted, beside the rule card Incremental
+          processing. An allocation view frame, labeled deployment, with a key: five nodes
+          stereotyped «core», Core 1 to Core 5, each holding one busy filter: Denoise, Brighten,
+          Crop, Blur faces, and Watermark. A readout of photos per minute changes from One program:
+          24 to The pipeline: up to 120, and a label reads The slowest filter sets the pace.
   - id: costs
     part: Consequences
     outline: What it costs
     label: "Consequences: what pipelines are bad at"
     title: A slider, a slowdown, and a broken photo
-    purpose: See the qualities the style inhibits, interactivity, latency, and error handling.
+    purpose: See the qualities the style inhibits, interactive usability, latency, and robustness.
     takeaway: >-
-      Pipelines resist interactive feedback, pay to convert data at every step, and make errors hard
-      to handle.
+      Pipelines resist interactive feedback, pay to convert the agreed format at every step, and
+      make errors hard to recover from.
     cues:
       - id: slider
         say: >-
-          The same rules also inhibit some qualities. First, interactivity. The editor wants a
-          brightness slider that updates every photo live, but each adjustment would have to travel
-          back upstream to Brighten. Acyclic flow forbids such feedback loops: data flows only from
-          source to sink. Interactive tools therefore fit this style poorly.
-        step: Interactivity
-        note: Each change re-runs items through the rest of a one-way line; feedback loops fit badly.
+          The style also inhibits some qualities. First, interactive usability. The editor wants a
+          brightness slider that updates every photo live, including photos already published. Each
+          drag would send those photos from the gallery back into Brighten: a feedback loop.
+          Acyclic flow forbids it, so interfaces that update as the user drags fit this style
+          poorly.
+        step: Interactive usability
+        note: A live edit of published photos would loop them back upstream; acyclic flow forbids it.
         source: >-
-          CS 130 lecture 15, slide 20 (processing sequential streams without feedback loops cannot
-          easily accommodate interactive user interfaces); Bass et al. 2013, Table 13.4.
+          CS 130 lecture 15, slide 20 (Interactive Usability: processing sequential streams that
+          generally disallow feedback loops cannot easily accommodate user interfaces that need
+          incremental display updates); Bass et al. 2013, Table 13.4 (not a good choice for an
+          interactive system, as it disallows cycles, which are important for user feedback).
         visual: >-
-          An editor's Brightness slider moves back and forth beside Rule card 4, Acyclic. In a C&C
-          view frame whose key adds not allowed, a dashed red connector tries to run from the slider
-          back into Brighten in the middle of the line and is struck by a cross, labeled Rule 4: no
-          feedback loops. A quality card reads Interactivity, inhibited.
+          A quality card reads Interactive usability, inhibited, beside the rule card Acyclic flow.
+          In a C&C view frame whose key adds not allowed, the pipeline of five filters feeds a
+          «sink» Website gallery below Watermark. A «user interface» Photo editor, holding the
+          Brightness slider, sits on a dashed red return path: from the gallery into the editor,
+          then straight up into Brighten. That last leg is struck by a cross, labeled Acyclic flow:
+          no feedback loops.
       - id: latency
         say: >-
-          Second, latency. Under independence, filters share nothing except the data in the pipes,
-          so each filter must decode the image, perform its one task, and encode a new file for the
-          next pipe. Five filters mean five decodes and five encodes: each photo takes longer than
-          in one program, and repeated encoding degrades quality.
-        step: Latency
-        note: Converting to and from the common format at every filter adds time.
+          Second, performance, measured as latency. So that any filter can follow any other, every
+          pipe carries the same file format, and each filter must decode the image, perform its one
+          task, and encode a new file. Five filters mean five decodes and five encodes: each photo
+          takes longer than in one program.
+        step: "Performance: latency"
+        note: The agreed format makes every filter decode and re-encode, so each item takes longer.
         source: >-
-          CS 130 lecture 15, slide 21 (a lowest-common-denominator format forces every filter to parse
-          and unparse data); Buschmann et al. 1996, Pipes and Filters, Consequences (data
-          transformation overhead). Repeated lossy encoding degrades a JPEG image.
+          CS 130 lecture 15, slide 21 (Performance, latency: a lowest-common-denominator format
+          forces every filter to parse and unparse data); Buschmann et al. 1996, Pipes and Filters,
+          Consequences (a single data type for all filters, chosen for flexibility, costs data
+          transformation overhead); Garlan and Shaw 1994, section 3.1.
         visual: >-
-          Rule card 1, Independence, at the top. In a C&C view frame, five filter components each
-          list the same three steps in a compartment: decode, job, and encode. A readout says One
-          photo through the line: 5 decodes, 5 encodes, then Slower than one program. A photo
-          labeled After 5 encodes shows blocky patches, and a quality card reads Performance:
-          latency, inhibited.
+          A card titled One agreed format reads Every pipe carries Image (JPEG). In a C&C view
+          frame, five filter components each list the same three steps in a compartment: decode,
+          job, and encode. A readout says One photo through the pipeline: 5 decodes, 5 encodes,
+          then Slower than one program, and a quality card reads Performance: latency, inhibited.
       - id: errors
         say: >-
-          Third, error handling. Midway through the game, one corrupted photo crashes Blur faces.
-          Which photos have left the line, and which remain in the pipes? Under independence and
-          agnosticism, no filter holds shared state or knows its neighbors, so no component knows
-          the global state. A restart may publish some photos twice.
+          Third, robustness: error handling. One corrupted photo crashes Blur faces. Which photos
+          have left the pipeline, and which remain in the pipes? Under independence and agnosticism,
+          no filter shares state or knows its neighbors, so no component knows the global state,
+          and recovery is hard: a restart may publish some photos twice.
         pause_after: 2.5
-        step: Error handling
+        step: "Robustness: error handling"
         note: With no shared state, recovering from a failed filter is hard.
         source: >-
           Buschmann et al. 1996, Pipes and Filters, Consequences (error handling is the Achilles' heel
           of the pattern); Bass et al. 2013, section 13.2 (the failure of any filter can cause the
           entire pipeline to fail).
         visual: >-
-          Compact rule cards for Rule 1 and Rule 2 at the top. In a C&C view frame, a garbled photo
-          slides into Blur faces, which turns red and dashed, marked Crashed. Dashed question marks
-          sit below the pipes on both sides, a label reads No component knows the global state, a
-          website card titled After a restart shows the same photo twice, captioned Posted and
-          Twice, and a quality card reads Error handling, inhibited.
+          Compact rule cards for Independence and Agnosticism at the top. In a C&C view frame, a garbled photo
+          slides into Blur faces, which turns red with a dashed outline, marked Crashed. Dashed
+          question marks sit below
+          the pipes on both sides, a label reads No component knows the global state, a website
+          card titled After a restart shows the same photo twice, captioned Posted and Twice, and a
+          quality card reads Robustness (error handling), inhibited.
   - id: limits
     part: Consequences
     outline: Bent rules
@@ -560,7 +614,7 @@ scenes:
           breaks incremental computation); Buschmann et al. 1996, Pipes and Filters, Consequences.
         visual: >-
           A tray titled Best shot of the burst fills with photos, 1 of 10 up to 10 of 10, before
-          passing anything on, and Rule card 3, Incremental, gets a crack. In a C&C view frame, Blur
+          passing anything on, and the rule card Incremental processing gets a crack at its edge. In a C&C view frame, Blur
           faces and Watermark wait, marked Waiting. A code card reads sort, which reads all input
           before writing any, and a sticker reads Back to a batch.
       - id: shared_state
@@ -576,7 +630,7 @@ scenes:
           derived from them); Buschmann et al. 1996, Pipes and Filters, Consequences (sharing state
           information is expensive or inflexible).
         visual: >-
-          Rule card 1, Independence, gets a crack. In a C&C view frame whose key adds hidden
+          The rule card Independence gets a crack at its edge. In a C&C view frame whose key adds hidden
           dependency, a Caption players filter, marked Reads its faces, sends a dashed red
           dependency arrow into the Blur faces filter, whose compartment lists faces_found, labeled
           Shared state. Red stickers read Can't reuse alone and Can't reorder.
@@ -637,9 +691,9 @@ scenes:
         visual: >-
           Two C&C view frames, each with a key reading «filter» component, port, and «pipe»
           connector. Unix shell, operating systems: six filters joined by pipes, tr, tr, sort, uniq
-          -c, sort -rn, and sed, labeled Rule 2: agnostic tools, reused in any text pipeline. GPU,
-          games: Input assembler, Vertex shader, Rasterizer, Pixel shader, and Output merger,
-          labeled Rule 3: each stage passes vertices and pixels straight on.
+          -c, sort -rn, and sed, labeled Agnosticism: tools reused in any text pipeline. GPU, games:
+          Input assembler, Vertex shader, Rasterizer, Pixel shader, and Output merger, labeled
+          Incremental processing: each stage passes pixels straight on.
       - id: search_fraud
         say: >-
           Elasticsearch passes every document's text through an analyzer: character filters, a
@@ -669,8 +723,8 @@ scenes:
           Two C&C view frames. Elasticsearch, search: Char filter, Tokenizer, Lowercase, Stop words,
           and Stemmer, with a note, Same chain for full-text queries, labeled Reuse: indexing and
           search share one chain. Fraud detection, finance: a «source» Card payments, a pipe labeled
-          keyed by account, a Fraud detector, and a «sink» Alerts, labeled Rule 3: each payment
-          judged as it arrives.
+          keyed by account, a Fraud detector, and a «sink» Alerts, labeled Incremental processing:
+          each payment judged as it arrives.
       - id: radio_genomes
         say: >-
           Software radios turn antenna samples into music through a channel filter, a demodulator,
@@ -694,18 +748,23 @@ scenes:
           channels); nf-core/rnaseq, https://nf-co.re/rnaseq/ (an RNA-sequencing pipeline: FastQC,
           Trim Galore!, STAR, Salmon, MultiQC on its default route, simplified here); nf-core module
           testing, https://nf-co.re/docs/developing/tutorials/writing-nf-core-modules/6-testing
-          (every module has unit tests).
+          (every module has unit tests); nf-core/rnaseq FASTQ_FASTQC_UMITOOLS_TRIMGALORE
+          subworkflow (FastQC and Trim Galore! each read the raw reads; FastQC writes reports and
+          passes no reads on) and MultiQC subworkflow (collects the reports of every step).
         visual: >-
           Two C&C view frames. GNU Radio, software radio: a «source» Antenna samples, Channel
-          filter, FM demodulator, Audio filter, and a «sink» Sound card, labeled Rule 4: GNU Radio 3
-          forbids loops. nf-core, RNA sequencing, simplified: FastQC, Trim Galore!, STAR, Salmon,
-          and MultiQC, labeled Rule 1: no shared state, so each step is tested alone.
+          filter, FM demodulator, Audio filter, and a «sink» Sound card, labeled Acyclic flow: GNU
+          Radio 3 forbids loops. nf-core, RNA sequencing, simplified: a «source» Raw reads tees into FastQC
+          below it and Trim Galore! beside it; Trim Galore! feeds STAR, STAR feeds Salmon, and
+          Salmon feeds a «sink» Gene counts. FastQC, Trim Galore!, STAR, and Salmon all join into a
+          wide MultiQC filter below them, which feeds a «sink» HTML report. Labels mark the tee and
+          the join, and a label reads Independence: no shared state, so each step is tested alone.
       - id: common_thread
         say: >-
           These systems share the workload the four rules assume: a stream of items transformed by
           independent steps. Where a step cannot obey them, the system bends a rule and pays for it:
-          sort and the QC report wait for all their input, and the graphics card's last stage reads
-          and writes shared buffers.
+          sort and the quality-control report wait for all their input, and the graphics card's
+          last stage reads and writes shared buffers.
         pause_after: 2.5
         step: What they share
         note: Streams through independent steps fit the rules; steps that need all input or shared buffers bend them.
@@ -722,16 +781,16 @@ scenes:
           1994, p. 7 (a filter that needs all its input turns the system into a batch).
         visual: >-
           A card titled The shared workload reads A stream of items through independent steps. Below
-          it, Rule card 3 sits over a card titled Waits for all its input, listing sort, in the Unix
-          shell, and MultiQC, the QC report; Rule card 1 sits over a card titled Shared buffers,
-          listing the GPU's output merger.
+          it, the rule card Incremental processing sits over a card titled Waits for all its input,
+          listing sort, in the Unix shell, and MultiQC, the quality-control report; the rule card
+          Independence sits over a card titled Shared buffers, listing the GPU's output merger.
   - id: summary
     label: Summary
     title: One job each, one way through
     purpose: Recall the problem, the parts, the four rules, and the trade-offs.
     takeaway: >-
-      Independent filters joined by one-way pipes buy reuse, easy change, and throughput, at a cost
-      in interactivity, latency, and error handling.
+      Independent filters joined by one-way pipes buy reuse, easy change, understandability, and
+      throughput, at a cost in interactive usability, latency, and robustness.
     cues:
       - id: recap_problem
         say: >-
@@ -740,41 +799,41 @@ scenes:
           decomposes the job into filters, components that each perform one transformation, joined
           by pipes, connectors that carry a stream from a source to a sink.
         step: The problem and the parts
-        note: A batch script becomes a line of filters joined by pipes.
+        note: A batch script becomes a pipeline of filters joined by pipes.
         visual: >-
           The batch timeline, with the note Nothing online until midnight, is struck by a cross.
-          Below it, in a C&C view frame, the line of five filters runs with photos flowing, with
+          Below it, in a C&C view frame, the pipeline of five filters runs with photos flowing, with
           callouts Filter: a component and Pipe: a connector, and a website card fills with finished
           photos.
       - id: recap_rules
         say: >-
-          Four rules give the style its power: filters share no state, ignore their neighbors, pass
-          each item on immediately, and send data one way only. Independence and agnosticism promote
-          reusability and modifiability; incremental processing promotes throughput; and acyclic
-          flow promotes simple reasoning: the line's behavior is the composition of its filters.
+          Four rules give the style its power. Independence and agnosticism, no shared state and no
+          named neighbors, promote reusability and testability, modifiability and extensibility.
+          Joined by acyclic flow, they promote understandability: the pipeline's behavior is the
+          composition of its filters. Incremental processing promotes performance, measured as
+          throughput.
         step: Four rules
         note: Independence, agnosticism, incremental processing, and acyclic flow.
         visual: >-
-          Four compact rule cards in a row: Rule 1, Independence; Rule 2, Agnosticism; Rule 3,
-          Incremental; and Rule 4, Acyclic. A bracket under the first two reads Rules 1 and 2, and
-          promoted quality cards sit under the rules they follow from: Reusability and Modifiability
-          under Rules 1 and 2, Throughput under Rule 3, and Simple reasoning under Rule 4. A sticker
-          reads As long as you keep the rules.
+          A green Promoted pan fills, each quality with the rules it follows from, by name, and why:
+          Reusability, testability, from independence and agnosticism: a filter needs only its input
+          and output; Modifiability, extensibility, from agnosticism: insert or replace one filter
+          alone; Understandability, from independence, agnosticism, and acyclic flow: the pipeline
+          composes its filters; and Performance: throughput, from incremental processing: filters can
+          work at once on different items.
       - id: recap_costs
         say: >-
-          The same rules inhibit three qualities. Interactivity: acyclic flow forbids feedback
-          upstream. Latency: under independence, every filter decodes and re-encodes each item.
-          Error handling: no filter knows the global state when one fails. Next time you write one
-          giant loop over a list, ask: could each step be its own filter?
+          The style inhibits three qualities. Interactive usability: acyclic flow forbids feedback
+          upstream. Performance, measured as latency: every filter decodes and re-encodes the agreed
+          format. Robustness: no component knows the global state to recover from a failure. Next
+          time you write one giant loop over a list, ask: could each step be its own filter?
         pause_after: 2.5
         step: The trade-off
-        note: It inhibits interactivity, latency, and error handling.
+        note: It inhibits interactive usability, latency, and robustness.
         visual: >-
-          A balance with two pans in the quality cards' colors, each quality with the rule it
-          follows from and why. The green Promoted pan lists Reusability, Rules 1, 2: a filter needs
-          only its input and output; Modifiability, Rule 2: change one filter, and no neighbor
-          changes; Throughput, Rule 3: all filters work at once on different items; and
-          Simple reasoning, Rule 4: the line's behavior composes its filters. The pink Inhibited
-          pan fills: Interactivity, Rule 4: no feedback upstream; Latency, Rule 1: every filter
-          decodes and re-encodes; and Error handling, Rules 1, 2: no filter knows the global state.
-          A last sticker asks Could each step be its own filter?
+          A balance's beam and post appear, the Promoted pan hanging from its left end, and a pink
+          Inhibited pan fills at its right: Interactive usability, from acyclic flow: no feedback
+          flows upstream; Performance: latency, from one agreed format: every filter decodes and
+          re-encodes; and Robustness (error handling), from independence and agnosticism: no
+          component knows the global state. Under the Inhibited pan, a last sticker: Could each step
+          be its own filter?

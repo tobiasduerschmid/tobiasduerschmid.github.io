@@ -1,0 +1,439 @@
+# Study companion for the Publish-Subscribe video narration (docs/narration-study.md):
+# a fresh retry for every knowledge-check question, each pointing back to the cue
+# that teaches it; one diagram exercise; and one design comparison. It never
+# changes the speech or its fingerprint. Retries test the same distinction on a
+# new campus system, with feedback that explains the wrong reasoning.
+version: 1
+reviews:
+  intro:
+    - scene: intro
+      cue: ticket
+      retry:
+        type: single
+        question: >-
+          A food truck's order screen shows each new order. Which request raises the same design
+          question as Mochi's camera frames?
+        options:
+          - A kitchen display, a printer, and a new app all want each order
+          - The owner wants one daily total in a fixed spreadsheet
+          - The cashier asks the cook whether a burrito is ready
+        correct_index: 0
+        explanation: >-
+          Several programs want every new order, and more keep joining: one producer and a growing
+          set of receivers, the shape of Mochi's camera frames.
+        option_feedback:
+          1: >-
+            One total for one fixed receiver leaves the sender nothing to keep track of. The camera's
+            problem came from many programs wanting every frame.
+          2: >-
+            A question that needs an answer is a conversation between two known parties, not one
+            producer feeding a growing set of receivers.
+  direct_calls:
+    - scene: direct_calls
+      cue: edit_camera
+      retry:
+        type: single
+        question: >-
+          A dorm's door lock calls the access log and the security desk by name on every swipe. The
+          housing office adds a visitor counter that needs every swipe. What does this design force?
+        options:
+          - Writing only the visitor counter; the lock stays the same
+          - Editing, retesting, and redeploying the door lock's code
+          - Nothing, as long as the counter answers quickly
+        correct_index: 1
+        explanation: >-
+          With direct calls, the sender names every receiver, so a new receiver means a new call in the
+          sender, then retesting and redeploying it, as the counter meant a new line in camera.py.
+        option_feedback:
+          0: >-
+            The lock calls each receiver by name, so it has to gain a call before the counter sees
+            any swipe.
+          2: >-
+            Speed decides how long each call blocks. The edit comes first: the lock must name the
+            counter before it can call it.
+  topic:
+    - scene: topic
+      cue: counter_joins
+      retry:
+        type: single
+        question: >-
+          A campus bus publishes "arrived at stop" events to a topic, and a map app and the stop
+          signs subscribe. A ridership logger wants the events too. What has to change?
+        options:
+          - Only the new logger, which subscribes to the topic
+          - The bus's code, so it also sends each event to the logger
+          - The topic's code, which must name each subscriber
+        correct_index: 0
+        explanation: >-
+          Each subscriber registers itself with the infrastructure for the topic, and the bus
+          publishes each event once without naming a receiver, so adding a subscriber changes no
+          publisher.
+        option_feedback:
+          1: >-
+            The bus publishes to the topic, not to its receivers, so it needs no new line for the
+            logger.
+          2: >-
+            Nobody edits the topic to add a name. The logger registers itself and gets its own queue.
+  ignorance:
+    - scene: ignorance
+      cue: subscriber_rule
+      retry:
+        type: single
+        question: >-
+          A dining hall's menu service publishes "dish sold out" to a topic, and the menu boards
+          subscribe. The hall swaps in a new inventory system that publishes the same events to the
+          same topic. Why do the boards keep working unchanged?
+        options:
+          - The new system calls each board directly
+          - The boards subscribe to the events, not to their sender
+          - The boards ask the topic which system sent each event
+        correct_index: 1
+        explanation: >-
+          By subscriber ignorance, a subscriber depends on the event, not on who published it, so any
+          publisher of the same events can replace another.
+        option_feedback:
+          0: >-
+            Calling each board would make the inventory system depend on the boards; a publisher in
+            this style names no receiver.
+          2: >-
+            Subscribers must not rely on the publisher's identity, so they have no reason to ask who
+            sent an event.
+  one_way:
+    - scene: one_way
+      cue: async
+      retry:
+        type: single
+        question: >-
+          A lab's temperature sensor publishes a reading every second. Its archiver subscriber is stuck
+          writing to a full disk. What happens to the sensor's next publish?
+        options:
+          - It waits until the archiver finishes writing
+          - It retries until the archiver confirms the write
+          - It returns at once; the reading waits in the archiver's queue
+        correct_index: 2
+        explanation: >-
+          Publishing is asynchronous: it puts a copy in each subscriber's queue and returns at once, so
+          a stuck subscriber only falls behind in its own queue.
+        option_feedback:
+          0: >-
+            Waiting for the receiver is what a blocking call does. In this style, a publisher never
+            blocks.
+          1: >-
+            Publishing returns no value and expects no confirmation, so there is nothing to retry for.
+  buys:
+    - scene: buys
+      cue: late_binding
+      retry:
+        type: single
+        question: >-
+          During exam week, the library starts a noise monitor that wants every sound-sensor reading,
+          and stops it afterward. What do the sensors do when the monitor starts and stops?
+        options:
+          - Nothing; the monitor subscribes and later unsubscribes
+          - They are redeployed with the monitor, then without it
+          - They pause until the monitor confirms it subscribed
+        correct_index: 0
+        explanation: >-
+          Run-time flexibility: subscriptions are made and dropped while the system runs, so the
+          publishers neither change nor restart.
+        option_feedback:
+          1: >-
+            The sensors keep no list of receivers, so nothing in them changes when a subscriber comes
+            or goes.
+          2: >-
+            A publisher never waits for subscribers and must not rely on any being present.
+  nobody_listens:
+    - scene: nobody_listens
+      cue: silent
+      retry:
+        type: single
+        question: >-
+          A team renames a topic from "orders/new" to "orders/created", but only in the publisher. The
+          kitchen screen still subscribes to "orders/new". What does the team see?
+        options:
+          - The publisher logs a "no subscribers" error
+          - The kitchen screen gets no orders, and nothing reports an error
+          - The kitchen screen fails to start until it is renamed too
+        correct_index: 1
+        explanation: >-
+          A publisher never learns who received its events, and subscribing to a topic nobody
+          publishes to is valid, so the orders vanish silently, as the renamed obstacles topic left the
+          planner blind.
+        option_feedback:
+          0: >-
+            Publishing works the same with no subscribers. Unlike a direct call, it never detects a
+            missing receiver.
+          2: >-
+            Subscribing to an unused topic name is valid, so the screen starts normally and simply
+            hears nothing.
+  who_talks:
+    - scene: who_talks
+      cue: scattered
+      retry:
+        type: single
+        question: >-
+          In a publish-subscribe system, a developer must change "speed" events from miles to
+          kilometers per hour. What makes this hard?
+        options:
+          - Finding every program that subscribes to "speed" events
+          - Rewriting the publisher's list of its receivers
+          - Nothing, since subscribers never depend on an event's meaning
+        correct_index: 0
+        explanation: >-
+          Who receives an event is spread across every program's subscriptions, and every subscriber
+          depends on the event's meaning, so the developer must search all the code before changing
+          the unit.
+        option_feedback:
+          1: >-
+            A publisher in this style keeps no list of receivers; that's why finding them takes a
+            search.
+          2: >-
+            Subscribers don't rely on who published, but they do depend on an event's format and
+            meaning.
+  when:
+    - scene: when
+      cue: brake
+      retry:
+        type: single
+        question: Which message should a campus library system send as a direct call instead of publishing it?
+        options:
+          - Announcing a new book to the catalog and the apps
+          - Checking out a book only if the account is in good standing
+          - Updating the display when a study room becomes free
+        correct_index: 1
+        explanation: >-
+          Call directly when the sender needs an answer or a guarantee, like a checkout that depends on
+          the account check. Publish facts that many programs may want.
+        option_feedback:
+          0: >-
+            A new arrival is a fact the catalog, the apps, and later programs may want; nobody needs
+            to answer it.
+          2: >-
+            A freed room is a fact to announce, and the sender needs no reply.
+  in_practice:
+    - scene: in_practice
+      cue: common_thread
+      retry:
+        type: single
+        question: >-
+          A campus weather station's readings are wanted by a website, an irrigation controller, and a
+          research archive, with more tools to come. Why does publish-subscribe fit?
+        options:
+          - The station must check which tools run before each reading
+          - Readings go out with no idea who listens, so new tools just subscribe
+          - The station can call each tool directly and wait for its reply
+        correct_index: 1
+        explanation: >-
+          By publisher ignorance, the station announces each reading once and never changes; a new
+          tool, like a new smart-home tool or LinkedIn team, only adds a subscription.
+        option_feedback:
+          0: >-
+            Publisher ignorance says a publisher must not rely on which subscribers are present;
+            checking first would tie the station to them.
+          2: >-
+            Calling each tool directly ties the station to every tool, so each new tool would mean
+            editing the station.
+  summary:
+    - scene: direct_calls
+      cue: freeze
+      retry:
+        type: single
+        question: >-
+          A dorm laundry machine calls the app, the billing system, and the usage log by name when a
+          cycle ends. The usage log's server hangs. What happens to the machine?
+        options:
+          - It skips the log and calls the next receiver
+          - It waits at the log's call and notifies no one after it
+          - Only the log falls behind; the machine carries on
+        correct_index: 1
+        explanation: >-
+          Each direct call waits for its receiver to return, so one hung receiver stalls the caller and
+          every call after it, as the hung dashboard froze Mochi.
+        option_feedback:
+          0: >-
+            A blocking call doesn't skip a receiver; the caller waits at that line until it returns.
+          2: >-
+            A slow receiver hurting only itself is what asynchronous publishing buys, not what direct
+            calls do.
+    - scene: ignorance
+      cue: publisher_rule
+      retry:
+        type: single
+        question: >-
+          A door lock keeps calling each receiver by name, but its calls no longer wait. Security adds
+          an alarm that needs every swipe. What still has to happen?
+        options:
+          - Nothing; calls that don't wait need no edits
+          - The door lock gains a call to the alarm
+          - The alarm must answer each call within a second
+        correct_index: 1
+        explanation: >-
+          Not waiting is not the same as not knowing who listens: the lock still names every receiver,
+          so a new receiver still means a new call in the lock. Publisher ignorance is what removes
+          that edit.
+        option_feedback:
+          0: >-
+            Calls that don't wait still name their receivers, so the lock must gain a call for the
+            alarm.
+          2: >-
+            A call that doesn't wait doesn't depend on the alarm's speed; what remains is that the
+            lock must name the alarm.
+    - scene: topic
+      cue: publisher
+      retry:
+        type: single
+        question: >-
+          A campus bus is redesigned to publish "arrived" events to a topic. What must its code no
+          longer contain?
+        options:
+          - The name of the topic it publishes to
+          - The names of the apps that want each arrival
+          - The code that reads its GPS position
+        correct_index: 1
+        explanation: >-
+          By publisher ignorance, the bus must not rely on who listens, so it keeps no list of
+          receivers. It still reads its own GPS and names its topic.
+        option_feedback:
+          0: >-
+            A publisher still names the topic it publishes to; the topic's name is part of what
+            couples the programs.
+          2: >-
+            Reading its own sensor is the bus's own job; publishing changes only how it hands each
+            event on.
+    - scene: one_way
+      cue: no_return
+      retry:
+        type: single
+        question: >-
+          A noise sensor publishes readings, and a quiet-zone app subscribes. The sensor would like to
+          know whether the app warned anyone. Under the style's rules, how could it find out?
+        options:
+          - The app publishes its warnings as events the sensor subscribes to
+          - Publishing returns how many warnings the app sent
+          - The sensor calls the app's callback and reads its result
+        correct_index: 0
+        explanation: >-
+          Information flows one way, with no return values; an answer, if there is one, travels as a
+          new event on another topic.
+        option_feedback:
+          1: >-
+            Publishing returns no value; it puts a copy into each queue and returns.
+          2: >-
+            Calling a subscriber directly would make the sensor depend on the app, which publisher
+            ignorance rules out.
+    - scene: one_way
+      cue: hurts_itself
+      retry:
+        type: single
+        question: >-
+          In a campus events system, the calendar subscriber crashes during a busy week. What happens
+          to the publisher and the other subscribers?
+        options:
+          - The publisher stops until the calendar restarts
+          - The topic stops delivering to every subscriber
+          - The publisher keeps publishing, and the others keep receiving
+        correct_index: 2
+        explanation: >-
+          Publishing never waits, and each subscriber has its own queue, so a crashed subscriber stalls
+          neither the publisher nor any other subscriber.
+        option_feedback:
+          0: >-
+            A publisher never waits for its subscribers, so a crashed one can't stall it.
+          1: >-
+            Each subscriber gets its own copy in its own queue, so one crash affects no other
+            subscriber.
+    - scene: nobody_listens
+      cue: robustness
+      retry:
+        type: single
+        question: >-
+          After a cleanup, a parking app publishes to "spot/freed", but the signs still subscribe to
+          "spots/freed". What happens?
+        options:
+          - The signs show no freed spots, and nothing reports an error
+          - The parking app reports that the signs are missing
+          - The signs refuse to start until the names match
+        correct_index: 0
+        explanation: >-
+          A topic's name is part of what still couples the programs, and a publisher never learns who
+          received its events, so the events vanish without an error.
+        option_feedback:
+          1: >-
+            Detecting a missing receiver is what a direct call does; publishing never learns who
+            received an event.
+          2: >-
+            Subscribing to a topic nobody publishes to is valid, so the signs start normally and hear
+            nothing.
+    - scene: when
+      cue: rule_of_thumb
+      retry:
+        type: single
+        question: Which campus dining message should be a direct call rather than an event?
+        options:
+          - Telling every menu screen that tacos sold out
+          - Charging a meal plan before the order is accepted
+          - Logging each order's pickup time for a report
+        correct_index: 1
+        explanation: >-
+          A charge that must succeed before the order is accepted needs an answer and a guarantee, so
+          it goes as a direct call. Sold-out items and pickup times are facts many programs may want.
+        option_feedback:
+          0: >-
+            A sold-out item is a fact for many screens; nobody needs to answer it.
+          2: >-
+            A pickup time is a fact that a report and later programs may want; nobody has to answer
+            it.
+exercises:
+  - id: add-battery-monitor
+    title: Add a battery monitor
+    scene: buys
+    cue: extensibility
+    prompt: >-
+      Mochi's battery sensor publishes its level to the battery topic, and the operator dashboard
+      subscribes. A new battery monitor must warn when the level runs low. Add the monitor to this
+      interaction so that the sensor's code does not change. A topic is drawn here as a lifeline of
+      the messaging infrastructure; an open arrowhead (->>) is an asynchronous message. Before
+      editing, decide who should send the monitor its message. Preview draws your sequence; it does
+      not check the design.
+    type: sequence
+    starter: |
+      @startuml
+      participant sensor: BatterySensor
+      participant battery: Topic
+      participant dashboard: OperatorDashboard
+      sensor ->> battery: publish(level)
+      battery ->> dashboard: on_level(level)
+      @enduml
+    solution: |
+      @startuml
+      participant sensor: BatterySensor
+      participant battery: Topic
+      participant dashboard: OperatorDashboard
+      participant monitor: BatteryMonitor
+      sensor ->> battery: publish(level)
+      battery ->> dashboard: on_level(level)
+      battery ->> monitor: on_level(level)
+      @enduml
+    checks:
+      - "The sensor still sends exactly one message, publish(level), to the battery topic, and never names the monitor."
+      - "The monitor receives the level from the topic as an asynchronous message, with no reply back to the sensor."
+      - "Explain why a sensor that also called the monitor directly would undo the extensibility that publisher ignorance buys."
+comparisons:
+  - id: seventh-program
+    title: Add a seventh program
+    question: >-
+      Campus security wants a seventh program, a crowd alarm, that reads every camera frame. Compare
+      the direct-call design with the topic. What must change in each, and what could go wrong at
+      run time?
+    before:
+      scene: direct_calls
+      cue: edit_camera
+      label: "Direct calls: the camera calls each program"
+    after:
+      scene: topic
+      cue: counter_joins
+      label: "A topic: the new program just subscribes"
+    consequences:
+      - "With direct calls, the camera's loop gains a call, and the camera is retested and redeployed; a hung alarm would stall the camera and every call after it."
+      - "With the topic, only the alarm's own code subscribes; the camera and every other subscriber stay unchanged, and a hung alarm fills only its own queue."
+      - "The topic adds latency to every frame, and the camera never learns whether the alarm is listening; if one fixed receiver must confirm each frame, a direct call is the simpler choice."

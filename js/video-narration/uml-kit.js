@@ -32,11 +32,14 @@
   const { el, svg } = window.SongKit;
   const { staged, show, track } = window.WallKit;
 
-  /** The kinds of view a frame names: its UML diagram keyword and its name. */
+  /**
+   * The kinds of view a frame names: its UML diagram keyword, its name, and
+   * its full name, which a lesson writes on the first frame of that view.
+   */
   const VIEWS = {
-    cnc: { keyword: 'cmp', name: 'C&C view' },
-    module: { keyword: 'pkg', name: 'Module view' },
-    allocation: { keyword: 'deployment', name: 'Allocation view' },
+    cnc: { keyword: 'cmp', name: 'C&C view', full: 'Component-and-connector (C&C) view' },
+    module: { keyword: 'pkg', name: 'Module view', full: 'Module view' },
+    allocation: { keyword: 'deployment', name: 'Allocation view', full: 'Allocation view' },
   };
   const stereo = (text) => `«${text}»`;
   const round = (v) => +v.toFixed(2);
@@ -59,10 +62,11 @@
    * key (legend) runs along the top edge at the right: key = [[glyph,
    * words], ...], each glyph one of GLYPHS. Both sit in the frame's top
    * 32px, so the diagram starts below them; in a narrow frame, `keyAt:
-   * 'bottom'` moves the key to the bottom edge. It is drawn under every
-   * other piece of its picture.
+   * 'bottom'` moves the key to the bottom edge. `fullName` spells out the
+   * view's name, for the first frame of a view whose short name is an
+   * abbreviation. It is drawn under every other piece of its picture.
    */
-  function frame(parent, { x, y, w, h, view = 'cnc', title, key = [], keyAt = 'top', at, until, how = 'fade' }) {
+  function frame(parent, { x, y, w, h, view = 'cnc', title, fullName = false, key = [], keyAt = 'top', at, until, how = 'fade' }) {
     const kind = VIEWS[view];
     const node = staged(parent, `uk-frame uk-frame--${view}`, x, y);
     // Under everything else in its picture, so it never covers what it frames.
@@ -72,7 +76,8 @@
     const tab = el('div', 'uk-frame-tab', node);
     const words = el('span', 'uk-frame-words', tab);
     el('b', 'uk-frame-keyword', words, kind.keyword);
-    el('span', 'uk-frame-name', words, title ? `${kind.name}: ${title}` : kind.name);
+    const name = fullName ? kind.full : kind.name;
+    el('span', 'uk-frame-name', words, title ? `${name}: ${title}` : name);
     // The tab's cut corner, its slanted edge drawn in the frame's line.
     const corner = svg('svg', { class: 'uk-frame-corner', viewBox: '0 0 16 32', preserveAspectRatio: 'none', 'aria-hidden': 'true' }, tab);
     svg('path', { class: 'uk-frame-corner-fill', d: 'M0 0 H16 V18 L2 32 H0 Z' }, corner);
@@ -102,6 +107,11 @@
     realize: [['uk-g-line uk-g-dash', 'M2 10 H19'], ['uk-g-hollow', 'M19 4 L29 10 L19 16 Z']],
     control: [['uk-g-line uk-g-cyan', 'M2 10 H20'], ['uk-g-head uk-g-cyan', 'M19 5 L29 10 L19 15 Z']],
     boundary: [['uk-g-line uk-g-dash', 'M3 3 H27 V17 H3 Z']],
+    // A use the style forbids: a red dependency struck by a cross, as on the diagram.
+    forbidden: [['uk-g-line uk-g-dash uk-g-red', 'M2 10 H27'], ['uk-g-line uk-g-red', 'M21 5 L28 10 L21 15'], ['uk-g-line uk-g-red', 'M8 4 L16 16 M16 4 L8 16']],
+    // A documented exception, such as layer bridging: an amber dependency.
+    bridge: [['uk-g-line uk-g-dash uk-g-amber', 'M2 10 H27'], ['uk-g-line uk-g-amber', 'M21 5 L28 10 L21 15']],
+    association: [['uk-g-line', 'M2 10 H27'], ['uk-g-line', 'M21 5 L28 10 L21 15']],
   };
 
   function glyph(parent, name) {
@@ -294,10 +304,13 @@
    * (an attachment, a communication path); 'dependency' a dashed line with an
    * open arrowhead (the module view's «use» and «allowed to use»); 'realize'
    * a dashed line with a hollow triangle (a class implements an interface);
-   * 'note' a dotted line ending in a small circle, a note's anchor. `ends`
+   * 'association' a solid line with an open arrowhead (a class holds
+   * references to another, navigable toward the head); 'note' a dotted line
+   * ending in a small circle, a note's anchor. `ends`
    * ('from', 'to', 'both') draws ports at those ends for elements drawn
-   * without their own; an arrow then stops at the port. `tone` (red, green)
-   * marks one the narration singles out, which a label also says in words;
+   * without their own; an arrow then stops at the port. `tone` (red, green,
+   * cyan, amber) marks one the narration singles out, which a label also says
+   * in words; amber marks a documented exception, such as a layer bridge.
    * `dashed` dashes a flow that is only an attempt.
    */
   function connector(parent, { points, from, to, kind = 'flow', ends = 'none', tone, dashed = false, at, until }) {
@@ -350,11 +363,12 @@
       svg('path', { class: 'uk-line', d: segment }, art);
       if (lastPiece) {
         const tip = `M${head.map(local).join(' L')}`;
-        if (kind === 'dependency') svg('path', { class: 'uk-casing', d: tip }, art);
+        const open = kind === 'dependency' || kind === 'association';
+        if (open) svg('path', { class: 'uk-casing', d: tip }, art);
         else if (head.length) svg('path', { class: 'uk-casing uk-casing--head', d: `${tip} Z` }, art);
         if (kind === 'note') svg('circle', { class: 'uk-casing uk-casing--head', cx: round(bx - minX), cy: round(by - minY), r: 4.5 }, art);
         if (kind === 'flow') svg('path', { class: 'uk-arrow uk-arrow--filled', d: `M${head.map(local).join(' L')} Z` }, art);
-        if (kind === 'dependency') svg('path', { class: 'uk-arrow uk-arrow--open', d: `M${head.map(local).join(' L')}` }, art);
+        if (open) svg('path', { class: 'uk-arrow uk-arrow--open', d: `M${head.map(local).join(' L')}` }, art);
         if (kind === 'realize') svg('path', { class: 'uk-arrow uk-arrow--hollow', d: `M${head.map(local).join(' L')} Z` }, art);
         if (kind === 'note') svg('circle', { class: 'uk-note-anchor', cx: round(bx - minX), cy: round(by - minY), r: 4.5 }, art);
       }

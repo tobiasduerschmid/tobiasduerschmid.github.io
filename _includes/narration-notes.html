@@ -18,7 +18,8 @@
 {% assign vn_letters = 'ABCDEFGHIJ' | split: '' %}
 {% comment %} Ruled lines are bordered spans, which print without background graphics; an area clips the ones it has no room for. {% endcomment %}
 {% capture vn_ruled %}{% for vn_line in (1..12) %}<span></span>{% endfor %}{% endcapture %}
-<main id="main-content" class="vn-notes{% unless lesson.animation %} vn-notes--document{% endunless %} narrated-explainer {{ include.topic }}-animation {{ include.topic }}-video" data-notes-topic="{{ include.topic }}" data-notes-kind="{{ notes_entry.kind }}" data-notes-renderer="{{ lesson.renderer }}">
+{% comment %} Explainer styles lay out a document lesson's stills. A video lesson's stills copy its stage, which those styles would move, so there only each closer look gets them. {% endcomment %}
+<main id="main-content" class="vn-notes{% unless lesson.animation %} vn-notes--document narrated-explainer{% endunless %} {{ include.topic }}-animation {{ include.topic }}-video" data-notes-topic="{{ include.topic }}" data-notes-kind="{{ notes_entry.kind }}" data-notes-renderer="{{ lesson.renderer }}">
   <header class="vn-notes-title">
     <p class="vn-notes-kicker">Lesson notes · {{ lesson.name }}</p>
     <h1>{{ explainer.title }}</h1>
@@ -68,7 +69,7 @@
         <div class="vn-note-lines" aria-hidden="true">{{ vn_ruled }}</div>
       </div>
     </section>
-    {% if cue.closer_look %}{% capture closer_notes_id %}{{ include.topic }}-notes{% endcapture %}{% include narration-closer-look.html topic=include.topic id=closer_notes_id scene=scene cue=cue mode='static' heading='h4' %}{% endif %}
+    {% if cue.closer_look %}{% capture closer_notes_id %}{{ include.topic }}-notes{% endcapture %}{% if lesson.animation %}<div class="narrated-explainer vn-note-look">{% endif %}{% include narration-closer-look.html topic=include.topic id=closer_notes_id scene=scene cue=cue mode='static' heading='h4' %}{% if lesson.animation %}</div>{% endif %}{% endif %}
     {% endfor %}
     {% assign vn_check = vn_quizzes[scene.id] | default: scene.checkpoint %}
     {% if vn_check %}

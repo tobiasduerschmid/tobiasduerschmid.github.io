@@ -83,14 +83,12 @@
 .pf-r-glove { fill: #f4f6fb; }
 .pf-r-finger { fill: none; stroke: #9aa3b5; stroke-width: 0.45; stroke-linecap: round; }
 .pf-r-ink { fill: none; stroke: #0b0f1a; stroke-width: 0.55; stroke-linejoin: round; }
-/* The filters' work: an underexposed veil, sensor grain, and encoding blocks. */
+/* The filters' work: an underexposed veil and sensor grain. */
 .pf-veil { fill: #050b1f; opacity: 0.55; }
 .pf-grain-0 { fill: #e6ecff; opacity: 0.6; }
 .pf-grain-1 { fill: #000; opacity: 0.5; }
 .pf-grain-2 { fill: #ff5ab4; opacity: 0.4; }
 .pf-grain-3 { fill: #52ff9e; opacity: 0.35; }
-.pf-block { fill: #24305e; opacity: 0.16; }
-.pf-block--alt { fill: #fdfbf3; opacity: 0.14; }
 /* The paper's logo, stamped in the corner; cut in half when a crop comes after it. */
 .pf-logo { position: absolute; right: 6px; bottom: 6px; padding: 0 6px; border-radius: 4px; background: #fdfbf3; color: #0b0f1a; font-size: 17px; font-weight: 900; letter-spacing: 0.08em; }
 .pf-logo--cut { right: -36px; }
@@ -106,6 +104,14 @@
 .pf-filter .uk-name { font-size: 20px; }
 .pf-filter .uk-compartment { margin: 4px -6px 0; padding: 2px 6px 0; }
 .pf-filter .uk-sub:empty { display: none; }
+/* A narrow filter keeps its icon in a row of its own, its stereotype and name
+   below it, so no word runs into the icon; its ports sit lower still. */
+.pf-filter.uk-component--compact { justify-content: flex-start; padding-top: 26px; }
+.pf-filter.uk-component--compact .uk-stereo { padding: 0; }
+/* A neighbor a filter cannot name: a plain grey box whose name is a question
+   mark (its compartment says Unknown in words). */
+.uk-component.pf-filter.is-anonymous { background: #e9eef7; }
+.uk-component.pf-filter.is-anonymous .uk-name { font-size: 26px; }
 /* A filter's parameter: a dial on the outside of its box. */
 .pf-dial { position: absolute; left: 50%; top: calc(100% + 8px); display: flex; align-items: center; gap: 6px; translate: -50% 0; padding: 2px 10px; border: 2px solid #0b0f1a; border-radius: 999px; background: #fff1ad; color: #0b0f1a; font-size: 20px; font-weight: 800; white-space: nowrap; }
 .pf-dial svg { width: 22px; height: 22px; }
@@ -146,3 +152,44 @@
 /* Shared globals in code type, and a filter's three small steps. */
 .pf-globals .sk-list-item { font-family: var(--font-mono); font-size: 20px; }
 .pf-steps .sk-list-title { font-size: 22px; }
+
+/* Designs compared: a paper table, a row per property, a column per design;
+   each cell says Yes or No beside its mark. */
+.pf-compare {
+  position: absolute;
+  display: grid;
+  grid-template-columns: 260px repeat(var(--pf-columns, 3), 1fr);
+  gap: 8px 12px;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: #fdfbf3;
+  color: #0b0f1a;
+  box-shadow: var(--vn-paper-shadow);
+}
+.pf-compare-head { padding-bottom: 6px; border-bottom: 3px solid rgba(11, 15, 26, 0.18); font-size: 22px; font-weight: 900; line-height: 1.15; text-align: center; }
+.pf-compare-corner { align-self: stretch; border-bottom: 3px solid rgba(11, 15, 26, 0.18); }
+.pf-compare-row { font-size: 21px; font-weight: 800; line-height: 1.2; }
+.pf-compare-cell { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 6px 10px; border-radius: 10px; font-size: 20px; font-weight: 900; }
+.pf-compare-cell svg { flex: none; width: 24px; height: 24px; }
+.pf-compare-cell--yes { background: #c4f5d3; color: #14532d; }
+.pf-compare-cell--no { background: #ffd6dc; color: #7a1526; }
+
+/* A cracked rule card: the crack runs down a strip at its right edge, kept
+   clear of the card's words. */
+.ak-rule.pf-rule-cracked { padding-right: 72px; }
+.ak-rule.pf-rule-cracked .ak-rule-crack { width: 56px; }
+/* A component whose words stand at its top, above what it holds (the
+   photo editor holds its slider). */
+.pf-filter.uk-component--top { justify-content: flex-start; }
+/* A pan shown before its balance: no hanger until the beam is up. */
+.sk-balance-pan.is-unhung::before { visibility: hidden; }
+
+/* The recap's pans list each quality's rules by name, in chips under the
+   quality; tighter rows keep both full pans on the stage. */
+.ak-pan-item { padding-top: 5px; }
+.ak-pan-item + .ak-pan-item { margin-top: 5px; }
+
+/* A label given a width wraps into balanced lines. */
+.pf-label-wrap { white-space: normal; text-wrap: balance; }

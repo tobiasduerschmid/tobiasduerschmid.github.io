@@ -1,0 +1,345 @@
+# Study companion for the Layers video narration (docs/narration-study.md):
+# question-specific review with a fresh retry for every check question, one
+# editable diagram exercise on the running example, and one comparison of two
+# frames under a change request. It never changes the speech or its audio.
+version: 1
+reviews:
+  intro:
+    - scene: intro
+      cue: console
+      retry:
+        type: single
+        question: >-
+          A campus map app runs on phones. Which request raises the same question as the
+          publisher's console request for Pearl Dash?
+        options:
+          - Add bike routes to the map on the same phone
+          - Run the map on a car dashboard with its own display and touch APIs
+          - Let two developers edit the map's code without conflicts
+        correct_index: 1
+        explanation: >-
+          The console request asks whether the same program can run on different hardware. A car
+          dashboard with its own display and touch APIs raises exactly that question.
+        option_feedback:
+          0: Bike routes are a new feature on the same device; no hardware changes.
+          2: That is the team problem from the introduction, people editing the same files, not new hardware.
+  tangle:
+    - scene: tangle
+      cue: ripple
+      retry:
+        type: single
+        question: >-
+          A drawing app's 30 tool panels each call the tablet's stylus API directly. The app moves
+          to a laptop with a different pen API. What does this tangle force?
+        options:
+          - Rewriting the shapes the app knows how to draw
+          - Only plugging the laptop's pen API in under the panels
+          - Editing each of the 30 panels that call the stylus API
+        correct_index: 2
+        explanation: >-
+          When device calls are spread through every file, a device change touches every file
+          that makes them, as the graphics calls in 38 of Pearl Dash's 40 files did.
+        option_feedback:
+          0: The shapes don't depend on which device draws them; the cost is in the panels that name the stylus API.
+          1: The laptop brings its own pen API, but every panel still calls the tablet's API by name, so each panel must change.
+  stack:
+    - scene: stack
+      cue: abstraction
+      retry:
+        type: single
+        question: >-
+          A smart-garden app has watering rules, a scheduler that turns rules into timed valve
+          commands, and a driver for the valve hardware. Arranged as layers, which goes at the
+          bottom?
+        options:
+          - The watering rules, since everything follows from them
+          - The valve driver, since it knows only the hardware
+          - The scheduler, since it sits between the other two
+        correct_index: 1
+        explanation: >-
+          Layers are ordered by level of abstraction: the most abstract ideas, the watering rules,
+          on top, and the code that knows only the hardware, the valve driver, at the bottom.
+        option_feedback:
+          0: The rules are the most abstract code, so they go on top; the layers below serve them.
+          2: Sitting between the other two puts the scheduler in the middle layer, not at the bottom.
+  allowed:
+    - scene: allowed
+      cue: upward_cost
+      retry:
+        type: single
+        question: >-
+          A layered photo app has Gallery screens, an Editing layer, and an Image codec layer, from
+          top to bottom. The codec imports a Gallery class to show progress. What does this cost?
+        options:
+          - The codec can't be reused in an app without that gallery
+          - Nothing, because the codec still decodes images
+          - The Editing layer may no longer use the codec
+        correct_index: 0
+        explanation: >-
+          The import points up, so it breaks never up: the codec now depends on this app's gallery,
+          another app can't reuse it, and the two layers depend on each other.
+        option_feedback:
+          1: The codec still works here, but it is now correct only if the gallery is present and correct, which ties it to this one app.
+          2: Editing still uses the codec below it as before; the new problem is a use that points up.
+  callbacks:
+    - scene: callbacks
+      cue: callback
+      retry:
+        type: single
+        question: >-
+          A drone's flight-control layer sits below its mission layer and must report a low
+          battery. Which design keeps never up?
+        options:
+          - Flight control calls the mission layer's land() method
+          - Flight control defines a listener the mission layer registers
+          - The mission layer moves below flight control
+        correct_index: 1
+        explanation: >-
+          The lower layer defines what it can report and calls whatever handler was registered:
+          control travels up at run time while the dependency still points down.
+        option_feedback:
+          0: Calling a method of the mission layer is an upward use; flight control would depend on this one mission layer.
+          2: The mission is the more abstract idea, so it stays on top; a callback sends the news up instead.
+  relaxed:
+    - scene: relaxed
+      cue: strictness
+      retry:
+        type: single
+        question: >-
+          A strictly layered drawing app lets its Tools layer call the graphics driver directly,
+          skipping two layers, and documents the exception. What has the team given up?
+        options:
+          - Some portability, since Tools now changes with the driver
+          - Nothing, since the call still points down
+          - The strict design, which is now relaxed layering
+        correct_index: 0
+        explanation: >-
+          A documented skip in a strict design is a layer bridge. Tools now depends on the graphics
+          driver directly, so a move to a different driver touches Tools too.
+        option_feedback:
+          1: Pointing down avoids a cycle, but Tools now depends on the driver itself, not only on the layer below it.
+          2: One documented exception keeps the design strict; relaxed layering lets every layer use any lower layer.
+  port:
+    - scene: port
+      cue: portability
+      retry:
+        type: single
+        question: >-
+          A layered e-reader has Reading features, a Page engine, a Device layer, and drivers. It
+          moves to a screen with a different display controller. Which layer does the team write
+          anew?
+        options:
+          - The Reading features, since pages now look different
+          - The Device layer, on the new display's drivers
+          - Every layer, since pages pass through each one
+        correct_index: 1
+        explanation: >-
+          Device details live in the lowest layers. A new Device layer with the same interface, on
+          the new drivers, leaves the page engine and the reading features unchanged.
+        option_feedback:
+          0: Reading features ask the page engine for pages and never see the display controller, so the move doesn't touch them.
+          2: Each layer uses only the interface of the layer below; if the Device layer keeps its interface, the layers above stay as they are.
+  costs:
+    - scene: costs
+      cue: bridge
+      retry:
+        type: single
+        question: >-
+          A layered maps app misses its frame budget, so its map renderer calls the phone's
+          graphics API directly, skipping two layers. What changes?
+        options:
+          - It draws faster and ties the renderer to that one graphics API
+          - It draws faster and creates a cycle between the layers
+          - It draws faster at no cost, since the call points down
+        correct_index: 0
+        explanation: >-
+          The bridge skips the layers' translating and copying, so it is faster, but the renderer
+          now depends on one graphics API and must change on a device with another.
+        option_feedback:
+          1: A cycle needs a use that goes up; this call goes down. Its cost is portability.
+          2: Pointing down keeps the layering free of cycles, but the renderer now depends on one specific graphics API.
+  leaks:
+    - scene: leaks
+      cue: leak
+      retry:
+        type: single
+        question: >-
+          A layered chat app's network layer is replaced by one with the same functions, but it
+          delivers messages in batches every two seconds, and typing indicators lag. Why?
+        options:
+          - The chat layer is buggy, since layering isolates every change
+          - Nothing in the interface changed, so the lag lies elsewhere
+          - The layers above relied on fast delivery, which no signature shows
+        correct_index: 2
+        explanation: >-
+          An interface includes the timing the layers above rely on. Same functions, slower
+          behavior: the change leaks through, like the stuttering pearl storm.
+        option_feedback:
+          0: Layering hides a change behind an interface only while the interface, timing included, holds; here the timing changed.
+          1: Timing is part of what the layers above rely on, so the interface did change, though no function did.
+  in_practice:
+    - scene: in_practice
+      cue: common_thread
+      retry:
+        type: single
+        question: >-
+          A robot vacuum maker switches motor-controller chips every model year. Which structure
+          keeps each switch cheap?
+        options:
+          - Cleaning rules that call each chip's registers directly
+          - A bottom layer that hides the motor chip behind an interface
+          - A top layer that checks the chip model before each command
+        correct_index: 1
+        explanation: >-
+          As in Android's hardware abstraction layer or SQLite's OS interface, one bottom layer
+          hides the hardware; the layers above use only its interface, so a new chip means a new
+          bottom layer.
+        option_feedback:
+          0: Calling the registers directly spreads chip details through the cleaning rules, so every switch touches them.
+          2: Checking the model in the top layer puts device details in the most abstract code, so every new chip edits it.
+  summary:
+    - scene: tangle
+      cue: ripple
+      retry:
+        type: single
+        question: >-
+          Before it was layered, a podcast app called the phone's media API from 25 files. Why
+          would a move to a smart TV have been costly?
+        options:
+          - The TV's media API would have to be written by the team
+          - Each of the 25 files names the phone's media API and must change
+          - The episode-ranking rules would change on a TV
+        correct_index: 1
+        explanation: >-
+          With device calls spread through the code, a device change touches every file that makes
+          them.
+        option_feedback:
+          0: The TV brings its own media API, as the console came with its drivers; the cost is in the 25 files that call the phone's API.
+          2: Ranking episodes doesn't depend on the device; the cost is in the files that name the phone's media API.
+    - scene: stack
+      cue: abstraction
+      retry:
+        type: single
+        question: >-
+          In a layered podcast app, which layer should hold the rule that skips episodes a listener
+          has finished?
+        options:
+          - The top layer, with the listening features
+          - The platform layer, beside the media API
+          - The playback engine, since it plays the episodes
+        correct_index: 0
+        explanation: >-
+          Skipping finished episodes is a listening idea, the most abstract code in the app, so it
+          belongs in the top layer.
+        option_feedback:
+          1: The platform layer offers device services like audio output; which episode to play is a more abstract idea.
+          2: The engine plays whatever it is handed; deciding what to play is a listening idea that belongs above it.
+    - scene: callbacks
+      cue: callback
+      retry:
+        type: single
+        question: >-
+          A layered podcast app's download engine, below the library screen, must report a
+          finished download. What keeps never up?
+        options:
+          - The engine imports the library screen and refreshes it
+          - The library screen moves into the engine's layer
+          - The engine defines a "download done" listener the screen registers
+        correct_index: 2
+        explanation: >-
+          The lower layer defines what it reports and calls the registered handler, so control goes
+          up while the dependency still points down.
+        option_feedback:
+          0: Importing the screen is an upward use; the engine would depend on this one screen.
+          1: The screen is more abstract than the engine, so moving it breaks the order of the layers; a callback sends the news up instead.
+    - scene: port
+      cue: portability
+      retry:
+        type: single
+        question: >-
+          The layered podcast app, with a listening layer, a playback engine, and a platform layer,
+          moves to a smartwatch with its own audio and screen APIs. What changes?
+        options:
+          - The listening layer, since episodes now play on a watch
+          - A new platform layer with the same interface, on the watch's APIs
+          - Every layer, since the audio passes through each one
+        correct_index: 1
+        explanation: >-
+          Device details live in the lowest layers, so a new platform layer with the same
+          interface, on the watch's APIs, leaves the layers above unchanged.
+        option_feedback:
+          0: The listening features ask the engine for episodes and never see the watch's APIs.
+          2: Each layer uses only the interface below; a platform layer with the same interface keeps the layers above unchanged.
+    - scene: costs
+      cue: bridge
+      retry:
+        type: single
+        question: >-
+          To start episodes faster, the podcast app's listening layer calls the phone's media API
+          directly, skipping two layers. What does that cost?
+        options:
+          - Nothing, since it only skips layers going down
+          - It ties that code to one media API, costing portability
+          - The listening layer becomes its own tier
+        correct_index: 1
+        explanation: >-
+          A bridge buys speed but ties that code to one media API, so it must change on any device
+          with a different one: portability traded for speed.
+        option_feedback:
+          0: Skipping down avoids a cycle, but the bridged code now depends on one specific media API.
+          2: A tier groups running components, usually by machine; a layer calling an API directly still runs in the same app.
+exercises:
+  - id: score-listener
+    title: Send the score up without an upward import
+    scene: callbacks
+    cue: callback
+    prompt: >-
+      The engine's Physics module imports the game's Score module to add a point when the squirrel
+      touches a pearl. Change the module view so that no dependency points from Engine up to Game
+      rules, while the engine can still report the collision. In this module view, draw every
+      relation as a dependency (..>) labeled with what it means, such as implements.
+    type: class
+    starter: |
+      @startuml
+      package "Game rules" as rules <<layer>> {
+        class Score @pos(80, 0)
+      }
+      package Engine as engine <<layer>> {
+        class Physics @pos(70, 190)
+      }
+      Physics ..> Score : «use»
+      @enduml
+    solution: |
+      @startuml
+      package "Game rules" as rules <<layer>> {
+        class PearlHandler @pos(340, 0)
+        class Score @pos(80, 0)
+      }
+      package Engine as engine <<layer>> {
+        interface CollisionListener @pos(320, 190) {
+          + on_collision(a, b)
+        }
+        class Physics @pos(60, 210)
+      }
+      Physics ..> CollisionListener : calls
+      PearlHandler ..> CollisionListener : implements
+      PearlHandler ..> Score : «use»
+      @enduml
+    checks:
+      - No dependency points from a class in Engine to a class in Game rules.
+      - The engine owns the listener interface it calls.
+      - A class in Game rules implements that interface and updates the score.
+      - At run time the call still travels up, through the listener the game registered.
+comparisons:
+  - id: layers-or-bridge
+    title: Every layer, or a bridge
+    question: >-
+      The publisher wants Pearl Dash on the console. Which design ports more cheaply, and what does
+      each give the game on the laptop?
+    before: {scene: costs, cue: overhead, label: Every request crosses all four layers}
+    after: {scene: costs, cue: bridge, label: A bridge to the laptop's graphics driver}
+    consequences:
+      - With every request crossing all four layers, the port replaces only the platform layer and the drivers; the engine and the game rules stay unchanged.
+      - The bridge makes pearl drawing fast enough on the laptop, but that code calls the laptop's driver, so it must be rewritten for the console.
+      - The bridge trades portability for performance; document it as an exception, or first look for the time elsewhere, such as drawing many pearls in one call.
+      - If the game will only ever run on the laptop, the bridge's portability cost may not matter.

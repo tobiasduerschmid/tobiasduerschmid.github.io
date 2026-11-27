@@ -7,12 +7,14 @@
  *   the game photo, a receiver leaping for the catch in front of the stands,
  *     drawn so every filter's work is visible: sensor grain, darkness, a
  *     crop to the catch, fans' faces pixelated, and the paper's logo;
- *   in the C&C view, a filter is a UML component stereotyped «filter» with
- *     an input port on its left and an output port on its right, its state
- *     (busy, idle) written in its lower compartment; a pipe is a connector
- *     from an output port to the next input port, which photos slide along;
+ *   in the C&C view, a filter is a UML component with an input port on its
+ *     left and an output port on its right, its state (busy, idle) written
+ *     in its lower compartment; where a frame's key says what a component is
+ *     («filter» component, or filter), only sources and sinks carry a
+ *     stereotype. A pipe is a connector from an output port to the next
+ *     input port, which photos slide along, under its arrowhead;
  *   a batch is a timeline of bars that fill one after another; the website
- *     is a gallery that fills with photos.
+ *     is a gallery that fills with photos; designs compare in a table.
  *
  * Every builder schedules its own motion on the Timeline, and every pose is a
  * pure function of narration time. Coordinates are CSS pixels inside the
@@ -181,12 +183,6 @@
     const seed = (i * 4 + kind) * 3;
     return circle(hash01(seed + 1) * PHOTO.w, hash01(seed + 2) * PHOTO.h, 0.5 + 0.45 * hash01(seed + 3));
   }).join(' '));
-  /** Repeated lossy encoding: 8-unit blocks in a checkerboard of two faint tints. */
-  const BLOCKS = [0, 1].map((alt) => {
-    const cells = [];
-    for (let bx = 0; bx < PHOTO.w; bx += 8) for (let by = 0; by < PHOTO.h; by += 8) if (((bx + by) % 16 === 0) === Boolean(alt)) cells.push(box(bx, by, 8, 8));
-    return cells.join(' ');
-  });
   /**
    * The photo at a token's size (about 26 pixels), in ten paths: the stands,
    * the crowd's heads and shirts, the field and its lines, and the receiver
@@ -214,9 +210,9 @@
   }
 
   /**
-   * The catch as a picture. look = { noise, dark, crop, blur, blocky }:
-   * sensor grain, an underexposed veil, a crop to the catch, the fans' faces
-   * pixelated, and the blocks that repeated lossy encoding leaves.
+   * The catch as a picture. look = { noise, dark, crop, blur }: sensor
+   * grain, an underexposed veil, a crop to the catch, and the fans' faces
+   * pixelated.
    */
   function photoArt(parent, look = {}) {
     const view = look.crop ? '36 4 88 60.5' : `0 0 ${PHOTO.w} ${PHOTO.h}`;
@@ -234,7 +230,6 @@
     RECEIVER.forEach(([part, d]) => path(d, `pf-r-${part}`));
     if (look.dark) path(box(0, 0, PHOTO.w, PHOTO.h), 'pf-veil');
     if (look.noise) GRAIN.forEach((d, kind) => path(d, `pf-grain-${kind}`));
-    if (look.blocky) BLOCKS.forEach((d, alt) => path(d, alt ? 'pf-block pf-block--alt' : 'pf-block'));
     return art;
   }
 
@@ -263,23 +258,33 @@
   // Filters and pipes
   // ------------------------------------------------------------------
 
-  /** A filter's height: «filter», its name, and a compartment for its state. */
+  /** A filter's height: an icon row, its name, and a compartment for its state. */
   const FILTER_H = 108;
+  /**
+   * Where a narrow filter's side ports sit, from its top: below its name, so
+   * no name runs into a port and every pipe stays clear of the words.
+   */
+  const LOW_PORT = 92;
 
   /**
-   * A filter: a UML component stereotyped «filter» (or `stereotype`: source,
-   * sink), with an input port on its left edge and an output port on its
-   * right, where pipes attach. states = [{ at, state, light }] repaints it
-   * (busy, idle, crashed, same, new, unknown, focus) and writes the state in
-   * words (`light`) in its lower compartment; `lines` lists fixed rows below
-   * its name; `dial` hangs a parameter below it; `ports` picks the sides
-   * that have a port (in, out), or none.
+   * A filter: a UML component (stereotyped `stereotype`, such as source or
+   * sink, when given), with an input port on its left edge and an output
+   * port on its right, where pipes attach. A frame's key says what an
+   * unstereotyped component is. states = [{ at, state, light }] repaints it
+   * (busy, idle, crashed, same, new, anonymous, focus) and writes the state
+   * in words (`light`) in its lower compartment; `lines` lists fixed rows
+   * below its name; `dial` hangs a parameter below it. `ports` picks the
+   * side ports (in, out) at `portAt` pixels from its top (its middle by
+   * default), or lists ports outright ([{ side, along }]); `variant:
+   * 'compact'` sets a narrow filter's name below its icon.
    */
-  function filter(parent, { x, y, w = 140, h = FILTER_H, name, stereotype = 'filter', at, until, how = 'pop', states = [], dial, ports = { in: true, out: true }, lines, variant }) {
+  function filter(parent, { x, y, w = 140, h = FILTER_H, name, stereotype = null, at, until, how = 'pop', states = [], dial, ports = { in: true, out: true }, portAt, lines, variant }) {
+    const along = portAt ?? 0.5;
+    const sides = Array.isArray(ports) ? ports : [ports && ports.in ? { side: 'left', along } : null, ports && ports.out ? { side: 'right', along } : null].filter(Boolean);
     const node = uml.component(parent, {
       x, y, w, h, name, stereotype, lines, at, until, how, variant,
       states: states.map(({ at: when, state, light }) => ({ at: when, state, sub: light ?? state })),
-      ports: [ports && ports.in ? { side: 'left', along: 0.5 } : null, ports && ports.out ? { side: 'right', along: 0.5 } : null].filter(Boolean),
+      ports: sides,
     });
     node.classList.add('pf-filter');
     if (dial) {
@@ -290,9 +295,12 @@
     return node;
   }
 
+  /** The outer face of a filter's port, for a pipe's end: box = { x, y, w, h }. */
+  const portFace = (box, side, along = 0.5) => uml.portFace(box, side, along);
+
   /**
    * A pipe: a connector from an output port's face to an input port's face
-   * ([x, y] points, or `points` for a bent one), its arrowhead at the input.
+   * ([x, y] points, or `points`), its arrowhead at the input.
    */
   function pipe(parent, { from, to, points, at, until, tone, dashed }) {
     const node = uml.connector(parent, { from, to, points, kind: 'flow', tone, dashed, at, until });
@@ -303,27 +311,45 @@
   /**
    * A line of filters left to right (names = filter names), joined by pipes:
    * x0 is the first box's left edge, `w` each box's width, `gap` the space
-   * between boxes; `pipesAt` brings the pipes in later than the filters.
-   * Returns the boxes, the pipes (with their end points), each box's port
-   * faces (inPort, outPort), and each box's center, for streams.
+   * between boxes, `portAt` how far below a box's top its side ports sit;
+   * `stereotype` and `variant` apply to every box, and `specs` vary one box;
+   * `pipesAt` brings the pipes in later than the filters. Returns the boxes,
+   * the pipes (with their end points), each box's port faces (inPort,
+   * outPort), and each box's center, for streams.
    */
-  function line(parent, { x0 = 42, y, w = 140, h = FILTER_H, gap = 44, names, at, step = 0.15, specs = [], until, pipesAt }) {
-    const boxes = names.map((name, i) => filter(parent, { x: x0 + i * (w + gap), y, w, h, name, at: at + i * step, until, ...(specs[i] || {}) }));
+  function line(parent, { x0 = 42, y, w = 140, h = FILTER_H, gap = 44, names, at, step = 0.15, specs = [], until, pipesAt, portAt, stereotype, variant }) {
+    const portY = y + (portAt ?? h / 2);
+    const boxes = names.map((name, i) => filter(parent, { x: x0 + i * (w + gap), y, w, h, name, portAt, stereotype, variant, at: at + i * step, until, ...(specs[i] || {}) }));
     const face = uml.PORT / 2;
-    const inPort = (i) => [x0 + i * (w + gap) - face, y + h / 2];
-    const outPort = (i) => [x0 + i * (w + gap) + w + face, y + h / 2];
+    const inPort = (i) => [x0 + i * (w + gap) - face, portY];
+    const outPort = (i) => [x0 + i * (w + gap) + w + face, portY];
     const pipes = names.slice(1).map((_, i) => {
       const from = outPort(i);
       const to = inPort(i + 1);
       const when = pipesAt === undefined ? at + (i + 1) * step - 0.05 : pipesAt + i * 0.12;
       return { node: pipe(parent, { from, to, at: when, until }), from, to };
     });
-    return { boxes, pipes, inPort, outPort, center: (i) => x0 + i * (w + gap) + w / 2, top: y, bottom: y + h };
+    return { boxes, pipes, inPort, outPort, center: (i) => x0 + i * (w + gap) + w / 2, top: y, bottom: y + h, portY };
   }
 
-  /** Photos sliding through a pipe: a stream of photo tokens from `from` to `to`. */
+  /**
+   * The path a photo token of `size` rides along a straight pipe from `from`
+   * to `to`: beside the line, on its left as it runs (above a pipe that runs
+   * right), and stopping short of both ports, so a photo never hides the
+   * pipe's line, its arrowhead, or a port.
+   */
+  function ride(from, to, size = 26) {
+    const length = Math.hypot(to[0] - from[0], to[1] - from[1]) || 1;
+    const [ux, uy] = [(to[0] - from[0]) / length, (to[1] - from[1]) / length];
+    const side = size / 2 + 7;
+    const inset = Math.min(6, length / 2);
+    const at = ([x, y], d) => [x + ux * d + uy * side, y + uy * d - ux * side];
+    return [at(from, inset), at(to, -inset)];
+  }
+
+  /** Photos sliding along a pipe: a stream of photo tokens riding beside it from `from` to `to`. */
   function flow(parent, { from, to, at, until, every = 0.8, duration = 0.7, look = {} }) {
-    return arch.stream(parent, { path: [from, to], at, until, every, duration, size: 26, kind: 'photo', art: photoToken(look) });
+    return arch.stream(parent, { path: ride(from, to), at, until, every, duration, size: 26, kind: 'photo', art: photoToken(look) });
   }
 
   // ------------------------------------------------------------------
@@ -415,5 +441,31 @@
     return show(node, at, until, 'rise');
   }
 
-  window.PipesKit = { FILTER_H, photoArt, photo, photoToken, filter, pipe, line, flow, bars, gallery, slider, tray };
+  /**
+   * Designs compared in a table: a row per property (`rows`, their names)
+   * and a column per design (columns = [{ title, at, cells }], one boolean
+   * per row, or { yes, at } to bring a cell in on its own word). Each cell
+   * says Yes or No in words beside a check or a cross, so no answer rests on
+   * color alone; a column arrives with its title.
+   */
+  function compare(parent, { x, y, w, rows, columns, at, until }) {
+    const node = staged(parent, 'pf-compare', x, y);
+    node.style.width = `${w}px`;
+    node.style.setProperty('--pf-columns', columns.length);
+    el('span', 'pf-compare-corner', node);
+    columns.forEach(({ title, at: columnAt }) => fx.pop(el('b', 'pf-compare-head is-staged', node, title), columnAt, { from: 0.6 }));
+    rows.forEach((name, r) => {
+      el('span', 'pf-compare-row', node, name);
+      columns.forEach(({ cells, at: columnAt }) => {
+        const cell = typeof cells[r] === 'object' ? cells[r] : { yes: cells[r] };
+        const mark = el('span', `pf-compare-cell pf-compare-cell--${cell.yes ? 'yes' : 'no'} is-staged`, node);
+        mark.append(icon(cell.yes ? 'check' : 'cross'));
+        el('span', null, mark, cell.yes ? 'Yes' : 'No');
+        fx.pop(mark, cell.at ?? columnAt, { from: 0.6 });
+      });
+    });
+    return show(node, at, until, 'rise');
+  }
+
+  window.PipesKit = { FILTER_H, LOW_PORT, photoArt, photo, photoToken, filter, portFace, pipe, line, ride, flow, bars, gallery, slider, tray, compare };
 })();

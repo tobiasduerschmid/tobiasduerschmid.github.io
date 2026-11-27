@@ -24,9 +24,14 @@
      enough for 3:1 against the sheet's lightest tone (--bg) and any paper. */
   --uk-wire: #dce6fb;
   --uk-casing: #0b1e38;
+  /* A documented exception (a layer bridge): amber, apart from the red of a
+     forbidden use and the blue accents, at least 3:1 on the sheet and 4.5:1
+     on a label in each mode. */
+  --uk-amber: #ffb85c;
 }
 :is(html:not(.dark-mode), html.print-light-mode) .stage {
   --uk-wire: #1f2a44;
+  --uk-amber: #9a5300;
 }
 
 .uk-component,
@@ -196,6 +201,7 @@
 .uk-connector--red { --uk-wire: var(--vn-red-ink); }
 .uk-connector--green { --uk-wire: var(--vn-green-ink); }
 .uk-connector--cyan { --uk-wire: var(--vn-cyan-ink); }
+.uk-connector--amber { --uk-wire: var(--uk-amber); }
 
 /* A relation's type beside its line, on its own patch of sheet. */
 .uk-label {
@@ -221,6 +227,7 @@
 .uk-boundary-sub { font-size: 20px; font-weight: 600; line-height: 1.25; white-space: nowrap; }
 .uk-label--red { color: var(--vn-red-ink); }
 .uk-label--green { color: var(--vn-green-ink); }
+.uk-label--amber { color: var(--uk-amber); }
 
 /* A diagram frame: a thin outline, its view named on a pentagon tab. Its
    sheet is a tinted film over the blueprint, so the grid shows through faintly
@@ -284,6 +291,8 @@
 .uk-g-head.uk-g-cyan { fill: #00677f; }
 .uk-g-hollow { fill: var(--uk-paper); stroke: var(--uk-ink); stroke-width: 1.8; }
 .uk-g-head.uk-g-red { fill: #b42318; }
+/* The key is paper in both modes, so its amber is the light one. */
+.uk-g-amber { stroke: #9a5300; }
 
 /* A callout, drawn as ArchUML draws a note: a dog-eared box with a dotted anchor line. */
 /* The note's paper is its own background, cut to the dog-eared shape its

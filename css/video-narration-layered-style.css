@@ -64,7 +64,8 @@
   font-weight: 900;
   white-space: nowrap;
 }
-.ls-hud--fps { left: auto; right: 8px; }
+/* The frame rate sits in the bottom corner, clear of the score on a narrow screen. */
+.ls-hud--fps { top: auto; right: 8px; bottom: 8px; left: auto; }
 .ls-hud--fps.is-bad { background: #ffd6dc; color: #7a1526; }
 /* The laptop: a camera in the bezel, a hinge, and a keyboard deck with a finger notch. */
 .ls-device--laptop::before { content: ''; position: absolute; top: 5px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: #3e4a78; }
@@ -107,3 +108,21 @@
 .ls-bar-fill.is-over { background: #b42318; }
 .ls-bar-budget { position: absolute; top: -8px; bottom: -8px; width: 0; border-left: 3px dashed #0b0f1a; }
 .ls-bar-budget-label { display: block; margin-top: 6px; color: #3a4660; font-size: 17px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* A bridge's words, in the amber of its arrow (the UML kit's --uk-amber), on
+   a label that follows the mode. */
+.ak-label--amber { color: var(--uk-amber); }
+
+/* A rule card whose name runs past its middle cracks along its right edge, so
+   the crack never crosses the name. */
+.ls-rule--edge-crack .ak-rule-crack { width: 14%; }
+
+/* A cross that strikes out an arrow in the narrow gap between two layers:
+   a small disk, so its X stays large enough to read. */
+.ak-cross.ls-cross { padding: 3px; }
+
+/* A trade-off item is three lines (name, rule chips, why): a tighter rhythm
+   lets the recap's pans fit the stage at full text size, as in the
+   Pipes-and-Filters lesson. */
+.ak-pan-item { padding-top: 5px; }
+.ak-pan-item + .ak-pan-item { margin-top: 5px; }

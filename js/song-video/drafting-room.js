@@ -197,6 +197,63 @@
     }));
   }
 
+  /** Whether a node draws something: a shape, text, a fill, or a border. */
+  function paints(node) {
+    if (node instanceof SVGGeometryElement || node instanceof SVGTextContentElement || node instanceof SVGImageElement) return true;
+    if (!(node instanceof HTMLElement)) return false;
+    if (node instanceof HTMLImageElement || node instanceof HTMLCanvasElement) return true;
+    const style = getComputedStyle(node);
+    if (style.backgroundImage !== 'none') return true;
+    const fill = style.backgroundColor.match(/[\d.]+/g);
+    if (fill && (fill.length < 4 || Number(fill[3]) > 0)) return true;
+    const sides = ['Top', 'Right', 'Bottom', 'Left'];
+    if (sides.some((side) => style[`border${side}Style`] !== 'none' && parseFloat(style[`border${side}Width`]) > 0)) return true;
+    return Array.from(node.childNodes).some((child) => child.nodeType === Node.TEXT_NODE && child.textContent.trim());
+  }
+
+  /**
+   * The sheet's lettering (title block, dimension figures) yields to the
+   * drawing on a stage marked data-lettering="yield": a word that anything
+   * on the stage covers, even in part, would read as a label of what covers
+   * it, so it hides until the stage clears. It runs after every other frame
+   * function, once the picture is posed, so stills copied right after a seek
+   * show it settled. During playback it measures every 0.2 s of stage time.
+   */
+  function yieldLettering(stage, art) {
+    const pieces = Array.from(art.querySelectorAll('.dr-lettering'));
+    let layers = [];
+    let painted = null;
+    const observer = new MutationObserver(() => { painted = null; });
+    let measuredAt = -Infinity;
+    function update(t) {
+      if (t >= measuredAt && t - measuredAt < 0.2) return;
+      measuredAt = t;
+      // A picture may be built inside this very seek, and the observer
+      // reports only after the task, so collect its records now.
+      if (observer.takeRecords().length) painted = null;
+      if (!painted) painted = layers.flatMap((layer) => Array.from(layer.querySelectorAll('*')).filter(paints));
+      const pad = 4 * (stage.getBoundingClientRect().width / W);
+      const covers = painted
+        .filter((node) => node.checkVisibility({ opacityProperty: true, visibilityProperty: true }))
+        .map((node) => node.getBoundingClientRect())
+        .filter((box) => box.width > 0 && box.height > 0);
+      for (const piece of pieces) {
+        const box = piece.getBoundingClientRect();
+        const covered = covers.some((cover) => cover.left < box.right + pad && cover.right > box.left - pad
+          && cover.top < box.bottom + pad && cover.bottom > box.top - pad);
+        piece.classList.toggle('is-covered', covered);
+      }
+    }
+    // The stage adds its picture layers and the choreography registers its
+    // frame functions after the theme is built, in the same task; starting
+    // one microtask later finds the layers and runs last.
+    queueMicrotask(() => {
+      layers = Array.from(stage.querySelectorAll(':scope > .camera, :scope > .hud'));
+      layers.forEach((layer) => observer.observe(layer, { childList: true, subtree: true }));
+      onFrame(update);
+    });
+  }
+
   function draftingRoom(stage) {
     const layer = el('div', 'layer dr-room', stage);
     el('div', 'dr-base', layer);
@@ -209,6 +266,7 @@
     heightChain(art);
     markers(art);
     titleBlock(art, { title: stage.dataset.sheetTitle, subtitle: stage.dataset.sheetSubtitle });
+    if (stage.dataset.lettering === 'yield') yieldLettering(stage, art);
     setSquare(art);
     compass(art);
     roll(art);

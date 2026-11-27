@@ -4,9 +4,9 @@ active: true
 cards:
   - id: 1
     difficulty: basic
-    question: "What is the defining invariant of the publish-subscribe style?"
-    answer: "**Dual ignorance.** Publishers do not know the identity, location, or even the existence of any subscribers; subscribers depend on the *occurrence of an event*, not on which publisher produced it. All routing flows through the bus."
-    explanation: "This obliviousness is what makes pub-sub fundamentally different from direct procedure calls or even Observer (where the subject still holds a list of observers). The bus is the only thing in the system that knows who talks to whom."
+    question: "What four constraints define the publish-subscribe architectural style?"
+    answer: "**Publisher ignorance** (a publisher doesn't rely on who listens, or whether anyone does), **subscriber ignorance** (a subscriber depends on the event, not its source), **one-way propagation** (publishing returns no value), and **asynchronous publishing** (the publisher never blocks)."
+    explanation: "The constraints are what give the style its power: the two ignorance rules let subscribers come and go and publishers be replaced, and one-way, asynchronous publishing keeps a slow or crashed subscriber from stalling anyone else. Only the topic, the connector between them, knows who talks to whom."
 
   - id: 2
     difficulty: basic
@@ -123,3 +123,9 @@ cards:
     question: "Why are topic names architecturally significant in topic-based publish-subscribe?"
     answer: "Topic names are the connectors that bind publishers and subscribers. If a publisher renames a topic but a subscriber keeps listening to the old name, the code may compile and run while the runtime message flow silently breaks."
     explanation: "The lecture's Autoware.AI example used exactly this failure mode: some components changed from one topic string to another while others did not. Pub-sub decoupling makes extension easy, but it also makes tracing and contract validation load-bearing."
+
+  - id: 17
+    difficulty: intermediate
+    question: "Under publish-subscribe's one-way propagation, how does a publisher learn what a subscriber did with its event?"
+    answer: "Not from the publish call, which returns no value. If the subscriber's result matters, the subscriber publishes it as a **new event on another topic**, and anyone interested, the original publisher included, subscribes to that topic."
+    explanation: "A publisher that waited for an answer would again depend on its subscribers, so the style sends answers forward as new events instead of back as return values."

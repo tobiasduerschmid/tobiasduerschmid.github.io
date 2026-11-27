@@ -50,10 +50,7 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer {
 }
 }
 
-/* Lesson notes inline the video stage and its frame, laid out in content-box like
-   its own page; the reset must not reach those stills. :where keeps the
-   reset's specificity. */
-.narrated-explainer :where(*:not(.vn-note-still, .vn-note-still *)), .narrated-explainer :where(*:not(.vn-note-still, .vn-note-still *))::before, .narrated-explainer :where(*:not(.vn-note-still, .vn-note-still *))::after { box-sizing: border-box; }
+.narrated-explainer *, .narrated-explainer *::before, .narrated-explainer *::after { box-sizing: border-box; }
 .narrated-explainer [hidden] { display: none !important; }
 .narrated-explainer .nja-player { background: var(--nja-bg); color: var(--nja-text); border: 2px solid var(--nja-line); border-radius: 8px; overflow: hidden; }
 /* Where a browser cannot show an element full screen (Safari on iPhone), the

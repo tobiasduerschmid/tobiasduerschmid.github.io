@@ -28,37 +28,22 @@ To achieve the systemic properties of the style, architects must enforce strict 
 *   **Strict Layering:** In a purely strict layered system, a layer is only allowed to use the services of the layer *immediately* below it. This topology models a classic network protocol stack (like the OSI 7-Layer Model).
 *   **Relaxed (Nonstrict) Layering:** Because strict layering can introduce high performance penalties by forcing data to traverse every intermediate layer, application software often employs *relaxed layering*. In a relaxed system, a layer is allowed to use *any* layer below it, not just the next lower one. 
 *   **Layer Bridging:** When a module in a higher layer accesses a nonadjacent lower layer, it is known as *layer bridging*. While occasional bridging is permitted for performance optimization, excessive layer bridging acts as an *architectural smell* that destroys the low coupling of the system, ultimately ruining the portability the style was meant to guarantee.
-*   **The Golden Rule:** Under no circumstances is a lower layer allowed to use an upper layer. Upward dependencies create cyclic references, which fundamentally invalidate the layering and turn the architecture into a "big ball of mud".
+*   **The Golden Rule (never up):** Under no circumstances is a lower layer allowed to use an upper layer. The narrated lesson calls this rule *never up*: it is the one part of the rules that no layering relaxes. Upward dependencies create cyclic references, which fundamentally invalidate the layering and turn the architecture into a "big ball of mud".
 
 The strict-vs-relaxed distinction is a trade-off, not a moral ranking. Strict layering maximizes dependency discipline because every layer depends only on the layer directly below it. Relaxed layering allows a higher layer to skip intermediate layers for performance or convenience, but each skip exposes the higher layer to more low-level detail and makes later replacement harder.
 
-The diagram below contrasts the four topologies. Solid arrows are *allowed* uses; dashed arrows annotated "✗" are the violations that turn a clean stack into a ball of mud.
+The module view below contrasts the three kinds of use. As in the narrated lesson, each layer is a UML package stereotyped «layer», and every arrow is a dashed dependency: «allowed to use» marks a use the strict rule permits, «bridge» marks a documented skip to a lower layer, and the upward arrow marks the use that never up forbids. The video draws a bridge in amber and a forbidden use in red, struck by a cross; here each kind is named on its arrow.
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
-layout compact 1110x876
-component Presentation
-component Domain
-component DataAccess
-component Infrastructure
-Presentation --> Domain : strict (OK)
-Domain --> DataAccess : strict (OK)
-DataAccess --> Infrastructure : strict (OK)
-Presentation ..> DataAccess : relaxed bridging
-Domain ..> Presentation : golden-rule violation
-note right of Presentation
-  Strict: use only
-  the layer directly below.
-end note
-note right of Domain
-  Relaxed: may skip layers
-  downward; acceptable.
-  Excessive bridging is a smell.
-end note
-note right of DataAccess
-  Golden rule: NEVER
-  use a layer above.
-  Creates cycles; kills portability.
-end note
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="Each layer may use the one below; a documented bridge may skip a layer; no use may point up." data-uml-spec='@startuml
+package Presentation <<layer>> @pos(60, 0)
+package Domain <<layer>> @pos(20, 160)
+package "Data access" as DataAccess <<layer>> @pos(60, 320)
+package Infrastructure <<layer>> @pos(60, 480)
+Presentation ..> Domain : «allowed to use»
+Domain ..> DataAccess : «allowed to use»
+DataAccess ..> Infrastructure : «allowed to use»
+Presentation ..> DataAccess : «bridge»
+Infrastructure ..> DataAccess : forbidden: never up
 @enduml'></div>
 
 ## CRC Card for a Layer

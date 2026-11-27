@@ -1,8 +1,8 @@
 {
-  "duration": 799.13,
+  "duration": 801.76525,
   "voice": "drama3-female6",
   "speed": 1,
-  "speech_sha256": "23a3098b691d6bf649f4b298c94f8758347dfb285a6eeaa946b651190cb85fb7",
+  "speech_sha256": "e45e947eb7fedddf69520f924aac82c96379ac0a4a224655ef1d4b83525e1410",
   "scenes": [
     {
       "id": "intro",
@@ -73,241 +73,241 @@
         {
           "id": "layers",
           "start": 148.16,
-          "end": 169.71,
-          "speech_end": 169.16
+          "end": 170.61,
+          "speech_end": 170.06
         },
         {
           "id": "translate",
-          "start": 169.71,
-          "end": 192.93,
-          "speech_end": 190.43
+          "start": 170.61,
+          "end": 193.83,
+          "speech_end": 191.33
         }
       ],
-      "end": 192.93
+      "end": 193.83
     },
     {
       "id": "allowed",
-      "start": 192.93,
+      "start": 193.83,
       "cues": [
         {
           "id": "uses",
-          "start": 192.93,
-          "end": 211.64,
-          "speech_end": 211.09
+          "start": 193.83,
+          "end": 212.54,
+          "speech_end": 211.99
         },
         {
           "id": "rules",
-          "start": 211.64,
-          "end": 234.21,
-          "speech_end": 233.66
+          "start": 212.54,
+          "end": 235.71,
+          "speech_end": 235.16
         },
         {
           "id": "why_rules",
-          "start": 234.21,
-          "end": 254.12,
-          "speech_end": 253.57
+          "start": 235.71,
+          "end": 257.71525,
+          "speech_end": 257.16525
         },
         {
           "id": "predict_upward",
-          "start": 254.12,
-          "end": 272.5,
-          "speech_end": 268.5
+          "start": 257.71525,
+          "end": 276.09525,
+          "speech_end": 272.09525
         },
         {
           "id": "upward_cost",
-          "start": 272.5,
-          "end": 293.56,
-          "speech_end": 291.06
+          "start": 276.09525,
+          "end": 295.47525,
+          "speech_end": 292.97525
         }
       ],
-      "end": 293.56
+      "end": 295.47525
     },
     {
       "id": "callbacks",
-      "start": 293.56,
+      "start": 295.47525,
       "cues": [
         {
           "id": "callback",
-          "start": 293.56,
-          "end": 313.03,
-          "speech_end": 312.48
+          "start": 295.47525,
+          "end": 314.94525,
+          "speech_end": 314.39525
         },
         {
           "id": "not_uses",
-          "start": 313.03,
-          "end": 337.35,
-          "speech_end": 334.85
+          "start": 314.94525,
+          "end": 339.26525,
+          "speech_end": 336.76525
         }
       ],
-      "end": 337.35
+      "end": 339.26525
     },
     {
       "id": "relaxed",
-      "start": 337.35,
+      "start": 339.26525,
       "cues": [
         {
           "id": "strictness",
-          "start": 337.35,
-          "end": 359.3,
-          "speech_end": 358.75
+          "start": 339.26525,
+          "end": 361.21525,
+          "speech_end": 360.66525
         },
         {
           "id": "tiers",
-          "start": 359.3,
-          "end": 378.47,
-          "speech_end": 377.92
+          "start": 361.21525,
+          "end": 380.38525,
+          "speech_end": 379.83525
         },
         {
           "id": "three_tiers",
-          "start": 378.47,
-          "end": 400.33,
-          "speech_end": 397.83
+          "start": 380.38525,
+          "end": 402.24525,
+          "speech_end": 399.74525
         }
       ],
-      "end": 400.33
+      "end": 402.24525
     },
     {
       "id": "port",
-      "start": 400.33,
+      "start": 402.24525,
       "cues": [
         {
           "id": "predict_console",
-          "start": 400.33,
-          "end": 419.39,
-          "speech_end": 415.39
+          "start": 402.24525,
+          "end": 421.30525,
+          "speech_end": 417.30525
         },
         {
           "id": "portability",
-          "start": 419.39,
-          "end": 438.94,
-          "speech_end": 438.39
+          "start": 421.30525,
+          "end": 440.85525,
+          "speech_end": 440.30525
         },
         {
           "id": "modify_reuse",
-          "start": 438.94,
-          "end": 460.71,
-          "speech_end": 460.16
+          "start": 440.85525,
+          "end": 462.62525,
+          "speech_end": 462.07525
         },
         {
           "id": "everyday",
-          "start": 460.71,
-          "end": 482.72,
-          "speech_end": 482.17
+          "start": 462.62525,
+          "end": 484.63525,
+          "speech_end": 484.08525
         },
         {
           "id": "team_test",
-          "start": 482.72,
-          "end": 502.9,
-          "speech_end": 500.4
+          "start": 484.63525,
+          "end": 504.81525,
+          "speech_end": 502.31525
         }
       ],
-      "end": 502.9
+      "end": 504.81525
     },
     {
       "id": "costs",
-      "start": 502.9,
+      "start": 504.81525,
       "cues": [
         {
           "id": "overhead",
-          "start": 502.9,
-          "end": 526.05,
-          "speech_end": 525.5
+          "start": 504.81525,
+          "end": 527.96525,
+          "speech_end": 527.41525
         },
         {
           "id": "bridge",
-          "start": 526.05,
-          "end": 547.1,
-          "speech_end": 546.55
+          "start": 527.96525,
+          "end": 549.01525,
+          "speech_end": 548.46525
         },
         {
           "id": "upfront",
-          "start": 547.1,
-          "end": 570.06,
-          "speech_end": 567.56
+          "start": 549.01525,
+          "end": 571.97525,
+          "speech_end": 569.47525
         }
       ],
-      "end": 570.06
+      "end": 571.97525
     },
     {
       "id": "leaks",
-      "start": 570.06,
+      "start": 571.97525,
       "cues": [
         {
           "id": "leak",
-          "start": 570.06,
-          "end": 590.81,
-          "speech_end": 590.26
+          "start": 571.97525,
+          "end": 592.72525,
+          "speech_end": 592.17525
         },
         {
           "id": "granularity",
-          "start": 590.81,
-          "end": 614.39,
-          "speech_end": 611.89
+          "start": 592.72525,
+          "end": 616.30525,
+          "speech_end": 613.80525
         }
       ],
-      "end": 614.39
+      "end": 616.30525
     },
     {
       "id": "in_practice",
-      "start": 614.39,
+      "start": 616.30525,
       "cues": [
         {
           "id": "network_phone",
-          "start": 614.39,
-          "end": 638.2,
-          "speech_end": 637.65
+          "start": 616.30525,
+          "end": 640.11525,
+          "speech_end": 639.56525
         },
         {
           "id": "browser_database",
-          "start": 638.2,
-          "end": 660.97,
-          "speech_end": 660.42
+          "start": 640.11525,
+          "end": 662.88525,
+          "speech_end": 662.33525
         },
         {
           "id": "car_spacecraft",
-          "start": 660.97,
-          "end": 683.56,
-          "speech_end": 683.01
+          "start": 662.88525,
+          "end": 685.47525,
+          "speech_end": 684.92525
         },
         {
           "id": "common_thread",
-          "start": 683.56,
-          "end": 708.7,
-          "speech_end": 706.2
+          "start": 685.47525,
+          "end": 710.61525,
+          "speech_end": 708.11525
         }
       ],
-      "end": 708.7
+      "end": 710.61525
     },
     {
       "id": "summary",
-      "start": 708.7,
+      "start": 710.61525,
       "cues": [
         {
           "id": "recap_problem",
-          "start": 708.7,
-          "end": 729.41,
-          "speech_end": 728.86
+          "start": 710.61525,
+          "end": 731.32525,
+          "speech_end": 730.77525
         },
         {
           "id": "recap_rules",
-          "start": 729.41,
-          "end": 751.82,
-          "speech_end": 751.27
+          "start": 731.32525,
+          "end": 755.49525,
+          "speech_end": 754.94525
         },
         {
           "id": "recap_tradeoff",
-          "start": 751.82,
-          "end": 774.59,
-          "speech_end": 774.04
+          "start": 755.49525,
+          "end": 778.26525,
+          "speech_end": 777.71525
         },
         {
           "id": "recap_costs",
-          "start": 774.59,
-          "end": 799.13,
-          "speech_end": 796.63
+          "start": 778.26525,
+          "end": 801.76525,
+          "speech_end": 799.26525
         }
       ],
-      "end": 799.13
+      "end": 801.76525
     }
   ]
 }
