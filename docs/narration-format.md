@@ -360,9 +360,9 @@ Cmd/Ctrl+Shift+7 and 8 toggle numbered and bulleted lists. Preserve native
 undo/redo and let Tab leave the field. Document shortcuts in `/shortcuts/`.
 Only supported semantic markup is accepted from pasted or stored content;
 discard executable content, attributes, and arbitrary styling. The print
-mirror preserves that safe formatting and real list structure. Each cue starts
-on its own printed page, with a full-width visual above its key points and
-nearly two inches of ruled handwriting space. Animated-stage pictures print
+mirror preserves that safe formatting and real list structure. Cues flow into
+the available page space, with full-width visuals above their key points and
+two ruled lines for handwriting. Animated-stage pictures print
 7.2 inches wide on both Letter and A4. Code, diagrams, and student writing use
 their content height and can continue across pages rather than clip or shrink.
 Knowledge checks follow their section; answers remain at the end.

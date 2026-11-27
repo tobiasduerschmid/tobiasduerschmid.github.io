@@ -267,8 +267,8 @@ preserve undo history; storage and export remain in the lifecycle script.
   Cmd/Ctrl+Shift+7, 8 (numbered and bulleted lists) to the focused field;
   preserve native undo/redo and Tab navigation. Keep `/shortcuts/` aligned.
   Print mirrors preserve safe formatting and semantic lists. Blank
-  handouts give each cue its own page, with a full-width visual above key
-  points and nearly two inches of ruled writing space. Animated stages print
+  handouts flow cues into available page space, with full-width visuals above
+  key points and two ruled writing lines. Animated stages print
   7.2 inches wide on Letter and A4. Code, diagrams, and populated student notes
   must grow across pages rather than clip, overlap, or shrink. Keep ruled space for
   handwriting, light print colors, and editing controls out of print.

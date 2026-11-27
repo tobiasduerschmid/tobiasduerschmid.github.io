@@ -1,6 +1,6 @@
 /* Shared editable handouts (_includes/narration-notes.html).
    On screen they preview the handout; in print, only the lesson remains: its
-   title, then a large picture per page above its key points and ruled lines,
+   title, then large pictures above their key points and ruled lines,
    with each section's knowledge checks and the answers at the end. Notes
    are a print surface, so they stay light. The page also loads the stage's
    styles, which color html and body for the stage page; these rules win. */
@@ -106,20 +106,27 @@ html body.vn-notes-page {
   .vn-notes-intro, .vn-notes-footer, .vn-notes-master { display: none; }
   .vn-notes-title, .vn-note, .vn-notes-answers { padding: 0; border: 0; border-radius: 0; background: none; }
   .vn-notes-title { margin: 0 0 0.1in; }
-  /* A cue starts on its own sheet. Content can continue onto another sheet
-     when the learner writes more; the slide and text never shrink to fit. */
+  /* Flow cues into available paper space without shrinking slides or text.
+     Long content and student writing can continue onto another sheet. */
   .vn-note {
     display: block;
     box-sizing: border-box;
-    margin: 0 0 0.12in;
-    padding-top: 0.06in;
+    margin: 0 0 0.04in;
+    padding-top: 0.02in;
     border-top: 1.5pt solid var(--vn-notes-ink);
     break-inside: auto;
   }
-  .vn-note > * + * { margin-top: 0.12in; }
-  .vn-note:not(.vn-check) { break-before: page; break-after: page; }
-  .vn-notes-scene:first-of-type > .vn-note:first-child { break-before: auto; }
-  .vn-check { display: flex; min-height: 3in; break-inside: avoid; }
+  .vn-note > * + * { margin-top: 0.04in; }
+  /* Blank writing lines share the space beside key points. Saved prose keeps
+     the full width and can flow across pages. Neither changes slide size. */
+  .vn-note:not(.has-written-notes) .vn-note-points {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 1.4in;
+    column-gap: 0.2in;
+  }
+  .vn-note:not(.has-written-notes) .vn-note-points .vn-note-editor { display: none; }
+  .vn-note:not(.has-written-notes) .vn-note-points .vn-note-lines { grid-column: 2; grid-row: 1; }
+  .vn-check { display: flex; break-inside: avoid; }
   /* Twice the former width, with room inside both Letter and A4 margins.
      Keep an explicit print scale: ResizeObserver may not run before export. */
   .vn-note-still { width: 7.2in; break-inside: avoid; }
@@ -186,11 +193,10 @@ html body.vn-notes-page {
   .vn-note-still .sk-balance-beam::before { border-top: 16px solid var(--vn-line); }
   .vn-note-still .us-card { background: linear-gradient(170deg, #fffaf0, var(--paper) 60%, #f6ead0) !important; }
   .vn-note-still .us-card::before { content: ''; position: absolute; top: 0; bottom: 0; left: calc(var(--margin) - 2px); border-left: 2px solid rgba(230, 60, 80, 0.55); }
-  /* Reserve nearly two inches for handwriting below each slide. */
-  .vn-note-points .vn-note-lines { flex: none; height: calc(7 * var(--vn-notes-line-gap)); }
+  /* Keep room for short handwritten notes without a large empty block. */
+  .vn-note-points .vn-note-lines { flex: none; height: calc(2 * var(--vn-notes-line-gap)); }
   .vn-check .vn-note-lines { flex: 1 0 auto; height: calc(3 * var(--vn-notes-line-gap)); }
   .vn-note-lines span { border-bottom-width: 0.75pt; }
-  .vn-notes-answers { break-before: page; }
   .vn-notes-answers li { break-inside: avoid; }
 }
 
