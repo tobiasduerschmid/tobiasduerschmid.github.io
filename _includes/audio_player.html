@@ -2,7 +2,9 @@
 Audio player + (optional) transcript disclosure.
 
 Parameters:
-  src               Required. URL of the audio file (passed to <source>).
+  src               URL of the MP3, required when narration is absent.
+  narration         Optional read-aloud data. Provides audio, script, captions,
+                    and chapters (titles with start times in seconds).
   transcript        Optional. HTML or plain text. If present, rendered inside
                     a collapsible <details> below the player and announced
                     via aria-controls so screen-reader users can choose to
@@ -23,14 +25,26 @@ Why this exists (WCAG 2.2 §1.2.1, WCAG 3 §2.1):
   default and doesn't take up space until requested.
 {%- endcomment -%}
 
-{%- assign _player_id = include.player_id | default: 'cap-' | append: include.src | slugify -%}
+{%- assign _audio_src = include.narration.audio | default: include.src -%}
+{%- assign _player_id = include.player_id | default: 'cap-' | append: _audio_src | slugify -%}
+{%- assign _chapter_id = _player_id | append: '-chapter' -%}
 {%- assign _transcript_id = _player_id | append: '-transcript' -%}
 {%- assign _transcript_label = include.transcript_label | default: 'Read transcript' -%}
+{%- assign _chapters = include.narration.chapters -%}
+{%- assign _previous_label = 'Restart from beginning' -%}
+{%- assign _next_label = 'Skip to end' -%}
+{%- if _chapters.size > 0 -%}
+    {%- assign _previous_label = 'Previous section' -%}
+    {%- assign _next_label = 'Next section' -%}
+{%- endif -%}
 
-<div class="cap" role="region" aria-label="Audio player">
+<div class="cap{% if include.narration %} cap--narrated{% endif %}" role="region" aria-label="Audio player">
     <audio class="cap__audio" preload="metadata"
         {%- if include.transcript or include.transcript_url %} aria-describedby="{{ _transcript_id }}"{% endif -%}>
-        <source src="{{ include.src }}" type="audio/mpeg">
+        <source src="{{ _audio_src | relative_url | escape }}" type="audio/mpeg">
+        {%- if include.narration.captions %}
+        <track kind="captions" src="{{ include.narration.captions | relative_url }}" srclang="en" label="English">
+        {%- endif %}
     </audio>
 
     <!-- Top Row: Timeline -->
@@ -49,13 +63,13 @@ Why this exists (WCAG 2.2 §1.2.1, WCAG 3 §2.1):
             <button type="button" class="cap__skip-btn" data-skip="-15" data-original-title="Back 15s" aria-label="Skip back 15 seconds">
                 <i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span aria-hidden="true">15</span>
             </button>
-            <button type="button" class="cap__ctrl-btn cap__ctrl-btn--prev" data-original-title="Restart" aria-label="Restart from beginning">
+            <button type="button" class="cap__ctrl-btn cap__ctrl-btn--prev" data-original-title="{{ _previous_label }}" aria-label="{{ _previous_label }}">
                 <i class="fa-solid fa-backward-step" aria-hidden="true"></i>
             </button>
             <button type="button" class="cap__play-btn" data-original-title="Play / Pause" aria-label="Play" aria-pressed="false">
                 <i class="fa-solid fa-play" aria-hidden="true"></i>
             </button>
-            <button type="button" class="cap__ctrl-btn cap__ctrl-btn--next" data-original-title="Skip to end" aria-label="Skip to end">
+            <button type="button" class="cap__ctrl-btn cap__ctrl-btn--next" data-original-title="{{ _next_label }}" aria-label="{{ _next_label }}">
                 <i class="fa-solid fa-forward-step" aria-hidden="true"></i>
             </button>
             <button type="button" class="cap__skip-btn" data-skip="15" data-original-title="Forward 15s" aria-label="Skip forward 15 seconds">
@@ -79,7 +93,25 @@ Why this exists (WCAG 2.2 §1.2.1, WCAG 3 §2.1):
                 aria-label="Volume">
         </div>
     </div>
+
+    {%- if _chapters.size > 0 %}
+    <form class="cap__chapter-jump">
+        <label for="{{ _chapter_id }}">Section</label>
+        <select id="{{ _chapter_id }}" name="chapter">
+            {% for chapter in _chapters -%}
+            <option value="{{ chapter.start }}">{{ chapter.title | escape }}</option>
+            {% endfor -%}
+        </select>
+        <button type="submit">Jump to section</button>
+    </form>
+    {%- endif %}
 </div>
+
+{%- if include.narration %}
+<div class="cap-narration-credit">
+    {% include narration-player-credit.html story=include.narration %}
+</div>
+{%- endif %}
 
 {%- if include.transcript or include.transcript_url -%}
 <details class="cap-transcript" id="{{ _transcript_id }}">

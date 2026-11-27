@@ -1,0 +1,91 @@
+{
+  "audio": "/assets/audio/how-should-i-use-ai-as-a-college-student.mp3",
+  "script": "/assets/narration/how-should-i-use-ai-as-a-college-student.txt",
+  "captions": "/assets/narration/how-should-i-use-ai-as-a-college-student.vtt",
+  "chapters": [
+    {
+      "title": "Introduction",
+      "start": 0.0
+    },
+    {
+      "title": "Motivation: Build the Skills to Use AI Well",
+      "start": 64.52
+    },
+    {
+      "title": "Cognitive Offloading: Beneficial vs. Detrimental Use",
+      "start": 335.21
+    },
+    {
+      "title": "The Bad: Detrimental Offloading (Outsourcing)",
+      "start": 421.53
+    },
+    {
+      "title": "The Good: Beneficial Offloading",
+      "start": 507.55
+    },
+    {
+      "title": "Strategies for Learning Deeply",
+      "start": 563.4
+    },
+    {
+      "title": "Socratic Interaction: AI as a Tutor, Not an Oracle",
+      "start": 576.89
+    },
+    {
+      "title": "The “Attempt First” Pattern",
+      "start": 709.73
+    },
+    {
+      "title": "Break the Problem into Steps",
+      "start": 789.39
+    },
+    {
+      "title": "The “Teach-Back” Method (AI as a Teachable Novice)",
+      "start": 868.87
+    },
+    {
+      "title": "Prompting Patterns",
+      "start": 1010.16
+    },
+    {
+      "title": "The “Generation-Then-Comprehension” Protocol",
+      "start": 1025.81
+    },
+    {
+      "title": "Actionable Tips:",
+      "start": 1072.25
+    },
+    {
+      "title": "Study Patterns That Preserve Useful Practice",
+      "start": 1123.25
+    },
+    {
+      "title": "The Alternative Approaches Pattern",
+      "start": 1136.62
+    },
+    {
+      "title": "Read, Make Your Own Notes, Then Clarify",
+      "start": 1211.38
+    },
+    {
+      "title": "Faded Worked Examples",
+      "start": 1269.44
+    },
+    {
+      "title": "Rubric-First Feedback Loop",
+      "start": 1348.28
+    },
+    {
+      "title": "Fading the Scaffold: The Goal is Independence",
+      "start": 1459.41
+    },
+    {
+      "title": "A Quick Rubric for Any AI Interaction",
+      "start": 1516.67
+    },
+    {
+      "title": "Self-Check Quiz",
+      "start": 1609.78
+    }
+  ]
+}

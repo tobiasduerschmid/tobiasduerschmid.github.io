@@ -4,6 +4,7 @@ title: "How Should I Use AI as a College Student? — A Science-Backed Guide for
 date: 2026-09-26
 category: "For Students"
 featured: true
+audio_narration: how-should-i-use-ai-as-a-college-student
 image: "/img/genai.jpg"
 permalink: /blog/how-should-i-use-ai-as-a-college-student/
 image_alt_text: "Student working on a computer with a robot sitting next to him. They both look at a digital screen. University buildings in the background. Soft evening light"

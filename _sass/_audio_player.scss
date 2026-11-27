@@ -22,6 +22,7 @@
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35),
                 inset 0 1px 0 rgba(255, 255, 255, 0.06);
     font-family: 'Inter', sans-serif;
+    font-size: 1.05em;
     transition: all 0.3s ease;
 
     /* ── Row 1: Timeline (Top) ────────────────────────── */
@@ -87,7 +88,6 @@
     }
 
     &__time {
-        font-size: 16px;
         font-weight: 600;
         font-variant-numeric: tabular-nums;
         color: rgba(255, 255, 255, 0.65);
@@ -107,12 +107,16 @@
 
     &__transport {
         display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
         align-items: center;
         gap: 12px;
     }
 
     &__speeds {
         display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
         gap: 4px;
         align-items: center;
     }
@@ -131,9 +135,10 @@
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 8px;
         color: rgba(255, 255, 255, 0.55);
-        font-size: 16px;
+        font: inherit;
         font-weight: 700;
-        padding: 6px 9px;
+        white-space: nowrap;
+        padding: 6px 0.35em;
         min-height: 24px;
         cursor: pointer;
         transition: all 0.2s ease;
@@ -158,16 +163,16 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        position: relative;
-        width: 34px;
+        gap: 2px;
+        min-width: 34px;
         min-height: 34px;
+        padding: 0;
         justify-content: center;
+        font: inherit;
 
         i { font-size: 20px; }
         span {
-            position: absolute;
-            bottom: -8px;
-            font-size: 7.5px;
+            line-height: 1;
             font-weight: 800;
         }
 
@@ -187,6 +192,12 @@
         min-height: 34px;
 
         &:hover { color: #fff; }
+
+        &[aria-disabled="true"] {
+            cursor: default;
+
+            i { opacity: 0.5; }
+        }
     }
 
     &__play-btn {
@@ -271,6 +282,39 @@
         }
     }
 
+    &__chapter-jump {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        color: #fff;
+
+        label { margin: 0; }
+
+        select,
+        button {
+            min-height: 40px;
+            max-width: 100%;
+            padding: 0.3em 0.55em;
+            border: 1px solid #a8a8ae;
+            border-radius: 6px;
+            background: #29292c;
+            color: inherit;
+            font: inherit;
+
+            &:focus-visible {
+                outline: 2px solid #FFD100;
+                outline-offset: 2px;
+            }
+        }
+
+        select {
+            flex: 1 1 10em;
+            min-width: 0;
+        }
+    }
+
     /* ── Light Mode Override ────────────────────────────── */
     html:not(.dark-mode) & {
         background: #f0f0f5;
@@ -287,6 +331,18 @@
         .cap__skip-btn, .cap__ctrl-btn, .cap__vol-btn, .cap__play-btn {
             color: rgba(0, 0, 0, 0.65);
             &:hover { color: #000; }
+        }
+
+        .cap__chapter-jump {
+            color: #171717;
+
+            select,
+            button {
+                background: #fff;
+                border-color: #666;
+
+                &:focus-visible { outline-color: #005587; }
+            }
         }
 
         .cap__time { color: rgba(0, 0, 0, 0.72); }
@@ -321,6 +377,11 @@
             margin-top: 4px;
         }
     }
+}
+
+@media print {
+    .cap--narrated,
+    .cap-narration-credit { display: none !important; }
 }
 
 /* ============================================================

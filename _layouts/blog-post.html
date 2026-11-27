@@ -61,9 +61,11 @@ layout: blog
           </div>
         </div>
 
-        {% if page.audio %}
+        {% assign audio_narration = site.data.blog_audio[page.audio_narration] %}
+        {% if page.audio or audio_narration %}
         {% include audio_player.html
             src=page.audio
+            narration=audio_narration
             transcript=page.transcript
             transcript_url=page.transcript_url
             transcript_label=page.transcript_label %}

@@ -1,0 +1,669 @@
+WEBVTT
+
+introduction-1
+00:00:00.000 --> 00:00:05.600
+How Should I Use AI as a College Student? — A Science-Backed Guide for CS Students
+
+introduction-2
+00:00:06.200 --> 00:00:17.880
+Many of my students come to me with this wonderful question: “How can I leverage AI as a tool to supercharge my education without accidentally outsourcing my own intelligence?”
+
+introduction-3
+00:00:18.130 --> 00:00:31.350
+In my opinion, this will fundamentally impact how much the current generation of college students will take out of their educational experience, because AI capabilities are growing at a very fast pace.
+
+introduction-4
+00:00:31.600 --> 00:00:46.080
+In Math, within just four years, AI has grown from barely passing grade school math tests to solving the hardest math problems that the world’s leading experts were unsuccessfully trying to solve for decades.
+
+introduction-5
+00:00:46.330 --> 00:01:03.670
+My baseline expectation is that this progress will continue across STEM, raising the bar on entry-level positions every year. To help students prepare for this scenario, I decided to write my advice down in a succinct, evidence-based post for everyone.
+
+motivation-build-the-skills-to-use-ai-well-1
+00:01:04.520 --> 00:01:08.640
+Motivation: Build the Skills to Use AI Well
+
+motivation-build-the-skills-to-use-ai-well-2
+00:01:09.140 --> 00:01:20.780
+It’s 7:00 PM on a Friday. Your friends want to watch a movie, but you’re stuck resolving a Git merge conflict in your group project. You and a teammate changed the same section of a file.
+
+motivation-build-the-skills-to-use-ai-well-3
+00:01:21.030 --> 00:01:36.470
+Keeping your version would lose their changes; keeping theirs would lose yours. You’ve spent an hour figuring out how to combine them, and the temptation to paste the conflict into AI and just prompting it “fix this” is overwhelming.
+
+motivation-build-the-skills-to-use-ai-well-4
+00:01:36.720 --> 00:01:50.720
+A professional might just ask AI for a fix. So why should you not just take this tempting short cut? Because skipping the learning phase means you’re not growing your skills — the main goal of education!
+
+motivation-build-the-skills-to-use-ai-well-5
+00:01:51.240 --> 00:01:58.480
+Several studies point to a useful lesson for your degree: strong technical skills can help you get more out of AI.
+
+motivation-build-the-skills-to-use-ai-well-6
+00:01:58.730 --> 00:02:17.030
+In Google’s study of professional developers, those with stronger coding foundations and more system design experience gained more speed from AI tools. There is a similar pattern in teams: AI can strengthen good working habits, but it can also make existing problems worse.
+
+motivation-build-the-skills-to-use-ai-well-7
+00:02:17.280 --> 00:02:37.940
+Studies in programming education help explain why fundamentals matter. Learners with stronger foundations could follow generated code, spot mistakes, and recognize cases the AI had missed. Those are the same skills you practice when you trace an algorithm, choose a data structure, or debug an assignment.
+
+motivation-build-the-skills-to-use-ai-well-8
+00:02:38.190 --> 00:02:46.070
+Anthropic also found that people with more knowledge of the task’s subject were more likely to succeed in their Claude Code sessions.
+
+motivation-build-the-skills-to-use-ai-well-9
+00:02:46.320 --> 00:02:58.260
+A recurring difference was how people used the tool: more experienced users planned, guided, and checked its work, while beginners more often turned to it simply to get past an obstacle.
+
+motivation-build-the-skills-to-use-ai-well-10
+00:02:58.510 --> 00:03:07.770
+The concern is that students who keep building these skills will get more value from AI, while those who skip that practice risk falling behind.
+
+motivation-build-the-skills-to-use-ai-well-11
+00:03:08.290 --> 00:03:21.430
+This means that as a college student, your main goal should be to maximize your skills so that, when you then add AI on top, you amplify a larger base of skills and keep compounding.
+
+motivation-build-the-skills-to-use-ai-well-12
+00:03:21.680 --> 00:03:39.300
+Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately. To use an analogy: Using AI to do the heavy lifting in your coursework is like sending a robot to the gym instead of working out yourself.
+
+motivation-build-the-skills-to-use-ai-well-13
+00:03:39.820 --> 00:03:43.820
+In the illustration, a student watches a robot lift weights.
+
+motivation-build-the-skills-to-use-ai-well-14
+00:03:44.000 --> 00:03:50.220
+"Wow, I just discovered this AI that makes my workout so much easier and faster!"
+
+motivation-build-the-skills-to-use-ai-well-15
+00:03:50.740 --> 00:04:07.720
+A study on math students found that students who used AI for homework performed 17% worse in subsequent tests — that’s the difference between an A and a C+. Reporting on a Brown University economics course describes a similar warning sign.
+
+motivation-build-the-skills-to-use-ai-well-16
+00:04:07.970 --> 00:04:22.150
+The take-home exam average was 96 out of 100, far above the course’s usual midterm averages, and the professor suspected AI use because many answers resembled ChatGPT’s.
+
+motivation-build-the-skills-to-use-ai-well-17
+00:04:22.400 --> 00:04:33.560
+When the final moved in person, many students with perfect take-home scores dropped the course or didn’t show up to the exam. Most students who took it scored much lower.
+
+motivation-build-the-skills-to-use-ai-well-18
+00:04:34.080 --> 00:04:40.360
+This matters for you, because a high score earned with AI can hide gaps in your own understanding.
+
+motivation-build-the-skills-to-use-ai-well-19
+00:04:40.610 --> 00:04:50.950
+The grade looked excellent right up to the moment the students had to rely on their own skills, and in exams, interviews, and on the job you eventually have to.
+
+motivation-build-the-skills-to-use-ai-well-20
+00:04:51.470 --> 00:05:08.990
+Learning research calls some useful challenges “desirable difficulties”: recalling an idea without your notes, for example, can help you remember it later even though it feels harder than rereading. The useful part is the mental practice, rather than frustration for its own sake.
+
+motivation-build-the-skills-to-use-ai-well-21
+00:05:09.240 --> 00:05:17.900
+Learn more about desirable difficulties and their importance for learning in my previous blog post “Evidence-Based Study Tips for College Students”.
+
+motivation-build-the-skills-to-use-ai-well-22
+00:05:18.420 --> 00:05:34.360
+Research also points to ways AI can support learning. For your coursework, a useful aim is to let AI clear up confusing instructions or explain an unfamiliar term while you keep practicing the reasoning the assignment is meant to teach.
+
+cognitive-offloading-beneficial-vs-detrimental-use-1
+00:05:35.210 --> 00:05:39.510
+Cognitive Offloading: Beneficial vs. Detrimental Use
+
+cognitive-offloading-beneficial-vs-detrimental-use-2
+00:05:40.010 --> 00:05:52.550
+Before diving into the actionable tips, I think it is useful to understand the theory behind what makes you learn effectively. Whether AI helps or harms learning depends on what you offload.
+
+cognitive-offloading-beneficial-vs-detrimental-use-3
+00:05:52.800 --> 00:06:05.960
+Cognitive Load Theory (CLT) differentiates different kinds of cognitive load: intrinsic and extraneous with a total cap of how much combined load you can keep in your brain at a time.
+
+cognitive-offloading-beneficial-vs-detrimental-use-4
+00:06:06.480 --> 00:06:16.800
+Intrinsic load is the cognitive effort that actually helps you learn. It comes from the ideas you need to understand together, relative to what you already know.
+
+cognitive-offloading-beneficial-vs-detrimental-use-5
+00:06:17.050 --> 00:06:26.430
+When you first learn recursion, tracking calls, variables, and return values are the intrinsic load that makes your mental muscle grow.
+
+cognitive-offloading-beneficial-vs-detrimental-use-6
+00:06:26.950 --> 00:06:44.810
+Extraneous load is avoidable effort added by how the material is presented, such as confusing instructions, searching for an explanation, challenges of installing required packages, or debugging a rare bug in your local step that prevents you from working on the actual homework problem.
+
+cognitive-offloading-beneficial-vs-detrimental-use-7
+00:06:45.330 --> 00:06:54.910
+Cognitive offloading means using tools to reduce mental effort, whether that’s a calculator, a calendar reminder, or AI debugging a script.
+
+cognitive-offloading-beneficial-vs-detrimental-use-8
+00:06:55.160 --> 00:07:00.680
+Your aim should be to reduce extraneous load while keeping intrinsic load high.
+
+the-bad-detrimental-offloading-outsourcing-1
+00:07:01.530 --> 00:07:05.410
+The Bad: Detrimental Offloading (Outsourcing)
+
+the-bad-detrimental-offloading-outsourcing-2
+00:07:05.910 --> 00:07:20.690
+Detrimental offloading means outsourcing the thinking you need to practice, i.e., intrinsic load. Asking AI to solve the traveling salesperson problem for you, for example, defeats an assignment meant to teach algorithmic optimization.
+
+the-bad-detrimental-offloading-outsourcing-3
+00:07:21.210 --> 00:07:22.530
+Two risks follow:
+
+the-bad-detrimental-offloading-outsourcing-4
+00:07:23.050 --> 00:07:41.330
+Skipping practice: If AI works out the logic for you, you miss practice recognizing and solving that kind of problem. In the math experiment above, which involved nearly 1,000 students, the unrestricted use of AI resulted in 17% worse final grades.
+
+the-bad-detrimental-offloading-outsourcing-5
+00:07:41.580 --> 00:07:52.300
+In another study, 52 developers learned a new Python library. Those with AI help scored lower on the following quiz, especially on debugging questions.
+
+the-bad-detrimental-offloading-outsourcing-6
+00:07:52.550 --> 00:08:00.630
+For a programming assignment, getting code to run is only one check; you also need to understand how to fix it when it breaks.
+
+the-bad-detrimental-offloading-outsourcing-7
+00:08:01.150 --> 00:08:14.190
+Metacognitive laziness: This means letting AI take over the job of checking your own thinking: deciding how to start, noticing what you do not understand, and judging whether your answer makes sense.
+
+the-bad-detrimental-offloading-outsourcing-8
+00:08:14.440 --> 00:08:26.700
+Research warns that better work produced with AI does not necessarily mean you have learned more. Before submitting an answer, check whether you can explain the reasoning without reopening the chat.
+
+the-good-beneficial-offloading-1
+00:08:27.550 --> 00:08:30.130
+The Good: Beneficial Offloading
+
+the-good-beneficial-offloading-2
+00:08:30.630 --> 00:08:42.190
+Beneficial offloading lets AI handle extraneous load, i.e., work that is getting in the way of your learning goal to leave you more attention for the skill you need to practice.
+
+the-good-beneficial-offloading-3
+00:08:42.440 --> 00:08:52.260
+A coding agent can help when your goal is algorithm design and you prompt in pseudo-code; it would replace needed practice when syntax itself is the learning goal.
+
+the-good-beneficial-offloading-4
+00:08:52.780 --> 00:09:08.540
+Some research from other disciplines confirms this. For example, in a 12-week study with 240 university students, one group used AI to brainstorm, then did the work of questioning ideas, strengthening arguments, and revising their essays.
+
+the-good-beneficial-offloading-5
+00:09:08.790 --> 00:09:22.550
+They improved more in critical thinking and writing quality than students taught in the usual way. A separate survey also linked offloading and reflecting together with better academic results reported by students.
+
+strategies-for-learning-deeply-1
+00:09:23.400 --> 00:09:25.540
+Strategies for Learning Deeply
+
+strategies-for-learning-deeply-2
+00:09:26.040 --> 00:09:36.040
+AI can give you hints, explanations, and feedback as you learn. The important question is what that help leaves you able to do yourself.
+
+socratic-interaction-ai-as-a-tutor-not-an-oracle-1
+00:09:36.890 --> 00:09:41.370
+Socratic Interaction: AI as a Tutor, Not an Oracle
+
+socratic-interaction-ai-as-a-tutor-not-an-oracle-2
+00:09:41.870 --> 00:09:43.230
+The Research Grounding:
+
+socratic-interaction-ai-as-a-tutor-not-an-oracle-3
+00:09:43.450 --> 00:09:56.670
+AI tutors can ask you to think through a problem before showing an answer. A recent study offers some insights into this. Across two terms of introductory programming, lab sections tried different AI tools.
+
+socratic-interaction-ai-as-a-tutor-not-an-oracle-4
+00:09:56.920 --> 00:10:13.260
+Students using a tutor that asked one question at a time and guided them back to their own reasoning improved more on supervised quizzes taken soon afterward than students without AI. The later exams did not show a clear overall advantage.
+
+socratic-interaction-ai-as-a-tutor-not-an-oracle-5
+00:10:13.510 --> 00:10:21.770
+Try using questions to practice explaining a solution, then check again a few days later whether you can solve a similar problem yourself.
+
+socratic-interaction-ai-as-a-tutor-not-an-oracle-6
+00:10:22.290 --> 00:10:35.470
+Different questions give you different kinds of practice. Recalling what you studied without looking at your notes is retrieval practice. Explaining why a loop terminates asks you to reason through the code.
+
+socratic-interaction-ai-as-a-tutor-not-an-oracle-7
+00:10:35.720 --> 00:10:43.120
+Both can be useful, but a conversation only gives you that practice if you do the remembering or explaining yourself.
+
+socratic-interaction-ai-as-a-tutor-not-an-oracle-8
+00:10:43.640 --> 00:10:45.620
+How and Why it Works:
+
+socratic-interaction-ai-as-a-tutor-not-an-oracle-9
+00:10:45.840 --> 00:10:55.120
+Ask the tutor to wait while you think and explain. Request a hint when you can’t make progress without one, or a worked example when you need more guidance.
+
+socratic-interaction-ai-as-a-tutor-not-an-oracle-10
+00:10:55.370 --> 00:11:15.090
+Applying CLT here means adjusting the challenge to your working-memory capacity: if a question requires juggling several unfamiliar ideas, ask for a simpler example first. Pardos and Bhandari’s research on AI-generated math help also highlights why you need to check the help you receive.
+
+socratic-interaction-ai-as-a-tutor-not-an-oracle-11
+00:11:15.340 --> 00:11:26.180
+Use lecture notes, a textbook, or code tests to check explanations. Asking AI to admit uncertainty does not ensure it will catch its own mistakes.
+
+socratic-interaction-ai-as-a-tutor-not-an-oracle-12
+00:11:26.700 --> 00:11:28.780
+Example Prompt (Python):
+
+socratic-interaction-ai-as-a-tutor-not-an-oracle-13
+00:11:29.030 --> 00:11:42.550
+“You are a Python tutor. I understand a single list-comprehension filter but am confused by multiple ‘if’ conditions. Ask me one question about which elements pass each filter, and wait for my answer.
+
+socratic-interaction-ai-as-a-tutor-not-an-oracle-14
+00:11:42.800 --> 00:11:48.880
+If I cannot explain the next step, show a small worked example and then give me a similar question.”
+
+the-attempt-first-pattern-1
+00:11:49.730 --> 00:11:51.470
+The “Attempt First” Pattern
+
+the-attempt-first-pattern-2
+00:11:51.970 --> 00:11:53.330
+The Research Grounding:
+
+the-attempt-first-pattern-3
+00:11:53.550 --> 00:12:06.750
+In classic memory experiments, people remembered words better when they worked them out from clues than when they simply read them. This gives you a reason to try producing an answer yourself before asking AI for help.
+
+the-attempt-first-pattern-4
+00:12:07.270 --> 00:12:09.250
+How and Why it Works:
+
+the-attempt-first-pattern-5
+00:12:09.470 --> 00:12:25.910
+Try a relevant step: predict the output, sketch an approach, or identify what you do not understand. Then seek feedback. If you lack the prerequisite knowledge, start with an explanation or worked example and then attempt a related task.
+
+the-attempt-first-pattern-6
+00:12:26.160 --> 00:12:45.320
+CLT helps explain this limit: searching for every next move can overwhelm working memory when the method is unfamiliar. A worked example can free attention for understanding the method. To check for an illusion of understanding, close the explanation and try again independently.
+
+the-attempt-first-pattern-7
+00:12:45.840 --> 00:12:48.460
+Example Prompt (C++):
+
+the-attempt-first-pattern-8
+00:12:48.710 --> 00:13:02.770
+“I am implementing a Graph Breadth-First Search (BFS) in C++. Here is my partial attempt and a trace of what I expected: [paste code and trace]. It enters an infinite loop.
+
+the-attempt-first-pattern-9
+00:13:03.020 --> 00:13:08.540
+Without rewriting the code, ask me a question that helps me check when I mark nodes as visited.”
+
+break-the-problem-into-steps-1
+00:13:09.390 --> 00:13:11.590
+Break the Problem into Steps
+
+break-the-problem-into-steps-2
+00:13:12.090 --> 00:13:13.450
+The Research Grounding:
+
+break-the-problem-into-steps-3
+00:13:13.670 --> 00:13:32.590
+In the DBox study, 24 university learners wrote solution steps, received AI feedback and hints, and revealed code gradually. They then solved a similar algorithm problem more accurately without tools than after using their usual study resources, which could include AI.
+
+break-the-problem-into-steps-4
+00:13:32.840 --> 00:13:38.000
+In a separate Python course, students who chose planning hints did better on assignments.
+
+break-the-problem-into-steps-5
+00:13:38.520 --> 00:13:40.500
+How and Why it Works:
+
+break-the-problem-into-steps-6
+00:13:40.720 --> 00:14:00.700
+Write a plan, identify a step you cannot justify, and ask for feedback on that step. This applies CLT’s idea of managing intrinsic load: learn manageable parts before reasoning about how they interact. You still need to put the parts together and explain the complete solution.
+
+break-the-problem-into-steps-7
+00:14:00.950 --> 00:14:08.610
+Then implement and test it yourself. If you lack the background to form a plan, study a worked example first.
+
+break-the-problem-into-steps-8
+00:14:09.130 --> 00:14:11.250
+Example Prompt (Programming):
+
+break-the-problem-into-steps-9
+00:14:11.500 --> 00:14:28.020
+“Here is my plan and the step I am uncertain about: [plan]. Ask me one question that tests whether that step follows. Help me identify a missing case before suggesting a change. Leave the implementation for me to write and test.”
+
+the-teach-back-method-ai-as-a-teachable-novice-1
+00:14:28.870 --> 00:14:32.930
+The “Teach-Back” Method (AI as a Teachable Novice)
+
+the-teach-back-method-ai-as-a-teachable-novice-2
+00:14:33.430 --> 00:14:34.790
+The Research Grounding:
+
+the-teach-back-method-ai-as-a-teachable-novice-3
+00:14:35.010 --> 00:14:52.350
+Imagine explaining inheritance to a classmate who keeps asking “why?”. Researchers propose using AI in that role: its questions can prompt you to explain ideas and notice gaps. The study from 2024 tried this with 40 people new to algorithms.
+
+the-teach-back-method-ai-as-a-teachable-novice-4
+00:14:52.600 --> 00:15:03.000
+When the AI asked “why” and “how” questions and gave feedback on their teaching, more of the conversation focused on developing understanding than with a simpler version.
+
+the-teach-back-method-ai-as-a-teachable-novice-5
+00:15:03.520 --> 00:15:19.920
+Some benefits have lasted beyond the study session. In a university psychology course, users of a similar system (ChatTutor) scored higher four weeks later than students taught as usual, but did not clearly outperform ordinary ChatGPT users.
+
+the-teach-back-method-ai-as-a-teachable-novice-6
+00:15:20.170 --> 00:15:30.250
+In a separate school study, students using ChatTutor did better than those using ChatGPT on a later test but did not clearly beat studying the material again.
+
+the-teach-back-method-ai-as-a-teachable-novice-7
+00:15:30.770 --> 00:15:32.750
+How and Why it Works:
+
+the-teach-back-method-ai-as-a-teachable-novice-8
+00:15:32.970 --> 00:15:51.150
+Explain a concept in your own words, then answer “why” and “how” questions. The ICAP framework describes learning activities that go beyond repeating supplied information: for example, explaining why a base case stops recursion or working out what happens if it is missing.
+
+the-teach-back-method-ai-as-a-teachable-novice-9
+00:15:51.400 --> 00:16:04.960
+It predicts benefits from making those connections. This also fits CLT’s focus on building reusable mental patterns: explaining how the steps connect can help you organize knowledge for future problems.
+
+the-teach-back-method-ai-as-a-teachable-novice-10
+00:16:05.210 --> 00:16:11.970
+Keep the explanation small enough to reason through; useful effort still needs to fit within working memory.
+
+the-teach-back-method-ai-as-a-teachable-novice-11
+00:16:12.490 --> 00:16:25.670
+Use the AI’s questions to inspect your explanation. Its apparent confusion or agreement is not a reliable verdict on your understanding; verify disputed claims with a trusted source or instructor.
+
+the-teach-back-method-ai-as-a-teachable-novice-12
+00:16:26.190 --> 00:16:28.270
+Example Prompt (Python):
+
+the-teach-back-method-ai-as-a-teachable-novice-13
+00:16:28.520 --> 00:16:41.300
+“Pretend you are a first-year CS student who is learning inheritance in Python. I will explain it to you. Ask one ‘why’ or ‘how’ question when I use undefined jargon or skip a step.
+
+the-teach-back-method-ai-as-a-teachable-novice-14
+00:16:41.550 --> 00:16:49.310
+Distinguish questions about clarity from claims that my explanation is incorrect, and give me a concrete example to check.”
+
+prompting-patterns-1
+00:16:50.160 --> 00:16:51.380
+Prompting Patterns
+
+prompting-patterns-2
+00:16:51.880 --> 00:16:57.480
+The following research-informed approaches can help you specify a useful learning interaction.
+
+prompting-patterns-3
+00:16:58.000 --> 00:17:04.960
+Judge your own prompts by what you can explain or solve afterward, as well as by how helpful the chat feels.
+
+the-generation-then-comprehension-protocol-1
+00:17:05.810 --> 00:17:08.870
+The “Generation-Then-Comprehension” Protocol
+
+the-generation-then-comprehension-protocol-2
+00:17:09.370 --> 00:17:30.230
+If you do use AI to generate a snippet of code because you are completely stuck, you must never blindly copy-paste it. Anthropic researchers Shen and Tamkin studied 52 developers learning an unfamiliar Python library. Those with AI help scored lower on the test immediately afterward.
+
+the-generation-then-comprehension-protocol-3
+00:17:30.480 --> 00:17:51.400
+Within that group, some who sought explanations or help understanding concepts scored better than those who handed over more coding. The researchers called two observed patterns “Generation-Then-Comprehension” and “Hybrid Code-Explanation”. If you use generated code, understanding and checking it is still your work to do.
+
+actionable-tips-1
+00:17:52.250 --> 00:17:53.450
+Actionable Tips:
+
+actionable-tips-2
+00:17:53.950 --> 00:18:05.910
+Explain and check: If AI supplies code, predict its behavior, explain the key decisions, and test edge cases. Ask for explanations beside the relevant lines.
+
+actionable-tips-3
+00:18:06.160 --> 00:18:27.320
+This applies CLT’s split-attention effect: keeping related information together reduces the extraneous load of mentally matching a separate explanation to the code. Investigate disagreements between its explanation and your mental model; either can be wrong. Then try a related task without the generated solution.
+
+actionable-tips-4
+00:18:27.840 --> 00:18:42.400
+Make a relevant attempt: Write down an approach, prediction, or specific question before seeking help when you have enough background to start. If you are missing prerequisites, get an explanation or example and then practice.
+
+study-patterns-that-preserve-useful-practice-1
+00:18:43.250 --> 00:18:46.310
+Study Patterns That Preserve Useful Practice
+
+study-patterns-that-preserve-useful-practice-2
+00:18:46.810 --> 00:18:55.770
+Choose activities that practice the skill you want to retain. Productive challenge can help, but making a task harder is not an end in itself.
+
+the-alternative-approaches-pattern-1
+00:18:56.620 --> 00:18:58.660
+The Alternative Approaches Pattern
+
+the-alternative-approaches-pattern-2
+00:18:59.160 --> 00:19:00.520
+The Research Grounding:
+
+the-alternative-approaches-pattern-3
+00:19:00.740 --> 00:19:16.800
+Garcia’s review of programming education research describes using ChatGPT to generate several solutions and discuss their differences—for example, comparing a loop with recursion. The review also stresses that generated code needs checking.
+
+the-alternative-approaches-pattern-4
+00:19:17.320 --> 00:19:19.300
+How and Why it Works:
+
+the-alternative-approaches-pattern-5
+00:19:19.520 --> 00:19:39.580
+Ask for alternatives, then make your own prediction about correctness, runtime, memory use, and readability before reading a comparison. CLT suggests keeping this comparison manageable: if three unfamiliar approaches overload you, begin with two short solutions and compare one feature at a time.
+
+the-alternative-approaches-pattern-6
+00:19:39.830 --> 00:19:47.250
+Having AI supply both the solutions and the evaluation can remove the reasoning you intended to practice.
+
+the-alternative-approaches-pattern-7
+00:19:47.770 --> 00:19:50.390
+Example Prompt (C++):
+
+the-alternative-approaches-pattern-8
+00:19:50.640 --> 00:20:06.520
+“Show three ways to reverse a mutable string in C++: a standard library algorithm, two pointers, and recursion. Let me compare their time and auxiliary-space costs, including the recursion call stack, before you give feedback.
+
+the-alternative-approaches-pattern-9
+00:20:06.770 --> 00:20:10.530
+Ask me to justify which I would choose for a stated constraint.”
+
+read-make-your-own-notes-then-clarify-1
+00:20:11.380 --> 00:20:14.700
+Read, Make Your Own Notes, Then Clarify
+
+read-make-your-own-notes-then-clarify-2
+00:20:15.200 --> 00:20:16.560
+The Research Grounding:
+
+read-make-your-own-notes-then-clarify-3
+00:20:16.780 --> 00:20:32.300
+In a study of 344 students aged 14–15, students assigned to take notes understood and remembered more three days later than those assigned to use AI alone. Keep making your own notes when studying with AI.
+
+read-make-your-own-notes-then-clarify-4
+00:20:32.820 --> 00:20:34.800
+How and Why it Works:
+
+read-make-your-own-notes-then-clarify-5
+00:20:35.020 --> 00:20:53.160
+Read a section and record its main idea, one example, and one uncertainty in your own words. Ask AI about the specific uncertainty, check its response against the source, and revise your notes yourself. Later, close the tools and reconstruct the explanation.
+
+read-make-your-own-notes-then-clarify-6
+00:20:53.680 --> 00:20:54.880
+Example Prompt:
+
+read-make-your-own-notes-then-clarify-7
+00:20:55.130 --> 00:21:08.590
+“Here is the passage and my own explanation. Identify one possible gap or misunderstanding and ask me a question about it before suggesting a correction. Point to the relevant passage so I can check your feedback.”
+
+faded-worked-examples-1
+00:21:09.440 --> 00:21:11.020
+Faded Worked Examples
+
+faded-worked-examples-2
+00:21:11.520 --> 00:21:12.880
+The Research Grounding:
+
+faded-worked-examples-3
+00:21:13.100 --> 00:21:31.780
+When a topic is new, a solved example lets you follow the reasoning instead of guessing where to start. CLT’s worked-example effect explains why this can help beginners: reducing unnecessary search leaves more working-memory capacity for understanding how the solution works.
+
+faded-worked-examples-4
+00:21:32.030 --> 00:21:47.870
+A 2023 review combining results from mathematics studies found that worked examples improved performance by a moderate amount. Related research shows that guidance which helps a beginner can become unnecessary as they gain experience.
+
+faded-worked-examples-5
+00:21:48.390 --> 00:21:50.370
+How and Why it Works:
+
+faded-worked-examples-6
+00:21:50.590 --> 00:22:05.990
+Start with a complete example, then try a similar one with the last step missing. Once you can complete and explain that step, try filling in more steps until you can solve a fresh problem yourself. Adjust the pace to your understanding.
+
+faded-worked-examples-7
+00:22:06.510 --> 00:22:08.590
+Example Prompt (Java):
+
+faded-worked-examples-8
+00:22:08.840 --> 00:22:19.220
+“Show me one worked example of tracing a recursive method, explaining each stack frame. Then give me a similar trace with the final two frames blank for me to fill in.
+
+faded-worked-examples-9
+00:22:19.470 --> 00:22:27.430
+Then give me a third problem with only the method and input, and ask me to produce the full trace before you show any answer.”
+
+rubric-first-feedback-loop-1
+00:22:28.280 --> 00:22:30.340
+Rubric-First Feedback Loop
+
+rubric-first-feedback-loop-2
+00:22:30.840 --> 00:22:32.200
+The Research Grounding:
+
+rubric-first-feedback-loop-3
+00:22:32.420 --> 00:22:37.760
+Reviews found that assessing your own work can strengthen your belief in your ability.
+
+rubric-first-feedback-loop-4
+00:22:38.280 --> 00:22:57.120
+Feeling confident is a reason to check, too. In one of Fernandes and colleagues’ reasoning experiments, adults with AI answered more questions correctly. Yet both groups—with and without AI—thought they had answered about four more questions correctly out of twenty than they actually had.
+
+rubric-first-feedback-loop-5
+00:22:57.370 --> 00:23:03.590
+When preparing for an exam, compare your predicted score with your actual score on practice questions.
+
+rubric-first-feedback-loop-6
+00:23:04.110 --> 00:23:06.090
+How and Why it Works:
+
+rubric-first-feedback-loop-7
+00:23:06.310 --> 00:23:22.970
+Start by scoring your own draft, solution, or design against the rubric. Then ask AI to check one rating against evidence and suggest a revision goal. Decide whether its feedback is justified by looking at the relevant passage, code, or test result.
+
+rubric-first-feedback-loop-8
+00:23:23.220 --> 00:23:27.100
+You remain responsible for judging the work and making the revision.
+
+rubric-first-feedback-loop-9
+00:23:27.620 --> 00:23:29.600
+Example Prompt (Writing):
+
+rubric-first-feedback-loop-10
+00:23:29.850 --> 00:23:43.230
+“Here is the rubric and my draft. Do not rewrite any prose. First ask me to self-assess my draft on each criterion. Then check one rating against a specific sentence or paragraph.
+
+rubric-first-feedback-loop-11
+00:23:43.480 --> 00:23:54.720
+If the evidence justifies a different rating, explain why; otherwise, explain what supports my rating. Suggest a revision goal if needed and ask what I will change.”
+
+rubric-first-feedback-loop-12
+00:23:55.240 --> 00:23:57.360
+Example Prompt (Programming):
+
+rubric-first-feedback-loop-13
+00:23:57.610 --> 00:24:11.410
+“Here is my solution and the grading rubric. Do not fix the code. Ask me to rate it first on correctness, edge cases, readability, and tests. Check one rating against the code and test evidence.
+
+rubric-first-feedback-loop-14
+00:24:11.660 --> 00:24:18.560
+Explain whether that evidence supports or challenges my rating, and suggest one targeted next step if needed.”
+
+fading-the-scaffold-the-goal-is-independence-1
+00:24:19.410 --> 00:24:22.970
+Fading the Scaffold: The Goal is Independence
+
+fading-the-scaffold-the-goal-is-independence-2
+00:24:23.470 --> 00:24:37.710
+As your knowledge grows, adjust the support. CLT calls this the expertise reversal effect: detailed guidance that helps when you are new can become unnecessary or get in the way once you know what you are doing.
+
+fading-the-scaffold-the-goal-is-independence-3
+00:24:37.960 --> 00:24:55.760
+As familiar patterns take less working-memory capacity, explanations you no longer need can add extraneous load. A complete recursion trace may help on your first attempt; later, try tracing the calls yourself and ask for feedback only where you are unsure.
+
+fading-the-scaffold-the-goal-is-independence-4
+00:24:56.280 --> 00:25:15.820
+Periodically solve a related problem without AI, and revisit it after a delay. If a formerly manageable task has become difficult, check your retention and restore practice. For a skill you aim to perform independently, successful support should help you become less dependent on that support.
+
+a-quick-rubric-for-any-ai-interaction-1
+00:25:16.670 --> 00:25:19.630
+A Quick Rubric for Any AI Interaction
+
+a-quick-rubric-for-any-ai-interaction-2
+00:25:20.130 --> 00:25:23.870
+Before you use an AI output in your coursework, ask:
+
+a-quick-rubric-for-any-ai-interaction-3
+00:25:24.390 --> 00:25:30.970
+Accuracy: Can I verify the factual claims, code behavior, math steps, or citations?
+
+a-quick-rubric-for-any-ai-interaction-4
+00:25:31.490 --> 00:25:37.090
+Alignment: Does the response support the learning objective, or did it solve a different problem?
+
+a-quick-rubric-for-any-ai-interaction-5
+00:25:37.610 --> 00:25:45.630
+Scaffolding: Did it make me retrieve, explain, compare, debug, revise, or self-assess?
+
+a-quick-rubric-for-any-ai-interaction-6
+00:25:46.150 --> 00:25:50.390
+Transfer: Can I now solve a similar problem without the AI?
+
+a-quick-rubric-for-any-ai-interaction-7
+00:25:50.910 --> 00:25:57.570
+Integrity: Does this use fit the course policy, and can I honestly explain what was mine?
+
+a-quick-rubric-for-any-ai-interaction-8
+00:25:58.090 --> 00:26:16.310
+If you cannot yet explain or apply the idea, plan more instruction or practice before treating it as learned. A helpful interaction might involve questions, feedback, or a complete worked solution: its value depends on your current knowledge and what you do with it afterward.
+
+a-quick-rubric-for-any-ai-interaction-9
+00:26:16.560 --> 00:26:22.280
+Check again after a delay, since immediate success is not the same as lasting retention.
+
+a-quick-rubric-for-any-ai-interaction-10
+00:26:22.800 --> 00:26:23.460
+Summary:
+
+a-quick-rubric-for-any-ai-interaction-11
+00:26:23.680 --> 00:26:37.020
+Use AI to support the practice your learning goal requires. Keep responsibility for reasoning and verification, seek enough guidance to make progress, and test what you can do independently after a delay.
+
+a-quick-rubric-for-any-ai-interaction-12
+00:26:37.270 --> 00:26:42.750
+The goal is both to finish the assignment and to retain skills you can use beyond it.
+
+a-quick-rubric-for-any-ai-interaction-13
+00:26:43.270 --> 00:26:44.490
+Research cutoff:
+
+a-quick-rubric-for-any-ai-interaction-14
+00:26:44.710 --> 00:26:48.930
+This post draws on research published through September 2026.
+
+self-check-quiz-1
+00:26:49.780 --> 00:26:51.100
+Self-Check Quiz
+
+self-check-quiz-2
+00:26:51.600 --> 00:26:55.860
+Take the self-check quiz on the article page to review these strategies.

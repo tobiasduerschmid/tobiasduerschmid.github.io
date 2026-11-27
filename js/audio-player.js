@@ -122,18 +122,53 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        const chapterJump = player.querySelector('.cap__chapter-jump');
+        if (chapterJump) {
+            const sectionPicker = chapterJump.elements.chapter;
+            const sectionStarts = Array.from(sectionPicker.options, option => Number(option.value));
+
+            function currentSectionIndex() {
+                // Match the precision of the section timestamps after a native seek.
+                const position = Math.round(audio.currentTime * 1000) / 1000;
+                const nextIndex = sectionStarts.findIndex(start => start > position);
+                return nextIndex === -1 ? sectionStarts.length - 1 : nextIndex - 1;
+            }
+
+            function updateSectionButtons() {
+                const index = currentSectionIndex();
+                prevBtn.setAttribute('aria-disabled', String(index <= 0));
+                nextBtn.setAttribute('aria-disabled', String(index === sectionStarts.length - 1));
+            }
+
+            function seekToSection(index) {
+                if (index < 0 || index >= sectionStarts.length) return;
+                audio.currentTime = sectionStarts[index];
+                sectionPicker.selectedIndex = index;
+                updateSectionButtons();
+            }
+
+            chapterJump.addEventListener('submit', event => {
+                event.preventDefault();
+                seekToSection(sectionPicker.selectedIndex);
+            });
+            prevBtn.addEventListener('click', () => seekToSection(currentSectionIndex() - 1));
+            nextBtn.addEventListener('click', () => seekToSection(currentSectionIndex() + 1));
+            audio.addEventListener('seeking', updateSectionButtons);
+            audio.addEventListener('timeupdate', updateSectionButtons);
+            updateSectionButtons();
+        } else {
+            if (prevBtn) prevBtn.addEventListener('click', () => { audio.currentTime = 0; });
+            if (nextBtn) nextBtn.addEventListener('click', () => {
+                if (!isNaN(audio.duration)) audio.currentTime = audio.duration;
+            });
+        }
+
         // ── Skip ±15 s ───────────────────────────────────────────
         skipBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 audio.currentTime = Math.max(0,
                     Math.min(audio.duration || 0, audio.currentTime + parseFloat(btn.dataset.skip)));
             });
-        });
-
-        // ── Prev (restart) / Next (jump to end) ──────────────────
-        if (prevBtn) prevBtn.addEventListener('click', () => { audio.currentTime = 0; });
-        if (nextBtn) nextBtn.addEventListener('click', () => {
-            if (!isNaN(audio.duration)) audio.currentTime = audio.duration;
         });
 
         // ── Speed presets ────────────────────────────────────────
