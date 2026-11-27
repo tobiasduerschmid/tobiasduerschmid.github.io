@@ -364,6 +364,8 @@ compact transport with section navigation and captions. Settings include
 a link to the transcript and visual descriptions. On narrow portrait screens,
 article graphics reflow around the headline. A wide diagram retains its
 geometry and reveals larger labels below it on the same narration cues.
+In fullscreen the picture, captions, and controls each have their own row.
+The picture fits the remaining space as caption size or phone orientation changes.
 The video and read-aloud player use the same MP3 and captions. Keep the
 compiled scene starts aligned with the chapter times in `_data/blog_audio/`.
 The blog narration tests compare those starts and every caption interval.
@@ -371,9 +373,19 @@ The blog narration tests compare those starts and every caption interval.
 The `blog-essay` stage draws the `essay_beats` in each scene's visual state.
 `from` and `to` are inclusive, one-based cue numbers. Each cue belongs to one
 beat. Write its title as the point a reader should remember, then show the
-evidence, decision, or worked step that makes that point visible. The beat stages its `items` and optional `signal` at a cue or an
-estimated word mark. An item's optional `detail_at: {cue, word}` can reveal
-its explanation later. Use `collection` for peer examples, `sequence` for
+evidence, decision, or worked step that makes that point visible. Give each
+item and optional takeaway (`signal`) a cue or estimated word mark. An
+item's optional `detail_at: {cue, word}` can reveal its explanation later.
+The stage uses those marks as the latest useful reveal times. It brings
+crowded labels forward within the slide, budgeting for their text at 2×
+and for both states of a diagram that changes in place. Keep titles and
+labels short enough to read together before the slide ends.
+To point to a related article, give the signal a `link` with a site-relative
+`href` and a `caption` matching the title as spoken in the signal's cue.
+The callout links to that page throughout the slide. The spoken title also
+becomes a link while its caption is on screen. Focusing either link pauses
+the narration.
+Use `collection` for peer examples, `sequence` for
 ordered steps, and `orbit` when a process returns to its starting point.
 A beat can arrange shared illustrations or name a
 topic-specific SVG figure. In a figure, `data-be-item` identifies the

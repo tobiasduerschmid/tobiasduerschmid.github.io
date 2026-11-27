@@ -230,6 +230,9 @@ html.dark-mode:not(.print-light-mode) .stage.theme-blog-essay {
 .be-prop-art [data-art-part="highlight"] { transform-box: fill-box; }
 .be-figure text:not([fill]) { fill: var(--be-ink); }
 
+/* The live player supplies a native link. Standalone stage and notes keep the text. */
+.has-native-video-links .be-signal--linked { visibility: hidden; }
+
 .be-signal {
   position: absolute;
   inset: auto 38px 27px;

@@ -54,7 +54,12 @@
   // A page with no host it can read (the notes, a sandboxed embed) stays light.
   let host = null;
   try {
-    if (window.parent !== window) host = window.parent.document.documentElement;
+    if (window.parent !== window) {
+      host = window.parent.document.documentElement;
+      if (window.frameElement?.hasAttribute('data-vn-native-links')) {
+        document.documentElement.classList.add('has-native-video-links');
+      }
+    }
   } catch (error) { /* cross-origin host */ }
   function syncTheme() {
     document.documentElement.classList.toggle('dark-mode', Boolean(host && host.classList.contains('dark-mode')));

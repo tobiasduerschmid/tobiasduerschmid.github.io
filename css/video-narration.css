@@ -134,6 +134,61 @@
 .video-narration[data-article-player] .vn-panel--animation { border-radius: 0; }
 .video-narration[data-article-player] .vn-video:not(.is-fullscreen) .vn-captions { min-height: 0; }
 .video-narration[data-article-player] .vn-settings a { display: block; margin-block: 0.7em; }
+.video-narration .vn-article-reference:not([hidden]) {
+  position: absolute;
+  z-index: 3;
+  inset: auto 4% 3%;
+  width: fit-content;
+  max-width: 92%;
+  margin-inline: auto;
+  padding: 0.4em 0.75em;
+  border: 1px solid var(--nja-line);
+  border-radius: 6px;
+  background: var(--nja-bg);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+}
+.video-narration .vn-article-reference, .video-narration .vn-article-reference:visited,
+.video-narration .vn-caption-reference, .video-narration .vn-caption-reference:visited {
+  color: inherit;
+  text-decoration: underline;
+}
+.video-narration :is(.vn-article-reference, .vn-caption-reference):focus-visible {
+  outline: 3px solid var(--nja-cyan);
+  outline-offset: 2px;
+}
+@media (any-hover: none) {
+  /* A touch seek's informational preview can sit over the caption while its
+     slider has focus. A tap should still follow the reference behind it. */
+  .video-narration[data-article-player]:has(.vn-caption-reference) .vn-timeline-tooltip {
+    pointer-events: none;
+  }
+}
+@media screen {
+  .video-narration[data-article-player] .nja-player:has(.vn-settings:not([hidden])) { overflow: visible; }
+
+  /* Captions and the toolbar size their own rows, clear of the picture. */
+  .video-narration[data-article-player] .vn-video.is-fullscreen .vn-surface {
+    container-type: size;
+    grid-template-rows: minmax(0, 1fr) auto auto;
+  }
+  .video-narration[data-article-player] .vn-video.is-fullscreen .vn-screen {
+    grid-area: 1 / 1;
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .video-narration[data-article-player] .vn-video.is-fullscreen .vn-panel--animation {
+    max-height: 100%;
+  }
+  .video-narration[data-article-player] .vn-video.is-fullscreen .vn-captions {
+    max-height: min(5em, calc(var(--vn-surface-height, 100vh) * 0.4));
+    max-height: min(5em, 40cqh);
+  }
+  .video-narration[data-article-player] .vn-video.is-fullscreen .vn-settings {
+    max-height: min(30em, calc(var(--vn-surface-height, 100vh) - 100% - 1em));
+    max-height: min(30em, calc(100cqh - 100% - 1em));
+  }
+}
 @container (min-width: 14em) and (max-width: 520px) {
   .video-narration[data-article-player] .vn-toolbar .vn-track { order: 0; }
 }

@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { loadLesson, ROOT } = require('../scripts/narration/source');
-const { openPlayerSettings, serveAudioRanges } = require('./helpers/narration-player');
+const { openPlayerSettings, seekNarration, serveAudioRanges } = require('./helpers/narration-player');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
 for (const [topic, slug, photoDescription] of [
@@ -80,7 +80,56 @@ for (const [topic, slug, photoDescription] of [
     await expect(art.getByText(story.scenes[chapterIndex].essay_beats[0].title, { exact: true })).toBeVisible();
     await a11yCheckpoint(page, `${slug} video`, { include: `#${topic}-video`, feature: 'blog-video-narration' });
   });
+
+  test(`${slug}: the full text of each illustration fits its double-speed reading time`, async ({ page }) => {
+    const { story, lesson } = loadLesson(topic);
+    const timing = require(`${ROOT}/_data/explainers/${topic}_timing.json`);
+    const beats = story.scenes.flatMap((scene, i) => scene.essay_beats.map(beat => ({
+      title: beat.title, start: timing.scenes[i].cues[beat.from - 1].start, end: timing.scenes[i].cues[beat.to - 1].end,
+    })));
+    await page.goto(lesson.animation.page);
+    await page.waitForFunction(() => Boolean(window.VideoNarrationStage));
+    const overBudget = await page.evaluate(async beats => {
+      await window.VideoNarrationStage.ready;
+      const counts = (picture, selectors) => [...picture.querySelectorAll(selectors)]
+        .map(node => node.textContent.trim().split(/\s+/u).length).reduce((total, words) => total + words, 0);
+      const failures = [];
+      for (const { title, start, end } of beats) {
+        window.VideoNarrationStage.seek(end - 0.2);
+        const picture = document.querySelector('#stage .be-picture');
+        if (picture?.querySelector('.be-title')?.textContent !== title) throw new Error(`Missing slide: ${title}`);
+        const shared = counts(picture, '.be-title,.be-subtitle,.be-signal,.be-prop-label,.be-prop-detail');
+        const words = shared + Math.max(counts(picture, '.be-figure text'), counts(picture, '.be-figure-label'));
+        const seconds = (end - start) / 2;
+        if (1 + words / 3 > seconds) failures.push({ title, words, seconds });
+      }
+      return failures;
+    }, beats);
+    expect(overBudget).toEqual([]);
+  });
 }
+
+test('the Big-O answer stays fully visible for at least three seconds at double speed', async ({ page }) => {
+  const { story } = loadLesson('blog_study_tips');
+  const timing = require('../_data/explainers/blog_study_tips_timing.json');
+  const index = story.scenes.findIndex(scene => scene.essay_beats.some(beat => beat.figure === 'study-big-o'));
+  const beat = story.scenes[index].essay_beats.find(beat => beat.figure === 'study-big-o');
+  const end = timing.scenes[index].cues[beat.to - 1].end;
+  await serveAudioRanges(page, story.audio);
+  await page.goto('/blog/evidence-based-study-tips-for-college-students/video/');
+  const player = page.getByRole('region', { name: 'Animated article', exact: true });
+  const answer = player.frameLocator('iframe[title$=" animation"]').getByText('6 visits · O(n)', { exact: true });
+  for (const time of [end - 6.05, end - 0.1]) {
+    await seekNarration(player, time);
+    await expect(answer).toBeVisible();
+    await expect.poll(() => answer.evaluate(node => {
+      for (let part = node; part; part = part.parentElement) {
+        if (Number(getComputedStyle(part).opacity) < 0.99) return false;
+      }
+      return true;
+    })).toBe(true);
+  }
+});
 
 test('the inline animation and article read-aloud yield to the most recently played track', async ({ page }) => {
   const { story } = loadLesson('blog_study_tips');
@@ -119,6 +168,54 @@ test('portrait playback keeps graphic labels readable on a 320px screen', async 
     * element.getBoundingClientRect().height / element.offsetHeight);
   expect(renderedFont).toBeGreaterThanOrEqual(16);
 });
+
+for (const [device, viewport, touch] of [
+  ['desktop', { width: 1280, height: 720 }, false],
+  ['phone', { width: 390, height: 844 }, true],
+]) {
+  test.describe(`Article captions on ${device}`, () => {
+    test.use({ viewport, hasTouch: touch, isMobile: touch });
+
+    test('large captions leave the complete illustration visible inline and in fullscreen', async ({ page }) => {
+      const { story } = loadLesson('blog_study_tips');
+      const timing = require('../_data/explainers/blog_study_tips_timing.json');
+      await serveAudioRanges(page, story.audio);
+      await page.goto('/blog/evidence-based-study-tips-for-college-students/video/');
+      const player = page.getByRole('region', { name: 'Animated article', exact: true });
+      const picture = player.locator('iframe[title$=" animation"]');
+      const captions = player.getByRole('region', { name: 'Narration', exact: true });
+      await openPlayerSettings(player);
+      await player.getByLabel('Caption size').selectOption({ label: '200%' });
+      await player.getByRole('button', { name: 'Close settings' }).click();
+      // Use a multiline spoken cue on a slide with a takeaway along its lower edge.
+      const sceneIndex = story.scenes.findIndex(scene => scene.id === 'desirable-difficulties-embrace-the-struggle');
+      const scene = story.scenes[sceneIndex];
+      const beat = scene.essay_beats.find(beat => beat.signal);
+      const cueIndex = beat.to - 1;
+      await player.getByRole('slider', { name: 'Narration position' }).fill(String(timing.scenes[sceneIndex].cues[cueIndex].end - 0.3));
+      await expect(captions).toHaveText(scene.cues[cueIndex].text);
+      await expect(picture.contentFrame().getByText(beat.signal.text, { exact: true })).toBeVisible();
+
+      async function expectClearPicture() {
+        await expect(picture).toBeVisible();
+        await expect(captions).toBeVisible();
+        await expect.poll(async () => {
+          const [art, cc] = await Promise.all([picture.boundingBox(), captions.boundingBox()]);
+          if (!art || !cc) return false;
+          // The phone may rotate the video surface within the portrait viewport.
+          return art.y + art.height <= cc.y + 1 || cc.y + cc.height <= art.y + 1
+            || art.x + art.width <= cc.x + 1 || cc.x + cc.width <= art.x + 1;
+        }).toBe(true);
+      }
+      await expectClearPicture();
+      await player.getByRole('button', { name: 'Enter full screen' }).click();
+      await expectClearPicture();
+      await player.getByRole('button', { name: 'Closed captions (CC)' }).click();
+      await expect(captions).toBeHidden();
+      await expect(picture).toBeInViewport({ ratio: 0.99 });
+    });
+  });
+}
 
 test.describe('article with JavaScript disabled', () => {
   test.use({ javaScriptEnabled: false });

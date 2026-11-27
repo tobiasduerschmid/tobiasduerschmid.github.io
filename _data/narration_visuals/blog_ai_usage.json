@@ -10,6 +10,7 @@
       "scripts": [
         "/js/video-narration/blog-essay-art.js",
         "/js/video-narration/blog-ai-figures.js",
+        "/js/video-narration/blog-essay-timing.js",
         "/js/video-narration/blog-essay.js"
       ]
     }
@@ -258,6 +259,12 @@
                 "tone": "blue"
               },
               {
+                "art": "chat",
+                "label": "“Wow, I just discovered this AI that makes my workout so much easier and faster!”",
+                "cue": 12,
+                "tone": "blue"
+              },
+              {
                 "art": "robot",
                 "label": "Robot lifts",
                 "cue": 12,
@@ -379,7 +386,11 @@
             "signal": {
               "cue": 21,
               "word": "previous",
-              "text": "See Evidence-Based Study Tips"
+              "text": "See Evidence-Based Study Tips",
+              "link": {
+                "href": "/blog/evidence-based-study-tips-for-college-students/",
+                "caption": "Evidence-Based Study Tips for College Students"
+              }
             }
           },
           {
@@ -820,12 +831,7 @@
                 "tone": "gold",
                 "word": "explanations"
               }
-            ],
-            "signal": {
-              "cue": 2,
-              "word": "yourself",
-              "text": "Judge help by what you can do."
-            }
+            ]
           }
         ]
       },
@@ -912,7 +918,7 @@
             "from": 8,
             "to": 9,
             "layout": "figure",
-            "title": "Try explaining before asking for a hint",
+            "title": "Explain before asking for hints",
             "items": [
               {
                 "art": "question",
@@ -922,7 +928,7 @@
               },
               {
                 "art": "student",
-                "label": "You think and explain",
+                "label": "Your reasoning",
                 "cue": 9,
                 "tone": "blue",
                 "word": "think"
@@ -936,7 +942,7 @@
               },
               {
                 "art": "book",
-                "label": "Full example",
+                "label": "Worked example",
                 "cue": 9,
                 "tone": "gold",
                 "word": "worked"
@@ -981,7 +987,7 @@
             "from": 12,
             "to": 14,
             "layout": "figure",
-            "title": "Work through one filter at a time",
+            "title": "Apply filters in order",
             "items": [
               {
                 "label": "Input list",
@@ -1003,7 +1009,7 @@
                 "word": "worked"
               },
               {
-                "label": "Retry with new values",
+                "label": "Try new values",
                 "cue": 14,
                 "word": "similar"
               }
@@ -1098,7 +1104,7 @@
             "from": 7,
             "to": 9,
             "layout": "figure",
-            "title": "The same node can return to the queue",
+            "title": "Unchecked revisits requeue a node",
             "subtitle": "Breadth-first search in C++",
             "items": [
               {
@@ -1116,7 +1122,7 @@
               },
               {
                 "art": "bug",
-                "label": "A enters again",
+                "label": "A returns",
                 "cue": 8,
                 "tone": "gold",
                 "word": "infinite"
@@ -1444,12 +1450,7 @@
                 "tone": "blue",
                 "word": "explain"
               }
-            ],
-            "signal": {
-              "cue": 3,
-              "word": "afterward",
-              "text": "Judge what you learn from the chat."
-            }
+            ]
           }
         ]
       },
@@ -1637,12 +1638,7 @@
                 "tone": "gold",
                 "word": "challenge"
               }
-            ],
-            "signal": {
-              "cue": 2,
-              "word": "retain",
-              "text": "Choose the effort that teaches."
-            }
+            ]
           }
         ]
       },
@@ -1879,12 +1875,7 @@
                 "tone": "blue",
                 "word": "relevant"
               }
-            ],
-            "signal": {
-              "cue": 7,
-              "word": "check",
-              "text": "Check the feedback against the source."
-            }
+            ]
           }
         ]
       },
@@ -1940,76 +1931,43 @@
           },
           {
             "from": 5,
-            "to": 6,
-            "layout": "sequence",
-            "title": "Remove steps as you gain understanding",
+            "to": 9,
+            "layout": "figure",
+            "title": "Trace more calls yourself each time",
+            "subtitle": "Java recursion",
             "items": [
               {
-                "art": "book",
-                "label": "Follow every step",
+                "art": "code",
+                "label": "Java method",
                 "cue": 5,
                 "tone": "blue"
               },
               {
+                "art": "blocks",
+                "label": "Complete trace",
+                "cue": 6,
+                "tone": "blue",
+                "word": "complete"
+              },
+              {
                 "art": "notebook",
-                "label": "Fill the last step",
+                "label": "Two frames blank",
                 "cue": 6,
                 "tone": "gold",
                 "word": "missing"
               },
               {
-                "art": "laptop",
-                "label": "Solve a fresh problem",
+                "art": "code",
+                "label": "Method and input",
                 "cue": 6,
                 "tone": "blue",
                 "word": "fresh"
               }
             ],
             "signal": {
-              "cue": 6,
-              "word": "pace",
-              "text": "Move on when you can explain it."
-            }
-          },
-          {
-            "from": 7,
-            "to": 9,
-            "layout": "figure",
-            "title": "Trace more calls yourself each time",
-            "subtitle": "A Java recursion example",
-            "items": [
-              {
-                "art": "code",
-                "label": "Java method",
-                "cue": 7,
-                "tone": "blue"
-              },
-              {
-                "art": "blocks",
-                "label": "Complete trace",
-                "cue": 8,
-                "tone": "blue",
-                "word": "worked"
-              },
-              {
-                "art": "notebook",
-                "label": "Two frames blank",
-                "cue": 8,
-                "tone": "gold",
-                "word": "blank"
-              },
-              {
-                "art": "code",
-                "label": "Method and input",
-                "cue": 9,
-                "tone": "blue",
-                "word": "third"
-              }
-            ],
-            "signal": {
               "cue": 9,
               "word": "before",
-              "text": "Complete the trace before seeing an answer."
+              "text": "Trace it before checking."
             },
             "figure": "ai-fading"
           }
@@ -2343,14 +2301,9 @@
                 "cue": 7,
                 "tone": "blue",
                 "word": "policy",
-                "detail": "Does course policy allow it?"
+                "detail": "Policy and honest attribution"
               }
-            ],
-            "signal": {
-              "cue": 7,
-              "word": "mine",
-              "text": "Be honest about what was yours."
-            }
+            ]
           },
           {
             "from": 8,
@@ -2448,11 +2401,11 @@
             "from": 1,
             "to": 2,
             "layout": "feature",
-            "title": "Check which strategies you can apply",
+            "title": "Test your strategies",
             "items": [
               {
                 "art": "checklist",
-                "label": "Article’s self-check quiz",
+                "label": "Article quiz",
                 "cue": 1,
                 "tone": "blue"
               }

@@ -322,7 +322,7 @@ scenes:
           able to catch bugs more quickly tomorrow. Embrace challenges as welcome learning
           opportunities!
         pause_after: 0.85
-        step: Debugging now builds skill for later
+        step: Debugging builds skill for later
         visual: >-
           The same loop is missing a closing brace. The learner checks for the matching brace
           and fills the blank line to complete the loop.
@@ -617,10 +617,10 @@ scenes:
           progress. If your course covered more theoretical concepts, periodically revisit older
           concepts.
         pause_after: 0.25
-        step: Weekly work builds steady progress
+        step: Revisiting Big-O keeps it accessible
         visual: >-
-          One workload crowds the deadline while smaller weekly code tasks spread progress
-          across the term.
+          A week-one card shows three visits in a single scan of a three-item list. A week-four
+          card asks how many visits a single scan takes if the list doubles.
         note: Apply new course techniques to the project every week.
       - id: p12
         say: >-

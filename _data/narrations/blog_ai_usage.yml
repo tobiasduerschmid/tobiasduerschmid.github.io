@@ -230,8 +230,9 @@ scenes:
         pause_after: 0.52
         step: You build skill by doing the hard reps
         visual: >-
-          A student stays on the sideline as a robot raises a barbell. The weight moves up while
-          the student remains in the same pose.
+          A student stays on the sideline as a robot raises a barbell. The student's speech
+          bubble says, “Wow, I just discovered this AI that makes my workout so much easier and
+          faster!”
         note: >-
           Delegating the hard part can make an assignment easier while removing the practice
           that builds skills.
@@ -240,8 +241,9 @@ scenes:
         pause_after: 0.18
         step: You build skill by doing the hard reps
         visual: >-
-          A student stays on the sideline as a robot raises a barbell. The weight moves up while
-          the student remains in the same pose.
+          A student stays on the sideline as a robot raises a barbell. The student's speech
+          bubble says, “Wow, I just discovered this AI that makes my workout so much easier and
+          faster!”
         note: >-
           Delegating the hard part can make an assignment easier while removing the practice
           that builds skills.
@@ -250,8 +252,9 @@ scenes:
         pause_after: 0.52
         step: You build skill by doing the hard reps
         visual: >-
-          A student stays on the sideline as a robot raises a barbell. The weight moves up while
-          the student remains in the same pose.
+          A student stays on the sideline as a robot raises a barbell. The student's speech
+          bubble says, “Wow, I just discovered this AI that makes my workout so much easier and
+          faster!”
         note: >-
           Delegating the hard part can make an assignment easier while removing the practice
           that builds skills.
@@ -329,9 +332,8 @@ scenes:
         pause_after: 0.52
         step: Rereading is weaker for retention
         visual: >-
-          Rereading sits beside recall from memory, a more demanding activity that can
-          strengthen retention. As the narration points to further reading, the caption names
-          the related study-tips guide.
+          Rereading with notes open and recall with notes closed appear side by side. The
+          callout names the related study-tips article.
         note: A desirable difficulty helps because of the mental practice it requires.
       - id: p22
         say: >-
@@ -695,15 +697,15 @@ scenes:
       - id: p08
         say: 'How and Why it Works:'
         pause_after: 0.22
-        step: Try explaining before asking for a hint
-        visual: The tutor asks a single question, “What comes next?”
+        step: Explain before asking for hints
+        visual: The tutor asks a single question, “What’s next?”
         note: Leave time to think before showing your reasoning.
       - id: p09
         say: >-
           Ask the tutor to wait while you think and explain. Request a hint when you can’t make
           progress without one, or a worked example when you need more guidance.
         pause_after: 0.25
-        step: Try explaining before asking for a hint
+        step: Explain before asking for hints
         visual: >-
           Room opens for the student to think and explain. A dotted branch for times when more
           help is needed offers a hint or a full worked example.
@@ -733,7 +735,7 @@ scenes:
       - id: p12
         say: 'Example Prompt (Python):'
         pause_after: 0.25
-        step: Work through one filter at a time
+        step: Apply filters in order
         visual: >-
           A four-value Python list contains 1, 2, 3 and 4.
         note: Ask which items pass each filter and have the tutor wait.
@@ -743,7 +745,7 @@ scenes:
           confused by multiple ‘if’ conditions. Ask me one question about which elements pass
           each filter, and wait for my answer.
         pause_after: 0.25
-        step: Work through one filter at a time
+        step: Apply filters in order
         visual: >-
           The first filter keeps 2, 3 and 4. The tutor asks which of these pass the even-number filter
           and leaves the answer covered.
@@ -753,7 +755,7 @@ scenes:
           If I cannot explain the next step, show a small worked example and then give me a
           similar question.”
         pause_after: 0.85
-        step: Work through one filter at a time
+        step: Apply filters in order
         visual: >-
           Arrows trace 2 and 4 through both filters. A new list, 2, 3, 5 and 6, lets the student
           apply the same conditions independently.
@@ -837,7 +839,7 @@ scenes:
       - id: p07
         say: 'Example Prompt (C++):'
         pause_after: 0.25
-        step: The same node can return to the queue
+        step: Unchecked revisits requeue a node
         visual: A two-node example has A and B connected as neighbors, with the search starting at A.
         note: Share the partial attempt and expected trace.
       - id: p08
@@ -846,7 +848,7 @@ scenes:
           attempt and a trace of what I expected: [paste code and trace]. It enters an infinite
           loop.
         pause_after: 0.25
-        step: The same node can return to the queue
+        step: Unchecked revisits requeue a node
         visual: >-
           The queue begins with A. If revisits go unchecked, processing it queues B, which then
           queues A again.
@@ -856,7 +858,7 @@ scenes:
           Without rewriting the code, ask me a question that helps me check when I mark nodes as
           visited.”
         pause_after: 0.85
-        step: The same node can return to the queue
+        step: Unchecked revisits requeue a node
         visual: The repeated A in the queue is the place to ask when the code marks a node as visited.
         note: Share the partial attempt and expected trace.
   - id: break-the-problem-into-steps
@@ -1491,10 +1493,8 @@ scenes:
       - id: p05
         say: 'How and Why it Works:'
         pause_after: 0.22
-        step: Remove steps as you gain understanding
-        visual: >-
-          A complete example is followed by a similar problem with a missing last step. The
-          final problem is solved independently once the learner can explain the missing steps.
+        step: Trace more calls yourself each time
+        visual: The Java method sumTo calls itself with a smaller input until n reaches zero.
         note: Practice completing one missing step before you fill in several.
       - id: p06
         say: >-
@@ -1502,10 +1502,10 @@ scenes:
           you can complete and explain that step, try filling in more steps until you can solve
           a fresh problem yourself. Adjust the pace to your understanding.
         pause_after: 0.52
-        step: Remove steps as you gain understanding
+        step: Trace more calls yourself each time
         visual: >-
-          A complete example is followed by a similar problem with a missing last step. The
-          final problem is solved independently once the learner can explain the missing steps.
+          Below the method, a complete stack trace sits beside one with two frames missing.
+          The last card gives only the input sumTo(4) and space to trace it yourself.
         note: Fade the help at a pace that matches your understanding.
       - id: p07
         say: 'Example Prompt (Java):'
@@ -1884,7 +1884,7 @@ scenes:
       - id: p01
         say: Self-Check Quiz
         pause_after: 0.5
-        step: Check which strategies you can apply
+        step: Test your strategies
         visual: >-
           A checklist invites you to take the article's self-check quiz and review the
           strategies.
@@ -1892,7 +1892,7 @@ scenes:
       - id: p02
         say: Take the self-check quiz on the article page to review these strategies.
         pause_after: 0.468
-        step: Check which strategies you can apply
+        step: Test your strategies
         visual: >-
           A checklist invites you to take the article's self-check quiz and review the
           strategies.

@@ -147,8 +147,8 @@
               stroke="var(--be-blue)" stroke-width="3"/>
         <rect x="48" y="220" width="46" height="50" rx="6" fill="var(--be-gold-tint)"
               stroke="var(--be-ink)" stroke-width="3" stroke-dasharray="6 5"/>
-        <text x="745.5" y="151" text-anchor="middle" font-size="31" font-weight="800">Missing</text>
-        <text x="745.5" y="191" text-anchor="middle" font-size="28">closing brace</text>
+        <text x="745.5" y="151" text-anchor="middle" font-size="31" font-weight="800">Find the</text>
+        <text x="745.5" y="191" text-anchor="middle" font-size="28">missing brace</text>
       </g>
       <g data-be-item="2">
         <rect x="516" y="111" width="39" height="45" rx="6" fill="none"
@@ -472,23 +472,22 @@
         <circle cx="191" cy="44" r="10" fill="var(--be-blue-tint)"/>
         <rect x="35" y="75" width="360" height="224" rx="14" fill="var(--be-paper)"/>
         <g stroke="none" text-anchor="middle">
-          <text x="215" y="118" font-weight="800">Week 1 · Learn</text>
-          <text x="215" y="163">Scan a list once</text>
+          <text x="215" y="118" font-weight="800">Week 1</text>
+          <text x="215" y="163">Scan the list</text>
         </g>
         ${visits(3, 187)}
         <text x="225" y="212" stroke="none">3 visits</text>
-        <text x="215" y="271" text-anchor="middle" stroke="none">n items → n visits</text>
+        <text x="215" y="271" text-anchor="middle" stroke="none">n items, n visits</text>
       </g>
       <g data-be-item="1">
         <circle cx="685" cy="44" r="10" fill="var(--be-gold)"/>
         <rect x="485" y="75" width="360" height="224" rx="14" fill="var(--be-gold-tint)"/>
         <g stroke="none" text-anchor="middle">
-          <text x="665" y="118" font-weight="800">Week 4 · Recall</text>
-          <text x="665" y="168">Double the list size.</text>
+          <text x="665" y="118" font-weight="800">Week 4</text>
+          <text x="665" y="168">Double the list.</text>
           <text x="665" y="210">How many visits?</text>
         </g>
         <rect x="525" y="230" width="280" height="50" rx="9" fill="var(--be-paper)" stroke-dasharray="6 5"/>
-        <text data-be-exit="2" x="665" y="265" text-anchor="middle" stroke="none">?</text>
       </g>
       <g data-be-item="2">
         <text x="665" y="264" text-anchor="middle" stroke="none">6 visits · O(n)</text>

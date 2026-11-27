@@ -28,7 +28,7 @@
 {% assign first_cue = first_scene.cues.first %}
 {% if include.article %}{% assign scene_label = 'Section' %}{% endif %}
 {% assign player_id = topic | append: '-video' %}
-<section data-narration-renderer="VideoNarrationVisuals" class="narrated-explainer narrated-lesson video-narration {{ topic }}-video mathjax_ignore" id="{{ topic }}-video" aria-labelledby="{{ topic }}-video-title" data-vn-topic="{{ topic }}"{% if include.article %} data-article-player{% endif %}>
+<section data-narration-renderer="VideoNarrationVisuals" class="narrated-explainer narrated-lesson video-narration {{ topic }}-video mathjax_ignore" id="{{ topic }}-video" aria-labelledby="{{ topic }}-video-title" data-vn-topic="{{ topic }}"{% if include.article %} data-article-player data-article-root="{{ '/' | relative_url | escape }}"{% endif %}>
   <h2 id="{{ topic }}-video-title"{% if include.article %} class="sr-only"{% endif %}>{{ include.heading | default: explainer.title | escape }}</h2>
   {% unless include.article %}{% if lesson.summary or lesson.prerequisites %}<p>{{ lesson.summary }} {{ lesson.prerequisites }}</p>{% endif %}{% endunless %}
   <div class="nja-player">
@@ -56,7 +56,8 @@
           <div class="vn-panel vn-panel--animation{% if include.poster %} has-cover{% endif %}" data-vn-panel="animation" hidden>
             {% if include.poster %}<img class="vn-animation-cover" src="{{ include.poster | relative_url }}" alt="">{% endif %}
             <p class="vn-animation-poster" data-vn-poster>{{ first_cue.visual | escape }}</p>
-            <iframe class="vn-animation-frame" data-src="{{ lesson.animation.page | relative_url }}" title="{{ lesson.name | escape }} animation" tabindex="-1" aria-hidden="true"></iframe>
+            <iframe class="vn-animation-frame" data-src="{{ lesson.animation.page | relative_url }}" title="{{ lesson.name | escape }} animation" tabindex="-1" aria-hidden="true"{% if include.article %} data-vn-native-links{% endif %}></iframe>
+            {% if include.article %}<a class="vn-article-reference" data-vn-article-reference hidden></a>{% endif %}
           </div>
           {% endif %}
           {% if explainer.slides %}

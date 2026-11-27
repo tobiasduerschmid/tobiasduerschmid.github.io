@@ -44,7 +44,7 @@
     for (const stroke of art.querySelectorAll('[data-art-part="checks"], [data-art-part="tick"]')) {
       stroke.setAttribute('stroke-dasharray', '1');
       stroke.setAttribute('stroke-dashoffset', '1');
-      fx.draw(stroke, when + 0.13, 0.45);
+      fx.draw(stroke, when + 0.1, 0.4);
     }
     for (const part of art.querySelectorAll('[data-art-part="rays"], [data-art-part="reply"], [data-art-part="note"]')) {
       enter(part, when + 0.15, 0, 4);
@@ -123,10 +123,33 @@
     }
   }
 
-  function figure(parent, beat, times) {
+  function buildFigure(parent, beat) {
     const body = el('div', 'be-figure-body', parent);
     const art = svg('svg', { class: 'be-figure', viewBox: '0 0 880 324' }, body);
     art.innerHTML = window.BlogEssayFigures[beat.figure](beat);
+    return art;
+  }
+
+  function figureTiming(art, beat) {
+    const text = beat.items.map(() => []);
+    art.querySelectorAll('text').forEach(node => {
+      const group = node.closest('[data-be-item]');
+      if (group) text[Number(group.dataset.beItem)].push(node.textContent.trim());
+    });
+    const replacements = [];
+    art.querySelectorAll('[data-be-exit]').forEach(node => {
+      const owner = node.closest('[data-be-item]');
+      if (!owner) return;
+      const from = Number(owner.dataset.beItem);
+      const to = Number(node.dataset.beExit);
+      // A question mark may disappear while the surrounding question stays.
+      const text = node.textContent.trim();
+      replacements.push({ from, to, text, wholeItem: node === owner });
+    });
+    return { text: text.map(parts => parts.join(' ')), replacements };
+  }
+
+  function animateFigure(art, beat, times) {
     const parts = [...art.querySelectorAll('[data-be-item]')];
     parts.forEach(node => {
       const when = times[Number(node.dataset.beItem)];
@@ -141,7 +164,7 @@
     art.querySelectorAll('[data-be-exit]').forEach(node => {
       fx.fadeOut(node, times[Number(node.dataset.beExit)], 0.28);
     });
-    const legend = el('ul', 'be-figure-legend', body);
+    const legend = el('ul', 'be-figure-legend', art.parentElement);
     legend.hidden = true;
     beat.items.forEach((item, index) => {
       const label = el('li', 'be-figure-label', legend, item.label);
@@ -160,12 +183,6 @@
       for (const beat of scene.essay_beats) {
         const start = line(beat.from).start;
         const end = line(beat.to).end;
-        const mark = ({ cue, word }, index = 0) => {
-          const timing = line(cue || beat.from);
-          return Math.max(timing.start, Math.min(timing.end - 1.1,
-            timing.marks[word] ?? timing.start + index * 0.42));
-        };
-        const times = beat.items.map(mark);
         // Cut between compositions so their text never competes during a seek.
         const picture = el('div', 'scene is-staged be-picture', layers.content);
         tween(picture, [{ opacity: 1 }, { opacity: 1 }], start, 0.001);
@@ -173,10 +190,16 @@
         const heading = el('div', 'be-heading', picture);
         label(heading, 'p', 'be-title', beat.title);
         label(heading, 'p', 'be-subtitle', beat.subtitle);
-        if (beat.layout === 'figure') figure(picture, beat, times);
+        const art = beat.layout === 'figure' ? buildFigure(picture, beat) : null;
+        const details = art ? figureTiming(art, beat) : {};
+        const mark = window.BlogEssayTiming.schedule(beat, line, details.text, details.replacements);
+        const times = beat.items.map(mark);
+        if (art) animateFigure(art, beat, times);
         else illustrated(picture, beat, times, mark);
         if (beat.signal?.text) {
-          enter(el('p', 'be-signal', picture, beat.signal.text), mark(beat.signal), 0, 7);
+          const signal = el('p', 'be-signal', picture, beat.signal.text);
+          if (beat.signal.link) signal.classList.add('be-signal--linked');
+          enter(signal, mark(beat.signal), 0, 7);
         }
       }
     }

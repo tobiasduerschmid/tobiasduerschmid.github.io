@@ -10,6 +10,7 @@
       "scripts": [
         "/js/video-narration/blog-essay-art.js",
         "/js/video-narration/blog-study-figures.js",
+        "/js/video-narration/blog-essay-timing.js",
         "/js/video-narration/blog-essay.js"
       ]
     }
@@ -375,7 +376,7 @@
             "from": 14,
             "to": 14,
             "layout": "figure",
-            "title": "Debugging now builds skill for later",
+            "title": "Debugging builds skill for later",
             "items": [
               {
                 "art": "code",
@@ -386,7 +387,7 @@
               },
               {
                 "art": "bug",
-                "label": "Missing closing brace",
+                "label": "Find the missing brace",
                 "cue": 14,
                 "word": "missing",
                 "tone": "gold"
@@ -395,15 +396,10 @@
                 "art": "pencil",
                 "label": "Braces match",
                 "cue": 14,
-                "word": "debug",
+                "word": "catch",
                 "tone": "blue"
               }
             ],
-            "signal": {
-              "cue": 14,
-              "word": "tomorrow",
-              "text": "Spot the mismatch, then fix it."
-            },
             "figure": "study-loop-debug"
           }
         ]
@@ -787,7 +783,7 @@
           },
           {
             "from": 10,
-            "to": 11,
+            "to": 10,
             "layout": "compare",
             "title": "Weekly work builds steady progress",
             "items": [
@@ -795,38 +791,38 @@
                 "art": "clock",
                 "label": "Last-minute pileup",
                 "cue": 10,
-                "word": "temptation",
+                "word": "due",
                 "tone": "blue"
               },
               {
                 "art": "blocks",
                 "label": "Incremental progress",
-                "cue": 11,
-                "word": "incremental",
+                "cue": 10,
+                "word": "temptation",
                 "tone": "gold"
               }
             ]
           },
           {
-            "from": 12,
+            "from": 11,
             "to": 12,
             "layout": "figure",
             "title": "Revisiting Big-O keeps it accessible",
             "items": [
               {
-                "label": "Scan a list once",
-                "cue": 12,
-                "word": "learned"
+                "label": "Week 1: scan the list",
+                "cue": 11,
+                "word": "course"
               },
               {
-                "label": "Predict the visits",
-                "cue": 12,
-                "word": "test"
+                "label": "Week 4: predict the visits",
+                "cue": 11,
+                "word": "revisit"
               },
               {
-                "label": "Recall and check",
+                "label": "Six visits, still linear",
                 "cue": 12,
-                "word": "retrieve"
+                "word": "homework"
               }
             ],
             "figure": "study-big-o"

@@ -66,6 +66,8 @@
   }
 
   function robotAtGym() {
+    const speechBubble = 'M287 37 H456 Q470 37 470 51 V213 Q470 227 456 227 H287 Q273 227 273 213 ' +
+      'V141 L258 120 L273 115 V51 Q273 37 287 37 Z';
     return `
       <g stroke="${ink}" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round">
         <path d="M65 265 H815" stroke-width="2"/>
@@ -95,6 +97,19 @@
         </g>
 
         <g data-be-item="1">
+          <path d="${speechBubble}" transform="translate(4 4)" fill="${shadow}" stroke="none"/>
+          <path d="${speechBubble}" fill="${paper}"/>
+          <text x="371.5" y="70" text-anchor="middle" font-size="24" fill="${ink}" stroke="none">
+            <tspan x="371.5" y="70">“Wow, I just</tspan>
+            <tspan x="371.5" y="98">discovered this</tspan>
+            <tspan x="371.5" y="126">AI that makes</tspan>
+            <tspan x="371.5" y="154">my workout so</tspan>
+            <tspan x="371.5" y="182">much easier</tspan>
+            <tspan x="371.5" y="210">and faster!”</tspan>
+          </text>
+        </g>
+
+        <g data-be-item="2">
           <ellipse cx="633" cy="253" rx="117" ry="12" fill="${shadow}" stroke="none"/>
           <path d="M583 216 H609 V244 H580 Z M654 216 H680 L686 244 H656 Z" fill="${blueTint}"/>
           <rect x="570" y="239" width="52" height="18" rx="7" fill="${paper}"/>
@@ -103,7 +118,7 @@
           <path d="M598 181 H662 L654 212 H605 Z" fill="${paper}"/>
           <circle cx="631" cy="196" r="8" fill="${gold}"/>
 
-          <g data-be-item="2" data-be-move="0 50">
+          <g data-be-item="3" data-be-move="0 50">
             <rect x="551" y="63" width="16" height="102" rx="7" fill="${blueTint}"/>
             <rect x="700" y="63" width="16" height="102" rx="7" fill="${blueTint}"/>
             <path d="M495 57 H773 V68 H495 Z" fill="${paper}"/>
@@ -127,7 +142,7 @@
           <path d="M621 157 Q631 165 641 157" fill="none" stroke-width="2.5"/>
           <text x="633" y="298" text-anchor="middle" fill="${ink}" stroke="none">Robot lifts</text>
         </g>
-        <g data-be-item="2" fill="none" stroke-width="3.8">
+        <g data-be-item="3" fill="none" stroke-width="3.8">
           <path d="M812 117 V56 M803 65 L812 56 L821 65"/>
         </g>
       </g>`;
@@ -179,19 +194,18 @@
     return strokes(`
       <g data-be-item="0">
         ${card({ x: 45, y: 43, width: 312, height: 110, tint: goldTint })}
-        ${label(70, 86, 'Tutor asks')}
-        ${label(70, 124, 'What comes next?')}
+        ${label(201, 105, 'What’s next?', 'middle')}
       </g>
       <g data-be-item="1">
         <path d="M376 98 H499 M489 88 L499 98 L489 108" fill="none"/>
         ${card({ x: 519, y: 43, width: 309, height: 110, tint: blueTint })}
-        ${label(674, 82, 'You think and explain', 'middle')}
+        ${label(674, 82, 'Your reasoning', 'middle')}
         <rect x="544" y="101" width="259" height="34" rx="8" fill="${paper}"/>
         <path data-be-item="1" data-be-move="-18 0" d="M561 119 H614 M624 119 H682 M692 119 H713" fill="none"/>
       </g>
       <g data-be-item="2">
         <path d="M673 164 V181" fill="none" stroke-dasharray="5 6"/>
-        ${label(673, 209, 'If you need more help', 'middle')}
+        ${label(673, 209, 'If stuck', 'middle')}
         <path d="M673 218 V223 H588 V234" fill="none" stroke-dasharray="5 6"/>
         ${card({ x: 511, y: 239, width: 155, height: 57 })}
         ${label(588, 276, 'Hint', 'middle')}
@@ -199,7 +213,7 @@
       <g data-be-item="3">
         <path d="M673 223 H765 V234" fill="none" stroke-dasharray="5 6"/>
         ${card({ x: 685, y: 239, width: 158, height: 57 })}
-        ${label(764, 276, 'Full example', 'middle')}
+        ${label(764, 276, 'Example', 'middle')}
       </g>`);
   }
 
@@ -207,9 +221,9 @@
     return strokes(`
       <g data-be-item="0">
         ${card({ x: 234, y: 17, width: 412, height: 55 })}
-        ${label(335, 53, 'A  B  C  D', 'middle')}
+        ${label(335, 53, 'ABCD', 'middle')}
         <path d="M413 43 H469 M459 33 L469 43 L459 53" fill="none"/>
-        ${label(545, 53, 'D  C  B  A', 'middle')}
+        ${label(545, 53, 'DCBA', 'middle')}
       </g>
       <g data-be-item="1">
         <path d="M440 83 V93 H160 V112 M153 105 L160 112 L167 105" fill="none"/>
@@ -239,7 +253,9 @@
       </g>
       <g data-be-item="4">
         ${card({ x: 223, y: 263, width: 434, height: 40 })}
-        ${label(440, 292, 'Compare time and extra space', 'middle')}
+        ${label(354, 292, 'Time', 'middle')}
+        <path d="M425 271 V297" fill="none"/>
+        ${label(530, 292, 'Extra space', 'middle')}
       </g>
       <g data-be-item="5">
         <rect x="618" y="201" width="69" height="26" rx="5" fill="${goldTint}"/>
@@ -321,7 +337,7 @@
       </g>
       <g data-be-item="1">
         ${card({ x: 409, y: 49, width: 425, height: 214 })}
-        ${label(622, 90, 'Queue as the search runs', 'middle')}
+        ${label(622, 90, 'Queue', 'middle')}
         ${card({ x: 441, y: 119, width: 84, height: 63, tint: goldTint })}
         ${label(483, 160, 'A', 'middle')}
       </g>
@@ -334,7 +350,7 @@
           ${card({ x: 703, y: 119, width: 84, height: 63, tint: goldTint })}
           ${label(745, 160, 'A', 'middle')}
         </g>
-        ${label(622, 228, 'A enters the queue again', 'middle')}
+        ${label(622, 228, 'A returns', 'middle')}
       </g>`);
   }
 
@@ -424,7 +440,7 @@
       ${card({ x: 30, y: 12, width: 813, height: 257 })}
       <path d="M54 90 H819 M54 189 H819" fill="none" stroke="${shadow}" stroke-width="2"/>
       <g data-be-item="0">
-        ${label(58, 61, 'Input list')}
+        ${label(58, 61, 'Input')}
         ${row(28, [1, 2, 3, 4], paper)}
       </g>
       <g data-be-item="1">
@@ -435,7 +451,7 @@
         ${label(58, 246, 'if x % 2 == 0')}
         <g data-be-exit="3">
           <rect x="411" y="208" width="365" height="46" rx="10" fill="${goldTint}" stroke-dasharray="7 5"/>
-          ${label(593, 239, 'Which values pass?', 'middle')}
+          ${label(593, 239, 'Which pass?', 'middle')}
         </g>
       </g>
       <g data-be-item="3">
@@ -443,7 +459,7 @@
         ${row(216, [2, 4], goldTint)}
       </g>
       <g data-be-item="4">
-        ${label(440, 302, 'Your turn: try the same filters on [2, 3, 5, 6].', 'middle')}
+        ${label(440, 302, 'Try [2, 3, 5, 6].', 'middle')}
       </g>`);
   }
 

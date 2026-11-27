@@ -102,11 +102,45 @@
     picture.addEventListener('pointerleave', () => animation.point(null, null, false));
   }
 
+  // Stage frames are hidden from assistive technology. The live player puts
+  // authored references in its own focus order, above the picture's play layer.
+  function articleReferences(root, audio) {
+    const callout = root.querySelector('[data-vn-article-reference]');
+    if (!callout) return null;
+    const caption = root.querySelector('.vn-captions p');
+    const pause = () => audio.pause();
+    callout.addEventListener('focus', pause);
+
+    return (scene, cue) => {
+      const number = scene.cues.indexOf(cue) + 1;
+      const beat = scene.essay_beats?.find(beat => beat.signal?.link && number >= beat.from && number <= beat.to);
+      const signal = beat?.signal;
+      const link = signal?.link;
+      callout.hidden = !link || !/^\/(?!\/)/.test(link.href);
+      if (callout.hidden) return;
+      const href = root.dataset.articleRoot + link.href.slice(1);
+      callout.href = href;
+      callout.textContent = signal.text;
+
+      if (number !== signal.cue || !link.caption) return;
+      const start = cue.text.indexOf(link.caption);
+      if (start < 0) return;
+      const anchor = document.createElement('a');
+      anchor.className = 'vn-caption-reference';
+      anchor.href = href;
+      anchor.textContent = link.caption;
+      anchor.addEventListener('focus', pause);
+      caption.replaceChildren(cue.text.slice(0, start), anchor, cue.text.slice(start + link.caption.length));
+    };
+  }
+
   function createRenderer(root, { story, timing, examples }) {
     const topic = root.dataset.vnTopic;
     const screen = root.querySelector('[data-vn-screen]');
     const panels = Object.fromEntries(Array.from(screen.querySelectorAll('[data-vn-panel]'), panel => [panel.dataset.vnPanel, panel]));
-    const animation = panels.animation ? animationStage(panels.animation, root.querySelector('audio')) : null;
+    const audio = root.querySelector('audio');
+    const animation = panels.animation ? animationStage(panels.animation, audio) : null;
+    const showReference = articleReferences(root, audio);
     const languageSelect = root.querySelector('[data-setting="language"]');
     if (animation) bindPictureChoices(root, animation, languageSelect);
     const explanation = root.querySelector('.nja-explanation');
@@ -161,6 +195,7 @@
       const cueChanged = cue !== lastCue;
       lastCue = cue;
       lastLanguage = language;
+      if (cueChanged && showReference) showReference(storyScene, cue);
       const readingStep = root.querySelector(`[data-reading-scene="${storyScene.id}"][data-reading-cue="${storyScene.cues.indexOf(cue)}"]`);
       screen.setAttribute('aria-label', cue.visual);
       screen.dataset.vnCount = String(shown.length);

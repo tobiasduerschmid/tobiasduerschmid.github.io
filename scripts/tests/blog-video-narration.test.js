@@ -4,6 +4,7 @@ const { readFileSync, statSync } = require('node:fs');
 const { resolve } = require('node:path');
 const { ROOT, loadLesson } = require('../narration/source');
 const { wordMarks } = require('../../js/video-narration-marks');
+const { schedule } = require('../../js/video-narration/blog-essay-timing');
 
 const read = path => readFileSync(resolve(ROOT, path.replace(/^\//, '')), 'utf8');
 const seconds = stamp => Number(stamp.slice(0, 2)) * 3600 + Number(stamp.slice(3, 5)) * 60 + Number(stamp.slice(6));
@@ -67,4 +68,51 @@ for (const [topic, slug] of [
     assert.deepEqual(actualCaptions, expectedCaptions);
     assert.equal(read(story.script), `${transcript.join('\n\n')}\n`);
   });
+
+  test(`${slug}: every label, detail and takeaway can be read at double speed`, () => {
+    const { story } = loadLesson(topic);
+    const timing = JSON.parse(read(`_data/explainers/${topic}_timing.json`));
+    for (const [index, scene] of story.scenes.entries()) {
+      const cues = timing.scenes[index].cues.map((cue, i) => ({
+        ...cue, marks: wordMarks(scene.cues[i].text, cue.start, cue.speech_end),
+      }));
+      const line = number => cues[number - 1];
+      for (const beat of scene.essay_beats) {
+        const reveal = schedule(beat, line);
+        const end = line(beat.to).end;
+        const visible = beat.items.flatMap(item => item.detail_at
+          ? [[item, item.label], [item.detail_at, item.detail]]
+          : [[item, [item.label, item.detail].filter(Boolean).join(' ')]]);
+        if (beat.signal) visible.push([beat.signal, beat.signal.text]);
+        for (const [anchor, text] of visible) {
+          const words = text.trim().split(/\s+/).length;
+          const seconds = (end - reveal(anchor) - 0.46) / 2; // Fully settled at 2×.
+          assert.ok(reveal(anchor) >= line(beat.from).start);
+          assert.ok(seconds >= Math.max(3, 1 + words / 3) - 0.001, `${beat.title} / ${text}: ${seconds.toFixed(2)}s`);
+        }
+      }
+    }
+  });
 }
+
+test('a diagram gives readers time with the unfinished example before revealing the repair', () => {
+  const initial = { label: 'Missing brace', word: 'mistake' };
+  const repair = { label: 'Braces match', word: 'repair' };
+  const beat = { from: 1, to: 1, items: [initial, repair] };
+  const line = () => ({ start: 10, end: 40, marks: { mistake: 38.5, repair: 39 } });
+  const reveal = schedule(beat, line, ['Read each line and locate the missing brace', 'Braces match'],
+    [{ from: 0, to: 1, wholeItem: true }]);
+  assert.ok((reveal(repair) - reveal(initial) - 0.7) / 2 >= 1 + 8 / 3);
+  assert.ok((40 - reveal(repair) - 0.7) / 2 >= 3);
+});
+
+test('a short answer gets reading time when it replaces a symbol beside a persistent question', () => {
+  const question = { label: 'Predict the visits' };
+  const answer = { label: 'Six visits', word: 'check' };
+  const beat = { from: 1, to: 1, items: [question, answer] };
+  const line = () => ({ start: 0, end: 16, marks: { check: 15 } });
+  const reveal = schedule(beat, line, ['Suppose you double the number of items in the list. How many visits?', 'Six visits'],
+    [{ from: 0, to: 1, text: '?' }]);
+  assert.ok((reveal(answer) - reveal(question) - 0.46) / 2 >= 3);
+  assert.ok((16 - reveal(answer) - 0.46) / 2 >= 3);
+});

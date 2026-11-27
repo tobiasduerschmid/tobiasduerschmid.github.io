@@ -171,6 +171,13 @@
     }
     seek.addEventListener('focus', previewPosition);
     seek.addEventListener('input', previewPosition);
+    if (root.hasAttribute('data-article-player')) {
+      // Touch has no hover to leave after a seek. Clear its preview when the
+      // browser finishes the tap, after the range input's value has changed.
+      seek.addEventListener('click', event => {
+        if (event.pointerType === 'touch' || event.sourceCapabilities?.firesTouchEvents) hideLabel();
+      });
+    }
     timeline.addEventListener('pointerleave', hideLabel);
     timeline.addEventListener('focusout', event => {
       if (!timeline.contains(event.relatedTarget)) { closeMenu(false); hideLabel(); }
