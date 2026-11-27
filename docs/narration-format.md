@@ -326,8 +326,8 @@ their section with a field for an answer and reasoning; the answer key stays
 at the end. Video lessons reuse `VideoNarrationStage.still(cue.end - 0.3)`;
 other kinds reuse their diagram, code, illustration, or explainer renderer
 through `narration-note-visual.html`. Never flatten readable code, diagrams,
-or student writing into screenshots. The code-language control affects only
-the open handout and does not change the site's saved language preference.
+or student writing into screenshots. The code-language control uses
+`SEBookCodePreferences` and its cookie, just like players and reading views.
 Non-video pictures include a visible description inside their image wrapper:
 Chromium can omit an image's PDF tag when all its children are hidden from the
 accessibility tree, so keep that description available in the exported file.
@@ -437,18 +437,24 @@ and verification screenshots outside the repository.
   While a knowledge check or decision is open, the bar steps aside: the
   checkpoint replaces the picture, keys typed in it answer it, and its own
   buttons continue or skip.
-- `js/narration-preferences.js`: the shared captions, playback-speed, and knowledge-check
+- `js/narration-preferences.js`: the shared playback and display
   preference for video, pattern, explainer, and case-study players and
   `/settings/`. The `sebook-narration-preferences` cookie stores
-  `{captions: boolean, speed: number, finalCheckOnly: boolean}` for one year,
-  with `Path=/`, `SameSite=Lax`, and `Secure` on HTTPS. Defaults are captions on,
-  1x, and all knowledge checks;
+  `captions`, `speed`, `finalCheckOnly`, `captionSize`, `landscape`,
+  `predictions`, `motion`, `volume`, and `muted` for one year, with `Path=/`,
+  `SameSite=Lax`, and `Secure` on HTTPS. Defaults are captions on at 100%, 1x,
+  all knowledge checks, landscape and predictions on, full volume, unmuted,
+  and system motion preference (`motion: null`, or an explicit boolean);
   visiting a lesson does not write a cookie. Every speed selector uses
   `narration-playback-speeds.html` (0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x).
   The shared control bar applies viewing preferences, including audio's current
   and default playback rate. Choices synchronize all mounted players without
-  moving the playback position or starting audio. Returning to an open tab
-  refreshes external changes or deletion; `/cookies/` lists and deletes the
+  moving the playback position or starting audio. The prediction module applies
+  saved opt-outs before the first cue and clears an existing hold when disabled;
+  the transport applies animation preferences. A narration lacking a control
+  preserves its saved choice for other narrations. Scene selection stays local
+  to the lesson. Cookie-change events (where supported) and returning to an open
+  tab refresh external changes or deletion; `/cookies/` lists and deletes the
   cookie. Invalid fields use their defaults, and blocked cookies leave the
   current page usable. Music video and inline audio clip settings are separate.
   **Only pause for the final knowledge check** is available in every player's
@@ -460,6 +466,12 @@ and verification screenshots outside the repository.
   or review buttons still opens any check. Prediction pauses are independent,
   and changing this preference affects upcoming boundaries without dismissing
   an already open check or changing quiz answers.
+- `js/sebook-code-preferences.js`: one code-language cookie for narration
+  players, reading/print views, and other SEBook selectors. It migrates the
+  earlier `sebook-code-language` localStorage value without overriding an
+  existing cookie, then removes the old copy after a successful save. The shared
+  head loads it before the profile-sync retirement catalog. Python is the
+  default; unsupported languages fall back without changing the preference.
 - Full screen fills the screen with the player's video
   (`css/narrated-explainer.css`): the stage, or the checkpoint that replaces
   it, takes the whole surface and scrolls inside; captions and the bar

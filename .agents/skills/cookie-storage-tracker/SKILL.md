@@ -119,7 +119,8 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 
 **Cookies:**
 - `dark-mode`, `show-highlights`, `highlights` (alias on blog index), `blog-show-citations`, `read-aloud`, `uml-accent-color`, `more-confetti`
-- `sebook-narration-preferences` — `{captions: boolean, speed: number, finalCheckOnly: boolean}` shared by all narration players and `/settings/`; defaults are captions on, 1x, and all knowledge checks. `finalCheckOnly` skips intermediate automatic/step-mode checks, retaining the last authored check and explicit review access. Written only on a choice, with a one-year max-age, `Path=/`, `SameSite=Lax`, and `Secure` on HTTPS. `/cookies/` provides individual, UI-category, and global deletion. Open players refresh on returning to the tab.
+- `sebook-narration-preferences` — all narration preferences: `captions` (true), `speed` (1), `finalCheckOnly` (false), `captionSize` (1), `landscape` (true), `predictions` (true), `motion` (null: follow system; explicit choices are booleans), `volume` (1), and `muted` (false). Shared by every narration player and `/settings/`; unsupported controls do not overwrite saved choices. Scene navigation stays lesson-specific. `finalCheckOnly` skips intermediate automatic/step-mode checks, retaining the last authored check and explicit review access. Written on a choice, with a one-year max-age, `Path=/`, `SameSite=Lax`, and `Secure` on HTTPS. `/cookies/` provides individual, UI-category, and global deletion. Players refresh on cookie-change events where supported and on returning to the tab.
+- `sebook-code-language` — shared code language across SEBook selectors and narrated player/reading/print views. Python by default; unsupported choices use a fallback without overwriting the preference. Same one-year cookie attributes as narration preferences. The old localStorage choice migrates on load before the profile-sync retirement catalog runs; the legacy copy is removed after successful migration and remains deletable in the inventory if migration cannot complete.
 - `se-bookmarks`, `se-bookmarks-active`
 - `se-gym-workout-fullscreen` — optional fullscreen for workout launches; off by default
 - `se-gym`, `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `analyze-performance`, `se-gym-show-difficulty`, `se-gym-show-workout-hero`, `se-gym-active-difficulties`
@@ -134,7 +135,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - `se-gym-workout-progress` — active workout checkpoint including card order, optional selected deck IDs that preserve skip scope on resume, position, score, missed cards, and difficulty tally
 - `tutorial-autosave`
 - `tutorial-instructions-hidden` — `1` while the learner keeps tutorial instructions hidden to a rail (all tutorials); removed on Show
-- `sebook-code-language` — shared language for SEBook code tabs, UML labs, and Observer lesson views; written on explicit selection, default Python
+- `sebook-code-language` — legacy value read only for migration to the cookie of the same name; no new localStorage writes. Retired for the profile sync extension with `{area: 'local', key: 'sebook-code-language'}`.
 - `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
 
 **localStorage — dynamic prefixes** (one entry per tutorial, lesson, or page path):
@@ -169,10 +170,10 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - Glossary abbreviation underlines: `abbr-underlines`
 - Read-aloud controls and voice: `read-aloud`, `tts-voice-name`
 - Audio defaults: `cap_volume`, `cap_speed`
-- Narration captions, playback speed, and final knowledge check only: `sebook-narration-preferences`
+- All narration playback/display settings: `sebook-narration-preferences`
 - Tutorial autosave: `tutorial-autosave`
 - Tutorial instructions hidden by default: `tutorial-instructions-hidden`
-- SE Book code language: `sebook-code-language` (Python, Java, C++, TypeScript)
+- SE Book code language: `sebook-code-language` cookie (Python, Java, C++, TypeScript)
 - UML accent color: `uml-accent-color`
 - SEBook bookmarks enabled: `se-bookmarks-active`
 - SE Gym enabled, timed practice, workout hero, difficulty visibility/filtering, and performance tracking: `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `se-gym-show-workout-hero`, `se-gym-show-difficulty`, `se-gym-active-difficulties`, `analyze-performance`, `se-gym-stats`

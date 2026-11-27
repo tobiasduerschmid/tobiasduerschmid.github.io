@@ -1,0 +1,16 @@
+<div class="setting-row">
+  <div>
+    <p class="setting-name" id="{{ include.id }}-label">{{ include.label }}</p>
+    <p class="setting-description" id="{{ include.id }}-help">{{ include.description }} Stored in <code>{{ include.storage_key }}</code>.</p>
+  </div>
+  <div class="setting-control">
+    <div class="setting-toggle-row">
+      <label class="switch" for="{{ include.id }}">
+        <span class="sr-only">{{ include.label }}</span>
+        <input type="checkbox" id="{{ include.id }}" data-setting="{{ include.setting }}" data-status-target="{{ include.id }}-status" aria-labelledby="{{ include.id }}-label" aria-describedby="{{ include.id }}-help">
+        <span class="slider round"></span>
+      </label>
+      <span class="setting-toggle-status" id="{{ include.id }}-status" aria-hidden="true"></span>
+    </div>
+  </div>
+</div>

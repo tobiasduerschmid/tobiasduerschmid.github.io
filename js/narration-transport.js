@@ -238,7 +238,17 @@
         ? [{ sceneIndex, cueIndex, end: cue.end, time: Math.max(cue.start, cue.end - SECTION_END_LEAD) }] : []
     )));
 
-    if (motion) motion.checked = !reducedMotion.matches;
+    let motionPreference;
+    function syncMotion() {
+      if (!motion) return;
+      motion.checked = motionPreference ?? !reducedMotion.matches;
+      if (currentScene >= 0) render(position);
+    }
+    window.NarrationPreferences.subscribe(preferences => {
+      if (motionPreference === preferences.motion) return;
+      motionPreference = preferences.motion;
+      syncMotion();
+    });
 
     function render(time) {
       position = Math.max(0, Math.min(timing.duration, time));
@@ -369,13 +379,10 @@
     });
     seek.addEventListener('input', () => seekTo(Number(seek.value)));
     sceneSelect.addEventListener('change', () => selectScene(Number(sceneSelect.value)));
-    if (motion) motion.addEventListener('change', () => render(position));
+    if (motion) motion.addEventListener('change', () => window.NarrationPreferences.set({ motion: motion.checked }));
     // Full screen also resizes the window, so this refits the stage.
     window.addEventListener('resize', () => render(position));
-    reducedMotion.addEventListener('change', (event) => {
-      if (motion) motion.checked = !event.matches;
-      render(position);
-    });
+    reducedMotion.addEventListener('change', syncMotion);
     audio.addEventListener('loadedmetadata', () => {
       if (pendingSeek !== null) {
         audio.currentTime = Math.min(pendingSeek, audio.duration);

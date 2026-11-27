@@ -161,7 +161,9 @@ are recorded in [the sequence inference evidence review](uml-sequence-research-e
 - `js/sebook-code-preferences.js` owns the shared language preference. Every
   SEBook language selector (chapter examples, labs, and Observer lesson views)
   follows it across the page, navigation, reloads, and other open tabs. Explicit
-  selections and language-specific view links write `sebook-code-language` to localStorage. Python
+  selections and language-specific view links write the one-year
+  `sebook-code-language` cookie. Earlier localStorage choices migrate on load;
+  the cookie takes precedence and the old copy is removed after a successful save. Python
   is the default and the first fallback when a language is unavailable; otherwise
   the example uses its authored default or first option. Fallbacks never overwrite
   the preference. `ts` and `typescript` refer to the same saved language. Settings

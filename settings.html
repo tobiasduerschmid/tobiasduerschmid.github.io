@@ -253,6 +253,17 @@ info_nav_title: "My Settings"
       <div class="settings-list">
         <div class="setting-row">
           <div>
+            <label class="setting-name" for="setting-narration-volume">Narration volume</label>
+            <p class="setting-description">Shared by every narration player. Muting remembers the volume to return to. Stored in <code>sebook-narration-preferences</code>.</p>
+          </div>
+          <div class="setting-control settings-range-line">
+            <input type="range" id="setting-narration-volume" min="0" max="100" step="1" data-setting="narrationVolume">
+            <output class="settings-value" id="setting-narration-volume-value" for="setting-narration-volume"></output>
+          </div>
+        </div>
+        {% include settings-toggle-row.html id="setting-narration-muted" setting="narrationMuted" label="Mute narration" description="Start narrations muted. Off by default. Change this here or with any player's mute button." storage_key="sebook-narration-preferences" %}
+        <div class="setting-row">
+          <div>
             <p class="setting-name">Narration closed captions</p>
             <p class="setting-description" id="setting-narration-captions-help">
               Show captions in every narrated video, design-pattern lesson,
@@ -283,6 +294,26 @@ info_nav_title: "My Settings"
           </div>
           <div class="setting-control">
             <select id="setting-narration-speed" data-setting="narrationSpeed" aria-describedby="setting-narration-speed-help">{% include narration-playback-speeds.html %}</select>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div>
+            <label class="setting-name" for="setting-narration-caption-size">Narration caption size</label>
+            <p class="setting-description">Use the same caption size in every narration. Defaults to 100%. Stored in <code>sebook-narration-preferences</code>.</p>
+          </div>
+          <div class="setting-control">
+            <select id="setting-narration-caption-size" data-setting="narrationCaptionSize">{% include narration-caption-sizes.html %}</select>
+          </div>
+        </div>
+        {% include settings-toggle-row.html id="setting-narration-landscape" setting="narrationLandscape" label="Narration landscape in full screen" description="Rotate portrait touch screens to a landscape layout in full screen. On by default; turn this off to keep the device's orientation." storage_key="sebook-narration-preferences" %}
+        {% include settings-toggle-row.html id="setting-narration-predictions" setting="narrationPredictions" label="Narration pause and predict" description="Pause at prediction prompts before revealing the explanation. On by default. Applies to every narration with prediction prompts." storage_key="sebook-narration-preferences" %}
+        <div class="setting-row">
+          <div>
+            <label class="setting-name" for="setting-narration-motion">Narration animation</label>
+            <p class="setting-description">Controls Animate visuals in narrations that offer animation. Defaults to your system's reduced-motion preference. An explicit choice applies across narrations. Stored in <code>sebook-narration-preferences</code>.</p>
+          </div>
+          <div class="setting-control">
+            <select id="setting-narration-motion" data-setting="narrationMotion"><option value="system">Follow system preference</option><option value="animate">Animate visuals</option><option value="still">Still visuals</option></select>
           </div>
         </div>
         <div class="setting-row">
@@ -344,7 +375,7 @@ info_nav_title: "My Settings"
               Shared by all language selectors in the SE Book, including code
               examples, UML labs, and narrated design-pattern and UML lessons (Observer, State, Strategy, Model-View-Controller, UML class diagrams, UML sequence diagrams, UML state machine diagrams). Python is the default.
               Examples without your language use Python, or their own default if
-              Python is unavailable. Stored as <code>sebook-code-language</code>.
+              Python is unavailable. Stored for one year in the <code>sebook-code-language</code> cookie. Earlier localStorage choices are migrated automatically.
             </p>
           </div>
           <div class="setting-control">
@@ -878,7 +909,6 @@ info_nav_title: "My Settings"
 </article>
 
 <script src="{{ '/js/song-video/preferences.js' | relative_url }}"></script>
-<script src="{{ '/js/sebook-code-preferences.js' | relative_url }}"></script>
 <script src="{{ '/js/narration-preferences.js' | relative_url }}?v={{ site.asset_version }}"></script>
 <script>
 (function () {
@@ -1231,10 +1261,19 @@ info_nav_title: "My Settings"
     } else if (setting === 'audioSpeed') {
       writeLS('cap_speed', target.value);
       announce('Audio speed setting saved.');
-    } else if (setting === 'narrationCaptions' || setting === 'narrationSpeed' || setting === 'narrationFinalCheck') {
-      var narrationSaved = window.NarrationPreferences.set(setting === 'narrationCaptions'
-        ? { captions: target.checked } : setting === 'narrationSpeed'
-          ? { speed: Number(target.value) } : { finalCheckOnly: target.checked });
+    } else if (setting.startsWith('narration')) {
+      var narrationChanges = {
+        narrationCaptions: { captions: target.checked },
+        narrationSpeed: { speed: Number(target.value) },
+        narrationFinalCheck: { finalCheckOnly: target.checked },
+        narrationCaptionSize: { captionSize: Number(target.value) },
+        narrationLandscape: { landscape: target.checked },
+        narrationPredictions: { predictions: target.checked },
+        narrationMotion: { motion: target.value === 'system' ? null : target.value === 'animate' },
+        narrationVolume: { volume: Number(target.value) / 100, muted: Number(target.value) === 0 },
+        narrationMuted: { muted: target.checked },
+      };
+      var narrationSaved = window.NarrationPreferences.set(narrationChanges[setting]);
       announce(narrationSaved ? 'Narration preferences saved.' : 'Narration preferences changed for this page. Your browser could not save them.');
     } else if (setting === 'songSpeed') {
       var saved = window.SongPreferences.saveSpeed(Number(target.value));
@@ -1262,12 +1301,19 @@ info_nav_title: "My Settings"
   window.NarrationPreferences.subscribe(function (preferences) {
     setCheckbox('setting-narration-captions', preferences.captions);
     setCheckbox('setting-narration-final-check', preferences.finalCheckOnly);
+    setCheckbox('setting-narration-muted', preferences.muted);
+    setCheckbox('setting-narration-landscape', preferences.landscape);
+    setCheckbox('setting-narration-predictions', preferences.predictions);
     document.getElementById('setting-narration-speed').value = String(preferences.speed);
+    document.getElementById('setting-narration-caption-size').value = String(preferences.captionSize);
+    document.getElementById('setting-narration-motion').value = preferences.motion === null ? 'system' : preferences.motion ? 'animate' : 'still';
+    document.getElementById('setting-narration-volume').value = String(Math.round(preferences.volume * 100));
+    document.getElementById('setting-narration-volume-value').textContent = Math.round(preferences.volume * 100) + '%';
   });
   if (form) {
     form.addEventListener('change', handleChange);
     form.addEventListener('input', function (event) {
-      if (event.target && event.target.getAttribute('data-setting') === 'audioVolume') {
+      if (event.target && ['audioVolume', 'narrationVolume'].includes(event.target.getAttribute('data-setting'))) {
         handleChange(event);
       }
     });

@@ -265,12 +265,17 @@ Verify with tests and eyes, every time, in both modes:
 The player's controls must stay at least as good as the music player's, which
 shares its modules. Rules that came from review:
 
-- Captions, playback speed, and the final-knowledge-check-only option use `js/narration-preferences.js` and the shared
+- All player preferences (captions and size, speed, volume/mute, landscape,
+  predictions, animation, and final-knowledge-check-only) use
+  `js/narration-preferences.js` and the shared
   `sebook-narration-preferences` cookie, just like pattern, explainer, and
   case-study players. Use the shared speed choices and control-bar binding;
   never persist or restore these settings in a video-specific renderer.
   The shared lifecycle skips intermediate automatic checks when requested,
   retaining the last authored check, manual review, and independent prediction pauses.
+  Animation follows the system reduced-motion preference until the reader
+  explicitly chooses on/off; restore that choice without resetting it when
+  another narration lacks animated visuals.
 - The scene header is a two-level, clickable outline. The part strip's parts
   (Theory, Roles, Artifacts, Events) jump to each part's first scene; under
   it, the current part expands into its scenes (in Roles: Team and

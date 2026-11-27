@@ -1,6 +1,7 @@
 /** One language preference for every SEBook code selector. */
 (function (global) {
   'use strict';
+  if (global.SEBookCodePreferences) return;
   const storageKey = 'sebook-code-language';
   const languages = ['python', 'java', 'cpp', 'typescript'];
   const listeners = new Set();
@@ -10,12 +11,41 @@
     return languages.includes(canonical) ? canonical : null;
   }
 
-  function read() {
-    try { return normalize(global.localStorage.getItem(storageKey)) || 'python'; }
-    catch (_) { return 'python'; }
+  function readCookie() {
+    try {
+      const entry = global.document.cookie.split(';').map(part => part.trim())
+        .find(part => part.startsWith(`${storageKey}=`));
+      return entry ? entry.slice(storageKey.length + 1) : null;
+    } catch (_) { return null; }
   }
 
-  let preferred = read();
+  function parse(cookie) {
+    try { return normalize(decodeURIComponent(cookie)); }
+    catch (_) { return null; }
+  }
+
+  let lastCookie = readCookie();
+
+  function writeCookie(language) {
+    try {
+      global.document.cookie = `${storageKey}=${language}; Max-Age=31536000; Path=/; SameSite=Lax`
+        + (global.location.protocol === 'https:' ? '; Secure' : '');
+    } catch (_) { /* The current page remains usable with blocked cookies. */ }
+    lastCookie = readCookie();
+    return parse(lastCookie) === language;
+  }
+
+  // Preserve choices made before this preference moved from localStorage.
+  // The cookie takes precedence; remove the old copy only after a safe save.
+  let preferred = parse(lastCookie);
+  try {
+    const legacy = normalize(global.localStorage.getItem(storageKey));
+    if (!preferred && legacy) {
+      preferred = legacy;
+      if (writeCookie(legacy)) global.localStorage.removeItem(storageKey);
+    } else if (preferred) global.localStorage.removeItem(storageKey);
+  } catch (_) { /* Storage may be unavailable. */ }
+  preferred ||= 'python';
 
   function notify(language) {
     if (language === preferred) return;
@@ -37,24 +67,30 @@
   function set(language) {
     const canonical = normalize(language);
     if (!canonical) return false;
-    let saved = false;
-    try { global.localStorage.setItem(storageKey, canonical); saved = true; }
-    catch (_) { /* The current page still works when browser storage is blocked. */ }
+    const saved = writeCookie(canonical);
     notify(canonical);
     return saved;
   }
 
   function subscribe(listener) {
+    refresh();
     listeners.add(listener);
     listener();
     return () => listeners.delete(listener);
   }
 
-  global.addEventListener('storage', event => {
-    if (event.key === storageKey || event.key === null) notify(read());
-  });
-  global.addEventListener('pageshow', event => {
-    if (event.persisted) notify(read());
+  function refresh() {
+    const cookie = readCookie();
+    if (cookie === lastCookie) return;
+    lastCookie = cookie;
+    notify(parse(cookie) || 'python');
+  }
+
+  global.cookieStore?.addEventListener('change', refresh);
+  global.addEventListener('focus', refresh);
+  global.addEventListener('pageshow', refresh);
+  global.document.addEventListener('visibilitychange', () => {
+    if (global.document.visibilityState === 'visible') refresh();
   });
   global.SEBookCodePreferences = { choose, set, subscribe };
 })(window);
