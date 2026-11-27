@@ -68,7 +68,7 @@ async function finishSteps(player, scene) {
   }
 }
 
-test('a text-only lesson retains feedback on review and continues through its final scene', async ({ page }) => {
+test('a text-only lesson starts a fresh check after scene review and continues through its final scene', async ({ page }) => {
   const player = textPlayer(page);
   const [scene, finalScene] = investigation.story.scenes;
   await expect(player.getByRole('button', { name: 'Next step', exact: true })).toBeVisible();
@@ -85,7 +85,9 @@ test('a text-only lesson retains feedback on review and continues through its fi
   await check.getByRole('button', { name: 'Review this scene' }).click();
   await expect(player.getByRole('region', { name: 'Narration', exact: true })).toHaveText(scene.cues.at(-1).text);
   await player.getByRole('button', { name: 'Knowledge check', exact: true }).click();
-  await expect(check.getByText(scene.checkpoint.explanation, { exact: true })).toBeVisible();
+  await expect(check.getByText(scene.checkpoint.explanation, { exact: true })).toBeHidden();
+  await expect(check.getByRole('radio', { checked: true })).toHaveCount(0);
+  await check.getByRole('radio').filter({ hasText: scene.checkpoint.options[scene.checkpoint.correct_index] }).click();
   await check.getByRole('button', { name: 'Continue lesson', exact: true }).click();
   await expect(check).toBeHidden();
   await expect(player.getByRole('region', { name: 'Narration', exact: true })).toHaveText(finalScene.cues[0].text);
@@ -113,7 +115,9 @@ test('an illustrated explainer can replay a wrong check without changing another
   await expect(checkPanel(other).getByRole('radio').first()).toBeEnabled();
   await player.getByRole('button', { name: 'Pause narration', exact: true }).click();
   await player.getByRole('button', { name: `Knowledge check: ${explainer.story.scenes[0].label}`, exact: true }).click();
-  await expect(check.getByText(question.explanation, { exact: true })).toBeVisible();
+  await expect(check.getByText(question.explanation, { exact: true })).toBeHidden();
+  await expect(check.getByRole('radio', { checked: true })).toHaveCount(0);
+  await check.getByRole('radio').first().click();
   await check.getByRole('button', { name: 'Continue narration', exact: true }).click();
   await expect(player.getByRole('region', { name: 'Narration', exact: true })).toHaveText(explainer.story.scenes[1].cues[0].text);
   await expect(checkPanel(other)).toBeVisible();

@@ -36,6 +36,43 @@ async function playEnd(player, lesson, index) {
 }
 
 for (const lesson of lessons) {
+  test(`${lesson.kind}: encountering a completed or skipped check again starts unanswered`, async ({ page }) => {
+    await page.addInitScript(() => document.addEventListener('play', event => {
+      if (event.target instanceof HTMLMediaElement) event.target.muted = true;
+    }, true));
+    const player = await open(page, lesson);
+    const check = player.locator('.narration-check');
+    const finalIndex = lesson.checks.at(-1);
+    for (let visit = 0; visit < 3; visit++) {
+      await playEnd(player, lesson, finalIndex);
+      await expect(check).toBeVisible();
+      await expect(check.getByRole('radio', { checked: true })).toHaveCount(0);
+      await expect(check.getByRole('radio').first()).toBeEnabled();
+      await expect(check.locator('.quiz-question-card.active')).toHaveAttribute('data-question-index', '0');
+      await expect(check.locator('.quiz-results')).toBeHidden();
+      await expect(check.locator('.current-score')).toHaveText('0');
+      if (visit === 0) {
+        const count = await check.locator('.quiz-question-card').count();
+        for (let question = 0; question < count; question++) {
+          await check.getByRole('radio').first().click();
+          await check.locator('.next-btn:visible').click();
+        }
+        if (count > 1) {
+          await expect(check.locator('.quiz-results')).toBeVisible();
+          await check.locator('.tvm-quiz-continue-btn').click();
+        }
+      } else {
+        if (visit === 2) await check.getByRole('radio').first().click();
+        await check.getByRole('button', { name: 'Skip Knowledge Check', exact: true }).click();
+      }
+      await expect(check).toBeHidden();
+      const song = player.locator('iframe.vn-song-frame');
+      if (await song.isVisible()) {
+        await song.contentFrame().getByRole('button', { name: 'Previous song', exact: true }).click();
+      }
+    }
+  });
+
   test(`${lesson.kind}: skips segment checks, keeps the final check, and can restore all checks`, async ({ page }) => {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));

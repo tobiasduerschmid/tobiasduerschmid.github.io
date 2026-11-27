@@ -140,12 +140,14 @@ transport. Close markers share a dot that opens a named choice list, retaining
 24px targets and one row at phone widths. `js/narration-quiz.js` adapts the shared quiz next action:
 one-question feedback leads directly to Continue narration (or the final
 action), for correct and incorrect answers; multi-question checks keep results.
-`NarrationQuiz.create` owns the shared panel, retained answer state, feedback,
+`NarrationQuiz.create` owns the shared panel, current attempt, feedback,
 and **Re-listen to segment** buttons. It delegates grading to `SebookQuiz` and
 invokes the player's continuation/replay callbacks. `NarrationPlayer` computes
 the replay start after the previous authored check, or at scene zero for the
 first check, including intervening unchecked scenes. Replay returns to the
-same check with answers preserved. Text-only lessons offer scene review.
+same check with a fresh unanswered attempt, as does any new automatic or manual
+opening. Explanation and similar-question detours return to the existing attempt.
+Text-only lessons offer scene review.
 
 `narration-data.html` and `NarrationPlayer` define one browser data boundary.
 Companion quizzes and inline `scene.checkpoint` questions normalize there into
@@ -267,8 +269,8 @@ preserve undo history; storage and export remain in the lifecycle script.
   Cmd/Ctrl+Shift+7, 8 (numbered and bulleted lists) to the focused field;
   preserve native undo/redo and Tab navigation. Keep `/shortcuts/` aligned.
   Print mirrors preserve safe formatting and semantic lists. Blank
-  handouts give each cue its own page, with a full-width visual above key
-  points and nearly two inches of ruled writing space. Animated stages print
+  handouts flow cues into available page space, with full-width visuals above
+  key points and two ruled writing lines. Animated stages print
   7.2 inches wide on Letter and A4. Code, diagrams, and populated student notes
   must grow across pages rather than clip, overlap, or shrink. Keep ruled space for
   handwriting, light print colors, and editing controls out of print.
@@ -353,6 +355,8 @@ and behavior contract is in [`docs/narration-study.md`](../../../docs/narration-
   storage is written. Saved writing belongs in the existing lesson-notes view.
 
 Use `narration-study.css` for readable light/dark/fullscreen/print presentation.
+Full screen hides Study tools and closes an open study panel so lesson navigation
+and playback remain available. Exiting restores the tools with session drafts retained.
 Study fields and buttons retain native keys instead of media shortcuts. Verify
 search/jump, draft retention/reset, code-language inspection, summary-question
 review/return/retry, normal/accelerated prediction holds and opt-out, mobile fullscreen, and

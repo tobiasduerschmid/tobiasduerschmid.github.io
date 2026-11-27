@@ -134,9 +134,8 @@ for (const [topic, lesson] of Object.entries(loadRegistry('video'))) {
           const bottom = row.getBoundingClientRect().bottom;
           return [...row.querySelectorAll('h2, h3, p, li, [role="img"]')].some(part => part.getBoundingClientRect().bottom > bottom + 0.5);
         }).map(row => row.querySelector('h3').textContent);
-        // The first slide shares its sheet with the title; later slides have
-        // their own sheet. Check sizes as well as pagination, so a tiny picture
-        // on an otherwise empty page cannot satisfy the print contract.
+        // Check slide size independently of pagination: packing pages must
+        // never shrink the artwork or crop its text.
         const top = element => element.getBoundingClientRect().top;
         const bottom = element => element.getBoundingClientRect().bottom;
         const pictures = rows.flatMap(row => [...row.querySelectorAll('[role="img"]')].map(picture => ({
@@ -159,20 +158,21 @@ for (const [topic, lesson] of Object.entries(loadRegistry('video'))) {
         expect(picture.artworkWidth, 'slide content is not cropped by its frame').toBeLessThanOrEqual(picture.width);
         expect(picture.right, 'slide fits inside the printable width').toBeLessThanOrEqual(paper.width);
         expect(picture.pointsBelow, 'key points follow the slide').toBe(true);
-        expect(picture.writingHeight, 'at least 1.9 inches of handwriting space').toBeGreaterThanOrEqual(1.9 * INCH);
+        expect(picture.writingHeight, 'room for short handwritten notes').toBeGreaterThanOrEqual(0.5 * INCH);
       }
     });
 
-    test(`${topic} notes: the ${paper.format} PDF gives each slide its own page`, async ({ page }) => {
+    test(`${topic} notes: the ${paper.format} PDF shares page space between full-size slides`, async ({ page }) => {
       await page.goto(notesUrl);
       await picturesReady(page);
-      // Isolate the slides so a split slide, a stray title page, or two slides
-      // squeezed onto a sheet changes the PDF's page count.
+      // Isolate the slides to check that short notes no longer force one
+      // page per cue. The size checks above prevent shrinking to pass this.
       await page.getByRole('region', { name: 'Answers' }).evaluate(answers => answers.remove());
       await page.getByRole('region', { name: /^Question \d+ / }).evaluateAll(checks => checks.forEach(check => check.remove()));
       const pdf = await page.pdf({ format: paper.format, preferCSSPageSize: true });
       const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length;
-      expect(pages).toBe(cues.length);
+      expect(pages).toBeLessThan(cues.length);
+      expect(pages).toBeGreaterThan(0);
     });
   }
 

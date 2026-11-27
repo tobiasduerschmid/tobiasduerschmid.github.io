@@ -72,7 +72,8 @@
   }
 
   /** Create the check view for one player. Checks are indexed by scene and
-   * are null for unchecked scenes. Reopening a check retains its answers. */
+   * are null for unchecked scenes. Each encounter starts a fresh attempt;
+   * explanation/practice detours return to the same in-progress attempt. */
   function create(root, { scenes, checks, reviews = {}, continueLabel, finishLabel, onContinue, onReplay, onReview, onReviewReturn }) {
     const panel = root.querySelector('.narration-check');
     const host = panel.querySelector('[data-quiz-host]');
@@ -93,7 +94,7 @@
 
     function returnFromReview(index, trigger) {
       onReviewReturn();
-      open(index, trigger);
+      show(index, trigger);
     }
 
     function reviewQuestion(index, questionIndex, reference, trigger) {
@@ -166,7 +167,14 @@
       panel.scrollIntoView({ block: 'nearest', behavior: 'instant' });
     }
 
-    function open(index, focusTarget) {
+    function open(index) {
+      mounted.forEach(quizHost => { quizHost.remove(); });
+      mounted.clear();
+      returnToQuestion = null;
+      show(index);
+    }
+
+    function show(index, focusTarget) {
       const questions = checks[index].questions;
       if (reviewPanel) reviewPanel.hidden = true;
       if (retryHost) { retryHost.remove(); retryHost = null; }

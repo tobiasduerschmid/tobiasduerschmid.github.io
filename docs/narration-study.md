@@ -106,6 +106,8 @@ instructions. Keep rubrics honest about valid alternatives.
 - `js/narration-prediction.js` supplies prediction gates to the transport.
 - `js/narration-quiz.js` owns question/retry presentation; the player owns jumps.
 - `js/narration-study.js` owns session review/search/inspection state.
+  Entering full screen closes and hides Study tools, leaving lesson navigation
+  and playback available. The tools return on exit; session drafts are retained.
 - `js/narration-practice.js` owns exercise drafts and comparisons.
 - `js/narration-study-view.js` presents reader frames and diagram drafts.
 - `_includes/narration-study*.html` and `css/narration-study.css` own markup and

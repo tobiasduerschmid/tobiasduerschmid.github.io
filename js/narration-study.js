@@ -37,6 +37,11 @@
       panel.open = false;
       surface.classList.remove('is-studying');
     }
+    // Full screen shows the lesson and its navigation. Closing the panel also
+    // releases its playback gate while retaining search and practice drafts.
+    root.addEventListener('narration-fullscreenchange', event => {
+      if (event.detail.active) close();
+    });
     function jump(reference) {
       const destination = frame(data.story, reference);
       player.showCue(destination.sceneIndex, destination.cueIndex);
