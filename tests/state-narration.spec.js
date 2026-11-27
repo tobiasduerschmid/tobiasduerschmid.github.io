@@ -32,7 +32,7 @@ async function theme(page, dark) {
 // WEBrick may answer a conditional MP3 range request with 304 instead of the
 // bytes Chromium needs after seeking; drop validators from range requests.
 async function serveAudioRanges(page) {
-  await page.route('**/assets/audio/state-pattern.mp3', route => {
+  await page.route('**/assets/audio/state-pattern.mp3*', route => {
     const headers = { ...route.request().headers() };
     if (headers.range) {
       delete headers['if-none-match'];

@@ -399,20 +399,28 @@
   // Diagrams
   // ------------------------------------------------------------------
 
-  /** Boxes on one bus line, half above it and half below: every box could talk to every other. */
+  /**
+   * Components on one shared topic, half above it and half below, each
+   * attached to it: the diagram that says only that anyone might talk to
+   * anyone. `y` is the top of the upper row; the whole is 290px tall.
+   */
   function bus(parent, { x, y, w, names, at, until }) {
-    const node = staged(parent, 'ps-bus', x, y);
-    node.style.width = `${w}px`;
+    const uml = window.UmlKit;
     const half = Math.ceil(names.length / 2);
-    [names.slice(0, half), names.slice(half)].forEach((row, r) => {
-      if (r === 1) el('span', 'ps-bus-line', node);
-      const boxes = el('div', `ps-bus-row ps-bus-row--${r ? 'below' : 'above'}`, node);
-      row.forEach((name, i) => {
-        const box = el('span', 'ps-bus-box is-staged', boxes, name);
-        fx.rise(box, at + 0.1 + (r * half + i) * 0.12, { distance: r ? 10 : -10, duration: 0.3 });
-      });
+    const bw = (w - (half - 1) * 14) / half;
+    const topicTop = y + 64 + 36;
+    const lane = arch.topic(parent, { x, y: topicTop + 38, w, name: 'events', tab: 'inside', at, until });
+    names.forEach((name, i) => {
+      const below = i >= half;
+      const bx = x + (i % half) * (bw + 14);
+      const by = below ? lane.bottom + 36 : y;
+      const when = at + 0.1 + i * 0.12;
+      uml.component(parent, { x: bx, y: by, w: bw, h: 64, name, variant: 'compact', at: when, until });
+      const cx = bx + bw / 2;
+      // A topic is a connector: the line has a port only at the component.
+      uml.connector(parent, { from: below ? [cx, lane.bottom] : [cx, by + 64], to: below ? [cx, by] : [cx, lane.top], kind: 'link', ends: below ? 'to' : 'from', at: when + 0.1, until });
     });
-    return show(node, at, until, 'fade');
+    return lane;
   }
 
   window.PubSubKit = { robotArt, robot, campusMap, rideCampus, walkway, skaterArt, phone, bus, CAMPUS };

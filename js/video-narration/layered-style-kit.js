@@ -1,13 +1,14 @@
 /*
  * Artwork for the Layers video narration (choreography:
  * js/video-narration/layered-style.js; styles: css/video-narration-layered-
- * style.css). It builds on the wall kit and the architecture kit and adds the
- * lesson's own objects, each a metaphor whose mapping holds for the idea it
- * teaches:
+ * style.css). It builds on the wall kit, the UML kit, and the architecture
+ * kit, and adds the lesson's own objects:
  *
- *   a layered design is a building drawn in section on the blueprint: each
- *     layer a floor, the most abstract on top and the device at the ground,
- *     because a floor rests only on the floors below it;
+ *   a layered design is a module view: each layer a UML package stereotyped
+ *     «layer», its modules inside as small packages, stacked with the most
+ *     abstract on top and the device's drivers at the bottom; the
+ *     allowed-to-use relation is a dashed dependency arrow between them;
+ *   an interface a lower layer defines is a box stereotyped «interface»;
  *   Pearl Dash is a game screen on a laptop or on a handheld console, with a
  *     squirrel, boba pearls, and the score written in words;
  *   the tangle is a grid of forty source files and a ball of mud whose
@@ -26,56 +27,49 @@
   const wall = window.WallKit;
   const { staged } = wall;
   const arch = window.ArchKit;
+  const uml = window.UmlKit;
   const { show } = arch;
 
   // ------------------------------------------------------------------
-  // The building: layers as floors
+  // The module view: layers as packages
   // ------------------------------------------------------------------
 
+  /** The space between one layer's body and the next layer's tab. */
+  const LAYER_GAP = 10;
+
   /**
-   * One layer as a floor: its name and chips naming what lives on it.
-   * states = [{ at, state }] repaints it (changed, same, new, lit, gone).
+   * One layer: a UML package stereotyped «layer», with chips for the modules
+   * inside it. `y` is its body's top; its tab stands above. states = [{ at,
+   * state }] repaints it (changed, same, new, lit). `tone` thin draws it
+   * without its contents (a small blank tab, the name inside); wrong edges it
+   * in red.
    */
-  function floor(parent, { x, y, w, h = 72, name, items = [], at, until, how = 'rise', states = [], tone }) {
-    const node = staged(parent, `ls-floor${tone ? ` ls-floor--${tone}` : ''}`, x, y);
-    node.style.width = `${w}px`;
-    node.style.height = `${h}px`;
-    el('b', 'ls-floor-name', node, name);
-    if (items.length) {
-      const row = el('span', 'ls-floor-items', node);
-      items.forEach((text) => el('span', 'ls-chip', row, text));
-    }
-    if (states.length) arch.track(node, 'is-', states);
-    return show(node, at, until, how);
+  function floor(parent, { x, y, w, h = 54, name, items = [], at, until, how = 'rise', states = [], tone }) {
+    // A layer drawn without its contents leaves out the stereotype too, to fit a narrow stack.
+    return uml.pkg(parent, {
+      x, y, w, h, name, stereotype: tone === 'thin' ? undefined : 'layer', items, states, at, until, how,
+      tab: tone === 'thin' ? 'blank' : 'name', variant: tone === 'wide' ? 'wrong' : undefined,
+    });
   }
 
   /**
-   * A building in section: a roof line, walls, ground hatching, and its
-   * floors from the top down (floors = [{ name, items, tone, at, states }]).
-   * Returns the floors and their geometry: top(i), mid(i), and bottom(i).
+   * A stack of layers from the top down (floors = [{ name, items, tone, at,
+   * until, states }]): `y` is the top of the first layer's tab. Returns the
+   * layers and their geometry: top(i) and bottom(i) of each body, mid(i),
+   * and the stack's height. `thin` draws every layer without its contents.
    */
-  function building(parent, { x, y, w, floors, h = 72, gap = 12, at, until, step = 0.15, roof = true }) {
-    const height = floors.length * h + (floors.length - 1) * gap;
-    const frame = staged(parent, 'ls-frame', x - 14, y - (roof ? 34 : 10));
-    frame.style.width = `${w + 28}px`;
-    frame.style.height = `${height + (roof ? 34 : 10) + 22}px`;
-    const art = svg('svg', { class: 'ls-frame-art', viewBox: `0 0 ${w + 28} ${height + (roof ? 34 : 10) + 22}`, 'aria-hidden': 'true' }, frame);
-    const top = roof ? 34 : 10;
-    if (roof) svg('path', { d: `M4 ${top - 4} L${(w + 28) / 2} 4 L${w + 24} ${top - 4}`, class: 'ls-frame-line' }, art);
-    svg('path', { d: `M4 ${top - 4} V${top + height + 8} M${w + 24} ${top - 4} V${top + height + 8}`, class: 'ls-frame-line' }, art);
-    svg('path', { d: `M0 ${top + height + 10} H${w + 28}`, class: 'ls-frame-ground' }, art);
-    for (let gx = 6; gx < w + 28; gx += 16) svg('path', { d: `M${gx} ${top + height + 10} l-8 10`, class: 'ls-frame-hatch' }, art);
-    show(frame, at, until, 'fade');
+  function building(parent, { x, y, w, floors, h = 54, gap = LAYER_GAP, at, until, step = 0.15, thin = false }) {
+    const tab = thin ? uml.BLANK_TAB : uml.TAB;
+    const pitch = tab + h + gap;
+    const top = (i) => y + tab + i * pitch;
     const nodes = floors.map((spec, i) => floor(parent, {
-      x, y: y + i * (h + gap), w, h, at: spec.at ?? at + 0.1 + i * step, until: spec.until ?? until, ...spec,
+      x, y: top(i), w, h, at: spec.at ?? at + 0.1 + i * step, until: spec.until ?? until, ...spec, tone: spec.tone ?? (thin ? 'thin' : undefined),
     }));
-    const geometry = {
-      x, y, w, h, gap,
-      top: (i) => y + i * (h + gap),
-      mid: (i) => y + i * (h + gap) + h / 2,
-      bottom: (i) => y + i * (h + gap) + h,
+    return {
+      floors: nodes, x, y, w, h, gap, tab, pitch,
+      top, mid: (i) => top(i) + h / 2, bottom: (i) => top(i) + h,
+      height: floors.length * pitch - gap,
     };
-    return { frame, floors: nodes, ...geometry };
   }
 
   // ------------------------------------------------------------------
@@ -325,15 +319,9 @@
     return show(node, at, until, 'rise');
   }
 
-  /** A socket an upper layer can plug into: an interface the lower layer defines, in code type. */
+  /** An interface a lower layer defines for the layers above: a box stereotyped «interface» with its operations. */
   function socket(parent, { x, y, w, name, text, at, until }) {
-    const node = staged(parent, 'ls-socket', x, y);
-    node.style.width = `${w}px`;
-    el('span', 'ls-socket-plug', node).append(icon('plug'));
-    const words = el('span', 'ls-socket-words', node);
-    el('b', 'ak-mono', words, name);
-    if (text) el('span', 'ak-mono', words, text);
-    return show(node, at, until, 'pop');
+    return uml.classBox(parent, { x, y, w, name, stereotype: 'interface', lines: text ? [text] : [], at, until });
   }
 
   window.LayersKit = { floor, building, squirrelArt, gameScreen, fileGrid, mudBall, frameBar, socket };

@@ -9,12 +9,14 @@
       "styles": [
         "/css/song-video-drafting-room.css",
         "/css/video-narration-wall-kit.css",
+        "/css/video-narration-uml-kit.css",
         "/css/video-narration-arch-kit.css",
         "/css/video-narration-layered-style.css"
       ],
       "scripts": [
         "/js/song-video/drafting-room.js",
         "/js/video-narration/wall-kit.js",
+        "/js/video-narration/uml-kit.js",
         "/js/video-narration/arch-kit.js",
         "/js/video-narration/layered-style-kit.js",
         "/js/video-narration/layered-style.js"
@@ -45,7 +47,6 @@
       },
       "cues": {
         "update": {},
-        "predict_port": {},
         "ripple": {},
         "mud": {}
       }
@@ -59,6 +60,7 @@
       },
       "cues": {
         "levels": {},
+        "abstraction": {},
         "layers": {},
         "translate": {}
       }
@@ -73,6 +75,7 @@
       "cues": {
         "uses": {},
         "rules": {},
+        "why_rules": {},
         "predict_upward": {},
         "upward_cost": {}
       }
@@ -98,7 +101,8 @@
       },
       "cues": {
         "strictness": {},
-        "tiers": {}
+        "tiers": {},
+        "three_tiers": {}
       }
     },
     "port": {
@@ -141,6 +145,20 @@
         "granularity": {}
       }
     },
+    "in_practice": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "network_phone": {},
+        "browser_database": {},
+        "car_spacecraft": {},
+        "common_thread": {}
+      }
+    },
     "summary": {
       "state": {
         "animation": true,
@@ -151,7 +169,8 @@
       "cues": {
         "recap_problem": {},
         "recap_rules": {},
-        "recap_tradeoff": {}
+        "recap_tradeoff": {},
+        "recap_costs": {}
       }
     }
   }

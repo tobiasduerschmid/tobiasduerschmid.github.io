@@ -1,0 +1,316 @@
+/*
+ * The UML kit (js/video-narration/uml-kit.js): software structures in the
+ * shapes and palette of ArchUML, the site's UML renderer, on a narration's
+ * stage. Loaded inside a narration's frame after the wall kit.
+ *
+ * Elements (components, packages, classes, nodes, ports) are paper pieces
+ * with dark ink in both modes, like ArchUML's light diagrams, so they keep
+ * their contrast on the cyanotype and on the whiteprint. The lines and frames
+ * drawn straight on the sheet, and the labels beside them, use the stage's
+ * tokens, so they follow the site's light or dark mode. A state repaints an
+ * element through a class and is also written in words. Readable text is at
+ * least 20px on the 960x540 stage.
+ */
+
+.stage {
+  /* ArchUML's palette (js/ArchUML/uml-bundle.js, getThemeColors). */
+  --uk-stroke: #4060a0;
+  --uk-fill: #dbe8f8;
+  --uk-paper: #fdfcf8;
+  --uk-package-line: #657484;
+  --uk-ink: #141b2d;
+  --uk-ink-soft: #34415e;
+  /* Lines on the dark blueprint, and the casing that outlines them: dark
+     enough for 3:1 against the sheet's lightest tone (--bg) and any paper. */
+  --uk-wire: #dce6fb;
+  --uk-casing: #0b1e38;
+}
+:is(html:not(.dark-mode), html.print-light-mode) .stage {
+  --uk-wire: #1f2a44;
+}
+
+.uk-component,
+.uk-class,
+.uk-package,
+.uk-node {
+  position: absolute;
+  box-sizing: border-box;
+  color: var(--uk-ink);
+}
+.uk-head { display: flex; flex-direction: column; align-items: center; }
+.uk-stereo { color: var(--uk-ink-soft); font-size: 20px; font-weight: 600; line-height: 1.15; white-space: nowrap; }
+.uk-name { font-size: 22px; font-weight: 900; line-height: 1.15; text-wrap: balance; }
+.uk-mono { font-family: var(--font-mono); }
+/* A compartment runs under a rule the full width of its element. */
+.uk-compartment { margin: 6px -12px 0; padding: 4px 12px 0; border-top: 2px solid var(--uk-stroke); font-size: 20px; font-weight: 700; line-height: 1.25; text-wrap: balance; }
+.uk-sub { color: var(--uk-ink-soft); }
+.uk-lines { display: flex; flex-direction: column; }
+
+/* A component: a box with the component icon at its top right. */
+.uk-component {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10px 12px 8px;
+  border: 2.5px solid var(--uk-stroke);
+  border-radius: 4px;
+  background: var(--uk-fill);
+  box-shadow: var(--vn-paper-shadow);
+  text-align: center;
+}
+.uk-icon { position: absolute; top: 6px; right: 7px; width: 26px; height: 20px; overflow: visible; }
+.uk-icon path { fill: var(--uk-paper); stroke: var(--uk-stroke); stroke-width: 1.8; stroke-linejoin: round; }
+/* The first line shares its height with the icon, so both of its sides keep clear of it. */
+.uk-component--bare .uk-head { padding: 0 24px; }
+.uk-component .uk-stereo { padding: 0 26px; }
+/* A component named by a command sets its name in code type. */
+.uk-component--mono .uk-name { font-family: var(--font-mono); font-weight: 800; }
+/* A narrow component sets its name below the icon's row instead. */
+.uk-component--compact { justify-content: flex-start; padding: 26px 6px 6px; }
+.uk-component--compact.uk-component--bare .uk-head { padding: 0; }
+/* A port: a small square straddling the outline, where a connector attaches. */
+.uk-port,
+.uk-end-port { box-sizing: border-box; }
+.uk-port { position: absolute; width: 14px; height: 14px; border: 2.5px solid var(--uk-stroke); background: var(--uk-paper); }
+
+
+/* States, written in words in the element's compartment as well. */
+:is(.uk-component, .uk-class).is-busy { background: #b8f0fb; }
+:is(.uk-component, .uk-class).is-idle { background: #e6ebf6; }
+:is(.uk-component, .uk-class).is-crashed { border-style: dashed; background: #ff9aa8; }
+:is(.uk-component, .uk-class).is-down { border-style: dashed; background: #d5dae6; }
+:is(.uk-component, .uk-class, .uk-package).is-new { background: #fff1ad; }
+:is(.uk-component, .uk-class, .uk-package).is-same { background: #c4f5d3; }
+:is(.uk-component, .uk-class, .uk-package).is-changed { background: #ffd6dc; }
+.uk-component.is-unknown { border-style: dashed; background: #e9eef7; }
+.uk-component.is-focus { border-width: 4.5px; }
+:is(.uk-component, .uk-class, .uk-package, .uk-node).is-lit { outline: 5px solid var(--vn-lit); outline-offset: 4px; }
+
+/* A classifier: a name compartment and its operations or attributes. */
+.uk-class {
+  padding: 8px 12px;
+  border: 2.5px solid var(--uk-stroke);
+  border-radius: 2px;
+  background: var(--uk-fill);
+  box-shadow: var(--vn-paper-shadow);
+  text-align: center;
+}
+.uk-class .uk-lines { text-align: left; }
+
+/* A package: a folder whose tab, standing on its outline, holds its name. */
+.uk-package {
+  padding: 12px 12px 8px;
+  border: 2.5px solid var(--uk-package-line);
+  border-radius: 0 4px 4px 4px;
+  background: var(--uk-paper);
+  box-shadow: var(--vn-paper-shadow);
+}
+.uk-tab {
+  position: absolute;
+  left: -2.5px;
+  bottom: calc(100% + 2.5px);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 2px 12px 0;
+  border: 2.5px solid var(--uk-package-line);
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  background: var(--uk-paper);
+  white-space: nowrap;
+}
+.uk-tab .uk-name { font-size: 22px; }
+/* A tab stays one line: text-wrap would override its white-space. */
+.uk-tab :is(.uk-name, .uk-stereo) { text-wrap: nowrap; }
+.uk-package.is-new .uk-tab { background: #fff1ad; }
+.uk-package.is-same .uk-tab { background: #c4f5d3; }
+.uk-package.is-changed .uk-tab { background: #ffd6dc; }
+.uk-package--wrong { border-color: #b42318; border-left-width: 8px; }
+/* A package drawn without its contents: a small empty tab, the name inside. */
+.uk-package--tab-blank { display: flex; align-items: center; padding: 0 12px; }
+.uk-package--tab-blank .uk-tab { width: 44px; height: 12px; padding: 0; }
+.uk-head--row { flex-direction: row; align-items: baseline; gap: 8px; }
+/* A package whose name stands on its tab centers its modules in its body, so
+   they keep clear of the outline. */
+.uk-package--tab-name { display: flex; align-items: center; padding-top: 0; padding-bottom: 0; }
+/* A module: a small package of the same blue as ArchUML's classes. */
+.uk-modules { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 7px; }
+.uk-module {
+  position: relative;
+  padding: 0 8px;
+  border: 2px solid var(--uk-stroke);
+  border-radius: 0 3px 3px 3px;
+  background: var(--uk-fill);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24px;
+  white-space: nowrap;
+}
+.uk-module::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  bottom: 100%;
+  width: 14px;
+  height: 5px;
+  border: 2px solid var(--uk-stroke);
+  border-bottom: 0;
+  border-radius: 2px 2px 0 0;
+  background: var(--uk-fill);
+}
+
+/* A node: a box drawn in depth, its top and right faces outside its box. */
+.uk-node {
+  padding: 6px 12px;
+  border: 2.5px solid var(--uk-stroke);
+  background: var(--uk-paper);
+  box-shadow: var(--vn-paper-shadow);
+}
+.uk-node .uk-head { align-items: flex-start; text-align: left; }
+.uk-node-depth { position: absolute; left: -2.5px; top: -14.5px; overflow: visible; }
+.uk-node-depth path { fill: var(--uk-fill); stroke: var(--uk-stroke); stroke-width: 2.5; stroke-linejoin: round; }
+
+/* Lines between elements. */
+.uk-connector { position: absolute; pointer-events: none; }
+.uk-connector-art { display: block; width: 100%; height: 100%; overflow: visible; }
+.uk-line { fill: none; stroke: var(--uk-wire); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+/* The casing (dark mode only): a dark band under each line and head. It
+   outlines the ink where a line crosses a paper element or the lamp-lit
+   sheet, so every line keeps 3:1 against what it crosses (WCAG 1.4.11).
+   Light mode's dark ink reads on every ground without one. */
+.uk-casing { fill: none; stroke: var(--uk-casing); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+.uk-casing--head { fill: var(--uk-casing); stroke-width: 6; }
+:is(html:not(.dark-mode), html.print-light-mode) .uk-casing { display: none; }
+/* Dashes are butt-capped so their gaps stay open, and each casing dash runs
+   2px past both ends of the ink dash it outlines. */
+.uk-connector--dependency .uk-line,
+.uk-connector--dashed .uk-line,
+.uk-connector--realize .uk-line { stroke-dasharray: 10 8; stroke-linecap: butt; }
+:is(.uk-connector--dependency, .uk-connector--dashed, .uk-connector--realize) .uk-casing--line { stroke-dasharray: 14 4; stroke-dashoffset: 2; stroke-linecap: butt; }
+.uk-arrow--filled { fill: var(--uk-wire); stroke: var(--uk-wire); stroke-width: 1.5; stroke-linejoin: round; }
+.uk-arrow--open { fill: none; stroke: var(--uk-wire); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.uk-arrow--hollow { fill: var(--uk-paper); stroke: var(--uk-wire); stroke-width: 2.5; stroke-linejoin: round; }
+.uk-end-port { fill: var(--uk-paper); stroke: var(--uk-stroke); stroke-width: 2.5; }
+.uk-connector--red { --uk-wire: var(--vn-red-ink); }
+.uk-connector--green { --uk-wire: var(--vn-green-ink); }
+.uk-connector--cyan { --uk-wire: var(--vn-cyan-ink); }
+
+/* A relation's type beside its line, on its own patch of sheet. */
+.uk-label {
+  position: absolute;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: var(--vn-label-bg);
+  color: var(--text);
+  font-size: 20px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.uk-label--plain { font-style: normal; }
+
+/* A boundary over a C&C diagram, such as a tier: a dashed outline, its name
+   on a label at the top left in the stage's ink. */
+.uk-boundary { position: absolute; box-sizing: border-box; border: 2.5px dashed var(--uk-wire); border-radius: 12px; }
+.uk-boundary-head { position: absolute; left: 10px; top: 8px; display: flex; flex-direction: column; padding: 2px 8px; border-radius: 6px; background: var(--vn-label-bg); color: var(--text); }
+.uk-boundary-name { font-size: 20px; font-weight: 800; line-height: 1.25; white-space: nowrap; }
+.uk-boundary-stereo { margin-right: 6px; font-weight: 600; }
+.uk-boundary-sub { font-size: 20px; font-weight: 600; line-height: 1.25; white-space: nowrap; }
+.uk-label--red { color: var(--vn-red-ink); }
+.uk-label--green { color: var(--vn-green-ink); }
+
+/* A diagram frame: a thin outline, its view named on a pentagon tab. Its
+   sheet is a tinted film over the blueprint, so the grid shows through faintly
+   while the backdrop's lettering and drafting tools stay out of the diagram. */
+.uk-frame { position: absolute; box-sizing: border-box; border: 2px solid var(--vn-line); border-radius: 2px; background: rgba(24, 66, 114, 0.76); }
+:is(html:not(.dark-mode), html.print-light-mode) .uk-frame { background: rgba(250, 252, 255, 0.74); }
+.uk-frame-tab { position: absolute; left: 0; top: 0; display: flex; height: 32px; }
+.uk-frame-words {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 0 10px;
+  border-bottom: 2px solid var(--vn-line);
+  background: var(--uk-paper);
+  color: var(--uk-ink);
+  font-size: 20px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.uk-frame-keyword { font-family: var(--font-mono); font-weight: 800; }
+.uk-frame-name { font-weight: 800; }
+.uk-frame-corner { display: block; flex: none; width: 16px; height: 100%; overflow: visible; }
+.uk-frame-corner-fill { fill: var(--uk-paper); }
+.uk-frame-corner-line { fill: none; stroke: var(--vn-line); stroke-width: 2; vector-effect: non-scaling-stroke; }
+
+/* A frame's key (legend), along its top edge at the right, opposite the view's tab,
+   or along its bottom edge in a narrow frame. */
+.uk-key {
+  position: absolute;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 12px;
+  border-bottom: 2px solid var(--vn-line);
+  border-left: 2px solid var(--vn-line);
+  background: var(--uk-paper);
+  color: var(--uk-ink);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+.uk-key--top { top: 0; }
+.uk-key--bottom { bottom: 0; border-top: 2px solid var(--vn-line); border-bottom: 0; }
+.uk-key-title { font-size: 17px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+.uk-key-item { display: inline-flex; align-items: center; gap: 6px; }
+.uk-key-glyph { flex: none; width: 30px; height: 20px; overflow: visible; }
+.uk-key-glyph path { stroke-linejoin: round; }
+.uk-g-fill { fill: var(--uk-fill); stroke: var(--uk-stroke); stroke-width: 1.8; }
+.uk-g-paper { fill: var(--uk-paper); stroke: var(--uk-stroke); stroke-width: 1.8; }
+.uk-g-grey { stroke: var(--uk-package-line); }
+.uk-g-line { fill: none; stroke: var(--uk-ink); stroke-width: 2.2; stroke-linecap: round; }
+.uk-g-thin { stroke-width: 1.4; }
+.uk-g-dash { stroke-dasharray: 4 3; stroke-linecap: butt; }
+.uk-g-head { fill: var(--uk-ink); stroke: var(--uk-ink); stroke-width: 1; }
+.uk-g-red { stroke: #b42318; }
+.uk-g-cyan { stroke: #00677f; }
+.uk-g-head.uk-g-cyan { fill: #00677f; }
+.uk-g-hollow { fill: var(--uk-paper); stroke: var(--uk-ink); stroke-width: 1.8; }
+.uk-g-head.uk-g-red { fill: #b42318; }
+
+/* A callout, drawn as ArchUML draws a note: a dog-eared box with a dotted anchor line. */
+/* The note's paper is its own background, cut to the dog-eared shape its
+   outline draws on top, so nothing inside a note can paint over the outline. */
+.uk-note {
+  position: absolute;
+  box-sizing: border-box;
+  height: 36px;
+  padding: 0 18px 0 10px;
+  background: #eef4fa;
+  color: var(--uk-ink);
+  clip-path: polygon(0 0, calc(100% - 12.5px) 0, 100% 12.5px, 100% 100%, 0 100%);
+}
+.uk-note-art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.uk-note-box { fill: none; stroke: #657484; stroke-width: 2; stroke-linejoin: round; }
+.uk-note-fold { fill: none; stroke: #657484; stroke-width: 2; stroke-linejoin: round; }
+.uk-note-words { position: relative; display: block; font-size: 20px; font-weight: 700; line-height: 36px; white-space: nowrap; }
+.uk-note--red .uk-note-words { color: #8a1c2b; }
+.uk-connector--note .uk-line { stroke-width: 2.5; stroke-dasharray: 3 5; stroke-linecap: round; }
+.uk-note-anchor { fill: #eef4fa; stroke: var(--uk-wire); stroke-width: 2.5; }
+
+@media print {
+  .uk-component,
+  .uk-class,
+  .uk-package,
+  .uk-node,
+  .uk-frame-words,
+  .uk-key,
+  .uk-note { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

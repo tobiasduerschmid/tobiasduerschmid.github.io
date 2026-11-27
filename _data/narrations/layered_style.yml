@@ -19,11 +19,15 @@ lesson:
     - Motivation
     - Rules
     - Consequences
+    - In practice
   parts_label: Part of the lesson
 speech:
   voice: drama3-female6
   speed: 1
-  pronunciations: {}
+  pronunciations:
+    UML: U M L
+    SQLite: S Q Lite
+    AUTOSAR: Auto Sar
 media:
   audio: /assets/audio/layered-style-narration.mp3
   captions: /assets/narration/layered-style-narration.vtt
@@ -43,15 +47,14 @@ scenes:
         say: >-
           It's three a.m. on the last night of a campus game jam. Your team's game, Pearl Dash, is
           finally fun: a squirrel sprints across rooftops, double-jumps over gaps, and grabs runaway
-          boba pearls before sunrise. You submit with four minutes to spare, and it wins Best Game.
+          boba pearls before sunrise. You submit it, and it wins Best Game.
         step: A game jam win
         note: Pearl Dash, a rooftop platformer, was built in one weekend on laptops.
         visual: >-
           A sticker reads 3:00 a.m., game jam. A laptop shows Pearl Dash: a squirrel with a big tail
           jumping between campus rooftops at night, boba pearls in the air, and the score rising
           from 980 to 1,240. Cards read Pearl Dash: sprint across rooftops, double-jump gaps, grab
-          boba pearls; and Best Game, campus game jam. A sticker reads Submitted: 4 minutes to
-          spare.
+          boba pearls; and Best Game, campus game jam.
       - id: console
         say: >-
           Monday, an email: a game publisher wants Pearl Dash on its handheld console by spring.
@@ -69,7 +72,8 @@ scenes:
         say: >-
           There's also the team. Four of you edit the same files: the artist swaps in animations,
           the gameplay programmer tunes jumps, someone fixes a sound glitch, and every night,
-          somebody's change breaks somebody else's. You open the code to see what porting will take.
+          somebody's change breaks somebody else's. You open the code to see what porting the game
+          to the new platform will take.
         pause_after: 2.5
         step: Four people, one tangle
         note: Everyone edits the same files, so changes collide.
@@ -99,32 +103,23 @@ scenes:
           A Python code card titled game.py: def update(squirrel), if keyboard.pressed("space"),
           squirrel.vy = -12, audio_driver.play("jump.wav"), squirrel.y += squirrel.vy, and
           gl.draw_quad(squirrel.x, squirrel.y, SQUIRREL_PNG). Each line lights up as it is named,
-          and tags in the margin name its level: Device, Game rule, Device, Physics, Device. A
-          sticker reads Game rules and device calls, line by line.
-      - id: predict_port
-        say: >-
-          Every one of the game's forty files looks like this. So predict: to port Pearl Dash to the
-          console, which files must change? Only the ones about graphics, sound, and input, or
-          nearly all of them?
-        prediction: true
-        pause_after: 4
-        step: Predict the port
-        note: To port the game, do only device files change, or nearly all files?
-        visual: >-
-          A grid of forty file tiles beside a card: 40 files, player.py, pearls.py, levels.py,
-          menu.py, and more. A dashed box asks: Which files change?
+          and each laptop-only call gets a red wavy underline, as an editor flags a problem. Tags
+          with icons in the margin name each line's level: a red laptop tag, Device, on the three
+          device calls; a gamepad tag, Game rule; and a gear tag, Physics. A red sticker reads Game
+          rules and device calls, line by line, and a red stamp reads Tangled code.
       - id: ripple
         say: >-
-          Nearly all of them. Device calls are sprinkled through every file, from the pearl counter
-          to the pause menu. A search for the graphics library finds three hundred and twelve calls
-          in thirty-eight files. Porting means rewriting the game, and the second game would start
-          from zero.
+          Every one of the game's forty files looks like this, so porting the game to the new
+          platform changes nearly all of them. A search for the graphics library finds three hundred
+          and twelve calls in thirty-eight files. Porting means rewriting the game, and the second
+          game would start from zero.
         step: The port ripples
         note: Device calls everywhere mean a device change touches nearly every file.
         visual: >-
-          Thirty-eight of the forty tiles turn red. A search panel for gl. reports 312 calls in 38
-          files: player.py, 41 calls; pearls.py, 29 calls; menu.py, 17 calls. A red stamp reads
-          Rewrite the game, and a card reads Second game: starts from zero.
+          A grid of forty file tiles beside a card: 40 files, player.py, pearls.py, levels.py,
+          menu.py, and more. Thirty-eight of the tiles turn red. A search panel for gl. reports 312
+          calls in 38 files: player.py, 41 calls; pearls.py, 29 calls; menu.py, 17 calls. A red
+          stamp reads Rewrite the game, and a card reads Second game: starts from zero.
       - id: mud
         say: >-
           Architects call this shape a big ball of mud: everything uses everything, and nobody can
@@ -152,39 +147,60 @@ scenes:
     cues:
       - id: levels
         say: >-
-          Look at that jump again, and the lines sit at different heights. Jump is a game idea. Move
-          a body by its speed is physics. Draw this image at this spot is graphics. Send these bytes
-          to the graphics chip is the device. Each level speaks a simpler language than the one
-          above.
+          Consider the jump again: its lines belong to different levels of abstraction. Jump is a
+          game idea. Move a body by its speed is physics. Draw this image at this spot is graphics.
+          Send these bytes to the chip is the device.
         step: Levels of abstraction
         note: The same feature exists at several levels of abstraction.
         visual: >-
           Four cards stack from top to bottom: Jump, a game idea; Move a body by its speed, physics;
           Draw this image here, graphics; and Send bytes to the graphics chip, the device. An arrow
-          up the left side is labeled More abstract, and a label on the right reads Simpler below.
+          up the left side is labeled More abstract.
+      - id: abstraction
+        say: >-
+          What makes a lower level simpler? Each level offers an abstraction: it says what to do and
+          hides how. Physics knows bodies and speeds, not squirrels; graphics knows images and
+          positions, not physics; the device knows only bytes. The lower the level, the less it
+          knows of the game, and the more programs it serves.
+        step: Abstraction
+        note: Each level hides how; lower levels know less about the game.
+        source: >-
+          Clements et al. 2010, section 2.4 (each layer offers a cohesive set of services to the
+          layer above and hides the details below it); Bass, Clements, and Kazman 2013, section
+          13.1, Layered pattern (a layering must provide the lower-level abstractions that
+          programmers at higher levels need); CS 130 lecture 16 (a layer groups functionality at one
+          level of abstraction).
+        visual: >-
+          The four cards stay, and each gains what its level knows: Jump, game idea: squirrels,
+          pearls, jumps; Move a body by its speed, physics: bodies and speeds, no squirrels; Draw
+          this image here, graphics: images and positions, no physics; Send bytes to the graphics
+          chip, device: bytes only. A label on the right reads Knows less below, and a banner reads
+          Abstraction: says what to do, hides how.
       - id: layers
         say: >-
-          Group the code by those levels, and you get layers. A layer is a group of modules at one
-          level of abstraction that offers services to the layer above. Pearl Dash gets four: game
-          rules on top, then the engine, then a platform layer for graphics, sound, and input, and
-          drivers at the bottom.
+          Grouping the code by these levels yields layers. A layer is a cohesive set of modules at
+          one level of abstraction that offers services to the layer above. Layers belong to the
+          module view, so each one is drawn as a UML package. Pearl Dash has four: game rules,
+          engine, platform, and drivers.
         step: Four layers
         note: A layer groups modules at one level of abstraction, serving the layer above.
         source: >-
           CS 130 lecture 16, slide 23 (a layer is a kind of module that cohesively groups
           functionality at a particular level of abstraction); Clements et al. 2010, section 2.4.
         visual: >-
-          A building drawn in section on the blueprint, with a roof and hatched ground, and four
-          floors from the top down: Game rules (Squirrel, Pearls, Score, Levels); Engine (Physics,
+          A UML frame labeled pkg, Module view, with a key: layer, module. Inside, four packages
+          stereotyped «layer» stack from the top down, each with its name on its tab and its modules
+          inside as small packages: Game rules (Squirrel, Pearls, Score, Levels); Engine (Physics,
           Collisions, Scene drawing); Platform (Graphics, Sound, Input); and Drivers (Laptop GPU,
-          Keyboard, Sound card). A card reads Layer: a group of modules at one level of abstraction,
-          offering services to the layer above.
+          Keyboard, Sound card). Callouts read Module: a package and Layer: a «layer» package, and a
+          card defines a layer: a cohesive set of modules at one level of abstraction, offering
+          services to the layer above.
       - id: translate
         say: >-
-          Each layer turns one request from above into several simpler ones below. Jump becomes
-          apply an upward push. The engine turns that into new positions and a draw call. The
-          platform turns the draw call into commands for the graphics chip. Each layer is a machine
-          the layer above can program.
+          Each layer translates one request from above into several simpler requests below. Jump
+          becomes apply an upward push. The engine turns that push into new positions and a draw
+          call, and the platform turns the draw call into commands for the graphics chip. Each layer
+          thus acts as a virtual machine for the layer above.
         pause_after: 2.5
         step: Each layer is a machine for the one above
         note: Each layer turns one request into several simpler requests to the layer below.
@@ -193,10 +209,11 @@ scenes:
           into several requests to Layer J-1); Fairbanks 2010, section 14.6 (each layer acts as a
           virtual machine for the layers above).
         visual: >-
-          The four-floor building. Beside each floor, its request appears: jump() at Game rules,
-          push(squirrel, up) at Engine, draw(sprite, x, y) at Platform, and 3 GPU commands at
-          Drivers, joined by arrows running down outside the wall, while a token travels from the
-          top floor to the bottom. A banner reads Each layer: a machine the layer above can program.
+          Pearl Dash's four layers in their module view. In a column beside the frame, each layer's
+          request appears level with it, joined to the next request by an arrow down and to its
+          layer by a dotted line: jump() at Game rules, push(squirrel, up) at Engine, draw(sprite,
+          x, y) at Platform, and 3 GPU commands at Drivers. A banner reads Each layer: a virtual
+          machine for the layer above.
   - id: allowed
     part: Rules
     outline: Allowed to use
@@ -209,51 +226,73 @@ scenes:
     cues:
       - id: uses
         say: >-
-          The style's power comes from its rules, written as an allowed-to-use relation. To use a
-          module means your code is only correct if that module is present and correct. The style
-          decides who is allowed to depend on whom, before anyone writes an import.
+          The style's rules are stated as an allowed-to-use relation, a dependency drawn as a dashed
+          arrow between layers. A module uses another if its own correctness depends on the presence
+          and correctness of the other. The relation fixes, before anyone writes an import, which
+          layers may depend on which.
         step: Allowed to use
         note: A uses B when A is correct only if B is present and correct.
         source: >-
           Clements et al. 2010, section 2.4.2 (module A uses module B if A's correctness depends on B
           being correct and present); CS 130 lecture 17, slide 13.
         visual: >-
-          The four-floor building with gold arrows running down outside its wall from each floor to
-          the one below, labeled allowed to use. A card reads A uses B: A is correct only if B is
-          present and correct.
+          The four layer packages in a module view frame whose key reads layer, may use, and may not
+          use. Dashed dependency arrows with open heads run down from each layer to the one below. A
+          card reads A uses B: A is correct only if B is present and correct, and a second card,
+          Allowed to use, reads Which layers may use which: each dashed arrow.
       - id: rules
         say: >-
-          Rule one: every module belongs to exactly one layer. Rule two: a layer may use only modules
-          in its own layer, or in the layer directly below. Rule three: there are at least two
-          layers, usually three or more. And it follows that no layer may ever use a layer above it.
+          Three rules define the style. Rule one, exactly one layer: every module belongs to a
+          single layer. Rule two, next lower layer: a layer may use only its own layer or the next
+          lower layer. Rule three: at least two layers, usually more. So no layer may use a layer
+          above it.
         step: Three rules, and never up
         note: One layer per module; use only your own layer or the one below; never up.
         source: >-
           CS 130 lecture 17, slide 13 (constraints of the layered style); Bass et al. 2013, Table
           13.1 (the allowed-to-use relations should not be circular).
         visual: >-
-          Beside the building, three rule cards: Rule 1, Exactly one layer: every module belongs to
-          exactly one layer; Rule 2, One floor down: use only your own layer or the one directly
-          below; Rule 3, At least two layers: usually three or more. The down arrows run beside the
-          wall, and a red sticker reads Never up.
+          Three rule cards appear beside the layers before the narrator names them: Rule 1, Exactly
+          one layer: every module belongs to exactly one layer; Rule 2, Next lower layer: use only
+          your own layer or the next lower layer; and Rule 3, At least two layers: usually three or
+          more. The dashed allowed-to-use arrows stay between the layers.
+      - id: why_rules
+        say: >-
+          Why these rules? Under the next-lower-layer rule, a layer depends only on the interface of
+          the layer below, so a change inside a layer stays hidden from the layers above while its
+          interface holds. And since no layer uses one above it, lower layers know nothing of the
+          game, and other programs can reuse them.
+        step: Why the rules
+        note: Each layer depends only on the interface below, so changes stay hidden and lower layers are reusable.
+        source: >-
+          Clements et al. 2010, section 2.4.3, pp. 90-91 (a layer applies information hiding: a
+          change to a lower layer can be hidden behind its interface and does not affect the layers
+          above; platform-specific lower layers are largely independent of the application that runs
+          on them); section 2.4.1, p. 88 (unrestricted upward usage destroys the properties layering
+          brings).
+        visual: >-
+          The three rule cards stay up, and Rule 2 lights up. A card titled Why these rules? lists A
+          layer sees only the interface below; Changes inside stay hidden; and Lower layers serve
+          any program.
       - id: predict_upward
         say: >-
           Test the rules. The engine detects that the squirrel touched a pearl, and the score should
-          go up. A teammate wants the engine to import the game's score module and add a point.
-          Predict: does that break a rule? And what would it cost?
+          increase. A teammate proposes that the engine import the game's score module and add a
+          point. Predict: does this violate a rule? And what would it cost?
         prediction: true
         pause_after: 4
         step: Predict the import
         note: The engine wants to import the game's score module. Allowed? At what cost?
         visual: >-
-          A sticker reads Collision! A dashed red arrow tries to run up from the Engine floor to the
-          Game rules floor, labeled engine imports score.py?, and a dashed box asks: Allowed?
+          The rule cards stay up. A sticker reads Collision!, a dashed red dependency arrow tries to
+          run up from Engine to Game rules, a label reads «use»: engine imports score.py?, and a
+          dashed box asks: Allowed?
       - id: upward_cost
         say: >-
-          It breaks the never-up rule. The engine would then depend on Pearl Dash's own scoring, so it
-          couldn't run without this game, and the second game couldn't reuse it. Worse, each layer
-          now depends on the other: change either, and the other may break. That's a cycle, and the
-          layers are gone.
+          It violates the next-lower-layer rule, which never permits an upward use. The engine would
+          depend on Pearl Dash's scoring, so the second game could not reuse it. Worse, the two
+          layers would depend on each other: a cycle, in which a change to either may break the
+          other. The layering would be lost.
         pause_after: 2.5
         step: Upward use makes a cycle
         note: An upward use ties the lower layer to one game and creates a cycle.
@@ -261,9 +300,9 @@ scenes:
           Clements et al. 2010, section 2.4.1 (allowing unrestricted upward usage destroys the
           desirable properties that layering brings).
         visual: >-
-          The red arrow up from the Engine to Game rules turns solid, beside the gold arrow down,
-          and a red stamp reads Never up. A sticker reads A cycle, with the label Each depends on
-          the other. A card reads Second game: blocked, engine needs score.py.
+          Rule 2 lights up again beside the red upward arrow. A red stamp reads Never up, a sticker
+          reads A cycle, with the label Each depends on the other, and a label reads Second game:
+          can't reuse it.
   - id: callbacks
     part: Rules
     outline: News goes up
@@ -276,10 +315,10 @@ scenes:
     cues:
       - id: callback
         say: >-
-          But the score still has to go up. The fix: the engine defines what it can report, a
-          collision listener, and the game hands it one at startup: when the squirrel touches a
-          pearl, call this. The engine calls whatever was registered, without knowing it belongs to
-          Pearl Dash.
+          Yet the score must still increase. The standard solution is a callback. The engine defines
+          an interface for what it can report, a collision listener, and the game registers an
+          implementation at startup. When the squirrel touches a pearl, the engine invokes whatever
+          was registered, without knowing that it belongs to Pearl Dash.
         step: A callback the engine defines
         note: The engine defines a listener interface; the game registers one at startup.
         source: >-
@@ -287,16 +326,19 @@ scenes:
           through a callback interface the lower layer defines); Buschmann et al. 1996, Layers,
           implementation step 9.
         visual: >-
-          Beside the building, a socket reads CollisionListener, on_collision(a, b), labeled Defined
-          by the engine. A card, add_point_if_pearl, plugs into it with an arrow. A token travels up
-          from the Engine floor to Game rules, and a readout changes from Score 1,240 to Score
-          1,250.
+          A module view frame whose key reads layer, class and interface, implements, and run-time
+          call. The Game rules package holds a class, PearlHandler, with on_collision(a, b); the
+          Engine package holds an interface, «interface» CollisionListener, with on_collision(a, b);
+          Platform and Drivers sit closed below. A dashed arrow with a hollow triangle runs from
+          PearlHandler down to CollisionListener. Labels read The engine defines the interface and
+          The game registers a handler, a cyan arrow runs up from the interface to the handler as a
+          token climbs it, and a readout changes from Score 1,240 to Score 1,250.
       - id: not_uses
         say: >-
-          Is that an upward use? No. Control travels up, but the engine's correctness doesn't depend
-          on what the handler does: its job ends when it reports the collision. The dependency still
-          points down: the game depends on the engine's listener interface, never the other way
-          around.
+          Is this an upward use? No. Control flows upward, but the engine's correctness does not
+          depend on what the handler does; its responsibility ends when it reports the collision.
+          The dependency still points down: the game depends on the engine's listener interface,
+          never the reverse. Control flow and dependency are different relations.
         pause_after: 2.5
         step: Calls go up, uses stay down
         note: A callback sends control upward, but the dependency still points down.
@@ -343,9 +385,9 @@ scenes:
                 a second game. Delete <code>engine/</code>: the game fails at its first import. Who
                 needs whom decides the dependency; the direction of calls does not.
         visual: >-
-          Two arrows beside the wall between Game rules and Engine: a dashed blue one going up,
-          labeled Calls at run time: on_collision, and a gold one going down, labeled Depends on:
-          CollisionListener. A green sticker reads Control goes up, dependency stays down.
+          The same view, with labels Control: up, at run time beside the cyan arrow's color and
+          Dependency: down, game → engine beside the hollow-triangle arrow's. A green sticker reads
+          Two different relations.
   - id: relaxed
     part: Rules
     outline: Strict or relaxed
@@ -358,10 +400,10 @@ scenes:
     cues:
       - id: strictness
         say: >-
-          Teams choose how strict to be. Strict layering: a layer may use only the layer directly
-          below. Relaxed layering: it may use any lower layer. A strict design may still allow a few
-          skips, like game rules calling the platform directly. That's layer bridging, and each
-          bridge must be documented as an exception.
+          Strictness varies. In strict layering, a layer may use only the layer directly below; in
+          relaxed layering, it may use any lower layer. A strict design may still permit a few
+          skips, such as game rules calling the platform directly. Such layer bridging must be
+          documented as an exception, because each bridge weakens portability.
         step: Strict or relaxed
         note: Strict allows only the layer below, relaxed any lower layer; a skip in a strict design is a bridge.
         source: >-
@@ -370,28 +412,60 @@ scenes:
           next-lower-layer uses are allowed, a skip is layer bridging, and the diagram or an
           accompanying document must show these exceptions); Bass et al. 2013, section 13.2.
         visual: >-
-          Two buildings with the same four floors. Left, Strict: only the layer directly below, with
-          an arrow from each floor to the next. Right, Relaxed: any lower layer, with the same arrows
-          plus two longer ones that each skip a floor. Then a red arrow runs beside the strict
-          building from Game rules straight to Platform, labeled Layer bridging, and a note reads
-          Each bridge: a documented exception.
+          Two module view frames, Strict layering and Relaxed layering, each with four small layer
+          packages and a key reading layer and may use. Left, labeled Only the layer directly below,
+          dashed arrows run from each layer to the next, and a red dashed arrow skips from Game
+          rules to Platform outside the stack, labeled Layer bridging. Right, labeled Any lower
+          layer, the same arrows plus two longer ones that each skip a layer. A note reads Each
+          bridge: a documented exception.
       - id: tiers
         say: >-
-          One more thing layers are not: tiers. Layers organize code, a module view, decided before
-          the game runs. When Pearl Dash runs, all four layers run together on one console. Tiers
-          are separate running processes, often on separate machines, like the game and its online
-          leaderboard server.
-        pause_after: 2.5
+          Layers must also be distinguished from tiers. Layers group code in the module view, and
+          all four layers of Pearl Dash run together on one console. A tier groups running
+          components, usually by the machine they run on, and a component may talk only within its
+          tier or to an adjacent tier.
         step: Layers are not tiers
-        note: Layers group code; tiers are separate running processes.
+        note: Layers group code; tiers group running components, usually by machine.
         source: >-
-          CMU 17-655 lecture 12, Layers versus Tiers; Clements et al. 2010, section 2.4.4 (layers
-          are not tiers).
+          Clements et al. 2010, section 2.4.4, p. 97 (layers are not tiers: a layer groups
+          implementation units, a tier groups runtime elements) and section 4.6.2, pp. 183-184 (a
+          tier is a logical grouping of runtime components; connectors only within a tier or between
+          adjacent tiers); Bass, Clements, and Kazman 2013, section 13.2, Multi-tier pattern, pp.
+          235-237 (a C&C or an allocation pattern, depending on how tiers are defined; usually
+          defined by the computing environment; a component belongs to exactly one tier); CMU 17-655
+          lecture 12, Layers versus Tiers.
         visual: >-
-          Left: the four-floor building labeled Layers: how the code is organized, with an arrow,
-          When it runs, to one card: One console, all four layers run here. Right: Tiers: separate
-          running processes, with a Pearl Dash card on the console and a Leaderboard card on a
-          server, joined by a line labeled Network.
+          Left, a module view frame labeled Layers: code, grouped before it runs, with the four
+          layers stacked. Right, an allocation view frame labeled Tiers: running components, grouped
+          by machine, with a key reading node, component, and network: a node stereotyped «device»,
+          Console, holds a component, Pearl Dash, all four layers; a second node, Server, holds a
+          component, Leaderboard; a line between them is labeled «network». An arrow runs from the
+          layers to the console, and a note reads A component talks only to its own or an adjacent
+          tier.
+      - id: three_tiers
+        say: >-
+          Pearl Dash's online leaderboard has three tiers. The game on the console is the
+          presentation tier. It calls a leaderboard service on a cloud server, the logic tier, and
+          only that service reads and writes scores in a database, the data tier. Each tier can then
+          be secured, scaled, and changed on its own.
+        pause_after: 2.5
+        step: Three tiers
+        note: Presentation, logic, and data tiers; each talks only to its neighbor.
+        source: >-
+          Bass, Clements, and Kazman 2013, section 13.2, Multi-tier pattern, pp. 235-237 (tiers in
+          client-server systems; tiers make it easier to ensure security and to optimize performance
+          and availability, and enhance modifiability; weakness: up-front cost and complexity;
+          Figure 13.15, a multi-tier view of a Java EE application); Clements et al. 2010, section
+          4.6.2, pp. 183-184 (tier boundaries drawn over a C&C diagram).
+        visual: >-
+          Left, a card defines Tier: a group of running components, usually on its own machines, and
+          adds Connectors only within a tier or to the next. Right, a C&C view frame, three-tier
+          leaderboard, with a key reading component, tier, and call: three dashed tier boundaries
+          stacked from the top, «tier» Presentation, on the console, holding the component Pearl
+          Dash; «tier» Logic, on a cloud server, holding Leaderboard service; and «tier» Data, on a
+          database server, holding Score database. Connectors labeled «call» run down from the game
+          to the service and from the service to the database. A second card, Each tier, on its own,
+          lists Secured, Scaled, and Changed.
   - id: port
     part: Consequences
     outline: Swap a floor
@@ -404,70 +478,75 @@ scenes:
     cues:
       - id: predict_console
         say: >-
-          Back to the publisher's request, on the layered game this time. The console has a
-          different graphics chip, buttons, and a different sound system. Predict: which of the four
-          layers must change for the console, and which stay exactly as they are?
+          Return to the publisher's request, now with the layered game. The console has a different
+          graphics chip, buttons, and a different sound system. Predict: which of the four layers
+          must change for the console, and which remain exactly as they are?
         prediction: true
         pause_after: 4
         step: Predict the port again
         note: Which layers change for the console, and which stay the same?
         visual: >-
-          The handheld console with the game on its screen, beside the four-floor building. A dashed
-          question mark sits beside each floor: change, or stay?
+          A card, The publisher's request, reads Pearl Dash on our handheld console, by spring, and
+          lists Different graphics chip, Buttons, not a keyboard, and Different sound system, beside
+          a handheld console showing the game. Pearl Dash's four layers stand in their module view,
+          with a dashed box holding a question mark beside each layer.
       - id: portability
         say: >-
           Only the bottom two. The drivers come with the console, and the team writes a new platform
-          layer on top of them, with the same interface. The engine still asks it to draw an image
-          here, and never notices. The game rules don't change at all. That's portability.
+          layer on top of them that offers the same interface. Under the next-lower-layer rule, the
+          engine depends only on that interface, so it is unaffected, and the game rules do not
+          change at all. This quality is portability.
         step: Portability
         note: Device details live in the lowest layers, so a port replaces only those.
         source: >-
           CS 130 lecture 15, slide 25 (layers isolate platform-specific dependencies in the
           bottommost layers); Clements et al. 2010, section 2.4.3.
         visual: >-
-          The Platform and Drivers floors slide out, and console versions slide in: Platform for the
-          console, with draw(), play(), and buttons(), on Console drivers, with Console GPU,
-          Buttons, and Speaker. The Engine and Game rules floors turn green, stamped Unchanged. A
-          quality card reads Portability, promoted, and a label reads Same interface: draw(),
-          play(), buttons().
+          Platform and Drivers slide out, replaced by new yellow packages, Platform for the console
+          (draw(), play(), buttons()) and Console drivers (Console GPU, Buttons, Speaker), while
+          Game rules and Engine turn green. Rule card 2, Next lower layer, appears with a quality
+          card, Portability, promoted, a label reading Same interface: draw(), play(), buttons(),
+          and a green stamp: Unchanged.
       - id: modify_reuse
         say: >-
-          The same rule buys modifiability. Swap the engine's physics for a faster version with the
-          same interface, and only the engine changes. And it buys reuse: the team's second game, a
-          skateboard racer, sits on the same engine and platform. The lower the layer, the more
-          programs can share it.
+          The next-lower-layer rule also promotes modifiability: replacing the engine's physics with
+          a faster implementation of the same interface changes only the engine. And the never-up
+          rule promotes reusability: the engine and platform know nothing about Pearl Dash, so the
+          team's second game, a skateboard racer, can build on them unchanged.
         step: Modifiability and reuse
         note: A layer can change inside, or be reused, without touching the layers above.
         source: >-
           CS 130 lecture 15, slide 25 (reusability and modifiability); Buschmann et al. 1996, Layers,
           Consequences (reuse of layers; dependencies are kept local).
         visual: >-
-          Two top floors sit side by side, Pearl Dash rules and Skateboard racer rules, on one
-          shared Engine floor and one Platform floor. The Engine's chips now begin with Faster
-          physics, and only that floor is marked changed. Quality cards read Modifiability,
-          promoted, and Reusability, promoted, and a note reads The lower the layer, the more
-          programs share it.
+          A module view frame with a key reading layer, module, and may use. Two packages sit side
+          by side on top, Pearl Dash rules and a new Skateboard racer rules, each with a dashed
+          dependency arrow down to a wide Engine package, which turns pink as it changes to Faster
+          physics, with a dashed arrow down to Platform. Below, Rule card 2 sits beside
+          Modifiability, promoted, and a Never up label beside Reusability, promoted. A note reads
+          The lower the layer, the more programs share it.
       - id: everyday
         say: >-
-          You rely on this every day. A chat message travels down a layered network stack: the app's
-          protocol, then a transport layer, then the internet layer, then the link at the bottom. The
-          same chat app works over dorm Wi-Fi, a cable, or cellular data, because only that bottom
-          layer differs.
+          The same structure underlies everyday networking. A chat message descends a layered
+          protocol stack: the application protocol, the transport layer, the internet layer, and the
+          link layer. The chat application works over Wi-Fi, cable, or cellular data, because only
+          the bottom layer differs and every layer above depends only on its interface.
         step: Layers you already use
         note: Network stacks are layered, so apps work over any link technology.
         source: >-
           CS 130 lecture 17, slide 14 (TCP/IP: application, transport, internet, and link layers);
           Buschmann et al. 1996, Layers, Example.
         visual: >-
-          A Chat app card, same code on any link, beside a four-floor network stack: Application
-          (Chat protocol, HTTP), Transport (TCP), Internet (IP), and Link. A token travels down the
-          stack while the Link floor changes from Wi-Fi to Cable to Cellular. A label reads Only the
-          bottom layer differs.
+          A module view frame titled Module view: network stack holds four layers: Application (Chat
+          protocol, HTTP), Transport (TCP), Internet (IP), and Link, whose module changes from Wi-Fi
+          to Cable to Cellular. A token travels down beside a card, Chat app: same code on any link.
+          Labels read Only the bottom layer differs and Layers use only the interface below.
       - id: team_test
         say: >-
-          Layers also split the work. Gameplay changes land in the game rules, engine work in the
-          engine, the sound fix in the platform, and nobody edits everyone's files at night. And you
-          can test the game rules on a laptop, with a fake engine below them, no console needed.
+          Layering also supports the division of labor and testability. Gameplay changes stay in the
+          game rules, engine work in the engine, and the sound fix in the platform. And because the
+          game rules depend only on the engine's interface, they can be tested on a laptop against a
+          fake engine, with no console.
         pause_after: 2.5
         step: Split work, test alone
         note: Layers divide work among people and let layers be tested separately.
@@ -475,9 +554,10 @@ scenes:
           Clements et al. 2010, section 2.4.3 (layers might define work assignments); Buschmann et
           al. 1996, Layers, Consequences (particular layers can be tested independently).
         visual: >-
-          The four-floor building with a team card beside three floors: Gameplay at Game rules, You
-          at Engine, and Sound at Platform. A readout reads Game rules on a fake engine: Test
-          passed, no console. Quality cards read Team split, promoted, and Testability, promoted.
+          Pearl Dash's layers in their module view, with team cards beside them: Gameplay at Game
+          rules, Engine team at Engine, and Sound at Platform. A readout reads Game rules on a fake
+          engine: test passed, no console, and quality cards read Division of labor and Testability,
+          promoted.
   - id: costs
     part: Consequences
     outline: The price
@@ -490,10 +570,10 @@ scenes:
     cues:
       - id: overhead
         say: >-
-          Now the costs. A game draws sixty frames a second, so each frame gets about sixteen
-          milliseconds. Every request now crosses four floors, and each layer translates and copies
-          data on the way down. In the pearl storm level, with five hundred pearls on screen, the
-          frame rate drops.
+          The rules also carry costs. First, performance. A game renders sixty frames a second,
+          leaving about sixteen milliseconds per frame. Under the next-lower-layer rule, every
+          request crosses all four layers, and each layer translates and copies data on the way
+          down. In the pearl storm level, with five hundred pearls, the frame rate drops.
         step: Every floor costs time
         note: Requests crossing several layers pay for translation at each one.
         source: >-
@@ -501,30 +581,33 @@ scenes:
           handoffs and data transformations); Buschmann et al. 1996, Layers, Consequences (lower
           efficiency).
         visual: >-
-          A Frame time bar with a budget line at 16.7 ms fills from 12.5 to 15.8 and then, in red,
-          to 21.3 ms, 47 frames per second. Tokens travel down beside the four-floor building, and a
-          label reads Each layer translates and copies. A quality card reads Performance, inhibited.
+          Pearl Dash's layers in their module view. A frame-time bar grows from 12.5 to 21.3
+          milliseconds, past its 16.7-millisecond budget, while tokens travel down beside the
+          layers. Rule card 2 sits beside labels reading Every request crosses all four layers and
+          Each layer translates and copies, and a quality card reads Performance, inhibited.
       - id: bridge
         say: >-
-          The tempting fix is a bridge: let the pearl-drawing code skip the engine and platform and
-          talk straight to the laptop's graphics driver. The frame rate comes back. But that code now
-          runs only on the laptop. On the console it must be rewritten: you've traded portability
-          for speed.
+          A tempting remedy bends the next-lower-layer rule with a bridge: the pearl-drawing code
+          bypasses the engine and platform and calls the laptop's graphics driver directly. The
+          frame rate recovers, but that code now depends on the laptop's driver, so it must be
+          rewritten for the console. The bridge trades portability for performance.
         step: A bridge trades portability for speed
         note: Skipping layers buys speed and loses portability on that path.
         source: >-
           CS 130 lecture 15, slide 25 (layer bridging permits skipping layers for performance while
           sacrificing some modifiability); Clements et al. 2010, section 2.4.1.
         visual: >-
-          A red arrow runs outside the building from Game rules straight down to Drivers, labeled
-          Bridge: pearl drawing to laptop driver, and the Frame time bar drops back from 21.3 to
-          15.1 ms. A card reads On the console: bridge breaks, rewrite it. Quality cards read Speed,
-          promoted, and Portability, inhibited.
+          Rule card 2 cracks. In the module view, whose key adds bridge, a red dashed arrow runs
+          outside the stack from Game rules straight to Drivers, labeled Bridge: pearl drawing →
+          laptop driver. The frame-time bar drops back to 15.1 milliseconds. A card reads On the
+          console: bridge breaks, rewrite it, and quality cards read Performance, promoted, and
+          Portability, inhibited.
       - id: upfront
         say: >-
-          And layers cost design time up front. Someone has to choose the levels, design each
-          interface, and keep the rules when a deadline begs for shortcuts. For a weekend jam, one
-          file was fine. For a game that must live on two devices for years, the floors pay off.
+          Second, up-front cost. Layering requires design effort before it pays off: someone must
+          choose the levels, design each interface, and enforce the rules when a deadline invites
+          shortcuts. For a weekend jam, a single file was adequate. For a game that must run on two
+          devices for years, the investment is worth it.
         pause_after: 2.5
         step: Up-front cost
         note: Layers cost design effort before they pay off; small throwaway code may not need them.
@@ -532,9 +615,10 @@ scenes:
           Bass et al. 2013, Table 13.1 (the addition of layers adds up-front cost and complexity to a
           system).
         visual: >-
-          A balance: the Up-front design pan lists Choose the levels, Design interfaces, and Keep
-          the rules; the Payoff pan lists Two devices, A second game, and Years of changes, and
-          sinks lower. A note reads Weekend jam: one file is fine.
+          A balance tips toward its payoff. The pink pan, Up-front cost, lists Choose the levels,
+          Design each interface, and Enforce the rules; the green pan, Payoff, lists Portability:
+          two devices, one game; and Modifiability: years of changes. A note reads Weekend jam: one
+          file is fine.
   - id: leaks
     part: Consequences
     outline: Leaks
@@ -547,10 +631,10 @@ scenes:
     cues:
       - id: leak
         say: >-
-          Layers can still leak. On the console, the new platform layer has the very same interface,
-          but it draws many small images more slowly. Nothing above changed, yet the pearl storm
-          stutters. An interface is more than its function names: it includes the timing that the
-          layers above quietly rely on.
+          Layers can also leak. On the console, the new platform layer has exactly the same
+          interface, but it draws many small images more slowly. Nothing above it changed, yet the
+          pearl storm stutters. An interface includes more than its function signatures: it also
+          includes the timing on which the layers above implicitly rely.
         step: Behavior leaks through
         note: An interface includes assumptions like timing, not just names.
         source: >-
@@ -558,16 +642,15 @@ scenes:
           layer's change to a performance assumption leaks through it); Buschmann et al. 1996, Layers,
           Consequences (cascades of changing behavior).
         visual: >-
-          The console's building: Game rules, Engine, Platform for the console (marked changed), and
-          Console drivers. The handheld console shows the game, and its frame rate drops from 60 fps
-          to 38 fps. A readout reads 500 small images: drawn more slowly, and a red sticker reads
-          Same interface, different timing.
+          Pearl Dash's layers in their module view, with the console's platform package turning
+          pink. On the console screen, 60 fps drops to 38 fps. A readout reads 500 small images:
+          drawn more slowly, and a red sticker reads Same interface, slower.
       - id: granularity
         say: >-
-          And how many layers? Too few, like one big engine-and-platform layer, and the console port
-          reaches deep into the engine. Too many, and every frame pays for extra hand-offs, while
-          every feature needs edits on six floors. Pick levels that change for different reasons,
-          at different speeds.
+          Finally, granularity. With too few layers, such as one combined engine-and-platform layer,
+          porting to the console reaches deep into the engine. With too many, every frame pays for
+          additional hand-offs, and each feature requires edits across six layers. Choose levels
+          that change for different reasons and at different rates.
         pause_after: 2.5
         step: How many layers?
         note: Choose layers that change for different reasons and at different rates.
@@ -577,11 +660,135 @@ scenes:
           different time scales); Buschmann, Henney, and Schmidt 2007, Layers thumbnail (rate of
           developmental change).
         visual: >-
-          Three buildings. Too few: Game rules over one big Engine and platform floor. Too many:
-          eight thin floors, Rules, Logic, Engine, Scene, Render, Platform, Bridge, and Drivers.
-          Just right: Game rules, Engine, Platform, and Drivers, each tagged with what changes it:
-          Gameplay ideas, Engine tech, Device APIs, and Hardware. A note reads Split where things
-          change for different reasons, at different speeds.
+          A module view frame holds three stacks of layer packages. Too few: Game rules over one
+          wide red Engine and platform layer. Too many: eight thin layers, Rules, Logic, Engine,
+          Scene, Render, Platform, Bridge, and Drivers. Just right: Game rules, Engine, Platform,
+          and Drivers, each with one module. A note reads Split where things change for different
+          reasons, at different speeds.
+  - id: in_practice
+    part: In practice
+    outline: Real-world examples
+    label: "In practice: where layers hold"
+    title: Real-world examples
+    purpose: Recognize the layered style in systems from many domains, and explain why it fits them.
+    takeaway: >-
+      Real systems layer code so that hardware, operating systems, and vendors can change behind a
+      stable interface, and they document their bridges.
+    cues:
+      - id: network_phone
+        say: >-
+          Layering is everywhere in practice. Every message you send descends the Internet's four
+          layers, and the standards themselves note where information deliberately leaks between
+          them. Android stacks apps, a framework, native libraries, a hardware abstraction layer,
+          and the Linux kernel, so a new camera chip needs a new hardware module and driver, not new
+          apps.
+        step: Internet and Android
+        note: The Internet protocol suite and Android are layered; a new chip needs only a new lower module.
+        source: >-
+          RFC 1122, https://www.rfc-editor.org/rfc/rfc1122, section 1.1.3 (application, transport,
+          internet, and link layers), section 1.3.1 (strict layering is an imperfect model), section
+          3.2.1.8 (passing IP options up to the transport layer is a deliberate violation of strict
+          layering); RFC 817, https://www.rfc-editor.org/rfc/rfc817, section 5 (a limited amount of
+          information can leak across a layer boundary, which has both a benefit and a penalty);
+          Android platform architecture, https://developer.android.com/guide/platform (apps, Java
+          API framework, native libraries and Android Runtime, HAL, Linux kernel; HAL modules
+          implement an interface for each type of hardware, such as the camera); Android HAL,
+          https://source.android.com/docs/core/architecture/hal (vendors add features without
+          modifying higher layers); legacy HAL,
+          https://source.android.com/docs/core/architecture/hal/archive (vendors implement the
+          corresponding HAL and driver).
+        visual: >-
+          Two module view frames, each with a key saying a layer uses the one below. TCP/IP,
+          networking: Application (HTTP, DNS), Transport (TCP, UDP), Internet (IP), and Link, with
+          Link highlighted, labeled Apps reuse transports; links change below. Android, phones:
+          Apps, Java API framework, Native libraries and runtime, Hardware abstraction layer, and
+          Linux kernel, with the hardware abstraction layer highlighted, labeled New chip: a new HAL
+          module.
+      - id: browser_database
+        say: >-
+          Chrome's code forbids upward includes, and an automated check rejects any that appear; the
+          layer that renders pages reports upward only through interfaces it defines. SQLite, the
+          database engine in every smartphone, reaches the operating system through one bottom
+          layer, so porting it, or simulating a failing disk in a test, replaces only that layer.
+        step: Browser and database
+        note: Chrome enforces never-up with tooling; SQLite swaps its bottom layer for porting and testing.
+        source: >-
+          Chromium content module,
+          https://chromium.googlesource.com/chromium/src/+/main/content/README.md (chrome over
+          content over lower libraries such as Blink; a module cannot include code from a higher
+          module but may include lower modules directly; enforced through DEPS rules; content calls
+          up only through the Content API, ContentClient and ContentBrowserClient, which the
+          embedder implements); Chromium checkdeps,
+          https://chromium.googlesource.com/chromium/src/+/main/buildtools/checkdeps/README.md, run
+          by the CheckUnwantedDependencies presubmit check on every added include; SQLite
+          architecture, https://www.sqlite.org/arch.html (interface, SQL compiler, virtual machine,
+          B-tree, pager, OS interface); SQLite VFS, https://www.sqlite.org/vfs.html, section 2 (the
+          VFS is the bottom layer; any module that needs the operating system invokes it; porting
+          means writing a new OS interface layer) and section 3.5 (a test VFS simulates filesystem
+          faults); SQLite testing, https://www.sqlite.org/testing.html, section 3.2 (a VFS rigged to
+          simulate I/O errors); SQLite deployment, https://www.sqlite.org/mostdeployed.html (in
+          every smartphone).
+        visual: >-
+          Two module view frames. Chrome, browsers: chrome, content, and Blink and lower libraries,
+          with a key reading layer and may not use. A red dashed arrow runs outside the stack from
+          content up to chrome and is struck by a cross, labeled A build check rejects upward
+          includes, and a note on content reads Up only via content's interfaces. SQLite, databases:
+          Interface, SQL compiler, Virtual machine, B-tree, Pager, and OS interface (VFS), with the
+          VFS highlighted, labeled Swap the bottom to port, or to test.
+      - id: car_spacecraft
+        say: >-
+          Many car makers follow AUTOSAR, whose rules state which layers may use which and forbid
+          bypassing the layer that hides the microcontroller, except in a complex-driver layer for
+          timing-critical devices. NASA's core Flight System hides the flight computer behind one
+          platform layer, so its apps run unchanged on a desktop during testing and in orbit.
+        step: Cars and spacecraft
+        note: AUTOSAR writes its allowed-to-use rules down; NASA flight apps run on laptops and in orbit.
+        source: >-
+          AUTOSAR Classic Platform, Layered Software Architecture R22-11,
+          https://www.autosar.org/fileadmin/standards/R22-11/CP/AUTOSAR_EXP_LayeredSoftwareArchitecture.pdf,
+          slides 22-29 (PDF pp. 12-19; application, RTE, services, ECU abstraction, microcontroller
+          abstraction), slide 27 (PDF p. 17; Complex Drivers, a layer from the hardware to the RTE
+          for devices with very high timing constraints), slide 40 (complex drivers may access the
+          microcontroller directly), slide 88 (PDF p. 78; bypassing the microcontroller abstraction
+          layer is not allowed; skipping one layer should be avoided, two or more is not allowed),
+          slide 89 (PDF p. 79; the allowed-to-use matrix); AUTOSAR partners,
+          https://www.autosar.org/about/partners; McComas, Wilmot, and Cudmore 2016, SmallSat,
+          https://ntrs.nasa.gov/api/citations/20160010300/downloads/20160010300.pdf (Figure 2, a
+          layered architecture: apps over the core Flight Executive over a platform abstraction
+          layer of two APIs, OSAL and PSP, over the OS and board; Table 2, the Linux desktop support
+          package used for development and testing); Cudmore 2021,
+          https://ntrs.nasa.gov/api/citations/20210000909/downloads/cFS_Platform_Updates-v5-final.pptx.pdf,
+          slide 3 (the cFS platform layer consists of the OSAL and the PSP).
+        visual: >-
+          Two module view frames. AUTOSAR, cars: Application components, Runtime environment,
+          Services, ECU abstraction, and Microcontroller abstraction, highlighted, labeled in red
+          Never bypass the microcontroller layer, with a note, Exception: complex drivers. NASA,
+          spacecraft: Apps, core Flight Executive, OS and platform abstraction, highlighted, and
+          Real-time OS and board, labeled Same apps on a desktop and in orbit.
+      - id: common_thread
+        say: >-
+          Most of these systems layer for the same reason: hardware, operating systems, and vendors
+          change independently of the programs above them, and a stable interface confines each
+          change to the layer below. Yet most relax the next-lower-layer rule: Chromium and SQLite
+          let a layer skip down, while AUTOSAR, Android, and NASA document each exception.
+        pause_after: 2.5
+        step: What they share
+        note: Layers confine change behind a stable interface; real systems document their bridges.
+        source: >-
+          Clements et al. 2010, section 2.4.3, pp. 90-91 (a change to a lower layer can be hidden
+          behind its interface; relaxed layering lets a layer use any lower one); RFC 817, section
+          5; Chromium content README (a module may include lower modules directly); SQLite VFS,
+          section 2 (any module may invoke the VFS); AUTOSAR R22-11, slide 27 (Complex Drivers) and
+          slide 88 (PDF p. 78; layer skipping rules); Android platform architecture (the NDK lets
+          native code access some platform libraries directly); cFE Application Developer's Guide,
+          https://github.com/nasa/cFE/blob/main/docs/cFE%20Application%20Developers%20Guide.md,
+          section 5 (the OS API is visible to cFE applications, to avoid an unnecessary level).
+        visual: >-
+          Rule card 2, Next lower layer, sits over a card titled Change stays below the interface,
+          listing Internet: the link layer; Android: the hardware abstraction layer; SQLite: the OS
+          interface; and NASA: the platform layer. Beside it, a card titled Relaxed in practice
+          lists Chromium, SQLite: skip down; AUTOSAR: complex drivers; Android: native code; and
+          NASA: apps call the OS layer.
   - id: summary
     label: Summary
     title: Down, never up
@@ -592,38 +799,59 @@ scenes:
     cues:
       - id: recap_problem
         say: >-
-          Let's recap. Pearl Dash began as a ball of mud: jumps, physics, and device calls on the
-          same lines, so porting meant rewriting nearly every file. Layers group modules by level of
-          abstraction, from game rules down to drivers, and each layer is a machine for the one
-          above.
+          Let's recap. Pearl Dash began as a ball of mud: game rules, physics, and device calls on
+          the same lines, so porting meant rewriting nearly every file. Layering groups modules into
+          packages by level of abstraction, from game rules down to drivers, and each layer serves
+          as a virtual machine for the one above.
         step: The problem and the layers
         note: A ball of mud becomes a stack of layers, ordered by abstraction.
         visual: >-
-          The tangled ball of mud, crossed out, with the label Ball of mud: rewrite to port, beside
-          the four-floor building, where a token travels from Game rules down to Drivers.
+          The ball of mud is struck by a cross. Beside it, Pearl Dash's four layers appear in their
+          module view, and a token travels down beside them. A label reads Ball of mud: rewrite to
+          port.
       - id: recap_rules
         say: >-
-          The rules: every module sits in exactly one layer; a layer uses only its own layer or the
-          one directly below, or, if relaxed, any lower one; and nothing uses a layer above. News
-          travels up through callbacks the lower layer defines. And layers organize code; tiers are
-          running processes.
+          The rules: every module belongs to exactly one layer; a layer uses only its own layer or
+          the one directly below, or any lower one if relaxed; and nothing uses a layer above.
+          Upward news travels through callbacks that the lower layer defines. Layers organize code
+          in a module view; tiers are running components.
         step: The rules
         note: Exactly one layer each; use only downward; news goes up through callbacks.
         visual: >-
-          Three rule cards: Rule 1, Exactly one layer; Rule 2, One floor down, or any lower if
-          relaxed; Rule 3, At least two layers. A red sticker reads Never up. A socket reads
-          CollisionListener: news goes up by callback, and a note reads Layers organize code; tiers
-          are running processes.
+          Three rule cards: Rule 1, Exactly one layer; Rule 2, Next lower layer; Rule 3, At least
+          two layers. A red sticker reads Never up, an interface box reads «interface»
+          CollisionListener: news goes up by callback, and a note reads Layers: code, a module view.
+          Tiers: running components.
       - id: recap_tradeoff
         say: >-
-          What the rules buy: swap the bottom for a new device, swap a layer's insides, and reuse the
-          lower layers in the next game. What they cost: time in every frame, design time up front,
-          and shortcuts that trade portability for speed. Next time you write an import, ask: is that
-          one floor down?
-        pause_after: 2.5
-        step: The trade-off
-        note: Portability, modifiability, and reuse, paid for in speed and design effort.
+          Because each layer depends only on the interface of the layer below, layering promotes
+          three qualities. Portability: a new platform changes only the bottom layers.
+          Modifiability: a change stays behind one layer's interface. Reusability: lower layers
+          never depend on the layers above, so other applications can reuse them.
+        step: What layering promotes
+        note: Layering promotes portability, modifiability, and reusability.
+        source: >-
+          Bass et al. 2013, Table 13.1 (layering supports modifiability and portability, and lower
+          layers are reusable); CS 130 lecture 15, slide 25.
         visual: >-
-          A balance: the Promoted pan holds Portability, Modifiability, and Reusability; the
-          Inhibited pan holds Performance and Up-front cost. A last sticker asks Is that import one
-          floor down?
+          A balance with two pans in the quality cards' colors. The green Promoted pan lists each
+          quality with the rule it follows from and why: Portability, Rule 2: a new platform changes
+          only the bottom layers; Modifiability, Rule 2: a change stays behind a layer's interface;
+          and Reusability, Rule 2: lower layers never depend on upper ones.
+      - id: recap_costs
+        say: >-
+          The same rules inhibit performance: every request crosses every layer, and each crossing
+          costs time. Layering also has an up-front cost: the levels and their interfaces must be
+          designed first. A bridge buys back performance at the price of portability. Next time you
+          write an import, ask: is it from the next lower layer?
+        pause_after: 2.5
+        step: What layering costs
+        note: It inhibits performance and costs design effort up front.
+        source: >-
+          Bass et al. 2013, Table 13.1 (layers add up-front cost and complexity, and a performance
+          penalty); CS 130 lecture 15, slide 25 (layer bridging).
+        visual: >-
+          The pink Inhibited pan fills: Performance, Rule 2: every request crosses every layer; and
+          Up-front cost: levels and interfaces come before features. A red tag reads Bridge:
+          performance back, portability lost, and a sticker asks Is that import from the next lower
+          layer?

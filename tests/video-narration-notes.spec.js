@@ -120,8 +120,10 @@ for (const [topic, lesson] of Object.entries(loadRegistry('video'))) {
         const title = document.querySelector('h1');
         const rows = [...document.querySelectorAll('h3')].map(heading => heading.closest('section')).filter(section => !section.matches('[aria-labelledby$="-answers"]'));
         const answers = document.querySelector('h2[id$="-answers"]').closest('section');
-        // The lesson is its title (with the line above it), its rows, and the answers.
-        const lesson = [title, title.previousElementSibling, ...rows, answers];
+        // The lesson is its title (with the line above it), its rows, any
+        // closer look printed after its cue, and the answers.
+        const looks = [...document.querySelectorAll('[data-closer-look-static]')];
+        const lesson = [title, title.previousElementSibling, ...rows, ...looks, answers];
         const strays = [];
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
         while (walker.nextNode()) {

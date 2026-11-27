@@ -9,12 +9,14 @@
       "styles": [
         "/css/song-video-drafting-room.css",
         "/css/video-narration-wall-kit.css",
+        "/css/video-narration-uml-kit.css",
         "/css/video-narration-arch-kit.css",
         "/css/video-narration-pipes-and-filters.css"
       ],
       "scripts": [
         "/js/song-video/drafting-room.js",
         "/js/video-narration/wall-kit.js",
+        "/js/video-narration/uml-kit.js",
         "/js/video-narration/arch-kit.js",
         "/js/video-narration/pipes-and-filters-kit.js",
         "/js/video-narration/pipes-and-filters.js"
@@ -44,7 +46,6 @@
       },
       "cues": {
         "script": {},
-        "predict_first": {},
         "midnight": {},
         "change_requests": {}
       }
@@ -138,6 +139,20 @@
         "best_shot": {},
         "shared_state": {},
         "when": {}
+      }
+    },
+    "in_practice": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "shell_gpu": {},
+        "search_fraud": {},
+        "radio_genomes": {},
+        "common_thread": {}
       }
     },
     "summary": {

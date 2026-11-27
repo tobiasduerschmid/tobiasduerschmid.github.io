@@ -28,16 +28,32 @@ architecture kit (`js/video-narration/arch-kit.js`) and the wall kit, styled by
   darkness, then brightness, a crop to the catch, fans' faces pixelated, and
   the paper's logo. A token in a pipe draws only the photo's flat silhouette.
   Photos slide through pipes and never across a filter's name.
+- **Notation.** Every diagram is a UML frame in ArchUML's notation
+  (`js/video-narration/uml-kit.js`): its tab names its view, and its key
+  explains its symbols. The line is a component-and-connector view: each
+  filter a «filter» component with input and output ports, each pipe a «pipe»
+  connector from port to port, sources and sinks as stereotyped components.
+  Throughput appears in an allocation view, one filter per processor core.
 - **Order.** Motivation (game night; the batch script; nothing until midnight;
   change requests); rules (filters, pipes, source and sink, enrich, refine,
   transform; independence and parameters; agnosticism; a common format;
   incremental processing; acyclic flow and composition; order and the two
   roles); consequences (reuse, easy change and testing, throughput;
   interactivity, latency and re-encoding, error handling; non-incremental
-  filters, bent rules, when to choose the style); recap.
-- **Predictions.** When the first photo goes online with the batch script; when
-  the second-quarter catch reaches the website with the pipeline. Each pauses
-  four seconds and is answered by the next cue.
+  filters, bent rules, when to choose the style); in practice (six real
+  systems); recap.
+- **Predictions.** When the second-quarter catch reaches the website with the
+  pipeline, which students can work out from rule three. It pauses four
+  seconds and is answered by the next cue. The motivation states the batch
+  script's delay (nothing online until midnight) instead of asking for it.
+- **In practice.** Six systems from six domains, each in its own C&C view: the
+  Unix shell's word-count pipeline, a graphics card's pipeline, an
+  Elasticsearch analyzer, fraud detection on Apache Flink, a GNU Radio FM
+  receiver, and an RNA-sequencing pipeline in Nextflow (nf-core/rnaseq,
+  simplified). The closing cue names where each bends a rule: sort and MultiQC
+  wait for all their input, and the output merger reads and writes shared
+  buffers. Every claim was checked against the systems' own documentation;
+  see the table below and each cue's `source`.
 - **Checks.** Every section ends in a check on a new system (sensor logging, an
   album upload, a log cleaner, lecture captions, a podcast, a chat-log
   pipeline, live captions, log analysis); the summary quiz follows one campus
@@ -54,6 +70,13 @@ architecture kit (`js/video-narration/arch-kit.js`) and the wall kit, styled by
 - **Speech.** No authors, books, or dates are spoken. The rules use the
   lecture's names (independence, agnosticism, acyclic) plus incremental
   processing from the dataflow definitions.
+  After a rule's definition, the speech refers to it by name ("independence",
+  "incremental processing"), never by number alone; numbers stay on the
+  screen's rule cards.
+  A quality attribute on screen is named aloud by its term as its card or
+  pan item arrives ("Latency: every filter decodes and re-encodes each item"), and the reason is given in that quality's own terms, not a
+  metaphor. The summary's trade-off (`ArchKit.tradeoff`) lists each quality
+  with the rule it follows from and why, in the narration's order.
 
 ## Sources
 
@@ -88,6 +111,18 @@ decks `L15_SoftwareArchitecture.pdf` and `L16_SoftwareArchitecture_2.pptx`.
 | A filter that needs all its input (sort) breaks incremental computation | Fairbanks 2010, section 14.8, footnote; Buschmann et al. 1996, Pipes and Filters, Consequences. |
 | Embodied styles that bend a constraint lose the properties derived from it; sharing state is expensive or inflexible | Fairbanks 2010, sections 14.2 and 14.8; Buschmann et al. 1996, Pipes and Filters, Consequences. |
 | Typical uses: stream processing, signal processing, logs, text through Unix commands; not interactive systems | Clements et al. 2010, section 4.2.1; Bass et al. 2013, section 13.2. Early compilers were pipelines (CMU 17-655 L10), but compiler passes usually share a symbol table and syntax tree, so the narration does not list them as steps that need no shared state. |
+
+### In practice
+
+| Claim | Sources |
+| --- | --- |
+| Unix tools do one job and expect their output to feed an unknown next program; the word-count pipeline; sort reads all its input first | BSTJ 57(6), 1978, p. 1902; Bentley, Knuth, and McIlroy 1986, p. 480; Garlan and Shaw 1994, section 3.1; GNU Coreutils, `sort`. |
+| A graphics pipeline: vertices shaded, primitives rasterized, pixels colored, stages running at once; the output merger reads and writes the shared render target and depth buffer | Direct3D 10 pipeline, rasterizer, and output-merger stage pages; Owens 2005, GPU Gems 2, chapter 29. |
+| An analyzer chains character filters, a tokenizer, and token filters; by default full-text queries use the index analyzer; stemming must be configured | Elastic: anatomy of an analyzer, specify an analyzer, term-level queries, stemmer token filter. |
+| Flink's fraud detector judges each transaction as it arrives, keyed by account | Apache Flink, fraud detection with the DataStream API (2.3); Learn Flink overview. |
+| A GNU Radio flowgraph of blocks from source to sink; GNU Radio 3 refuses loops (GNU Radio 4 adds basic feedback) | Blossom 2004; GNU Radio `flowgraph.cc` and issue 7908; GNU Radio 4 README. |
+| Nextflow processes share no writable state; nf-core modules have unit tests; MultiQC collects every step's reports | Nextflow training; nf-core/rnaseq; nf-core module testing; Nextflow `collect`; MultiQC docs. |
+
 
 References:
 

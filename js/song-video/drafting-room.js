@@ -14,7 +14,8 @@
  * Everything is a pure function of song time. Motion is slow and the scenery
  * is low-contrast on purpose: the sheet must never compete with the diagrams
  * drawn over it, and nothing large changes brightness quickly (WCAG 2.3.1).
- * Under reduced motion the dust holds still.
+ * Under reduced motion the dust holds still. A stage marked
+ * data-dust="off" (every video narration's) has no dust at all.
  */
 (function () {
   'use strict';
@@ -214,8 +215,8 @@
     ruler(art);
     const shade = svg('g', { transform: 'translate(-8 -2)' }, art);
     lamp(shade);
-    const motes = dust(layer, 16);
-    onFrame((time) => {
+    const motes = stage.dataset.dust === 'off' ? [] : dust(layer, 16);
+    if (motes.length) onFrame((time) => {
       const t = reducedMotion.matches ? 0 : time;
       for (const mote of motes) {
         const a = (t / mote.period) * Math.PI * 2 + mote.phase;

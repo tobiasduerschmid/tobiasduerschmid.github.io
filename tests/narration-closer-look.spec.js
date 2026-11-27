@@ -142,7 +142,8 @@ test('the code language follows the site preference and every language fits with
     const heights = await panel(player).locator(`[data-code-language="${language}"] .nja-code-line`).evaluateAll(lines => lines.map(line => line.getBoundingClientRect().height));
     expect(Math.max(...heights), `${language} lines wrap`).toBeLessThan(Math.min(...heights) * 1.5);
   }
-  expect(await page.evaluate(() => localStorage.getItem('sebook-code-language'))).toBe('typescript');
+  const saved = (await page.context().cookies()).find(cookie => cookie.name === 'sebook-code-language');
+  expect(saved && saved.value).toBe('typescript');
 });
 
 test('in viewport full screen, Escape closes the look and stays in full screen', async ({ page }) => {
@@ -201,6 +202,8 @@ for (const [view, url] of [['lesson notes', '/SEBook/architectural_styles/layers
     await expect(look.locator('[data-code-language]:not([hidden])')).toContainText('from engine.core import Body, CollisionListener, Engine');
     await look.getByRole('combobox', { name: 'Example language' }).selectOption('java');
     await expect(look.locator('[data-code-language]:not([hidden])')).toContainText('public interface CollisionListener');
+    // A static closer look shows the language for this page only; it saves no preference.
+    expect((await page.context().cookies()).find(cookie => cookie.name === 'sebook-code-language')).toBeUndefined();
     expect(await page.evaluate(() => localStorage.getItem('sebook-code-language'))).toBeNull();
     await a11yCheckpoint(page, `closer look in the ${view}`, { include: '.narration-closer-look--static', feature: 'narration-closer-look' });
   });

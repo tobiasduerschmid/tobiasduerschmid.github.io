@@ -179,6 +179,25 @@ limits:
       it's done.
     2: >-
       Translating a code needs only the line at hand, so each line moves on right away.
+in_practice:
+  question: >-
+    A video site's upload pipeline decodes each frame, draws a watermark, picks the best thumbnail
+    among all frames, then encodes and publishes. Which step bends the incremental rule?
+  options:
+    - Drawing the watermark on each frame
+    - Picking the best thumbnail among all frames
+    - Encoding each frame for the web
+  correct_index: 1
+  explanation: >-
+    To pick the best thumbnail, that filter must see every frame before it can emit anything, just
+    as sort and the genome report wait for all their input.
+  option_feedback:
+    0: >-
+      The watermark goes onto each frame as it arrives, so that filter can pass every frame on right
+      away.
+    2: >-
+      Each frame can be encoded and passed on as soon as it arrives; nothing waits for the whole
+      video.
 summary:
   questions:
     - question: >-

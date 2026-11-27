@@ -1,5 +1,6 @@
 // The architectural-style video narrations (Publish-Subscribe, Layers, Pipes
-// and Filters) share one teaching contract: motivation, rules, consequences;
+// and Filters) share one teaching contract: motivation, rules, consequences,
+// real systems in practice;
 // every cue a picture on the blueprint stage; a check after every section;
 // rendered speech; and notes that keep every taught term.
 const { loadStory, loadRegistry } = require('../narration/source');
@@ -16,16 +17,16 @@ const registry = loadRegistry('video');
 
 const LESSONS = {
   publish_subscribe: {
-    kit: 'publish-subscribe', predictions: 3, summarySystem: /garage|gate/i,
+    kit: 'publish-subscribe', predictions: 2, summarySystem: /garage|gate/i,
     taught: [
-      'direct calls', 'blocks', 'topic', 'publisher', 'subscriber', 'callback', 'message queue', 'never program to program',
+      'direct calls', 'blocks', 'topic', 'publisher', 'subscriber', 'callback', 'message queue', 'never component to component',
       'rule 1, publisher ignorance', 'rule 2, subscriber ignorance', 'observer', 'rule 3, one-way propagation',
       'rule 4, asynchronous', 'extensibility', 'run-time flexibility', 'no error', 'event format', 'robustness',
       'understandability', 'latency', 'single point of failure', 'direct call', 'facts', 'requests',
     ],
   },
   layered_style: {
-    kit: 'layered-style', predictions: 3, summarySystem: /music/i,
+    kit: 'layered-style', predictions: 2, summarySystem: /music/i,
     taught: [
       'big ball of mud', 'levels of abstraction', 'layer', 'virtual machine', 'allowed-to-use', 'uses', 'rule 1',
       'rule 2', 'rule 3', 'never up', 'upward use', 'cycle', 'callback', 'strict layering', 'relaxed layering',
@@ -34,7 +35,7 @@ const LESSONS = {
     ],
   },
   pipes_and_filters: {
-    kit: 'pipes-and-filters', predictions: 2, summarySystem: /radio|podcast|episode|station/i,
+    kit: 'pipes-and-filters', predictions: 1, summarySystem: /radio|podcast|episode|station/i,
     taught: [
       'batch sequential', 'filter', 'pipe', 'buffer', 'source', 'sink', 'enrich', 'refine', 'transform',
       'rule 1, independence', 'parameters', 'rule 2, agnosticism', 'rule 3, incremental', 'rule 4, acyclic',
@@ -51,8 +52,8 @@ for (const [topic, spec] of Object.entries(LESSONS)) {
   const timing = JSON.parse(read(`_data/explainers/${topic}_timing.json`));
   const cues = story.scenes.flatMap(scene => scene.cues);
 
-  test(`${topic}: motivation comes first, then the rules, then the consequences`, () => {
-    assert.deepEqual(lesson.parts, ['Motivation', 'Rules', 'Consequences']);
+  test(`${topic}: motivation comes first, then the rules, the consequences, and real systems in practice`, () => {
+    assert.deepEqual(lesson.parts, ['Motivation', 'Rules', 'Consequences', 'In practice']);
     const parts = story.scenes.map(scene => scene.part).filter(Boolean);
     assert.deepEqual([...new Set(parts)], lesson.parts, 'parts appear in order, each in one run');
     assert.equal(story.scenes[0].part, 'Motivation', 'the lesson opens with its motivation');
@@ -167,7 +168,10 @@ for (const [topic, spec] of Object.entries(LESSONS)) {
     assert.ok(lesson.animation.sheet_title, 'the blueprint title block names the lesson');
     for (const file of [...lesson.animation.styles, ...lesson.animation.scripts]) assert.ok(existsSync(path.join(root, file)), file);
     const scripts = lesson.animation.scripts.map(file => path.basename(file));
-    assert.ok(scripts.indexOf('wall-kit.js') < scripts.indexOf('arch-kit.js'), 'the architecture kit builds on the wall kit');
+    assert.ok(lesson.animation.styles.map(file => path.basename(file)).includes('video-narration-uml-kit.css'), 'the UML kit styles its diagrams');
+    assert.ok(scripts.includes('uml-kit.js'), 'the diagrams are drawn with the UML kit');
+    assert.ok(scripts.indexOf('wall-kit.js') < scripts.indexOf('uml-kit.js'), 'the UML kit builds on the wall kit');
+    assert.ok(scripts.indexOf('uml-kit.js') < scripts.indexOf(`${spec.kit}-kit.js`), 'the topic kit draws with the UML kit');
     assert.ok(scripts.indexOf('arch-kit.js') < scripts.indexOf(`${spec.kit}-kit.js`), 'the topic kit builds on the architecture kit');
     assert.equal(scripts.at(-1), `${spec.kit}.js`, 'the choreography loads after its kits');
   });

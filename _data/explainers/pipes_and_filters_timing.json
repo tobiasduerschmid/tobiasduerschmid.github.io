@@ -1,8 +1,8 @@
 {
-  "duration": 570.42,
+  "duration": 713.45,
   "voice": "drama3-female6",
   "speed": 1,
-  "speech_sha256": "69a2718f9eabc2acaf232b230cfd3114de7c881006c20ed953fff73a7d53c3d3",
+  "speech_sha256": "169d3b1706d4d8a2f96126bcc37556c2e6aad6cb301ef6ba7b0ed563a03b4bae",
   "scenes": [
     {
       "id": "intro",
@@ -34,225 +34,250 @@
           "speech_end": 56.69
         },
         {
-          "id": "predict_first",
-          "start": 57.24,
-          "end": 74.14,
-          "speech_end": 70.14
-        },
-        {
           "id": "midnight",
-          "start": 74.14,
-          "end": 94.35,
-          "speech_end": 93.8
+          "start": 57.24,
+          "end": 78.75,
+          "speech_end": 78.2
         },
         {
           "id": "change_requests",
-          "start": 94.35,
-          "end": 116.41,
-          "speech_end": 113.91
+          "start": 78.75,
+          "end": 100.81,
+          "speech_end": 98.31
         }
       ],
-      "end": 116.41
+      "end": 100.81
     },
     {
       "id": "filters",
-      "start": 116.41,
+      "start": 100.81,
       "cues": [
         {
           "id": "filter",
-          "start": 116.41,
-          "end": 136.08,
-          "speech_end": 135.53
+          "start": 100.81,
+          "end": 120.88,
+          "speech_end": 120.33
         },
         {
           "id": "pipe",
-          "start": 136.08,
-          "end": 151.59,
-          "speech_end": 151.04
+          "start": 120.88,
+          "end": 141.13,
+          "speech_end": 140.58
         },
         {
           "id": "source_sink",
-          "start": 151.59,
-          "end": 171.45,
-          "speech_end": 168.95
+          "start": 141.13,
+          "end": 162.81,
+          "speech_end": 160.31
         }
       ],
-      "end": 171.45
+      "end": 162.81
     },
     {
       "id": "alone",
-      "start": 171.45,
+      "start": 162.81,
       "cues": [
         {
           "id": "independent",
-          "start": 171.45,
-          "end": 190.82,
-          "speech_end": 190.27
+          "start": 162.81,
+          "end": 185.42,
+          "speech_end": 184.87
         },
         {
           "id": "agnostic",
-          "start": 190.82,
-          "end": 209.91,
-          "speech_end": 209.36
+          "start": 185.42,
+          "end": 207.11,
+          "speech_end": 206.56
         },
         {
           "id": "common_format",
-          "start": 209.91,
-          "end": 228.37,
-          "speech_end": 225.87
+          "start": 207.11,
+          "end": 229.61,
+          "speech_end": 227.11
         }
       ],
-      "end": 228.37
+      "end": 229.61
     },
     {
       "id": "stream",
-      "start": 228.37,
+      "start": 229.61,
       "cues": [
         {
           "id": "incremental",
-          "start": 228.37,
-          "end": 246.32,
-          "speech_end": 245.77
+          "start": 229.61,
+          "end": 250.34,
+          "speech_end": 249.79
         },
         {
           "id": "predict_online",
-          "start": 246.32,
-          "end": 262.06,
-          "speech_end": 258.06
+          "start": 250.34,
+          "end": 266.08,
+          "speech_end": 262.08
         },
         {
           "id": "seconds",
-          "start": 262.06,
-          "end": 277.63,
-          "speech_end": 277.08
+          "start": 266.08,
+          "end": 284.79,
+          "speech_end": 284.24
         },
         {
           "id": "acyclic",
-          "start": 277.63,
-          "end": 300.45,
-          "speech_end": 297.95
+          "start": 284.79,
+          "end": 309.35,
+          "speech_end": 306.85
         }
       ],
-      "end": 300.45
+      "end": 309.35
     },
     {
       "id": "order",
-      "start": 300.45,
+      "start": 309.35,
       "cues": [
         {
           "id": "order_matters",
-          "start": 300.45,
-          "end": 316.36,
-          "speech_end": 315.81
+          "start": 309.35,
+          "end": 329.92,
+          "speech_end": 329.37
         },
         {
           "id": "roles",
-          "start": 316.36,
-          "end": 337.78,
-          "speech_end": 335.28
+          "start": 329.92,
+          "end": 353.62,
+          "speech_end": 351.12
         }
       ],
-      "end": 337.78
+      "end": 353.62
     },
     {
       "id": "buys",
-      "start": 337.78,
+      "start": 353.62,
       "cues": [
         {
           "id": "reuse",
-          "start": 337.78,
-          "end": 356.09,
-          "speech_end": 355.54
+          "start": 353.62,
+          "end": 374.11,
+          "speech_end": 373.56
         },
         {
           "id": "change",
-          "start": 356.09,
-          "end": 374.74,
-          "speech_end": 374.19
+          "start": 374.11,
+          "end": 397.16,
+          "speech_end": 396.61
         },
         {
           "id": "throughput",
-          "start": 374.74,
-          "end": 394.32,
-          "speech_end": 391.82
+          "start": 397.16,
+          "end": 420.36,
+          "speech_end": 417.86
         }
       ],
-      "end": 394.32
+      "end": 420.36
     },
     {
       "id": "costs",
-      "start": 394.32,
+      "start": 420.36,
       "cues": [
         {
           "id": "slider",
-          "start": 394.32,
-          "end": 413.77,
-          "speech_end": 413.22
+          "start": 420.36,
+          "end": 442.17,
+          "speech_end": 441.62
         },
         {
           "id": "latency",
-          "start": 413.77,
-          "end": 434.5,
-          "speech_end": 433.95
+          "start": 442.17,
+          "end": 465.16,
+          "speech_end": 464.61
         },
         {
           "id": "errors",
-          "start": 434.5,
-          "end": 455.54,
-          "speech_end": 453.04
+          "start": 465.16,
+          "end": 489.04,
+          "speech_end": 486.54
         }
       ],
-      "end": 455.54
+      "end": 489.04
     },
     {
       "id": "limits",
-      "start": 455.54,
+      "start": 489.04,
       "cues": [
         {
           "id": "best_shot",
-          "start": 455.54,
-          "end": 473.73,
-          "speech_end": 473.18
+          "start": 489.04,
+          "end": 509.59,
+          "speech_end": 509.04
         },
         {
           "id": "shared_state",
-          "start": 473.73,
-          "end": 491.98,
-          "speech_end": 491.43
+          "start": 509.59,
+          "end": 530.2,
+          "speech_end": 529.65
         },
         {
           "id": "when",
-          "start": 491.98,
-          "end": 511.54,
-          "speech_end": 509.04
+          "start": 530.2,
+          "end": 551.26,
+          "speech_end": 548.76
         }
       ],
-      "end": 511.54
+      "end": 551.26
+    },
+    {
+      "id": "in_practice",
+      "start": 551.26,
+      "cues": [
+        {
+          "id": "shell_gpu",
+          "start": 551.26,
+          "end": 572.05,
+          "speech_end": 571.5
+        },
+        {
+          "id": "search_fraud",
+          "start": 572.05,
+          "end": 594.7,
+          "speech_end": 594.15
+        },
+        {
+          "id": "radio_genomes",
+          "start": 594.7,
+          "end": 618.63,
+          "speech_end": 618.08
+        },
+        {
+          "id": "common_thread",
+          "start": 618.63,
+          "end": 640.19,
+          "speech_end": 637.69
+        }
+      ],
+      "end": 640.19
     },
     {
       "id": "summary",
-      "start": 511.54,
+      "start": 640.19,
       "cues": [
         {
           "id": "recap_problem",
-          "start": 511.54,
-          "end": 530.99,
-          "speech_end": 530.44
+          "start": 640.19,
+          "end": 662.28,
+          "speech_end": 661.73
         },
         {
           "id": "recap_rules",
-          "start": 530.99,
-          "end": 550.22,
-          "speech_end": 549.67
+          "start": 662.28,
+          "end": 686.89,
+          "speech_end": 686.34
         },
         {
           "id": "recap_costs",
-          "start": 550.22,
-          "end": 570.42,
-          "speech_end": 567.92
+          "start": 686.89,
+          "end": 713.45,
+          "speech_end": 710.95
         }
       ],
-      "end": 570.42
+      "end": 713.45
     }
   ]
 }

@@ -83,7 +83,7 @@ test('each section ends in exactly one tutorial question and resumes only when r
   // WEBrick may answer a conditional MP3 range request with 304 instead of
   // the bytes Chromium needs after seeking. Keep the real narration while
   // removing cache validators from these range requests.
-  await page.route('**/assets/audio/observer-pattern.mp3', route => {
+  await page.route('**/assets/audio/observer-pattern.mp3*', route => {
     const headers = { ...route.request().headers() };
     if (headers.range) {
       delete headers['if-none-match'];

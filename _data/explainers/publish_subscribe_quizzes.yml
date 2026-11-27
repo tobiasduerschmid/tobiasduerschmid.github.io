@@ -185,6 +185,26 @@ when:
     2: >-
       A sold-out item is a fact to announce; many programs may want it, and the sender needs no
       reply.
+in_practice:
+  question: >-
+    Campus parking sensors announce each freed spot. A heat map, a parking-ticket predictor, and
+    lot-entrance signs all want those events, and more apps may follow. Why does publish-subscribe
+    fit?
+  options:
+    - Each sensor can call every app directly and wait for its reply
+    - Sensors publish without knowing who listens, so each new app only subscribes
+    - Sensors must check which apps are running before sending each event
+  correct_index: 1
+  explanation: >-
+    By publisher ignorance, the sensors announce each event once and never change; a new app, like a
+    new LinkedIn team or smart-home tool, only adds a subscription.
+  option_feedback:
+    0: >-
+      Calling each app directly ties every sensor to every app, so each new app would mean editing
+      the sensors, as Mochi's camera loop once did.
+    2: >-
+      Rule one says a publisher must not rely on the presence of subscribers; checking who is
+      running would tie the sensors to the apps again.
 summary:
   questions:
     - question: >-

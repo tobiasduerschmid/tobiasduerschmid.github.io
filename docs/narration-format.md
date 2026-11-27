@@ -425,8 +425,15 @@ and verification screenshots outside the repository.
   fullscreen, cue presentation, and print lifecycle. `mount` selects an audio
   or text-only session from the presence of authored media. Both support scene
   and cue navigation, refresh, pause, and fullscreen; audio sessions also expose
-  play and time seeking. Unchecked scenes play continuously. Printing opens the
-  transcript and its nested answer disclosures, then restores their state.
+  play and time seeking. Unchecked scenes play continuously. A checked scene
+  stops 0.3 s before its boundary, inside the last cue's silence: a timer due
+  at the next check's stop point is armed from the start of playback, because
+  a background tab runs no animation frames and `timeupdate` is too coarse at
+  higher speeds (`tests/narration-check-stop.spec.js`). The audio and captions
+  URLs carry `?v=` and the speech fingerprint, so no cache pairs a page's timing
+  with an older rendering; audio whose length differs from the timing makes
+  the player ask for a reload. Printing opens the transcript and its nested
+  answer disclosures, then restores their state.
 - `js/narration-player-controls.js`: the control bar's behavior, from the song
   player's own modules (`js/song-video/`): the same keys in every player (K or
   Space, the arrow keys, 0 to 9, C, F, and Escape, documented at

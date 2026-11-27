@@ -24,6 +24,12 @@ Like tutorials, a new lesson supplies data and a page referencing its ID; do not
   use `say: >-`. Keep accessible `visual` descriptions, explanations, predictions,
   citations, and case-study checkpoints beside the speech so reviewers can read
   the whole teaching sequence without navigating renderer code.
+- Ask for a prediction only when students can work out the answer from what
+  the lesson has taught, or when their first intuition is likely wrong;
+  otherwise state the answer. In speech, refer to a rule by its name
+  (independence, publisher ignorance), never by its number alone; a listener
+  can't look back to see which rule "rule two" was. The number may accompany
+  the name where the rule is defined, matching its card on screen.
 - `_data/narration_visuals/<id>.json` is the separate visual package. Its
   `presentation` selects assets, `resources` holds diagrams/slides/code metadata,
   and `scenes.<scene-id>` holds `state` and `cues.<cue-id>` rendering payloads.
@@ -168,7 +174,10 @@ one session contract. Audio sessions additionally expose `play` and `seekTo`.
 The transport owns the clock, cue text, motion, fullscreen, and transcript
 printing; the shared control bar applies saved captions and playback speed.
 Audio pauses at enabled checks and prediction gates; other cues play
-continuously. Keep every player paused until explicit playback. Step-mode continuation
+continuously. A check stops inside its section's closing silence, by a timer
+armed from playback start (frames stop in background tabs), so the next
+section is never heard. Audio and captions are versioned by the speech
+fingerprint. Keep every player paused until explicit playback. Step-mode continuation
 stays silent; check labels and single-question completion follow the same UI
 for every kind. Shared controls, timeline, and song modules keep their existing
 specialized responsibilities.

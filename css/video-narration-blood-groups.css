@@ -439,9 +439,9 @@
 
 /* A value wrapped in boxes inside boxes. */
 .bg-wraps { position: absolute; }
-.bg-wrap { position: relative; padding: 36px 14px 14px; border: 3px dashed var(--vn-dashed); border-radius: 12px; }
+.bg-wrap { position: relative; padding: 4px 14px 14px; border: 3px dashed var(--vn-dashed); border-radius: 12px; }
 .bg-wraps > .bg-wrap { background: var(--vn-column); }
-.bg-wrap-name { position: absolute; left: 12px; top: 4px; color: var(--vn-gold-ink); font-family: var(--font-mono); font-size: 20px; font-weight: 800; white-space: nowrap; }
+.bg-wrap-name { display: block; margin: 0 0 6px -2px; color: var(--vn-gold-ink); font-family: var(--font-mono); font-size: 20px; font-weight: 800; white-space: nowrap; }
 .bg-wrap-core { display: inline-block; padding: 6px 14px; border-radius: 8px; background: var(--bg-paper); color: var(--bg-ink); font-family: var(--font-mono); font-size: 24px; font-weight: 800; }
 
 /* Print and the notes page: the stage is always light there

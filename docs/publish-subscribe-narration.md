@@ -19,17 +19,37 @@ Pipes and Filters lessons) and the wall kit, styled by
   camera, and a hung dashboard freezes the robot. The redesign publishes
   frames to a topic; the rules scenes use the same programs; the consequence
   scenes replay a topic rename, an emergency stop, and a crowded topic list.
+- **Notation.** Every diagram is a UML frame in ArchUML's notation
+  (`js/video-narration/uml-kit.js`): its tab names its view, and its key
+  explains its symbols. In the C&C views each program is a component with
+  ports. A topic is a connector, never a component: `arch.topic` draws it as
+  a rounded channel labeled «topic» and its name, and the key's pill glyph
+  matches it. Attachments run between a component's port and the channel:
+  `toTopic` for a publisher, `fromTopic` for a subscriber, so the port is
+  always on the component's end and never on the topic. Direct calls are
+  call connectors with a port on both components, and the Observer
+  comparison is a C&C view of objects and calls.
 - **Order.** Motivation (lunch by robot; direct calls and their two pains);
   rules (topic, publishers, subscribers, queues; publisher and subscriber
   ignorance, with the difference from Observer; one-way propagation and
   asynchronous delivery); consequences (extensibility, run-time flexibility,
   replaceable parts; robustness and the silent renamed topic; what still
   couples programs; understandability, ordering, latency, a central broker;
-  when to call directly instead); recap.
-- **Predictions.** Which code changes to add the counter; what happens to Mochi
-  when the dashboard hangs after the redesign; what the planner does, and what
-  reports an error, after the rename. Each pauses four seconds and is answered
-  by the next cue.
+  when to call directly instead); in practice (six real systems); recap.
+- **Predictions.** What happens to Mochi when the dashboard hangs after the
+  redesign, which students can derive from rule four; and what the planner
+  does, and what reports an error, after the rename, where most expect an
+  error. Each pauses four seconds and is answered by the next cue. The
+  motivation states that a new counter means editing the camera, instead of
+  asking.
+- **In practice.** Six systems from six domains, each in its own C&C view:
+  Android's airplane-mode broadcast, Slack's channel servers and gateways,
+  Roblox's cross-server messages, Kafka at LinkedIn, MQTT in a smart home, and
+  IEC 61850 trip messages between substation relays. The closing cue ties
+  consumers that come and go to rules one and two, and three ways of living
+  without a delivery receipt to rules one and three. Every claim was checked
+  against the systems' own documentation; see the table below and each cue's
+  `source`.
 - **Checks.** Every section ends in a check on a new system (a shuttle tracker,
   a parking app, a smart dorm, a doorbell, a campus events app, a food-ordering
   backend), and the summary quiz follows one new system, a campus parking
@@ -47,6 +67,13 @@ Pipes and Filters lessons) and the wall kit, styled by
 - **Speech.** No authors, books, or dates are spoken. The four rules are named
   with the lecture's words. Topic names appear on screen in code type and are
   spoken in words ("the camera image topic").
+  After a rule's definition, the speech refers to it by name ("publisher
+  ignorance", "asynchronous publishing"), never by number alone; numbers stay
+  on the screen's rule cards.
+  A quality attribute on screen is named aloud by its term as its card or
+  pan item arrives ("Robustness: nobody confirms delivery"), and the reason is given in that quality's own terms, not a
+  metaphor. The summary's trade-off (`ArchKit.tradeoff`) lists each quality
+  with the rule it follows from and why, in the narration's order.
 
 ## Sources
 
@@ -83,6 +110,18 @@ Call-Return Styles.
 The rule of thumb "publish facts, call for requests that need an answer or a
 guarantee" is this lesson's own summary of the robustness and request-reply
 points above; no source states it in those words.
+
+### In practice
+
+| Claim | Sources |
+| --- | --- |
+| Android broadcasts resemble publish-subscribe; the system routes the airplane-mode broadcast to registered apps, and the sending code names none | Android broadcasts overview and implicit-broadcast exceptions; `ConnectivityService.setAirplaneMode`. |
+| A Slack channel server sends each message to every gateway subscribed to the channel | Slack Engineering, Real-time Messaging, 2023. |
+| Roblox servers publish to topics; delivery typically within one to two seconds, best effort and not guaranteed | Roblox MessagingService reference; cross-server messaging guide. |
+| LinkedIn's activity events on Kafka topics; new consumers need no producer change; consumers rewind to re-read about a week of data | Kreps, Narkhede, and Rao 2011; Goodhope et al. 2012; Kreps 2013, The Log. |
+| MQTT servers deliver each message to every matching subscription; a sensor publishes readings to a topic | OASIS MQTT 5.0, section 3.3.4; Home Assistant MQTT sensor; Zigbee2MQTT topics. |
+| GOOSE is publisher/subscriber; trips must arrive within 3 ms; no acknowledgement, so messages repeat, then slow to a heartbeat | IEC 61850-7-2 preview; Dolezilek et al. 2017; Loenders, Beerten, and Van Hertem 2018; Bhamare, ABB. |
+
 
 References:
 

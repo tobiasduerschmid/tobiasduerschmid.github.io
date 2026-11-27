@@ -64,7 +64,7 @@ test('narration plays and pauses with synchronized animation progress', async ({
   const position = animation.getByRole('slider', { name: 'Animation position' });
   await expect.poll(async () => Number(await position.inputValue())).toBeGreaterThan(0.2);
   const audio = animation.getByLabel('Node.js narration by Fish Audio Drama 3');
-  expect(await audio.evaluate((element) => element.currentSrc)).toMatch(/nodejs-basics\.mp3$/);
+  expect(await audio.evaluate((element) => element.currentSrc)).toMatch(/nodejs-basics\.mp3(\?v=[0-9a-f]+)?$/);
   expect(await audio.evaluate((element) => element.duration)).toBeCloseTo(timing.duration, 0);
   await animation.getByRole('button', { name: 'Pause narration' }).click();
   await expect(animation.getByRole('button', { name: 'Play narration' })).toBeVisible();

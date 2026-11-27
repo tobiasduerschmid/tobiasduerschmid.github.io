@@ -1,22 +1,25 @@
 // The architectural-style video narrations (Publish-Subscribe, Layers, Pipes
 // and Filters): every cue shows its stage named by its visual and rests on
 // its picture; no picture overlaps, crowds, or leaves the stage; text keeps
-// 4.5:1 on both blueprints; a theme switch repaints like a fresh video; and
-// the player, quiz, and reading views stay accessible on desktop and phone.
+// 4.5:1 on both blueprints; every UML diagram names its view, carries a key,
+// and keeps its words inside its shapes; a theme switch repaints like a fresh
+// video; and the player, quiz, and reading views stay accessible on desktop
+// and phone.
 const { loadStory, loadRegistry } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const { seekNarration, setSiteTheme, serveAudioRanges } = require('./helpers/narration-player');
-const { WALL_SKIPPED, stageTextProblems, crowdedBoxes, stageContrastProblems, stagePaint } = require('./helpers/video-narration-stage');
+const { WALL_SKIPPED, stageTextProblems, crowdedBoxes, stageContrastProblems, diagramNotationProblems, textSpillProblems, attachmentPortProblems, lineContrastProblems, stagePaint } = require('./helpers/video-narration-stage');
 const { readFileSync } = require('node:fs');
 const yaml = require('js-yaml');
 
-// Wires and pipes join the pieces they connect; tokens travel over them; a
-// cross lies over what it strikes; a topic's channel runs under the cards that
-// publish into it and subscribe from it; Mochi and the walkway's props sit on
-// the walkway; a building's section lines frame its floors; and a speech
+// Wires, pipes, and UML connectors join the pieces they connect, and a
+// connector's stereotype label sits beside its line; tokens travel over them;
+// a cross lies over what it strikes; a topic's channel runs under the cards
+// that publish into it and subscribe from it; a diagram's frame encloses its
+// elements; Mochi and the walkway's props sit on the walkway; and a speech
 // bubble points at who speaks. These touch other pieces on purpose.
-const ARCH_SKIPPED = `${WALL_SKIPPED}, .ak-wire, .ak-token, .ak-cross, .ak-topic, .sk-speech, .ps-robot, .ps-walk-prop, .pf-pipe, .ls-frame`;
+const ARCH_SKIPPED = `${WALL_SKIPPED}, .ak-wire, .ak-token, .ak-cross, .ak-topic, .sk-speech, .ps-robot, .ps-walk-prop, .pf-pipe, .uk-connector, .uk-label, .uk-frame`;
 
 const LESSONS = {
   publish_subscribe: {
@@ -132,12 +135,36 @@ for (const [topic, spec] of Object.entries(LESSONS)) {
         await openStage(page, dark);
         expect(await problemsAtRest(page, stageContrastProblems)).toEqual({});
       });
+
+      test(`every diagram line keeps 3:1 against what it crosses on the ${dark ? 'dark blueprint' : 'light whiteprint'}`, async ({ page }) => {
+        test.setTimeout(120000);
+        await openStage(page, dark);
+        expect(await problemsAtRest(page, lineContrastProblems)).toEqual({});
+      });
     }
 
     test('every cue keeps a visible gap between its cards, panels, and readouts', async ({ page }) => {
       test.setTimeout(120000);
       await openStage(page);
       expect(await problemsAtRest(page, crowdedBoxes, ARCH_SKIPPED)).toEqual({});
+    });
+
+    test('every diagram names its view and carries a key, and no note hides its outline', async ({ page }) => {
+      test.setTimeout(120000);
+      await openStage(page);
+      expect(await problemsAtRest(page, diagramNotationProblems)).toEqual({});
+    });
+
+    test('no words spill out of the card, tag, label, or shape they are written on', async ({ page }) => {
+      test.setTimeout(120000);
+      await openStage(page);
+      expect(await problemsAtRest(page, textSpillProblems)).toEqual({});
+    });
+
+    test('every attachment meets a component at a port, and no topic has one', async ({ page }) => {
+      test.setTimeout(120000);
+      await openStage(page);
+      expect(await problemsAtRest(page, attachmentPortProblems)).toEqual({});
     });
 
     // Switching theme after the stage is built must paint exactly the colors a

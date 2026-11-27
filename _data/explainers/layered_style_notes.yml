@@ -16,9 +16,8 @@ intro-team:
 tangle-update:
   - "One function mixes game rules, physics, and device calls"
   - "Laptop keyboard, audio driver, and graphics library, line by line"
-tangle-predict_port:
-  - "**Predict:** to port the game, which of its 40 files change?"
 tangle-ripple:
+  - "All 40 files mix game rules with device calls"
   - "Device calls sit in nearly every file: 312 calls in 38 files"
   - "Porting means rewriting; a second game starts from zero"
 tangle-mud:
@@ -27,20 +26,30 @@ tangle-mud:
 stack-levels:
   - "The same feature exists at several **levels of abstraction**"
   - "Jump, then physics, then graphics, then device bytes"
+stack-abstraction:
+  - "An **abstraction** states the what and hides the how"
+  - "Lower levels know less: bodies, then images, then bytes"
+  - "Knowing less of the game, a lower level serves more programs"
 stack-layers:
   - "**Layer:** modules at one level of abstraction, serving the layer above"
+  - "**Module view:** each layer is a UML **package**, stereotyped «layer»"
   - "Pearl Dash: game rules, engine, platform, drivers"
 stack-translate:
   - "Each layer turns one request into several simpler ones below"
   - "Each layer is a **virtual machine** for the layer above"
 allowed-uses:
   - "**Allowed-to-use** relation: decided before anyone writes an import"
+  - "Drawn as a dashed **dependency** arrow from one layer to another"
   - "A **uses** B: A is correct only if B is present and correct"
 allowed-rules:
   - "**Rule 1:** every module belongs to exactly one layer"
   - "**Rule 2:** use only your own layer or the one directly below"
   - "**Rule 3:** two layers at least, typically three or more"
   - "So: **never up**"
+allowed-why_rules:
+  - "Rule 2 → each layer relies only on the **interface** beneath it"
+  - "Inner changes stay **hidden** from upper layers while that interface holds"
+  - "Never up → lower layers are game-agnostic, so other programs **reuse** them"
 allowed-predict_upward:
   - "**Predict:** may the engine import the game's score module? At what cost?"
 allowed-upward_cost:
@@ -57,16 +66,22 @@ relaxed-strictness:
   - "**Relaxed layering:** any lower layer"
   - "**Layer bridging:** a skip in a strict design, documented as an exception"
 relaxed-tiers:
-  - "**Layers** organize code (a module view)"
-  - "**Tiers** are separate running processes, like a game and its server; layers run together"
+  - "**Layers** group code (module view); all four run together on one console"
+  - "**Tier:** a group of running components, usually per machine"
+  - "Components talk within their tier or to the next tier only"
+relaxed-three_tiers:
+  - "**Three tiers:** presentation (the game), logic (a cloud service), data (a database)"
+  - "Only the logic tier reads and writes the scores"
+  - "Each tier can be secured, scaled, and changed separately"
 port-predict_console:
   - "**Predict:** which layers change for the console, and which stay?"
 port-portability:
   - "Only the bottom two: a new platform layer, same interface"
+  - "Rule 2: the engine relies only on that interface, so nothing above changes"
   - "**Portability** (promoted): device details live in the lowest layers"
 port-modify_reuse:
-  - "**Modifiability** (promoted): swap a layer's insides behind its interface"
-  - "**Reusability** (promoted): a second game shares the lower layers"
+  - "**Modifiability** (promoted, Rule 2): swap a layer's insides behind its interface"
+  - "**Reusability** (promoted, never up): a second game shares the lower layers"
 port-everyday:
   - "Network stacks are layered: application, transport, internet, link"
   - "Apps work over Wi-Fi, cable, or cellular; only the link differs"
@@ -75,10 +90,12 @@ port-team_test:
   - "**Testability:** test game rules on a fake engine"
 costs-overhead:
   - "60 frames/s gives about 16.7 ms per frame"
+  - "Rule 2: each request passes through all four layers"
   - "Each layer translates and copies: **performance** (inhibited)"
 costs-bridge:
-  - "A bridge to the laptop's driver restores the frame rate"
-  - "But that code only runs on the laptop: speed traded for portability"
+  - "A **bridge** bends Rule 2: pearl drawing calls the laptop's driver"
+  - "The frame rate recovers, but that code only runs on the laptop"
+  - "Speed traded for **portability**"
 costs-upfront:
   - "**Up-front cost:** choosing levels, designing interfaces, keeping the rules"
   - "Worth it for code that must live on several devices for years"
@@ -86,9 +103,22 @@ leaks-leak:
   - "Same interface, but the console draws small images more slowly"
   - "An interface includes the **timing** layers above rely on"
 leaks-granularity:
-  - "Too few layers: a port reaches deep inside"
+  - "Too few layers: porting reaches deep inside"
   - "Too many: extra hand-offs and edits on many floors"
   - "Split where things change for different reasons, at different speeds"
+in_practice-network_phone:
+  - "**Internet suite:** apps reuse transports; links change underneath"
+  - "**Android:** a new chip needs a new HAL module and driver, not new apps"
+in_practice-browser_database:
+  - "**Chrome:** build tooling rejects upward includes; news goes up via interfaces"
+  - "**SQLite:** swap the bottom (VFS) layer to port or to test failures"
+in_practice-car_spacecraft:
+  - "**AUTOSAR:** a written allowed-to-use matrix; only complex drivers bypass the microcontroller layer"
+  - "**NASA:** one platform layer hides the flight computer; same apps on desktop and in orbit"
+in_practice-common_thread:
+  - "Hardware, OSes, and vendors evolve **independently** of the code on top"
+  - "Most **relax** Rule 2: Chromium and SQLite allow skipping down"
+  - "AUTOSAR, Android, and NASA **document** their exceptions"
 summary-recap_problem:
   - "Mud: rules and device calls mixed, so porting rewrote everything"
   - "Layers: grouped by abstraction, each a machine for the one above"
@@ -96,5 +126,10 @@ summary-recap_rules:
   - "One layer per module; use only downward; never up"
   - "News goes up through callbacks; layers are code, tiers are processes"
 summary-recap_tradeoff:
-  - "Promoted: portability, modifiability, reusability"
-  - "Inhibited: performance and up-front design effort"
+  - "**Promoted:** portability, modifiability, and reusability, all from Rule 2"
+  - "A new platform touches only the bottom layers; changes stay behind interfaces"
+  - "Lower layers depend on nothing above them, so other programs reuse them"
+summary-recap_costs:
+  - "**Inhibited:** performance, since each request passes through every layer"
+  - "**Up-front cost:** levels and interfaces are designed before features"
+  - "A bridge regains performance and gives up portability"

@@ -9,6 +9,10 @@
   // speech starts right at the boundary. Checks run once per frame and output is
   // buffered, so stop inside that silence rather than at the boundary itself.
   const SECTION_END_LEAD = 0.3;
+  // A rendering's audio and timing differ in length by a few encoder frames; a
+  // larger difference means the audio comes from another rendering of the speech.
+  const DURATION_TOLERANCE = 0.75;
+  const STALE_AUDIO = 'This narration’s audio was updated after the page loaded. Reload the page to keep the audio, pictures, and pauses in step.';
 
   // Full screen uses the standard API, Safari's prefixed one, or, where a
   // browser cannot show an element full screen (Safari on iPhone), a mode the
@@ -225,6 +229,9 @@
     const fullscreen = fullscreenControl(root, fullscreenTargetOf(root, options));
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
+    let stopTimer = 0;
+    // Set once the audio turns out to come from another rendering; the warning outlives starting playback.
+    let staleAudio = false;
     let position = 0;
     let currentScene = -1;
     let currentCue = -1;
@@ -278,6 +285,16 @@
       labelControl(playButton, audio.paused ? 'Play narration' : 'Pause narration', 'is-playing', !audio.paused);
     }
 
+    // Stops at the end of a checked section and opens its check.
+    function stopAtCheck(index) {
+      disarmStop();
+      audio.pause();
+      // Keep the completed section on screen while its checkpoint is open.
+      audio.currentTime = Math.max(0, timing.scenes[index].end - 0.002);
+      render(audio.currentTime);
+      options.onSectionEnd(index);
+    }
+
     function renderPlayback(time) {
       const boundary = currentScene >= 0 ? timing.scenes[currentScene].end : Infinity;
       const checkAt = options.shouldCheck(currentScene) ? boundary - SECTION_END_LEAD : Infinity;
@@ -294,15 +311,45 @@
         return true;
       }
       if (options.shouldCheck(currentScene) && time + TIME_EPSILON >= boundary - SECTION_END_LEAD) {
-        audio.pause();
-        // Keep the completed section on screen while its checkpoint is open.
-        audio.currentTime = Math.max(0, boundary - 0.002);
-        render(audio.currentTime);
-        options.onSectionEnd(currentScene);
+        stopAtCheck(currentScene);
         return true;
       }
       render(time);
+      armStop();
       return false;
+    }
+
+    // The first check the learner will stop at whose stop point lies at or
+    // after `time`.
+    function nextStop(time) {
+      return options.checkScenes
+        .filter(index => options.shouldCheck(index))
+        .map(index => ({ index, at: timing.scenes[index].end - SECTION_END_LEAD }))
+        .filter(stop => stop.at + TIME_EPSILON >= time)
+        .sort((a, b) => a.at - b.at)[0] || null;
+    }
+
+    // Frames stop in a hidden tab, and timeupdate fires only a few times a
+    // second, too coarse at higher speeds to stop before the next section. So
+    // from the moment playback starts, a timer is due at the next check's stop
+    // point; it is armed again until playback reaches that point. When it is
+    // due, a prediction the playback crossed still holds first.
+    function armStop() {
+      if (stopTimer || audio.paused || pendingSeek !== null) return;
+      const stop = nextStop(audio.currentTime);
+      if (!stop) return;
+      const wait = Math.max(0, (stop.at - audio.currentTime) / (audio.playbackRate || 1));
+      stopTimer = setTimeout(() => {
+        stopTimer = 0;
+        if (audio.paused || pendingSeek !== null) return;
+        if (audio.currentTime + TIME_EPSILON < stop.at) armStop();
+        else if (!renderPlayback(audio.currentTime) && options.shouldCheck(stop.index)) stopAtCheck(stop.index);
+      }, wait * 1000);
+    }
+
+    function disarmStop() {
+      clearTimeout(stopTimer);
+      stopTimer = 0;
     }
 
     function tick() {
@@ -344,7 +391,7 @@
       if (position >= timing.duration - 0.1) seekTo(0);
       try {
         await audio.play();
-        status.textContent = '';
+        status.textContent = staleAudio ? STALE_AUDIO : '';
       } catch (error) {
         status.textContent = 'Narration could not play. You can still select scenes, read the transcript, or download the audio.';
       }
@@ -391,14 +438,24 @@
         render(pendingSeek);
         pendingSeek = null;
       }
+      // Audio from another rendering would play out of step with the pictures and stop mid-sentence at checks.
+      if (Number.isFinite(audio.duration) && Math.abs(audio.duration - timing.duration) > DURATION_TOLERANCE) {
+        staleAudio = true;
+        status.textContent = STALE_AUDIO;
+      }
     });
     audio.addEventListener('play', updatePlayButton);
     audio.addEventListener('playing', () => {
       updatePlayButton();
       stopFrames();
       if (!document.hidden) frame = requestAnimationFrame(tick);
+      armStop();
     });
-    audio.addEventListener('pause', () => { stopFrames(); updatePlayButton(); });
+    audio.addEventListener('pause', () => { stopFrames(); disarmStop(); updatePlayButton(); });
+    // A new position or speed moves the stop.
+    audio.addEventListener('seeking', disarmStop);
+    audio.addEventListener('seeked', armStop);
+    audio.addEventListener('ratechange', () => { disarmStop(); armStop(); });
     audio.addEventListener('waiting', stopFrames);
     audio.addEventListener('timeupdate', () => {
       if (pendingSeek === null) {

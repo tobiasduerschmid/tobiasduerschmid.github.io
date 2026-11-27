@@ -164,6 +164,10 @@
 :is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room :is(.dr-north, .dr-lamp-joint) { fill: rgba(30, 79, 156, 0.3); }
 :is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-lamp-shade { fill: rgba(30, 79, 156, 0.08); stroke: rgba(30, 79, 156, 0.34); }
 :is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-lamp-rim { stroke: rgba(168, 118, 0, 0.45); }
+/* On the light blueprint, the dark gold accents read as olive against the
+   blue paper: accent ink is UCLA Blue and lit highlights UCLA Darker Blue.
+   Dark mode keeps its gold. */
+:is(html:not(.dark-mode), html.print-light-mode) .stage.theme-drafting-room { --vn-gold-ink: #2774ae; --vn-lit: #005587; }
 :is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-lettering { fill: rgba(30, 79, 156, 0.4); }
 :is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-mote { background: rgba(30, 79, 156, 0.3); }
 :is(html:not(.dark-mode), html.print-light-mode) .theme-drafting-room .dr-vignette { background: radial-gradient(ellipse at 50% 45%, transparent 60%, rgba(30, 60, 110, 0.1) 100%); }

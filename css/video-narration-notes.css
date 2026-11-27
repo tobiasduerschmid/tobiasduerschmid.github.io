@@ -201,6 +201,9 @@ html body.vn-notes-page {
   .vn-note-still :is(.sk-arrow--dashed, .ak-wire--dashed)::before { border-top-style: dashed; }
   .vn-note-still .ak-wire--dashed::before { border-top-width: 4px; }
   .vn-note-still .sk-balance-beam::before { border-top: 16px solid var(--vn-line); }
+  /* A wavy text decoration prints as bitmap tiles; a code smell's squiggle
+     prints as a dotted border in its red instead. */
+  .vn-note-still .ak-code-row.is-smell .ak-code-statement { text-decoration: none; border-bottom: 3px dotted #ff6b7d; }
   .vn-note-still .us-card { background: linear-gradient(170deg, #fffaf0, var(--paper) 60%, #f6ead0) !important; }
   .vn-note-still .us-card::before { content: ''; position: absolute; top: 0; bottom: 0; left: calc(var(--margin) - 2px); border-left: 2px solid rgba(230, 60, 80, 0.55); }
   /* Keep room for short handwritten notes without a large empty block. */

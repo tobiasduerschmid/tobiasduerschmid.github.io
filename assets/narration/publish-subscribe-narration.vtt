@@ -17,129 +17,145 @@ direct_calls-1
 Here's the camera driver's loop. For every frame, it calls each program by name: the detector, the logger, the dashboard, one after another. Each call waits until that program returns. The camera knows exactly who gets its frames, and in what order.
 
 direct_calls-2
-00:01:12.150 --> 00:01:27.170
-Before you write a line, predict. To add the pedestrian counter, which code has to change: only the new counter, or the camera driver as well? And who has to test that change?
+00:01:12.150 --> 00:01:29.380
+Adding the pedestrian counter changes the camera driver too: you add a call to the camera's loop, then retest and redeploy the most critical code on the robot. The camera team now owns a counting feature it never asked for, and every future fan means another edit.
 
 direct_calls-3
-00:01:27.170 --> 00:01:43.040
-The camera driver too. To add a listener, you add a call to the camera's loop, then retest and redeploy the most critical code on the robot. The camera team now owns a counting feature it never asked for, and every future fan means another edit.
-
-direct_calls-4
-00:01:43.040 --> 00:02:01.830
+00:01:29.380 --> 00:01:48.170
 It gets worse. Last week the dashboard's server hung, so the call to show a frame never returned. The camera waited at that line, the detector got no new frames, and Mochi froze in the middle of the walkway, in front of a campus tour. One slow listener stalled the whole robot.
 
-direct_calls-5
-00:02:01.830 --> 00:02:20.250
+direct_calls-4
+00:01:48.170 --> 00:02:06.590
 So here's what you need. The camera should announce each frame once, without knowing who wants it, and never wait for anyone. That's the publish-subscribe style. Let's meet its parts and its four rules, then see what those rules buy, and what they cost.
 
 topic-1
-00:02:20.250 --> 00:02:37.980
-Publish-subscribe puts something in the middle: a topic, a named channel run by the messaging infrastructure. The camera becomes a publisher. For each frame, it publishes once to the camera image topic, and goes straight back to grabbing the next frame. It calls no one by name.
+00:02:06.590 --> 00:02:28.240
+Publish-subscribe introduces an intermediary: a topic, a named channel managed by the messaging infrastructure. In a component-and-connector view, each program is a component, and the topic is the connector between them. The camera becomes a publisher: it announces each frame once to the camera image topic and calls no other program.
 
 topic-2
-00:02:37.980 --> 00:02:56.110
-On the other side sit the subscribers. The detector, logger, and dashboard each tell the infrastructure: I want the camera image topic, and here's my callback. Each gets its own message queue. When a frame is published, a copy lands in every queue, and each callback runs.
+00:02:28.240 --> 00:02:47.370
+The other components are subscribers. The detector, logger, and dashboard each register with the infrastructure for the camera image topic and supply a callback. Each subscriber receives its own message queue. When a frame is published, the connector places a copy in every queue, and each callback runs.
 
 topic-3
-00:02:56.110 --> 00:03:11.100
-Now take your ticket again. The pedestrian counter subscribes to the same topic, and that's the whole change. Not one line of the camera driver moves. With three subscribers, four, or none at all, the camera's code is exactly the same.
+00:02:47.370 --> 00:03:02.840
+Now revisit the ticket. The pedestrian counter subscribes to the same topic, and that is the entire change: not one line of the camera driver is modified. With three subscribers, four, or none, the camera's code remains identical.
 
 topic-4
-00:03:11.100 --> 00:03:33.260
-A program can play both roles. The detector subscribes to camera images and publishes obstacles. The planner subscribes to obstacles and publishes driving commands, which the motor controller subscribes to. Every arrow now runs from a program to a topic, or from a topic to a program, never program to program.
+00:03:02.840 --> 00:03:23.600
+A component may play both roles. The detector subscribes to camera images and publishes obstacles. The planner subscribes to obstacles and publishes driving commands, to which the motor controller subscribes. Every attachment now connects a component to a topic; no component calls another directly.
 
 ignorance-1
-00:03:33.260 --> 00:03:53.230
-Now the rules, the part that gives the style its power. Rule one, publisher ignorance: a publisher must not rely on the presence or identity of any subscriber. The camera works the same whether five programs listen or none. It fires and forgets, and its correctness never depends on a listener.
+00:03:23.600 --> 00:03:45.950
+Four rules give the style its power, and each exists for a reason. Rule one, publisher ignorance: a publisher must not rely on the presence or identity of any subscriber. The camera behaves identically whether five components listen or none. Consequently, subscribers can be added or removed without modifying the publisher.
 
 ignorance-2
-00:03:53.230 --> 00:04:11.920
-Rule two, subscriber ignorance: a subscriber must not rely on who published. The planner subscribes to obstacles, not to the detector. So when the team swaps in a new detector that uses a laser scanner, publishing the same obstacles topic, the planner never notices the change.
+00:03:45.950 --> 00:04:07.420
+Rule two, subscriber ignorance: a subscriber must not rely on the identity of the publisher. The planner subscribes to obstacles, not to the detector. The rule exists so that publishers remain replaceable: when the team substitutes a laser-based detector that publishes the same obstacles topic, the planner is unaffected.
 
 ignorance-3
-00:04:11.920 --> 00:04:32.320
-If you know the Observer pattern, this looks familiar, with one big difference. An observed subject keeps its own list of observers and calls each one. Here, neither side holds a reference to the other. The topic keeps the list, and it can even run in another process, or on another machine.
+00:04:07.420 --> 00:04:31.680
+The Observer pattern resembles this, with one important difference. Observer operates between objects within one program: the subject keeps its own list of observers and calls each one. In publish-subscribe, neither side holds a reference to the other. The topic maintains the list, and it may even run in another process or on another machine.
 
 one_way-1
-00:04:32.320 --> 00:04:51.630
-Rule three, one-way propagation: information flows from publisher to subscriber, and never back. Publishing returns no value. The camera can't ask, did anyone see an obstacle? If an answer exists at all, it travels as a new event, on another topic, to whoever subscribes.
+00:04:31.680 --> 00:04:54.690
+Rule three, one-way propagation: information flows from publisher to subscriber and never back, so publishing returns no value. The rule exists because a publisher that awaited an answer would again depend on its subscribers. The camera cannot ask whether anyone saw an obstacle; any answer travels as a new event on another topic.
 
 one_way-2
-00:04:51.630 --> 00:05:08.720
-Rule four, asynchronous: a publisher never blocks. Publishing drops a copy of the frame into each subscriber's queue and returns right away. Each subscriber empties its own queue at its own pace, while the camera keeps sending thirty frames a second.
+00:04:54.690 --> 00:05:14.700
+Rule four, asynchronous publishing: a publisher never blocks. Publishing places a copy of the frame in each subscriber's queue and returns immediately, so no subscriber can delay the publisher. Each subscriber drains its own queue at its own pace, while the camera continues at thirty frames a second.
 
 one_way-3
-00:05:08.720 --> 00:05:25.040
+00:05:14.700 --> 00:05:31.020
 Now replay last week's disaster. The dashboard's server hangs again, and its callback stops returning. Predict: what happens to Mochi this time? And what happens to the frames meant for the dashboard?
 
 one_way-4
-00:05:25.040 --> 00:05:44.780
-Mochi keeps rolling. The camera still publishes, and the detector still gets every frame. Only the dashboard falls behind. Its queue holds ten frames; when it's full, the oldest frames are dropped to make room. A slow subscriber now hurts no one but itself.
+00:05:31.020 --> 00:05:52.920
+Mochi keeps moving. The camera still publishes, and the detector still receives every frame. Only the dashboard falls behind. Its queue holds ten frames; when it is full, the oldest frames are dropped. Because publishing is asynchronous, a slow subscriber now harms no component but itself.
 
 buys-1
-00:05:44.780 --> 00:06:03.270
-Now, the consequences, starting with what the rules buy. First, extensibility. Campus planning's counter, a battery monitor, a recorder for the research lab: each one just subscribes. Publisher ignorance is what makes adding a subscriber cost nothing on the publishing side.
+00:05:52.920 --> 00:06:10.970
+Now the consequences, each traceable to a rule. First, extensibility. Campus planning's counter, a battery monitor, and the research lab's recorder each simply subscribe. Because of publisher ignorance, adding a subscriber requires no change to any publisher.
 
 buys-2
-00:06:03.270 --> 00:06:22.920
-Second, run-time flexibility. Connections are made late, while the robot runs. When an operator opens the dashboard, it subscribes to the camera topic; when the operator closes it, it unsubscribes. The research lab's recorder joins only during experiments. Mochi never restarts for any of it.
+00:06:10.970 --> 00:06:32.500
+Second, run-time flexibility. Since publishers do not rely on who is listening, connections can be established late, while the robot runs. When an operator opens the dashboard, it subscribes to the camera topic; when the operator closes it, it unsubscribes. The recorder joins only during experiments, and Mochi never restarts.
 
 buys-3
-00:06:22.920 --> 00:06:42.440
-Third, replaceable parts. Thanks to subscriber ignorance, any publisher can be swapped for one that sends the same events, like the laser detector. And because publishing never waits, a slow or crashed subscriber can't stall the rest. Each benefit traces back to a rule.
+00:06:32.500 --> 00:06:54.740
+Third, replaceability and fault isolation. Because of subscriber ignorance, any publisher can be replaced by one that sends the same events, such as the laser detector. And because publishing never waits, a slow or crashed subscriber cannot stall the others. Each benefit follows directly from one of the four rules.
 
 nobody_listens-1
-00:06:42.440 --> 00:07:02.030
-Now the costs. A teammate tidies up names, and the detector now publishes to a topic called obstacles, instead of obstacle list. The planner still subscribes to the old name. Everything compiles. Every program starts. Read on its own, each file looks correct, and the change gets approved.
+00:06:54.740 --> 00:07:14.830
+The same rules also impose costs. A teammate renames a topic: the detector now publishes to obstacles instead of obstacle list, but the planner still subscribes to the old name. Everything compiles, and every component starts. Read in isolation, each file looks correct, and the change is approved.
 
 nobody_listens-2
-00:07:02.030 --> 00:07:18.490
+00:07:14.830 --> 00:07:31.290
 So predict. On the next delivery, a skateboarder cuts across Mochi's path, and the detector spots the board right away. What does the planner do about it? And which of Mochi's programs reports an error?
 
 nobody_listens-3
-00:07:18.490 --> 00:07:38.940
-The planner does nothing: it never hears about the skateboard. And no program reports an error. The detector publishes into a topic nobody reads, and by publisher ignorance, it can't tell. Only the safety bumper stops Mochi. A renamed topic like this hid for two months in a popular self-driving framework.
+00:07:31.290 --> 00:07:53.020
+The planner does nothing: it never learns of the skateboard. And no component reports an error. The detector publishes into a topic that nobody reads, and by publisher ignorance, it cannot detect this. Only the safety bumper stops Mochi. A renamed topic of this kind remained hidden for two months in a popular self-driving framework.
 
 nobody_listens-4
-00:07:38.940 --> 00:08:01.140
-So what still couples the programs? Each topic's name, and the format and meaning of its events. Change any of them, and every subscriber must follow, or it quietly goes wrong. And unlike a direct call, which fails loudly when its receiver is missing, publishing never learns whether anyone got the event.
+00:07:53.020 --> 00:08:17.640
+What still couples the components? Each topic's name, and its events' format and meaning; change one, and every subscriber must follow or quietly fail. That is the cost to robustness: a direct call fails loudly when its receiver is missing, but under publisher ignorance and one-way propagation, a publisher never learns who received an event.
 
 who_talks-1
-00:08:01.140 --> 00:08:19.690
-The second cost is understandability. The camera's old loop listed every receiver in one place. Now that answer is scattered: to learn who gets frames, you search every program for the topic's name. And a diagram of boxes on one bus says only that anyone might talk to anyone.
+00:08:17.640 --> 00:08:39.470
+The second cost is understandability, the flip side of publisher and subscriber ignorance. The camera's old loop listed every receiver in one place. Now, to determine who receives frames, one must search every component for the topic's name. A diagram of boxes on one bus shows only that any component might communicate with any other.
 
 who_talks-2
-00:08:19.690 --> 00:08:37.640
-Timing is harder to reason about too. When several subscribers get the same event, the order in which they're notified isn't fixed, and each queue drains at its own pace. A test that passes today can fail tomorrow, so teams trace events at run time to see what really happened.
+00:08:39.470 --> 00:08:59.600
+Asynchronous publishing also complicates reasoning about timing. When several subscribers receive the same event, the order of notification is not fixed, and each queue drains at its own pace. A test that passes today may fail tomorrow, so teams trace events at run time to observe what actually happened.
 
 who_talks-3
-00:08:37.640 --> 00:08:56.130
-So teams make the hidden flow visible again. They design topic names and event formats early, as carefully as any interface. They keep a list of who publishes and who subscribes to each topic. And they test publishers and subscribers running together, not just each file alone.
+00:08:59.600 --> 00:09:17.670
+Teams therefore restore the visibility of the flow. They design topic names and event formats early, as carefully as any interface. They maintain a list of the publishers and subscribers of each topic. And they test publishers and subscribers together, not only each file in isolation.
 
 who_talks-4
-00:08:56.130 --> 00:09:13.910
-And every message takes a detour through the infrastructure, which adds latency compared with a direct call. If that infrastructure is one central broker, it's also a single point of failure: when it goes down, every conversation stops at once.
+00:09:17.670 --> 00:09:37.710
+Third, latency. Every message takes a detour through the connector's infrastructure, which adds delay compared with a direct call. If that infrastructure is a single central broker, it also becomes a single point of failure: when it fails, every conversation stops at once.
 
 when-1
-00:09:13.910 --> 00:09:33.460
-So when shouldn't you publish? When the sender needs an answer, or must know the job got done. Take the emergency stop. If the safety monitor just published brake now and nobody heard it, Mochi would keep rolling. So that command is a direct call, which fails loudly if the motor controller is gone.
+00:09:37.710 --> 00:09:59.700
+When, then, should a component not publish? When the sender requires an answer or a guarantee of completion. Consider the emergency stop. If the safety monitor merely published brake now and nobody received it, Mochi would keep moving. That command is therefore a direct call, which fails loudly if the motor controller is unavailable.
 
 when-2
-00:09:33.460 --> 00:09:52.830
-Here's a rule of thumb. Publish facts that many programs might want, like a new camera frame, the battery level, or arriving at a building. Call directly for requests that need a reply or a guarantee, like stop the motors, or charge this card. Most real systems, Mochi included, use both.
+00:09:59.700 --> 00:10:20.510
+A useful rule of thumb follows. Publish facts that many components may want, such as a new camera frame, the battery level, or arrival at a building. Call directly for requests that require a reply or a guarantee, such as stopping the motors or charging a card. Most real systems, Mochi included, combine both.
 
 when-3
-00:09:52.830 --> 00:10:14.410
-You rarely build the infrastructure yourself. Robot frameworks, messaging protocols for tiny devices, and event-streaming platforms for big backends all package this style, with its trade-offs built in. Choosing one means choosing extensibility and flexibility, and accepting the costs that come with them.
+00:10:20.510 --> 00:10:44.190
+In practice, the infrastructure is rarely built from scratch. Robot middleware, messaging protocols for small devices, and event-streaming platforms all implement this style, with its trade-offs built in. Selecting one means accepting extensibility and flexibility, together with the costs to robustness and understandability that accompany them.
+
+in_practice-1
+00:10:44.190 --> 00:11:04.020
+Publish-subscribe runs much of the software you use every day. When you switch on airplane mode, Android publishes one broadcast, and every app that registered for it reacts, though the code that sends it never names those apps. When you post in Slack, a channel server pushes the message to every subscribed gateway.
+
+in_practice-2
+00:11:04.020 --> 00:11:24.990
+Game servers in Roblox publish announcements to topics that subscribed servers usually hear within a second or two, although delivery is explicitly not guaranteed. At LinkedIn, clicks and page views become events on Kafka topics, and new teams consume them without changing the website, even replaying events from days earlier.
+
+in_practice-3
+00:11:24.990 --> 00:11:48.140
+In smart homes, a temperature sensor publishes its readings over MQTT, and a dashboard, a heating automation, and a logger subscribe without the sensor knowing them. In power substations, protection relays publish trip messages that other relays receive within milliseconds; since nobody acknowledges them, each relay keeps repeating its message.
+
+in_practice-4
+00:11:48.140 --> 00:12:12.720
+Most of these systems need what publisher and subscriber ignorance provide: consumers that come and go without any change to the producers. Each also pays for publisher ignorance and one-way propagation, since no publisher learns who received an event; Roblox accepts the loss, LinkedIn keeps a replayable log, and substations repeat every message.
 
 summary-1
-00:10:14.410 --> 00:10:33.320
-Let's recap. Mochi's camera once called every listener by name, so each new listener meant editing the camera, and one slow listener froze the robot. Publish-subscribe puts a topic in the middle: publishers send events to it, and the infrastructure delivers them to every subscriber's queue.
+00:12:12.720 --> 00:12:33.090
+Let's recap. Mochi's camera once called every listener by name, so each new listener meant editing the camera, and one slow listener froze the robot. Publish-subscribe places a topic, a connector, between the components: publishers announce events to it, and the infrastructure delivers them to every subscriber's queue.
 
 summary-2
-00:10:33.320 --> 00:10:53.110
-Four rules give the style its power. Publishers don't rely on who listens. Subscribers don't rely on who published. Information flows one way, with no return values. And publishing never waits. Together, they let you add, swap, and plug in programs while the system runs.
+00:12:33.090 --> 00:12:59.160
+Four rules give the style its power: publishers do not rely on who listens, subscribers do not rely on who published, information flows one way, and publishing never waits. The ignorance rules promote extensibility and replaceability, even while the system runs. One-way, asynchronous publishing promotes fault isolation: a slow subscriber cannot stall the rest.
 
 summary-3
-00:10:53.110 --> 00:11:15.470
-The price: nobody confirms delivery, so a renamed topic fails in silence, and the flow of events is spread across many files. Publish facts that many programs might want; call directly when you need an answer or a guarantee. Next time you write a call, ask who's listening, and whether you need to know.
+00:12:59.160 --> 00:13:18.530
+The same rules inhibit three qualities. Robustness: nobody confirms delivery, so a renamed topic fails silently. Understandability: to find who receives an event, one must search every component. Latency: every event passes through the infrastructure, which adds delay.
+
+summary-4
+00:13:18.530 --> 00:13:33.270
+So choose per message. Publish facts that many components may want; call directly when you need an answer or a guarantee. Next time you write a call, ask who is listening, and whether you need to know.

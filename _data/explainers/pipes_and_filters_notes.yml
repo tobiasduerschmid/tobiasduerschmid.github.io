@@ -12,9 +12,8 @@ intro-steps:
 monolith-script:
   - "One script runs each step on all photos, saving a folder each time"
   - "Everything in one file, with shared **global settings**"
-monolith-predict_first:
-  - "**Predict:** six 20-minute steps from 10 p.m. When is the first photo online?"
 monolith-midnight:
+  - "Six 20-minute steps from 10 p.m.: the first photo waits two hours"
   - "Nothing online until every step finished every photo: midnight"
   - "15,000 in-between files; this is a **batch sequential** design"
 monolith-change_requests:
@@ -23,8 +22,9 @@ monolith-change_requests:
 filters-filter:
   - "**Filter:** reads a stream, transforms each item, writes a stream"
   - "Each filter does exactly one thing and is its own program"
+  - "**C&C view** (run time): each filter is a **component** with input and output **ports**"
 filters-pipe:
-  - "**Pipe:** joins a filter's output to the next filter's input"
+  - "**Pipe:** a **connector**; it links one filter's output port to another's input"
   - "One way, in order, unchanged; a small **buffer**, so no lockstep"
 filters-source_sink:
   - "**Source** feeds the line; **sink** takes the results"
@@ -32,6 +32,7 @@ filters-source_sink:
 alone-independent:
   - "**Rule 1, independence:** no shared state; talk only through pipes"
   - "Settings become each filter's own **parameters**"
+  - "Why: a filter relies only on its ports, so it is testable and reusable alone"
 alone-agnostic:
   - "**Rule 2, agnosticism:** don't know upstream or downstream neighbors"
   - "Item in, item out: that ignorance lets a filter move anywhere"
@@ -45,7 +46,7 @@ stream-predict_online:
   - "**Predict:** five filters at half a second each. When is the catch online?"
 stream-seconds:
   - "Seconds after the shot, since every filter works in parallel"
-  - "The line keeps up with the camera"
+  - "Why Rule 3: a shorter wait for the first result, and every filter stays busy"
 stream-acyclic:
   - "**Rule 4, acyclic:** one way from source to sink, no loops"
   - "Output = composition: watermark(blur(crop(brighten(denoise(raw)))))"
@@ -57,22 +58,24 @@ order-roles:
   - "**Pipeline builder:** picks the filters and their order"
 buys-reuse:
   - "**Reusability** (promoted): a filter works unchanged in other pipelines"
-  - "Comes from independence and agnosticism"
+  - "Follows from Rule 1 (no shared state) and Rule 2 (no named neighbors)"
 buys-change:
   - "**Extensibility:** insert a filter with one new pipe"
-  - "**Modifiability:** replace a filter that keeps the same format"
-  - "Test each filter alone with a known input"
+  - "**Modifiability:** replace a filter that keeps the same format; no filter names its neighbors"
+  - "**Testability** (Rule 1): test each filter alone with a known input"
 buys-throughput:
-  - "**Throughput** (promoted): filters run in parallel on different items"
-  - "Up to 5× the photos per minute on five cores; the slowest filter sets the pace"
+  - "**Throughput** (promoted, Rule 3): filters work on different items at once"
+  - "**Allocation view:** one filter per core, up to 5× the photos per minute"
+  - "The slowest filter sets the pace"
 costs-slider:
-  - "**Interactivity** (inhibited): pipelines run one way"
+  - "**Interactivity** (inhibited, Rule 4): no feedback loop back upstream"
   - "Each change must re-run items through the rest of the line"
 costs-latency:
-  - "Each filter decodes and re-encodes the common format"
+  - "Rule 1 leaves only pipe data, so each filter decodes and re-encodes"
   - "**Latency** (inhibited); lossy encoding can cost quality"
 costs-errors:
   - "A crashed filter: which items made it, which are stuck?"
+  - "Rules 1 and 2: no component knows the global state"
   - "Restarts can duplicate output; **error handling** is the weak spot"
 limits-best_shot:
   - "A filter needing all its input (sort, best shot) stalls the line"
@@ -83,12 +86,24 @@ limits-shared_state:
 limits-when:
   - "Good fit: streams of items through independent steps"
   - "Poor fit: interactive tools, steps sharing lots of data"
+in_practice-shell_gpu:
+  - "**Unix pipeline:** agnostic one-job tools joined by pipes"
+  - "**GPU pipeline:** stages pass vertices and pixels on, many in parallel"
+in_practice-search_fraud:
+  - "**Search analyzer:** by default, one chain for documents and full-text queries"
+  - "**Fraud detection** (Flink): each payment judged as it streams in"
+in_practice-radio_genomes:
+  - "**GNU Radio 3:** flowgraphs must be acyclic (Rule 4)"
+  - "**RNA-sequencing pipelines:** isolated steps, each testable and reusable alone"
+in_practice-common_thread:
+  - "Shared workload: a **stream** of items through **independent steps**"
+  - "A step needing all input or shared buffers **bends a rule**"
 summary-recap_problem:
   - "The batch script published nothing until midnight"
   - "Pipes and filters: one-job filters, joined by pipes, source to sink"
 summary-recap_rules:
   - "Rules: independence, agnosticism, incremental, acyclic"
-  - "They buy reuse, easy change, simple reasoning, and throughput"
+  - "**Promoted:** reusability, modifiability, throughput, and simple reasoning"
 summary-recap_costs:
-  - "Costs: no live feedback loops, conversion overhead, hard error handling"
-  - "A filter needing all its input turns the line into a batch"
+  - "**Inhibited:** interactivity, latency, and error handling"
+  - "No feedback upstream; a decode and encode per filter; no global state"

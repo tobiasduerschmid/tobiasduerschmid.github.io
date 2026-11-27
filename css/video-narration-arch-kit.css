@@ -21,7 +21,38 @@
   --ak-editor: linear-gradient(155deg, #172039, #080d1e 72%);
   --ak-editor-text: #e6edf7;
   --ak-editor-muted: #b8c4d9;
+  /* The inside of a topic's channel, a faint tint of the connectors' ink. */
+  --ak-channel: rgba(220, 230, 251, 0.12);
 }
+:is(html:not(.dark-mode), html.print-light-mode) .stage { --ak-channel: rgba(31, 42, 68, 0.06); }
+
+/* A topic: a connector, not a component. Its channel is drawn in the
+   connectors' ink (--uk-wire), and its «topic» name sits above one end on a
+   label, as a connector's type does. */
+.ak-topic { position: absolute; box-sizing: border-box; height: 78px; }
+.ak-topic-label {
+  position: absolute;
+  top: 0;
+  left: 18px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: var(--vn-label-bg);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 28px;
+  white-space: nowrap;
+}
+.ak-topic--right .ak-topic-label { left: auto; right: 18px; }
+/* A still diagram, where no token travels, writes the name inside the channel. */
+.ak-topic--inside .ak-topic-label { top: 42px; }
+.ak-topic-stereo { font-style: italic; font-weight: 600; }
+.ak-topic-name { font-size: 21px; font-weight: 800; }
+.ak-topic-channel { position: absolute; left: 0; right: 0; top: 34px; height: 44px; box-sizing: border-box; border: 3px solid var(--uk-wire); border-radius: 22px; background: var(--ak-channel); }
+.ak-topic.is-lit .ak-topic-channel { border-color: var(--gold); background: rgba(255, 209, 102, 0.24); }
+.ak-topic.is-empty .ak-topic-channel { border-style: dashed; background: transparent; }
 .ak-mono { font-family: var(--font-mono); }
 
 /* Each topic tag's kind, named in words beside its color. */
@@ -33,6 +64,11 @@
 .sk-topic--inhibits { --sk-topic: var(--pink); }
 .sk-topic--trade-off,
 .sk-topic--recap { --sk-topic: var(--violet); }
+.sk-topic--in-practice { --sk-topic: var(--gold); }
+
+/* A bracket's name sits on its own patch of sheet: gold ink on the bare
+   cyanotype would fall short of 4.5:1. */
+.sk-bracket span { padding: 0 8px; border-radius: 6px; background: var(--vn-label-bg); }
 
 /* Notes break their lines evenly, never leaving one word alone. */
 .sk-note,
@@ -69,10 +105,6 @@
 .ak-card.is-idle { background: #e6ebf6; }
 .ak-card.is-crashed { background: #ff9aa8; }
 .ak-card.is-lit { outline: 5px solid var(--vn-lit); outline-offset: 4px; }
-/* A filter's ports: an input on its left edge, an output on its right. */
-.ak-port { position: absolute; top: 50%; width: 14px; height: 14px; margin-top: -7px; border: 3px solid var(--ak-ink); border-radius: 3px; background: var(--ak-paper); }
-.ak-port--in { left: -10px; }
-.ak-port--out { right: -10px; }
 
 /* A queue of messages: a row of slots that fill and drain. */
 .ak-queue { position: absolute; display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 8px; background: var(--vn-label-bg); }
@@ -112,6 +144,10 @@
 .ak-tag--pink { background: #ffc2dc; }
 .ak-tag--green { background: #9be7b4; }
 .ak-tag--violet { background: #e7c6ff; }
+.ak-tag--red { background: #ffb3be; }
+.ak-tag svg { width: 18px; height: 18px; margin-right: 6px; vertical-align: -3px; }
+/* A flagged statement: a red wavy underline, as an editor marks a problem. */
+.ak-code-row.is-smell .ak-code-statement { text-decoration: underline wavy #ff6b7d 2px; text-decoration-skip-ink: none; text-underline-offset: 5px; }
 
 /* A rule of the style: the same card in every lesson. */
 .ak-rule {
@@ -124,6 +160,7 @@
   color: #0b1f3a;
   box-shadow: var(--vn-paper-shadow);
 }
+.ak-rule.is-lit { outline: 5px solid var(--vn-lit); outline-offset: 3px; }
 .ak-rule-head { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 10px; }
 .ak-rule-number { color: #1e4f9c; font-size: 17px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
 .ak-rule-name { font-size: 23px; font-weight: 900; line-height: 1.15; }
@@ -139,6 +176,8 @@
   align-items: center;
   gap: 12px;
   box-sizing: border-box;
+  /* A name's longest word always fits: the card widens rather than let it spill. */
+  min-width: min-content;
   padding: 8px 14px;
   border-radius: 12px;
   color: var(--ak-ink);
@@ -155,6 +194,22 @@
 .ak-quality-words small { font-size: 17px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
 .ak-quality--promoted .ak-quality-words small { color: #14532d; }
 .ak-quality--inhibited .ak-quality-words small { color: #7a1526; }
+
+/* A trade-off's pan (ArchKit.tradeoff): paper in its quality cards' color,
+   each quality by name with the rule it follows from, and why under it. */
+.ak-pan { position: absolute; box-sizing: border-box; padding: 12px 18px 14px; border-radius: 14px; background: #c4f5d3; color: var(--ak-ink); box-shadow: var(--vn-paper-shadow); }
+.ak-pan--inhibited { background: #ffd6dc; }
+.ak-pan--promoted .ak-quality-icon { color: #4ade80; }
+.ak-pan--inhibited .ak-quality-icon { color: #ff8a99; }
+.ak-pan-head { display: flex; align-items: center; gap: 12px; padding-bottom: 8px; border-bottom: 3px solid rgba(11, 15, 26, 0.18); }
+.ak-pan-title { font-size: 26px; font-weight: 900; line-height: 1.1; }
+.ak-pan-items { margin: 0; padding: 0; list-style: none; }
+.ak-pan-item { padding: 8px 0 0; }
+.ak-pan-item + .ak-pan-item { margin-top: 8px; border-top: 2px solid rgba(11, 15, 26, 0.12); }
+.ak-pan-line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.ak-pan-name { font-size: 23px; font-weight: 900; line-height: 1.2; }
+.ak-pan-rule { flex: none; padding: 1px 9px; border-radius: 7px; background: rgba(11, 15, 26, 0.1); font-size: 18px; font-weight: 800; line-height: 1.25; white-space: nowrap; }
+.ak-pan-why { display: block; margin-top: 2px; color: #26324d; font-size: 20px; font-weight: 700; line-height: 1.2; text-wrap: balance; }
 
 /* Connectors: thin lines that grow from the tail, with an arrowhead. */
 .ak-wire { position: absolute; height: 4px; margin-top: -2px; border-radius: 2px; background: currentColor; color: var(--vn-gold-ink); transform-origin: 0 50%; }
@@ -215,36 +270,6 @@
 /* A cross that strikes something out: dark red on a white disk, in both modes. */
 .ak-cross { position: absolute; display: grid; place-items: center; box-sizing: border-box; padding: 8px; border: 3px solid #b42318; border-radius: 50%; background: #ffffff; color: #b42318; }
 .ak-cross svg { width: 100%; height: 100%; stroke-width: 3.4; }
-
-/* A topic: a channel events travel through, named on a tab above one end,
-   so a token inside the channel never passes behind the name. */
-.ak-topic {
-  position: absolute;
-  box-sizing: border-box;
-  height: 44px;
-  border: 3px solid var(--vn-cyan-ink);
-  border-radius: 22px;
-  background: var(--vn-panel);
-}
-.ak-topic-tab {
-  position: absolute;
-  bottom: calc(100% + 4px);
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 2px 12px;
-  border: 2px solid var(--vn-cyan-ink);
-  border-radius: 8px;
-  background: var(--vn-label-bg);
-  color: var(--text);
-  white-space: nowrap;
-}
-.ak-topic--tab-left .ak-topic-tab { left: 18px; }
-.ak-topic--tab-right .ak-topic-tab { right: 18px; }
-.ak-topic-kind { color: var(--vn-cyan-ink); font-size: 17px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
-.ak-topic-name { font-size: 22px; font-weight: 800; }
-.ak-topic.is-empty { border-style: dashed; }
-.ak-topic.is-lit { border-color: var(--vn-lit); background: var(--vn-panel-lit); }
 
 /* An editor's search across the codebase, dark in both modes. */
 .ak-search { position: absolute; box-sizing: border-box; padding: 12px 16px; border-radius: 14px; background: var(--ak-editor); color: var(--ak-editor-text); box-shadow: var(--vn-paper-shadow); }

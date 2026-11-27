@@ -1,8 +1,11 @@
 {%- comment -%}
   The narration's native audio: the clock of an enhanced player, and the
   player itself without JavaScript. Params: story (with audio and captions), label.
+  The speech fingerprint versions both files, so a browser or CDN never pairs
+  this page's timing with audio cached from an earlier rendering.
 {%- endcomment -%}
+{%- if include.story.speech_sha256 -%}{%- capture speech_version -%}?v={{ include.story.speech_sha256 | slice: 0, 16 }}{%- endcapture -%}{%- endif -%}
 <audio class="nja-audio" controls preload="none" aria-label="{{ include.label | escape }}">
-  <source src="{{ include.story.audio | relative_url }}" type="audio/mpeg">
-  <track kind="captions" src="{{ include.story.captions | relative_url }}" srclang="en" label="English">
+  <source src="{{ include.story.audio | relative_url }}{{ speech_version }}" type="audio/mpeg">
+  <track kind="captions" src="{{ include.story.captions | relative_url }}{{ speech_version }}" srclang="en" label="English">
 </audio>

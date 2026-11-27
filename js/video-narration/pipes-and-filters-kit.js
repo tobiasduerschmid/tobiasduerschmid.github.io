@@ -1,16 +1,18 @@
 /*
  * Artwork for the Pipes and Filters video narration (choreography:
  * js/video-narration/pipes-and-filters.js; styles: css/video-narration-
- * pipes-and-filters.css). It builds on the wall kit and the architecture kit
- * and adds the lesson's own objects:
+ * pipes-and-filters.css). It builds on the wall kit, the UML kit, and the
+ * architecture kit, and adds the lesson's own objects:
  *
  *   the game photo, a receiver leaping for the catch in front of the stands,
  *     drawn so every filter's work is visible: sensor grain, darkness, a
  *     crop to the catch, fans' faces pixelated, and the paper's logo;
- *   a filter is a box with an input port and an output port and a light that
- *     says busy or idle in words; a pipe is a tube with an arrowhead that
- *     photos slide through; a batch is a timeline of bars that fill one
- *     after another; the website is a gallery that fills with photos.
+ *   in the C&C view, a filter is a UML component stereotyped «filter» with
+ *     an input port on its left and an output port on its right, its state
+ *     (busy, idle) written in its lower compartment; a pipe is a connector
+ *     from an output port to the next input port, which photos slide along;
+ *   a batch is a timeline of bars that fill one after another; the website
+ *     is a gallery that fills with photos.
  *
  * Every builder schedules its own motion on the Timeline, and every pose is a
  * pure function of narration time. Coordinates are CSS pixels inside the
@@ -25,6 +27,7 @@
   const wall = window.WallKit;
   const { staged } = wall;
   const arch = window.ArchKit;
+  const uml = window.UmlKit;
   const { show } = arch;
 
   // ------------------------------------------------------------------
@@ -260,58 +263,62 @@
   // Filters and pipes
   // ------------------------------------------------------------------
 
+  /** A filter's height: «filter», its name, and a compartment for its state. */
+  const FILTER_H = 108;
+
   /**
-   * A filter: its name in a box with an input port on its left and an output
-   * port on its right. states = [{ at, state, light }] sets its light (busy,
-   * idle, waiting, crashed) and says it in words; `dial` adds a parameter on
-   * its side.
+   * A filter: a UML component stereotyped «filter» (or `stereotype`: source,
+   * sink), with an input port on its left edge and an output port on its
+   * right, where pipes attach. states = [{ at, state, light }] repaints it
+   * (busy, idle, crashed, same, new, unknown, focus) and writes the state in
+   * words (`light`) in its lower compartment; `lines` lists fixed rows below
+   * its name; `dial` hangs a parameter below it; `ports` picks the sides
+   * that have a port (in, out), or none.
    */
-  function filter(parent, { x, y, w = 140, h = 84, name, at, until, how = 'pop', states = [], dial, ports = true }) {
-    const node = staged(parent, 'pf-filter', x, y);
-    node.style.width = `${w}px`;
-    node.style.height = `${h}px`;
-    el('b', 'pf-filter-name', node, name);
-    if (ports) {
-      el('span', 'ak-port ak-port--in', node);
-      el('span', 'ak-port ak-port--out', node);
-    }
-    if (states.length) {
-      const light = el('span', 'pf-light', node, '');
-      arch.track(node, 'is-', states.map(({ at: when, state, light: words }) => ({ at: when, state, words: words ?? state })), light);
-    }
+  function filter(parent, { x, y, w = 140, h = FILTER_H, name, stereotype = 'filter', at, until, how = 'pop', states = [], dial, ports = { in: true, out: true }, lines, variant }) {
+    const node = uml.component(parent, {
+      x, y, w, h, name, stereotype, lines, at, until, how, variant,
+      states: states.map(({ at: when, state, light }) => ({ at: when, state, sub: light ?? state })),
+      ports: [ports && ports.in ? { side: 'left', along: 0.5 } : null, ports && ports.out ? { side: 'right', along: 0.5 } : null].filter(Boolean),
+    });
+    node.classList.add('pf-filter');
     if (dial) {
       const knob = el('span', 'pf-dial', node);
       knob.append(icon('gear'));
       el('span', 'ak-mono', knob, dial);
     }
-    return show(node, at, until, how);
+    return node;
   }
 
-  /** A pipe: a tube from `from` to `to` ([x, y] points on its center line) with an arrowhead at `to`. */
-  function pipe(parent, { from: [x1, y1], to: [x2, y2], at, until, tone }) {
-    const node = staged(parent, `pf-pipe${tone ? ` pf-pipe--${tone}` : ''}`, x1, y1);
-    node.style.width = `${Math.max(0, Math.hypot(x2 - x1, y2 - y1))}px`;
-    node.style.rotate = `${((Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI).toFixed(2)}deg`;
-    fx.fadeIn(node, at, 0.35);
-    if (until !== undefined) fx.fadeOut(node, until - 0.25, 0.25);
+  /**
+   * A pipe: a connector from an output port's face to an input port's face
+   * ([x, y] points, or `points` for a bent one), its arrowhead at the input.
+   */
+  function pipe(parent, { from, to, points, at, until, tone, dashed }) {
+    const node = uml.connector(parent, { from, to, points, kind: 'flow', tone, dashed, at, until });
+    node.classList.add('pf-pipe');
     return node;
   }
 
   /**
    * A line of filters left to right (names = filter names), joined by pipes:
-   * x0 is the first box's left edge, `w` each box's width, `gap` each pipe's
-   * length. Returns the boxes, the pipes, and each box's ports, for streams.
+   * x0 is the first box's left edge, `w` each box's width, `gap` the space
+   * between boxes; `pipesAt` brings the pipes in later than the filters.
+   * Returns the boxes, the pipes (with their end points), each box's port
+   * faces (inPort, outPort), and each box's center, for streams.
    */
-  function line(parent, { x0 = 42, y, w = 140, h = 84, gap = 44, names, at, step = 0.15, specs = [], until }) {
+  function line(parent, { x0 = 42, y, w = 140, h = FILTER_H, gap = 44, names, at, step = 0.15, specs = [], until, pipesAt }) {
     const boxes = names.map((name, i) => filter(parent, { x: x0 + i * (w + gap), y, w, h, name, at: at + i * step, until, ...(specs[i] || {}) }));
+    const face = uml.PORT / 2;
+    const inPort = (i) => [x0 + i * (w + gap) - face, y + h / 2];
+    const outPort = (i) => [x0 + i * (w + gap) + w + face, y + h / 2];
     const pipes = names.slice(1).map((_, i) => {
-      const from = [x0 + i * (w + gap) + w + 10, y + h / 2];
-      const to = [x0 + (i + 1) * (w + gap) - 10, y + h / 2];
-      return { node: pipe(parent, { from, to, at: at + (i + 1) * step - 0.05, until }), from, to };
+      const from = outPort(i);
+      const to = inPort(i + 1);
+      const when = pipesAt === undefined ? at + (i + 1) * step - 0.05 : pipesAt + i * 0.12;
+      return { node: pipe(parent, { from, to, at: when, until }), from, to };
     });
-    const inPort = (i) => [x0 + i * (w + gap) - 10, y + h / 2];
-    const outPort = (i) => [x0 + i * (w + gap) + w + 10, y + h / 2];
-    return { boxes, pipes, inPort, outPort, center: (i) => x0 + i * (w + gap) + w / 2 };
+    return { boxes, pipes, inPort, outPort, center: (i) => x0 + i * (w + gap) + w / 2, top: y, bottom: y + h };
   }
 
   /** Photos sliding through a pipe: a stream of photo tokens from `from` to `to`. */
@@ -408,5 +415,5 @@
     return show(node, at, until, 'rise');
   }
 
-  window.PipesKit = { photoArt, photo, photoToken, filter, pipe, line, flow, bars, gallery, slider, tray };
+  window.PipesKit = { FILTER_H, photoArt, photo, photoToken, filter, pipe, line, flow, bars, gallery, slider, tray };
 })();

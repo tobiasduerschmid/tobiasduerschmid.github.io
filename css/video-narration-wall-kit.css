@@ -297,6 +297,8 @@
 .sk-list-items--two { display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; }
 .sk-list-item { display: flex; align-items: center; gap: 10px; margin: 6px 0 0; font-size: 21px; font-weight: 800; line-height: 1.2; }
 .sk-list-item svg { flex: none; width: 24px; height: 24px; color: var(--vn-cyan-ink); }
+/* Why an item holds, on a short line under it. */
+.sk-list-why { display: block; margin-top: 1px; color: var(--muted); font-size: 20px; font-weight: 700; line-height: 1.2; }
 .sk-list.is-lit { border: 5px solid var(--vn-lit); background: var(--vn-panel-lit); }
 .sk-list--trap,
 .sk-list--fix { border: 0; color: #0b0f1a; box-shadow: var(--vn-paper-shadow); }
@@ -307,7 +309,9 @@
 .sk-list--trap .sk-list-icon { color: #ff6b7d; }
 .sk-list--fix .sk-list-icon { color: #4ade80; }
 .sk-list--trap .sk-list-text,
-.sk-list--fix .sk-list-text { color: #0b0f1a; }
+.sk-list--fix .sk-list-text,
+.sk-list--trap .sk-list-why,
+.sk-list--fix .sk-list-why { color: #0b0f1a; }
 
 /* Empiricism as a temple: a roof and a base around three stone pillars. */
 .sk-roof {

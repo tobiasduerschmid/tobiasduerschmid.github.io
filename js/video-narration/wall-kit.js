@@ -218,9 +218,11 @@
 
   /**
    * A dark card: an icon, a title, an optional line, and items that rise in
-   * one at a time ({ text, at, iconName }), in two columns when `columns` is
-   * 2. `tone` prints it on paper: 'trap' (pink) or 'fix' (green). `lit`
-   * outlines it in gold during each [from, to) interval.
+   * one at a time ({ text, why, at, iconName }), in two columns when
+   * `columns` is 2. An item's `why` is a short second line under it, in the
+   * card's muted ink, that says why the item holds. `tone` prints it on
+   * paper: 'trap' (pink) or 'fix' (green). `lit` outlines it in gold during
+   * each [from, to) interval.
    */
   function listCard(parent, { x, y, w, h, title, text, iconName, items = [], columns = 1, tone, at, until, lit: intervals }) {
     const node = staged(parent, `sk-list${tone ? ` sk-list--${tone}` : ''}`, x, y);
@@ -232,10 +234,11 @@
     if (text) el('p', 'sk-list-text', node, text);
     if (items.length) {
       const list = el('ul', `sk-list-items${columns === 2 ? ' sk-list-items--two' : ''}`, node);
-      items.forEach(({ text: line, at: lineAt = at, iconName: lineIcon }) => {
+      items.forEach(({ text: line, why, at: lineAt = at, iconName: lineIcon }) => {
         const item = el('li', 'sk-list-item is-staged', list);
         if (lineIcon) item.append(icon(lineIcon));
-        el('span', null, item, line);
+        const words = el('span', null, item, line);
+        if (why) el('span', 'sk-list-why', words, why);
         fx.rise(item, lineAt, { distance: 10, duration: 0.3 });
       });
     }
@@ -270,8 +273,8 @@
   }
 
   /**
-   * A balance: a beam on a post, centered on (x, y), with a listCard() pan
-   * hanging level from each end. The beam tilts to each { at, angle } in
+   * A balance: a beam on a post, centered on (x, y), with a pan hanging
+   * level from each end: a listCard(), or the node a pan's `build` draws. The beam tilts to each { at, angle } in
    * turn (degrees; a negative angle lowers the left pan). Returns the pans.
    */
   function balance(parent, { x, y, beam, at, pans, tilts }) {
@@ -281,7 +284,8 @@
     fx.fadeIn(post, at, 0.35);
     fx.fadeIn(bar, at + 0.1, 0.35);
     const hung = pans.map((options) => {
-      const pan = listCard(parent, { ...options, x: 0, y: 0 });
+      // A pan is a list card, or whatever its `build` draws (as wide as its `w`).
+      const pan = options.build ? options.build(parent) : listCard(parent, { ...options, x: 0, y: 0 });
       pan.classList.add('sk-balance-pan');
       return pan;
     });
@@ -314,11 +318,11 @@
     return node;
   }
 
-  /** A dashed, empty place for an answer still to come. */
+  /** A dashed, empty place for an answer still to come; it grows taller if its words need it. */
   function slot(parent, { x, y, w, h, text = '?', at, until }) {
     const node = staged(parent, 'sk-slot', x, y, text);
     node.style.width = `${w}px`;
-    node.style.height = `${h}px`;
+    node.style.minHeight = `${h}px`;
     return appear(node, at, until, { from: 0.7 });
   }
 
@@ -340,7 +344,7 @@
    * name, and the icon that stands for it throughout the video.
    */
   function topicTag(parent, { kind, name, iconName, at }) {
-    const node = el('div', `sk-topic sk-topic--${kind.toLowerCase()} is-staged`, parent);
+    const node = el('div', `sk-topic sk-topic--${kind.toLowerCase().replace(/\s+/g, '-')} is-staged`, parent);
     el('span', 'sk-topic-icon', node).append(icon(iconName));
     const words = el('span', 'sk-topic-words', node);
     el('small', null, words, kind);
@@ -359,9 +363,54 @@
     return el('div', 'sk-overlay', parent);
   }
 
+  // ------------------------------------------------------------------
+  // Timing helpers shared by the kits built on this one
+  // ------------------------------------------------------------------
+
+  /** The entry of a time-sorted list in force at t (the first one before any). */
+  function latest(entries, t) {
+    let found = entries[0];
+    for (const entry of entries) if (entry.at <= t) found = entry;
+    return found;
+  }
+
+  /** Shows `node` from `at` with `how`, and hides it again at `until`. */
+  function show(node, at, until, how = 'pop') {
+    if (how === 'rise') fx.rise(node, at, { distance: 16, duration: 0.4 });
+    else if (how === 'fade') fx.fadeIn(node, at, 0.35);
+    else if (how === 'slide') fx.slideIn(node, at, { dx: 60, duration: 0.45 });
+    else if (how === 'drop') fx.slideIn(node, at, { dx: 0, dy: -40, duration: 0.45 });
+    else if (how === 'none') node.classList.remove('is-staged');
+    else fx.pop(node, at, { from: 0.6 });
+    if (until !== undefined) fx.fadeOut(node, until - 0.25, 0.25);
+    return node;
+  }
+
+  /**
+   * Keeps one state class on `node` at a time: states = [{ at, state }],
+   * painted as `${prefix}${state}`. A class, not an inline color, so the
+   * rounded-surface repaint (js/song-video/rounded-surfaces.js) follows it.
+   * Optional `words` writes the state's words into `label` as well.
+   */
+  function track(node, prefix, states, label) {
+    const sorted = [{ at: -Infinity, state: '', words: undefined }, ...states].sort((a, b) => a.at - b.at);
+    let shown;
+    const update = (t) => {
+      const entry = latest(sorted, t);
+      if (entry === shown) return;
+      if (shown && shown.state) node.classList.remove(`${prefix}${shown.state}`);
+      if (entry.state) node.classList.add(`${prefix}${entry.state}`);
+      if (label && entry.words !== undefined) label.textContent = entry.words;
+      shown = entry;
+    };
+    update(-Infinity);
+    onFrame(update);
+  }
+
   window.WallKit = {
     staged, appear, lit, badge, skill, frame, card, note, column, banner,
     speech, loop, label, checklist, bracket, dot, flag, listCard, temple,
     pillar, balance, arrow, slot, progressBar, topicTag, body, overlay,
+    latest, show, track,
   };
 })();

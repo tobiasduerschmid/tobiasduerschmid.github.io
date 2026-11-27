@@ -4,7 +4,7 @@ plugins:
   - jekyll-scholar
 
 env: production
-asset_version: "20261126-arch-styles-closer-look"
+asset_version: "20261126-arch-styles-ucla-accents"
 
 # Feature flags
 personal_gym: true

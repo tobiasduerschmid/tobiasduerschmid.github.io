@@ -9,23 +9,23 @@
 # `questions`.
 intro:
   question: >-
-    A campus radio app's team gets three requests. Which one is a port, like moving Pearl Dash to the
-    handheld console?
+    A campus radio app's team gets three requests. Which one is platform porting, like moving Pearl
+    Dash to the handheld console?
   options:
     - Running the app on smart speakers with no screen and a different audio system
     - Building a podcast app on the radio app's existing audio code
     - Stopping teammates from breaking each other's changes in shared files
   correct_index: 0
   explanation: >-
-    A port moves the same program onto different hardware, here a different audio system and no
-    screen, like Pearl Dash's console with its own graphics chip, buttons, and sound system.
+    Platform porting moves the same program onto a different platform, here a different audio system
+    and no screen, like Pearl Dash's console with its own graphics chip, buttons, and sound system.
   option_feedback:
     1: >-
       Building a second product on the same code is reuse, like the publisher's second game on
-      Pearl Dash's tech. A port runs the same app on a different device.
+      Pearl Dash's tech. Platform porting runs the same app on a different device.
     2: >-
-      That's the team problem from Pearl Dash: everyone editing the same files at night. A port is
-      about running on a different device.
+      That's the team problem from Pearl Dash: everyone editing the same files at night. Platform
+      porting is about running on a different device.
 tangle:
   question: >-
     A fitness app's 25 workout screens each call the phone's step-sensor API directly. The team moves
@@ -180,6 +180,26 @@ leaks:
     1: >-
       Timing is part of what the layers above rely on, so it belongs to the interface, even though no
       function name shows it.
+in_practice:
+  question: >-
+    A smart-thermostat company moves its app to a cheaper microcontroller every year. To make each
+    move cheap, which part of the code should be the only part that changes?
+  options:
+    - The scheduling rules at the top that decide when to heat
+    - A bottom layer that hides the microcontroller behind an interface
+    - The middle layer that turns schedules into heating commands
+  correct_index: 1
+  explanation: >-
+    As in Android's hardware abstraction layer, SQLite's OS interface, or NASA's platform layer, a
+    bottom layer hides the chip; the layers above use only its interface, so a new chip means a new
+    bottom layer.
+  option_feedback:
+    0: >-
+      The top layer depends only on the layer below it; if the bottom hides the chip, the scheduling
+      rules never notice the move.
+    2: >-
+      The middle layer uses only the interface of the layer below; it stays the same as long as that
+      interface holds.
 summary:
   questions:
     - question: >-

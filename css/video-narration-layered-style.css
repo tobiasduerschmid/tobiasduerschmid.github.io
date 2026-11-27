@@ -1,46 +1,12 @@
 /*
  * The Layers narration's own objects on its animated stage
  * (js/video-narration/layered-style-kit.js), loaded only inside its frame
- * after the wall kit and the architecture kit. Floors, devices, and readouts
- * are paper or devices with their own inks, the same in both modes; the
- * building's section lines and the ball of mud are drawn with the stage's
- * --vn-* tokens, so they follow the site's light or dark mode. Readable text
+ * after the wall kit, the UML kit, and the architecture kit. Layers are UML
+ * packages from the UML kit; devices and readouts are paper or devices with
+ * their own inks, the same in both modes; the ball of mud is drawn with the
+ * stage's --vn-* tokens, so it follows the site's light or dark mode. Readable text
  * is at least 20px on the 960x540 stage; uppercase micro-labels at least 17px.
  */
-
-/* A layer as a floor of the building: its name over chips naming its parts. */
-.ls-floor {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  box-sizing: border-box;
-  padding: 6px 14px;
-  border-left: 8px solid #1e4f9c;
-  border-radius: 8px;
-  background: #fdfbf3;
-  color: #0b0f1a;
-  box-shadow: var(--vn-paper-shadow);
-}
-.ls-floor-name { font-size: 22px; font-weight: 900; line-height: 1.15; white-space: nowrap; }
-.ls-floor-items { display: flex; flex-wrap: wrap; gap: 6px; }
-.ls-chip { padding: 0 8px; border-radius: 6px; background: #e3e9f5; color: #0b0f1a; font-size: 20px; font-weight: 700; line-height: 26px; white-space: nowrap; }
-.ls-floor.is-same { background: #c4f5d3; }
-.ls-floor.is-new { background: #fff1ad; }
-.ls-floor.is-changed { background: #ffd6dc; }
-.ls-floor.is-lit { outline: 5px solid var(--vn-lit); outline-offset: 3px; }
-/* Thin floors in the too-many building, and the one wide floor in the too-few one. */
-.ls-floor--thin { padding: 2px 12px; }
-.ls-floor--thin .ls-floor-name { font-size: 20px; }
-.ls-floor--wide { border-left-color: #b42318; }
-
-/* The building in section: roof, walls, and hatched ground, in sheet ink. */
-.ls-frame { position: absolute; }
-.ls-frame-art { display: block; width: 100%; height: 100%; overflow: visible; }
-.ls-frame-line { fill: none; stroke: var(--vn-line); stroke-width: 3; stroke-linejoin: round; }
-.ls-frame-ground { stroke: var(--vn-line); stroke-width: 4; }
-.ls-frame-hatch { stroke: var(--vn-line); stroke-width: 2; }
 
 /* Pearl Dash on a device: the device is dark plastic with its own inks. */
 .ls-device { position: absolute; box-sizing: border-box; color: #f5f7fb; }
@@ -141,21 +107,3 @@
 .ls-bar-fill.is-over { background: #b42318; }
 .ls-bar-budget { position: absolute; top: -8px; bottom: -8px; width: 0; border-left: 3px dashed #0b0f1a; }
 .ls-bar-budget-label { display: block; margin-top: 6px; color: #3a4660; font-size: 17px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; }
-
-/* A socket the engine defines, so the game can plug a handler in. */
-.ls-socket {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-sizing: border-box;
-  padding: 8px 12px;
-  border: 3px dashed #1e4f9c;
-  border-radius: 12px;
-  background: #e8f1ff;
-  color: #0b1f3a;
-}
-.ls-socket-plug { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%; background: #1e4f9c; color: #fff; }
-.ls-socket-plug svg { width: 24px; height: 24px; }
-.ls-socket-words { display: flex; flex-direction: column; font-size: 20px; line-height: 1.25; }
-.ls-socket-words b { font-weight: 800; }

@@ -30,7 +30,8 @@ async function setSiteTheme(page, dark) {
 // bytes Chromium needs after seeking; drops the validators from range
 // requests for the lesson's audio at `audioPath`.
 async function serveAudioRanges(page, audioPath) {
-  await page.route(`**${audioPath}`, route => {
+  // The page versions its audio by speech fingerprint (?v=...), so match the path alone.
+  await page.route(url => url.pathname === audioPath, route => {
     const headers = { ...route.request().headers() };
     if (headers.range) {
       delete headers['if-none-match'];

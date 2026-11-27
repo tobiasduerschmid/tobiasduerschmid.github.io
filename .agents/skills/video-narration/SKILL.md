@@ -122,11 +122,24 @@ If you only remember eleven things:
 
 Structure the lesson as the topic's own parts, shown by the `part` strip (for
 Scrum: Theory, Roles, Artifacts, Events). Follow one story through them: for
-Scrum, one sprint of one team. Use two or three `prediction: true` cues with
-`pause_after: 4` before an important reveal; the picture asks the question
-(an empty dashed slot, a "?") and answers only in the next cue. Close with a
+Scrum, one sprint of one team. Ask for a prediction (`prediction: true`,
+`pause_after: 4`) only where it helps learning: students can work out the
+answer from what the lesson has taught, or their first intuition is likely
+wrong. A question they cannot reason about yet (a story fact, a sum, a
+consequence asked before its concept) only delays the answer, so state it
+instead. The picture asks the question (an empty dashed slot, a "?") and
+answers only in the next cue. Close with a
 scene that connects the parts and a recap that reuses the earlier pictures'
 objects, so recall has visual anchors.
+
+When a term arrives on screen (a quality attribute's card, a pan item, a
+rule), the narration says that term as it arrives, and explains it in the
+term's own words: "Portability: a new platform changes only the bottom
+layers", not "a new device". A metaphor can introduce an idea, but the
+recap and trade-off pictures name each quality and its reason plainly, in
+the order the picture lists them. An architecture lesson's trade-off is
+`ArchKit.tradeoff`: pans colored like the quality cards, each quality with
+the rule it follows from and why.
 
 Write each cue as 30 to 55 spoken words. Give every cue a `visual` that
 describes what is on screen, including its words, because it is the screen's
@@ -169,7 +182,23 @@ from building.
   the architecture kit (`arch-kit.js`, `window.ArchKit`) between the two:
   components with state classes, wires, queues, code cards, rule plaques,
   quality cards, and travelling tokens. Reuse it before drawing a new
-  component or connector.
+  component or connector. Software structure is drawn with the UML kit
+  (`uml-kit.js`, `window.UmlKit`), loaded before the architecture kit: every
+  diagram sits in a `frame` that names its view (C&C, module, or allocation)
+  and carries a key, with components and ports, «layer» packages, classes,
+  nodes, connectors attached port to port, stereotype labels, and notes.
+  `diagramNotationProblems` (stage test helpers) checks each frame's view
+  and key, and that no note paints over its outline. `textSpillProblems`
+  checks every kit: each run of words must lie inside the nearest piece
+  that paints a surface (a fill, or a border on all four sides). A part
+  that hangs outside its shape on purpose, as `.pf-dial` does, paints its
+  own surface. Fix a spill in the kit (`min-width: min-content`, a
+  `minHeight`), not by shrinking the words. `attachmentPortProblems`
+  checks the C&C attachment rule: a line that ends on a component's
+  outline ends at a port (`ends` on `uml.connector`), and a connector drawn
+  as a shape, such as a topic, never carries one. Say which end is the
+  component at the call site; never infer it from coordinates, which can
+  coincide with another picture's shapes.
 - Paper pieces (`card`, `note`, `speech`, `checklist`) are as wide as `w`
   plus padding; `listCard` is exactly `w`. Leave room for a raised, lit card.
 - Stamps do not shake the stage, and nothing large changes brightness quickly

@@ -1,61 +1,75 @@
-It's three a.m. on the last night of a campus game jam. Your team's game, Pearl Dash, is finally fun: a squirrel sprints across rooftops, double-jumps over gaps, and grabs runaway boba pearls before sunrise. You submit with four minutes to spare, and it wins Best Game.
+It's three a.m. on the last night of a campus game jam. Your team's game, Pearl Dash, is finally fun: a squirrel sprints across rooftops, double-jumps over gaps, and grabs runaway boba pearls before sunrise. You submit it, and it wins Best Game.
 
 Monday, an email: a game publisher wants Pearl Dash on its handheld console by spring. Different graphics chip, buttons instead of a keyboard, a different sound system. And the publisher's next question: could your team build a second game on the same tech by summer?
 
-There's also the team. Four of you edit the same files: the artist swaps in animations, the gameplay programmer tunes jumps, someone fixes a sound glitch, and every night, somebody's change breaks somebody else's. You open the code to see what porting will take.
+There's also the team. Four of you edit the same files: the artist swaps in animations, the gameplay programmer tunes jumps, someone fixes a sound glitch, and every night, somebody's change breaks somebody else's. You open the code to see what porting the game to the new platform will take.
 
 Here's how the squirrel jumps. In one function, the code reads the laptop's space bar, sets the jump speed, plays a sound through the laptop's audio driver, moves the squirrel by its speed, and draws it with the laptop's graphics library. Game rules and device calls, line by line.
 
-Every one of the game's forty files looks like this. So predict: to port Pearl Dash to the console, which files must change? Only the ones about graphics, sound, and input, or nearly all of them?
-
-Nearly all of them. Device calls are sprinkled through every file, from the pearl counter to the pause menu. A search for the graphics library finds three hundred and twelve calls in thirty-eight files. Porting means rewriting the game, and the second game would start from zero.
+Every one of the game's forty files looks like this, so porting the game to the new platform changes nearly all of them. A search for the graphics library finds three hundred and twelve calls in thirty-eight files. Porting means rewriting the game, and the second game would start from zero.
 
 Architects call this shape a big ball of mud: everything uses everything, and nobody can say what depends on what. It's what you get by default, under a deadline. The fix is a structure with one strict rule about who may use whom. Let's build it.
 
-Look at that jump again, and the lines sit at different heights. Jump is a game idea. Move a body by its speed is physics. Draw this image at this spot is graphics. Send these bytes to the graphics chip is the device. Each level speaks a simpler language than the one above.
+Consider the jump again: its lines belong to different levels of abstraction. Jump is a game idea. Move a body by its speed is physics. Draw this image at this spot is graphics. Send these bytes to the chip is the device.
 
-Group the code by those levels, and you get layers. A layer is a group of modules at one level of abstraction that offers services to the layer above. Pearl Dash gets four: game rules on top, then the engine, then a platform layer for graphics, sound, and input, and drivers at the bottom.
+What makes a lower level simpler? Each level offers an abstraction: it says what to do and hides how. Physics knows bodies and speeds, not squirrels; graphics knows images and positions, not physics; the device knows only bytes. The lower the level, the less it knows of the game, and the more programs it serves.
 
-Each layer turns one request from above into several simpler ones below. Jump becomes apply an upward push. The engine turns that into new positions and a draw call. The platform turns the draw call into commands for the graphics chip. Each layer is a machine the layer above can program.
+Grouping the code by these levels yields layers. A layer is a cohesive set of modules at one level of abstraction that offers services to the layer above. Layers belong to the module view, so each one is drawn as a U M L package. Pearl Dash has four: game rules, engine, platform, and drivers.
 
-The style's power comes from its rules, written as an allowed-to-use relation. To use a module means your code is only correct if that module is present and correct. The style decides who is allowed to depend on whom, before anyone writes an import.
+Each layer translates one request from above into several simpler requests below. Jump becomes apply an upward push. The engine turns that push into new positions and a draw call, and the platform turns the draw call into commands for the graphics chip. Each layer thus acts as a virtual machine for the layer above.
 
-Rule one: every module belongs to exactly one layer. Rule two: a layer may use only modules in its own layer, or in the layer directly below. Rule three: there are at least two layers, usually three or more. And it follows that no layer may ever use a layer above it.
+The style's rules are stated as an allowed-to-use relation, a dependency drawn as a dashed arrow between layers. A module uses another if its own correctness depends on the presence and correctness of the other. The relation fixes, before anyone writes an import, which layers may depend on which.
 
-Test the rules. The engine detects that the squirrel touched a pearl, and the score should go up. A teammate wants the engine to import the game's score module and add a point. Predict: does that break a rule? And what would it cost?
+Three rules define the style. Rule one, exactly one layer: every module belongs to a single layer. Rule two, next lower layer: a layer may use only its own layer or the next lower layer. Rule three: at least two layers, usually more. So no layer may use a layer above it.
 
-It breaks the never-up rule. The engine would then depend on Pearl Dash's own scoring, so it couldn't run without this game, and the second game couldn't reuse it. Worse, each layer now depends on the other: change either, and the other may break. That's a cycle, and the layers are gone.
+Why these rules? Under the next-lower-layer rule, a layer depends only on the interface of the layer below, so a change inside a layer stays hidden from the layers above while its interface holds. And since no layer uses one above it, lower layers know nothing of the game, and other programs can reuse them.
 
-But the score still has to go up. The fix: the engine defines what it can report, a collision listener, and the game hands it one at startup: when the squirrel touches a pearl, call this. The engine calls whatever was registered, without knowing it belongs to Pearl Dash.
+Test the rules. The engine detects that the squirrel touched a pearl, and the score should increase. A teammate proposes that the engine import the game's score module and add a point. Predict: does this violate a rule? And what would it cost?
 
-Is that an upward use? No. Control travels up, but the engine's correctness doesn't depend on what the handler does: its job ends when it reports the collision. The dependency still points down: the game depends on the engine's listener interface, never the other way around.
+It violates the next-lower-layer rule, which never permits an upward use. The engine would depend on Pearl Dash's scoring, so the second game could not reuse it. Worse, the two layers would depend on each other: a cycle, in which a change to either may break the other. The layering would be lost.
 
-Teams choose how strict to be. Strict layering: a layer may use only the layer directly below. Relaxed layering: it may use any lower layer. A strict design may still allow a few skips, like game rules calling the platform directly. That's layer bridging, and each bridge must be documented as an exception.
+Yet the score must still increase. The standard solution is a callback. The engine defines an interface for what it can report, a collision listener, and the game registers an implementation at startup. When the squirrel touches a pearl, the engine invokes whatever was registered, without knowing that it belongs to Pearl Dash.
 
-One more thing layers are not: tiers. Layers organize code, a module view, decided before the game runs. When Pearl Dash runs, all four layers run together on one console. Tiers are separate running processes, often on separate machines, like the game and its online leaderboard server.
+Is this an upward use? No. Control flows upward, but the engine's correctness does not depend on what the handler does; its responsibility ends when it reports the collision. The dependency still points down: the game depends on the engine's listener interface, never the reverse. Control flow and dependency are different relations.
 
-Back to the publisher's request, on the layered game this time. The console has a different graphics chip, buttons, and a different sound system. Predict: which of the four layers must change for the console, and which stay exactly as they are?
+Strictness varies. In strict layering, a layer may use only the layer directly below; in relaxed layering, it may use any lower layer. A strict design may still permit a few skips, such as game rules calling the platform directly. Such layer bridging must be documented as an exception, because each bridge weakens portability.
 
-Only the bottom two. The drivers come with the console, and the team writes a new platform layer on top of them, with the same interface. The engine still asks it to draw an image here, and never notices. The game rules don't change at all. That's portability.
+Layers must also be distinguished from tiers. Layers group code in the module view, and all four layers of Pearl Dash run together on one console. A tier groups running components, usually by the machine they run on, and a component may talk only within its tier or to an adjacent tier.
 
-The same rule buys modifiability. Swap the engine's physics for a faster version with the same interface, and only the engine changes. And it buys reuse: the team's second game, a skateboard racer, sits on the same engine and platform. The lower the layer, the more programs can share it.
+Pearl Dash's online leaderboard has three tiers. The game on the console is the presentation tier. It calls a leaderboard service on a cloud server, the logic tier, and only that service reads and writes scores in a database, the data tier. Each tier can then be secured, scaled, and changed on its own.
 
-You rely on this every day. A chat message travels down a layered network stack: the app's protocol, then a transport layer, then the internet layer, then the link at the bottom. The same chat app works over dorm Wi-Fi, a cable, or cellular data, because only that bottom layer differs.
+Return to the publisher's request, now with the layered game. The console has a different graphics chip, buttons, and a different sound system. Predict: which of the four layers must change for the console, and which remain exactly as they are?
 
-Layers also split the work. Gameplay changes land in the game rules, engine work in the engine, the sound fix in the platform, and nobody edits everyone's files at night. And you can test the game rules on a laptop, with a fake engine below them, no console needed.
+Only the bottom two. The drivers come with the console, and the team writes a new platform layer on top of them that offers the same interface. Under the next-lower-layer rule, the engine depends only on that interface, so it is unaffected, and the game rules do not change at all. This quality is portability.
 
-Now the costs. A game draws sixty frames a second, so each frame gets about sixteen milliseconds. Every request now crosses four floors, and each layer translates and copies data on the way down. In the pearl storm level, with five hundred pearls on screen, the frame rate drops.
+The next-lower-layer rule also promotes modifiability: replacing the engine's physics with a faster implementation of the same interface changes only the engine. And the never-up rule promotes reusability: the engine and platform know nothing about Pearl Dash, so the team's second game, a skateboard racer, can build on them unchanged.
 
-The tempting fix is a bridge: let the pearl-drawing code skip the engine and platform and talk straight to the laptop's graphics driver. The frame rate comes back. But that code now runs only on the laptop. On the console it must be rewritten: you've traded portability for speed.
+The same structure underlies everyday networking. A chat message descends a layered protocol stack: the application protocol, the transport layer, the internet layer, and the link layer. The chat application works over Wi-Fi, cable, or cellular data, because only the bottom layer differs and every layer above depends only on its interface.
 
-And layers cost design time up front. Someone has to choose the levels, design each interface, and keep the rules when a deadline begs for shortcuts. For a weekend jam, one file was fine. For a game that must live on two devices for years, the floors pay off.
+Layering also supports the division of labor and testability. Gameplay changes stay in the game rules, engine work in the engine, and the sound fix in the platform. And because the game rules depend only on the engine's interface, they can be tested on a laptop against a fake engine, with no console.
 
-Layers can still leak. On the console, the new platform layer has the very same interface, but it draws many small images more slowly. Nothing above changed, yet the pearl storm stutters. An interface is more than its function names: it includes the timing that the layers above quietly rely on.
+The rules also carry costs. First, performance. A game renders sixty frames a second, leaving about sixteen milliseconds per frame. Under the next-lower-layer rule, every request crosses all four layers, and each layer translates and copies data on the way down. In the pearl storm level, with five hundred pearls, the frame rate drops.
 
-And how many layers? Too few, like one big engine-and-platform layer, and the console port reaches deep into the engine. Too many, and every frame pays for extra hand-offs, while every feature needs edits on six floors. Pick levels that change for different reasons, at different speeds.
+A tempting remedy bends the next-lower-layer rule with a bridge: the pearl-drawing code bypasses the engine and platform and calls the laptop's graphics driver directly. The frame rate recovers, but that code now depends on the laptop's driver, so it must be rewritten for the console. The bridge trades portability for performance.
 
-Let's recap. Pearl Dash began as a ball of mud: jumps, physics, and device calls on the same lines, so porting meant rewriting nearly every file. Layers group modules by level of abstraction, from game rules down to drivers, and each layer is a machine for the one above.
+Second, up-front cost. Layering requires design effort before it pays off: someone must choose the levels, design each interface, and enforce the rules when a deadline invites shortcuts. For a weekend jam, a single file was adequate. For a game that must run on two devices for years, the investment is worth it.
 
-The rules: every module sits in exactly one layer; a layer uses only its own layer or the one directly below, or, if relaxed, any lower one; and nothing uses a layer above. News travels up through callbacks the lower layer defines. And layers organize code; tiers are running processes.
+Layers can also leak. On the console, the new platform layer has exactly the same interface, but it draws many small images more slowly. Nothing above it changed, yet the pearl storm stutters. An interface includes more than its function signatures: it also includes the timing on which the layers above implicitly rely.
 
-What the rules buy: swap the bottom for a new device, swap a layer's insides, and reuse the lower layers in the next game. What they cost: time in every frame, design time up front, and shortcuts that trade portability for speed. Next time you write an import, ask: is that one floor down?
+Finally, granularity. With too few layers, such as one combined engine-and-platform layer, porting to the console reaches deep into the engine. With too many, every frame pays for additional hand-offs, and each feature requires edits across six layers. Choose levels that change for different reasons and at different rates.
+
+Layering is everywhere in practice. Every message you send descends the Internet's four layers, and the standards themselves note where information deliberately leaks between them. Android stacks apps, a framework, native libraries, a hardware abstraction layer, and the Linux kernel, so a new camera chip needs a new hardware module and driver, not new apps.
+
+Chrome's code forbids upward includes, and an automated check rejects any that appear; the layer that renders pages reports upward only through interfaces it defines. S Q Lite, the database engine in every smartphone, reaches the operating system through one bottom layer, so porting it, or simulating a failing disk in a test, replaces only that layer.
+
+Many car makers follow Auto Sar, whose rules state which layers may use which and forbid bypassing the layer that hides the microcontroller, except in a complex-driver layer for timing-critical devices. NASA's core Flight System hides the flight computer behind one platform layer, so its apps run unchanged on a desktop during testing and in orbit.
+
+Most of these systems layer for the same reason: hardware, operating systems, and vendors change independently of the programs above them, and a stable interface confines each change to the layer below. Yet most relax the next-lower-layer rule: Chromium and S Q Lite let a layer skip down, while Auto Sar, Android, and NASA document each exception.
+
+Let's recap. Pearl Dash began as a ball of mud: game rules, physics, and device calls on the same lines, so porting meant rewriting nearly every file. Layering groups modules into packages by level of abstraction, from game rules down to drivers, and each layer serves as a virtual machine for the one above.
+
+The rules: every module belongs to exactly one layer; a layer uses only its own layer or the one directly below, or any lower one if relaxed; and nothing uses a layer above. Upward news travels through callbacks that the lower layer defines. Layers organize code in a module view; tiers are running components.
+
+Because each layer depends only on the interface of the layer below, layering promotes three qualities. Portability: a new platform changes only the bottom layers. Modifiability: a change stays behind one layer's interface. Reusability: lower layers never depend on the layers above, so other applications can reuse them.
+
+The same rules inhibit performance: every request crosses every layer, and each crossing costs time. Layering also has an up-front cost: the levels and their interfaces must be designed first. A bridge buys back performance at the price of portability. Next time you write an import, ask: is it from the next lower layer?

@@ -52,7 +52,8 @@ The versioned authoring contract and a complete minimal example are in
 | `js/narration-player.js` | Shared by every kind: playback lifecycle, section checks, replay, continuation, and roadmap/step navigation. Visuals come from `VideoNarrationVisuals.createRenderer`; diagram copies use `NarrationDiagram`. |
 | `css/video-narration.css` | The screen, panels, and slide layouts, in both themes and print. |
 | `js/video-narration/wall-kit.js`, `css/video-narration-wall-kit.css` | The materials every animated lesson draws with (`WallKit`): paper cards, notes, badges, speech bubbles, checklists, list cards, frames, arrows, slots, balances, and each picture's heading strip (`topicTag`) over its scaled body. Class names keep the `sk-` prefix. |
-| `js/video-narration/arch-kit.js`, `css/video-narration-arch-kit.css` | The architecture lessons' shared materials (`ArchKit`), built on the wall kit: components as cards whose state (down, changed, new, same, busy, crashed) is a class plus an icon and words, wires, message queues, code cards with diff and gutter tags, numbered rule plaques, promoted and inhibited quality cards, tokens that travel along a path, readouts, topics, and a code-search result; `ArchKit.shape` builds path data for circles and boxes, so a detailed illustration draws one path per paint. |
+| `js/video-narration/uml-kit.js`, `css/video-narration-uml-kit.css` | Software structure in UML notation and ArchUML's palette (`UmlKit`), loaded between the wall kit and the architecture kit: diagram frames whose tab always names the view (`cmp C&C view`, `pkg Module view`, `deployment Allocation view`) and whose key explains the symbols; components with ports; packages and «layer» packages with module chips; classes and interfaces; deployment nodes; connectors (flow, link, dependency, realization) attached port to port; stereotype labels; and dog-eared notes (`callout`) whose dotted anchor line can bend around shapes (`via`). Elements are paper pieces in both themes, lines and frames follow the stage's tokens, and a frame's sheet is a tinted film over the blueprint. `diagramNotationProblems` in `tests/helpers/video-narration-stage.js` checks every frame's view and key, and that no note paints over its outline; `textSpillProblems` checks, in every kit, that no words spill out of the card, tag, label, or shape they are written on; `attachmentPortProblems` checks that every line ending on a component's outline ends at a port, and that no port sits on a topic, which is a connector. |
+| `js/video-narration/arch-kit.js`, `css/video-narration-arch-kit.css` | The architecture lessons' shared materials (`ArchKit`), built on the wall kit, beside the UML kit: components as cards whose state (down, changed, new, same, busy, crashed) is a class plus an icon and words, wires, message queues, code cards with diff and gutter tags, numbered rule plaques, promoted and inhibited quality cards, trade-offs (`tradeoff`: the wall kit's balance with pans colored like the quality cards, each quality with its rule and why), tokens that travel along a path, readouts, topics (the publish-subscribe connector, drawn as a channel in the connectors' ink with its «topic» name as a label, never as a component), and a code-search result; `ArchKit.shape` builds path data for circles and boxes, so a detailed illustration draws one path per paint. |
 | `js/video-narration/<topic>.js`, `<topic>-kit.js`, `css/video-narration-<topic>.css` | The topic's choreography and its own objects, loaded only in its frame after the wall kit (and, for an architecture lesson, after the architecture kit). |
 | `_includes/video-narration-stage-element.html` | The stage element, shared by the stage frame and the notes: topic, theme, and the sheet lettering a theme may print. |
 | `_data/explainers/<topic>_notes.yml` | Key points per cue for the printable notes. |
@@ -185,6 +186,10 @@ narration palettes for both modes in `css/video-narration-stage.css`: the
 `story-wall` (Scrum) and the `drafting-room` blueprint, a cyanotype sheet by
 night and a whiteprint by day. The blueprint's title block prints the
 optional `sheet_title` and `sheet_subtitle` of `presentation.animation`.
+A narration's backdrop holds still: the stage element carries
+`data-dust="off"`, so the blueprint draws none of the dust that drifts
+through a song's lamplight, and a theme must not add small moving points
+(`tests/video-narration-backdrop.spec.js`).
 
 The stage follows the site's light or dark mode: `js/video-narration-stage.js`
 mirrors the embedding page's `dark-mode` class onto the frame and keeps
@@ -258,7 +263,8 @@ The slide content and layout are preserved. Kit paint
 that must print stays flat where Chromium's PDF output would make a bitmap:
 tiled gradients, gradients with transparent stops, radial gradients, and any
 gradient of two or more colors in a rounded box that holds text (the Blood
-Groups AT paint is a one-color layer over the right half of an A fill).
+Groups AT paint is a one-color layer over the right half of an A fill), and
+wavy text decorations (a code smell's squiggle prints as a dotted border).
 Stills lay out SVG text with geometric precision: Chromium otherwise keeps
 SVG glyph positions from the scale a still was first drawn at, and a still is
 rescaled after it is drawn. The notes
