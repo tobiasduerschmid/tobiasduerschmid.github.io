@@ -200,10 +200,36 @@ html body.vn-notes-page {
      arrows, the architecture kit's dashed wires, the balance beam, and the
      index-card margin without a bitmap paint layer or a filled bounding box
      around a rotated line. */
-  .vn-note-still :is(.sk-arrow, .sk-balance-beam, .ak-wire--dashed) { background: none !important; }
-  .vn-note-still :is(.sk-arrow, .sk-balance-beam, .ak-wire--dashed)::before { content: ''; position: absolute; inset: 0; box-sizing: border-box; border-top: 6px solid currentColor; }
+  .vn-note-still :is(.sk-arrow, .sk-balance-beam, .ak-wire) { background: none !important; }
+  .vn-note-still :is(.sk-arrow, .sk-balance-beam, .ak-wire)::before { content: ''; position: absolute; inset: 0; box-sizing: border-box; border-top: 6px solid currentColor; }
   .vn-note-still :is(.sk-arrow--dashed, .ak-wire--dashed)::before { border-top-style: dashed; }
-  .vn-note-still .ak-wire--dashed::before { border-top-width: 4px; }
+  .vn-note-still .ak-wire::before { border-top-width: 4px; }
+  /* Dark artwork would print as large dark blocks. On paper, code editors and
+     the search card take a light editor theme (dark ink, a light syntax
+     palette at 4.5:1 or more), and devices, screens, and photo frames take
+     light grounds. */
+  .vn-note-still .stage { --ak-editor: #f6f8fc; --ak-editor-text: #14213d; --ak-editor-muted: #45536e; }
+  .vn-note-still :is(.code-card, .ak-search) { background: #f6f8fc; border: 2px solid #8a94ad; box-shadow: none; }
+  .vn-note-still .code-card-title { background: #e3e8f2; color: #45536e; }
+  .vn-note-still .code-line { color: #14213d; }
+  .vn-note-still .code-line--removed { color: #8a1c2b; }
+  .vn-note-still .code-line--added { color: #176138; }
+  .vn-note-still .code-line--marker { color: #7a4f00; }
+  .vn-note-still .code-tok--kw { color: #8250df; }
+  .vn-note-still :is(.code-tok--fn, .code-tok--const) { color: #953800; }
+  .vn-note-still .code-tok--cls { color: #116329; }
+  .vn-note-still :is(.code-tok--call, .code-tok--num) { color: #0550ae; }
+  .vn-note-still :is(.code-tok--str, .code-tok--deco) { color: #0a3069; }
+  .vn-note-still .code-tok--self { color: #a40e26; }
+  .vn-note-still .code-tok--cm { color: #57606a; }
+  .vn-note-still .ak-search-bar { background: #fff; border-color: #8a94ad; }
+  .vn-note-still .ak-search-summary { color: #7a4f00; }
+  .vn-note-still :is(.ls-device--laptop, .ls-device--console) { background: #d5dbe8; box-shadow: none; color: #14213d; }
+  .vn-note-still .ls-screen { background: #e8eef9; }
+  .vn-note-still .pf-photo-frame { background: #e3e8f2; }
+  .vn-note-still .ak-code-row--added .ak-code-sign { color: #176138; }
+  .vn-note-still .ak-code-row--removed .ak-code-sign { color: #8a1c2b; }
+  .vn-note-still .sk-skill:not([class*="sk-skill--"]) { background: #c4b5fd; }
   .vn-note-still .sk-balance-beam::before { border-top: 16px solid var(--vn-line); }
   /* A wavy text decoration prints as bitmap tiles; a code smell's squiggle
      prints as a dotted border in its red instead. */

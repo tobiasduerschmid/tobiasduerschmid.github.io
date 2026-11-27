@@ -18,6 +18,11 @@
   .vn-stage-document a, .vn-stage-document a:visited { color: #005587; text-decoration: underline; }
 }
 
+/* The stage sets its own base type, the video frame's defaults, so a copy on
+   another page (the lesson notes' working stage and stills) lays out exactly
+   as in the video instead of inheriting that page's text size. */
+.stage { font-size: 16px; line-height: normal; }
+
 /* The stage follows the site's light or dark mode: js/video-narration-stage.js
    mirrors the embedding page's dark-mode class onto this frame. The dark
    values are the song videos' own; light mode re-points the song kit's tokens
