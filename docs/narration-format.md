@@ -484,15 +484,18 @@ and verification screenshots outside the repository.
 - `_includes/narration-player-check.html`: one semantic check panel for all
   kinds, using `.narration-check` and the common light/dark/print styling.
 - `js/narration-quiz.js`: the check presentation lifecycle, including mounting,
-  opening, closing, retained answers, and replay feedback. It delegates grading
-  to SebookQuiz and receives continuation/replay callbacks from NarrationPlayer.
+  opening, closing, fresh attempts, and replay feedback. Each new encounter or
+  manual opening resets answers, feedback, score, and question position. Returning
+  from an explanation or similar-question detour keeps the current attempt.
+  It delegates grading to SebookQuiz and receives continuation/replay callbacks
+  from NarrationPlayer.
   Single-question feedback goes directly to **Continue narration** (or
   **Continue lesson** without audio); multi-question summaries retain results.
   The final action is **Continue to song** for a paired song, otherwise
   **Finish review**. The same labels apply to case-study decisions.
   **Re-listen to segment** appears after wrong answers and on results with
   mistakes. The player replays from after the previous authored check, or the
-  beginning, retaining answers until the check returns. Text-only lessons
+  beginning, starting a fresh check on returning. Text-only lessons
   offer **Review this scene**. No renderer owns check or replay behavior.
 - Visual modules expose `createRenderer(root, data)`, returning `render(frame)`.
   The root's `data-narration-renderer` names the module. A frame contains the DOM

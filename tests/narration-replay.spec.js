@@ -99,7 +99,7 @@ for (const { topic, fallback, mobile } of [
   { topic: 'scrum', fallback: false, mobile: false },
   { topic: 'huggingface2026', fallback: true, mobile: true },
 ]) {
-  test(`${topic}: replay starts after the previous check and returns to retained feedback in fullscreen`, async ({ page }) => {
+  test(`${topic}: replay starts after the previous check and returns to a fresh attempt in fullscreen`, async ({ page }) => {
     if (fallback) await page.addInitScript(() => {
       Object.defineProperty(Document.prototype, 'fullscreenEnabled', { get: () => false });
       Object.defineProperty(Document.prototype, 'webkitFullscreenEnabled', { get: () => false });
@@ -135,15 +135,17 @@ for (const { topic, fallback, mobile } of [
       }
     }
     await expect(check).toBeVisible();
-    await expect(check.getByText(question.explanation, { exact: true })).toBeVisible();
-    await expect(check.getByRole('button', { name: 'Re-listen to segment', exact: true })).toBeVisible();
+    await expect(check.getByText(question.explanation, { exact: true })).toBeHidden();
+    await expect(check.getByRole('radio', { checked: true })).toHaveCount(0);
+    await expect(check.getByRole('radio').first()).toBeEnabled();
+    await expect(check.getByRole('button', { name: 'Re-listen to segment', exact: true })).toBeHidden();
     await expect(player.locator('audio')).toHaveJSProperty('paused', true);
   });
 }
 
 for (const { mistakes, name } of [
-  { mistakes: 1, name: 'a passing summary retains progress and still offers replay for its mistake' },
-  { mistakes: 2, name: 'a failed summary retains progress and clears replay after a correct retry' },
+  { mistakes: 1, name: 'a reopened summary starts fresh and still offers replay for a new mistake' },
+  { mistakes: 2, name: 'a reopened summary starts fresh and clears replay after a correct retry' },
 ]) {
   test(name, async ({ page }) => {
     const lesson = lessons.find(lesson => lesson.topic === 'strategy');
@@ -159,14 +161,14 @@ for (const { mistakes, name } of [
     await replay().click();
     await expectReplaying(player, lesson, index);
     check = await openCheck(player, lesson, index);
-    await expect(check.getByText(questions[1].explanation, { exact: true })).toBeVisible();
-    await check.getByRole('button', { name: 'Next Question', exact: true }).click();
-    for (const [offset, question] of questions.slice(2).entries()) {
-      const correct = mistakes === 1 || offset > 0;
+    await expect(check.getByText(questions[1].explanation, { exact: true })).toBeHidden();
+    await expect(check.getByRole('radio', { checked: true })).toHaveCount(0);
+    for (const [offset, question] of questions.entries()) {
+      const correct = offset !== 1 && (mistakes === 1 || offset !== 2);
       await answer(check, question, correct);
       if (correct) await expect(replay()).toBeHidden();
       else await expect(replay()).toBeVisible();
-      await check.getByRole('button', { name: offset + 3 < questions.length ? 'Next Question' : 'See Results', exact: true }).click();
+      await check.getByRole('button', { name: offset + 1 < questions.length ? 'Next Question' : 'See Results', exact: true }).click();
     }
     await expect(check.getByText('Knowledge Check Complete!', { exact: true })).toBeVisible();
     await expect(replay()).toBeVisible();

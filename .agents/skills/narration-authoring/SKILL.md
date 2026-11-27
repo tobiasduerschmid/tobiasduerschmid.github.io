@@ -140,12 +140,14 @@ transport. Close markers share a dot that opens a named choice list, retaining
 24px targets and one row at phone widths. `js/narration-quiz.js` adapts the shared quiz next action:
 one-question feedback leads directly to Continue narration (or the final
 action), for correct and incorrect answers; multi-question checks keep results.
-`NarrationQuiz.create` owns the shared panel, retained answer state, feedback,
+`NarrationQuiz.create` owns the shared panel, current attempt, feedback,
 and **Re-listen to segment** buttons. It delegates grading to `SebookQuiz` and
 invokes the player's continuation/replay callbacks. `NarrationPlayer` computes
 the replay start after the previous authored check, or at scene zero for the
 first check, including intervening unchecked scenes. Replay returns to the
-same check with answers preserved. Text-only lessons offer scene review.
+same check with a fresh unanswered attempt, as does any new automatic or manual
+opening. Explanation and similar-question detours return to the existing attempt.
+Text-only lessons offer scene review.
 
 `narration-data.html` and `NarrationPlayer` define one browser data boundary.
 Companion quizzes and inline `scene.checkpoint` questions normalize there into
