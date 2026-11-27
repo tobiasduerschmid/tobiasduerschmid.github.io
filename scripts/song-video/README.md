@@ -940,12 +940,13 @@ Start the `song-video-stage` server from `.claude/launch.json` (or run
 node scripts/song-video/render.js snapshots_and_pointers
 ```
 
-The full render captures about 7,400 frames with four headless browsers (a few
-minutes), screens them for flashing, and encodes both cuts. It needs macOS with
-Xcode Command Line Tools (`swift`), the storyboard's `say` voice, a Chromium for Playwright (set
-`PLAYWRIGHT_CHROME_EXECUTABLE` to an installed Chrome if Playwright's own
-browsers aren't installed), and
-about 1.5 GB of temporary disk for the frames.
+Rendering the audio-described track requires macOS and the storyboard's
+`say` voice. When the storyboard declares `video`,
+the full render also captures frames with four headless browsers,
+screens them for flashing, and encodes the requested videos. Frame capture
+needs a Chromium for Playwright. Set `PLAYWRIGHT_CHROME_EXECUTABLE` to an
+installed Chrome if Playwright's own browsers aren't installed. The flash
+screen and MP4 encoding require Xcode Command Line Tools (`swift`).
 
 - `--stills 18.6,61.5 --out DIR` renders just those moments as PNGs, for
   checking a choreography.

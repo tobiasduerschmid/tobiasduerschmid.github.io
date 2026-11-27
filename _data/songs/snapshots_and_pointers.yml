@@ -1,19 +1,20 @@
 # Storyboard for "Snapshots and Pointers", the Git song on the SE Book page
 # SEBook/tools/git.md (embedded with _includes/song-video.html).
 #
-# This file is the single source of truth for the song's words and timing:
-#   - js/song-video/songs/snapshots_and_pointers.js choreographs the
-#     music video against each line's `start` and its `marks` (the times of
-#     the words the visuals hit), and render.js renders the MP4 and writes the
-#     captions file from `text` (re-render everything with
-#     `node scripts/song-video/render.js snapshots_and_pointers`);
+# This file is the single source of truth for the song's words and timing.
+#   - js/song-video/songs/snapshots_and_pointers.js choreographs the live
+#     player against each line's `start` and its `marks` (the times of the
+#     words the visuals hit).
+#   - render.js uses `text` and `narration` to generate the captions and the
+#     audio-described soundtrack (`node scripts/song-video/render.js
+#     snapshots_and_pointers`).
 #   - _includes/song-video.html prints every line with its `visual`
-#     description as the on-page transcript (WCAG 1.2.1 / 1.2.3);
-#   - each section's `narration` is spoken in the audio-described cut, where
-#     the video pauses at the start of the section while the narrator
+#     description as the on-page transcript (WCAG 1.2.1 / 1.2.3).
+#   - each section's `narration` is spoken in the audio-described track, where
+#     the animation pauses at the start of the section while the narrator
 #     describes what it shows (extended audio description, WCAG 1.2.5).
-# Editing text or descriptions here updates the transcript on the next Jekyll
-# build, but the video and captions only after a re-render.
+# Jekyll builds update the player and transcript. Re-run render.js to update
+# the captions and audio-described track.
 #
 # Times are seconds into the recording. Line `start`/`end` and `marks` come
 # from Whisper word timestamps aligned to the lyrics; `text` is what is
@@ -22,7 +23,7 @@
 # sheet: chorus 2 ends on "moves" (the verse cuts in over "with it"), and the
 # last quiz answer skips "Never!".
 
-title: "Snapshots and Pointers: a song about Git"   # the video's accessible name
+title: "Snapshots and Pointers: a song about Git"   # the player's accessible name
 credit: Lyrics written for this chapter; music and vocals generated with Suno.
 theme: darkroom   # stage look: the photographer's darkroom of js/song-video/darkroom.js
 extras:   # the theme's art and styles, loaded before the choreography
@@ -30,11 +31,8 @@ extras:   # the theme's art and styles, loaded before the choreography
     - /css/song-video-darkroom.css
   scripts:
     - /js/song-video/darkroom.js
-video: /assets/video/snapshots-and-pointers.mp4
 captions: /assets/video/snapshots-and-pointers.vtt
-described_video: /assets/video/snapshots-and-pointers-described.mp4
 described_captions: /assets/video/snapshots-and-pointers-described.vtt
-poster: /assets/video/snapshots-and-pointers-poster.jpg
 player: /assets/song-player/snapshots-and-pointers.html
 soundtrack: assets/audio/snapshots-and-pointers.m4a   # shared by the live player and exporter
 described_soundtrack: assets/audio/snapshots-and-pointers-described.m4a
@@ -46,7 +44,6 @@ width: 1920
 height: 1080
 fps: 30
 duration: 247.97
-poster_time: 18.6
 beats:
   bpm: 95.11   # tracked with librosa; the grid drifts by under 50 ms
   first: 0.815
