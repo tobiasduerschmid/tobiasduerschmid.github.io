@@ -1,0 +1,124 @@
+# Printable handout key points. Keys preserve scene and cue identities.
+intro-photo-dump:
+  - "**Example:** a summer story whose splits arrange four photos"
+  - "Beach fills the left half; cat, gig, and taco share the right"
+intro-try-it:
+  - "Photos and splits both show a photo count and offer Share"
+  - "Try Share on a single photo, on bottom, and on the story"
+intro-pattern-parts:
+  - "**Roles:** shared interface, standalone items, groups of items, clients using them"
+  - "**Pattern description:** context, problem, solution, consequences"
+context-part-whole:
+  - "**Part-whole hierarchy:** wholes built from parts; some parts are wholes too"
+  - "Story holds right; right holds bottom; bottom holds two photos"
+context-alike:
+  - "**Clients:** code using these objects; it ignores single-versus-group differences"
+  - "A photo answers alone; a split answers for its contents"
+context-trees:
+  - "Examples: file folders, grouped drawing shapes, submenus, nested page boxes"
+  - "**Leaf:** nothing inside · **Composite:** a group"
+problem-area:
+  - "**Area helper:** a rectangle dividing itself evenly, side by side or stacked"
+  - "Each split gives every item one part, following list order"
+problem-first-design:
+  - "First design: Photo has a name; Split keeps a direction plus items"
+  - "Items are typed photo-or-split, because no shared type exists"
+problem-branches:
+  - "draw and photo count each check: photo here, or nested split?"
+  - "Every new operation repeats that same check"
+problem-client-check:
+  - "Share also checks its selection's type"
+  - "Drawing a photo now lives in two places: split and button"
+problem-predict-captions:
+  - "**Prediction:** captions arrive; which code must change?"
+  - "What happens when one needed change is forgotten?"
+problem-every-change:
+  - "The item type must allow captions; three checks each need a branch"
+  - "Forget the branch in draw: a blank area, with no error reported"
+problem-demands:
+  - "Demands: one shared type, and one ordered list of it"
+  - "Share without type checks; new kinds without editing old classes"
+tile_role-shared-type:
+  - "**Tile:** declares drawing into an area, and photo count"
+  - "Photo and Split implement Tile, so holders stop asking which kind"
+tile_role-canvas:
+  - "**Canvas:** one list collecting a line per drawn tile"
+  - "Passed down the tree; the caller receives the full picture"
+photo_role-direct:
+  - "Photo answers from its own data: one line, a count of one"
+  - "**Leaf:** has nothing inside and asks no other tile"
+photo_role-shared:
+  - "Unchanging, and unaware of the split that holds it"
+  - "So one Photo object can sit in two stories"
+split_role-one-list:
+  - "Split: a direction plus one ordered list of Tiles"
+  - "Mixes photos and splits freely; nesting needs no type checks"
+split_role-count:
+  - "photo count sums every tile's answer"
+  - "Never asks a tile's kind; sums travel back up"
+split_role-draw:
+  - "draw divides its area evenly and passes parts on, in order"
+  - "List order sets placement: whichever tile comes first lands left or on top"
+split_role-safe-add:
+  - "**Safe choice:** add exists only on Split"
+  - "Adding to a photo fails before running; code that adds must know it holds a split"
+split_role-transparent-add:
+  - "**Transparent choice:** add declared on Tile"
+  - "Uniform for clients, but photos must refuse add while running"
+collaborations-press:
+  - "Share calls draw on the story: whole area, empty canvas"
+  - "The button only knows it holds some tile"
+collaborations-first-tile:
+  - "**Prediction:** the story holds beach, then the right split"
+  - "In which order do the four photos reach the canvas?"
+collaborations-recursion:
+  - "Left half to beach, drawn first; right half to the right split"
+  - "Right cuts again: cat 2nd, gig 3rd, taco 4th"
+collaborations-loop:
+  - "Four lines return to the button, in reading order"
+  - "Composites forward each request; leaves answer it directly"
+solution-component:
+  - "**Component** (Tile): requests every object answers, single or group"
+  - "Clients hold Components without knowing the kind"
+solution-leaf:
+  - "**Leaf** (Photo): answers itself, has no children"
+  - "Many leaf kinds may exist, each implementing Component"
+solution-composite:
+  - "**Composite** (Split): holds Components and forwards, maybe adding work"
+  - "Four classes in the diagram describe object trees of any depth"
+solution-client:
+  - "**Client** (ShareButton): uses only the Component interface"
+  - "Composites are Components, so composites contain composites"
+consequences-simple-clients:
+  - "**Benefit, simple clients:** one photo and a whole split are treated alike"
+  - "No type checks, so the button's code never grows"
+consequences-new-kinds:
+  - "**Benefit, new kinds fit:** one new class implementing Tile"
+  - "Existing classes need no edits; a kind missing draw is reported"
+consequences-overly-general:
+  - "**Liability, overly general:** a photos-only strip still inherits add"
+  - "The type system can't refuse splits; a runtime check is needed"
+consequences-safety:
+  - "**Liability:** choose safety (add on Split) or transparency (add on Tile)"
+  - "Safe is checked early; transparent makes leaves reject add at run time"
+applicability-fit:
+  - "Use Composite when parts nest and clients shouldn't care about kind"
+  - "The story qualifies: nested splits, one Share button"
+applicability-plain-list:
+  - "Carousel post: a flat swipeable list, where a plain list wins"
+  - "Only one leaf kind? One Tile class with optional children may do"
+applicability-neighbors:
+  - "**Decorator:** a polaroid frame, one child plus extra drawing"
+  - "Composite: many children, arranged; also inside MVC views and macro commands"
+transfer-plan:
+  - "**Your turn:** add captions to the Composite design"
+  - "What is new, what changes, and how does the caption get under beach?"
+transfer-caption:
+  - "Add one class: Caption implements Tile, with a photo count of zero"
+  - "One more stacked Split object puts beach above the caption"
+  - "Existing classes stay as they are; the first design required three new branches"
+summary-recap:
+  - "**Context:** nesting parts; clients treat one object and groups alike"
+  - "**Problem:** type checks everywhere repeat and silently miss new kinds"
+  - "**Solution:** Component, Leaf, Composite, Client"
+  - "**Consequences:** simple clients, easy new kinds; overly general; safety versus transparency"

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 160" width="90" height="160">
+  <title>A beach photo: the sun over a striped umbrella and a towel on the sand</title>
+  <g id="ground">
+    <rect width="90" height="160" fill="#cdeefb"/>
+    <path d="M0 88 Q11.25 84 22.5 88 T45 88 T67.5 88 T90 88 V104 H0 Z" fill="#7ccbe6"/>
+    <path d="M0 102 Q22.5 98 45 101 T90 100 V160 H0 Z" fill="#f5e2a9"/>
+  </g>
+  <circle id="sun" cx="45" cy="50" r="9" fill="#ffd23f"/>
+  <g id="umbrella">
+    <rect x="44.2" y="82" width="1.6" height="32" fill="#8a5a3b"/>
+    <path d="M25 84 A20 20 0 0 1 65 84 Z" fill="#ef6f6c"/>
+    <path d="M38.5 84 Q40.5 71 45 64 Q49.5 71 51.5 84 Z" fill="#fff7f0"/>
+  </g>
+  <g id="towel">
+    <rect x="30" y="112" width="30" height="7" rx="1.5" fill="#4f9bd9"/>
+    <rect x="30" y="114.5" width="30" height="2" fill="#ffffff"/>
+  </g>
+</svg>

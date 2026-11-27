@@ -1,0 +1,851 @@
+python:
+  label: Python
+  filename: composite_demo.py
+  note: An abstract base class makes the Tile role explicit, and frozen dataclasses let two stories share one photo. draw adds one text line per tile, which the collage paints as a tile. Plain Python reports add on a Photo when the call runs; a type checker reports it earlier.
+  imports: |
+    from __future__ import annotations
+
+    from abc import ABC, abstractmethod
+    from dataclasses import dataclass
+    from enum import Enum
+  blocks:
+    area:
+      source: |
+        class Direction(Enum):
+            SIDE_BY_SIDE = "side by side"
+            STACKED = "stacked"
+
+
+        @dataclass(frozen=True)
+        class Area:
+            x: int
+            y: int
+            width: int
+            height: int
+
+            def part(self, index: int, count: int, direction: Direction) -> Area:
+                if direction is Direction.SIDE_BY_SIDE:
+                    width = self.width // count
+                    return Area(self.x + index * width, self.y, width, self.height)
+                height = self.height // count
+                return Area(self.x, self.y + index * height, self.width, height)
+
+            def __str__(self) -> str:
+                return f"{self.width}x{self.height} at {self.x},{self.y}"
+
+
+        STORY = Area(0, 0, 1080, 1920)
+      focus:
+        part: [13, 14, 15, 16, 17, 18]
+    problem:
+      source: |
+        @dataclass(frozen=True)
+        class Photo:
+            name: str
+
+
+        class Split:
+            def __init__(self, direction: Direction) -> None:
+                self.direction = direction
+                self.items: list[Photo | Split] = []
+
+            def add(self, item: Photo | Split) -> None:
+                self.items.append(item)
+
+            def draw(self, area: Area, canvas: list[str]) -> None:
+                for index, item in enumerate(self.items):
+                    part = area.part(index, len(self.items), self.direction)
+                    if isinstance(item, Photo):
+                        canvas.append(f"{item.name} {part}")
+                    elif isinstance(item, Split):
+                        item.draw(part, canvas)
+
+            def photo_count(self) -> int:
+                count = 0
+                for item in self.items:
+                    if isinstance(item, Photo):
+                        count += 1
+                    elif isinstance(item, Split):
+                        count += item.photo_count()
+                return count
+
+
+        class ShareButton:
+            def __init__(self, selection: Photo | Split) -> None:
+                self.selection = selection
+
+            def press(self) -> list[str]:
+                canvas: list[str] = []
+                if isinstance(self.selection, Photo):
+                    canvas.append(f"{self.selection.name} {STORY}")
+                elif isinstance(self.selection, Split):
+                    self.selection.draw(STORY, canvas)
+                return canvas
+      focus:
+        area: [15, 16]
+        types: [2, 3, 8, 9, 11, 12]
+        branches: [17, 18, 19, 20, 25, 26, 27, 28]
+        client: [38, 39, 40, 41]
+        changes: [17, 19, 25, 27, 38, 40]
+    tile:
+      source: |
+        class Tile(ABC):
+            @abstractmethod
+            def draw(self, area: Area, canvas: list[str]) -> None: ...
+
+            @abstractmethod
+            def photo_count(self) -> int: ...
+      focus:
+        interface: [1, 2, 3, 5, 6]
+        draw: [3]
+    photo:
+      source: |
+        @dataclass(frozen=True)
+        class Photo(Tile):
+            name: str
+
+            def draw(self, area: Area, canvas: list[str]) -> None:
+                canvas.append(f"{self.name} {area}")
+
+            def photo_count(self) -> int:
+                return 1
+      focus:
+        requests: [5, 6, 8, 9]
+        fields: [1, 3]
+    split:
+      source: |
+        class Split(Tile):
+            def __init__(self, direction: Direction) -> None:
+                self.direction = direction
+                self.tiles: list[Tile] = []
+
+            def add(self, tile: Tile) -> None:
+                self.tiles.append(tile)
+
+            def draw(self, area: Area, canvas: list[str]) -> None:
+                for index, tile in enumerate(self.tiles):
+                    tile.draw(area.part(index, len(self.tiles), self.direction), canvas)
+
+            def photo_count(self) -> int:
+                return sum(tile.photo_count() for tile in self.tiles)
+
+
+        class ShareButton:
+            def __init__(self, selection: Tile) -> None:
+                self.selection = selection
+
+            def press(self) -> list[str]:
+                canvas: list[str] = []
+                self.selection.draw(STORY, canvas)
+                return canvas
+      focus:
+        tiles: [3, 4]
+        count: [13, 14]
+        draw: [9, 10, 11]
+        add: [6, 7]
+        press: [21, 22, 23]
+        result: [11, 24]
+    caption:
+      source: |
+        @dataclass(frozen=True)
+        class Caption(Tile):
+            text: str
+
+            def draw(self, area: Area, canvas: list[str]) -> None:
+                canvas.append(f'caption "{self.text}" {area}')
+
+            def photo_count(self) -> int:
+                return 0
+      focus:
+        class: [1, 2, 3, 5, 6, 8, 9]
+    wire:
+      source: |
+        beach = Photo("beach")
+        caption = Caption("core memories")
+        left = Split(Direction.STACKED)
+        left.add(beach)
+        left.add(caption)
+
+        bottom = Split(Direction.SIDE_BY_SIDE)
+        bottom.add(Photo("gig"))
+        bottom.add(Photo("taco"))
+        right = Split(Direction.STACKED)
+        right.add(Photo("cat"))
+        right.add(bottom)
+
+        story = Split(Direction.SIDE_BY_SIDE)
+        story.add(left)
+        story.add(right)
+
+        print(f"story: {story.photo_count()} photos")
+        for line in ShareButton(story).press():
+            print(line)
+      focus:
+        build: [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 14, 15, 16]
+        print: [18, 19, 20]
+java:
+  label: Java
+  filename: CompositeDemo.java
+  note: Tile is our own interface, and records let two stories share one photo. draw adds one text line per tile, which the collage paints as a tile.
+  imports: |
+    import java.util.ArrayList;
+    import java.util.List;
+  blocks:
+    area:
+      source: |
+        enum Direction { SIDE_BY_SIDE, STACKED }
+
+        record Area(int x, int y, int width, int height) {
+            static final Area STORY = new Area(0, 0, 1080, 1920);
+
+            Area part(int index, int count, Direction direction) {
+                if (direction == Direction.SIDE_BY_SIDE) {
+                    int partWidth = width / count;
+                    return new Area(x + index * partWidth, y, partWidth, height);
+                }
+                int partHeight = height / count;
+                return new Area(x, y + index * partHeight, width, partHeight);
+            }
+
+            @Override
+            public String toString() {
+                return width + "x" + height + " at " + x + "," + y;
+            }
+        }
+      focus:
+        part: [6, 7, 8, 9, 10, 11, 12, 13]
+    problem:
+      source: |
+        record Photo(String name) {}
+
+        final class Split {
+            private final Direction direction;
+            private final List<Object> items = new ArrayList<>();
+
+            Split(Direction direction) {
+                this.direction = direction;
+            }
+
+            void add(Object item) {
+                items.add(item);
+            }
+
+            void draw(Area area, List<String> canvas) {
+                for (int index = 0; index < items.size(); index++) {
+                    Area part = area.part(index, items.size(), direction);
+                    Object item = items.get(index);
+                    if (item instanceof Photo photo) {
+                        canvas.add(photo.name() + " " + part);
+                    } else if (item instanceof Split split) {
+                        split.draw(part, canvas);
+                    }
+                }
+            }
+
+            int photoCount() {
+                int count = 0;
+                for (Object item : items) {
+                    if (item instanceof Photo) {
+                        count += 1;
+                    } else if (item instanceof Split split) {
+                        count += split.photoCount();
+                    }
+                }
+                return count;
+            }
+        }
+
+        final class ShareButton {
+            private final Object selection;
+
+            ShareButton(Object selection) {
+                this.selection = selection;
+            }
+
+            List<String> press() {
+                List<String> canvas = new ArrayList<>();
+                if (selection instanceof Photo photo) {
+                    canvas.add(photo.name() + " " + Area.STORY);
+                } else if (selection instanceof Split split) {
+                    split.draw(Area.STORY, canvas);
+                }
+                return canvas;
+            }
+        }
+      focus:
+        area: [16, 17]
+        types: [1, 4, 5, 11, 12]
+        branches: [19, 20, 21, 22, 30, 31, 32, 33]
+        client: [49, 50, 51, 52]
+        changes: [19, 21, 30, 32, 49, 51]
+    tile:
+      source: |
+        interface Tile {
+            void draw(Area area, List<String> canvas);
+
+            int photoCount();
+        }
+      focus:
+        interface: [1, 2, 4, 5]
+        draw: [2]
+    photo:
+      source: |
+        record Photo(String name) implements Tile {
+            @Override
+            public void draw(Area area, List<String> canvas) {
+                canvas.add(name + " " + area);
+            }
+
+            @Override
+            public int photoCount() {
+                return 1;
+            }
+        }
+      focus:
+        requests: [3, 4, 5, 8, 9, 10]
+        fields: [1]
+    split:
+      source: |
+        final class Split implements Tile {
+            private final Direction direction;
+            private final List<Tile> tiles = new ArrayList<>();
+
+            Split(Direction direction) {
+                this.direction = direction;
+            }
+
+            void add(Tile tile) {
+                tiles.add(tile);
+            }
+
+            @Override
+            public void draw(Area area, List<String> canvas) {
+                for (int index = 0; index < tiles.size(); index++) {
+                    tiles.get(index).draw(area.part(index, tiles.size(), direction), canvas);
+                }
+            }
+
+            @Override
+            public int photoCount() {
+                return tiles.stream().mapToInt(Tile::photoCount).sum();
+            }
+        }
+
+        final class ShareButton {
+            private final Tile selection;
+
+            ShareButton(Tile selection) {
+                this.selection = selection;
+            }
+
+            List<String> press() {
+                List<String> canvas = new ArrayList<>();
+                selection.draw(Area.STORY, canvas);
+                return canvas;
+            }
+        }
+      focus:
+        tiles: [2, 3]
+        count: [21, 22]
+        draw: [14, 15, 16]
+        add: [9, 10]
+        press: [33, 34, 35]
+        result: [16, 36]
+    caption:
+      source: |
+        record Caption(String text) implements Tile {
+            @Override
+            public void draw(Area area, List<String> canvas) {
+                canvas.add("caption \"" + text + "\" " + area);
+            }
+
+            @Override
+            public int photoCount() {
+                return 0;
+            }
+        }
+      focus:
+        class: [1, 2, 3, 4, 5, 7, 8, 9, 10, 11]
+    wire:
+      source: |
+        public class CompositeDemo {
+            public static void main(String[] args) {
+                Photo beach = new Photo("beach");
+                Caption caption = new Caption("core memories");
+                Split left = new Split(Direction.STACKED);
+                left.add(beach);
+                left.add(caption);
+
+                Split bottom = new Split(Direction.SIDE_BY_SIDE);
+                bottom.add(new Photo("gig"));
+                bottom.add(new Photo("taco"));
+                Split right = new Split(Direction.STACKED);
+                right.add(new Photo("cat"));
+                right.add(bottom);
+
+                Split story = new Split(Direction.SIDE_BY_SIDE);
+                story.add(left);
+                story.add(right);
+
+                System.out.println("story: " + story.photoCount() + " photos");
+                for (String line : new ShareButton(story).press()) {
+                    System.out.println(line);
+                }
+            }
+        }
+      focus:
+        build: [3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 16, 17, 18]
+        print: [20, 21, 22, 23]
+cpp:
+  label: C++
+  filename: composite_demo.cpp
+  note: In the composite design, splits hold their tiles through shared_ptr to const Tile, so two stories can share one photo. draw adds one text line per tile, which the collage paints as a tile. Each class lists its data members first.
+  imports: |
+    #include <iostream>
+    #include <memory>
+    #include <string>
+    #include <utility>
+    #include <variant>
+    #include <vector>
+  blocks:
+    area:
+      source: |
+        enum class Direction { SideBySide, Stacked };
+
+        struct Area {
+            int x;
+            int y;
+            int width;
+            int height;
+
+            Area part(int index, int count, Direction direction) const {
+                if (direction == Direction::SideBySide) {
+                    const int partWidth = width / count;
+                    return {x + index * partWidth, y, partWidth, height};
+                }
+                const int partHeight = height / count;
+                return {x, y + index * partHeight, width, partHeight};
+            }
+
+            std::string str() const {
+                return std::to_string(width) + "x" + std::to_string(height) + " at " +
+                       std::to_string(x) + "," + std::to_string(y);
+            }
+        };
+
+        constexpr Area kStory{0, 0, 1080, 1920};
+      focus:
+        part: [9, 10, 11, 12, 13, 14, 15, 16]
+    problem:
+      source: |
+        struct Photo {
+            std::string name;
+        };
+
+        class Split;
+        using SplitPtr = std::shared_ptr<const Split>;
+        using Item = std::variant<Photo, SplitPtr>;
+
+        class Split {
+            Direction direction_;
+            std::vector<Item> items_;
+
+        public:
+            explicit Split(Direction direction) : direction_(direction) {}
+
+            void add(Item item) { items_.push_back(std::move(item)); }
+
+            void draw(const Area& area, std::vector<std::string>& canvas) const {
+                const int count = static_cast<int>(items_.size());
+                for (std::size_t index = 0; index < items_.size(); ++index) {
+                    const Area part = area.part(static_cast<int>(index), count, direction_);
+                    if (const auto* photo = std::get_if<Photo>(&items_[index])) {
+                        canvas.push_back(photo->name + " " + part.str());
+                    } else if (const auto* split = std::get_if<SplitPtr>(&items_[index])) {
+                        (*split)->draw(part, canvas);
+                    }
+                }
+            }
+
+            int photoCount() const {
+                int count = 0;
+                for (const Item& item : items_) {
+                    if (std::holds_alternative<Photo>(item)) {
+                        count += 1;
+                    } else if (const auto* split = std::get_if<SplitPtr>(&item)) {
+                        count += (*split)->photoCount();
+                    }
+                }
+                return count;
+            }
+        };
+
+        class ShareButton {
+            Item selection_;
+
+        public:
+            explicit ShareButton(Item selection) : selection_(std::move(selection)) {}
+
+            std::vector<std::string> press() const {
+                std::vector<std::string> canvas;
+                if (const auto* photo = std::get_if<Photo>(&selection_)) {
+                    canvas.push_back(photo->name + " " + kStory.str());
+                } else if (const auto* split = std::get_if<SplitPtr>(&selection_)) {
+                    (*split)->draw(kStory, canvas);
+                }
+                return canvas;
+            }
+        };
+      focus:
+        area: [20, 21]
+        types: [1, 2, 3, 6, 7, 11, 16]
+        branches: [22, 23, 24, 25, 33, 34, 35, 36]
+        client: [51, 52, 53, 54]
+        changes: [22, 24, 33, 35, 51, 53]
+    tile:
+      source: |
+        class Tile {
+        public:
+            virtual ~Tile() = default;
+            virtual void draw(const Area& area, std::vector<std::string>& canvas) const = 0;
+            virtual int photoCount() const = 0;
+        };
+      focus:
+        interface: [1, 2, 3, 4, 5, 6]
+        draw: [4]
+    photo:
+      source: |
+        class Photo : public Tile {
+            std::string name_;
+
+        public:
+            explicit Photo(std::string name) : name_(std::move(name)) {}
+
+            void draw(const Area& area, std::vector<std::string>& canvas) const override {
+                canvas.push_back(name_ + " " + area.str());
+            }
+
+            int photoCount() const override { return 1; }
+        };
+      focus:
+        requests: [7, 8, 9, 11]
+        fields: [2, 5]
+    split:
+      source: |
+        class Split : public Tile {
+            Direction direction_;
+            std::vector<std::shared_ptr<const Tile>> tiles_;
+
+        public:
+            explicit Split(Direction direction) : direction_(direction) {}
+
+            void add(std::shared_ptr<const Tile> tile) { tiles_.push_back(std::move(tile)); }
+
+            void draw(const Area& area, std::vector<std::string>& canvas) const override {
+                const int count = static_cast<int>(tiles_.size());
+                for (std::size_t index = 0; index < tiles_.size(); ++index) {
+                    tiles_[index]->draw(area.part(static_cast<int>(index), count, direction_), canvas);
+                }
+            }
+
+            int photoCount() const override {
+                int count = 0;
+                for (const auto& tile : tiles_) count += tile->photoCount();
+                return count;
+            }
+        };
+
+        class ShareButton {
+            std::shared_ptr<const Tile> selection_;
+
+        public:
+            explicit ShareButton(std::shared_ptr<const Tile> selection) : selection_(std::move(selection)) {}
+
+            std::vector<std::string> press() const {
+                std::vector<std::string> canvas;
+                selection_->draw(kStory, canvas);
+                return canvas;
+            }
+        };
+      focus:
+        tiles: [2, 3]
+        count: [17, 18, 19, 20]
+        draw: [10, 11, 12, 13]
+        add: [8]
+        press: [30, 31, 32]
+        result: [13, 33]
+    caption:
+      source: |
+        class Caption : public Tile {
+            std::string text_;
+
+        public:
+            explicit Caption(std::string text) : text_(std::move(text)) {}
+
+            void draw(const Area& area, std::vector<std::string>& canvas) const override {
+                canvas.push_back("caption \"" + text_ + "\" " + area.str());
+            }
+
+            int photoCount() const override { return 0; }
+        };
+      focus:
+        class: [1, 2, 4, 5, 7, 8, 9, 11, 12]
+    wire:
+      source: |
+        int main() {
+            auto beach = std::make_shared<Photo>("beach");
+            auto caption = std::make_shared<Caption>("core memories");
+            auto left = std::make_shared<Split>(Direction::Stacked);
+            left->add(beach);
+            left->add(caption);
+
+            auto bottom = std::make_shared<Split>(Direction::SideBySide);
+            bottom->add(std::make_shared<Photo>("gig"));
+            bottom->add(std::make_shared<Photo>("taco"));
+            auto right = std::make_shared<Split>(Direction::Stacked);
+            right->add(std::make_shared<Photo>("cat"));
+            right->add(bottom);
+
+            auto story = std::make_shared<Split>(Direction::SideBySide);
+            story->add(left);
+            story->add(right);
+
+            std::cout << "story: " << story->photoCount() << " photos\n";
+            for (const std::string& line : ShareButton(story).press()) {
+                std::cout << line << '\n';
+            }
+        }
+      focus:
+        build: [2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 15, 16, 17]
+        print: [19, 20, 21, 22]
+typescript:
+  label: TypeScript
+  filename: composite-demo.ts
+  note: Tile is a TypeScript interface, and readonly fields let two stories share one photo. draw adds one text line per tile, which the collage paints as a tile.
+  imports: |
+    export {};
+  blocks:
+    area:
+      source: |
+        type Direction = "side by side" | "stacked";
+
+        class Area {
+          readonly x: number;
+          readonly y: number;
+          readonly width: number;
+          readonly height: number;
+
+          constructor(x: number, y: number, width: number, height: number) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+          }
+
+          part(index: number, count: number, direction: Direction): Area {
+            if (direction === "side by side") {
+              const width = Math.floor(this.width / count);
+              return new Area(this.x + index * width, this.y, width, this.height);
+            }
+            const height = Math.floor(this.height / count);
+            return new Area(this.x, this.y + index * height, this.width, height);
+          }
+
+          toString(): string {
+            return `${this.width}x${this.height} at ${this.x},${this.y}`;
+          }
+        }
+
+        const STORY = new Area(0, 0, 1080, 1920);
+      focus:
+        part: [16, 17, 18, 19, 20, 21, 22, 23]
+    problem:
+      source: |
+        class Photo {
+          readonly name: string;
+
+          constructor(name: string) {
+            this.name = name;
+          }
+        }
+
+        type Item = Photo | Split;
+
+        class Split {
+          readonly direction: Direction;
+          private readonly items: Item[] = [];
+
+          constructor(direction: Direction) {
+            this.direction = direction;
+          }
+
+          add(item: Item): void {
+            this.items.push(item);
+          }
+
+          draw(area: Area, canvas: string[]): void {
+            this.items.forEach((item, index) => {
+              const part = area.part(index, this.items.length, this.direction);
+              if (item instanceof Photo) {
+                canvas.push(`${item.name} ${part}`);
+              } else if (item instanceof Split) {
+                item.draw(part, canvas);
+              }
+            });
+          }
+
+          photoCount(): number {
+            let count = 0;
+            for (const item of this.items) {
+              if (item instanceof Photo) {
+                count += 1;
+              } else if (item instanceof Split) {
+                count += item.photoCount();
+              }
+            }
+            return count;
+          }
+        }
+
+        class ShareButton {
+          readonly selection: Item;
+
+          constructor(selection: Item) {
+            this.selection = selection;
+          }
+
+          press(): string[] {
+            const canvas: string[] = [];
+            if (this.selection instanceof Photo) {
+              canvas.push(`${this.selection.name} ${STORY}`);
+            } else if (this.selection instanceof Split) {
+              this.selection.draw(STORY, canvas);
+            }
+            return canvas;
+          }
+        }
+      focus:
+        area: [24, 25]
+        types: [2, 9, 13, 19, 20]
+        branches: [26, 27, 28, 29, 37, 38, 39, 40]
+        client: [56, 57, 58, 59]
+        changes: [26, 28, 37, 39, 56, 58]
+    tile:
+      source: |
+        interface Tile {
+          draw(area: Area, canvas: string[]): void;
+          photoCount(): number;
+        }
+      focus:
+        interface: [1, 2, 3, 4]
+        draw: [2]
+    photo:
+      source: |
+        class Photo implements Tile {
+          readonly name: string;
+
+          constructor(name: string) {
+            this.name = name;
+          }
+
+          draw(area: Area, canvas: string[]): void {
+            canvas.push(`${this.name} ${area}`);
+          }
+
+          photoCount(): number {
+            return 1;
+          }
+        }
+      focus:
+        requests: [8, 9, 10, 12, 13, 14]
+        fields: [2, 4, 5]
+    split:
+      source: |
+        class Split implements Tile {
+          readonly direction: Direction;
+          private readonly tiles: Tile[] = [];
+
+          constructor(direction: Direction) {
+            this.direction = direction;
+          }
+
+          add(tile: Tile): void {
+            this.tiles.push(tile);
+          }
+
+          draw(area: Area, canvas: string[]): void {
+            this.tiles.forEach((tile, index) => {
+              tile.draw(area.part(index, this.tiles.length, this.direction), canvas);
+            });
+          }
+
+          photoCount(): number {
+            return this.tiles.reduce((count, tile) => count + tile.photoCount(), 0);
+          }
+        }
+
+        class ShareButton {
+          readonly selection: Tile;
+
+          constructor(selection: Tile) {
+            this.selection = selection;
+          }
+
+          press(): string[] {
+            const canvas: string[] = [];
+            this.selection.draw(STORY, canvas);
+            return canvas;
+          }
+        }
+      focus:
+        tiles: [2, 3]
+        count: [19, 20, 21]
+        draw: [13, 14, 15, 16]
+        add: [9, 10]
+        press: [31, 32, 33]
+        result: [15, 34]
+    caption:
+      source: |
+        class Caption implements Tile {
+          readonly text: string;
+
+          constructor(text: string) {
+            this.text = text;
+          }
+
+          draw(area: Area, canvas: string[]): void {
+            canvas.push(`caption "${this.text}" ${area}`);
+          }
+
+          photoCount(): number {
+            return 0;
+          }
+        }
+      focus:
+        class: [1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 15]
+    wire:
+      source: |
+        const beach = new Photo("beach");
+        const caption = new Caption("core memories");
+        const left = new Split("stacked");
+        left.add(beach);
+        left.add(caption);
+
+        const bottom = new Split("side by side");
+        bottom.add(new Photo("gig"));
+        bottom.add(new Photo("taco"));
+        const right = new Split("stacked");
+        right.add(new Photo("cat"));
+        right.add(bottom);
+
+        const story = new Split("side by side");
+        story.add(left);
+        story.add(right);
+
+        console.log(`story: ${story.photoCount()} photos`);
+        for (const line of new ShareButton(story).press()) {
+          console.log(line);
+        }
+      focus:
+        build: [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 14, 15, 16]
+        print: [18, 19, 20, 21]

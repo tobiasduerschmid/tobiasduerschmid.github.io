@@ -1,0 +1,440 @@
+# Study activities use existing teaching cues; they do not alter narrated speech.
+version: 1
+reviews:
+  intro:
+  - scene: intro
+    cue: pattern-parts
+    retry:
+      type: single
+      question: A teammate describes the Composite pattern with only a class diagram and sample code. Which
+        parts of a pattern's description are missing?
+      options:
+      - Its method names and return types
+      - Its context, problem, and consequences
+      - Its unit tests and benchmarks
+      correct_index: 1
+      explanation: A pattern is described by its context, problem, solution, and consequences; a diagram and
+        code show only the solution.
+      option_feedback:
+        0: Method names and types are details of one implementation, which the diagram and code already
+          show.
+        2: Tests and benchmarks check one implementation; they do not say when the pattern applies or what it
+          costs.
+  context:
+  - scene: context
+    cue: alike
+    retry:
+      type: single
+      question: Which requirement most directly points to the Composite pattern?
+      options:
+      - Several screens must refresh whenever one shared record changes
+      - Users pick one of several interchangeable compression algorithms
+      - Modules hold lessons and modules, and any of them reports its reading time
+      correct_index: 2
+      explanation: Modules inside modules are a part-whole hierarchy that nests, and asking one lesson or a
+        whole module for its reading time is the uniform treatment the Composite pattern provides.
+      option_feedback:
+        0: Refreshing dependents after a change is the Observer pattern's context.
+        1: Choosing among interchangeable algorithms is the Strategy pattern's context.
+  problem:
+  - scene: problem
+    cue: every-change
+    retry:
+      type: single
+      question: A drawing app's Group class checks whether each item is a shape or a group in move() and
+        draw(), and its toolbar checks the selected item's type too. In Composite pattern terms, what happens
+        when text boxes are added?
+      options:
+      - Only a TextBox class is added; the existing checks already move it
+      - Each check needs a text-box branch, and a missed one skips text boxes silently
+      - Only Group changes; the code that calls move() and draw() stays the same
+      correct_index: 1
+      explanation: Every operation and every client that checks types needs a branch for the new kind, and a
+        check with no else skips an unknown kind without an error.
+      option_feedback:
+        0: Each check names only the kinds it knows, so text boxes need their own branch in every check.
+        2: Clients that check an item's kind need a new branch too, not just the Group class.
+  tile_role:
+  - scene: tile_role
+    cue: shared-type
+    retry:
+      type: single
+      question: In the Composite pattern, why must single items and groups share one type?
+      options:
+      - So each item can find the group that holds it
+      - So items can be created without naming their classes
+      - So one list holds both kinds and asks each the same requests
+      correct_index: 2
+      explanation: One shared type lets a group keep any mix of items in one ordered list and treat them alike,
+        and lets clients do the same.
+      option_feedback:
+        0: The shared type declares the requests every item answers; it adds no link to the parent group.
+        1: Creating objects without naming their classes is a creational concern, not what the shared type is
+          for.
+  photo_role:
+  - scene: photo_role
+    cue: shared
+    retry:
+      type: single
+      question: In the Composite pattern, a map marker never changes and keeps no reference to the layer that
+        holds it. What does that allow?
+      options:
+      - Each layer must store a private copy of the marker
+      - The same marker object can appear in two layers at once
+      - The marker must ask its layer before it can draw
+      correct_index: 1
+      explanation: A leaf with no changing state and no parent reference answers the same way wherever it sits,
+        so composites can share one object.
+      option_feedback:
+        0: Copies are unnecessary when nothing about the leaf changes and it does not depend on its parent.
+        2: A leaf answers from its own data; it needs nothing from the composite that holds it.
+  split_role:
+  - scene: split_role
+    cue: safe-add
+    retry:
+      type: single
+      question: A Composite pattern design declares add only in Folder, not in the shared FileItem interface.
+        What happens if code tries to add a file to another file?
+      options:
+      - The file rejects add while the program runs
+      - The mistake is caught before the program runs
+      - The file quietly becomes a folder
+      correct_index: 1
+      explanation: With add declared only in the composite, a leaf has no add at all, so the call is rejected
+        before the program runs; that is the safe choice.
+      option_feedback:
+        0: Rejecting add at run time is what happens in the transparent choice, where every item declares add.
+        2: Items never change their kind; a leaf stays a leaf.
+  collaborations:
+  - scene: collaborations
+    cue: recursion
+    retry:
+      type: single
+      question: In a Composite pattern menu, the main menu holds an item and then a submenu. When the main
+        menu is drawn, how does the request reach the submenu's items?
+      options:
+      - The main menu draws every item in the tree itself
+      - Each item draws itself before any menu asks
+      - The main menu asks the submenu, which asks its own items
+      correct_index: 2
+      explanation: Each composite forwards the request to its children in order, and nested composites do the
+        same, so the request travels down level by level.
+      option_feedback:
+        0: A composite only knows its direct children; nested composites handle their own children.
+        1: Leaves answer when they are asked; they do not act ahead of the request.
+  solution:
+  - scene: solution
+    cue: client
+    retry:
+      type: single
+      question: In a Composite pattern file browser, a Size button asks any selected file or folder for its
+        size. Which role does the Size button play?
+      options:
+      - Leaf
+      - Composite
+      - Client
+      correct_index: 2
+      explanation: The button uses the shared interface and never checks the kind of item it holds, which is
+        the Client role.
+      option_feedback:
+        0: Leaves are the single items in the structure, like files. The button is outside the structure.
+        1: Composites hold children, like folders. The button only uses items.
+  consequences:
+  - scene: consequences
+    cue: simple-clients
+    retry:
+      type: single
+      question: In the Composite pattern, which consequence lets a Print button handle one page or a whole
+        chapter of pages with the same code?
+      options:
+      - Clients treat single items and groups alike
+      - Leaves reject add while the program runs
+      - Composites can restrict which children they hold
+      correct_index: 0
+      explanation: Because single items and groups share one interface, a client calls the same request on
+        either, with no type checks.
+      option_feedback:
+        1: Rejecting add at run time belongs to the transparent choice, a liability rather than a benefit.
+        2: Restricting children is hard in the Composite pattern, because the type system cannot enforce it.
+  applicability:
+  - scene: applicability
+    cue: neighbors
+    retry:
+      type: single
+      question: A spoiler blur wraps exactly one message bubble and adds a blur to its drawing. Which pattern
+        fits the blur better than the Composite pattern?
+      options:
+      - A plain list, since it holds one bubble
+      - Decorator, since it wraps one object and adds behavior
+      - Composite, since it shares the bubble's interface
+      correct_index: 1
+      explanation: One child plus added behavior is the Decorator's shape; a composite holds many children and
+        arranges them.
+      option_feedback:
+        0: A list is a collection of many items; the blur wraps one and changes its drawing.
+        2: Sharing the interface is not enough; a composite holds many children.
+  transfer:
+  - scene: transfer
+    cue: caption
+    retry:
+      type: single
+      question: A Composite pattern design for a course site adds quizzes as a new kind of item that modules
+        hold. What changes?
+      options:
+      - One new Quiz class that implements the shared interface
+      - A quiz branch in every module method and every client
+      - A quiz method added to the shared interface
+      correct_index: 0
+      explanation: A new kind of leaf is one new class; existing composites and clients already work with
+        anything that implements the interface.
+      option_feedback:
+        1: A branch per kind was the cost of the type-check design that the Composite pattern replaces.
+        2: The interface already declares the requests a quiz answers; nothing needs a quiz-specific method.
+  summary:
+  - scene: context
+    cue: part-whole
+    retry:
+      type: single
+      question: A recipe app has recipes that include steps and other recipes, and cooks ask for the total
+        time of one step or a whole recipe. Which part of the Composite pattern does this match?
+      options:
+      - 'Its context: parts nest into wholes, and clients treat both alike'
+      - 'Its solution: leaves and composites behind one interface'
+      - 'Its consequences: simple clients and runtime checks'
+      correct_index: 0
+      explanation: The description states a situation in which parts nest and clients ask the same question of
+        both, which is the Composite pattern's context.
+      option_feedback:
+        1: Nothing in the description says how the code is organized; that would be the solution.
+        2: Consequences follow from applying the solution; the description only states the situation.
+  - scene: problem
+    cue: every-change
+    retry:
+      type: single
+      question: The recipe app's first Recipe class checks whether each item is a step or a recipe in
+        totalTime() and in its Print button. In Composite pattern terms, what goes wrong as the app grows?
+      options:
+      - Recipes can no longer contain other recipes
+      - Every new kind of item adds a branch to every check
+      - Steps must store a reference to their recipe
+      correct_index: 1
+      explanation: Each operation and each client repeats the type check, so every new kind edits all of them,
+        and a missed branch fails silently.
+      option_feedback:
+        0: The type-check design can nest recipes; the trouble is the repeated checks.
+        2: Parent references are unrelated to this problem; the checks are what repeat.
+  - scene: solution
+    cue: composite
+    retry:
+      type: single
+      question: In a Composite pattern design for the recipe app, which class plays the Composite role?
+      options:
+      - Step, which answers totalTime() from its own minutes
+      - RecipeItem, the interface that steps and recipes share
+      - Recipe, which holds items and forwards requests to them
+      correct_index: 2
+      explanation: Recipe holds children of the shared type, steps or other recipes, and answers by forwarding
+        to them.
+      option_feedback:
+        0: A step has no children; it plays the Leaf role.
+        1: The shared interface plays the Component role.
+  - scene: split_role
+    cue: count
+    retry:
+      type: single
+      question: A cook asks a whole recipe for its total time. In a Composite pattern design, how is the answer
+        computed?
+      options:
+      - The recipe asks each item, nested recipes ask theirs, and the sums return
+      - The cook's screen collects every step in the tree and adds them
+      - Each step reports its minutes to its recipe ahead of time
+      correct_index: 0
+      explanation: The request travels down the tree; composites forward it and add up the answers, and leaves
+        answer from their own data.
+      option_feedback:
+        1: The client makes one call and never walks the tree itself.
+        2: Leaves answer when they are asked rather than reporting ahead of time.
+  - scene: consequences
+    cue: overly-general
+    retry:
+      type: single
+      question: The recipe app wants quick recipes that may hold only steps, never other recipes. What do the
+        Composite pattern's consequences say about this rule?
+      options:
+      - The shared interface lets the compiler forbid nested recipes
+      - Composites may never restrict the kinds of children they hold
+      - The inherited add accepts any item, so a runtime check is needed
+      correct_index: 2
+      explanation: A quick recipe inherits Recipe's add, which accepts any item, so the restriction has to be
+        checked while the program runs.
+      option_feedback:
+        0: The inherited add accepts every kind of item, so the type system cannot enforce this rule.
+        1: Restrictions are allowed; they just become checks at runtime.
+  - scene: applicability
+    cue: plain-list
+    retry:
+      type: single
+      question: A music app shows a flat queue of songs that never nests, and every song has the same data.
+        Should the queue use the Composite pattern?
+      options:
+      - Yes, because every collection should be a composite
+      - No, because nothing nests, so a plain list is simpler
+      - No, because a composite cannot hold songs
+      correct_index: 1
+      explanation: The Composite pattern pays off when items nest inside groups; without nesting, a plain list
+        is the simpler design.
+      option_feedback:
+        0: A collection alone is not a part-whole hierarchy that nests.
+        2: A composite can hold any kind of leaf; the reason to skip it is that nothing nests.
+exercises:
+- id: add-sticker
+  title: Add a sticker tile
+  scene: transfer
+  cue: caption
+  prompt: Stickers arrive. A sticker draws an emoji into its area and counts as no photos. Extend the class
+    diagram with a Sticker class that fits the composite design, so existing splits can hold stickers and the
+    Share button can share them. Do not change Split or ShareButton.
+  type: class
+  starter: |
+    @startuml
+    layout portrait
+    interface Tile {
+      + draw(area, canvas)
+      + photoCount(): int
+    }
+    class Photo {
+      - name
+      + draw(area, canvas)
+      + photoCount(): int
+    }
+    class Split {
+      - direction
+      + add(tile: Tile)
+      + draw(area, canvas)
+      + photoCount(): int
+    }
+    class ShareButton {
+      - selection: Tile
+      + press(): canvas
+    }
+    ShareButton --> Tile : selection
+    Photo ..|> Tile
+    Split ..|> Tile
+    Split o--> "*" Tile : tiles
+    @enduml
+  solution: |
+    @startuml
+    layout portrait
+    interface Tile {
+      + draw(area, canvas)
+      + photoCount(): int
+    }
+    class Photo {
+      - name
+      + draw(area, canvas)
+      + photoCount(): int
+    }
+    class Sticker {
+      - emoji
+      + draw(area, canvas)
+      + photoCount(): int
+    }
+    class Split {
+      - direction
+      + add(tile: Tile)
+      + draw(area, canvas)
+      + photoCount(): int
+    }
+    class ShareButton {
+      - selection: Tile
+      + press(): canvas
+    }
+    ShareButton --> Tile : selection
+    Photo ..|> Tile
+    Sticker ..|> Tile
+    Split ..|> Tile
+    Split o--> "*" Tile : tiles
+    @enduml
+  checks:
+  - Sticker implements Tile and provides draw(area, canvas) and photoCount(), which returns zero.
+  - Split, ShareButton, and Tile are unchanged; a split already holds any Tile, so it can hold stickers.
+  - Explain what the first design would have needed for stickers, and which missed check could skip them
+    silently.
+- id: trace-right-half
+  title: Trace sharing the right half
+  scene: collaborations
+  cue: loop
+  prompt: A learner presses Share on right, the stacked split that holds the cat above the bottom split.
+    Complete the sequence from the button down to cat and bottom, naming each part of the area in words.
+    Bottom's own photos are left out to keep the trace focused.
+  type: sequence
+  starter: |
+    @startuml
+    participant button: ShareButton
+    participant right: Split
+    participant cat: Photo
+    participant bottom: Split
+    @enduml
+  solution: |
+    @startuml
+    participant button: ShareButton
+    participant right: Split
+    participant cat: Photo
+    participant bottom: Split
+    activate button
+    button -> right: draw(whole story, canvas)
+    activate right
+    right -> cat: draw(top half, canvas)
+    activate cat
+    deactivate cat
+    right -> bottom: draw(bottom half, canvas)
+    activate bottom
+    deactivate bottom
+    deactivate right
+    deactivate button
+    @enduml
+  checks:
+  - The button calls draw on right with the whole story area; it never checks whether right is a split.
+  - right cuts its area stacked, sending the top half to cat and then the bottom half to bottom, in list
+    order.
+  - Explain what bottom does next, and in which order gig and taco are drawn.
+comparisons:
+- id: type-checks-or-shared-type
+  title: 'Captions: type checks or one shared type?'
+  question: Captions arrive. Compare what each design must change, and what goes wrong if one change is
+    missed.
+  before:
+    scene: problem
+    cue: every-change
+    label: 'First design: three photo-or-split checks'
+  after:
+    scene: transfer
+    cue: caption
+    label: 'Composite design: one new Caption class'
+  consequences:
+  - The first design needs a caption branch in every check; a missed branch in draw leaves the caption blank
+    with no error.
+  - The composite design adds one class that implements Tile, and no existing class changes.
+  - The composite design costs a shared interface and a class per kind, and every tile must answer every
+    request.
+  - With only photos and splits that never change, the first design's checks may be simpler to read.
+- id: carousel-or-split
+  title: 'A carousel post: a plain list or a split?'
+  question: A carousel post shows photos one after another. Should it be a split of tiles or a plain list,
+    and what would change your answer?
+  before:
+    scene: applicability
+    cue: plain-list
+    label: 'Carousel post: a flat list of photos'
+  after:
+    scene: split_role
+    cue: one-list
+    label: 'Split: one ordered list of Tiles that nest'
+  consequences:
+  - A carousel never nests, and nothing treats one photo and the whole carousel alike, so a plain list is
+    simpler and clearer.
+  - A split earns its shared interface only when tiles nest and clients treat one tile and a group alike.
+  - If carousels could hold other carousels or splits, and Share had to work on any of them, the composite
+    would pay off.
+  - Turning a list into a composite later means adding the shared interface and a composite class that owns
+    the list.

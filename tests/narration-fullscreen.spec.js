@@ -18,6 +18,8 @@ const narrations = [
     diagramScene: sceneNumber('strategy', 'strategy_role') },
   { url: '/SEBook/designpatterns/mvc.html', id: 'mvc-animation', title: 'Model-View-Controller in a data visualizer',
     diagramScene: sceneNumber('mvc', 'model_role') },
+  { url: '/SEBook/designpatterns/composite.html', id: 'composite-animation', title: 'The Composite pattern in a photo collage',
+    diagramScene: sceneNumber('composite', 'split_role') },
   { url: '/SEBook/uml_class_diagram.html', id: 'uml_class_diagram-animation', title: 'UML class diagrams in a study-group chat app',
     diagramScene: sceneNumber('uml_class_diagram', 'class_box') },
   { url: '/SEBook/uml_sequence_diagram.html', id: 'uml_sequence_diagram-animation', title: "UML sequence diagrams on a space probe's scan",

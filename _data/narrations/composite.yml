@@ -1,0 +1,572 @@
+# Edit speech and teaching text here. Visual state lives in ../narration_visuals/composite.json.
+version: 1
+id: composite
+kind: pattern
+title: The Composite pattern in a photo collage
+lesson:
+  name: Composite
+  summary: >-
+    Follow a story-collage app from splits that ask “photo or split?” in every operation to
+    <strong>one Tile interface for photos and splits</strong>, so any split can hold any tile.
+  prerequisites: Assumes familiarity with interfaces, polymorphism, and recursion.
+  chapter: /SEBook/designpatterns/composite.html
+  views: /SEBook/designpatterns/composite
+  outline_labels:
+    context: Wholes made of parts
+    problem: Photo or split?
+    tile_role: Tile
+    photo_role: Photo
+    split_role: Split
+    collaborations: One request, every level
+    solution: Component, Leaf, Composite
+    consequences: Benefits and liabilities
+    applicability: When to use Composite
+  complete_examples: >-
+    Areas are whole pixels, and every split divides its area equally among its tiles. A photo
+    never changes and knows no parent, so one Photo object can appear in two stories; the C++
+    example shares tiles through shared_ptr. A split must not contain itself, directly or through
+    another split; add does not check this. Both designs draw the photo story identically, but
+    with captions, the first design's Split.draw leaves the caption's area blank.
+speech:
+  voice: drama3-female6
+  speed: 1.0
+  pronunciations:
+    # Drama 3 drops a label that opens a sentence; these lead-ins keep it.
+    "Context: parts nest": "First, the context: parts nest"
+    "Problem: code that": "Then the problem: code that"
+    "Solution: a Component": "Then the solution: a Component"
+    "Solution, abstracted.": "Now the solution, abstracted."
+    "Consequences: simple": "And the consequences: simple"
+media:
+  audio: /assets/audio/composite-pattern.mp3
+  captions: /assets/narration/composite-pattern.vtt
+  script: /assets/narration/composite-pattern.txt
+scenes:
+  - id: intro
+    label: How a pattern is described
+    title: One Share button for every tile
+    purpose: See the example working, then preview how every pattern is described.
+    takeaway: A pattern pairs a problem that recurs in a context with a solution and its consequences.
+    cues:
+      - id: photo-dump
+        say: >-
+          Picture your summer photo dump as one phone story. The beach photo fills the left half.
+          On the right, the cat sits on top, and below it the gig and the taco share the space,
+          side by side. Four photos in one story, arranged by splits.
+        step: A story made of tiles
+        note: "Story: beach on the left; on the right, cat above gig and taco. Four photos."
+        visual: >-
+          The illustrated summer story shows the beach photo on the left half, the cat on the top
+          right, and the gig and taco photos side by side on the bottom right. Beside it, the layout
+          tree lists every tile with its kind, photo count, and Share button.
+      - id: try-it
+        say: >-
+          Notice what the app treats alike. A single photo and a whole split both show a photo
+          count, and both have a Share button. Try it yourself. Pause the narration, press Share on
+          any tile, a photo or a split, and watch it fill the whole story.
+        step: "Try it"
+        note: "Press Share on a photo, on bottom, or on the whole story."
+        visual: >-
+          Every row of the layout tree, photo or split, shows a photo count and a Share button. The
+          story is drawn on the canvas.
+      - id: pattern-parts
+        say: >-
+          The Composite pattern organizes structures like this one. Its roles are a shared
+          interface, single items, groups that hold other items, and the clients that use them. We
+          describe it by its context, problem, solution, and consequences. Choose a code language
+          above; the design is the same in each.
+        source: >-
+          Gamma et al., Design Patterns: Composite; Freeman et al., Head First Design Patterns: the
+          Composite Pattern
+        step: "Context, problem, solution, consequences"
+        note: >-
+          A shared interface · single items · groups that hold items · clients that use them
+        visual: "The story and its layout tree stay on screen."
+        pause_after: 2.5
+  - id: context
+    part: Context
+    label: "Context: wholes made of parts"
+    title: When does the Composite pattern apply?
+    purpose: Recognize the situation that the Composite pattern fits.
+    takeaway: >-
+      The context: a part-whole hierarchy that nests, and clients that want to treat one item and a
+      group alike.
+    cues:
+      - id: part-whole
+        say: >-
+          First, the context. The Composite pattern applies to part-whole hierarchies: wholes made
+          of parts, where some parts are wholes themselves. The story is made of tiles. Its right
+          half holds the cat and the bottom split, and the bottom holds two photos. Splits nest as
+          deep as you like.
+        source: >-
+          Gamma et al., Design Patterns: Composite, Applicability; Buschmann et al.,
+          Pattern-Oriented Software Architecture, Vol. 1: Whole-Part
+        step: "A part-whole hierarchy"
+        note: "Wholes made of parts; some parts are wholes themselves."
+        visual: >-
+          In the layout tree, the splits story, right, and bottom carry the tag whole; the canvas
+          still shows all four photos.
+      - id: alike
+        say: >-
+          The second sign: clients, the code that uses these objects, want to ignore the difference
+          between a single object and a group. The Share button and the layout tree ask a photo and
+          a split the same questions. A photo answers for itself; a split answers for everything
+          inside it.
+        step: "One item or a group, treated alike"
+        note: >-
+          Clients are the code that uses the objects; they ask both kinds the same questions.
+        visual: >-
+          The beach photo and the bottom split are tagged same requests. Each shows a photo count
+          and a Share button.
+      - id: trees
+        say: >-
+          Such structures are everywhere: folders that hold files and folders, drawings whose
+          shapes are grouped into larger shapes, menus with submenus, and the boxes nested inside
+          every web page. They form trees. An item with nothing inside is called a leaf, and a group
+          is called a composite.
+        source: "Gamma et al., Design Patterns: Composite, Motivation and Known Uses"
+        step: Trees everywhere
+        note: "Folders · grouped shapes · submenus · nested page boxes. Leaf: nothing inside; composite: a group."
+        visual: The beach photo and the bottom split stay tagged same requests in the layout tree.
+        pause_after: 2.5
+  - id: problem
+    part: Problem
+    label: "Problem: photo or split?"
+    title: Photos and splits, checked by type
+    purpose: Find what breaks when code checks whether each item is a single item or a group.
+    takeaway: >-
+      The problem: code that asks every item for its type repeats that check in every operation and
+      every client.
+    cues:
+      - id: area
+        say: >-
+          Now the problem. First, a small helper every version uses. An area is a rectangle that
+          cuts itself into equal parts, side by side or stacked. A split cuts its area into one part
+          per item and hands each item its part of the area, in list order.
+        step: "The area helper"
+        note: "An area cuts itself into equal parts, side by side or stacked."
+        visual: >-
+          In the first design's code, the loop in Split's draw and its call to area.part are marked.
+          On the canvas, every split's area is outlined with a dashed line.
+      - id: first-design
+        say: >-
+          Here is a direct first design. A photo has a name. A split has a direction and one list of
+          items, and each item is either a photo or a split. The two classes share no type, so the
+          split holds two unrelated kinds of items.
+        step: "No shared type"
+        note: "Photo has a name; Split has a direction and a list of photos or splits."
+        visual: >-
+          The Photo class, Split's list of photo-or-split items, and its add method are marked. The
+          first design draws the same story.
+      - id: branches
+        say: >-
+          So every operation asks which one it holds. The split's draw method draws a photo itself,
+          or forwards the part to a nested split. Its photo count adds one for a photo, or asks the
+          nested split for its count. Each operation repeats the same check.
+        source: "Gamma et al., Design Patterns: Composite, Consequences"
+        step: "Every operation checks the type"
+        note: "draw and photo count each ask: photo or split?"
+        visual: "The photo-or-split checks in Split's draw and photo count are marked."
+      - id: client-check
+        say: >-
+          The Share button asks too: is my selection a photo or a split? If it is a photo, the
+          button draws the photo itself, into the whole story. So the knowledge of how to draw a
+          photo is now written in two places, the split and the Share button.
+        step: "The client checks too"
+        note: "ShareButton checks its selection's type, and draws a photo itself."
+        visual: >-
+          The two checks in ShareButton's press are marked. The first design's story stays drawn,
+          and the layout tree lists every tile.
+      - id: predict-captions
+        say: >-
+          Now a new kind of tile arrives: a caption. The caption, core memories, should go under the
+          beach photo. Predict what must change in this design, and what happens if one of those
+          changes is missed. Pause the narration and decide before you go on.
+        step: "Predict the cost of captions"
+        note: "Which code changes for captions? What if one change is missed?"
+        visual: >-
+          A caption, core memories, waits to go under the beach photo. The code marks the Photo
+          class, the split's list of items, and its add method.
+        prediction: true
+        pause_after: 6
+      - id: every-change
+        say: >-
+          The item type must allow captions, and all three checks need a new branch: in the split's
+          draw method, its photo count, and the Share button. Miss the one in draw, and the
+          caption's area stays blank. Nothing reports an error, because that check has no else
+          branch.
+        step: "Every check changes"
+        note: "Miss the branch in draw: a blank area, and no error."
+        visual: >-
+          The three checks are marked. The layout tree gains a left split holding beach above the
+          caption; on the canvas, beach moves to the top of the left half, and the caption's area
+          below it stays blank, tagged not drawn.
+      - id: demands
+        say: >-
+          So a solution must meet four demands. One shared type for photos and splits. A split that
+          holds one ordered list of that type, so splits nest without checks. A Share button that
+          works on any tile without checks. And new kinds of tile without edits to existing classes.
+        step: "Four demands"
+        note: >-
+          One shared type · one ordered list · Share without checks · new kinds without edits
+        visual: >-
+          The three checks stay marked. The left split still holds beach above the caption, whose
+          area stays blank, tagged not drawn.
+        pause_after: 3
+  - id: tile_role
+    part: Solution
+    label: "Solution, concretely: one type for every tile"
+    title: One type for photos and splits
+    purpose: Give photos and splits one shared type.
+    takeaway: Tile is the shared type; photos and splits both implement it.
+    cues:
+      - id: shared-type
+        say: >-
+          Solution, concretely. First, one shared type. Tile declares the two requests that every
+          tile answers: draw yourself into this area, and tell me your photo count. Photo and Split
+          both implement Tile, so code that holds a tile no longer needs to know which kind it
+          holds.
+        source: "Gamma et al., Design Patterns: Composite, Participants"
+        step: One shared type
+        note: "Tile: draw into an area, and photo count"
+        visual: >-
+          The Tile interface is marked in the code and highlighted in the class diagram. Every row
+          of the layout tree is tagged Tile.
+      - id: canvas
+        say: >-
+          Look at draw's canvas parameter: a list that collects one line for each tile drawn. The
+          same canvas is handed down the whole tree, so every tile adds its own line, and whoever
+          called draw gets the finished picture back in one list.
+        source: "Kerievsky, Refactoring to Patterns: Move Accumulation to Collecting Parameter"
+        step: "One canvas, passed down"
+        note: "Every tile adds its line to the same canvas."
+        visual: >-
+          Tile's draw method is marked, with its canvas parameter. Every row of the layout tree is
+          still tagged Tile.
+        pause_after: 2.5
+  - id: photo_role
+    part: Solution
+    label: "Solution, concretely: a photo answers for itself"
+    title: A photo answers for itself
+    purpose: See how a leaf answers every request from its own data.
+    takeaway: A photo is a leaf; it answers draw and photo count itself and has nothing inside.
+    cues:
+      - id: direct
+        say: >-
+          Photo answers both requests from its own data. Its draw adds one line to the canvas: its
+          name and the area it was given. Its photo count is simply one. A photo has nothing inside,
+          which makes it a leaf of the tree, and it never asks anyone else.
+        step: A leaf answers directly
+        note: draw adds the photo's own line; photo count returns 1.
+        visual: >-
+          Photo's draw and photo count are marked, and Photo is highlighted in the class diagram.
+          The four photo rows of the layout tree are tagged Photo.
+      - id: shared
+        say: >-
+          A photo never changes after it is made, and it knows nothing about the split that holds
+          it. So one photo object can appear in two stories at once: the beach photo in your summer
+          dump and in a best-of-the-year story, both drawing the same picture.
+        source: "Gamma et al., Design Patterns: Composite, Implementation"
+        step: "One photo, two stories"
+        note: "Unchanging and unaware of its split, so one photo can be shared."
+        visual: >-
+          Photo's unchanging name is marked. The beach row carries the tag also in another story.
+        pause_after: 2.5
+  - id: split_role
+    part: Solution
+    label: "Solution, concretely: a split asks its tiles"
+    title: A split asks its tiles
+    purpose: See how a composite answers by forwarding to its children.
+    takeaway: A split holds one ordered list of tiles and answers every request by asking them.
+    cues:
+      - id: one-list
+        say: >-
+          Split keeps a direction and one ordered list of tiles. Because the list's type is Tile,
+          not photo-or-split, a split can hold both kinds mixed, in any order, and splits nest
+          inside splits without a single type check. The list's order is the reading order of the
+          story.
+        step: "One ordered list"
+        note: "A direction and one list of Tiles"
+        visual: >-
+          Split's direction and its list of tiles are marked, and Split is highlighted in the class
+          diagram. The three split rows are tagged Split, with their areas outlined on the canvas.
+      - id: count
+        say: >-
+          Its photo count asks each of its tiles for their count and adds up the answers. It never
+          asks what kind of tile it is holding. A nested split answers the same way, so the question
+          travels down the tree, and the sums come back up.
+        step: Ask every tile
+        note: photo count sums its tiles' counts.
+        visual: Split's photo count is marked. The three split rows stay tagged Split.
+      - id: draw
+        say: >-
+          Its draw cuts its area into equal parts, one per tile, and forwards each part to its tile,
+          in list order. So list order decides where each tile lands: the first tile gets the left
+          or top part. A split draws nothing itself; it only arranges.
+        source: "Gamma et al., Design Patterns: Composite, Implementation"
+        step: Cut and forward
+        note: draw hands each tile its part, in list order.
+        visual: Split's draw method is marked. On the canvas, each split's area is outlined.
+      - id: safe-add
+        say: >-
+          Notice where the add method is declared: in Split, not in Tile. Code cannot add a tile to
+          a photo; that mistake is caught before the program runs. That is the safe choice. The
+          price is that code that adds tiles must know it holds a split.
+        source: >-
+          Gamma et al., Design Patterns: Composite, Implementation; Freeman et al., Head First
+          Design Patterns: the Composite Pattern
+        step: "Safe: add only in Split"
+        note: "add only in Split: adding to a photo fails before the program runs."
+        visual: "Split's add method is marked."
+      - id: transparent-add
+        say: >-
+          The other choice declares the add method in Tile itself. Then every tile looks alike to
+          clients, but a photo must refuse to add anything while the program runs. That is the
+          transparent choice. This lesson's code makes the safe one; both are versions of the
+          Composite pattern.
+        step: "Transparent: add in Tile"
+        note: "add in Tile: uniform, but photos reject it at run time."
+        visual: "Split's add method stays marked, and Tile is highlighted in the class diagram."
+        pause_after: 2.5
+  - id: collaborations
+    part: Solution
+    label: "Solution, concretely: one request through the tree"
+    title: One press of Share
+    purpose: Trace one request through the tree, from the client to every leaf.
+    takeaway: A composite forwards each request to its children; a leaf answers it directly.
+    cues:
+      - id: press
+        say: >-
+          Now trace one press of Share on the story. The Share button calls draw on the story,
+          handing it the whole story's area and an empty canvas. The button neither knows nor cares
+          that the story is a split; it only knows it holds a tile.
+        step: "Share calls draw"
+        note: "press: draw the story into the whole story area, with an empty canvas"
+        visual: >-
+          ShareButton's press is marked. The sequence diagram shows the button calling draw on the
+          story, with the story lifeline highlighted. On the canvas, the story's area is outlined,
+          and nothing is drawn yet.
+      - id: first-tile
+        say: >-
+          The story is a split, side by side, holding the beach photo and then the right split. Now
+          predict the order in which all four photos land on the canvas. Pause and decide before you
+          go on.
+        step: "Predict the drawing order"
+        note: "In which order are the four photos drawn?"
+        visual: >-
+          Split's draw method is marked. The story's area stays outlined, and nothing is drawn yet.
+        prediction: true
+        pause_after: 5
+      - id: recursion
+        say: >-
+          The story cuts its area in two. Beach gets the left half and draws itself first. The right
+          split gets the right half and does the same, cutting it into a top part and a bottom part.
+          The cat is drawn second, then the gig, then the taco.
+        step: "Splits inside splits"
+        note: "beach 1st · cat 2nd · gig 3rd · taco 4th"
+        visual: >-
+          Split's draw method stays marked. The sequence diagram adds the story's calls to beach and
+          to right, with the right lifeline highlighted. On the canvas, the beach, cat, gig, and
+          taco tiles appear in that order, each tagged with its drawing order.
+      - id: loop
+        say: >-
+          The call returns to the Share button with a canvas of four lines, in reading order. That
+          is the loop of this pattern: a composite forwards each request to its children, and a leaf
+          answers it directly. One call on the story reached every tile.
+        step: The loop
+        note: Composites forward; leaves answer.
+        visual: >-
+          The forwarding call in Split's draw and the returned canvas are marked. The finished story
+          shows all four photos with their drawing order.
+        pause_after: 2.5
+  - id: solution
+    part: Solution
+    label: "Solution, abstracted: Component, Leaf, and Composite"
+    title: Component, Leaf, Composite, Client
+    purpose: Step back from the photos to the pattern's roles.
+    takeaway: Component, Leaf, Composite, and Client make up the Composite pattern.
+    cues:
+      - id: component
+        say: >-
+          Solution, abstracted. Remove the photos and the story, and four roles remain. The
+          Component, our Tile, declares the requests that every object in the structure answers,
+          whether it is a single item or a group. Clients hold Components and never need to know
+          which kind they hold.
+        source: "Gamma et al., Design Patterns: Composite, Structure and Participants"
+        step: Component
+        note: "Component (Tile): the requests every object answers"
+        visual: The role diagram highlights Component. Every row of the layout tree is tagged Component.
+      - id: leaf
+        say: >-
+          A Leaf, our Photo, answers each request itself and has no children. A structure can have
+          many kinds of leaves; each kind implements the Component in its own way, and nothing above
+          it needs to know which kind it is.
+        step: Leaf
+        note: "Leaf (Photo): answers itself, no children"
+        visual: The role diagram highlights Leaf. The four photo rows are tagged Leaf.
+      - id: composite
+        say: >-
+          A Composite, our Split, holds children of the Component type and answers by forwarding to
+          them, sometimes adding work of its own. Because a Composite is itself a Component,
+          Composites can contain Composites: these four classes describe object trees of any depth.
+        step: "Composite"
+        note: "Composite (Split): holds Components, forwards requests"
+        visual: >-
+          The role diagram highlights Composite. The three split rows are tagged Composite.
+      - id: client
+        say: >-
+          The Client, our Share button, uses only the Component interface. It never asks which kind
+          it holds, so the same call works on one photo or on the whole story, and the client stays
+          this simple however deep the tree grows.
+        step: "Client"
+        note: "Client (ShareButton): uses only the Component"
+        visual: >-
+          The role diagram highlights Client. Every Share button in the layout tree is tagged
+          Client.
+        pause_after: 2.5
+  - id: consequences
+    part: Consequences
+    label: "Consequences: benefits and liabilities"
+    title: What the Composite pattern buys and costs
+    purpose: Weigh the benefits and the liabilities of the Composite pattern.
+    takeaway: >-
+      The consequences: simple clients and easy new kinds, against an overly general structure and a
+      choice between safety and transparency.
+    cues:
+      - id: simple-clients
+        say: >-
+          Now the consequences. The first benefit: simple clients. The Share button treats one photo
+          and a whole split exactly the same way, with no type checks at all. Wherever a single tile
+          fits, a whole split of tiles fits too, and the button's code never grows.
+        source: "Gamma et al., Design Patterns: Composite, Consequences"
+        step: "Benefit: simple clients"
+        note: Share treats one photo and a split alike.
+        visual: Every Share button in the layout tree is tagged no checks.
+      - id: new-kinds
+        say: >-
+          The second benefit: new kinds fit in. A new kind of tile is one new class that implements
+          Tile. Existing splits hold it and the Share button shares it, without editing any existing
+          class. And a new kind that forgets draw is reported as an error, not left blank.
+        step: "Benefit: new kinds fit in"
+        note: "A new kind: one new class; nothing else changes."
+        visual: >-
+          The story and its layout tree are shown. The note names the benefit: a new kind of tile is
+          one new class.
+      - id: overly-general
+        say: >-
+          The first liability: the design can be overly general. Imagine a photo-booth strip, a kind
+          of split that may hold only photos. It inherits the add method from Split, which accepts
+          any tile, so the type system cannot keep splits out. The strip needs a check while the
+          program runs.
+        source: "Gamma et al., Design Patterns: Composite, Consequences"
+        step: "Liability: overly general"
+        note: "A photos-only strip needs a runtime check."
+        visual: >-
+          The story and its layout tree are shown. The note describes a photo-booth strip that would
+          still accept any tile through add.
+      - id: safety
+        say: >-
+          The second liability: safety or transparency. With the add method only in Split, misuse is
+          caught before the program runs, but code that builds the tree must know it holds a split.
+          Declared in Tile, it makes all tiles look alike, but leaves must reject it while the
+          program runs.
+        step: "Liability: safety or transparency"
+        note: "add in Split: safe. add in Tile: transparent."
+        visual: >-
+          The story and its layout tree are shown. The note says add is declared only in Split.
+        pause_after: 2.5
+  - id: applicability
+    part: Context
+    label: "Context revisited: when to use Composite"
+    title: When to use the Composite pattern
+    purpose: Decide when the Composite pattern fits and when a simpler design is better.
+    takeaway: >-
+      Use Composite when parts nest inside wholes and clients should not care which they hold;
+      otherwise prefer something simpler.
+    cues:
+      - id: fit
+        say: >-
+          Back to the context, and when to use the pattern. Composite fits when parts nest inside
+          wholes, wholes nest inside wholes, and clients should not care whether they hold one item
+          or a whole group. The summer story fits: splits sit inside splits, and one Share button
+          serves every tile.
+        source: "Gamma et al., Design Patterns: Composite, Applicability"
+        step: "A good fit"
+        note: "Nesting, plus clients that treat items and groups alike"
+        visual: "The story and its layout tree are shown, with splits nested inside splits."
+      - id: plain-list
+        say: >-
+          Compare a carousel post: a flat list of photos you swipe through. Nothing nests, and
+          nothing treats one photo and the whole carousel alike, so a plain list is better. With one
+          kind of leaf and no others coming, one Tile class with optional children can be simpler
+          too.
+        step: "Simpler designs"
+        note: "No nesting: a plain list. One kind of leaf: one class may do."
+        visual: >-
+          Below the canvas, a carousel post shows three photo thumbnails, beach, cat, and gig, as a
+          flat list, showing 1 of 3.
+      - id: neighbors
+        say: >-
+          Now a polaroid frame around the cat. It has the tile interface and one child, and it adds
+          drawing of its own: that is a Decorator. A split holds many tiles and arranges them.
+          Composite also appears inside other patterns, like Model-View-Controller's view trees and
+          commands that group other commands.
+        source: "Gamma et al., Design Patterns: Composite, Related Patterns; Decorator"
+        step: "Neighbors"
+        note: "Frame: one child, adds drawing (Decorator). Split: many children, arranges them."
+        visual: >-
+          The cat tile is shown in a polaroid frame, tagged polaroid frame. The carousel post stays
+          below the canvas.
+        pause_after: 2.5
+  - id: transfer
+    label: Apply the pattern
+    title: Captions arrive in the Composite design
+    purpose: Extend the Composite design with captions.
+    takeaway: A new kind of leaf is one new class that implements the Component; no existing class changes.
+    cues:
+      - id: plan
+        say: >-
+          Your turn. Captions arrive in the Composite design. A caption draws its text into its area
+          and has zero photos, and core memories must sit under the beach photo. Predict what you
+          add, which existing classes change, and how the story puts the caption there. Pause and
+          plan your answer.
+        step: "Your turn"
+        note: "What do you add, which classes change, and how does the caption get there?"
+        visual: >-
+          The class diagram shows Tile, Photo, Split, and ShareButton. A caption, core memories,
+          waits to go under the beach photo.
+        prediction: true
+        pause_after: 6
+      - id: caption
+        say: >-
+          You add one class, Caption, which implements Tile: its draw adds its text and area, and
+          its photo count returns zero. The story just gets one more Split object, stacked, holding
+          the beach photo above the caption. No existing class changes; the first design needed
+          three new branches.
+        step: "One new class"
+        note: "Caption implements Tile; one more Split object stacks beach above it."
+        visual: >-
+          The class diagram adds Caption, which implements Tile, highlighted. The layout tree gains
+          a left split holding beach above the caption, and on the canvas the caption core memories
+          appears under the beach photo, tagged new.
+        pause_after: 2.5
+  - id: summary
+    label: "Summary: the whole pattern"
+    title: Context, problem, solution, consequences
+    purpose: Recall every part of the Composite pattern before the summary quiz.
+    takeaway: Context, problem, solution, and consequences make up the mental model for every pattern.
+    cues:
+      - id: recap
+        say: >-
+          To finish, recall the whole pattern. Context: parts nest into wholes, and clients treat
+          one object and a group alike. Problem: code that asks every item for its type repeats its
+          checks and silently misses new kinds. Solution: a Component interface that Leaves
+          implement directly and Composites implement by forwarding to their children. Consequences:
+          simple clients and easy new kinds, but an overly general structure and a choice between
+          safety and transparency.
+        step: The Composite pattern in four parts
+        note: Context → Problem → Solution → Consequences
+        visual: >-
+          Four cards summarize the Composite pattern's context, problem, solution, and
+          consequences. The finished story shows the caption under the beach photo.
+        pause_after: 2.5

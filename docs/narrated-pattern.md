@@ -5,7 +5,7 @@ pauses, editable diagram exercises, question-specific review and fresh retries,
 diagram/code inspection, design comparisons, and searchable review. Author these
 in `<topic>_study.yml`; keep speech and renderer state in their existing sources.
 
-Observer, State, Strategy, and Model-View-Controller share one player:
+Observer, State, Strategy, Model-View-Controller, and Composite share one player:
 language-selectable code, ArchUML class, state, sequence, and CRC diagrams,
 topic illustrations, and a knowledge check at the end of every section. A
 lesson is data plus a few topic includes; the player, reader, and print views
@@ -144,6 +144,6 @@ both views. `tests/narration-fullscreen.spec.js` covers full screen on every
 narration page; add a new narration's page to its list. See
 `tests/narration-navigation.spec.js` for opening-frame navigation, keyboard
 jumps, focus, and mobile reflow checks across both lesson types. See
-`docs/observer-animation.md`, `docs/state-narration.md`, and `docs/strategy-narration.md` for the
-topic-specific details, and the `design-pattern-narration` skill for how to
+`docs/observer-animation.md`, `docs/state-narration.md`, `docs/strategy-narration.md`, and
+`docs/composite-narration.md` for the topic-specific details, and the `design-pattern-narration` skill for how to
 author a lesson.

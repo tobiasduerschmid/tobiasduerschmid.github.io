@@ -1,0 +1,221 @@
+{
+  "version": 1,
+  "presentation": {
+    "visuals": {
+      "ui": "composite-collage-panel.html"
+    },
+    "scripts": [
+      "composite-collage.js"
+    ],
+    "styles": [
+      "/css/composite-narration.css"
+    ]
+  },
+  "resources": {
+    "languages": [
+      "python",
+      "java",
+      "cpp",
+      "typescript"
+    ],
+    "default_language": "python",
+    "example_order": [
+      "area",
+      "tile",
+      "photo",
+      "split",
+      "caption",
+      "wire"
+    ],
+    "diagrams": {
+      "solution": {
+        "label": "Class diagram of the photo collage redesign",
+        "description": "Photo and Split both implement the Tile interface, which declares draw(area, canvas) and photoCount(). Photo keeps a name. Split keeps a direction, offers add(tile: Tile), and holds any number of Tiles, so its tiles may be photos or other splits. ShareButton holds one Tile as its selection and offers press(), which returns the canvas.",
+        "caption": "A dashed arrow with a hollow triangle means a class implements an interface. The arrow with a hollow diamond means a Split holds any number of Tiles, which may be photos or other splits. The plain arrow means a ShareButton uses one Tile.",
+        "source": "@startuml\nlayout portrait\ninterface Tile {\n  + draw(area, canvas)\n  + photoCount(): int\n}\nclass Photo {\n  - name\n  + draw(area, canvas)\n  + photoCount(): int\n}\nclass Split {\n  - direction\n  + add(tile: Tile)\n  + draw(area, canvas)\n  + photoCount(): int\n}\nclass ShareButton {\n  - selection: Tile\n  + press(): canvas\n}\nShareButton --> Tile : selection\nPhoto ..|> Tile\nSplit ..|> Tile\nSplit o--> \"*\" Tile : tiles\n@enduml\n"
+      },
+      "solution_caption": {
+        "label": "Class diagram with the Caption class added",
+        "description": "As before, Photo and Split implement Tile, Split holds any number of Tiles, and ShareButton uses one Tile. A new class, Caption, keeps a text and also implements Tile, with draw(area, canvas) and photoCount(). No other class changed.",
+        "caption": "Caption is one new class that implements Tile. Split and ShareButton are unchanged: a split holds Tiles, so it can hold captions too.",
+        "source": "@startuml\nlayout portrait\ninterface Tile {\n  + draw(area, canvas)\n  + photoCount(): int\n}\nclass Photo {\n  - name\n  + draw(area, canvas)\n  + photoCount(): int\n}\nclass Caption {\n  - text\n  + draw(area, canvas)\n  + photoCount(): int\n}\nclass Split {\n  - direction\n  + add(tile: Tile)\n  + draw(area, canvas)\n  + photoCount(): int\n}\nclass ShareButton {\n  - selection: Tile\n  + press(): canvas\n}\nShareButton --> Tile : selection\nPhoto ..|> Tile\nCaption ..|> Tile\nSplit ..|> Tile\nSplit o--> \"*\" Tile : tiles\n@enduml\n"
+      },
+      "trace": {
+        "type": "sequence",
+        "label": "Sequence of one press of Share on the story",
+        "description": "The Share button, button, calls draw(whole story, canvas) on story. story calls draw(left half, canvas) on beach, which draws itself, and then draw(right half, canvas) on right.",
+        "caption": "Lifelines are named after the tiles. The trace shows the first two levels; the canvas shows the deeper calls. Messages appear as the narration reaches them.",
+        "source": "@startuml\nparticipant button: ShareButton\nparticipant story: Split\nparticipant beach: Photo\nparticipant right: Split\n",
+        "steps": [
+          "activate button\nbutton -> story: draw(whole story, canvas)\nactivate story\n",
+          "story -> beach: draw(left half, canvas)\nactivate beach\ndeactivate beach\n",
+          "story -> right: draw(right half, canvas)\nactivate right\ndeactivate right\ndeactivate story\ndeactivate button\n"
+        ]
+      },
+      "roles": {
+        "label": "Composite pattern role diagram",
+        "description": "A Client uses the Component interface, which declares operation(). Leaf and Composite both implement Component. Composite also declares add(child: Component) and holds any number of Components as its children.",
+        "caption": "This is the safe arrangement, with add only in Composite; the transparent one also declares add in Component. Composite both implements Component and holds Components, so composites can contain composites.",
+        "source": "@startuml\nlayout portrait\nclass Client\ninterface Component {\n  + operation()\n}\nclass Leaf {\n  + operation()\n}\nclass Composite {\n  + add(child: Component)\n  + operation()\n}\nClient --> Component : uses\nLeaf ..|> Component\nComposite ..|> Component\nComposite o--> \"*\" Component : children\n@enduml\n"
+      }
+    }
+  },
+  "scenes": {
+    "intro": {
+      "state": { "ui": true },
+      "cues": {
+        "photo-dump": { "ui_state": "start" },
+        "try-it": { "ui_state": "start" },
+        "pattern-parts": { "ui_state": "start" }
+      }
+    },
+    "context": {
+      "state": { "ui": true },
+      "cues": {
+        "part-whole": { "ui_state": "wholes" },
+        "alike": { "ui_state": "alike" },
+        "trees": { "ui_state": "alike" }
+      }
+    },
+    "problem": {
+      "state": { "code": "problem", "ui": true },
+      "cues": {
+        "area": { "focus": "area", "ui_state": "first_areas" },
+        "first-design": { "focus": "types", "ui_state": "first_start" },
+        "branches": { "focus": "branches", "ui_state": "first_start" },
+        "client-check": { "focus": "client", "ui_state": "first_start" },
+        "predict-captions": { "focus": "types", "ui_state": "first_caption_pending" },
+        "every-change": { "focus": "changes", "ui_state": "first_caption_blank" },
+        "demands": { "focus": "changes", "ui_state": "first_caption_blank" }
+      }
+    },
+    "tile_role": {
+      "state": { "code": "tile", "diagram": "solution", "ui": true },
+      "cues": {
+        "shared-type": { "focus": "interface", "diagram_focus": "Tile", "ui_state": "tiles" },
+        "canvas": { "focus": "draw", "diagram_focus": "Tile", "ui_state": "tiles" }
+      }
+    },
+    "photo_role": {
+      "state": { "code": "photo", "diagram": "solution", "ui": true },
+      "cues": {
+        "direct": { "focus": "requests", "diagram_focus": "Photo", "ui_state": "photos" },
+        "shared": { "focus": "fields", "diagram_focus": "Photo", "ui_state": "photo_shared" }
+      }
+    },
+    "split_role": {
+      "state": { "code": "split", "diagram": "solution", "ui": true },
+      "cues": {
+        "one-list": { "focus": "tiles", "diagram_focus": "Split", "ui_state": "splits" },
+        "count": { "focus": "count", "diagram_focus": "Split", "ui_state": "splits" },
+        "draw": { "focus": "draw", "diagram_focus": "Split", "ui_state": "splits" },
+        "safe-add": { "focus": "add", "diagram_focus": "Split", "ui_state": "splits" },
+        "transparent-add": { "focus": "add", "diagram_focus": "Tile", "ui_state": "splits" }
+      }
+    },
+    "collaborations": {
+      "state": { "code": "split", "diagram": "trace", "ui": true },
+      "cues": {
+        "press": { "focus": "press", "diagram_steps": 1, "diagram_focus": "story", "ui_state": "trace_press" },
+        "first-tile": { "focus": "draw", "diagram_steps": 1, "ui_state": "trace_press" },
+        "recursion": { "focus": "draw", "diagram_steps": 3, "diagram_focus": "right", "ui_state": "trace_drawn" },
+        "loop": { "focus": "result", "diagram_steps": 3, "ui_state": "trace_done" }
+      }
+    },
+    "solution": {
+      "state": { "diagram": "roles", "ui": true },
+      "cues": {
+        "component": { "diagram_focus": "Component", "ui_state": "role_component" },
+        "leaf": { "diagram_focus": "Leaf", "ui_state": "role_leaf" },
+        "composite": { "diagram_focus": "Composite", "ui_state": "role_composite" },
+        "client": { "diagram_focus": "Client", "ui_state": "role_client" }
+      }
+    },
+    "consequences": {
+      "state": {
+        "ui": true,
+        "cards": [
+          {
+            "title": "Benefit: simple clients",
+            "text": "Clients treat one tile and a whole split the same way, with no type checks; wherever one tile fits, a whole split fits too."
+          },
+          {
+            "title": "Benefit: new kinds fit in",
+            "text": "A new kind of tile is one new class that implements the shared interface; existing splits and clients work with it unchanged."
+          },
+          {
+            "title": "Liability: overly general",
+            "text": "A split that may hold only some kinds, such as a photos-only strip, cannot use the type system to restrict add; it needs a check at runtime."
+          },
+          {
+            "title": "Liability: safety or transparency",
+            "text": "Add only in the composite is checked early, but code that builds the tree must know it holds a composite; add in the component is uniform, but leaves reject it at runtime."
+          }
+        ]
+      },
+      "cues": {
+        "simple-clients": { "ui_state": "no_checks" },
+        "new-kinds": { "ui_state": "new_kinds" },
+        "overly-general": { "ui_state": "overly_general" },
+        "safety": { "ui_state": "safety" }
+      }
+    },
+    "applicability": {
+      "state": {
+        "ui": true,
+        "cards": [
+          {
+            "title": "A good fit",
+            "text": "Items nest inside groups, groups inside groups, and clients should not care which one they hold."
+          },
+          {
+            "title": "Simpler designs",
+            "text": "No nesting: a plain list, like a carousel post. One kind of leaf and no others coming: one class with an optional list of children."
+          },
+          {
+            "title": "Neighbors",
+            "text": "A frame around one tile adds drawing: a Decorator. View trees in Model-View-Controller and commands that group other commands are composites."
+          }
+        ]
+      },
+      "cues": {
+        "fit": { "ui_state": "fit" },
+        "plain-list": { "ui_state": "carousel" },
+        "neighbors": { "ui_state": "frame" }
+      }
+    },
+    "transfer": {
+      "state": { "diagram": "solution", "ui": true },
+      "cues": {
+        "plan": { "ui_state": "caption_pending" },
+        "caption": { "diagram": "solution_caption", "diagram_focus": "Caption", "ui_state": "caption" }
+      }
+    },
+    "summary": {
+      "state": {
+        "ui": true,
+        "cards": [
+          {
+            "title": "Context",
+            "text": "A part-whole hierarchy that nests, whose clients want to treat one object and a group alike."
+          },
+          {
+            "title": "Problem",
+            "text": "Code that asks every item whether it is single or a group repeats its type checks, and silently misses new kinds."
+          },
+          {
+            "title": "Solution",
+            "text": "A Component interface that Leaves implement directly and Composites implement by forwarding to their children."
+          },
+          {
+            "title": "Consequences",
+            "text": "Simple clients and easy new kinds, at the cost of an overly general structure and a choice between safety and transparency."
+          }
+        ]
+      },
+      "cues": {
+        "recap": { "ui_state": "final" }
+      }
+    }
+  }
+}

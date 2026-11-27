@@ -161,6 +161,8 @@
       seekToFraction: audio && (fraction => player.seekTo(Number(seek.max) * fraction)),
       fullscreen: toggleFullscreen,
       captions: cc && toggleCaptions,
+      // A button in a lesson's live illustration presses on Space, as any button does.
+      nativeSpace: '[data-np-visual] button',
     });
     root.querySelectorAll('[data-vn-skip]').forEach(button => listen(button, 'click', () => skip(Math.sign(Number(button.dataset.vnSkip)))));
     if (cc) listen(cc, 'click', toggleCaptions);

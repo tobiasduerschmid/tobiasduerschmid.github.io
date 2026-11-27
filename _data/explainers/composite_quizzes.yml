@@ -1,0 +1,185 @@
+# One knowledge check per section, about the Composite pattern rather than the
+# photo collage. The summary section lists several questions under `questions`.
+intro:
+  question: Which parts make up a design pattern's description, such as the Composite pattern's?
+  options:
+    - A class library, its public API, and examples of its usage
+    - A UML class diagram, a unit test suite, and a code template
+    - A context, a recurring problem, a solution, and its consequences
+  correct_index: 2
+  explanation: A pattern describes a problem that recurs in a context, a solution expressed as roles that work together, and the consequences of applying it.
+  option_feedback:
+    0: A library is code to call. A pattern's description says when its design applies, which problem it solves, how it works, and what it costs.
+    1: Diagrams and code illustrate a pattern, but without its context, problem, and consequences you cannot tell when to apply it.
+context:
+  question: Which situation is the context for the Composite pattern?
+  options:
+    - Objects nest in part-whole trees, and clients treat one object and a group alike
+    - One task has several interchangeable algorithms, and clients choose among them
+    - Several objects must be notified whenever one object changes
+  correct_index: 0
+  explanation: The Composite pattern applies to part-whole hierarchies in which some parts are wholes themselves, and whose clients want to ignore the difference between a single object and a group.
+  option_feedback:
+    1: Choosing among interchangeable algorithms involves no wholes made of parts. Composite's context is a structure of parts that nests.
+    2: Notifying dependents of a change involves no wholes made of parts. Composite's context is a structure of parts that nests.
+problem:
+  question: In the Composite pattern's problem, code asks whether each item is a single item or a group. What happens when a new kind of item arrives?
+  options:
+    - Only a class for the new kind is added; the existing checks already handle it
+    - Every type check needs a new branch, and a missed one skips the item silently
+    - The group class changes, but the clients that check types keep working
+  correct_index: 1
+  explanation: Each operation and each client asks which kind it holds, so a new kind needs a branch in every check, and a check with no else skips an unknown kind without any error.
+  option_feedback:
+    0: The checks only name the kinds they already know. A new kind needs its own branch in every operation and in every client that checks.
+    2: Clients check types too, as the Share button does, so each of them needs a branch for the new kind.
+tile_role:
+  question: In the Composite pattern, what does one shared type for single items and groups make possible?
+  options:
+    - Each item can keep a reference to every group that holds it
+    - Each group can create new items without knowing their classes
+    - One ordered list holds both kinds, and both answer the same requests
+  correct_index: 2
+  explanation: With one shared type, a group keeps all its items, of any kind, in one ordered list, and code that holds an item can ask it the same requests without checking its kind.
+  option_feedback:
+    0: The shared type declares the requests every item answers, such as draw and photo count. It does not connect an item to the groups that hold it.
+    1: Creating items is a different concern. The shared type is about answering the same requests, whatever kind an item is.
+photo_role:
+  question: In the Composite pattern, why can one leaf, such as a photo, sit in two composites, such as two stories, at once?
+  options:
+    - It never changes and knows nothing about the composite that holds it
+    - Each composite stores its own private copy of the leaf before using it
+    - The client tells the leaf which composite is asking before it answers
+  correct_index: 0
+  explanation: A leaf that never changes and keeps no reference to its parent answers the same way wherever it sits, so two composites can share the same object.
+  option_feedback:
+    1: No copy is needed. The same object sits in both composites, because nothing about it changes and it does not know where it is.
+    2: The client only calls the shared request. A leaf answers from its own data and the area it is given, whoever asks.
+split_role:
+  question: In the Composite pattern, add is declared only in the composite class, not in the shared interface. What does this choice give?
+  options:
+    - Every item looks alike to clients, and leaves reject add at run time
+    - Adding an item to a leaf is caught before the program runs
+    - Composites can no longer contain other composites
+  correct_index: 1
+  explanation: With add only in the composite, code cannot call add on a leaf at all, so the mistake is caught before the program runs; the price is that code that adds must know it holds a composite.
+  option_feedback:
+    0: That is the transparent choice, which declares add in the shared interface. Declaring add only in the composite is the safe choice.
+    2: A composite still holds items of the shared type, and composites are of that type, so they still nest.
+collaborations:
+  question: In the Composite pattern, a client calls one request on a composite whose children include another composite. How does the request reach the leaves inside the inner composite?
+  options:
+    - The client walks the whole tree itself and asks every leaf directly
+    - Each leaf reports its answer to the root ahead of time, before anyone asks
+    - The outer composite forwards it to the inner one, which forwards it again
+  correct_index: 2
+  explanation: Each composite forwards the request to its children, and each leaf answers it directly, so one call on the outer composite reaches every leaf, level by level.
+  option_feedback:
+    0: The client makes one call on the outer composite and never walks the tree. The composites pass the request down.
+    1: A leaf answers only when it is asked. Each composite asks its children when its own request arrives.
+solution:
+  question: In a Composite pattern drawing app, an Export button asks whatever is selected, one shape or a whole group, to export itself. Which role does the Export button play?
+  options:
+    - Client, which uses only the Component interface
+    - Composite, which holds children and forwards requests to them
+    - Leaf, which answers requests itself and has no children
+  correct_index: 0
+  explanation: The Export button holds a selected item and calls one request on it without knowing its kind, so it is a Client of the Component interface.
+  option_feedback:
+    1: Groups play the Composite role, because they hold children. The Export button holds one selection and only calls a request on it.
+    2: Single shapes play the Leaf role. The Export button is not part of the structure; it uses the structure.
+consequences:
+  question: In the Composite pattern, which consequence lets one client call handle a single item or a whole group with the same code?
+  options:
+    - Composites can contain composites, so the tree can nest without limit
+    - Clients treat single items and groups alike, with no type checks
+    - Add in the composite is checked before the program runs
+  correct_index: 1
+  explanation: Clients use only the shared interface and never check an item's kind, so the same call works on a single item or a whole group.
+  option_feedback:
+    0: Nesting explains why the tree can grow deep, not why a client needs no type checks.
+    2: Where add is declared is the choice between safety and transparency. It does not decide whether clients check types.
+applicability:
+  question: A polaroid frame wraps exactly one tile and adds a border to its drawing. Which pattern describes the frame, as opposed to the Composite pattern's split?
+  options:
+    - Leaf, because the frame draws a border of its own
+    - Composite, because the frame has the same interface as a tile
+    - Decorator, because it has one child and adds behavior of its own
+  correct_index: 2
+  explanation: A frame with the component's interface, exactly one child, and drawing of its own is a Decorator; a composite holds many children and arranges them.
+  option_feedback:
+    0: A leaf has no children, but the frame holds one tile and adds to that tile's drawing.
+    1: Sharing the interface is not enough. A composite holds many children and arranges them, while the frame wraps one and adds drawing.
+transfer:
+  question: In a Composite pattern design, a new kind of leaf must appear under an existing leaf. What changes?
+  options:
+    - One new leaf class, and a new composite object that stacks the two
+    - One new leaf class, and the old leaf gets an add method to hold it
+    - The composite class gets a branch that places the new kind below
+  correct_index: 0
+  explanation: The new kind is one new leaf class, and one more composite object holds the existing leaf and the new one in order; no existing class changes.
+  option_feedback:
+    1: A leaf has no children and no add method. To put two tiles together, a composite object holds both.
+    2: A branch per kind was the first design's cost. A composite places its children by list order, not by their kind.
+summary:
+  questions:
+    - question: A study planner has tasks and projects. A project holds tasks and other projects, and students ask how many hours remain for one task or a whole project. Which part of the Composite pattern does this description match?
+      options:
+        - 'Its context: parts nest into wholes, and clients treat both alike'
+        - 'Its solution: a Component interface with leaves and composites'
+        - 'Its consequences: simple clients and an overly general structure'
+      correct_index: 0
+      explanation: The description states a situation, not a design or its costs. Tasks and projects nest, and students ask the same question of one task or a whole project; that is the Composite pattern's context.
+      option_feedback:
+        1: The description says nothing about how the code is organized. A Component interface with leaves and composites would be the solution.
+        2: Costs and benefits follow from applying the solution. The description only states the situation the planner is in.
+    - question: The planner's first Project class keeps tasks and subprojects in one list, and both remainingHours() and the Done button check each item's type. In Composite pattern terms, what is the problem?
+      options:
+        - Only a class for each new kind is added; the checks already handle it
+        - Projects cannot be placed inside other projects at all
+        - Every operation repeats the task-or-project check, so new kinds edit them all
+      correct_index: 2
+      explanation: Each operation and each client asks whether an item is a task or a project, so every new operation repeats the check, and every new kind of item edits every check, the problem the Composite pattern addresses.
+      option_feedback:
+        0: Each check covers only the kinds it names, so a new kind needs a branch in every operation and every client.
+        1: The first design can nest projects, because a project's list can hold other projects. The trouble is the repeated type check.
+    - question: In a Composite design for the planner, which class plays the Composite role?
+      options:
+        - Task, which answers remainingHours() from its own estimate
+        - Project, which holds tasks and projects and forwards requests
+        - PlannerItem, the interface that tasks and projects both implement
+      correct_index: 1
+      explanation: Project stores child items, which may be tasks or other projects, and answers each request by forwarding it to its children.
+      option_feedback:
+        0: A task has no children and answers from its own data. It plays the Leaf role.
+        2: The shared interface plays the Component role. The Composite implements it and also holds children.
+    - question: A student asks a semester project for its remaining hours. In a Composite design, how is the answer computed?
+      options:
+        - The project asks each child, inner projects ask theirs, and the sums return
+        - The student's screen collects every task in the tree and adds their estimates
+        - Each task reports its hours upward to the project that holds it, in advance
+      correct_index: 0
+      explanation: "The request travels down: each project forwards it to its children and adds up their answers, and each task answers from its own estimate."
+      option_feedback:
+        1: The client makes one call on the project and never walks the tree itself. The structure does the traversal.
+        2: In a Composite design, the project asks its children; a task answers when asked instead of reporting ahead of time.
+    - question: The planner wants exam projects, a kind of Project, that may contain only tasks, never other projects. What do the Composite pattern's consequences say about this rule?
+      options:
+        - The type system enforces it once tasks and projects share an interface
+        - Composite forbids composites that restrict their children
+        - Project's add accepts any item, so the rule needs a check at runtime
+      correct_index: 2
+      explanation: An exam project inherits Project's add, which accepts any item, so the type system cannot keep projects out. The exam project has to check each item while the program runs.
+      option_feedback:
+        0: The inherited add accepts every kind of item, so the type system cannot enforce this restriction.
+        1: The pattern allows such restrictions; it just cannot enforce them through the type system, so they become runtime checks.
+    - question: A shopping list holds only items, never grouped into sublists, and every item has the same data. Should it use the Composite pattern?
+      options:
+        - Yes, because any collection of objects should be a composite
+        - No, because nothing nests, so a plain list of items is simpler
+        - No, because a composite can hold only one kind of leaf
+      correct_index: 1
+      explanation: Composite pays off when items nest inside groups and groups inside groups. Without nesting, a plain list is simpler.
+      option_feedback:
+        0: A collection alone is not a part-whole hierarchy that nests. Without nesting, a composite adds classes without benefit.
+        2: A composite can hold many kinds of leaves, as a split holds photos and captions. The reason to skip it is that nothing nests.

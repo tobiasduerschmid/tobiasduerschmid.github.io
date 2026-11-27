@@ -1,7 +1,10 @@
 ---
 title: Composite Design Pattern
 layout: sebook
+static_uml: true
 ---
+
+{% include narration.html topic="composite" %}
 
 # Problem
 
