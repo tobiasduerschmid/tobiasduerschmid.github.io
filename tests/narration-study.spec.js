@@ -175,16 +175,37 @@ for (const topic of ['uml_class_diagram', 'uml_sequence_diagram', 'uml_state_dia
 }
 
 for (const dark of [false, true]) {
-  test(`study tools remain operable on mobile in ${dark ? 'dark' : 'light'} fullscreen`, async ({ page }) => {
+  test(`fullscreen hides study tools and keeps navigation usable in ${dark ? 'dark fallback' : 'light native'} mode`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
+    if (dark) await page.addInitScript(() => {
+      delete Element.prototype.requestFullscreen;
+      delete Element.prototype.webkitRequestFullscreen;
+    });
     const player = await openStudy(page);
     if (dark) await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
-    await player.getByRole('button', { name: 'Enter full screen', exact: true }).click();
     await player.getByLabel('Study activity').selectOption('practice');
-    await expect(player.getByLabel('Your diagram source')).toBeEditable();
-    await a11yCheckpoint(page, `narration-study-mobile-${dark}`, { include: '#observer-animation' });
-    await player.getByRole('button', { name: 'Return to lesson' }).click();
-    await expect(player.getByText('Study tools', { exact: true })).toBeFocused();
+    const draft = 'class MyObserver {}';
+    await player.getByLabel('Your diagram source').fill(draft);
+    await player.getByRole('button', { name: 'Enter full screen', exact: true }).click();
+    await expect(player.getByText('Study tools', { exact: true })).toBeHidden();
+    await expect(player.getByLabel('Your diagram source')).toBeHidden();
+    await player.getByRole('button', { name: 'Mute narration', exact: true }).click();
+    await player.getByRole('button', { name: 'Play narration', exact: true }).click();
+    await expect(player.getByRole('button', { name: 'Pause narration', exact: true })).toBeVisible();
+    await player.getByRole('button', { name: 'Pause narration', exact: true }).click();
+    await player.getByRole('button', { name: 'Player settings', exact: true }).click();
+    await player.getByRole('combobox', { name: 'Scene', exact: true }).selectOption('1');
+    await player.getByRole('button', { name: 'Close settings', exact: true }).click();
+    const navigation = player.getByRole('button', { name: 'Problem: jump to its start', exact: true }).filter({ visible: true });
+    await expect(navigation).toBeInViewport();
+    await navigation.click();
+    await expect(player.getByRole('heading', { name: 'The document knows every widget', exact: true })).toBeVisible();
+    await a11yCheckpoint(page, `narration-navigation-fullscreen-${dark}`, { include: '#observer-animation' });
+    await player.getByRole('button', { name: 'Exit full screen', exact: true }).click();
+    await expect(player.getByText('Study tools', { exact: true })).toBeVisible();
+    await player.getByText('Study tools', { exact: true }).click();
+    await player.getByLabel('Study activity').selectOption('practice');
+    await expect(player.getByLabel('Your diagram source')).toHaveValue(draft);
   });
 }
 

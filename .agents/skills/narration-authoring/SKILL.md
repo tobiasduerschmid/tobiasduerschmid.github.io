@@ -353,6 +353,8 @@ and behavior contract is in [`docs/narration-study.md`](../../../docs/narration-
   storage is written. Saved writing belongs in the existing lesson-notes view.
 
 Use `narration-study.css` for readable light/dark/fullscreen/print presentation.
+Full screen hides Study tools and closes an open study panel so lesson navigation
+and playback remain available. Exiting restores the tools with session drafts retained.
 Study fields and buttons retain native keys instead of media shortcuts. Verify
 search/jump, draft retention/reset, code-language inspection, summary-question
 review/return/retry, normal/accelerated prediction holds and opt-out, mobile fullscreen, and
