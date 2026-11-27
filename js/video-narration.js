@@ -17,6 +17,7 @@
   function animationStage(panel, audio) {
     const frame = panel.querySelector('iframe');
     const poster = panel.querySelector('[data-vn-poster]');
+    const dismissCover = () => panel.classList.remove('has-cover');
     let stage = null;
     let wanted = 0;
     let posed = null;
@@ -43,6 +44,7 @@
     if (loader) loader.observe(panel.closest('[data-vn-screen]'));
     else load();
     audio.addEventListener('play', load, { once: true });
+    if (panel.classList.contains('has-cover')) audio.addEventListener('play', dismissCover, { once: true });
 
     // A point on the page in the frame's own coordinates. Portrait full
     // screen turns the video a quarter clockwise (`rotated`), frame included.
@@ -53,9 +55,10 @@
     }
 
     return {
-      pose(time, description) {
+      pose(time, description, position) {
         wanted = time;
         poster.textContent = description;
+        if (position > 0) dismissCover();
         if (stage && time !== posed) {
           stage.seek(time);
           posed = time;
@@ -106,6 +109,7 @@
     const animation = panels.animation ? animationStage(panels.animation, root.querySelector('audio')) : null;
     const languageSelect = root.querySelector('[data-setting="language"]');
     if (animation) bindPictureChoices(root, animation, languageSelect);
+    const explanation = root.querySelector('.nja-explanation');
     let lastCue = null;
     let lastLanguage = null;
     let lastDiagramKey = null;
@@ -150,7 +154,7 @@
     function render({ scene: storyScene, cue, motion, time: position }) {
       const shown = cue.show || storyScene.show;
       if (animation && shown.includes('animation')) {
-        animation.pose(motion ? position : restingTime(storyScene, cue), cue.visual);
+        animation.pose(motion ? position : restingTime(storyScene, cue), cue.visual, position);
       }
       const language = languageSelect ? languageSelect.value : null;
       if (cue === lastCue && language === lastLanguage) return;
@@ -170,8 +174,9 @@
       if (shown.includes('slide') && cueChanged) copySettled(panels.slide, readingStep, 'slide');
       if (shown.includes('code')) showCode(readingStep, language);
       if (shown.includes('diagram')) showDiagram(storyScene, cue, readingStep);
-      root.querySelector('.nja-step').textContent = cue.step;
-      root.querySelector('.nja-note').textContent = cue.note;
+      if (!explanation) return;
+      explanation.querySelector('.nja-step').textContent = cue.step;
+      explanation.querySelector('.nja-note').textContent = cue.note;
       root.querySelector('[data-vn-takeaway]').textContent = storyScene.takeaway;
       root.querySelector('.nja-takeaway').hidden = Boolean(cue.prediction);
     }

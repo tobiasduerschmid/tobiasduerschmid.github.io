@@ -31,6 +31,8 @@ const narrations = [
   { url: '/SEBook/architectural_styles/pubsub.html', id: 'publish_subscribe-video', title: 'Who is listening?' },
   { url: '/SEBook/architectural_styles/layers.html', id: 'layered_style-video', title: 'One floor down' },
   { url: '/SEBook/architectural_styles/pipes_and_filters.html', id: 'pipes_and_filters-video', title: 'Do one thing, pass it on' },
+  { url: '/blog/how-should-i-use-ai-as-a-college-student/video/', id: 'blog_ai_usage-video', title: 'Animated article', name: 'AI guide' },
+  { url: '/blog/evidence-based-study-tips-for-college-students/video/', id: 'blog_study_tips-video', title: 'Animated article', name: 'Study tips' },
 ];
 const lessonOf = (page, narration) => page.getByRole('region', { name: narration.title, exact: true });
 // Accessibility checkpoints audit `.nja-player`, the element that fills the screen.
@@ -39,7 +41,7 @@ const insideFullScreen = locator => locator.evaluate(element =>
 const fullScreenActive = page => page.evaluate(() => document.fullscreenElement !== null);
 
 for (const narration of narrations) {
-  test(`${narration.title}: full screen keeps the controls and narration, then returns to the page`, async ({ page }) => {
+  test(`${narration.name || narration.title}: full screen keeps the controls and narration, then returns to the page`, async ({ page }) => {
     await page.goto(narration.url);
     const lesson = lessonOf(page, narration);
     await lesson.getByRole('button', { name: 'Enter full screen' }).press('Enter');

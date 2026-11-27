@@ -1,0 +1,13 @@
+<link rel="stylesheet" href="{{ '/css/blog-video-cover.css' | relative_url }}?v={{ site.asset_version }}">
+<div class="blog-video-cover" data-blog-video-cover>
+  <div class="blog-video-cover__poster" data-blog-video-poster>
+    <img src="{{ include.image | escape }}" alt="{{ include.image_alt | escape }}" class="rounded-img">
+    <button type="button" class="blog-video-cover__play" data-blog-video-play aria-label="Play animated article" hidden>
+      <span class="blog-video-cover__icon">{% include player-icon.html name='play' %}</span>
+    </button>
+  </div>
+  <div class="blog-video-cover__player" data-blog-video-player hidden>
+    {% include narration.html topic=include.topic heading='Animated article' article=true %}
+  </div>
+</div>
+<script src="{{ '/js/blog-video-cover.js' | relative_url }}?v={{ site.asset_version }}" defer></script>

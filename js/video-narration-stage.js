@@ -40,9 +40,12 @@
   // On the stage page (body.is-fit), the stage fills the frame.
   const fits = document.body.classList.contains('is-fit');
   function fit() {
-    const scale = Math.min(window.innerWidth / STAGE_WIDTH, window.innerHeight / STAGE_HEIGHT);
-    const x = (window.innerWidth - STAGE_WIDTH * scale) / 2;
-    const y = (window.innerHeight - STAGE_HEIGHT * scale) / 2;
+    const responsive = stage.dataset.theme === 'blog-essay';
+    const width = (responsive && stage.offsetWidth) || STAGE_WIDTH;
+    const height = (responsive && stage.offsetHeight) || STAGE_HEIGHT;
+    const scale = Math.min(window.innerWidth / width, window.innerHeight / height);
+    const x = (window.innerWidth - width * scale) / 2;
+    const y = (window.innerHeight - height * scale) / 2;
     stage.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
   }
 

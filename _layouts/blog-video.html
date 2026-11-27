@@ -1,0 +1,10 @@
+---
+layout: blog
+---
+{%- assign article = site.blog | where: 'video_narration', page.topic | first -%}
+<article class="col-xs-12">
+  <p><a href="{{ article.url | relative_url }}">Read the original article</a></p>
+  <h1>{{ article.title | escape }}</h1>
+  {% include narration.html topic=page.topic heading='Animated article' poster=article.image article=true %}
+  {{ content }}
+</article>

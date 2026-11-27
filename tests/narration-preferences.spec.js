@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { lessonIds, loadLesson } = require('../scripts/narration/source');
-const { openPlayerSettings } = require('./helpers/narration-player');
+const { isArticleNarration, narrationPlayer, openPlayerSettings } = require('./helpers/narration-player');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
 const cookieName = 'sebook-narration-preferences';
@@ -9,29 +9,48 @@ const representatives = ['scrum', 'strategy', 'nodejs', 'therac25'].map(topic =>
 
 async function open(page, lesson) {
   await page.goto(lesson.lesson.chapter);
-  const player = page.getByRole('region', { name: lesson.story.title, exact: true });
+  const player = narrationPlayer(page, lesson);
   await expect(player.getByRole('button', { name: 'Play narration', exact: true })).toBeVisible();
   return player;
 }
 
-async function expectPreferences(player, captions, speed, finalCheckOnly = false) {
+async function expectPreferences(player, captions, speed, { article = false, finalCheckOnly = false } = {}) {
   await expect(player.getByRole('button', { name: 'Closed captions (CC)', exact: true })).toHaveAttribute('aria-pressed', String(captions));
   const caption = player.getByRole('region', { name: 'Narration', exact: true, includeHidden: true });
   if (captions) await expect(caption).toBeVisible();
   else await expect(caption).toBeHidden();
   await openPlayerSettings(player);
   await expect(player.getByRole('combobox', { name: /^(Narration speed|Speed)$/ })).toHaveValue(String(speed));
-  await expect(player.getByRole('checkbox', { name: 'Only pause for the final knowledge check', exact: true })).toBeChecked({ checked: finalCheckOnly });
+  const finalCheck = player.getByRole('checkbox', { name: 'Only pause for the final knowledge check', exact: true });
+  if (article) await expect(finalCheck).toHaveCount(0);
+  else await expect(finalCheck).toBeChecked({ checked: finalCheckOnly });
   await expect(player.locator('audio')).toHaveJSProperty('playbackRate', speed);
   await expect(player.locator('audio')).toHaveJSProperty('paused', true);
   await player.getByRole('button', { name: 'Close settings', exact: true }).click();
 }
 
 for (const lesson of lessons) {
+  const article = isArticleNarration(lesson.lesson);
   test(`${lesson.topic}: restores the shared cookie in its captions, speed selector, and audio`, async ({ page, context, baseURL }) => {
     await context.addCookies([{ name: cookieName, value: encodeURIComponent(JSON.stringify({ captions: false, speed: 2, finalCheckOnly: true })), url: baseURL }]);
     const player = await open(page, lesson);
-    await expectPreferences(player, false, 2, true);
+    await expectPreferences(player, false, 2, { article, finalCheckOnly: true });
+  });
+}
+
+for (const article of lessons.filter(({ lesson }) => isArticleNarration(lesson))) {
+  test(`${article.topic}: article choices survive reload and preserve the lesson's knowledge-check choice`, async ({ page, context, baseURL }) => {
+    await context.addCookies([{ name: cookieName, value: encodeURIComponent(JSON.stringify({ finalCheckOnly: true })), url: baseURL }]);
+    const player = await open(page, article);
+    await player.getByRole('button', { name: 'Closed captions (CC)', exact: true }).click();
+    await openPlayerSettings(player);
+    await expect(player.getByRole('checkbox', { name: 'Pause and predict', exact: true })).toHaveCount(0);
+    await player.getByRole('combobox', { name: /^(Narration speed|Speed)$/ }).selectOption('1.5');
+    await expectPreferences(player, false, 1.5, { article: true });
+    await page.reload();
+    await expectPreferences(player, false, 1.5, { article: true });
+    const lessonPlayer = await open(page, representatives[0]);
+    await expectPreferences(lessonPlayer, false, 1.5, { finalCheckOnly: true });
   });
 }
 
@@ -102,7 +121,7 @@ test('Settings edits and Browser storage deletion are reflected in narration pla
   await expect(page.getByRole('checkbox', { name: 'Mute narration', exact: true })).toBeChecked();
   await a11yCheckpoint(page, 'shared narration preferences', { feature: 'narration-preferences' });
   const player = await open(page, representatives[0]);
-  await expectPreferences(player, false, 1.25, true);
+  await expectPreferences(player, false, 1.25, { finalCheckOnly: true });
   await expectExtraPreferences(player, { captionSize: '2', volume: 0.35, muted: true, enabled: false });
   await page.goto('/cookies/');
   const row = page.getByRole('row').filter({ has: page.getByRole('cell', { name: cookieName, exact: true }) });

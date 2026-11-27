@@ -26,16 +26,18 @@
 {% assign quizzes = site.data.explainers[quizzes_key] %}
 {% assign first_scene = explainer.scenes.first %}
 {% assign first_cue = first_scene.cues.first %}
+{% if include.article %}{% assign scene_label = 'Section' %}{% endif %}
 {% assign player_id = topic | append: '-video' %}
-<section data-narration-renderer="VideoNarrationVisuals" class="narrated-explainer narrated-lesson video-narration {{ topic }}-video mathjax_ignore" id="{{ topic }}-video" aria-labelledby="{{ topic }}-video-title" data-vn-topic="{{ topic }}">
-  <h2 id="{{ topic }}-video-title">{{ explainer.title }}</h2>
-  <p>{{ lesson.summary }} {{ lesson.prerequisites }}</p>
+<section data-narration-renderer="VideoNarrationVisuals" class="narrated-explainer narrated-lesson video-narration {{ topic }}-video mathjax_ignore" id="{{ topic }}-video" aria-labelledby="{{ topic }}-video-title" data-vn-topic="{{ topic }}"{% if include.article %} data-article-player{% endif %}>
+  <h2 id="{{ topic }}-video-title"{% if include.article %} class="sr-only"{% endif %}>{{ include.heading | default: explainer.title | escape }}</h2>
+  {% unless include.article %}{% if lesson.summary or lesson.prerequisites %}<p>{{ lesson.summary }} {{ lesson.prerequisites }}</p>{% endif %}{% endunless %}
   <div class="nja-player">
     <div class="vn-video song-player-screen" data-vn-video tabindex="-1">
       <div class="vn-surface">
         {% capture video_settings %}{% if lesson.animation %}<label class="nja-motion"><input type="checkbox" data-setting="motion" checked> Animate visuals</label>{% endif %}
-          <button type="button" class="np-review-check" data-review-check>Knowledge check</button>{% endcapture %}
+          {% if include.article %}<a href="{{ lesson.views | append: '/read/' | relative_url }}">Transcript and visual descriptions</a>{% else %}<button type="button" class="np-review-check" data-review-check>Knowledge check</button>{% endif %}{% endcapture %}
         {% capture video_view %}{% if explainer.languages %}{% include narration-player-language.html id=topic languages=explainer.languages default=explainer.default_language examples=examples %}{% endif %}{% endcapture %}
+      {% unless include.article %}
         {% include narration-player-start.html %}
       <div class="vn-scenes" tabindex="0" role="region" aria-label="Scene navigation">
         {% for scene in explainer.scenes %}
@@ -46,11 +48,13 @@
         </div>
         {% endfor %}
       </div>
+      {% endunless %}
       <div class="vn-frame">
         {%- comment -%} One screen for every scene: moving a frame in the document would reload it. {%- endcomment %}
         <div class="vn-screen nja-stage" data-vn-screen role="group" aria-label="{{ first_cue.visual | escape }}">
           {% if lesson.animation %}
-          <div class="vn-panel vn-panel--animation" data-vn-panel="animation" hidden>
+          <div class="vn-panel vn-panel--animation{% if include.poster %} has-cover{% endif %}" data-vn-panel="animation" hidden>
+            {% if include.poster %}<img class="vn-animation-cover" src="{{ include.poster | relative_url }}" alt="">{% endif %}
             <p class="vn-animation-poster" data-vn-poster>{{ first_cue.visual | escape }}</p>
             <iframe class="vn-animation-frame" data-src="{{ lesson.animation.page | relative_url }}" title="{{ lesson.name | escape }} animation" tabindex="-1" aria-hidden="true"></iframe>
           </div>
@@ -67,34 +71,41 @@
           {% if explainer.languages %}
           <div class="vn-panel vn-panel--code nja-code-column" data-vn-panel="code" hidden></div>
           {% endif %}
-          <button type="button" class="vn-picture-control" aria-label="Play video" aria-describedby="{{ topic }}-video-help" hidden></button>
+          <button type="button" class="vn-picture-control" aria-label="Play video" {% unless include.article %}aria-describedby="{{ topic }}-video-help"{% endunless %} hidden></button>
           <span class="vn-gesture-feedback" aria-hidden="true" hidden></span>
-          <noscript><p>{{ first_cue.visual | escape }}</p></noscript>
+          <noscript><p>{{ first_cue.visual | escape }}</p>{% if include.article %}<p><a href="{{ lesson.views | append: '/read/' | relative_url }}">Transcript and visual descriptions</a></p>{% endif %}</noscript>
         </div>
-        {% include narration-player-check.html topic=include.topic id=player_id %}
-        <div class="nja-narration vn-captions" id="{{ topic }}-video-captions" role="region" aria-label="Narration" tabindex="0"><p>{{ first_cue.text }}</p></div>
+        {% unless include.article %}{% include narration-player-check.html topic=include.topic id=player_id %}{% endunless %}
+        <div class="nja-narration vn-captions" id="{{ topic }}-video-captions" role="region" aria-label="Narration" {% if include.article %}data-fullscreen-scroll{% else %}tabindex="0"{% endif %}><p>{{ first_cue.text }}</p></div>
       </div>
-      <p class="vn-phone-tip">Tip: turn your phone sideways for a bigger picture.</p>
-      {% include narration-player-controls.html id=player_id duration=timing.duration seek_label="Narration position" scenes=explainer.scenes view=video_view settings=video_settings %}
+      {% unless include.article %}<p class="vn-phone-tip">Tip: turn your phone sideways for a bigger picture.</p>{% endunless %}
+      {% include narration-player-controls.html id=player_id duration=timing.duration seek_label="Narration position" scenes=explainer.scenes view=video_view settings=video_settings scene_label=scene_label article=include.article %}
       </div>
     </div>
+    {% unless include.article %}
     <div class="nja-explanation"><strong class="nja-step">{{ first_cue.step }}</strong><p class="nja-note">{{ first_cue.note | escape }}</p></div>
     <p class="nja-takeaway"><i class="fa fa-lightbulb" aria-hidden="true"></i><span data-vn-takeaway>{{ first_scene.takeaway }}</span></p>
+    {% endunless %}
     {% capture audio_label %}{{ lesson.name }} narration by Fish Audio Drama 3{% endcapture %}
     {% include narration-player-audio.html story=explainer label=audio_label %}
     <p class="nja-status" role="status" aria-live="polite"></p>
   </div>
+  {% unless include.article %}
   {{ include.notes_actions }}
 
-  {% include narration-player-tips.html id=player_id picture=true pause_note="The narration pauses for a knowledge check at the end of each section." %}
+  {%- if quizzes -%}{%- assign pause_note = 'The narration pauses for a knowledge check at the end of each section.' -%}{%- else -%}{%- assign pause_note = nil -%}{%- endif -%}
+  {% include narration-player-tips.html id=player_id picture=true pause_note=pause_note %}
   {% include narration-player-credit.html story=explainer %}
   <p class="np-view-links"><a data-np-view-link href="{{ lesson.views | append: '/read/' | relative_url }}">Read at my own pace</a> · <a data-np-view-link href="{{ lesson.views | append: '/print/' | relative_url }}">Print step-by-step version</a>{% if notes %} · <a href="{{ lesson.views | append: '/notes/' | relative_url }}">Lesson notes with pictures</a>{% endif %}</p>
   <details class="nja-transcript">
     <summary>Transcript{% if explainer.languages %}, code,{% endif %} and visual descriptions</summary>
     {% include video-narration-reading.html topic=topic %}
   </details>
-  {% include narration-data.html topic=include.topic %}
+  {% else %}
+    {% if explainer.slides or explainer.diagrams or explainer.languages %}<div hidden>{% include video-narration-reading.html topic=topic %}</div>{% endif %}
+  {% endunless %}
+  {% include narration-data.html topic=include.topic article=include.article %}
 </section>
-{% include narration-player-scripts.html %}
-<script src="{{ '/js/narrated-pattern-document.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+{% include narration-player-scripts.html article=include.article diagrams=explainer.diagrams %}
+{% unless include.article %}<script src="{{ '/js/narrated-pattern-document.js' | relative_url }}?v={{ site.asset_version }}" defer></script>{% endunless %}
 <script src="{{ '/js/video-narration.js' | relative_url }}?v={{ site.asset_version }}" defer></script>

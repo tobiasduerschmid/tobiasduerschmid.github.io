@@ -353,3 +353,32 @@ presence of tags alone is not proof of PDF or full-site conformance.
    per-topic copy of the notes layout, script, or page.
 
 The `video-narration` skill covers how to author a lesson that teaches well.
+
+### Animated articles
+
+An animated blog post sets `video_narration` to its lesson ID. The blog post layout turns
+its featured image into a play button. Activating it starts the animation
+and audio in that same spot. The standalone `blog-video` layout uses the
+same image and player. Both pass `article=true` to `narration.html` for a
+compact transport with section navigation and captions. Settings include
+a link to the transcript and visual descriptions. On narrow portrait screens,
+article graphics reflow around the headline. A wide diagram retains its
+geometry and reveals larger labels below it on the same narration cues.
+The video and read-aloud player use the same MP3 and captions. Keep the
+compiled scene starts aligned with the chapter times in `_data/blog_audio/`.
+The blog narration tests compare those starts and every caption interval.
+
+The `blog-essay` stage draws the `essay_beats` in each scene's visual state.
+`from` and `to` are inclusive, one-based cue numbers. Each cue belongs to one
+beat. Write its title as the point a reader should remember, then show the
+evidence, decision, or worked step that makes that point visible. The beat stages its `items` and optional `signal` at a cue or an
+estimated word mark. An item's optional `detail_at: {cue, word}` can reveal
+its explanation later. Use `collection` for peer examples, `sequence` for
+ordered steps, and `orbit` when a process returns to its starting point.
+A beat can arrange shared illustrations or name a
+topic-specific SVG figure. In a figure, `data-be-item` identifies the
+zero-based item whose cue reveals a group. A group with `data-be-move` moves
+from the given horizontal and vertical offsets to its drawn position.
+Use `data-be-exit` with an item index to retire a state when the next one appears.
+Keep each cue's visual description up to date with the artwork for the
+reading and print views.

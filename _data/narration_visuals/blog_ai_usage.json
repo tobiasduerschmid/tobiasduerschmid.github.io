@@ -1,0 +1,2469 @@
+{
+  "version": 1,
+  "presentation": {
+    "animation": {
+      "page": "/assets/video-narration/blog_ai_usage.html",
+      "theme": "blog-essay",
+      "styles": [
+        "/css/video-narration-blog-essay.css"
+      ],
+      "scripts": [
+        "/js/video-narration/blog-essay-art.js",
+        "/js/video-narration/blog-ai-figures.js",
+        "/js/video-narration/blog-essay.js"
+      ]
+    }
+  },
+  "resources": {
+    "essay_topic": "blog_ai_usage"
+  },
+  "scenes": {
+    "introduction": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "feature",
+            "title": "Use AI to strengthen your own thinking",
+            "subtitle": "A guide for computer science students",
+            "items": [
+              {
+                "art": "student",
+                "label": "Your education",
+                "cue": 1,
+                "tone": "blue"
+              },
+              {
+                "art": "robot",
+                "label": "AI as a tool",
+                "cue": 2,
+                "tone": "gold",
+                "word": "tool"
+              }
+            ],
+            "signal": {
+              "cue": 2,
+              "word": "outsourcing",
+              "text": "Keep the thinking in your hands."
+            }
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "layout": "sequence",
+            "title": "Prepare for a higher skills bar",
+            "items": [
+              {
+                "art": "book",
+                "label": "School math",
+                "cue": 4,
+                "tone": "blue",
+                "word": "grade"
+              },
+              {
+                "art": "document",
+                "label": "Hard math problems",
+                "cue": 4,
+                "tone": "gold",
+                "word": "hardest"
+              },
+              {
+                "art": "stairs",
+                "label": "Rising expectations",
+                "cue": 5,
+                "tone": "blue",
+                "word": "raising"
+              }
+            ],
+            "signal": {
+              "cue": 5,
+              "word": "prepare",
+              "text": "Prepare for a rising bar."
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {}
+      }
+    },
+    "motivation-build-the-skills-to-use-ai-well": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "figure",
+            "title": "A good merge preserves both edits",
+            "subtitle": "Both edits belong in the file.",
+            "items": [
+              {
+                "art": "code",
+                "label": "Your changes",
+                "cue": 2,
+                "tone": "blue",
+                "word": "merge"
+              },
+              {
+                "art": "code",
+                "label": "Teammate’s changes",
+                "cue": 2,
+                "tone": "gold",
+                "word": "teammate"
+              },
+              {
+                "art": "document",
+                "label": "Combined file",
+                "cue": 3,
+                "tone": "blue",
+                "word": "combine"
+              }
+            ],
+            "signal": {
+              "cue": 3,
+              "word": "fix",
+              "text": "Temptation to say “Fix this”"
+            },
+            "figure": "ai-merge"
+          },
+          {
+            "from": 4,
+            "to": 6,
+            "layout": "feature",
+            "title": "Strong foundations make AI more useful",
+            "items": [
+              {
+                "art": "student",
+                "label": "Practice the skill",
+                "cue": 4,
+                "tone": "blue"
+              },
+              {
+                "art": "code",
+                "label": "Coding foundations",
+                "cue": 5,
+                "tone": "blue",
+                "word": "strong",
+                "detail": "System design experience",
+                "detail_at": {
+                  "cue": 6,
+                  "word": "design"
+                }
+              },
+              {
+                "art": "blocks",
+                "label": "Team habits",
+                "cue": 6,
+                "tone": "gold",
+                "word": "teams"
+              }
+            ],
+            "signal": {
+              "cue": 6,
+              "word": "strengthen",
+              "text": "AI can amplify existing habits."
+            }
+          },
+          {
+            "from": 7,
+            "to": 8,
+            "layout": "collection",
+            "title": "Foundations help you check AI’s work",
+            "items": [
+              {
+                "art": "code",
+                "label": "Follow the code",
+                "cue": 7,
+                "tone": "blue",
+                "word": "follow"
+              },
+              {
+                "art": "bug",
+                "label": "Spot missed cases",
+                "cue": 7,
+                "tone": "blue",
+                "word": "mistakes"
+              },
+              {
+                "art": "book",
+                "label": "Use subject knowledge",
+                "cue": 8,
+                "tone": "gold",
+                "word": "knowledge"
+              }
+            ],
+            "signal": {
+              "cue": 8,
+              "word": "succeed",
+              "text": "Knowledge helps you steer the tool."
+            }
+          },
+          {
+            "from": 9,
+            "to": 11,
+            "layout": "sequence",
+            "title": "Build the skill AI will amplify",
+            "items": [
+              {
+                "art": "map",
+                "label": "Plan the work",
+                "cue": 9,
+                "tone": "blue",
+                "word": "planned"
+              },
+              {
+                "art": "checklist",
+                "label": "Guide and check",
+                "cue": 9,
+                "tone": "blue",
+                "word": "checked"
+              },
+              {
+                "art": "stairs",
+                "label": "Amplify your skills",
+                "cue": 11,
+                "tone": "gold",
+                "word": "amplify"
+              }
+            ],
+            "signal": {
+              "cue": 10,
+              "word": "practice",
+              "text": "Keep building the base."
+            }
+          },
+          {
+            "from": 12,
+            "to": 14,
+            "layout": "figure",
+            "title": "You build skill by doing the hard reps",
+            "items": [
+              {
+                "art": "student",
+                "label": "Student watches",
+                "cue": 12,
+                "tone": "blue"
+              },
+              {
+                "art": "robot",
+                "label": "Robot lifts",
+                "cue": 12,
+                "tone": "gold",
+                "word": "robot"
+              },
+              {
+                "art": "barbell",
+                "label": "The robot’s rep",
+                "cue": 13,
+                "tone": "gold",
+                "word": "lift"
+              }
+            ],
+            "signal": {
+              "cue": 14,
+              "word": "workout",
+              "text": "Whose workout was it?"
+            },
+            "figure": "ai-gym"
+          },
+          {
+            "from": 15,
+            "to": 16,
+            "layout": "compare",
+            "title": "High scores can hide a practice gap",
+            "subtitle": "Different courses and measures.",
+            "items": [
+              {
+                "art": "document",
+                "label": "Math assessment",
+                "cue": 15,
+                "tone": "blue",
+                "word": "17",
+                "detail": "17% worse afterward"
+              },
+              {
+                "art": "pencil",
+                "label": "Take-home exam",
+                "cue": 16,
+                "tone": "gold",
+                "word": "average",
+                "detail": "96 out of 100"
+              }
+            ]
+          },
+          {
+            "from": 17,
+            "to": 19,
+            "layout": "figure",
+            "title": "Most scored much lower in person",
+            "items": [
+              {
+                "art": "document",
+                "label": "Take-home exam",
+                "cue": 17,
+                "tone": "gold"
+              },
+              {
+                "art": "notebook",
+                "label": "In-person final",
+                "cue": 17,
+                "tone": "blue",
+                "word": "person"
+              },
+              {
+                "art": "student",
+                "label": "Many perfect scorers",
+                "cue": 17,
+                "tone": "gold",
+                "word": "dropped"
+              },
+              {
+                "art": "checklist",
+                "label": "Most scored lower",
+                "cue": 17,
+                "tone": "blue",
+                "word": "lower"
+              }
+            ],
+            "signal": {
+              "cue": 18,
+              "word": "understanding",
+              "text": "Check what you can explain yourself."
+            },
+            "figure": "ai-brown-final",
+            "subtitle": "Brown University economics course"
+          },
+          {
+            "from": 20,
+            "to": 21,
+            "layout": "compare",
+            "title": "Rereading is weaker for retention",
+            "items": [
+              {
+                "art": "book",
+                "label": "Reread with notes open",
+                "cue": 20,
+                "tone": "gold",
+                "detail": "Less retrieval practice",
+                "detail_at": {
+                  "cue": 20,
+                  "word": "rereading"
+                }
+              },
+              {
+                "art": "brain",
+                "label": "Recall with notes closed",
+                "cue": 20,
+                "tone": "blue",
+                "word": "recalling",
+                "detail": "Useful mental practice",
+                "detail_at": {
+                  "cue": 20,
+                  "word": "practice"
+                }
+              }
+            ],
+            "signal": {
+              "cue": 21,
+              "word": "previous",
+              "text": "See Evidence-Based Study Tips"
+            }
+          },
+          {
+            "from": 22,
+            "to": 22,
+            "layout": "feature",
+            "title": "Clear friction to free up reasoning",
+            "items": [
+              {
+                "art": "student",
+                "label": "Practice the reasoning",
+                "cue": 22,
+                "tone": "blue"
+              },
+              {
+                "art": "chat",
+                "label": "Clarify instructions",
+                "cue": 22,
+                "tone": "gold",
+                "word": "confusing"
+              },
+              {
+                "art": "book",
+                "label": "Define a term",
+                "cue": 22,
+                "tone": "gold",
+                "word": "term"
+              }
+            ],
+            "signal": {
+              "cue": 22,
+              "word": "teach",
+              "text": "Keep the practice the assignment calls for."
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {},
+        "p10": {},
+        "p11": {},
+        "p12": {},
+        "p13": {},
+        "p14": {},
+        "p15": {},
+        "p16": {},
+        "p17": {},
+        "p18": {},
+        "p19": {},
+        "p20": {},
+        "p21": {},
+        "p22": {}
+      }
+    },
+    "cognitive-offloading-beneficial-vs-detrimental-use": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "figure",
+            "title": "Both kinds of load share one limit",
+            "subtitle": "Working memory has limited capacity.",
+            "items": [
+              {
+                "art": "brain",
+                "label": "Working memory",
+                "cue": 1,
+                "tone": "blue"
+              },
+              {
+                "art": "blocks",
+                "label": "Intrinsic load",
+                "cue": 3,
+                "tone": "blue",
+                "word": "intrinsic"
+              },
+              {
+                "art": "document",
+                "label": "Extraneous load",
+                "cue": 3,
+                "tone": "gold",
+                "word": "extraneous"
+              },
+              {
+                "art": "balance",
+                "label": "One shared limit",
+                "cue": 3,
+                "tone": "blue",
+                "word": "cap"
+              }
+            ],
+            "signal": {
+              "cue": 2,
+              "word": "depends",
+              "text": "What mental effort does the tool remove?"
+            },
+            "figure": "ai-working-memory"
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "layout": "collection",
+            "title": "Recursion requires tracking ideas together",
+            "items": [
+              {
+                "art": "code",
+                "label": "Calls",
+                "cue": 4,
+                "tone": "blue"
+              },
+              {
+                "art": "blocks",
+                "label": "Variables",
+                "cue": 5,
+                "tone": "blue",
+                "word": "variables"
+              },
+              {
+                "art": "document",
+                "label": "Return values",
+                "cue": 5,
+                "tone": "gold",
+                "word": "return"
+              }
+            ],
+            "signal": {
+              "cue": 5,
+              "word": "tracking",
+              "text": "These are the ideas to practice."
+            }
+          },
+          {
+            "from": 6,
+            "to": 8,
+            "layout": "figure",
+            "title": "Offload friction and keep the reasoning",
+            "items": [
+              {
+                "art": "code",
+                "label": "Target reasoning",
+                "cue": 6,
+                "tone": "blue"
+              },
+              {
+                "art": "bug",
+                "label": "Setup friction",
+                "cue": 6,
+                "tone": "gold",
+                "word": "installing"
+              },
+              {
+                "art": "robot",
+                "label": "Tool takes over",
+                "cue": 7,
+                "tone": "gold",
+                "word": "offloading"
+              }
+            ],
+            "signal": {
+              "cue": 7,
+              "word": "offloading",
+              "text": "A tool can reduce mental effort."
+            },
+            "figure": "ai-offload"
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {}
+      }
+    },
+    "the-bad-detrimental-offloading-outsourcing": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "compare",
+            "title": "Outsourcing the route skips the skill",
+            "subtitle": "Traveling salesperson assignment",
+            "items": [
+              {
+                "art": "map",
+                "label": "Design the route",
+                "cue": 1,
+                "tone": "blue"
+              },
+              {
+                "art": "robot",
+                "label": "Receive a solution",
+                "cue": 2,
+                "tone": "gold",
+                "word": "asking"
+              }
+            ],
+            "signal": {
+              "cue": 2,
+              "word": "defeats",
+              "text": "The optimization is the assignment."
+            }
+          },
+          {
+            "from": 4,
+            "to": 4,
+            "layout": "compare",
+            "title": "Skipping the logic can hurt later tests",
+            "items": [
+              {
+                "art": "robot",
+                "label": "AI does the logic",
+                "cue": 4,
+                "tone": "gold"
+              },
+              {
+                "art": "checklist",
+                "label": "Independent math test",
+                "cue": 4,
+                "tone": "blue",
+                "word": "experiment"
+              }
+            ],
+            "signal": {
+              "cue": 4,
+              "word": "17",
+              "text": "Unrestricted AI use led to 17% worse final grades."
+            }
+          },
+          {
+            "from": 5,
+            "to": 6,
+            "layout": "compare",
+            "title": "Running code can hide gaps in debugging",
+            "items": [
+              {
+                "art": "code",
+                "label": "Code runs",
+                "cue": 5,
+                "tone": "gold"
+              },
+              {
+                "art": "bug",
+                "label": "You can fix it",
+                "cue": 5,
+                "tone": "blue",
+                "word": "debugging"
+              }
+            ],
+            "signal": {
+              "cue": 6,
+              "word": "breaks",
+              "text": "What would you check if it broke?"
+            }
+          },
+          {
+            "from": 7,
+            "to": 8,
+            "layout": "sequence",
+            "title": "Explain the reasoning with the chat closed",
+            "items": [
+              {
+                "art": "map",
+                "label": "Decide how to start",
+                "cue": 7,
+                "tone": "blue"
+              },
+              {
+                "art": "question",
+                "label": "Notice a gap",
+                "cue": 7,
+                "tone": "gold",
+                "word": "noticing"
+              },
+              {
+                "art": "checklist",
+                "label": "Justify the answer",
+                "cue": 7,
+                "tone": "blue",
+                "word": "judging"
+              }
+            ],
+            "signal": {
+              "cue": 8,
+              "word": "chat",
+              "text": "Explain it with the chat closed."
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {}
+      }
+    },
+    "the-good-beneficial-offloading": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "compare",
+            "title": "The learning goal decides what to offload",
+            "subtitle": "What are you meant to learn?",
+            "items": [
+              {
+                "art": "map",
+                "label": "Learn algorithm design",
+                "cue": 1,
+                "tone": "blue",
+                "detail": "Pseudocode is yours",
+                "detail_at": {
+                  "cue": 3,
+                  "word": "pseudo"
+                }
+              },
+              {
+                "art": "code",
+                "label": "Learn syntax",
+                "cue": 3,
+                "tone": "gold",
+                "word": "syntax",
+                "detail": "Writing it is practice"
+              }
+            ],
+            "signal": {
+              "cue": 2,
+              "word": "attention",
+              "text": "Free attention for the target skill."
+            }
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "layout": "sequence",
+            "title": "Brainstorm with AI, then revise yourself",
+            "items": [
+              {
+                "art": "chat",
+                "label": "Brainstorm with AI",
+                "cue": 4,
+                "tone": "gold",
+                "word": "brainstorm"
+              },
+              {
+                "art": "question",
+                "label": "Question the ideas",
+                "cue": 4,
+                "tone": "blue",
+                "word": "questioning"
+              },
+              {
+                "art": "pencil",
+                "label": "Revise your argument",
+                "cue": 4,
+                "tone": "blue",
+                "word": "revising"
+              }
+            ],
+            "signal": {
+              "cue": 5,
+              "word": "improved",
+              "text": "Reflection makes the help useful."
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {}
+      }
+    },
+    "strategies-for-learning-deeply": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 2,
+            "layout": "feature",
+            "title": "Judge help by what you can do afterward",
+            "items": [
+              {
+                "art": "student",
+                "label": "You do the thinking",
+                "cue": 1,
+                "tone": "blue"
+              },
+              {
+                "art": "chat",
+                "label": "Hints",
+                "cue": 2,
+                "tone": "gold",
+                "word": "hints"
+              },
+              {
+                "art": "notebook",
+                "label": "Explanations and feedback",
+                "cue": 2,
+                "tone": "gold",
+                "word": "explanations"
+              }
+            ],
+            "signal": {
+              "cue": 2,
+              "word": "yourself",
+              "text": "Judge help by what you can do."
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {}
+      }
+    },
+    "socratic-interaction-ai-as-a-tutor-not-an-oracle": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 4,
+            "layout": "sequence",
+            "title": "One question at a time keeps you thinking",
+            "items": [
+              {
+                "art": "chat",
+                "label": "Tutor asks",
+                "cue": 1,
+                "tone": "gold"
+              },
+              {
+                "art": "brain",
+                "label": "You think",
+                "cue": 3,
+                "tone": "blue",
+                "word": "think"
+              },
+              {
+                "art": "student",
+                "label": "You explain",
+                "cue": 4,
+                "tone": "blue",
+                "word": "reasoning",
+                "detail": "Better near-term quizzes",
+                "detail_at": {
+                  "cue": 4,
+                  "word": "quizzes"
+                }
+              }
+            ],
+            "signal": {
+              "cue": 4,
+              "word": "later",
+              "text": "Later exams showed no clear gain."
+            }
+          },
+          {
+            "from": 5,
+            "to": 7,
+            "layout": "compare",
+            "title": "Recall and explanation train different skills",
+            "items": [
+              {
+                "art": "book",
+                "label": "Recall an idea",
+                "cue": 6,
+                "tone": "blue",
+                "detail": "From memory",
+                "word": "recalling"
+              },
+              {
+                "art": "code",
+                "label": "Explain a loop",
+                "cue": 6,
+                "tone": "gold",
+                "word": "loop",
+                "detail": "Why it ends"
+              }
+            ],
+            "signal": {
+              "cue": 5,
+              "word": "days",
+              "text": "Try a similar problem a few days later."
+            }
+          },
+          {
+            "from": 8,
+            "to": 9,
+            "layout": "figure",
+            "title": "Try explaining before asking for a hint",
+            "items": [
+              {
+                "art": "question",
+                "label": "Tutor asks",
+                "cue": 8,
+                "tone": "gold"
+              },
+              {
+                "art": "student",
+                "label": "You think and explain",
+                "cue": 9,
+                "tone": "blue",
+                "word": "think"
+              },
+              {
+                "art": "chat",
+                "label": "Hint",
+                "cue": 9,
+                "tone": "gold",
+                "word": "hint"
+              },
+              {
+                "art": "book",
+                "label": "Full example",
+                "cue": 9,
+                "tone": "gold",
+                "word": "worked"
+              }
+            ],
+            "figure": "ai-tutor-waits"
+          },
+          {
+            "from": 10,
+            "to": 11,
+            "layout": "feature",
+            "title": "Simplify the example and verify the help",
+            "items": [
+              {
+                "art": "brain",
+                "label": "Adjust the challenge",
+                "cue": 10,
+                "tone": "blue"
+              },
+              {
+                "art": "lamp",
+                "label": "Simpler example",
+                "cue": 10,
+                "tone": "gold",
+                "word": "simpler"
+              },
+              {
+                "art": "checklist",
+                "label": "Verify the explanation",
+                "cue": 11,
+                "tone": "blue",
+                "word": "tests"
+              }
+            ],
+            "signal": {
+              "cue": 11,
+              "word": "uncertainty",
+              "text": "Use notes, textbooks, or tests."
+            }
+          },
+          {
+            "from": 12,
+            "to": 14,
+            "layout": "figure",
+            "title": "Work through one filter at a time",
+            "items": [
+              {
+                "label": "Input list",
+                "cue": 12
+              },
+              {
+                "label": "Greater than one",
+                "cue": 13,
+                "word": "single"
+              },
+              {
+                "label": "Which values pass?",
+                "cue": 13,
+                "word": "elements"
+              },
+              {
+                "label": "Trace both filters",
+                "cue": 14,
+                "word": "worked"
+              },
+              {
+                "label": "Retry with new values",
+                "cue": 14,
+                "word": "similar"
+              }
+            ],
+            "figure": "ai-python-filters"
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {},
+        "p10": {},
+        "p11": {},
+        "p12": {},
+        "p13": {},
+        "p14": {}
+      }
+    },
+    "the-attempt-first-pattern": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "compare",
+            "title": "Producing an answer can improve recall",
+            "items": [
+              {
+                "art": "pencil",
+                "label": "Generate from clues",
+                "cue": 1,
+                "tone": "blue"
+              },
+              {
+                "art": "book",
+                "label": "Read the answer",
+                "cue": 3,
+                "tone": "gold",
+                "word": "read"
+              }
+            ],
+            "signal": {
+              "cue": 3,
+              "word": "remembered",
+              "text": "Producing an answer can help it stick."
+            }
+          },
+          {
+            "from": 4,
+            "to": 6,
+            "layout": "collection",
+            "title": "Try first if you know how to start",
+            "items": [
+              {
+                "art": "pencil",
+                "label": "Make a relevant attempt",
+                "cue": 4,
+                "tone": "blue"
+              },
+              {
+                "art": "notebook",
+                "label": "Start with an example",
+                "cue": 5,
+                "tone": "gold",
+                "word": "example",
+                "detail": "Reduces time spent searching",
+                "detail_at": {
+                  "cue": 6,
+                  "word": "example"
+                }
+              }
+            ],
+            "signal": {
+              "cue": 6,
+              "word": "independently",
+              "text": "Retry independently after either starting point."
+            },
+            "subtitle": "Choose a starting point that fits what you know."
+          },
+          {
+            "from": 7,
+            "to": 9,
+            "layout": "figure",
+            "title": "The same node can return to the queue",
+            "subtitle": "Breadth-first search in C++",
+            "items": [
+              {
+                "art": "map",
+                "label": "Two neighboring nodes",
+                "cue": 7,
+                "tone": "blue"
+              },
+              {
+                "art": "database",
+                "label": "First queued node",
+                "cue": 8,
+                "tone": "gold",
+                "word": "trace"
+              },
+              {
+                "art": "bug",
+                "label": "A enters again",
+                "cue": 8,
+                "tone": "gold",
+                "word": "infinite"
+              }
+            ],
+            "signal": {
+              "cue": 9,
+              "word": "check",
+              "text": "When does your code mark a node visited?"
+            },
+            "figure": "ai-repeated-queue"
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {}
+      }
+    },
+    "break-the-problem-into-steps": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 4,
+            "layout": "sequence",
+            "title": "Planning hints can help you solve alone",
+            "subtitle": "How DBox supported practice",
+            "items": [
+              {
+                "art": "notebook",
+                "label": "Write solution steps",
+                "cue": 1,
+                "tone": "blue"
+              },
+              {
+                "art": "chat",
+                "label": "Get planning hints",
+                "cue": 3,
+                "tone": "gold",
+                "word": "hints"
+              },
+              {
+                "art": "laptop",
+                "label": "Solve without tools",
+                "cue": 3,
+                "tone": "blue",
+                "word": "similar"
+              }
+            ],
+            "signal": {
+              "cue": 4,
+              "word": "assignments",
+              "text": "Planning hints target a step."
+            }
+          },
+          {
+            "from": 5,
+            "to": 7,
+            "layout": "sequence",
+            "title": "Plan the whole, ask about one step",
+            "items": [
+              {
+                "art": "map",
+                "label": "Sketch the plan",
+                "cue": 5,
+                "tone": "blue"
+              },
+              {
+                "art": "question",
+                "label": "Question one step",
+                "cue": 6,
+                "tone": "gold",
+                "word": "justify"
+              },
+              {
+                "art": "checklist",
+                "label": "Implement and test",
+                "cue": 7,
+                "tone": "blue",
+                "word": "implement"
+              }
+            ],
+            "signal": {
+              "cue": 6,
+              "word": "interact",
+              "text": "Explain how the parts work together."
+            }
+          },
+          {
+            "from": 8,
+            "to": 9,
+            "layout": "feature",
+            "title": "Ask about the gap and write the code",
+            "items": [
+              {
+                "art": "notebook",
+                "label": "Here is my plan",
+                "cue": 8,
+                "tone": "blue"
+              },
+              {
+                "art": "question",
+                "label": "Does this step follow?",
+                "cue": 9,
+                "tone": "gold",
+                "word": "follows"
+              },
+              {
+                "art": "bug",
+                "label": "What case is missing?",
+                "cue": 9,
+                "tone": "blue",
+                "word": "missing"
+              }
+            ],
+            "signal": {
+              "cue": 9,
+              "word": "implementation",
+              "text": "I will write and test it."
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {}
+      }
+    },
+    "the-teach-back-method-ai-as-a-teachable-novice": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 4,
+            "layout": "orbit",
+            "title": "Teaching a novice can reveal gaps",
+            "items": [
+              {
+                "art": "student",
+                "label": "Explain inheritance",
+                "cue": 1,
+                "tone": "blue"
+              },
+              {
+                "art": "robot",
+                "label": "AI plays a novice",
+                "cue": 3,
+                "tone": "gold",
+                "word": "researchers"
+              },
+              {
+                "art": "question",
+                "label": "Why? How?",
+                "cue": 4,
+                "tone": "gold",
+                "word": "why"
+              }
+            ],
+            "signal": {
+              "cue": 4,
+              "word": "understanding",
+              "text": "Use questions to uncover gaps."
+            }
+          },
+          {
+            "from": 5,
+            "to": 6,
+            "layout": "compare",
+            "title": "Teach-back showed mixed follow-up gains",
+            "items": [
+              {
+                "art": "calendar",
+                "label": "Four weeks later",
+                "cue": 5,
+                "tone": "blue",
+                "word": "weeks",
+                "detail": "Ahead of usual teaching"
+              },
+              {
+                "art": "book",
+                "label": "School follow-up",
+                "cue": 6,
+                "tone": "gold",
+                "word": "later",
+                "detail": "Restudying held up"
+              }
+            ]
+          },
+          {
+            "from": 7,
+            "to": 10,
+            "layout": "feature",
+            "title": "Small examples make the why easier to trace",
+            "items": [
+              {
+                "art": "code",
+                "label": "Explain the base case",
+                "cue": 7,
+                "tone": "blue"
+              },
+              {
+                "art": "blocks",
+                "label": "Connect the steps",
+                "cue": 9,
+                "tone": "gold",
+                "word": "connect"
+              },
+              {
+                "art": "notebook",
+                "label": "Keep it small",
+                "cue": 10,
+                "tone": "blue",
+                "word": "small"
+              }
+            ],
+            "signal": {
+              "cue": 8,
+              "word": "base",
+              "text": "What happens without a base case?"
+            }
+          },
+          {
+            "from": 11,
+            "to": 14,
+            "layout": "sequence",
+            "title": "Use questions to clarify and verify",
+            "items": [
+              {
+                "art": "student",
+                "label": "Teach in your words",
+                "cue": 11,
+                "tone": "blue",
+                "detail": "Use confusion as a clue",
+                "detail_at": {
+                  "cue": 11,
+                  "word": "confusion"
+                }
+              },
+              {
+                "art": "question",
+                "label": "Ask for clarification",
+                "cue": 13,
+                "tone": "gold",
+                "word": "jargon"
+              },
+              {
+                "art": "book",
+                "label": "Check a concrete example",
+                "cue": 14,
+                "tone": "blue",
+                "word": "concrete"
+              }
+            ],
+            "signal": {
+              "cue": 11,
+              "word": "verify",
+              "text": "Verify disputed claims with a source."
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {},
+        "p10": {},
+        "p11": {},
+        "p12": {},
+        "p13": {},
+        "p14": {}
+      }
+    },
+    "prompting-patterns": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "sequence",
+            "title": "Test a prompt by explaining or solving",
+            "items": [
+              {
+                "art": "chat",
+                "label": "Ask for specific help",
+                "cue": 1,
+                "tone": "gold"
+              },
+              {
+                "art": "brain",
+                "label": "Explain or solve",
+                "cue": 3,
+                "tone": "blue",
+                "word": "explain"
+              }
+            ],
+            "signal": {
+              "cue": 3,
+              "word": "afterward",
+              "text": "Judge what you learn from the chat."
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {}
+      }
+    },
+    "the-generation-then-comprehension-protocol": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 2,
+            "layout": "compare",
+            "title": "Generated code can mask a learning gap",
+            "items": [
+              {
+                "art": "code",
+                "label": "Generated snippet",
+                "cue": 1,
+                "tone": "gold"
+              },
+              {
+                "art": "checklist",
+                "label": "Learning check",
+                "cue": 2,
+                "tone": "blue",
+                "word": "lower",
+                "detail": "Lower scores with AI help"
+              }
+            ],
+            "signal": {
+              "cue": 2,
+              "word": "copy",
+              "text": "Read generated code before using it."
+            }
+          },
+          {
+            "from": 3,
+            "to": 3,
+            "layout": "sequence",
+            "title": "Explain and verify code before using it",
+            "items": [
+              {
+                "art": "code",
+                "label": "Start with the snippet",
+                "cue": 3,
+                "tone": "gold"
+              },
+              {
+                "art": "question",
+                "label": "Ask how it works",
+                "cue": 3,
+                "tone": "blue",
+                "word": "explanations"
+              },
+              {
+                "art": "checklist",
+                "label": "Verify it yourself",
+                "cue": 3,
+                "tone": "blue",
+                "word": "checking"
+              }
+            ],
+            "signal": {
+              "cue": 3,
+              "word": "understanding",
+              "text": "Understanding is still your work."
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {}
+      }
+    },
+    "actionable-tips": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "sequence",
+            "title": "Check explanations against the relevant lines",
+            "items": [
+              {
+                "art": "code",
+                "label": "Predict its behavior",
+                "cue": 1,
+                "tone": "blue"
+              },
+              {
+                "art": "highlighter",
+                "label": "Explain the key lines",
+                "cue": 2,
+                "tone": "gold",
+                "word": "explanations"
+              },
+              {
+                "art": "laptop",
+                "label": "Test and try again",
+                "cue": 3,
+                "tone": "blue",
+                "word": "related"
+              }
+            ],
+            "signal": {
+              "cue": 3,
+              "word": "disagreements",
+              "text": "Investigate where the explanations disagree."
+            }
+          },
+          {
+            "from": 4,
+            "to": 4,
+            "layout": "feature",
+            "title": "Try a step before asking for help",
+            "items": [
+              {
+                "art": "notebook",
+                "label": "Write a first attempt",
+                "cue": 4,
+                "tone": "blue"
+              },
+              {
+                "art": "question",
+                "label": "Ask a specific question",
+                "cue": 4,
+                "tone": "gold",
+                "word": "specific"
+              },
+              {
+                "art": "book",
+                "label": "Get an example first",
+                "cue": 4,
+                "tone": "gold",
+                "word": "prerequisites"
+              }
+            ]
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {}
+      }
+    },
+    "study-patterns-that-preserve-useful-practice": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 2,
+            "layout": "feature",
+            "title": "Choose practice for the skill you want",
+            "items": [
+              {
+                "art": "student",
+                "label": "Practice the target skill",
+                "cue": 1,
+                "tone": "blue"
+              },
+              {
+                "art": "barbell",
+                "label": "Productive challenge",
+                "cue": 2,
+                "tone": "gold",
+                "word": "challenge"
+              }
+            ],
+            "signal": {
+              "cue": 2,
+              "word": "retain",
+              "text": "Choose the effort that teaches."
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {}
+      }
+    },
+    "the-alternative-approaches-pattern": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "compare",
+            "title": "Check alternatives you get from AI",
+            "items": [
+              {
+                "art": "code",
+                "label": "Loop",
+                "cue": 1,
+                "tone": "blue"
+              },
+              {
+                "art": "blocks",
+                "label": "Recursion",
+                "cue": 3,
+                "tone": "gold",
+                "word": "recursion"
+              }
+            ],
+            "signal": {
+              "cue": 3,
+              "word": "checking",
+              "text": "Check both generated solutions."
+            }
+          },
+          {
+            "from": 4,
+            "to": 6,
+            "layout": "sequence",
+            "title": "Make your own comparison before feedback",
+            "items": [
+              {
+                "art": "code",
+                "label": "Choose two candidates",
+                "cue": 4,
+                "tone": "blue"
+              },
+              {
+                "art": "notebook",
+                "label": "Predict their tradeoffs",
+                "cue": 5,
+                "tone": "blue",
+                "word": "prediction"
+              },
+              {
+                "art": "chat",
+                "label": "Read feedback afterward",
+                "cue": 6,
+                "tone": "gold",
+                "word": "evaluation"
+              }
+            ],
+            "signal": {
+              "cue": 5,
+              "word": "feature",
+              "text": "Compare one feature at a time."
+            }
+          },
+          {
+            "from": 7,
+            "to": 9,
+            "layout": "figure",
+            "title": "Compare reversal time and space",
+            "items": [
+              {
+                "art": "code",
+                "label": "Reverse one string",
+                "cue": 7,
+                "tone": "blue"
+              },
+              {
+                "art": "code",
+                "label": "Standard library",
+                "cue": 8,
+                "tone": "blue",
+                "word": "algorithm"
+              },
+              {
+                "art": "map",
+                "label": "Two pointers",
+                "cue": 8,
+                "tone": "gold",
+                "word": "pointers"
+              },
+              {
+                "art": "blocks",
+                "label": "Recursion",
+                "cue": 8,
+                "tone": "blue",
+                "word": "recursion"
+              },
+              {
+                "art": "checklist",
+                "label": "Time and extra space",
+                "cue": 8,
+                "tone": "blue",
+                "word": "costs"
+              },
+              {
+                "art": "blocks",
+                "label": "Call stack",
+                "cue": 8,
+                "tone": "gold",
+                "word": "stack"
+              }
+            ],
+            "signal": {
+              "cue": 9,
+              "word": "constraint",
+              "text": "Which fits your constraint?"
+            },
+            "figure": "ai-reversing-fork"
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {}
+      }
+    },
+    "read-make-your-own-notes-then-clarify": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "compare",
+            "title": "Students recalled more after taking notes",
+            "subtitle": "Study of 344 students aged 14–15",
+            "items": [
+              {
+                "art": "notebook",
+                "label": "Take your own notes",
+                "cue": 1,
+                "tone": "blue"
+              },
+              {
+                "art": "chat",
+                "label": "Use AI alone",
+                "cue": 3,
+                "tone": "gold",
+                "word": "alone"
+              }
+            ],
+            "signal": {
+              "cue": 3,
+              "word": "later",
+              "text": "Note-takers recalled and understood more."
+            }
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "layout": "sequence",
+            "title": "Write your notes before asking AI",
+            "items": [
+              {
+                "art": "book",
+                "label": "Read the passage",
+                "cue": 4,
+                "tone": "blue"
+              },
+              {
+                "art": "notebook",
+                "label": "Idea, example, question",
+                "cue": 5,
+                "tone": "blue",
+                "word": "record"
+              },
+              {
+                "art": "chat",
+                "label": "Ask about the uncertainty",
+                "cue": 5,
+                "tone": "gold",
+                "word": "specific"
+              }
+            ],
+            "signal": {
+              "cue": 5,
+              "word": "reconstruct",
+              "text": "Later, close everything and reconstruct."
+            }
+          },
+          {
+            "from": 6,
+            "to": 7,
+            "layout": "feature",
+            "title": "Verify feedback against the passage",
+            "items": [
+              {
+                "art": "document",
+                "label": "Passage and explanation",
+                "cue": 6,
+                "tone": "blue"
+              },
+              {
+                "art": "question",
+                "label": "Ask about one gap",
+                "cue": 7,
+                "tone": "gold",
+                "word": "gap"
+              },
+              {
+                "art": "highlighter",
+                "label": "Point to the passage",
+                "cue": 7,
+                "tone": "blue",
+                "word": "relevant"
+              }
+            ],
+            "signal": {
+              "cue": 7,
+              "word": "check",
+              "text": "Check the feedback against the source."
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {}
+      }
+    },
+    "faded-worked-examples": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 4,
+            "layout": "feature",
+            "title": "Worked examples give beginners a start",
+            "items": [
+              {
+                "art": "notebook",
+                "label": "Solved example",
+                "cue": 1,
+                "tone": "blue"
+              },
+              {
+                "art": "map",
+                "label": "Less searching",
+                "cue": 3,
+                "tone": "gold",
+                "word": "search"
+              },
+              {
+                "art": "brain",
+                "label": "Understand the method",
+                "cue": 3,
+                "tone": "blue",
+                "word": "understanding"
+              }
+            ],
+            "signal": {
+              "cue": 4,
+              "word": "experience",
+              "text": "Adjust guidance as experience grows."
+            }
+          },
+          {
+            "from": 5,
+            "to": 6,
+            "layout": "sequence",
+            "title": "Remove steps as you gain understanding",
+            "items": [
+              {
+                "art": "book",
+                "label": "Follow every step",
+                "cue": 5,
+                "tone": "blue"
+              },
+              {
+                "art": "notebook",
+                "label": "Fill the last step",
+                "cue": 6,
+                "tone": "gold",
+                "word": "missing"
+              },
+              {
+                "art": "laptop",
+                "label": "Solve a fresh problem",
+                "cue": 6,
+                "tone": "blue",
+                "word": "fresh"
+              }
+            ],
+            "signal": {
+              "cue": 6,
+              "word": "pace",
+              "text": "Move on when you can explain it."
+            }
+          },
+          {
+            "from": 7,
+            "to": 9,
+            "layout": "figure",
+            "title": "Trace more calls yourself each time",
+            "subtitle": "A Java recursion example",
+            "items": [
+              {
+                "art": "code",
+                "label": "Java method",
+                "cue": 7,
+                "tone": "blue"
+              },
+              {
+                "art": "blocks",
+                "label": "Complete trace",
+                "cue": 8,
+                "tone": "blue",
+                "word": "worked"
+              },
+              {
+                "art": "notebook",
+                "label": "Two frames blank",
+                "cue": 8,
+                "tone": "gold",
+                "word": "blank"
+              },
+              {
+                "art": "code",
+                "label": "Method and input",
+                "cue": 9,
+                "tone": "blue",
+                "word": "third"
+              }
+            ],
+            "signal": {
+              "cue": 9,
+              "word": "before",
+              "text": "Complete the trace before seeing an answer."
+            },
+            "figure": "ai-fading"
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {}
+      }
+    },
+    "rubric-first-feedback-loop": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 5,
+            "layout": "compare",
+            "title": "Compare predicted and actual scores",
+            "subtitle": "Reasoning experiment, out of 20",
+            "items": [
+              {
+                "art": "question",
+                "label": "Predicted score",
+                "cue": 1,
+                "tone": "gold"
+              },
+              {
+                "art": "checklist",
+                "label": "Actual score",
+                "cue": 4,
+                "tone": "blue",
+                "word": "answered"
+              }
+            ],
+            "signal": {
+              "cue": 4,
+              "word": "twenty",
+              "text": "Both groups overestimated by about four."
+            }
+          },
+          {
+            "from": 6,
+            "to": 8,
+            "layout": "figure",
+            "title": "Check one self-rating against evidence",
+            "items": [
+              {
+                "art": "document",
+                "label": "Your work",
+                "cue": 6,
+                "tone": "blue"
+              },
+              {
+                "art": "checklist",
+                "label": "My self-rating",
+                "cue": 7,
+                "tone": "blue",
+                "word": "scoring"
+              },
+              {
+                "art": "chat",
+                "label": "Check one rating",
+                "cue": 7,
+                "tone": "gold",
+                "word": "one"
+              },
+              {
+                "art": "highlighter",
+                "label": "Find the evidence",
+                "cue": 7,
+                "tone": "blue",
+                "word": "passage"
+              },
+              {
+                "art": "pencil",
+                "label": "Revise it yourself",
+                "cue": 8,
+                "tone": "blue",
+                "word": "revision"
+              }
+            ],
+            "signal": {
+              "cue": 7,
+              "word": "evidence",
+              "text": "Check a passage, code, or test result."
+            },
+            "figure": "ai-revision-loop"
+          },
+          {
+            "from": 9,
+            "to": 11,
+            "layout": "sequence",
+            "title": "Check your rating against a specific passage",
+            "items": [
+              {
+                "art": "document",
+                "label": "Assess each criterion",
+                "cue": 9,
+                "tone": "blue"
+              },
+              {
+                "art": "highlighter",
+                "label": "Check a specific passage",
+                "cue": 10,
+                "tone": "gold",
+                "word": "paragraph"
+              },
+              {
+                "art": "pencil",
+                "label": "Choose a revision",
+                "cue": 11,
+                "tone": "blue",
+                "word": "revision"
+              }
+            ],
+            "signal": {
+              "cue": 11,
+              "word": "justifies",
+              "text": "Which rating does the evidence support?"
+            }
+          },
+          {
+            "from": 12,
+            "to": 14,
+            "layout": "figure",
+            "title": "One passing test leaves edge cases open",
+            "items": [
+              {
+                "art": "checklist",
+                "label": "Your self-rating",
+                "cue": 12,
+                "tone": "blue"
+              },
+              {
+                "art": "question",
+                "label": "Edge cases covered?",
+                "cue": 13,
+                "tone": "gold",
+                "word": "edge"
+              },
+              {
+                "art": "code",
+                "label": "Passing normal case",
+                "cue": 13,
+                "tone": "blue",
+                "word": "evidence"
+              },
+              {
+                "art": "bug",
+                "label": "Empty input untested",
+                "cue": 14,
+                "tone": "gold",
+                "word": "challenges"
+              }
+            ],
+            "signal": {
+              "cue": 14,
+              "word": "targeted",
+              "text": "Add an empty-string test."
+            },
+            "figure": "ai-edge-case-evidence",
+            "subtitle": "Example using C++ string reversal"
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {},
+        "p10": {},
+        "p11": {},
+        "p12": {},
+        "p13": {},
+        "p14": {}
+      }
+    },
+    "fading-the-scaffold-the-goal-is-independence": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 2,
+            "layout": "compare",
+            "title": "Use less guidance as your skills grow",
+            "items": [
+              {
+                "art": "book",
+                "label": "New to the method",
+                "cue": 1,
+                "tone": "gold",
+                "detail": "Detailed guidance"
+              },
+              {
+                "art": "student",
+                "label": "Know the method",
+                "cue": 2,
+                "tone": "blue",
+                "word": "unnecessary",
+                "detail": "Less guidance"
+              }
+            ],
+            "signal": {
+              "cue": 2,
+              "word": "expertise",
+              "text": "The expertise reversal effect"
+            }
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "layout": "sequence",
+            "title": "Try a related problem without AI later",
+            "items": [
+              {
+                "art": "blocks",
+                "label": "Study a full trace",
+                "cue": 3,
+                "tone": "gold",
+                "word": "complete"
+              },
+              {
+                "art": "code",
+                "label": "Trace the calls yourself",
+                "cue": 3,
+                "tone": "blue",
+                "word": "yourself"
+              },
+              {
+                "art": "calendar",
+                "label": "Revisit after a delay",
+                "cue": 4,
+                "tone": "blue",
+                "word": "delay"
+              }
+            ],
+            "signal": {
+              "cue": 4,
+              "word": "retention",
+              "text": "Resume practice if the skill slips."
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {}
+      }
+    },
+    "a-quick-rubric-for-any-ai-interaction": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 4,
+            "layout": "compare",
+            "title": "Verify the output and check the goal",
+            "items": [
+              {
+                "art": "checklist",
+                "label": "Accuracy",
+                "cue": 1,
+                "tone": "blue",
+                "detail": "Can I verify it?"
+              },
+              {
+                "art": "map",
+                "label": "Alignment",
+                "cue": 4,
+                "tone": "gold",
+                "word": "objective",
+                "detail": "Does it serve the goal?"
+              }
+            ],
+            "signal": {
+              "cue": 3,
+              "word": "verify",
+              "text": "Verify facts, behavior, or citations."
+            }
+          },
+          {
+            "from": 5,
+            "to": 7,
+            "layout": "collection",
+            "title": "Check your practice, transfer, and integrity",
+            "items": [
+              {
+                "art": "stairs",
+                "label": "Scaffolding",
+                "cue": 5,
+                "tone": "gold",
+                "detail": "What did I practice?"
+              },
+              {
+                "art": "student",
+                "label": "Transfer",
+                "cue": 6,
+                "tone": "blue",
+                "word": "similar",
+                "detail": "Can I solve it alone?"
+              },
+              {
+                "art": "shield",
+                "label": "Integrity",
+                "cue": 7,
+                "tone": "blue",
+                "word": "policy",
+                "detail": "Does course policy allow it?"
+              }
+            ],
+            "signal": {
+              "cue": 7,
+              "word": "mine",
+              "text": "Be honest about what was yours."
+            }
+          },
+          {
+            "from": 8,
+            "to": 9,
+            "layout": "sequence",
+            "title": "Retest later before calling it learned",
+            "items": [
+              {
+                "art": "question",
+                "label": "Can I explain it?",
+                "cue": 8,
+                "tone": "blue"
+              },
+              {
+                "art": "book",
+                "label": "Help if unsure",
+                "cue": 8,
+                "tone": "gold",
+                "word": "instruction"
+              },
+              {
+                "art": "calendar",
+                "label": "Check later",
+                "cue": 9,
+                "tone": "blue",
+                "word": "delay"
+              }
+            ],
+            "signal": {
+              "cue": 9,
+              "word": "retention",
+              "text": "Check for lasting retention."
+            }
+          },
+          {
+            "from": 10,
+            "to": 14,
+            "layout": "sequence",
+            "title": "Keep skills you can use without AI",
+            "items": [
+              {
+                "art": "student",
+                "label": "Practice the reasoning",
+                "cue": 10,
+                "tone": "blue"
+              },
+              {
+                "art": "checklist",
+                "label": "Verify the result",
+                "cue": 11,
+                "tone": "blue",
+                "word": "verification"
+              },
+              {
+                "art": "calendar",
+                "label": "Check on your own",
+                "cue": 11,
+                "tone": "gold",
+                "word": "delay"
+              }
+            ],
+            "signal": {
+              "cue": 14,
+              "word": "september",
+              "text": "Research through September 2026"
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {},
+        "p10": {},
+        "p11": {},
+        "p12": {},
+        "p13": {},
+        "p14": {}
+      }
+    },
+    "self-check-quiz": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 2,
+            "layout": "feature",
+            "title": "Check which strategies you can apply",
+            "items": [
+              {
+                "art": "checklist",
+                "label": "Article’s self-check quiz",
+                "cue": 1,
+                "tone": "blue"
+              }
+            ]
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {}
+      }
+    }
+  }
+}

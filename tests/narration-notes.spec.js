@@ -4,6 +4,7 @@ const path = require('node:path');
 const yaml = require('js-yaml');
 const { PDFDocument, PDFName, PDFDict } = require('pdf-lib');
 const { ROOT, lessonIds, loadLesson } = require('../scripts/narration/source');
+const { isArticleNarration } = require('./helpers/narration-player');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
 const readData = name => yaml.load(readFileSync(path.join(ROOT, '_data/explainers', name), 'utf8'));
@@ -47,7 +48,11 @@ async function expectQuestions(page, questions) {
 
 for (const topic of lessonIds()) {
   const { lesson, story, cues, questions } = handout(topic);
-  test(`${topic}: exporting from the lesson opens a complete, editable handout`, async ({ page }) => {
+  const article = isArticleNarration(lesson);
+  const behavior = article
+    ? 'the standalone article notes are editable and open for print'
+    : 'exporting from the lesson opens a complete, editable handout';
+  test(`${topic}: ${behavior}`, async ({ page }) => {
     test.setTimeout(120000);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -57,11 +62,18 @@ for (const topic of lessonIds()) {
       window.print = () => { window.printRequests += 1; };
     });
     await page.goto(lesson.chapter);
-    await page.getByRole('link', { name: 'Save lesson notes as PDF', exact: true }).click();
+    const exportLink = page.getByRole('link', { name: 'Save lesson notes as PDF', exact: true });
+    if (article) {
+      await expect(exportLink).toHaveCount(0);
+      await expect(page.getByRole('link', { name: 'Edit lesson notes', exact: true })).toHaveCount(0);
+      await page.goto(`${lesson.notes_url}#export`);
+    } else {
+      await exportLink.click();
+    }
     await ready(page);
     await expect(page).toHaveURL(new RegExp(`${lesson.notes_url}$`));
     await expect(page.getByRole('heading', { level: 1, name: story.title, exact: true })).toBeVisible();
-    expect(await page.evaluate(() => window.printRequests)).toBe(1);
+    await expect.poll(() => page.evaluate(() => window.printRequests)).toBe(1);
     for (const cue of cues) {
       const row = page.getByRole('region', { name: cue.heading, exact: true });
       await expect(row.getByRole('img', { name: cue.visual, exact: true })).toBeVisible();
@@ -71,7 +83,7 @@ for (const topic of lessonIds()) {
     }
     await expectQuestions(page, questions);
     await page.getByRole('button', { name: 'Save as PDF or print', exact: true }).click();
-    expect(await page.evaluate(() => window.printRequests)).toBe(2);
+    await expect.poll(() => page.evaluate(() => window.printRequests)).toBe(2);
     expect(errors).toEqual([]);
     await page.setViewportSize({ width: 320, height: 740 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth), 'handout fits a narrow phone viewport').toBeLessThanOrEqual(321);

@@ -18,9 +18,13 @@ layout: blog
               {% endif %}
             </small>
           </p>
-          {% if page.image %}
-          <img src="{{page.image}}" alt="{{ page.image_alt_text }}" class="rounded-img">
+          {% assign video = site.data.video_narrations[page.video_narration] %}
+          {% if video.animation and page.image %}
+            {% include blog-video-cover.html topic=page.video_narration image=page.image image_alt=page.image_alt_text %}
+          {% elsif page.image %}
+            <img src="{{page.image}}" alt="{{ page.image_alt_text }}" class="rounded-img">
           {% endif %}
+          {% if video %}<p><a href="{{ video.chapter | relative_url }}">Watch the animated article</a></p>{% endif %}
         </div>
 
         <!-- Toggles -->

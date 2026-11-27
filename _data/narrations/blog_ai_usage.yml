@@ -1,0 +1,1899 @@
+# Narration text follows the existing article recording and its WebVTT cues.
+# Edit the companion visual package for artwork without changing the speech clock.
+version: 1
+id: blog_ai_usage
+kind: video
+title: How Should I Use AI as a College Student?
+lesson:
+  name: Using AI in college
+  chapter: /blog/how-should-i-use-ai-as-a-college-student/video/
+  views: /blog/how-should-i-use-ai-as-a-college-student/video
+  parts:
+    - Why skills matter
+    - Cognitive load
+    - Learning strategies
+    - Prompting
+    - Study patterns
+    - Review
+  parts_label: Article topics
+speech:
+  voice: drama3-male-a
+  speed: 1
+  pronunciations:
+    AI: A I
+    UCLA: U C L A
+    CS: C S
+media:
+  audio: /assets/audio/how-should-i-use-ai-as-a-college-student.mp3
+  captions: /assets/narration/how-should-i-use-ai-as-a-college-student.vtt
+  script: /assets/narration/how-should-i-use-ai-as-a-college-student.txt
+scenes:
+  - id: introduction
+    label: Introduction
+    title: Introduction
+    part: Why skills matter
+    purpose: A guide for computer science students
+    takeaway: Use AI in ways that strengthen the thinking you will need on your own.
+    cues:
+      - id: p01
+        say: How Should I Use AI as a College Student? — A Science-Backed Guide for CS Students
+        pause_after: 0.6
+        step: Use AI to strengthen your own thinking
+        visual: >-
+          A student is the central figure, with a robot beside them representing the help they
+          can choose to use.
+        note: Use AI to expand what you can learn while keeping responsibility for your reasoning.
+      - id: p02
+        say: >-
+          Many of my students come to me with this wonderful question: “How can I leverage AI as
+          a tool to supercharge my education without accidentally outsourcing my own
+          intelligence?”
+        pause_after: 0.25
+        step: Use AI to strengthen your own thinking
+        visual: >-
+          A student is the central figure, with a robot beside them representing the help they
+          can choose to use.
+        note: Use AI to expand what you can learn while keeping responsibility for your reasoning.
+      - id: p03
+        say: >-
+          In my opinion, this will fundamentally impact how much the current generation of
+          college students will take out of their educational experience, because AI
+          capabilities are growing at a very fast pace.
+        pause_after: 0.25
+        step: Use AI to strengthen your own thinking
+        visual: >-
+          A student is the central figure, with a robot beside them representing the help they
+          can choose to use.
+        note: Use AI to expand what you can learn while keeping responsibility for your reasoning.
+      - id: p04
+        say: >-
+          In Math, within just four years, AI has grown from barely passing grade school math
+          tests to solving the hardest math problems that the world’s leading experts were
+          unsuccessfully trying to solve for decades.
+        pause_after: 0.25
+        step: Prepare for a higher skills bar
+        visual: >-
+          A textbook for school math and a document for hard math problems show the scope of
+          recent AI progress, followed by stairs for the author's forecast of rising
+          expectations in STEM.
+        note: The author expects progress in AI to raise expectations for entry-level STEM roles.
+      - id: p05
+        say: >-
+          My baseline expectation is that this progress will continue across STEM, raising the
+          bar on entry-level positions every year. To help students prepare for this scenario, I
+          decided to write my advice down in a succinct, evidence-based post for everyone.
+        pause_after: 0.85
+        step: Prepare for a higher skills bar
+        visual: >-
+          A textbook for school math and a document for hard math problems show the scope of
+          recent AI progress, followed by stairs for the author's forecast of rising
+          expectations in STEM.
+        note: The author expects progress in AI to raise expectations for entry-level STEM roles.
+  - id: motivation-build-the-skills-to-use-ai-well
+    label: Build the skills
+    title: 'Motivation: Build the Skills to Use AI Well'
+    part: Why skills matter
+    purpose: Both edits belong in the file.
+    takeaway: Practice resolving the hard part of an assignment before asking AI to do it.
+    cues:
+      - id: p01
+        say: 'Motivation: Build the Skills to Use AI Well'
+        pause_after: 0.5
+        step: A good merge preserves both edits
+        visual: >-
+          A clock reads Friday at seven in the evening, setting the scene for the merge
+          conflict.
+        note: A merge conflict can require combining two edits to a shared section.
+      - id: p02
+        say: >-
+          It’s 7:00 PM on a Friday. Your friends want to watch a movie, but you’re stuck
+          resolving a Git merge conflict in your group project. You and a teammate changed the
+          same section of a file.
+        pause_after: 0.25
+        step: A good merge preserves both edits
+        visual: >-
+          Two cards show your version and your teammate’s version of the same code block. Each
+          edit has a different line pattern.
+        note: The conflict is practice in reasoning about both changes.
+      - id: p03
+        say: >-
+          Keeping your version would lose their changes; keeping theirs would lose yours. You’ve
+          spent an hour figuring out how to combine them, and the temptation to paste the
+          conflict into AI and just prompting it “fix this” is overwhelming.
+        pause_after: 0.25
+        step: A good merge preserves both edits
+        visual: >-
+          On “combine,” copies of both differently marked edits slide into the combined file.
+          Both contributions are preserved.
+        note: A merge conflict can require combining two edits to a shared section.
+      - id: p04
+        say: >-
+          A professional might just ask AI for a fix. So why should you not just take this
+          tempting short cut? Because skipping the learning phase means you’re not growing your
+          skills — the main goal of education!
+        pause_after: 0.52
+        step: Strong foundations make AI more useful
+        visual: >-
+          A student's practice anchors the scene. Code and blocks show the coding and design
+          foundations that help individuals benefit from AI and the team habits AI can amplify.
+        note: >-
+          Strong coding and design foundations helped professionals gain more speed in Google's
+          study.
+      - id: p05
+        say: >-
+          Several studies point to a useful lesson for your degree: strong technical skills can
+          help you get more out of AI.
+        pause_after: 0.25
+        step: Strong foundations make AI more useful
+        visual: >-
+          A student's practice anchors the scene. Code and blocks show the coding and design
+          foundations that help individuals benefit from AI and the team habits AI can amplify.
+        note: AI can strengthen good team habits or compound existing problems.
+      - id: p06
+        say: >-
+          In Google’s study of professional developers, those with stronger coding foundations
+          and more system design experience gained more speed from AI tools. There is a similar
+          pattern in teams: AI can strengthen good working habits, but it can also make existing
+          problems worse.
+        pause_after: 0.25
+        step: Strong foundations make AI more useful
+        visual: >-
+          A student's practice anchors the scene. Code and blocks show the coding and design
+          foundations that help individuals benefit from AI and the team habits AI can amplify.
+        note: >-
+          Strong coding and design foundations helped professionals gain more speed in Google's
+          study.
+      - id: p07
+        say: >-
+          Studies in programming education help explain why fundamentals matter. Learners with
+          stronger foundations could follow generated code, spot mistakes, and recognize cases
+          the AI had missed. Those are the same skills you practice when you trace an algorithm,
+          choose a data structure, or debug an assignment.
+        pause_after: 0.25
+        step: Foundations help you check AI’s work
+        visual: >-
+          Three peer items show how programming foundations help you follow generated code, spot
+          missed cases, and use subject knowledge to evaluate an AI’s work.
+        note: >-
+          Practice tracing, choosing data structures, and debugging so you can evaluate
+          AI-generated work.
+      - id: p08
+        say: >-
+          Anthropic also found that people with more knowledge of the task’s subject were more
+          likely to succeed in their Claude Code sessions.
+        pause_after: 0.25
+        step: Foundations help you check AI’s work
+        visual: >-
+          Three peer items show how programming foundations help you follow generated code, spot
+          missed cases, and use subject knowledge to evaluate an AI’s work.
+        note: >-
+          Practice tracing, choosing data structures, and debugging so you can evaluate
+          AI-generated work.
+      - id: p09
+        say: >-
+          A recurring difference was how people used the tool: more experienced users planned,
+          guided, and checked its work, while beginners more often turned to it simply to get
+          past an obstacle.
+        pause_after: 0.25
+        step: Build the skill AI will amplify
+        visual: >-
+          An experienced user's plan and inspection frame the AI's contribution. A staircase at
+          the end represents how AI builds on skills you keep practicing.
+        note: Experienced AI users often plan, guide, and check the work.
+      - id: p10
+        say: >-
+          The concern is that students who keep building these skills will get more value from
+          AI, while those who skip that practice risk falling behind.
+        pause_after: 0.52
+        step: Build the skill AI will amplify
+        visual: >-
+          An experienced user's plan and inspection frame the AI's contribution. A staircase at
+          the end represents how AI builds on skills you keep practicing.
+        note: The same tool can deliver more value as your skills grow.
+      - id: p11
+        say: >-
+          This means that as a college student, your main goal should be to maximize your skills
+          so that, when you then add AI on top, you amplify a larger base of skills and keep
+          compounding.
+        pause_after: 0.25
+        step: Build the skill AI will amplify
+        visual: >-
+          An experienced user's plan and inspection frame the AI's contribution. A staircase at
+          the end represents how AI builds on skills you keep practicing.
+        note: Experienced AI users often plan, guide, and check the work.
+      - id: p12
+        say: >-
+          Unfortunately, AI as a technology often incentivizes behavior that reduces skill
+          formation, if used inappropriately. To use an analogy: Using AI to do the heavy
+          lifting in your coursework is like sending a robot to the gym instead of working out
+          yourself.
+        pause_after: 0.52
+        step: You build skill by doing the hard reps
+        visual: >-
+          A student stays on the sideline as a robot raises a barbell. The weight moves up while
+          the student remains in the same pose.
+        note: >-
+          Delegating the hard part can make an assignment easier while removing the practice
+          that builds skills.
+      - id: p13
+        say: In the illustration, a student watches a robot lift weights.
+        pause_after: 0.18
+        step: You build skill by doing the hard reps
+        visual: >-
+          A student stays on the sideline as a robot raises a barbell. The weight moves up while
+          the student remains in the same pose.
+        note: >-
+          Delegating the hard part can make an assignment easier while removing the practice
+          that builds skills.
+      - id: p14
+        say: '"Wow, I just discovered this AI that makes my workout so much easier and faster!"'
+        pause_after: 0.52
+        step: You build skill by doing the hard reps
+        visual: >-
+          A student stays on the sideline as a robot raises a barbell. The weight moves up while
+          the student remains in the same pose.
+        note: >-
+          Delegating the hard part can make an assignment easier while removing the practice
+          that builds skills.
+      - id: p15
+        say: >-
+          A study on math students found that students who used AI for homework performed 17%
+          worse in subsequent tests — that’s the difference between an A and a C+. Reporting on
+          a Brown University economics course describes a similar warning sign.
+        pause_after: 0.25
+        step: High scores can hide a practice gap
+        visual: >-
+          The math experiment shows a 17 percent drop on a later independent assessment with
+          unrestricted AI. A separate card shows the 96 out of 100 take-home average reported
+          for a Brown economics class.
+        note: In a math experiment, unrestricted AI help was followed by 17% worse performance.
+      - id: p16
+        say: >-
+          The take-home exam average was 96 out of 100, far above the course’s usual midterm
+          averages, and the professor suspected AI use because many answers resembled ChatGPT’s.
+        pause_after: 0.25
+        step: High scores can hide a practice gap
+        visual: >-
+          The math experiment shows a 17 percent drop on a later independent assessment with
+          unrestricted AI. A separate card shows the 96 out of 100 take-home average reported
+          for a Brown economics class.
+        note: Reporting on a Brown economics course described an unusually high take-home average.
+      - id: p17
+        say: >-
+          When the final moved in person, many students with perfect take-home scores dropped
+          the course or didn’t show up to the exam. Most students who took it scored much lower.
+        pause_after: 0.52
+        step: Most scored much lower in person
+        visual: >-
+          The take-home economics exam averaged 96 out of 100. A separate branch shows that many
+          perfect scorers dropped the course or missed the in-person final. Most of those who
+          took the final scored much lower.
+        note: Brown's in-person final scores were generally lower among students who took it.
+      - id: p18
+        say: >-
+          This matters for you, because a high score earned with AI can hide gaps in your own
+          understanding.
+        pause_after: 0.25
+        step: Most scored much lower in person
+        visual: >-
+          The take-home average sits next to the in-person result. The contrast asks what you
+          can explain on your own.
+        note: An impressive result can conceal gaps that surface in exams, interviews, or work.
+      - id: p19
+        say: >-
+          The grade looked excellent right up to the moment the students had to rely on their
+          own skills, and in exams, interviews, and on the job you eventually have to.
+        pause_after: 0.52
+        step: Most scored much lower in person
+        visual: >-
+          The two exam results remain visible while the narration connects independent ability
+          to exams, interviews, and work.
+        note: Brown's in-person final scores were generally lower among students who took it.
+      - id: p20
+        say: >-
+          Learning research calls some useful challenges “desirable difficulties”: recalling an
+          idea without your notes, for example, can help you remember it later even though it
+          feels harder than rereading. The useful part is the mental practice, rather than
+          frustration for its own sake.
+        pause_after: 0.25
+        step: Rereading is weaker for retention
+        visual: >-
+          Rereading sits beside recall from memory, a more demanding activity that can
+          strengthen retention. As the narration points to further reading, the caption names
+          the related study-tips guide.
+        note: A desirable difficulty helps because of the mental practice it requires.
+      - id: p21
+        say: >-
+          Learn more about desirable difficulties and their importance for learning in my
+          previous blog post “Evidence-Based Study Tips for College Students”.
+        pause_after: 0.52
+        step: Rereading is weaker for retention
+        visual: >-
+          Rereading sits beside recall from memory, a more demanding activity that can
+          strengthen retention. As the narration points to further reading, the caption names
+          the related study-tips guide.
+        note: A desirable difficulty helps because of the mental practice it requires.
+      - id: p22
+        say: >-
+          Research also points to ways AI can support learning. For your coursework, a useful
+          aim is to let AI clear up confusing instructions or explain an unfamiliar term while
+          you keep practicing the reasoning the assignment is meant to teach.
+        pause_after: 0.85
+        step: Clear friction to free up reasoning
+        visual: >-
+          The student practices reasoning, while two smaller help cards show AI clarifying
+          instructions or defining an unfamiliar term.
+        note: Use AI to clarify instructions or terms while you keep practicing the core reasoning.
+  - id: cognitive-offloading-beneficial-vs-detrimental-use
+    label: Cognitive offloading
+    title: 'Cognitive Offloading: Beneficial vs. Detrimental Use'
+    part: Cognitive load
+    purpose: Working memory has limited capacity.
+    takeaway: Remove avoidable friction while keeping the reasoning that serves your learning goal.
+    cues:
+      - id: p01
+        say: 'Cognitive Offloading: Beneficial vs. Detrimental Use'
+        pause_after: 0.5
+        step: Both kinds of load share one limit
+        visual: An outline labeled Working memory marks the space available for mental work.
+        note: >-
+          Cognitive Load Theory distinguishes intrinsic and extraneous demands on limited
+          working memory.
+      - id: p02
+        say: >-
+          Before diving into the actionable tips, I think it is useful to understand the theory
+          behind what makes you learn effectively. Whether AI helps or harms learning depends on
+          what you offload.
+        pause_after: 0.25
+        step: Both kinds of load share one limit
+        visual: >-
+          The shared space for mental work is still empty as the narration asks which effort to
+          offload.
+        note: >-
+          Cognitive Load Theory distinguishes intrinsic and extraneous demands on limited
+          working memory.
+      - id: p03
+        say: >-
+          Cognitive Load Theory (CLT) differentiates different kinds of cognitive load:
+          intrinsic and extraneous with a total cap of how much combined load you can keep in
+          your brain at a time.
+        pause_after: 0.52
+        step: Both kinds of load share one limit
+        visual: >-
+          Intrinsic load and extraneous load enter the same tray. A bracket below the labels
+          makes clear that both draw on one shared limit.
+        note: >-
+          Cognitive Load Theory distinguishes intrinsic and extraneous demands on limited
+          working memory.
+      - id: p04
+        say: >-
+          Intrinsic load is the cognitive effort that actually helps you learn. It comes from
+          the ideas you need to understand together, relative to what you already know.
+        pause_after: 0.25
+        step: Recursion requires tracking ideas together
+        visual: >-
+          Three side-by-side cards show calls, variables, and return values. You must track all
+          three together when learning recursion.
+        note: >-
+          Intrinsic load reflects the ideas you must reason about together, given what you
+          already know.
+      - id: p05
+        say: >-
+          When you first learn recursion, tracking calls, variables, and return values are the
+          intrinsic load that makes your mental muscle grow.
+        pause_after: 0.52
+        step: Recursion requires tracking ideas together
+        visual: >-
+          Three side-by-side cards show calls, variables, and return values. You must track all
+          three together when learning recursion.
+        note: >-
+          Intrinsic load reflects the ideas you must reason about together, given what you
+          already know.
+      - id: p06
+        say: >-
+          Extraneous load is avoidable effort added by how the material is presented, such as
+          confusing instructions, searching for an explanation, challenges of installing
+          required packages, or debugging a rare bug in your local step that prevents you from
+          working on the actual homework problem.
+        pause_after: 0.52
+        step: Offload friction and keep the reasoning
+        visual: The working-memory tray holds target reasoning and a second card for setup friction.
+        note: Offload obstacles that are incidental to the learning goal.
+      - id: p07
+        say: >-
+          Cognitive offloading means using tools to reduce mental effort, whether that’s a
+          calculator, a calendar reminder, or AI debugging a script.
+        pause_after: 0.25
+        step: Offload friction and keep the reasoning
+        visual: >-
+          The setup card slides out of working memory into the tool’s tray. The target reasoning
+          stays in working memory.
+        note: Keep the attention-demanding reasoning that the assignment is meant to teach.
+      - id: p08
+        say: Your aim should be to reduce extraneous load while keeping intrinsic load high.
+        pause_after: 0.85
+        step: Offload friction and keep the reasoning
+        visual: >-
+          The empty slot in working memory shows the space that opened up when the tool took
+          over the setup friction.
+        note: Offload obstacles that are incidental to the learning goal.
+  - id: the-bad-detrimental-offloading-outsourcing
+    label: Detrimental offloading
+    title: 'The Bad: Detrimental Offloading (Outsourcing)'
+    part: Cognitive load
+    purpose: Traveling salesperson assignment
+    takeaway: Do the assignment’s core reasoning yourself, then explain the result from memory.
+    cues:
+      - id: p01
+        say: 'The Bad: Detrimental Offloading (Outsourcing)'
+        pause_after: 0.5
+        step: Outsourcing the route skips the skill
+        visual: >-
+          A route map stands for practicing optimization. A robot stands for receiving a
+          finished route without getting to work out the optimization yourself.
+        note: Detrimental offloading hands off reasoning the learner needs to practice.
+      - id: p02
+        say: >-
+          Detrimental offloading means outsourcing the thinking you need to practice, i.e.,
+          intrinsic load. Asking AI to solve the traveling salesperson problem for you, for
+          example, defeats an assignment meant to teach algorithmic optimization.
+        pause_after: 0.52
+        step: Outsourcing the route skips the skill
+        visual: >-
+          A route map stands for practicing optimization. A robot stands for receiving a
+          finished route without getting to work out the optimization yourself.
+        note: Detrimental offloading hands off reasoning the learner needs to practice.
+      - id: p03
+        say: 'Two risks follow:'
+        pause_after: 0.52
+        step: Outsourcing the route skips the skill
+        visual: >-
+          A route map stands for practicing optimization. A robot stands for receiving a
+          finished route without getting to work out the optimization yourself.
+        note: Detrimental offloading hands off reasoning the learner needs to practice.
+      - id: p04
+        say: >-
+          Skipping practice: If AI works out the logic for you, you miss practice recognizing
+          and solving that kind of problem. In the math experiment above, which involved nearly
+          1,000 students, the unrestricted use of AI resulted in 17% worse final grades.
+        pause_after: 0.25
+        step: Skipping the logic can hurt later tests
+        visual: >-
+          An AI answer replaces the learner's logical work during practice. A separate
+          independent math assessment shows the lower final grades after unrestricted AI use.
+        note: Unrestricted AI help let students skip the logic they needed to practice.
+      - id: p05
+        say: >-
+          In another study, 52 developers learned a new Python library. Those with AI help
+          scored lower on the following quiz, especially on debugging questions.
+        pause_after: 0.25
+        step: Running code can hide gaps in debugging
+        visual: >-
+          One side shows a program finishing. The other shows diagnosing a failure, the skill
+          that especially separated learners in the Python library study.
+        note: >-
+          In a Python library study, helped developers struggled especially with debugging
+          questions.
+      - id: p06
+        say: >-
+          For a programming assignment, getting code to run is only one check; you also need to
+          understand how to fix it when it breaks.
+        pause_after: 0.52
+        step: Running code can hide gaps in debugging
+        visual: >-
+          One side shows a program finishing. The other shows diagnosing a failure, the skill
+          that especially separated learners in the Python library study.
+        note: Understand how to fix the code when it breaks.
+      - id: p07
+        say: >-
+          Metacognitive laziness: This means letting AI take over the job of checking your own
+          thinking: deciding how to start, noticing what you do not understand, and judging
+          whether your answer makes sense.
+        pause_after: 0.25
+        step: Explain the reasoning with the chat closed
+        visual: >-
+          A plan, a question about an unclear step, and a checklist for justifying the result
+          show how to check your reasoning before submitting.
+        note: Keep responsibility for choosing an approach, noticing gaps, and judging the answer.
+      - id: p08
+        say: >-
+          Research warns that better work produced with AI does not necessarily mean you have
+          learned more. Before submitting an answer, check whether you can explain the reasoning
+          without reopening the chat.
+        pause_after: 0.85
+        step: Explain the reasoning with the chat closed
+        visual: >-
+          A plan, a question about an unclear step, and a checklist for justifying the result
+          show how to check your reasoning before submitting.
+        note: Explain the reasoning without reopening the chat.
+  - id: the-good-beneficial-offloading
+    label: Beneficial offloading
+    title: 'The Good: Beneficial Offloading'
+    part: Cognitive load
+    purpose: What are you meant to learn?
+    takeaway: Match AI’s help to the learning goal and keep the skill you intend to practice.
+    cues:
+      - id: p01
+        say: 'The Good: Beneficial Offloading'
+        pause_after: 0.5
+        step: The learning goal decides what to offload
+        visual: >-
+          Two coding tasks put the learning goal side by side. In algorithm design, AI can
+          translate your pseudocode. In syntax practice, translating the code is the exercise.
+        note: A coding agent can handle syntax if the assignment is about algorithm design.
+      - id: p02
+        say: >-
+          Beneficial offloading lets AI handle extraneous load, i.e., work that is getting in
+          the way of your learning goal to leave you more attention for the skill you need to
+          practice.
+        pause_after: 0.25
+        step: The learning goal decides what to offload
+        visual: >-
+          Two coding tasks put the learning goal side by side. In algorithm design, AI can
+          translate your pseudocode. In syntax practice, translating the code is the exercise.
+        note: Write the syntax yourself when syntax is what you are learning.
+      - id: p03
+        say: >-
+          A coding agent can help when your goal is algorithm design and you prompt in
+          pseudo-code; it would replace needed practice when syntax itself is the learning goal.
+        pause_after: 0.52
+        step: The learning goal decides what to offload
+        visual: >-
+          Two coding tasks put the learning goal side by side. In algorithm design, AI can
+          translate your pseudocode. In syntax practice, translating the code is the exercise.
+        note: A coding agent can handle syntax if the assignment is about algorithm design.
+      - id: p04
+        say: >-
+          Some research from other disciplines confirms this. For example, in a 12-week study
+          with 240 university students, one group used AI to brainstorm, then did the work of
+          questioning ideas, strengthening arguments, and revising their essays.
+        pause_after: 0.25
+        step: Brainstorm with AI, then revise yourself
+        visual: >-
+          AI opens the process with a brainstorm. A student then questions the ideas and revises
+          an essay, keeping argument development in their own hands.
+        note: A writing study combined AI brainstorming with student-led critique and revision.
+      - id: p05
+        say: >-
+          They improved more in critical thinking and writing quality than students taught in
+          the usual way. A separate survey also linked offloading and reflecting together with
+          better academic results reported by students.
+        pause_after: 0.85
+        step: Brainstorm with AI, then revise yourself
+        visual: >-
+          AI opens the process with a brainstorm. A student then questions the ideas and revises
+          an essay, keeping argument development in their own hands.
+        note: Students in that group improved more on critical thinking and writing quality.
+  - id: strategies-for-learning-deeply
+    label: Learning deeply
+    title: Strategies for Learning Deeply
+    part: Learning strategies
+    purpose: What can you do afterward?
+    takeaway: Choose help that leaves you able to perform the target skill independently.
+    cues:
+      - id: p01
+        say: Strategies for Learning Deeply
+        pause_after: 0.5
+        step: Judge help by what you can do afterward
+        visual: >-
+          A student sits at the center of the scene. A chat bubble for hints and a notebook for
+          explanations and feedback point back to what the student learns to do.
+        note: Judge a hint, explanation, or feedback by the skill it leaves you able to use.
+      - id: p02
+        say: >-
+          AI can give you hints, explanations, and feedback as you learn. The important question
+          is what that help leaves you able to do yourself.
+        pause_after: 0.85
+        step: Judge help by what you can do afterward
+        visual: >-
+          A student sits at the center of the scene. A chat bubble for hints and a notebook for
+          explanations and feedback point back to what the student learns to do.
+        note: Judge a hint, explanation, or feedback by the skill it leaves you able to use.
+  - id: socratic-interaction-ai-as-a-tutor-not-an-oracle
+    label: Socratic tutoring
+    title: 'Socratic Interaction: AI as a Tutor, Not an Oracle'
+    part: Learning strategies
+    purpose: One question at a time
+    takeaway: Ask one question at a time, explain your answer, and check it against a reliable source.
+    cues:
+      - id: p01
+        say: 'Socratic Interaction: AI as a Tutor, Not an Oracle'
+        pause_after: 0.5
+        step: One question at a time keeps you thinking
+        visual: >-
+          An AI tutor asks a question and waits while a student thinks and responds. A note
+          distinguishes the study's short-term quiz improvement from its uncertain longer-term
+          result.
+        note: Question-led tutoring improved near-term supervised quizzes in one study.
+      - id: p02
+        say: 'The Research Grounding:'
+        pause_after: 0.22
+        step: One question at a time keeps you thinking
+        visual: >-
+          An AI tutor asks a question and waits while a student thinks and responds. A note
+          distinguishes the study's short-term quiz improvement from its uncertain longer-term
+          result.
+        note: Later exams showed no clear overall advantage.
+      - id: p03
+        say: >-
+          AI tutors can ask you to think through a problem before showing an answer. A recent
+          study offers some insights into this. Across two terms of introductory programming,
+          lab sections tried different AI tools.
+        pause_after: 0.25
+        step: One question at a time keeps you thinking
+        visual: >-
+          An AI tutor asks a question and waits while a student thinks and responds. A note
+          distinguishes the study's short-term quiz improvement from its uncertain longer-term
+          result.
+        note: Question-led tutoring improved near-term supervised quizzes in one study.
+      - id: p04
+        say: >-
+          Students using a tutor that asked one question at a time and guided them back to their
+          own reasoning improved more on supervised quizzes taken soon afterward than students
+          without AI. The later exams did not show a clear overall advantage.
+        pause_after: 0.25
+        step: One question at a time keeps you thinking
+        visual: >-
+          An AI tutor asks a question and waits while a student thinks and responds. A note
+          distinguishes the study's short-term quiz improvement from its uncertain longer-term
+          result.
+        note: Later exams showed no clear overall advantage.
+      - id: p05
+        say: >-
+          Try using questions to practice explaining a solution, then check again a few days
+          later whether you can solve a similar problem yourself.
+        pause_after: 0.52
+        step: Recall and explanation train different skills
+        visual: >-
+          A book with a recall label represents remembering without looking at notes. A loop
+          example represents explaining why the code terminates. Both kinds of practice belong
+          to the learner.
+        note: Retrieval practice means recalling without notes.
+      - id: p06
+        say: >-
+          Different questions give you different kinds of practice. Recalling what you studied
+          without looking at your notes is retrieval practice. Explaining why a loop terminates
+          asks you to reason through the code.
+        pause_after: 0.25
+        step: Recall and explanation train different skills
+        visual: >-
+          A book with a recall label represents remembering without looking at notes. A loop
+          example represents explaining why the code terminates. Both kinds of practice belong
+          to the learner.
+        note: Explain why a loop terminates to practice reasoning about code.
+      - id: p07
+        say: >-
+          Both can be useful, but a conversation only gives you that practice if you do the
+          remembering or explaining yourself.
+        pause_after: 0.52
+        step: Recall and explanation train different skills
+        visual: >-
+          A book with a recall label represents remembering without looking at notes. A loop
+          example represents explaining why the code terminates. Both kinds of practice belong
+          to the learner.
+        note: Retrieval practice means recalling without notes.
+      - id: p08
+        say: 'How and Why it Works:'
+        pause_after: 0.22
+        step: Try explaining before asking for a hint
+        visual: The tutor asks a single question, “What comes next?”
+        note: Leave time to think before showing your reasoning.
+      - id: p09
+        say: >-
+          Ask the tutor to wait while you think and explain. Request a hint when you can’t make
+          progress without one, or a worked example when you need more guidance.
+        pause_after: 0.25
+        step: Try explaining before asking for a hint
+        visual: >-
+          Room opens for the student to think and explain. A dotted branch for times when more
+          help is needed offers a hint or a full worked example.
+        note: Use a hint for a single obstacle and a worked example when you need fuller guidance.
+      - id: p10
+        say: >-
+          Applying CLT here means adjusting the challenge to your working-memory capacity: if a
+          question requires juggling several unfamiliar ideas, ask for a simpler example first.
+          Pardos and Bhandari’s research on AI-generated math help also highlights why you need
+          to check the help you receive.
+        pause_after: 0.25
+        step: Simplify the example and verify the help
+        visual: >-
+          Working memory sits at the center. A simpler example reduces what you must track. A
+          checklist shows that any version of the explanation still needs to be verified.
+        note: When several ideas are unfamiliar, ask for a simpler example first.
+      - id: p11
+        say: >-
+          Use lecture notes, a textbook, or code tests to check explanations. Asking AI to admit
+          uncertainty does not ensure it will catch its own mistakes.
+        pause_after: 0.52
+        step: Simplify the example and verify the help
+        visual: >-
+          Working memory sits at the center. A simpler example reduces what you must track. A
+          checklist shows that any version of the explanation still needs to be verified.
+        note: Verify help in a trusted source or with code tests.
+      - id: p12
+        say: 'Example Prompt (Python):'
+        pause_after: 0.25
+        step: Work through one filter at a time
+        visual: >-
+          A four-value Python list contains 1, 2, 3 and 4.
+        note: Ask which items pass each filter and have the tutor wait.
+      - id: p13
+        say: >-
+          “You are a Python tutor. I understand a single list-comprehension filter but am
+          confused by multiple ‘if’ conditions. Ask me one question about which elements pass
+          each filter, and wait for my answer.
+        pause_after: 0.25
+        step: Work through one filter at a time
+        visual: >-
+          The first filter keeps 2, 3 and 4. The tutor asks which of these pass the even-number filter
+          and leaves the answer covered.
+        note: If that stalls, use a small worked example and try a similar question.
+      - id: p14
+        say: >-
+          If I cannot explain the next step, show a small worked example and then give me a
+          similar question.”
+        pause_after: 0.85
+        step: Work through one filter at a time
+        visual: >-
+          Arrows trace 2 and 4 through both filters. A new list, 2, 3, 5 and 6, lets the student
+          apply the same conditions independently.
+        note: Ask which items pass each filter and have the tutor wait.
+  - id: the-attempt-first-pattern
+    label: Attempt first
+    title: The “Attempt First” Pattern
+    part: Learning strategies
+    purpose: Work out an answer first
+    takeaway: When you have the background, make a testable attempt before asking for feedback.
+    cues:
+      - id: p01
+        say: The “Attempt First” Pattern
+        pause_after: 0.5
+        step: Producing an answer can improve recall
+        visual: >-
+          Two study cards distinguish generating a word from a clue and reading the same word.
+          The comparison shows why trying to produce an answer can help it stick.
+        note: >-
+          In classic memory experiments, generating words from clues improved recall compared
+          with reading them.
+      - id: p02
+        say: 'The Research Grounding:'
+        pause_after: 0.22
+        step: Producing an answer can improve recall
+        visual: >-
+          Two study cards distinguish generating a word from a clue and reading the same word.
+          The comparison shows why trying to produce an answer can help it stick.
+        note: >-
+          In classic memory experiments, generating words from clues improved recall compared
+          with reading them.
+      - id: p03
+        say: >-
+          In classic memory experiments, people remembered words better when they worked them
+          out from clues than when they simply read them. This gives you a reason to try
+          producing an answer yourself before asking AI for help.
+        pause_after: 0.52
+        step: Producing an answer can improve recall
+        visual: >-
+          Two study cards distinguish generating a word from a clue and reading the same word.
+          The comparison shows why trying to produce an answer can help it stick.
+        note: >-
+          In classic memory experiments, generating words from clues improved recall compared
+          with reading them.
+      - id: p04
+        say: 'How and Why it Works:'
+        pause_after: 0.22
+        step: Try first if you know how to start
+        visual: >-
+          Two possible starting points sit side by side. Make a relevant attempt when you can
+          start, or use a worked example when important prerequisites are missing. An
+          independent retry is the check after either path.
+        note: Predict, sketch, or name a gap before seeking feedback when you can start.
+      - id: p05
+        say: >-
+          Try a relevant step: predict the output, sketch an approach, or identify what you do
+          not understand. Then seek feedback. If you lack the prerequisite knowledge, start with
+          an explanation or worked example and then attempt a related task.
+        pause_after: 0.25
+        step: Try first if you know how to start
+        visual: >-
+          Two possible starting points sit side by side. Make a relevant attempt when you can
+          start, or use a worked example when important prerequisites are missing. An
+          independent retry is the check after either path.
+        note: >-
+          If the method is unfamiliar, study an example before trying a related task
+          independently.
+      - id: p06
+        say: >-
+          CLT helps explain this limit: searching for every next move can overwhelm working
+          memory when the method is unfamiliar. A worked example can free attention for
+          understanding the method. To check for an illusion of understanding, close the
+          explanation and try again independently.
+        pause_after: 0.52
+        step: Try first if you know how to start
+        visual: >-
+          Two possible starting points sit side by side. Make a relevant attempt when you can
+          start, or use a worked example when important prerequisites are missing. An
+          independent retry is the check after either path.
+        note: Predict, sketch, or name a gap before seeking feedback when you can start.
+      - id: p07
+        say: 'Example Prompt (C++):'
+        pause_after: 0.25
+        step: The same node can return to the queue
+        visual: A two-node example has A and B connected as neighbors, with the search starting at A.
+        note: Share the partial attempt and expected trace.
+      - id: p08
+        say: >-
+          “I am implementing a Graph Breadth-First Search (BFS) in C++. Here is my partial
+          attempt and a trace of what I expected: [paste code and trace]. It enters an infinite
+          loop.
+        pause_after: 0.25
+        step: The same node can return to the queue
+        visual: >-
+          The queue begins with A. If revisits go unchecked, processing it queues B, which then
+          queues A again.
+        note: Ask when to mark a node visited without requesting replacement code.
+      - id: p09
+        say: >-
+          Without rewriting the code, ask me a question that helps me check when I mark nodes as
+          visited.”
+        pause_after: 0.85
+        step: The same node can return to the queue
+        visual: The repeated A in the queue is the place to ask when the code marks a node as visited.
+        note: Share the partial attempt and expected trace.
+  - id: break-the-problem-into-steps
+    label: Break into steps
+    title: Break the Problem into Steps
+    part: Learning strategies
+    purpose: How DBox supported practice
+    takeaway: Sketch the full plan and ask for a hint on the first step you cannot justify.
+    cues:
+      - id: p01
+        say: Break the Problem into Steps
+        pause_after: 0.5
+        step: Planning hints can help you solve alone
+        visual: >-
+          The learners' solution steps gain AI feedback and gradual code reveals before the
+          learners try a similar problem without tools.
+        note: In the DBox study, learners planned, got feedback, and revealed code gradually.
+      - id: p02
+        say: 'The Research Grounding:'
+        pause_after: 0.22
+        step: Planning hints can help you solve alone
+        visual: >-
+          The learners' solution steps gain AI feedback and gradual code reveals before the
+          learners try a similar problem without tools.
+        note: They solved a similar problem more accurately without tools after using DBox.
+      - id: p03
+        say: >-
+          In the DBox study, 24 university learners wrote solution steps, received AI feedback
+          and hints, and revealed code gradually. They then solved a similar algorithm problem
+          more accurately without tools than after using their usual study resources, which
+          could include AI.
+        pause_after: 0.25
+        step: Planning hints can help you solve alone
+        visual: >-
+          The learners' solution steps gain AI feedback and gradual code reveals before the
+          learners try a similar problem without tools.
+        note: In the DBox study, learners planned, got feedback, and revealed code gradually.
+      - id: p04
+        say: >-
+          In a separate Python course, students who chose planning hints did better on
+          assignments.
+        pause_after: 0.52
+        step: Planning hints can help you solve alone
+        visual: >-
+          The learners' solution steps gain AI feedback and gradual code reveals before the
+          learners try a similar problem without tools.
+        note: They solved a similar problem more accurately without tools after using DBox.
+      - id: p05
+        say: 'How and Why it Works:'
+        pause_after: 0.22
+        step: Plan the whole, ask about one step
+        visual: >-
+          The plan highlights one step that needs justification. Help is aimed at that step,
+          then the student puts the pieces together, implements the plan, and tests it.
+        note: Manage intrinsic load by reasoning about manageable steps and then connecting them.
+      - id: p06
+        say: >-
+          Write a plan, identify a step you cannot justify, and ask for feedback on that step.
+          This applies CLT’s idea of managing intrinsic load: learn manageable parts before
+          reasoning about how they interact. You still need to put the parts together and
+          explain the complete solution.
+        pause_after: 0.25
+        step: Plan the whole, ask about one step
+        visual: >-
+          The plan highlights one step that needs justification. Help is aimed at that step,
+          then the student puts the pieces together, implements the plan, and tests it.
+        note: Start with a worked example when you cannot sketch a plan yet.
+      - id: p07
+        say: >-
+          Then implement and test it yourself. If you lack the background to form a plan, study
+          a worked example first.
+        pause_after: 0.52
+        step: Plan the whole, ask about one step
+        visual: >-
+          The plan highlights one step that needs justification. Help is aimed at that step,
+          then the student puts the pieces together, implements the plan, and tests it.
+        note: Manage intrinsic load by reasoning about manageable steps and then connecting them.
+      - id: p08
+        say: 'Example Prompt (Programming):'
+        pause_after: 0.25
+        step: Ask about the gap and write the code
+        visual: >-
+          A student's plan is central. The AI asks whether a particular step follows and points
+          to a possible missing case while the student keeps implementation and tests.
+        note: Ask one question about your uncertain step, then look for a missing case.
+      - id: p09
+        say: >-
+          “Here is my plan and the step I am uncertain about: [plan]. Ask me one question that
+          tests whether that step follows. Help me identify a missing case before suggesting a
+          change. Leave the implementation for me to write and test.”
+        pause_after: 0.85
+        step: Ask about the gap and write the code
+        visual: >-
+          A student's plan is central. The AI asks whether a particular step follows and points
+          to a possible missing case while the student keeps implementation and tests.
+        note: Keep writing and testing the implementation as your own practice.
+  - id: the-teach-back-method-ai-as-a-teachable-novice
+    label: Teach-back
+    title: The “Teach-Back” Method (AI as a Teachable Novice)
+    part: Learning strategies
+    purpose: Teach the novice
+    takeaway: Teach a small idea in your own words and verify any disputed claim.
+    cues:
+      - id: p01
+        say: The “Teach-Back” Method (AI as a Teachable Novice)
+        pause_after: 0.5
+        step: Teaching a novice can reveal gaps
+        visual: >-
+          A student explains inheritance to an AI playing a beginner. Its why or how questions
+          send the student back to clarify the explanation.
+        note: AI can play the novice while you supply the explanation.
+      - id: p02
+        say: 'The Research Grounding:'
+        pause_after: 0.22
+        step: Teaching a novice can reveal gaps
+        visual: >-
+          A student explains inheritance to an AI playing a beginner. Its why or how questions
+          send the student back to clarify the explanation.
+        note: Why and how questions can prompt learners to notice gaps in their reasoning.
+      - id: p03
+        say: >-
+          Imagine explaining inheritance to a classmate who keeps asking “why?”. Researchers
+          propose using AI in that role: its questions can prompt you to explain ideas and
+          notice gaps. The study from 2024 tried this with 40 people new to algorithms.
+        pause_after: 0.25
+        step: Teaching a novice can reveal gaps
+        visual: >-
+          A student explains inheritance to an AI playing a beginner. Its why or how questions
+          send the student back to clarify the explanation.
+        note: AI can play the novice while you supply the explanation.
+      - id: p04
+        say: >-
+          When the AI asked “why” and “how” questions and gave feedback on their teaching, more
+          of the conversation focused on developing understanding than with a simpler version.
+        pause_after: 0.52
+        step: Teaching a novice can reveal gaps
+        visual: >-
+          A student explains inheritance to an AI playing a beginner. Its why or how questions
+          send the student back to clarify the explanation.
+        note: Why and how questions can prompt learners to notice gaps in their reasoning.
+      - id: p05
+        say: >-
+          Some benefits have lasted beyond the study session. In a university psychology course,
+          users of a similar system (ChatTutor) scored higher four weeks later than students
+          taught as usual, but did not clearly outperform ordinary ChatGPT users.
+        pause_after: 0.25
+        step: Teach-back showed mixed follow-up gains
+        visual: >-
+          One side represents a university result measured four weeks later against usual
+          teaching. The other represents a school result that did not clearly improve on
+          restudying.
+        note: One university study found higher later scores than usual instruction.
+      - id: p06
+        say: >-
+          In a separate school study, students using ChatTutor did better than those using
+          ChatGPT on a later test but did not clearly beat studying the material again.
+        pause_after: 0.52
+        step: Teach-back showed mixed follow-up gains
+        visual: >-
+          One side represents a university result measured four weeks later against usual
+          teaching. The other represents a school result that did not clearly improve on
+          restudying.
+        note: Advantages over ordinary ChatGPT or revisiting the material depended on the study.
+      - id: p07
+        say: 'How and Why it Works:'
+        pause_after: 0.22
+        step: Small examples make the why easier to trace
+        visual: >-
+          A recursion base case anchors the scene. Connecting the steps shows why recursion
+          stops, and a small example keeps that explanation manageable.
+        note: Explain why a base case stops recursion and what happens without it.
+      - id: p08
+        say: >-
+          Explain a concept in your own words, then answer “why” and “how” questions. The ICAP
+          framework describes learning activities that go beyond repeating supplied information:
+          for example, explaining why a base case stops recursion or working out what happens if
+          it is missing.
+        pause_after: 0.25
+        step: Small examples make the why easier to trace
+        visual: >-
+          A recursion base case anchors the scene. Connecting the steps shows why recursion
+          stops, and a small example keeps that explanation manageable.
+        note: Keep the example small enough to reason through each connection.
+      - id: p09
+        say: >-
+          It predicts benefits from making those connections. This also fits CLT’s focus on
+          building reusable mental patterns: explaining how the steps connect can help you
+          organize knowledge for future problems.
+        pause_after: 0.25
+        step: Small examples make the why easier to trace
+        visual: >-
+          A recursion base case anchors the scene. Connecting the steps shows why recursion
+          stops, and a small example keeps that explanation manageable.
+        note: Explain why a base case stops recursion and what happens without it.
+      - id: p10
+        say: >-
+          Keep the explanation small enough to reason through; useful effort still needs to fit
+          within working memory.
+        pause_after: 0.52
+        step: Small examples make the why easier to trace
+        visual: >-
+          A recursion base case anchors the scene. Connecting the steps shows why recursion
+          stops, and a small example keeps that explanation manageable.
+        note: Keep the example small enough to reason through each connection.
+      - id: p11
+        say: >-
+          Use the AI’s questions to inspect your explanation. Its apparent confusion or
+          agreement is not a reliable verdict on your understanding; verify disputed claims with
+          a trusted source or instructor.
+        pause_after: 0.52
+        step: Use questions to clarify and verify
+        visual: >-
+          The student offers an explanation of inheritance. The novice asks about jargon or a
+          skipped step, then a trusted example is used to distinguish a clarity issue from an
+          incorrect claim.
+        note: Treat the AI’s confusion or agreement as a prompt to inspect your explanation.
+      - id: p12
+        say: 'Example Prompt (Python):'
+        pause_after: 0.25
+        step: Use questions to clarify and verify
+        visual: >-
+          The student offers an explanation of inheritance. The novice asks about jargon or a
+          skipped step, then a trusted example is used to distinguish a clarity issue from an
+          incorrect claim.
+        note: Distinguish unclear explanations from factual errors, then verify disputed claims.
+      - id: p13
+        say: >-
+          “Pretend you are a first-year CS student who is learning inheritance in Python. I will
+          explain it to you. Ask one ‘why’ or ‘how’ question when I use undefined jargon or skip
+          a step.
+        pause_after: 0.25
+        step: Use questions to clarify and verify
+        visual: >-
+          The student offers an explanation of inheritance. The novice asks about jargon or a
+          skipped step, then a trusted example is used to distinguish a clarity issue from an
+          incorrect claim.
+        note: Treat the AI’s confusion or agreement as a prompt to inspect your explanation.
+      - id: p14
+        say: >-
+          Distinguish questions about clarity from claims that my explanation is incorrect, and
+          give me a concrete example to check.”
+        pause_after: 0.85
+        step: Use questions to clarify and verify
+        visual: >-
+          The student offers an explanation of inheritance. The novice asks about jargon or a
+          skipped step, then a trusted example is used to distinguish a clarity issue from an
+          incorrect claim.
+        note: Distinguish unclear explanations from factual errors, then verify disputed claims.
+  - id: prompting-patterns
+    label: Prompting patterns
+    title: Prompting Patterns
+    part: Prompting
+    purpose: Design the interaction
+    takeaway: Write prompts that leave you able to explain the result or solve a related task.
+    cues:
+      - id: p01
+        say: Prompting Patterns
+        pause_after: 0.5
+        step: Test a prompt by explaining or solving
+        visual: >-
+          A prompt starts the exchange. The measure of its usefulness is whether the student can
+          explain the idea or solve a problem afterward.
+        note: Specify what the AI should do and which reasoning you intend to keep.
+      - id: p02
+        say: >-
+          The following research-informed approaches can help you specify a useful learning
+          interaction.
+        pause_after: 0.52
+        step: Test a prompt by explaining or solving
+        visual: >-
+          A prompt starts the exchange. The measure of its usefulness is whether the student can
+          explain the idea or solve a problem afterward.
+        note: Specify what the AI should do and which reasoning you intend to keep.
+      - id: p03
+        say: >-
+          Judge your own prompts by what you can explain or solve afterward, as well as by how
+          helpful the chat feels.
+        pause_after: 0.85
+        step: Test a prompt by explaining or solving
+        visual: >-
+          A prompt starts the exchange. The measure of its usefulness is whether the student can
+          explain the idea or solve a problem afterward.
+        note: Specify what the AI should do and which reasoning you intend to keep.
+  - id: the-generation-then-comprehension-protocol
+    label: Generate and understand
+    title: The “Generation-Then-Comprehension” Protocol
+    part: Prompting
+    purpose: When you need generated code
+    takeaway: If AI generates code, take responsibility for explaining and checking it before use.
+    cues:
+      - id: p01
+        say: The “Generation-Then-Comprehension” Protocol
+        pause_after: 0.5
+        step: Generated code can mask a learning gap
+        visual: >-
+          A generated snippet sits beside a later assessment. The Python library study found
+          lower immediate test scores among developers who got AI help.
+        note: >-
+          In the Python library study, developers with AI help scored lower on the immediate
+          test.
+      - id: p02
+        say: >-
+          If you do use AI to generate a snippet of code because you are completely stuck, you
+          must never blindly copy-paste it. Anthropic researchers Shen and Tamkin studied 52
+          developers learning an unfamiliar Python library. Those with AI help scored lower on
+          the test immediately afterward.
+        pause_after: 0.25
+        step: Generated code can mask a learning gap
+        visual: >-
+          A generated snippet sits beside a later assessment. The Python library study found
+          lower immediate test scores among developers who got AI help.
+        note: >-
+          In the Python library study, developers with AI help scored lower on the immediate
+          test.
+      - id: p03
+        say: >-
+          Within that group, some who sought explanations or help understanding concepts scored
+          better than those who handed over more coding. The researchers called two observed
+          patterns “Generation-Then-Comprehension” and “Hybrid Code-Explanation”. If you use
+          generated code, understanding and checking it is still your work to do.
+        pause_after: 0.85
+        step: Explain and verify code before using it
+        visual: >-
+          The generated code leads to an explanation of the unfamiliar concepts and then to
+          checks conducted by the learner.
+        note: >-
+          Some participants who sought explanations did better than those who delegated more
+          coding.
+  - id: actionable-tips
+    label: Actionable tips
+    title: 'Actionable Tips:'
+    part: Prompting
+    purpose: Put the explanation by the code
+    takeaway: Predict, explain, and test generated code, then attempt a new task without it.
+    cues:
+      - id: p01
+        say: 'Actionable Tips:'
+        pause_after: 0.5
+        step: Check explanations against the relevant lines
+        visual: >-
+          A code block is paired with its explanation so you can predict its behavior and test
+          edge cases. A fresh exercise asks you to apply the reasoning without the generated
+          solution.
+        note: Read explanations beside the relevant code lines to reduce split attention.
+      - id: p02
+        say: >-
+          Explain and check: If AI supplies code, predict its behavior, explain the key
+          decisions, and test edge cases. Ask for explanations beside the relevant lines.
+        pause_after: 0.25
+        step: Check explanations against the relevant lines
+        visual: >-
+          A code block is paired with its explanation so you can predict its behavior and test
+          edge cases. A fresh exercise asks you to apply the reasoning without the generated
+          solution.
+        note: Test boundary cases, then apply the reasoning to another problem unaided.
+      - id: p03
+        say: >-
+          This applies CLT’s split-attention effect: keeping related information together
+          reduces the extraneous load of mentally matching a separate explanation to the code.
+          Investigate disagreements between its explanation and your mental model; either can be
+          wrong. Then try a related task without the generated solution.
+        pause_after: 0.52
+        step: Check explanations against the relevant lines
+        visual: >-
+          A code block is paired with its explanation so you can predict its behavior and test
+          edge cases. A fresh exercise asks you to apply the reasoning without the generated
+          solution.
+        note: Read explanations beside the relevant code lines to reduce split attention.
+      - id: p04
+        say: >-
+          Make a relevant attempt: Write down an approach, prediction, or specific question
+          before seeking help when you have enough background to start. If you are missing
+          prerequisites, get an explanation or example and then practice.
+        pause_after: 0.85
+        step: Try a step before asking for help
+        visual: >-
+          A student's written approach or prediction leads to a specific question. A worked
+          example supplies a way in when essential prerequisites are missing.
+        note: Attempt an approach, prediction, or question when you have enough background.
+  - id: study-patterns-that-preserve-useful-practice
+    label: Useful study practice
+    title: Study Patterns That Preserve Useful Practice
+    part: Study patterns
+    purpose: Choose the skill to retain
+    takeaway: Choose the challenge that makes you practice a skill you want to retain.
+    cues:
+      - id: p01
+        say: Study Patterns That Preserve Useful Practice
+        pause_after: 0.5
+        step: Choose practice for the skill you want
+        visual: >-
+          A student at the center is supported by a barbell as a reminder of productive
+          challenge. The label directs attention to practicing the target skill.
+        note: A worthwhile study activity makes you practice the skill you want to retain.
+      - id: p02
+        say: >-
+          Choose activities that practice the skill you want to retain. Productive challenge can
+          help, but making a task harder is not an end in itself.
+        pause_after: 0.85
+        step: Choose practice for the skill you want
+        visual: >-
+          A student at the center is supported by a barbell as a reminder of productive
+          challenge. The label directs attention to practicing the target skill.
+        note: A worthwhile study activity makes you practice the skill you want to retain.
+  - id: the-alternative-approaches-pattern
+    label: Compare approaches
+    title: The Alternative Approaches Pattern
+    part: Study patterns
+    purpose: Two ways to solve one problem
+    takeaway: Predict how two plausible approaches differ before reading AI’s evaluation.
+    cues:
+      - id: p01
+        say: The Alternative Approaches Pattern
+        pause_after: 0.5
+        step: Check alternatives you get from AI
+        visual: >-
+          A loop and a recursive approach appear at the same scale so the student can compare
+          them and verify both.
+        note: AI can propose alternatives, such as a loop and recursion, for you to evaluate.
+      - id: p02
+        say: 'The Research Grounding:'
+        pause_after: 0.22
+        step: Check alternatives you get from AI
+        visual: >-
+          A loop and a recursive approach appear at the same scale so the student can compare
+          them and verify both.
+        note: AI can propose alternatives, such as a loop and recursion, for you to evaluate.
+      - id: p03
+        say: >-
+          Garcia’s review of programming education research describes using ChatGPT to generate
+          several solutions and discuss their differences—for example, comparing a loop with
+          recursion. The review also stresses that generated code needs checking.
+        pause_after: 0.52
+        step: Check alternatives you get from AI
+        visual: >-
+          A loop and a recursive approach appear at the same scale so the student can compare
+          them and verify both.
+        note: AI can propose alternatives, such as a loop and recursion, for you to evaluate.
+      - id: p04
+        say: 'How and Why it Works:'
+        pause_after: 0.22
+        step: Make your own comparison before feedback
+        visual: >-
+          Two candidate solutions lead to a notebook for your own prediction and then to AI
+          feedback. Correctness, runtime, memory, and readability are potential comparison
+          criteria.
+        note: Predict correctness, runtime, memory, and readability before reading AI’s comparison.
+      - id: p05
+        say: >-
+          Ask for alternatives, then make your own prediction about correctness, runtime, memory
+          use, and readability before reading a comparison. CLT suggests keeping this comparison
+          manageable: if three unfamiliar approaches overload you, begin with two short
+          solutions and compare one feature at a time.
+        pause_after: 0.25
+        step: Make your own comparison before feedback
+        visual: >-
+          Two candidate solutions lead to a notebook for your own prediction and then to AI
+          feedback. Correctness, runtime, memory, and readability are potential comparison
+          criteria.
+        note: >-
+          If three approaches overwhelm you, compare two short solutions on one feature at a
+          time.
+      - id: p06
+        say: >-
+          Having AI supply both the solutions and the evaluation can remove the reasoning you
+          intended to practice.
+        pause_after: 0.52
+        step: Make your own comparison before feedback
+        visual: >-
+          Two candidate solutions lead to a notebook for your own prediction and then to AI
+          feedback. Correctness, runtime, memory, and readability are potential comparison
+          criteria.
+        note: Predict correctness, runtime, memory, and readability before reading AI’s comparison.
+      - id: p07
+        say: 'Example Prompt (C++):'
+        pause_after: 0.25
+        step: Compare reversal time and space
+        visual: >-
+          Reversing the four-letter string ABCD gives DCBA. Each method in the comparison must
+          produce this result.
+        note: Compare time and auxiliary space, including the recursive call stack.
+      - id: p08
+        say: >-
+          “Show three ways to reverse a mutable string in C++: a standard library algorithm, two
+          pointers, and recursion. Let me compare their time and auxiliary-space costs,
+          including the recursion call stack, before you give feedback.
+        pause_after: 0.25
+        step: Compare reversal time and space
+        visual: >-
+          The standard library branch shows std::reverse. Two pointers move inward from opposite
+          ends. Recursion adds stack frames to the comparison of time and extra space.
+        note: Justify one choice against a stated constraint before getting feedback.
+      - id: p09
+        say: Ask me to justify which I would choose for a stated constraint.”
+        pause_after: 0.85
+        step: Compare reversal time and space
+        visual: All three methods remain beside the prompt to justify which one fits the constraint.
+        note: Compare time and auxiliary space, including the recursive call stack.
+  - id: read-make-your-own-notes-then-clarify
+    label: Read, note, clarify
+    title: Read, Make Your Own Notes, Then Clarify
+    part: Study patterns
+    purpose: Study of 344 students aged 14–15
+    takeaway: Write the main idea, one example, and one uncertainty before asking AI about the passage.
+    cues:
+      - id: p01
+        say: Read, Make Your Own Notes, Then Clarify
+        pause_after: 0.5
+        step: Students recalled more after taking notes
+        visual: >-
+          Note-taking and AI-only study appear side by side. A delayed check highlights better
+          understanding and recall for the students assigned to take notes.
+        note: >-
+          Students who took notes understood and recalled more three days later than the AI-only
+          group.
+      - id: p02
+        say: 'The Research Grounding:'
+        pause_after: 0.22
+        step: Students recalled more after taking notes
+        visual: >-
+          Note-taking and AI-only study appear side by side. A delayed check highlights better
+          understanding and recall for the students assigned to take notes.
+        note: >-
+          Students who took notes understood and recalled more three days later than the AI-only
+          group.
+      - id: p03
+        say: >-
+          In a study of 344 students aged 14–15, students assigned to take notes understood and
+          remembered more three days later than those assigned to use AI alone. Keep making your
+          own notes when studying with AI.
+        pause_after: 0.52
+        step: Students recalled more after taking notes
+        visual: >-
+          Note-taking and AI-only study appear side by side. A delayed check highlights better
+          understanding and recall for the students assigned to take notes.
+        note: >-
+          Students who took notes understood and recalled more three days later than the AI-only
+          group.
+      - id: p04
+        say: 'How and Why it Works:'
+        pause_after: 0.22
+        step: Write your notes before asking AI
+        visual: >-
+          A passage leads to a notebook for the main idea, one example, and one uncertainty. The
+          uncertainty becomes a targeted question, and the source stays available to verify the
+          response.
+        note: Capture the section’s main idea, a concrete example, and an open question.
+      - id: p05
+        say: >-
+          Read a section and record its main idea, one example, and one uncertainty in your own
+          words. Ask AI about the specific uncertainty, check its response against the source,
+          and revise your notes yourself. Later, close the tools and reconstruct the
+          explanation.
+        pause_after: 0.52
+        step: Write your notes before asking AI
+        visual: >-
+          A passage leads to a notebook for the main idea, one example, and one uncertainty. The
+          uncertainty becomes a targeted question, and the source stays available to verify the
+          response.
+        note: >-
+          Check AI against the source, revise your notes, then reconstruct the idea without
+          looking.
+      - id: p06
+        say: 'Example Prompt:'
+        pause_after: 0.25
+        step: Verify feedback against the passage
+        visual: >-
+          A passage and the student's explanation sit at the center. One question tests a
+          possible gap, and the source is highlighted so the student can check the feedback.
+        note: Ask about one possible gap before requesting a correction.
+      - id: p07
+        say: >-
+          “Here is the passage and my own explanation. Identify one possible gap or
+          misunderstanding and ask me a question about it before suggesting a correction. Point
+          to the relevant passage so I can check your feedback.”
+        pause_after: 0.85
+        step: Verify feedback against the passage
+        visual: >-
+          A passage and the student's explanation sit at the center. One question tests a
+          possible gap, and the source is highlighted so the student can check the feedback.
+        note: Ask for the relevant passage so you can verify the feedback yourself.
+  - id: faded-worked-examples
+    label: Faded worked examples
+    title: Faded Worked Examples
+    part: Study patterns
+    purpose: Start with a solved example
+    takeaway: Study a complete example, fill in missing steps, and work up to a fresh problem.
+    cues:
+      - id: p01
+        say: Faded Worked Examples
+        pause_after: 0.5
+        step: Worked examples give beginners a start
+        visual: >-
+          A complete example centers the learner's attention on how the method works. Supporting
+          symbols show less searching and more room in working memory to understand the steps.
+        note: >-
+          A worked example reduces the search for a starting point when the method is
+          unfamiliar.
+      - id: p02
+        say: 'The Research Grounding:'
+        pause_after: 0.22
+        step: Worked examples give beginners a start
+        visual: >-
+          A complete example centers the learner's attention on how the method works. Supporting
+          symbols show less searching and more room in working memory to understand the steps.
+        note: A mathematics review found a moderate improvement from worked examples.
+      - id: p03
+        say: >-
+          When a topic is new, a solved example lets you follow the reasoning instead of
+          guessing where to start. CLT’s worked-example effect explains why this can help
+          beginners: reducing unnecessary search leaves more working-memory capacity for
+          understanding how the solution works.
+        pause_after: 0.25
+        step: Worked examples give beginners a start
+        visual: >-
+          A complete example centers the learner's attention on how the method works. Supporting
+          symbols show less searching and more room in working memory to understand the steps.
+        note: >-
+          A worked example reduces the search for a starting point when the method is
+          unfamiliar.
+      - id: p04
+        say: >-
+          A 2023 review combining results from mathematics studies found that worked examples
+          improved performance by a moderate amount. Related research shows that guidance which
+          helps a beginner can become unnecessary as they gain experience.
+        pause_after: 0.52
+        step: Worked examples give beginners a start
+        visual: >-
+          A complete example centers the learner's attention on how the method works. Supporting
+          symbols show less searching and more room in working memory to understand the steps.
+        note: A mathematics review found a moderate improvement from worked examples.
+      - id: p05
+        say: 'How and Why it Works:'
+        pause_after: 0.22
+        step: Remove steps as you gain understanding
+        visual: >-
+          A complete example is followed by a similar problem with a missing last step. The
+          final problem is solved independently once the learner can explain the missing steps.
+        note: Practice completing one missing step before you fill in several.
+      - id: p06
+        say: >-
+          Start with a complete example, then try a similar one with the last step missing. Once
+          you can complete and explain that step, try filling in more steps until you can solve
+          a fresh problem yourself. Adjust the pace to your understanding.
+        pause_after: 0.52
+        step: Remove steps as you gain understanding
+        visual: >-
+          A complete example is followed by a similar problem with a missing last step. The
+          final problem is solved independently once the learner can explain the missing steps.
+        note: Fade the help at a pace that matches your understanding.
+      - id: p07
+        say: 'Example Prompt (Java):'
+        pause_after: 0.25
+        step: Trace more calls yourself each time
+        visual: >-
+          The Java method sumTo returns zero when n is zero. Otherwise it adds n to sumTo of n
+          minus one.
+        note: Trace each stack frame in a complete example.
+      - id: p08
+        say: >-
+          “Show me one worked example of tracing a recursive method, explaining each stack
+          frame. Then give me a similar trace with the final two frames blank for me to fill in.
+        pause_after: 0.25
+        step: Trace more calls yourself each time
+        visual: >-
+          The complete trace shows n equal to 2, 1, and 0. The next trace shows n equal to 3 and
+          2 with the final two frames blank.
+        note: Fill two frames on a related trace, then trace a fresh method and input.
+      - id: p09
+        say: >-
+          Then give me a third problem with only the method and input, and ask me to produce the
+          full trace before you show any answer.”
+        pause_after: 0.85
+        step: Trace more calls yourself each time
+        visual: The final card gives sumTo(4) and leaves the entire trace to the learner.
+        note: Trace each stack frame in a complete example.
+  - id: rubric-first-feedback-loop
+    label: Rubric-first feedback
+    title: Rubric-First Feedback Loop
+    part: Study patterns
+    purpose: Reasoning experiment, out of 20
+    takeaway: Rate your own work first, then check one rating against specific evidence.
+    cues:
+      - id: p01
+        say: Rubric-First Feedback Loop
+        pause_after: 0.5
+        step: Compare predicted and actual scores
+        visual: >-
+          Predicted and actual scores sit side by side. Both groups in the reasoning experiment
+          estimated about four more correct answers than they actually got.
+        note: >-
+          In one reasoning experiment, adults with AI performed better, but both groups
+          overestimated by about four.
+      - id: p02
+        say: 'The Research Grounding:'
+        pause_after: 0.22
+        step: Compare predicted and actual scores
+        visual: >-
+          Predicted and actual scores sit side by side. Both groups in the reasoning experiment
+          estimated about four more correct answers than they actually got.
+        note: Compare predicted and actual practice scores when preparing for an exam.
+      - id: p03
+        say: Reviews found that assessing your own work can strengthen your belief in your ability.
+        pause_after: 0.52
+        step: Compare predicted and actual scores
+        visual: >-
+          Predicted and actual scores sit side by side. Both groups in the reasoning experiment
+          estimated about four more correct answers than they actually got.
+        note: >-
+          In one reasoning experiment, adults with AI performed better, but both groups
+          overestimated by about four.
+      - id: p04
+        say: >-
+          Feeling confident is a reason to check, too. In one of Fernandes and colleagues’
+          reasoning experiments, adults with AI answered more questions correctly. Yet both
+          groups—with and without AI—thought they had answered about four more questions
+          correctly out of twenty than they actually had.
+        pause_after: 0.25
+        step: Compare predicted and actual scores
+        visual: >-
+          Predicted and actual scores sit side by side. Both groups in the reasoning experiment
+          estimated about four more correct answers than they actually got.
+        note: Compare predicted and actual practice scores when preparing for an exam.
+      - id: p05
+        say: >-
+          When preparing for an exam, compare your predicted score with your actual score on
+          practice questions.
+        pause_after: 0.52
+        step: Compare predicted and actual scores
+        visual: >-
+          Predicted and actual scores sit side by side. Both groups in the reasoning experiment
+          estimated about four more correct answers than they actually got.
+        note: >-
+          In one reasoning experiment, adults with AI performed better, but both groups
+          overestimated by about four.
+      - id: p06
+        say: 'How and Why it Works:'
+        pause_after: 0.22
+        step: Check one self-rating against evidence
+        visual: A page labeled Your work sets up the first rating, which belongs to the learner.
+        note: Self-score against a rubric before requesting feedback.
+      - id: p07
+        say: >-
+          Start by scoring your own draft, solution, or design against the rubric. Then ask AI
+          to check one rating against evidence and suggest a revision goal. Decide whether its
+          feedback is justified by looking at the relevant passage, code, or test result.
+        pause_after: 0.25
+        step: Check one self-rating against evidence
+        visual: >-
+          The self-rating moves from the work into a panel that checks one rating. An evidence
+          marker refers back to the original passage, code, or test result.
+        note: Decide whether the feedback is justified and revise your own work.
+      - id: p08
+        say: You remain responsible for judging the work and making the revision.
+        pause_after: 0.52
+        step: Check one self-rating against evidence
+        visual: >-
+          An arrow from the evidence check leads back to the work. A label reminds the learner
+          to make the revision.
+        note: Self-score against a rubric before requesting feedback.
+      - id: p09
+        say: 'Example Prompt (Writing):'
+        pause_after: 0.25
+        step: Check your rating against a specific passage
+        visual: >-
+          A draft and rubric lead to checking one self-rating against a particular sentence or
+          paragraph. Based on that evidence, the student chooses a revision.
+        note: Ask AI to check a rating against a specific sentence or paragraph.
+      - id: p10
+        say: >-
+          “Here is the rubric and my draft. Do not rewrite any prose. First ask me to
+          self-assess my draft on each criterion. Then check one rating against a specific
+          sentence or paragraph.
+        pause_after: 0.25
+        step: Check your rating against a specific passage
+        visual: >-
+          A draft and rubric lead to checking one self-rating against a particular sentence or
+          paragraph. Based on that evidence, the student chooses a revision.
+        note: Use the evidence to choose what to change.
+      - id: p11
+        say: >-
+          If the evidence justifies a different rating, explain why; otherwise, explain what
+          supports my rating. Suggest a revision goal if needed and ask what I will change.”
+        pause_after: 0.52
+        step: Check your rating against a specific passage
+        visual: >-
+          A draft and rubric lead to checking one self-rating against a particular sentence or
+          paragraph. Based on that evidence, the student chooses a revision.
+        note: Ask AI to check a rating against a specific sentence or paragraph.
+      - id: p12
+        say: 'Example Prompt (Programming):'
+        pause_after: 0.25
+        step: One passing test leaves edge cases open
+        visual: >-
+          The example starts with a panel for the learner’s self-rating, before checking any
+          test result.
+        note: Rate correctness, edge cases, readability, and tests first.
+      - id: p13
+        say: >-
+          “Here is my solution and the grading rubric. Do not fix the code. Ask me to rate it
+          first on correctness, edge cases, readability, and tests. Check one rating against the
+          code and test evidence.
+        pause_after: 0.25
+        step: One passing test leaves edge cases open
+        visual: >-
+          The rating asks whether edge cases are covered. The evidence shows a passing test that
+          reverses ABCD into DCBA.
+        note: Ground a single piece of feedback in code or test evidence.
+      - id: p14
+        say: >-
+          Explain whether that evidence supports or challenges my rating, and suggest one
+          targeted next step if needed.”
+        pause_after: 0.85
+        step: One passing test leaves edge cases open
+        visual: >-
+          A separate dashed row shows that empty input is still untested. The suggested next
+          step is to add an empty-string test.
+        note: Rate correctness, edge cases, readability, and tests first.
+  - id: fading-the-scaffold-the-goal-is-independence
+    label: Fade toward independence
+    title: 'Fading the Scaffold: The Goal is Independence'
+    part: Study patterns
+    purpose: Guidance changes with skill
+    takeaway: Reduce guidance as your skill grows and check again without AI after a delay.
+    cues:
+      - id: p01
+        say: 'Fading the Scaffold: The Goal is Independence'
+        pause_after: 0.5
+        step: Use less guidance as your skills grow
+        visual: >-
+          A complete explanation gives a new learner a starting point. As a learner gains
+          expertise, the picture shifts to a focused hint for the specific step they still need.
+        note: >-
+          Detailed guidance helps beginners but can add unnecessary effort as learners gain
+          expertise.
+      - id: p02
+        say: >-
+          As your knowledge grows, adjust the support. CLT calls this the expertise reversal
+          effect: detailed guidance that helps when you are new can become unnecessary or get in
+          the way once you know what you are doing.
+        pause_after: 0.25
+        step: Use less guidance as your skills grow
+        visual: >-
+          A complete explanation gives a new learner a starting point. As a learner gains
+          expertise, the picture shifts to a focused hint for the specific step they still need.
+        note: >-
+          Detailed guidance helps beginners but can add unnecessary effort as learners gain
+          expertise.
+      - id: p03
+        say: >-
+          As familiar patterns take less working-memory capacity, explanations you no longer
+          need can add extraneous load. A complete recursion trace may help on your first
+          attempt; later, try tracing the calls yourself and ask for feedback only where you are
+          unsure.
+        pause_after: 0.52
+        step: Try a related problem without AI later
+        visual: >-
+          A complete recursion trace gives way to your own trace. A calendar marks a later
+          attempt at a related problem without AI, with practice restored if the skill has
+          faded.
+        note: Ask only about the calls you are unsure of once you can trace the rest.
+      - id: p04
+        say: >-
+          Periodically solve a related problem without AI, and revisit it after a delay. If a
+          formerly manageable task has become difficult, check your retention and restore
+          practice. For a skill you aim to perform independently, successful support should help
+          you become less dependent on that support.
+        pause_after: 0.85
+        step: Try a related problem without AI later
+        visual: >-
+          A complete recursion trace gives way to your own trace. A calendar marks a later
+          attempt at a related problem without AI, with practice restored if the skill has
+          faded.
+        note: Try a related problem without AI after a delay and restore practice if needed.
+  - id: a-quick-rubric-for-any-ai-interaction
+    label: Quick AI rubric
+    title: A Quick Rubric for Any AI Interaction
+    part: Review
+    purpose: Check the output and the goal
+    takeaway: Check accuracy, alignment, scaffolding, transfer, and integrity before using AI’s output.
+    cues:
+      - id: p01
+        say: A Quick Rubric for Any AI Interaction
+        pause_after: 0.5
+        step: Verify the output and check the goal
+        visual: >-
+          A checklist for accuracy asks whether the output can be verified. A map for alignment
+          asks whether the response serves the assignment's learning goal.
+        note: Accuracy asks whether you can verify facts, code behavior, math steps, or citations.
+      - id: p02
+        say: 'Before you use an AI output in your coursework, ask:'
+        pause_after: 0.52
+        step: Verify the output and check the goal
+        visual: >-
+          A checklist for accuracy asks whether the output can be verified. A map for alignment
+          asks whether the response serves the assignment's learning goal.
+        note: Alignment asks whether the help serves the intended learning objective.
+      - id: p03
+        say: 'Accuracy: Can I verify the factual claims, code behavior, math steps, or citations?'
+        pause_after: 0.52
+        step: Verify the output and check the goal
+        visual: >-
+          A checklist for accuracy asks whether the output can be verified. A map for alignment
+          asks whether the response serves the assignment's learning goal.
+        note: Accuracy asks whether you can verify facts, code behavior, math steps, or citations.
+      - id: p04
+        say: >-
+          Alignment: Does the response support the learning objective, or did it solve a
+          different problem?
+        pause_after: 0.52
+        step: Verify the output and check the goal
+        visual: >-
+          A checklist for accuracy asks whether the output can be verified. A map for alignment
+          asks whether the response serves the assignment's learning goal.
+        note: Alignment asks whether the help serves the intended learning objective.
+      - id: p05
+        say: 'Scaffolding: Did it make me retrieve, explain, compare, debug, revise, or self-assess?'
+        pause_after: 0.52
+        step: Check your practice, transfer, and integrity
+        visual: >-
+          Three peer cards show scaffolding, transfer, and integrity. They ask what thinking you
+          practiced, what you can do independently, and whether the use fits course policy.
+        note: Scaffolding prompts useful mental work such as retrieval, explanation, or debugging.
+      - id: p06
+        say: 'Transfer: Can I now solve a similar problem without the AI?'
+        pause_after: 0.52
+        step: Check your practice, transfer, and integrity
+        visual: >-
+          Three peer cards show scaffolding, transfer, and integrity. They ask what thinking you
+          practiced, what you can do independently, and whether the use fits course policy.
+        note: Transfer and integrity ask what you can do alone and whether that use was allowed.
+      - id: p07
+        say: >-
+          Integrity: Does this use fit the course policy, and can I honestly explain what was
+          mine?
+        pause_after: 0.52
+        step: Check your practice, transfer, and integrity
+        visual: >-
+          Three peer cards show scaffolding, transfer, and integrity. They ask what thinking you
+          practiced, what you can do independently, and whether the use fits course policy.
+        note: Scaffolding prompts useful mental work such as retrieval, explanation, or debugging.
+      - id: p08
+        say: >-
+          If you cannot yet explain or apply the idea, plan more instruction or practice before
+          treating it as learned. A helpful interaction might involve questions, feedback, or a
+          complete worked solution: its value depends on your current knowledge and what you do
+          with it afterward.
+        pause_after: 0.25
+        step: Retest later before calling it learned
+        visual: >-
+          A student who cannot yet explain or apply the idea gets suitable instruction or
+          practice. A later check distinguishes immediate success from lasting retention.
+        note: Choose a question, feedback, or a full example according to your current knowledge.
+      - id: p09
+        say: >-
+          Check again after a delay, since immediate success is not the same as lasting
+          retention.
+        pause_after: 0.52
+        step: Retest later before calling it learned
+        visual: >-
+          A student who cannot yet explain or apply the idea gets suitable instruction or
+          practice. A later check distinguishes immediate success from lasting retention.
+        note: Check again later before treating the material as learned.
+      - id: p10
+        say: 'Summary:'
+        pause_after: 0.22
+        step: Keep skills you can use without AI
+        visual: >-
+          The closing picture returns to the student, a checklist, and a calendar. Together they
+          represent practicing the target reasoning, verifying answers, and checking later what
+          you can do independently.
+        note: >-
+          Use AI to support the assignment’s learning goal while keeping responsibility for
+          reasoning and verification.
+      - id: p11
+        say: >-
+          Use AI to support the practice your learning goal requires. Keep responsibility for
+          reasoning and verification, seek enough guidance to make progress, and test what you
+          can do independently after a delay.
+        pause_after: 0.25
+        step: Keep skills you can use without AI
+        visual: >-
+          The closing picture returns to the student, a checklist, and a calendar. Together they
+          represent practicing the target reasoning, verifying answers, and checking later what
+          you can do independently.
+        note: Revisit the material later to see if you can apply it on your own.
+      - id: p12
+        say: The goal is both to finish the assignment and to retain skills you can use beyond it.
+        pause_after: 0.52
+        step: Keep skills you can use without AI
+        visual: >-
+          The closing picture returns to the student, a checklist, and a calendar. Together they
+          represent practicing the target reasoning, verifying answers, and checking later what
+          you can do independently.
+        note: >-
+          Use AI to support the assignment’s learning goal while keeping responsibility for
+          reasoning and verification.
+      - id: p13
+        say: 'Research cutoff:'
+        pause_after: 0.22
+        step: Keep skills you can use without AI
+        visual: >-
+          The closing picture returns to the student, a checklist, and a calendar. Together they
+          represent practicing the target reasoning, verifying answers, and checking later what
+          you can do independently.
+        note: Revisit the material later to see if you can apply it on your own.
+      - id: p14
+        say: This post draws on research published through September 2026.
+        pause_after: 0.85
+        step: Keep skills you can use without AI
+        visual: >-
+          The closing picture returns to the student, a checklist, and a calendar. Together they
+          represent practicing the target reasoning, verifying answers, and checking later what
+          you can do independently.
+        note: >-
+          Use AI to support the assignment’s learning goal while keeping responsibility for
+          reasoning and verification.
+  - id: self-check-quiz
+    label: Self-check quiz
+    title: Self-Check Quiz
+    part: Review
+    purpose: Try the self-check quiz
+    takeaway: Take the self-check quiz on the article page to review the strategies.
+    cues:
+      - id: p01
+        say: Self-Check Quiz
+        pause_after: 0.5
+        step: Check which strategies you can apply
+        visual: >-
+          A checklist invites you to take the article's self-check quiz and review the
+          strategies.
+        note: Review the strategies with the quiz on the article page.
+      - id: p02
+        say: Take the self-check quiz on the article page to review these strategies.
+        pause_after: 0.468
+        step: Check which strategies you can apply
+        visual: >-
+          A checklist invites you to take the article's self-check quiz and review the
+          strategies.
+        note: Review the strategies with the quiz on the article page.

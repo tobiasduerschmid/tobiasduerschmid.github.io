@@ -119,6 +119,12 @@
     // An incompletely rendered lesson still has its readable transcript.
     if (story.audio && !timing) return;
     const renderVisuals = window[root.dataset.narrationRenderer].createRenderer(root, data);
+    // Articles use the lesson transport and chapter clock with continuous playback.
+    if (root.hasAttribute('data-article-player')) {
+      return window.NarrationTransport.mount(root, {
+        storyboard: story, timing, render: renderVisuals, checkScenes: [], shouldCheck: () => false,
+      });
+    }
     const checkScenes = checks.flatMap((check, index) => check ? [index] : []);
     let finalCheckOnly = false;
     const shouldCheck = index => Boolean(checks[index]) && (!finalCheckOnly || index === checkScenes.at(-1));

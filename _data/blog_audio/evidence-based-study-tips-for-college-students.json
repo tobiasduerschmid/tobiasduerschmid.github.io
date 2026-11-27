@@ -1,0 +1,43 @@
+{
+  "audio": "/assets/audio/evidence-based-study-tips-for-college-students.mp3",
+  "script": "/assets/narration/evidence-based-study-tips-for-college-students.txt",
+  "captions": "/assets/narration/evidence-based-study-tips-for-college-students.vtt",
+  "chapters": [
+    {
+      "title": "Introduction",
+      "start": 0.0
+    },
+    {
+      "title": "Desirable Difficulties: Embrace the Struggle",
+      "start": 143.37
+    },
+    {
+      "title": "Retrieval Practice: Ditch the Highlighter and Quiz Yourself",
+      "start": 339.63
+    },
+    {
+      "title": "Spaced Practice: Space Out Your Study Sessions",
+      "start": 515.95
+    },
+    {
+      "title": "Interleaving: Mix Up Your Problem Types",
+      "start": 680.57
+    },
+    {
+      "title": "Generation: Struggle First, Check the Solution Later",
+      "start": 824.12
+    },
+    {
+      "title": "Component Skills: Manage Your Cognitive Load",
+      "start": 904.33
+    },
+    {
+      "title": "Growth Mindset: The Foundation for Desirable Difficulties",
+      "start": 1104.44
+    },
+    {
+      "title": "Quiz & Conclusion",
+      "start": 1267.35
+    }
+  ]
+}

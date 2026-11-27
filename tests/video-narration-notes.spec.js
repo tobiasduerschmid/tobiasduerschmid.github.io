@@ -1,14 +1,17 @@
-const { loadStory, loadRegistry } = require('../scripts/narration/source');
+const { ROOT, loadStory, loadRegistry } = require('../scripts/narration/source');
 // The printable notes of every video narration (docs/video-narration.md,
-// "Printable notes"): the page that "Save lesson notes as PDF" opens and prints.
+// "Printable notes"), including standalone notes for animated articles.
 const { test, expect } = require('@playwright/test');
-const { readFileSync } = require('node:fs');
+const { existsSync, readFileSync } = require('node:fs');
+const { join } = require('node:path');
 const { createHash } = require('node:crypto');
 const { PDFDocument, PDFName, PDFRawStream } = require('pdf-lib');
 const yaml = require('js-yaml');
+const { isArticleNarration } = require('./helpers/narration-player');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
-const data = file => yaml.load(readFileSync(require.resolve(`../_data/${file}`), 'utf8'));
+const dataPath = file => join(ROOT, '_data', file);
+const data = file => yaml.load(readFileSync(dataPath(file), 'utf8'));
 // Rendered text: emphasis markers gone, typographic apostrophes and quotes plain.
 const plain = text => text.replace(/\*\*/g, '').replace(/[’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').trim();
 // A key point's Markdown as the page shows it: bold and code markers gone.
@@ -51,7 +54,8 @@ for (const [topic, lesson] of Object.entries(loadRegistry('video'))) {
   const story = loadStory(topic);
   const timing = data(`explainers/${topic}_timing.json`);
   const notes = data(`explainers/${topic}_notes.yml`);
-  const quizzes = data(`explainers/${topic}_quizzes.yml`);
+  const quizzesFile = `explainers/${topic}_quizzes.yml`;
+  const quizzes = existsSync(dataPath(quizzesFile)) ? data(quizzesFile) : {};
   const cues = story.scenes.flatMap((scene, sceneIndex) => scene.cues.map((cue, cueIndex) => ({
     cue,
     // Notes are keyed by <scene id>-<cue id>, or by the cue's number in older lessons, as the notes page reads them.
@@ -59,8 +63,11 @@ for (const [topic, lesson] of Object.entries(loadRegistry('video'))) {
     heading: `${sceneIndex + 1}.${cueIndex + 1} ${cue.step}`,
     rest: timing.scenes[sceneIndex].cues[cueIndex].end - REST_LEAD,
   })));
-  const questions = story.scenes.flatMap(scene => (quizzes[scene.id] ? quizzes[scene.id].questions || [quizzes[scene.id]] : []));
-  const notesUrl = `${lesson.views}/notes/`;
+  const questions = story.scenes.flatMap(scene => {
+    const check = quizzes[scene.id] || scene.checkpoint;
+    return check ? check.questions || [check] : [];
+  });
+  const notesUrl = lesson.notes_url;
 
   test(`${topic} notes: every cue's picture and key points`, async ({ page }) => {
     await page.goto(notesUrl);
@@ -98,17 +105,26 @@ for (const [topic, lesson] of Object.entries(loadRegistry('video'))) {
     expect(differ).toEqual({});
   });
 
-  test(`${topic} notes: each section's check follows it, and the answers close the notes`, async ({ page }) => {
-    await page.goto(notesUrl);
-    const answers = page.getByRole('region', { name: 'Answers' }).getByRole('listitem');
-    await expect(answers).toHaveCount(questions.length);
-    for (const [index, question] of questions.entries()) {
-      const check = page.getByRole('region', { name: new RegExp(`^Question ${index + 1} `) });
-      await expect(check).toContainText(question.question);
-      expect(await check.getByRole('listitem').allTextContents()).toEqual(question.options);
-      await expect(answers.nth(index)).toContainText(`${question.options[question.correct_index]}. ${question.explanation}`);
-    }
-  });
+  if (questions.length) {
+    test(`${topic} notes: each section's check follows it, and the answers close the notes`, async ({ page }) => {
+      await page.goto(notesUrl);
+      const answers = page.getByRole('region', { name: 'Answers', exact: true }).getByRole('listitem');
+      await expect(answers).toHaveCount(questions.length);
+      for (const [index, question] of questions.entries()) {
+        const check = page.getByRole('region', { name: new RegExp(`^Question ${index + 1} `) });
+        await expect(check).toContainText(question.question);
+        expect(await check.getByRole('listitem').allTextContents()).toEqual(question.options);
+        await expect(answers.nth(index)).toContainText(`${question.options[question.correct_index]}. ${question.explanation}`);
+      }
+    });
+  } else {
+    test(`${topic} notes: a narration without checks has no questions or answer key`, async ({ page }) => {
+      await page.goto(notesUrl);
+      await expect(page.getByRole('heading', { level: 1, name: story.title, exact: true })).toBeVisible();
+      await expect(page.getByRole('region', { name: /^Question \d+ / })).toHaveCount(0);
+      await expect(page.getByRole('region', { name: 'Answers', exact: true })).toHaveCount(0);
+    });
+  }
 
   for (const paper of PAPERS) {
     test(`${topic} notes: ${paper.format} print gives each slide the page width and writing space below`, async ({ page }) => {
@@ -119,11 +135,11 @@ for (const [topic, lesson] of Object.entries(loadRegistry('video'))) {
       const printed = await page.evaluate(() => {
         const title = document.querySelector('h1');
         const rows = [...document.querySelectorAll('h3')].map(heading => heading.closest('section')).filter(section => !section.matches('[aria-labelledby$="-answers"]'));
-        const answers = document.querySelector('h2[id$="-answers"]').closest('section');
+        const answers = document.querySelector('h2[id$="-answers"]')?.closest('section');
         // The lesson is its title (with the line above it), its rows, any
         // closer look printed after its cue, and the answers.
         const looks = [...document.querySelectorAll('[data-closer-look-static]')];
-        const lesson = [title, title.previousElementSibling, ...rows, ...looks, answers];
+        const lesson = [title, title.previousElementSibling, ...rows, ...looks, answers].filter(Boolean);
         const strays = [];
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
         while (walker.nextNode()) {
@@ -169,7 +185,7 @@ for (const [topic, lesson] of Object.entries(loadRegistry('video'))) {
       await picturesReady(page);
       // Isolate the slides to check that short notes no longer force one
       // page per cue. The size checks above prevent shrinking to pass this.
-      await page.getByRole('region', { name: 'Answers' }).evaluate(answers => answers.remove());
+      await page.getByRole('region', { name: 'Answers', exact: true }).evaluateAll(sections => sections.forEach(section => section.remove()));
       await page.getByRole('region', { name: /^Question \d+ / }).evaluateAll(checks => checks.forEach(check => check.remove()));
       const pdf = await page.pdf({ format: paper.format, preferCSSPageSize: true });
       const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length;
@@ -209,17 +225,20 @@ for (const [topic, lesson] of Object.entries(loadRegistry('video'))) {
     expect(await drawingStreams()).toEqual(light);
   });
 
-  test(`${topic}: the button under the video opens the notes and the print dialog`, async ({ page }) => {
-    await page.addInitScript(() => {
-      window.printRequests = 0;
-      window.print = () => { window.printRequests += 1; };
+  // The all-kind handout suite exercises the standalone article print route.
+  if (!isArticleNarration(lesson)) {
+    test(`${topic}: the button under the video opens the notes and the print dialog`, async ({ page }) => {
+      await page.addInitScript(() => {
+        window.printRequests = 0;
+        window.print = () => { window.printRequests += 1; };
+      });
+      await page.goto(lesson.chapter);
+      await page.getByRole('link', { name: 'Save lesson notes as PDF' }).click();
+      await expect(page).toHaveURL(new RegExp(`${notesUrl}$`));
+      await picturesReady(page);
+      await expect.poll(() => page.evaluate(() => window.printRequests)).toBe(1);
+      await page.getByRole('button', { name: 'Save as PDF or print' }).click();
+      await expect.poll(() => page.evaluate(() => window.printRequests)).toBe(2);
     });
-    await page.goto(lesson.chapter);
-    await page.getByRole('link', { name: 'Save lesson notes as PDF' }).click();
-    await expect(page).toHaveURL(new RegExp(`${notesUrl}$`));
-    await picturesReady(page);
-    expect(await page.evaluate(() => window.printRequests)).toBe(1);
-    await page.getByRole('button', { name: 'Save as PDF or print' }).click();
-    expect(await page.evaluate(() => window.printRequests)).toBe(2);
-  });
+  }
 }

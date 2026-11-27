@@ -24,7 +24,7 @@
     <p class="vn-notes-kicker">Lesson notes · {{ lesson.name }}</p>
     <h1>{{ explainer.title }}</h1>
     <div class="vn-notes-intro">
-      <p>Large slides with key points and space for your own notes underneath, each section's knowledge check, and the answers at the end. Printed slides flow into the available page space at their full size.</p>
+      <p>Large visuals with key points and space for your notes underneath.{% if vn_quizzes %} Knowledge checks have answers at the end.{% endif %} Printed visuals keep their full size.</p>
       <p>Type in the fields below. Your notes save automatically in this browser and are included when you export a PDF. <a href="{{ '/cookies/#narration-notes' | relative_url }}">Manage saved notes</a>.</p>
       <p id="notes-format-help">While editing, use Ctrl (⌘ on Mac) + B for bold, + I for italic, or + U for underline. Ctrl/⌘ + Shift + 7 makes a numbered list; + Shift + 8 makes a bulleted list. Use your usual undo and redo keys. Formatting is saved and included in the PDF.</p>
       <p class="vn-notes-format-status" role="status" data-notes-format-status></p>

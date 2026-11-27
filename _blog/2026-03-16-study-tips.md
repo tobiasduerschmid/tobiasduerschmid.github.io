@@ -7,7 +7,8 @@ featured: true
 permalink: /blog/evidence-based-study-tips-for-college-students/
 image: "/img/learning.jpg"
 image_alt_text: "Students working on a laptop and whiteboard"
-audio: "/files/study_tips.mp3"
+audio_narration: evidence-based-study-tips-for-college-students
+video_narration: blog_study_tips
 ---
 
 **A Short Guide to Studying Effectively in College: How to Hack Your Brain for Better Learning**

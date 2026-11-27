@@ -1,0 +1,683 @@
+{
+  "duration": 1328.16,
+  "voice": "drama3-male-a",
+  "speed": 1,
+  "scenes": [
+    {
+      "id": "introduction",
+      "start": 0,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 0,
+          "end": 3.44,
+          "speech_end": 2.84
+        },
+        {
+          "id": "p02",
+          "start": 3.44,
+          "end": 9.62,
+          "speech_end": 9.1
+        },
+        {
+          "id": "p03",
+          "start": 9.62,
+          "end": 22.03,
+          "speech_end": 21.78
+        },
+        {
+          "id": "p04",
+          "start": 22.03,
+          "end": 43.34,
+          "speech_end": 43.09
+        },
+        {
+          "id": "p05",
+          "start": 43.34,
+          "end": 53.05,
+          "speech_end": 52.8
+        },
+        {
+          "id": "p06",
+          "start": 53.05,
+          "end": 70.27,
+          "speech_end": 69.75
+        },
+        {
+          "id": "p07",
+          "start": 70.27,
+          "end": 84.6,
+          "speech_end": 84.35
+        },
+        {
+          "id": "p08",
+          "start": 84.6,
+          "end": 103.97,
+          "speech_end": 103.72
+        },
+        {
+          "id": "p09",
+          "start": 103.97,
+          "end": 122.24,
+          "speech_end": 121.99
+        },
+        {
+          "id": "p10",
+          "start": 122.24,
+          "end": 132.9,
+          "speech_end": 132.38
+        },
+        {
+          "id": "p11",
+          "start": 132.9,
+          "end": 143.37,
+          "speech_end": 142.52
+        }
+      ],
+      "end": 143.37
+    },
+    {
+      "id": "desirable-difficulties-embrace-the-struggle",
+      "start": 143.37,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 143.37,
+          "end": 147.44,
+          "speech_end": 146.89
+        },
+        {
+          "id": "p02",
+          "start": 147.44,
+          "end": 165.49,
+          "speech_end": 165.24
+        },
+        {
+          "id": "p03",
+          "start": 165.49,
+          "end": 178.72,
+          "speech_end": 178.47
+        },
+        {
+          "id": "p04",
+          "start": 178.72,
+          "end": 191.69,
+          "speech_end": 191.44
+        },
+        {
+          "id": "p05",
+          "start": 191.69,
+          "end": 204.16,
+          "speech_end": 203.91
+        },
+        {
+          "id": "p06",
+          "start": 204.16,
+          "end": 219.13,
+          "speech_end": 218.88
+        },
+        {
+          "id": "p07",
+          "start": 219.13,
+          "end": 235.2,
+          "speech_end": 234.95
+        },
+        {
+          "id": "p08",
+          "start": 235.2,
+          "end": 252.48,
+          "speech_end": 251.96
+        },
+        {
+          "id": "p09",
+          "start": 252.48,
+          "end": 261.51,
+          "speech_end": 261.26
+        },
+        {
+          "id": "p10",
+          "start": 261.51,
+          "end": 278.04,
+          "speech_end": 277.79
+        },
+        {
+          "id": "p11",
+          "start": 278.04,
+          "end": 285.96,
+          "speech_end": 285.44
+        },
+        {
+          "id": "p12",
+          "start": 285.96,
+          "end": 303.97,
+          "speech_end": 303.72
+        },
+        {
+          "id": "p13",
+          "start": 303.97,
+          "end": 321.68,
+          "speech_end": 321.43
+        },
+        {
+          "id": "p14",
+          "start": 321.68,
+          "end": 339.63,
+          "speech_end": 338.78
+        }
+      ],
+      "end": 339.63
+    },
+    {
+      "id": "retrieval-practice-ditch-the-highlighter-and-quiz-yourself",
+      "start": 339.63,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 339.63,
+          "end": 344.24,
+          "speech_end": 343.69
+        },
+        {
+          "id": "p02",
+          "start": 344.24,
+          "end": 355.49,
+          "speech_end": 355.24
+        },
+        {
+          "id": "p03",
+          "start": 355.49,
+          "end": 372.54,
+          "speech_end": 372.29
+        },
+        {
+          "id": "p04",
+          "start": 372.54,
+          "end": 387.13,
+          "speech_end": 386.88
+        },
+        {
+          "id": "p05",
+          "start": 387.13,
+          "end": 397.66,
+          "speech_end": 397.41
+        },
+        {
+          "id": "p06",
+          "start": 397.66,
+          "end": 409.51,
+          "speech_end": 409.26
+        },
+        {
+          "id": "p07",
+          "start": 409.51,
+          "end": 420.34,
+          "speech_end": 420.09
+        },
+        {
+          "id": "p08",
+          "start": 420.34,
+          "end": 434.58,
+          "speech_end": 434.06
+        },
+        {
+          "id": "p09",
+          "start": 434.58,
+          "end": 448.29,
+          "speech_end": 448.04
+        },
+        {
+          "id": "p10",
+          "start": 448.29,
+          "end": 462.42,
+          "speech_end": 462.17
+        },
+        {
+          "id": "p11",
+          "start": 462.42,
+          "end": 482.62,
+          "speech_end": 482.1
+        },
+        {
+          "id": "p12",
+          "start": 482.62,
+          "end": 492.79,
+          "speech_end": 492.54
+        },
+        {
+          "id": "p13",
+          "start": 492.79,
+          "end": 502.06,
+          "speech_end": 501.81
+        },
+        {
+          "id": "p14",
+          "start": 502.06,
+          "end": 515.95,
+          "speech_end": 515.1
+        }
+      ],
+      "end": 515.95
+    },
+    {
+      "id": "spaced-practice-space-out-your-study-sessions",
+      "start": 515.95,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 515.95,
+          "end": 519.86,
+          "speech_end": 519.31
+        },
+        {
+          "id": "p02",
+          "start": 519.86,
+          "end": 536.73,
+          "speech_end": 536.48
+        },
+        {
+          "id": "p03",
+          "start": 536.73,
+          "end": 550.84,
+          "speech_end": 550.59
+        },
+        {
+          "id": "p04",
+          "start": 550.84,
+          "end": 565.91,
+          "speech_end": 565.66
+        },
+        {
+          "id": "p05",
+          "start": 565.91,
+          "end": 584.65,
+          "speech_end": 584.13
+        },
+        {
+          "id": "p06",
+          "start": 584.65,
+          "end": 597.3,
+          "speech_end": 597.05
+        },
+        {
+          "id": "p07",
+          "start": 597.3,
+          "end": 614.77,
+          "speech_end": 614.52
+        },
+        {
+          "id": "p08",
+          "start": 614.77,
+          "end": 629.24,
+          "speech_end": 628.99
+        },
+        {
+          "id": "p09",
+          "start": 629.24,
+          "end": 643.42,
+          "speech_end": 642.9
+        },
+        {
+          "id": "p10",
+          "start": 643.42,
+          "end": 653.89,
+          "speech_end": 653.64
+        },
+        {
+          "id": "p11",
+          "start": 653.89,
+          "end": 666.5,
+          "speech_end": 666.25
+        },
+        {
+          "id": "p12",
+          "start": 666.5,
+          "end": 680.57,
+          "speech_end": 679.72
+        }
+      ],
+      "end": 680.57
+    },
+    {
+      "id": "interleaving--mix-up-your-problem-types",
+      "start": 680.57,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 680.57,
+          "end": 684.02,
+          "speech_end": 683.47
+        },
+        {
+          "id": "p02",
+          "start": 684.02,
+          "end": 700.37,
+          "speech_end": 700.12
+        },
+        {
+          "id": "p03",
+          "start": 700.37,
+          "end": 715.46,
+          "speech_end": 715.21
+        },
+        {
+          "id": "p04",
+          "start": 715.46,
+          "end": 725.01,
+          "speech_end": 724.76
+        },
+        {
+          "id": "p05",
+          "start": 725.01,
+          "end": 743.35,
+          "speech_end": 742.83
+        },
+        {
+          "id": "p06",
+          "start": 743.35,
+          "end": 762.42,
+          "speech_end": 762.17
+        },
+        {
+          "id": "p07",
+          "start": 762.42,
+          "end": 770.46,
+          "speech_end": 769.94
+        },
+        {
+          "id": "p08",
+          "start": 770.46,
+          "end": 784.19,
+          "speech_end": 783.94
+        },
+        {
+          "id": "p09",
+          "start": 784.19,
+          "end": 801,
+          "speech_end": 800.75
+        },
+        {
+          "id": "p10",
+          "start": 801,
+          "end": 815.77,
+          "speech_end": 815.52
+        },
+        {
+          "id": "p11",
+          "start": 815.77,
+          "end": 824.12,
+          "speech_end": 823.27
+        }
+      ],
+      "end": 824.12
+    },
+    {
+      "id": "generation-struggle-first-check-the-solution-later",
+      "start": 824.12,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 824.12,
+          "end": 828.69,
+          "speech_end": 828.14
+        },
+        {
+          "id": "p02",
+          "start": 828.69,
+          "end": 836.78,
+          "speech_end": 836.53
+        },
+        {
+          "id": "p03",
+          "start": 836.78,
+          "end": 854.38,
+          "speech_end": 853.86
+        },
+        {
+          "id": "p04",
+          "start": 854.38,
+          "end": 868.38,
+          "speech_end": 867.86
+        },
+        {
+          "id": "p05",
+          "start": 868.38,
+          "end": 881.29,
+          "speech_end": 881.04
+        },
+        {
+          "id": "p06",
+          "start": 881.29,
+          "end": 898.12,
+          "speech_end": 897.87
+        },
+        {
+          "id": "p07",
+          "start": 898.12,
+          "end": 904.33,
+          "speech_end": 903.48
+        }
+      ],
+      "end": 904.33
+    },
+    {
+      "id": "component-skills-manage-your-cognitive-load",
+      "start": 904.33,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 904.33,
+          "end": 908.14,
+          "speech_end": 907.59
+        },
+        {
+          "id": "p02",
+          "start": 908.14,
+          "end": 927.91,
+          "speech_end": 927.66
+        },
+        {
+          "id": "p03",
+          "start": 927.91,
+          "end": 940.73,
+          "speech_end": 940.21
+        },
+        {
+          "id": "p04",
+          "start": 940.73,
+          "end": 948.5,
+          "speech_end": 948.25
+        },
+        {
+          "id": "p05",
+          "start": 948.5,
+          "end": 963.61,
+          "speech_end": 963.36
+        },
+        {
+          "id": "p06",
+          "start": 963.61,
+          "end": 982.36,
+          "speech_end": 982.11
+        },
+        {
+          "id": "p07",
+          "start": 982.36,
+          "end": 998.97,
+          "speech_end": 998.72
+        },
+        {
+          "id": "p08",
+          "start": 998.97,
+          "end": 1012.42,
+          "speech_end": 1012.17
+        },
+        {
+          "id": "p09",
+          "start": 1012.42,
+          "end": 1027.97,
+          "speech_end": 1027.72
+        },
+        {
+          "id": "p10",
+          "start": 1027.97,
+          "end": 1031.65,
+          "speech_end": 1031.13
+        },
+        {
+          "id": "p11",
+          "start": 1031.65,
+          "end": 1042.1,
+          "speech_end": 1041.85
+        },
+        {
+          "id": "p12",
+          "start": 1042.1,
+          "end": 1065.01,
+          "speech_end": 1064.76
+        },
+        {
+          "id": "p13",
+          "start": 1065.01,
+          "end": 1083.14,
+          "speech_end": 1082.89
+        },
+        {
+          "id": "p14",
+          "start": 1083.14,
+          "end": 1094.55,
+          "speech_end": 1094.3
+        },
+        {
+          "id": "p15",
+          "start": 1094.55,
+          "end": 1104.44,
+          "speech_end": 1103.59
+        }
+      ],
+      "end": 1104.44
+    },
+    {
+      "id": "growth-mindset-the-foundation-for-desirable-difficulties",
+      "start": 1104.44,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 1104.44,
+          "end": 1109.33,
+          "speech_end": 1108.78
+        },
+        {
+          "id": "p02",
+          "start": 1109.33,
+          "end": 1122.16,
+          "speech_end": 1121.91
+        },
+        {
+          "id": "p03",
+          "start": 1122.16,
+          "end": 1130.31,
+          "speech_end": 1130.06
+        },
+        {
+          "id": "p04",
+          "start": 1130.31,
+          "end": 1146.8,
+          "speech_end": 1146.55
+        },
+        {
+          "id": "p05",
+          "start": 1146.8,
+          "end": 1161,
+          "speech_end": 1160.48
+        },
+        {
+          "id": "p06",
+          "start": 1161,
+          "end": 1176.37,
+          "speech_end": 1176.12
+        },
+        {
+          "id": "p07",
+          "start": 1176.37,
+          "end": 1187.9,
+          "speech_end": 1187.65
+        },
+        {
+          "id": "p08",
+          "start": 1187.9,
+          "end": 1204.61,
+          "speech_end": 1204.36
+        },
+        {
+          "id": "p09",
+          "start": 1204.61,
+          "end": 1211.05,
+          "speech_end": 1210.53
+        },
+        {
+          "id": "p10",
+          "start": 1211.05,
+          "end": 1223.62,
+          "speech_end": 1223.37
+        },
+        {
+          "id": "p11",
+          "start": 1223.62,
+          "end": 1238.91,
+          "speech_end": 1238.66
+        },
+        {
+          "id": "p12",
+          "start": 1238.91,
+          "end": 1254.18,
+          "speech_end": 1253.93
+        },
+        {
+          "id": "p13",
+          "start": 1254.18,
+          "end": 1267.35,
+          "speech_end": 1266.5
+        }
+      ],
+      "end": 1267.35
+    },
+    {
+      "id": "quiz--conclusion",
+      "start": 1267.35,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 1267.35,
+          "end": 1269.34,
+          "speech_end": 1268.79
+        },
+        {
+          "id": "p02",
+          "start": 1269.34,
+          "end": 1287.32,
+          "speech_end": 1286.8
+        },
+        {
+          "id": "p03",
+          "start": 1287.32,
+          "end": 1304.08,
+          "speech_end": 1303.56
+        },
+        {
+          "id": "p04",
+          "start": 1304.08,
+          "end": 1318.29,
+          "speech_end": 1318.04
+        },
+        {
+          "id": "p05",
+          "start": 1318.29,
+          "end": 1328.16,
+          "speech_end": 1327.59
+        }
+      ],
+      "end": 1328.16
+    }
+  ],
+  "speech_sha256": "e7944e428cce93654e3704f833fffd9fb99745e54d1a3f611cba14e4cde8cbf8"
+}

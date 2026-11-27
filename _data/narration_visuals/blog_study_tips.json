@@ -1,0 +1,1738 @@
+{
+  "version": 1,
+  "presentation": {
+    "animation": {
+      "page": "/assets/video-narration/blog_study_tips.html",
+      "theme": "blog-essay",
+      "styles": [
+        "/css/video-narration-blog-essay.css"
+      ],
+      "scripts": [
+        "/js/video-narration/blog-essay-art.js",
+        "/js/video-narration/blog-study-figures.js",
+        "/js/video-narration/blog-essay.js"
+      ]
+    }
+  },
+  "resources": {
+    "essay_topic": "blog_study_tips"
+  },
+  "scenes": {
+    "introduction": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "collection",
+            "title": "Rereading alone leads to weak recall",
+            "subtitle": "Common habits that can feel productive",
+            "items": [
+              {
+                "art": "book",
+                "label": "Rereading",
+                "cue": 1,
+                "tone": "blue",
+                "detail": "The page feels familiar"
+              },
+              {
+                "art": "highlighter",
+                "label": "Highlighting",
+                "cue": 3,
+                "word": "highlighting",
+                "tone": "gold",
+                "detail": "The answer stays in view"
+              },
+              {
+                "art": "clock",
+                "label": "Cramming",
+                "cue": 3,
+                "word": "cramming",
+                "tone": "blue",
+                "detail": "Little time between attempts"
+              }
+            ]
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "layout": "figure",
+            "title": "Familiarity can feel like mastery",
+            "items": [
+              {
+                "art": "book",
+                "label": "Lecture notes",
+                "cue": 4,
+                "word": "productive",
+                "tone": "blue"
+              },
+              {
+                "art": "highlighter",
+                "label": "Feels familiar",
+                "cue": 4,
+                "word": "rereading",
+                "tone": "gold"
+              },
+              {
+                "art": "question",
+                "label": "Can I explain it?",
+                "cue": 5,
+                "word": "familiar",
+                "tone": "blue"
+              }
+            ],
+            "figure": "study-familiarity"
+          },
+          {
+            "from": 6,
+            "to": 7,
+            "layout": "sequence",
+            "title": "Productive effort helps learning last",
+            "items": [
+              {
+                "art": "stairs",
+                "label": "Effort now",
+                "cue": 6,
+                "word": "difficulties",
+                "tone": "gold"
+              },
+              {
+                "art": "brain",
+                "label": "Remember later",
+                "cue": 6,
+                "word": "retention",
+                "tone": "blue"
+              },
+              {
+                "art": "code",
+                "label": "Apply in practice",
+                "cue": 7,
+                "word": "computer",
+                "tone": "blue"
+              }
+            ]
+          },
+          {
+            "from": 8,
+            "to": 9,
+            "layout": "compare",
+            "title": "Learning shows up in future performance",
+            "items": [
+              {
+                "art": "clock",
+                "label": "How it feels now",
+                "cue": 8,
+                "word": "learners",
+                "tone": "blue"
+              },
+              {
+                "art": "brain",
+                "label": "What sticks later",
+                "cue": 9,
+                "word": "permanent",
+                "tone": "gold",
+                "detail": "Use it on a new task",
+                "detail_at": {
+                  "cue": 9,
+                  "word": "future"
+                }
+              }
+            ]
+          },
+          {
+            "from": 10,
+            "to": 11,
+            "layout": "feature",
+            "title": "Retention shows which study habits work",
+            "items": [
+              {
+                "art": "checklist",
+                "label": "Strategies to try",
+                "cue": 10,
+                "word": "strategies",
+                "tone": "gold"
+              },
+              {
+                "art": "document",
+                "label": "UCLA research",
+                "detail": "Bjork Lab",
+                "cue": 11,
+                "word": "ucla",
+                "tone": "blue"
+              }
+            ]
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {},
+        "p10": {},
+        "p11": {}
+      }
+    },
+    "desirable-difficulties-embrace-the-struggle": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "compare",
+            "title": "Productive struggle helps learning last",
+            "items": [
+              {
+                "art": "book",
+                "label": "Smooth and easy",
+                "cue": 2,
+                "word": "misconception",
+                "tone": "blue"
+              },
+              {
+                "art": "stairs",
+                "label": "Work it out",
+                "cue": 3,
+                "word": "roadblocks",
+                "tone": "gold"
+              }
+            ],
+            "signal": {
+              "cue": 3,
+              "word": "retrieve",
+              "text": "Process, connect and retrieve."
+            }
+          },
+          {
+            "from": 4,
+            "to": 6,
+            "layout": "sequence",
+            "title": "Effortful recall strengthens memory",
+            "subtitle": "Can you recall an algorithm’s time complexity?",
+            "items": [
+              {
+                "art": "notebook",
+                "label": "Close the notes",
+                "cue": 4,
+                "word": "notes",
+                "tone": "blue"
+              },
+              {
+                "art": "question",
+                "label": "Recall or construct",
+                "cue": 4,
+                "word": "recall",
+                "tone": "gold"
+              },
+              {
+                "art": "brain",
+                "label": "Strengthen memory",
+                "cue": 6,
+                "word": "stronger",
+                "tone": "blue",
+                "detail": "Effort helps retention",
+                "detail_at": {
+                  "cue": 6,
+                  "word": "effortful"
+                }
+              }
+            ]
+          },
+          {
+            "from": 7,
+            "to": 8,
+            "layout": "compare",
+            "title": "Helpful challenges stay within reach",
+            "items": [
+              {
+                "art": "blocks",
+                "label": "Remove barriers",
+                "detail": "Too little sleep or missing basics",
+                "cue": 7,
+                "word": "studying",
+                "tone": "blue"
+              },
+              {
+                "art": "stairs",
+                "label": "Keep reachable challenges",
+                "cue": 8,
+                "word": "challenges",
+                "tone": "gold"
+              }
+            ],
+            "signal": {
+              "cue": 8,
+              "word": "answer",
+              "text": "More thinking, an answer within reach."
+            }
+          },
+          {
+            "from": 9,
+            "to": 11,
+            "layout": "collection",
+            "title": "Shuffling cards tests what you remember",
+            "items": [
+              {
+                "art": "cards",
+                "label": "Shuffle cards",
+                "cue": 9,
+                "word": "challenges",
+                "tone": "blue"
+              },
+              {
+                "art": "chat",
+                "label": "Explain aloud",
+                "cue": 10,
+                "word": "explain",
+                "tone": "gold"
+              },
+              {
+                "art": "map",
+                "label": "Move study spots",
+                "cue": 10,
+                "word": "place",
+                "tone": "blue"
+              }
+            ],
+            "signal": {
+              "cue": 11,
+              "word": "friction",
+              "text": "Productive effort is part of learning."
+            }
+          },
+          {
+            "from": 12,
+            "to": 13,
+            "layout": "figure",
+            "title": "Writing code yourself builds skill",
+            "items": [
+              {
+                "art": "code",
+                "label": "Practice loop",
+                "cue": 12,
+                "word": "coding",
+                "tone": "blue"
+              },
+              {
+                "art": "robot",
+                "label": "Suggested code",
+                "cue": 12,
+                "word": "auto",
+                "tone": "gold"
+              },
+              {
+                "art": "checklist",
+                "label": "Filled in at once",
+                "cue": 13,
+                "word": "efficient",
+                "tone": "blue"
+              },
+              {
+                "art": "robot",
+                "label": "Suggestions off",
+                "cue": 13,
+                "word": "off",
+                "tone": "gold"
+              },
+              {
+                "art": "code",
+                "label": "Type the loop header",
+                "cue": 13,
+                "word": "syntax",
+                "tone": "blue"
+              },
+              {
+                "art": "pencil",
+                "label": "Write the logic",
+                "cue": 13,
+                "word": "logic",
+                "tone": "gold"
+              },
+              {
+                "art": "code",
+                "label": "Close the loop",
+                "cue": 13,
+                "word": "scratch",
+                "tone": "blue"
+              }
+            ],
+            "figure": "study-code-practice"
+          },
+          {
+            "from": 14,
+            "to": 14,
+            "layout": "figure",
+            "title": "Debugging now builds skill for later",
+            "items": [
+              {
+                "art": "code",
+                "label": "Loop with a mismatch",
+                "cue": 14,
+                "word": "mental",
+                "tone": "blue"
+              },
+              {
+                "art": "bug",
+                "label": "Missing closing brace",
+                "cue": 14,
+                "word": "missing",
+                "tone": "gold"
+              },
+              {
+                "art": "pencil",
+                "label": "Braces match",
+                "cue": 14,
+                "word": "debug",
+                "tone": "blue"
+              }
+            ],
+            "signal": {
+              "cue": 14,
+              "word": "tomorrow",
+              "text": "Spot the mismatch, then fix it."
+            },
+            "figure": "study-loop-debug"
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {},
+        "p10": {},
+        "p11": {},
+        "p12": {},
+        "p13": {},
+        "p14": {}
+      }
+    },
+    "retrieval-practice-ditch-the-highlighter-and-quiz-yourself": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "feature",
+            "title": "Recall makes future recall easier",
+            "items": [
+              {
+                "art": "cards",
+                "label": "Active retrieval",
+                "cue": 1,
+                "word": "retrieval",
+                "tone": "gold"
+              },
+              {
+                "art": "database",
+                "label": "Read stored data",
+                "cue": 2,
+                "word": "scientist",
+                "tone": "blue"
+              },
+              {
+                "art": "brain",
+                "label": "Easier to retrieve",
+                "cue": 3,
+                "word": "human",
+                "tone": "gold"
+              }
+            ],
+            "signal": {
+              "cue": 3,
+              "word": "future",
+              "text": "Recalling it now helps you recall it later."
+            }
+          },
+          {
+            "from": 4,
+            "to": 6,
+            "layout": "figure",
+            "title": "Self-testing shows what to revisit",
+            "items": [
+              {
+                "art": "book",
+                "label": "Open lecture notes",
+                "cue": 4,
+                "word": "often",
+                "tone": "blue"
+              },
+              {
+                "art": "question",
+                "label": "Recall an answer",
+                "cue": 4,
+                "word": "quiz",
+                "tone": "blue"
+              },
+              {
+                "art": "notebook",
+                "label": "Notes covered",
+                "cue": 5,
+                "word": "without",
+                "tone": "gold"
+              },
+              {
+                "art": "pencil",
+                "label": "Write from memory",
+                "cue": 5,
+                "word": "material2",
+                "tone": "blue"
+              },
+              {
+                "art": "checklist",
+                "label": "Check what to review",
+                "cue": 6,
+                "word": "exactly",
+                "tone": "gold"
+              }
+            ],
+            "figure": "study-self-test"
+          },
+          {
+            "from": 7,
+            "to": 8,
+            "layout": "compare",
+            "title": "Producing answers strengthens recall",
+            "items": [
+              {
+                "art": "cards",
+                "label": "Produce an answer",
+                "cue": 7,
+                "word": "produce",
+                "tone": "gold"
+              },
+              {
+                "art": "checklist",
+                "label": "Recognize a choice",
+                "cue": 7,
+                "word": "recognize",
+                "tone": "blue"
+              }
+            ],
+            "signal": {
+              "cue": 8,
+              "word": "entire",
+              "text": "Favor prompts that require full recall."
+            }
+          },
+          {
+            "from": 9,
+            "to": 10,
+            "layout": "collection",
+            "title": "Closed notes make you retrieve",
+            "items": [
+              {
+                "art": "notebook",
+                "label": "Summarize from memory",
+                "cue": 9,
+                "word": "notes",
+                "tone": "blue",
+                "detail": "Write a short summary",
+                "detail_at": {
+                  "cue": 10,
+                  "word": "summary"
+                }
+              },
+              {
+                "art": "checklist",
+                "label": "Take a practice test",
+                "cue": 10,
+                "word": "practice",
+                "tone": "gold"
+              }
+            ]
+          },
+          {
+            "from": 11,
+            "to": 11,
+            "layout": "orbit",
+            "title": "Recall between lectures reinforces memory",
+            "items": [
+              {
+                "art": "notebook",
+                "label": "Previous lecture",
+                "cue": 11,
+                "word": "before",
+                "tone": "blue"
+              },
+              {
+                "art": "brain",
+                "label": "Recall what you learned",
+                "cue": 11,
+                "word": "recall",
+                "tone": "gold"
+              },
+              {
+                "art": "calendar",
+                "label": "Repeat before class",
+                "cue": 11,
+                "word": "often",
+                "tone": "blue",
+                "detail": "Generate an answer",
+                "detail_at": {
+                  "cue": 11,
+                  "word": "production"
+                }
+              }
+            ]
+          },
+          {
+            "from": 12,
+            "to": 14,
+            "layout": "collection",
+            "title": "Recall fits into everyday coding",
+            "items": [
+              {
+                "art": "code",
+                "label": "Loop syntax",
+                "cue": 12,
+                "word": "loop",
+                "tone": "blue"
+              },
+              {
+                "art": "laptop",
+                "label": "Git commands",
+                "cue": 13,
+                "word": "git",
+                "tone": "gold"
+              },
+              {
+                "art": "blocks",
+                "label": "Sorting algorithms",
+                "cue": 14,
+                "word": "sorting",
+                "tone": "blue"
+              }
+            ],
+            "signal": {
+              "cue": 14,
+              "word": "consulting",
+              "text": "Recall first. Then consult a reference."
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {},
+        "p10": {},
+        "p11": {},
+        "p12": {},
+        "p13": {},
+        "p14": {}
+      }
+    },
+    "spaced-practice-space-out-your-study-sessions": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "figure",
+            "figure": "study-spacing",
+            "title": "Spaced sessions improve retention",
+            "items": [
+              {
+                "art": "clock",
+                "label": "Cram session",
+                "cue": 2,
+                "word": "cramming",
+                "tone": "gold"
+              },
+              {
+                "art": "calendar",
+                "label": "Spaced sessions",
+                "cue": 3,
+                "word": "space",
+                "tone": "blue"
+              },
+              {
+                "art": "balance",
+                "label": "Same total time",
+                "cue": 3,
+                "word": "cumulative",
+                "tone": "blue"
+              }
+            ]
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "layout": "orbit",
+            "title": "Gaps make the next recall more useful",
+            "items": [
+              {
+                "art": "clock",
+                "label": "Leave a gap",
+                "cue": 4,
+                "word": "time",
+                "tone": "blue"
+              },
+              {
+                "art": "brain",
+                "label": "Recall after forgetting",
+                "cue": 4,
+                "word": "forget",
+                "tone": "gold"
+              },
+              {
+                "art": "calendar",
+                "label": "Increase the interval",
+                "cue": 5,
+                "word": "increasing",
+                "tone": "blue",
+                "detail": "Build durable memory",
+                "detail_at": {
+                  "cue": 5,
+                  "word": "retained"
+                }
+              }
+            ]
+          },
+          {
+            "from": 6,
+            "to": 7,
+            "layout": "sequence",
+            "title": "Weekly review keeps old topics accessible",
+            "items": [
+              {
+                "art": "calendar",
+                "label": "Review every week",
+                "cue": 6,
+                "word": "week",
+                "tone": "blue"
+              },
+              {
+                "art": "brain",
+                "label": "Retrieve old topics",
+                "cue": 7,
+                "word": "rusty",
+                "tone": "gold"
+              },
+              {
+                "art": "chat",
+                "label": "Ask about gaps",
+                "cue": 7,
+                "word": "office",
+                "tone": "blue"
+              }
+            ]
+          },
+          {
+            "from": 8,
+            "to": 9,
+            "layout": "collection",
+            "title": "Scheduling makes spaced review easier",
+            "items": [
+              {
+                "art": "chat",
+                "label": "Use office hours",
+                "cue": 8,
+                "word": "professor",
+                "tone": "gold"
+              },
+              {
+                "art": "calendar",
+                "label": "Schedule review",
+                "cue": 8,
+                "word": "calendar",
+                "tone": "blue"
+              },
+              {
+                "art": "student",
+                "label": "Study together",
+                "cue": 9,
+                "word": "together",
+                "tone": "blue",
+                "detail": "Explain your thinking",
+                "detail_at": {
+                  "cue": 9,
+                  "word": "verbally"
+                }
+              }
+            ]
+          },
+          {
+            "from": 10,
+            "to": 11,
+            "layout": "compare",
+            "title": "Weekly work builds steady progress",
+            "items": [
+              {
+                "art": "clock",
+                "label": "Last-minute pileup",
+                "cue": 10,
+                "word": "temptation",
+                "tone": "blue"
+              },
+              {
+                "art": "blocks",
+                "label": "Incremental progress",
+                "cue": 11,
+                "word": "incremental",
+                "tone": "gold"
+              }
+            ]
+          },
+          {
+            "from": 12,
+            "to": 12,
+            "layout": "figure",
+            "title": "Revisiting Big-O keeps it accessible",
+            "items": [
+              {
+                "label": "Scan a list once",
+                "cue": 12,
+                "word": "learned"
+              },
+              {
+                "label": "Predict the visits",
+                "cue": 12,
+                "word": "test"
+              },
+              {
+                "label": "Recall and check",
+                "cue": 12,
+                "word": "retrieve"
+              }
+            ],
+            "figure": "study-big-o"
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {},
+        "p10": {},
+        "p11": {},
+        "p12": {}
+      }
+    },
+    "interleaving--mix-up-your-problem-types": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "compare",
+            "title": "Mixed practice teaches which method fits",
+            "items": [
+              {
+                "art": "blocks",
+                "label": "Blocked practice",
+                "detail": "One topic at a time",
+                "cue": 2,
+                "word": "blocked",
+                "tone": "blue"
+              },
+              {
+                "art": "cards",
+                "label": "Interleaved practice",
+                "detail": "Choose what fits",
+                "cue": 3,
+                "word": "interleaving",
+                "tone": "gold",
+                "detail_at": {
+                  "cue": 3,
+                  "word": "discriminate"
+                }
+              }
+            ]
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "layout": "feature",
+            "title": "Switching prompts recall and comparison",
+            "items": [
+              {
+                "art": "blocks",
+                "label": "Switch topics",
+                "cue": 4,
+                "word": "topic",
+                "tone": "blue"
+              },
+              {
+                "art": "brain",
+                "label": "Recall after a gap",
+                "cue": 5,
+                "word": "retrieval",
+                "tone": "gold"
+              },
+              {
+                "art": "question",
+                "label": "Compare the clues",
+                "cue": 5,
+                "word": "differences",
+                "tone": "blue"
+              }
+            ]
+          },
+          {
+            "from": 6,
+            "to": 7,
+            "layout": "sequence",
+            "title": "Mixed practice builds on the basics",
+            "items": [
+              {
+                "art": "book",
+                "label": "Learn the type",
+                "cue": 6,
+                "word": "understand",
+                "tone": "blue"
+              },
+              {
+                "art": "blocks",
+                "label": "Mix related problems",
+                "cue": 6,
+                "word": "alternating",
+                "tone": "gold",
+                "detail": "Shuffle flashcard topics",
+                "detail_at": {
+                  "cue": 7,
+                  "word": "mix"
+                }
+              }
+            ]
+          },
+          {
+            "from": 8,
+            "to": 9,
+            "layout": "figure",
+            "figure": "study-interleaving",
+            "title": "Mixed sets make you choose a sort",
+            "items": [
+              {
+                "art": "blocks",
+                "label": "Merge-sort problems",
+                "cue": 8,
+                "word": "merge",
+                "tone": "blue"
+              },
+              {
+                "art": "blocks",
+                "label": "Quicksort problems",
+                "cue": 8,
+                "word": "quick",
+                "tone": "gold"
+              },
+              {
+                "art": "blocks",
+                "label": "Bubble-sort problems",
+                "cue": 8,
+                "word": "bubble",
+                "tone": "blue"
+              },
+              {
+                "art": "cards",
+                "label": "Mixed order",
+                "cue": 8,
+                "word": "shuffle",
+                "tone": "gold"
+              },
+              {
+                "art": "cards",
+                "label": "Reordered problems",
+                "cue": 8,
+                "word": "randomly",
+                "tone": "gold"
+              },
+              {
+                "art": "question",
+                "label": "Choose a sort",
+                "cue": 9,
+                "word": "constraints",
+                "tone": "blue"
+              }
+            ],
+            "signal": {
+              "cue": 9,
+              "word": "languages",
+              "text": "Vary the languages you practice, too."
+            }
+          },
+          {
+            "from": 10,
+            "to": 11,
+            "layout": "compare",
+            "title": "Mixing courses reveals connections",
+            "items": [
+              {
+                "art": "laptop",
+                "label": "Operating systems",
+                "cue": 10,
+                "word": "together",
+                "tone": "blue"
+              },
+              {
+                "art": "code",
+                "label": "Programming languages",
+                "cue": 10,
+                "word": "programming",
+                "tone": "gold"
+              }
+            ],
+            "signal": {
+              "cue": 11,
+              "word": "connect",
+              "text": "How does a language shape a system’s design?"
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {},
+        "p10": {},
+        "p11": {}
+      }
+    },
+    "generation-struggle-first-check-the-solution-later": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "sequence",
+            "title": "An attempt makes the answer clearer",
+            "items": [
+              {
+                "art": "question",
+                "label": "Make an attempt",
+                "cue": 2,
+                "word": "trying",
+                "tone": "blue"
+              },
+              {
+                "art": "pencil",
+                "label": "Notice errors",
+                "cue": 3,
+                "word": "errors",
+                "tone": "gold"
+              },
+              {
+                "art": "document",
+                "label": "Check the solution",
+                "cue": 3,
+                "word": "correct",
+                "tone": "blue",
+                "detail": "See what you missed",
+                "detail_at": {
+                  "cue": 3,
+                  "word": "unsuccessful"
+                }
+              }
+            ]
+          },
+          {
+            "from": 4,
+            "to": 4,
+            "layout": "sequence",
+            "title": "Early attempts make errors useful",
+            "items": [
+              {
+                "art": "notebook",
+                "label": "Attempt the homework",
+                "cue": 4,
+                "word": "homework",
+                "tone": "blue"
+              },
+              {
+                "art": "book",
+                "label": "Compare in lecture",
+                "cue": 4,
+                "word": "lecture",
+                "tone": "gold"
+              },
+              {
+                "art": "checklist",
+                "label": "Adjust your strategy",
+                "cue": 4,
+                "word": "diagnostic",
+                "tone": "blue"
+              }
+            ]
+          },
+          {
+            "from": 5,
+            "to": 7,
+            "layout": "figure",
+            "figure": "study-generation-tree",
+            "title": "A first attempt helps you see the gap",
+            "items": [
+              {
+                "art": "tree",
+                "label": "In-order traversal",
+                "cue": 5,
+                "word": "traverse",
+                "tone": "blue"
+              },
+              {
+                "art": "pencil",
+                "label": "Your attempt",
+                "cue": 5,
+                "word": "script",
+                "tone": "gold"
+              },
+              {
+                "art": "checklist",
+                "label": "Count the visits",
+                "cue": 6,
+                "word": "means",
+                "tone": "blue"
+              },
+              {
+                "art": "document",
+                "label": "Compare with the reference",
+                "cue": 6,
+                "word": "correct",
+                "tone": "blue"
+              },
+              {
+                "art": "question",
+                "label": "Find the skipped node",
+                "cue": 6,
+                "word": "click",
+                "tone": "gold"
+              }
+            ],
+            "signal": {
+              "cue": 7,
+              "word": "create",
+              "text": "Attempt first. Check later."
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {}
+      }
+    },
+    "component-skills-manage-your-cognitive-load": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "compare",
+            "title": "Smaller pieces reduce working-memory load",
+            "items": [
+              {
+                "art": "brain",
+                "label": "Limited working memory",
+                "cue": 2,
+                "word": "limited",
+                "tone": "blue"
+              },
+              {
+                "art": "blocks",
+                "label": "Practice one piece",
+                "cue": 3,
+                "word": "isolation",
+                "tone": "gold"
+              }
+            ],
+            "signal": {
+              "cue": 3,
+              "word": "combining",
+              "text": "Combine the pieces once they’re familiar."
+            }
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "layout": "sequence",
+            "title": "Early practice leaves time to combine",
+            "items": [
+              {
+                "art": "checklist",
+                "label": "Split into sub-goals",
+                "cue": 4,
+                "word": "decompose",
+                "tone": "blue"
+              },
+              {
+                "art": "calendar",
+                "label": "Start practice early",
+                "cue": 5,
+                "word": "earlier",
+                "tone": "gold"
+              },
+              {
+                "art": "blocks",
+                "label": "Combine near the exam",
+                "cue": 5,
+                "word": "combining",
+                "tone": "blue"
+              }
+            ]
+          },
+          {
+            "from": 6,
+            "to": 7,
+            "layout": "compare",
+            "title": "Interleaving helps when it’s manageable",
+            "items": [
+              {
+                "art": "cards",
+                "label": "Manageable? Mix it",
+                "cue": 6,
+                "word": "interleaving",
+                "tone": "gold"
+              },
+              {
+                "art": "blocks",
+                "label": "Too much? Split it",
+                "cue": 6,
+                "word": "exhaustion",
+                "tone": "blue"
+              }
+            ],
+            "signal": {
+              "cue": 7,
+              "word": "successfully",
+              "text": "Mix skills when you can meet the challenge."
+            }
+          },
+          {
+            "from": 8,
+            "to": 10,
+            "layout": "compare",
+            "title": "Familiar skills combine sooner",
+            "items": [
+              {
+                "art": "blocks",
+                "label": "Some pieces familiar",
+                "detail": "Combine sooner",
+                "cue": 8,
+                "word": "experience",
+                "tone": "blue"
+              },
+              {
+                "art": "stairs",
+                "label": "Some pieces new",
+                "detail": "Practice separately longer",
+                "cue": 9,
+                "word": "separately",
+                "tone": "gold",
+                "detail_at": {
+                  "cue": 9,
+                  "word": "longer"
+                }
+              }
+            ],
+            "signal": {
+              "cue": 10,
+              "word": "common",
+              "text": "The pace can vary by topic."
+            }
+          },
+          {
+            "from": 11,
+            "to": 12,
+            "layout": "figure",
+            "figure": "study-working-memory",
+            "figureState": "overload",
+            "title": "Three unfamiliar layers can overload you",
+            "items": [
+              {
+                "art": "laptop",
+                "label": "Build an app",
+                "cue": 11,
+                "word": "application",
+                "tone": "blue"
+              },
+              {
+                "art": "laptop",
+                "label": "Front end",
+                "cue": 12,
+                "word": "frontend",
+                "tone": "blue"
+              },
+              {
+                "art": "code",
+                "label": "Back end",
+                "cue": 12,
+                "word": "backend",
+                "tone": "gold"
+              },
+              {
+                "art": "database",
+                "label": "Database",
+                "cue": 12,
+                "word": "database",
+                "tone": "blue"
+              },
+              {
+                "art": "brain",
+                "label": "Too much at once",
+                "cue": 12,
+                "word": "high",
+                "tone": "blue"
+              }
+            ]
+          },
+          {
+            "from": 13,
+            "to": 15,
+            "layout": "figure",
+            "figure": "study-working-memory",
+            "figureState": "practice",
+            "title": "Separate practice makes integration easier",
+            "items": [
+              {
+                "art": "laptop",
+                "label": "Study notes page",
+                "cue": 13,
+                "word": "static",
+                "tone": "blue"
+              },
+              {
+                "art": "database",
+                "label": "Practice queries",
+                "cue": 13,
+                "word": "queries",
+                "tone": "blue"
+              },
+              {
+                "art": "code",
+                "label": "Practice back-end logic",
+                "cue": 13,
+                "word": "individual",
+                "tone": "blue"
+              },
+              {
+                "art": "blocks",
+                "label": "Connect the app",
+                "cue": 13,
+                "word": "integrate",
+                "tone": "gold"
+              },
+              {
+                "art": "pencil",
+                "label": "Send a new note",
+                "cue": 13,
+                "word": "into",
+                "tone": "blue"
+              },
+              {
+                "art": "database",
+                "label": "Store the note",
+                "cue": 13,
+                "word": "application",
+                "tone": "gold"
+              },
+              {
+                "art": "calendar",
+                "label": "Practice after class",
+                "cue": 14,
+                "word": "lectures",
+                "tone": "blue"
+              }
+            ],
+            "signal": {
+              "cue": 15,
+              "word": "manageable",
+              "text": "Break the work into manageable goals."
+            }
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {},
+        "p10": {},
+        "p11": {},
+        "p12": {},
+        "p13": {},
+        "p14": {},
+        "p15": {}
+      }
+    },
+    "growth-mindset-the-foundation-for-desirable-difficulties": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 3,
+            "layout": "feature",
+            "title": "A fixed mindset treats struggle as a limit",
+            "items": [
+              {
+                "art": "blocks",
+                "label": "Hit a roadblock",
+                "cue": 1,
+                "word": "difficulties",
+                "tone": "gold"
+              },
+              {
+                "art": "chat",
+                "label": "Fixed mindset",
+                "detail": "“I’m not smart enough.”",
+                "cue": 2,
+                "word": "fixed",
+                "tone": "blue",
+                "detail_at": {
+                  "cue": 3,
+                  "word": "smart"
+                }
+              }
+            ]
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "layout": "sequence",
+            "title": "Abilities grow with strategic practice",
+            "items": [
+              {
+                "art": "brain",
+                "label": "Growth mindset",
+                "cue": 4,
+                "word": "growth",
+                "tone": "blue"
+              },
+              {
+                "art": "checklist",
+                "label": "Practice strategically",
+                "cue": 4,
+                "word": "strategic",
+                "tone": "gold"
+              },
+              {
+                "art": "stairs",
+                "label": "Keep working at it",
+                "cue": 5,
+                "word": "friction",
+                "tone": "blue"
+              }
+            ]
+          },
+          {
+            "from": 6,
+            "to": 7,
+            "layout": "figure",
+            "title": "“Yet” leaves room to change strategies",
+            "items": [
+              {
+                "art": "chat",
+                "label": "I don’t understand this",
+                "cue": 6,
+                "word": "understand",
+                "tone": "blue"
+              },
+              {
+                "art": "pencil",
+                "label": "Add yet",
+                "cue": 6,
+                "word": "yet2",
+                "tone": "gold"
+              },
+              {
+                "art": "checklist",
+                "label": "Adjust your strategy",
+                "cue": 7,
+                "word": "strategies",
+                "tone": "blue"
+              },
+              {
+                "art": "chat",
+                "label": "Ask for help",
+                "cue": 7,
+                "word": "office",
+                "tone": "gold"
+              }
+            ],
+            "figure": "study-add-yet"
+          },
+          {
+            "from": 8,
+            "to": 9,
+            "layout": "sequence",
+            "title": "You can reuse successful strategies",
+            "items": [
+              {
+                "art": "checklist",
+                "label": "Reuse effective strategies",
+                "cue": 8,
+                "word": "consistent",
+                "tone": "blue"
+              },
+              {
+                "art": "chat",
+                "label": "Visit office hours",
+                "cue": 8,
+                "word": "office",
+                "tone": "gold"
+              },
+              {
+                "art": "notebook",
+                "label": "Show what you tried",
+                "cue": 9,
+                "word": "tried",
+                "tone": "blue"
+              }
+            ]
+          },
+          {
+            "from": 10,
+            "to": 11,
+            "layout": "feature",
+            "title": "Coding ability develops with practice",
+            "items": [
+              {
+                "art": "laptop",
+                "label": "Learning to code",
+                "cue": 10,
+                "word": "software",
+                "tone": "blue"
+              },
+              {
+                "art": "bug",
+                "label": "A C program segfaults",
+                "cue": 11,
+                "word": "segfaults",
+                "tone": "blue"
+              },
+              {
+                "art": "code",
+                "label": "Git rebase gets messy",
+                "cue": 11,
+                "word": "rebase",
+                "tone": "gold"
+              }
+            ],
+            "signal": {
+              "cue": 11,
+              "word": "imposter",
+              "text": "Debugging setbacks are part of learning."
+            }
+          },
+          {
+            "from": 12,
+            "to": 13,
+            "layout": "sequence",
+            "title": "Debugging practice builds mastery",
+            "items": [
+              {
+                "art": "bug",
+                "label": "Inspect the error",
+                "cue": 12,
+                "word": "bugs",
+                "tone": "blue"
+              },
+              {
+                "art": "code",
+                "label": "Practice debugging",
+                "cue": 12,
+                "word": "mastery",
+                "tone": "gold"
+              },
+              {
+                "art": "chat",
+                "label": "Ask for help",
+                "cue": 13,
+                "word": "help",
+                "tone": "blue"
+              }
+            ]
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {},
+        "p06": {},
+        "p07": {},
+        "p08": {},
+        "p09": {},
+        "p10": {},
+        "p11": {},
+        "p12": {},
+        "p13": {}
+      }
+    },
+    "quiz--conclusion": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ],
+        "essay_beats": [
+          {
+            "from": 1,
+            "to": 2,
+            "layout": "sequence",
+            "title": "Self-testing strengthens what you learned",
+            "items": [
+              {
+                "art": "cards",
+                "label": "Try the flashcards",
+                "cue": 1,
+                "tone": "blue"
+              },
+              {
+                "art": "checklist",
+                "label": "Take the quiz",
+                "cue": 2,
+                "word": "quiz",
+                "tone": "gold"
+              },
+              {
+                "art": "calendar",
+                "label": "Revisit later",
+                "cue": 2,
+                "word": "revisit",
+                "tone": "blue"
+              }
+            ]
+          },
+          {
+            "from": 3,
+            "to": 3,
+            "layout": "feature",
+            "title": "Small changes build a study routine",
+            "items": [
+              {
+                "art": "calendar",
+                "label": "Plan the next session",
+                "cue": 3,
+                "word": "apply",
+                "tone": "blue"
+              },
+              {
+                "art": "cards",
+                "label": "Recall a topic",
+                "cue": 3,
+                "word": "integrate",
+                "tone": "gold"
+              },
+              {
+                "art": "blocks",
+                "label": "Mix related problems",
+                "cue": 3,
+                "word": "practices",
+                "tone": "blue"
+              }
+            ]
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "layout": "collection",
+            "title": "These resources explain why the tips work",
+            "items": [
+              {
+                "art": "book",
+                "label": "Make It Stick",
+                "cue": 4,
+                "word": "book",
+                "tone": "gold"
+              },
+              {
+                "art": "document",
+                "label": "UCLA Bjork Lab",
+                "cue": 5,
+                "word": "research",
+                "tone": "blue"
+              },
+              {
+                "art": "chat",
+                "label": "Robert Bjork’s talk",
+                "cue": 5,
+                "word": "harvard",
+                "tone": "blue"
+              }
+            ]
+          }
+        ]
+      },
+      "cues": {
+        "p01": {},
+        "p02": {},
+        "p03": {},
+        "p04": {},
+        "p05": {}
+      }
+    }
+  }
+}

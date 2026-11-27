@@ -1,0 +1,1157 @@
+{
+  "duration": 1616.328,
+  "voice": "drama3-male-a",
+  "speed": 1,
+  "scenes": [
+    {
+      "id": "introduction",
+      "start": 0,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 0,
+          "end": 6.2,
+          "speech_end": 5.6
+        },
+        {
+          "id": "p02",
+          "start": 6.2,
+          "end": 18.13,
+          "speech_end": 17.88
+        },
+        {
+          "id": "p03",
+          "start": 18.13,
+          "end": 31.6,
+          "speech_end": 31.35
+        },
+        {
+          "id": "p04",
+          "start": 31.6,
+          "end": 46.33,
+          "speech_end": 46.08
+        },
+        {
+          "id": "p05",
+          "start": 46.33,
+          "end": 64.52,
+          "speech_end": 63.67
+        }
+      ],
+      "end": 64.52
+    },
+    {
+      "id": "motivation-build-the-skills-to-use-ai-well",
+      "start": 64.52,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 64.52,
+          "end": 69.14,
+          "speech_end": 68.64
+        },
+        {
+          "id": "p02",
+          "start": 69.14,
+          "end": 81.03,
+          "speech_end": 80.78
+        },
+        {
+          "id": "p03",
+          "start": 81.03,
+          "end": 96.72,
+          "speech_end": 96.47
+        },
+        {
+          "id": "p04",
+          "start": 96.72,
+          "end": 111.24,
+          "speech_end": 110.72
+        },
+        {
+          "id": "p05",
+          "start": 111.24,
+          "end": 118.73,
+          "speech_end": 118.48
+        },
+        {
+          "id": "p06",
+          "start": 118.73,
+          "end": 137.28,
+          "speech_end": 137.03
+        },
+        {
+          "id": "p07",
+          "start": 137.28,
+          "end": 158.19,
+          "speech_end": 157.94
+        },
+        {
+          "id": "p08",
+          "start": 158.19,
+          "end": 166.32,
+          "speech_end": 166.07
+        },
+        {
+          "id": "p09",
+          "start": 166.32,
+          "end": 178.51,
+          "speech_end": 178.26
+        },
+        {
+          "id": "p10",
+          "start": 178.51,
+          "end": 188.29,
+          "speech_end": 187.77
+        },
+        {
+          "id": "p11",
+          "start": 188.29,
+          "end": 201.68,
+          "speech_end": 201.43
+        },
+        {
+          "id": "p12",
+          "start": 201.68,
+          "end": 219.82,
+          "speech_end": 219.3
+        },
+        {
+          "id": "p13",
+          "start": 219.82,
+          "end": 224,
+          "speech_end": 223.82
+        },
+        {
+          "id": "p14",
+          "start": 224,
+          "end": 230.74,
+          "speech_end": 230.22
+        },
+        {
+          "id": "p15",
+          "start": 230.74,
+          "end": 247.97,
+          "speech_end": 247.72
+        },
+        {
+          "id": "p16",
+          "start": 247.97,
+          "end": 262.4,
+          "speech_end": 262.15
+        },
+        {
+          "id": "p17",
+          "start": 262.4,
+          "end": 274.08,
+          "speech_end": 273.56
+        },
+        {
+          "id": "p18",
+          "start": 274.08,
+          "end": 280.61,
+          "speech_end": 280.36
+        },
+        {
+          "id": "p19",
+          "start": 280.61,
+          "end": 291.47,
+          "speech_end": 290.95
+        },
+        {
+          "id": "p20",
+          "start": 291.47,
+          "end": 309.24,
+          "speech_end": 308.99
+        },
+        {
+          "id": "p21",
+          "start": 309.24,
+          "end": 318.42,
+          "speech_end": 317.9
+        },
+        {
+          "id": "p22",
+          "start": 318.42,
+          "end": 335.21,
+          "speech_end": 334.36
+        }
+      ],
+      "end": 335.21
+    },
+    {
+      "id": "cognitive-offloading-beneficial-vs-detrimental-use",
+      "start": 335.21,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 335.21,
+          "end": 340.01,
+          "speech_end": 339.51
+        },
+        {
+          "id": "p02",
+          "start": 340.01,
+          "end": 352.8,
+          "speech_end": 352.55
+        },
+        {
+          "id": "p03",
+          "start": 352.8,
+          "end": 366.48,
+          "speech_end": 365.96
+        },
+        {
+          "id": "p04",
+          "start": 366.48,
+          "end": 377.05,
+          "speech_end": 376.8
+        },
+        {
+          "id": "p05",
+          "start": 377.05,
+          "end": 386.95,
+          "speech_end": 386.43
+        },
+        {
+          "id": "p06",
+          "start": 386.95,
+          "end": 405.33,
+          "speech_end": 404.81
+        },
+        {
+          "id": "p07",
+          "start": 405.33,
+          "end": 415.16,
+          "speech_end": 414.91
+        },
+        {
+          "id": "p08",
+          "start": 415.16,
+          "end": 421.53,
+          "speech_end": 420.68
+        }
+      ],
+      "end": 421.53
+    },
+    {
+      "id": "the-bad-detrimental-offloading-outsourcing",
+      "start": 421.53,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 421.53,
+          "end": 425.91,
+          "speech_end": 425.41
+        },
+        {
+          "id": "p02",
+          "start": 425.91,
+          "end": 441.21,
+          "speech_end": 440.69
+        },
+        {
+          "id": "p03",
+          "start": 441.21,
+          "end": 443.05,
+          "speech_end": 442.53
+        },
+        {
+          "id": "p04",
+          "start": 443.05,
+          "end": 461.58,
+          "speech_end": 461.33
+        },
+        {
+          "id": "p05",
+          "start": 461.58,
+          "end": 472.55,
+          "speech_end": 472.3
+        },
+        {
+          "id": "p06",
+          "start": 472.55,
+          "end": 481.15,
+          "speech_end": 480.63
+        },
+        {
+          "id": "p07",
+          "start": 481.15,
+          "end": 494.44,
+          "speech_end": 494.19
+        },
+        {
+          "id": "p08",
+          "start": 494.44,
+          "end": 507.55,
+          "speech_end": 506.7
+        }
+      ],
+      "end": 507.55
+    },
+    {
+      "id": "the-good-beneficial-offloading",
+      "start": 507.55,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 507.55,
+          "end": 510.63,
+          "speech_end": 510.13
+        },
+        {
+          "id": "p02",
+          "start": 510.63,
+          "end": 522.44,
+          "speech_end": 522.19
+        },
+        {
+          "id": "p03",
+          "start": 522.44,
+          "end": 532.78,
+          "speech_end": 532.26
+        },
+        {
+          "id": "p04",
+          "start": 532.78,
+          "end": 548.79,
+          "speech_end": 548.54
+        },
+        {
+          "id": "p05",
+          "start": 548.79,
+          "end": 563.4,
+          "speech_end": 562.55
+        }
+      ],
+      "end": 563.4
+    },
+    {
+      "id": "strategies-for-learning-deeply",
+      "start": 563.4,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 563.4,
+          "end": 566.04,
+          "speech_end": 565.54
+        },
+        {
+          "id": "p02",
+          "start": 566.04,
+          "end": 576.89,
+          "speech_end": 576.04
+        }
+      ],
+      "end": 576.89
+    },
+    {
+      "id": "socratic-interaction-ai-as-a-tutor-not-an-oracle",
+      "start": 576.89,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 576.89,
+          "end": 581.87,
+          "speech_end": 581.37
+        },
+        {
+          "id": "p02",
+          "start": 581.87,
+          "end": 583.45,
+          "speech_end": 583.23
+        },
+        {
+          "id": "p03",
+          "start": 583.45,
+          "end": 596.92,
+          "speech_end": 596.67
+        },
+        {
+          "id": "p04",
+          "start": 596.92,
+          "end": 613.51,
+          "speech_end": 613.26
+        },
+        {
+          "id": "p05",
+          "start": 613.51,
+          "end": 622.29,
+          "speech_end": 621.77
+        },
+        {
+          "id": "p06",
+          "start": 622.29,
+          "end": 635.72,
+          "speech_end": 635.47
+        },
+        {
+          "id": "p07",
+          "start": 635.72,
+          "end": 643.64,
+          "speech_end": 643.12
+        },
+        {
+          "id": "p08",
+          "start": 643.64,
+          "end": 645.84,
+          "speech_end": 645.62
+        },
+        {
+          "id": "p09",
+          "start": 645.84,
+          "end": 655.37,
+          "speech_end": 655.12
+        },
+        {
+          "id": "p10",
+          "start": 655.37,
+          "end": 675.34,
+          "speech_end": 675.09
+        },
+        {
+          "id": "p11",
+          "start": 675.34,
+          "end": 686.7,
+          "speech_end": 686.18
+        },
+        {
+          "id": "p12",
+          "start": 686.7,
+          "end": 689.03,
+          "speech_end": 688.78
+        },
+        {
+          "id": "p13",
+          "start": 689.03,
+          "end": 702.8,
+          "speech_end": 702.55
+        },
+        {
+          "id": "p14",
+          "start": 702.8,
+          "end": 709.73,
+          "speech_end": 708.88
+        }
+      ],
+      "end": 709.73
+    },
+    {
+      "id": "the-attempt-first-pattern",
+      "start": 709.73,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 709.73,
+          "end": 711.97,
+          "speech_end": 711.47
+        },
+        {
+          "id": "p02",
+          "start": 711.97,
+          "end": 713.55,
+          "speech_end": 713.33
+        },
+        {
+          "id": "p03",
+          "start": 713.55,
+          "end": 727.27,
+          "speech_end": 726.75
+        },
+        {
+          "id": "p04",
+          "start": 727.27,
+          "end": 729.47,
+          "speech_end": 729.25
+        },
+        {
+          "id": "p05",
+          "start": 729.47,
+          "end": 746.16,
+          "speech_end": 745.91
+        },
+        {
+          "id": "p06",
+          "start": 746.16,
+          "end": 765.84,
+          "speech_end": 765.32
+        },
+        {
+          "id": "p07",
+          "start": 765.84,
+          "end": 768.71,
+          "speech_end": 768.46
+        },
+        {
+          "id": "p08",
+          "start": 768.71,
+          "end": 783.02,
+          "speech_end": 782.77
+        },
+        {
+          "id": "p09",
+          "start": 783.02,
+          "end": 789.39,
+          "speech_end": 788.54
+        }
+      ],
+      "end": 789.39
+    },
+    {
+      "id": "break-the-problem-into-steps",
+      "start": 789.39,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 789.39,
+          "end": 792.09,
+          "speech_end": 791.59
+        },
+        {
+          "id": "p02",
+          "start": 792.09,
+          "end": 793.67,
+          "speech_end": 793.45
+        },
+        {
+          "id": "p03",
+          "start": 793.67,
+          "end": 812.84,
+          "speech_end": 812.59
+        },
+        {
+          "id": "p04",
+          "start": 812.84,
+          "end": 818.52,
+          "speech_end": 818
+        },
+        {
+          "id": "p05",
+          "start": 818.52,
+          "end": 820.72,
+          "speech_end": 820.5
+        },
+        {
+          "id": "p06",
+          "start": 820.72,
+          "end": 840.95,
+          "speech_end": 840.7
+        },
+        {
+          "id": "p07",
+          "start": 840.95,
+          "end": 849.13,
+          "speech_end": 848.61
+        },
+        {
+          "id": "p08",
+          "start": 849.13,
+          "end": 851.5,
+          "speech_end": 851.25
+        },
+        {
+          "id": "p09",
+          "start": 851.5,
+          "end": 868.87,
+          "speech_end": 868.02
+        }
+      ],
+      "end": 868.87
+    },
+    {
+      "id": "the-teach-back-method-ai-as-a-teachable-novice",
+      "start": 868.87,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 868.87,
+          "end": 873.43,
+          "speech_end": 872.93
+        },
+        {
+          "id": "p02",
+          "start": 873.43,
+          "end": 875.01,
+          "speech_end": 874.79
+        },
+        {
+          "id": "p03",
+          "start": 875.01,
+          "end": 892.6,
+          "speech_end": 892.35
+        },
+        {
+          "id": "p04",
+          "start": 892.6,
+          "end": 903.52,
+          "speech_end": 903
+        },
+        {
+          "id": "p05",
+          "start": 903.52,
+          "end": 920.17,
+          "speech_end": 919.92
+        },
+        {
+          "id": "p06",
+          "start": 920.17,
+          "end": 930.77,
+          "speech_end": 930.25
+        },
+        {
+          "id": "p07",
+          "start": 930.77,
+          "end": 932.97,
+          "speech_end": 932.75
+        },
+        {
+          "id": "p08",
+          "start": 932.97,
+          "end": 951.4,
+          "speech_end": 951.15
+        },
+        {
+          "id": "p09",
+          "start": 951.4,
+          "end": 965.21,
+          "speech_end": 964.96
+        },
+        {
+          "id": "p10",
+          "start": 965.21,
+          "end": 972.49,
+          "speech_end": 971.97
+        },
+        {
+          "id": "p11",
+          "start": 972.49,
+          "end": 986.19,
+          "speech_end": 985.67
+        },
+        {
+          "id": "p12",
+          "start": 986.19,
+          "end": 988.52,
+          "speech_end": 988.27
+        },
+        {
+          "id": "p13",
+          "start": 988.52,
+          "end": 1001.55,
+          "speech_end": 1001.3
+        },
+        {
+          "id": "p14",
+          "start": 1001.55,
+          "end": 1010.16,
+          "speech_end": 1009.31
+        }
+      ],
+      "end": 1010.16
+    },
+    {
+      "id": "prompting-patterns",
+      "start": 1010.16,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 1010.16,
+          "end": 1011.88,
+          "speech_end": 1011.38
+        },
+        {
+          "id": "p02",
+          "start": 1011.88,
+          "end": 1018,
+          "speech_end": 1017.48
+        },
+        {
+          "id": "p03",
+          "start": 1018,
+          "end": 1025.81,
+          "speech_end": 1024.96
+        }
+      ],
+      "end": 1025.81
+    },
+    {
+      "id": "the-generation-then-comprehension-protocol",
+      "start": 1025.81,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 1025.81,
+          "end": 1029.37,
+          "speech_end": 1028.87
+        },
+        {
+          "id": "p02",
+          "start": 1029.37,
+          "end": 1050.48,
+          "speech_end": 1050.23
+        },
+        {
+          "id": "p03",
+          "start": 1050.48,
+          "end": 1072.25,
+          "speech_end": 1071.4
+        }
+      ],
+      "end": 1072.25
+    },
+    {
+      "id": "actionable-tips",
+      "start": 1072.25,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 1072.25,
+          "end": 1073.95,
+          "speech_end": 1073.45
+        },
+        {
+          "id": "p02",
+          "start": 1073.95,
+          "end": 1086.16,
+          "speech_end": 1085.91
+        },
+        {
+          "id": "p03",
+          "start": 1086.16,
+          "end": 1107.84,
+          "speech_end": 1107.32
+        },
+        {
+          "id": "p04",
+          "start": 1107.84,
+          "end": 1123.25,
+          "speech_end": 1122.4
+        }
+      ],
+      "end": 1123.25
+    },
+    {
+      "id": "study-patterns-that-preserve-useful-practice",
+      "start": 1123.25,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 1123.25,
+          "end": 1126.81,
+          "speech_end": 1126.31
+        },
+        {
+          "id": "p02",
+          "start": 1126.81,
+          "end": 1136.62,
+          "speech_end": 1135.77
+        }
+      ],
+      "end": 1136.62
+    },
+    {
+      "id": "the-alternative-approaches-pattern",
+      "start": 1136.62,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 1136.62,
+          "end": 1139.16,
+          "speech_end": 1138.66
+        },
+        {
+          "id": "p02",
+          "start": 1139.16,
+          "end": 1140.74,
+          "speech_end": 1140.52
+        },
+        {
+          "id": "p03",
+          "start": 1140.74,
+          "end": 1157.32,
+          "speech_end": 1156.8
+        },
+        {
+          "id": "p04",
+          "start": 1157.32,
+          "end": 1159.52,
+          "speech_end": 1159.3
+        },
+        {
+          "id": "p05",
+          "start": 1159.52,
+          "end": 1179.83,
+          "speech_end": 1179.58
+        },
+        {
+          "id": "p06",
+          "start": 1179.83,
+          "end": 1187.77,
+          "speech_end": 1187.25
+        },
+        {
+          "id": "p07",
+          "start": 1187.77,
+          "end": 1190.64,
+          "speech_end": 1190.39
+        },
+        {
+          "id": "p08",
+          "start": 1190.64,
+          "end": 1206.77,
+          "speech_end": 1206.52
+        },
+        {
+          "id": "p09",
+          "start": 1206.77,
+          "end": 1211.38,
+          "speech_end": 1210.53
+        }
+      ],
+      "end": 1211.38
+    },
+    {
+      "id": "read-make-your-own-notes-then-clarify",
+      "start": 1211.38,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 1211.38,
+          "end": 1215.2,
+          "speech_end": 1214.7
+        },
+        {
+          "id": "p02",
+          "start": 1215.2,
+          "end": 1216.78,
+          "speech_end": 1216.56
+        },
+        {
+          "id": "p03",
+          "start": 1216.78,
+          "end": 1232.82,
+          "speech_end": 1232.3
+        },
+        {
+          "id": "p04",
+          "start": 1232.82,
+          "end": 1235.02,
+          "speech_end": 1234.8
+        },
+        {
+          "id": "p05",
+          "start": 1235.02,
+          "end": 1253.68,
+          "speech_end": 1253.16
+        },
+        {
+          "id": "p06",
+          "start": 1253.68,
+          "end": 1255.13,
+          "speech_end": 1254.88
+        },
+        {
+          "id": "p07",
+          "start": 1255.13,
+          "end": 1269.44,
+          "speech_end": 1268.59
+        }
+      ],
+      "end": 1269.44
+    },
+    {
+      "id": "faded-worked-examples",
+      "start": 1269.44,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 1269.44,
+          "end": 1271.52,
+          "speech_end": 1271.02
+        },
+        {
+          "id": "p02",
+          "start": 1271.52,
+          "end": 1273.1,
+          "speech_end": 1272.88
+        },
+        {
+          "id": "p03",
+          "start": 1273.1,
+          "end": 1292.03,
+          "speech_end": 1291.78
+        },
+        {
+          "id": "p04",
+          "start": 1292.03,
+          "end": 1308.39,
+          "speech_end": 1307.87
+        },
+        {
+          "id": "p05",
+          "start": 1308.39,
+          "end": 1310.59,
+          "speech_end": 1310.37
+        },
+        {
+          "id": "p06",
+          "start": 1310.59,
+          "end": 1326.51,
+          "speech_end": 1325.99
+        },
+        {
+          "id": "p07",
+          "start": 1326.51,
+          "end": 1328.84,
+          "speech_end": 1328.59
+        },
+        {
+          "id": "p08",
+          "start": 1328.84,
+          "end": 1339.47,
+          "speech_end": 1339.22
+        },
+        {
+          "id": "p09",
+          "start": 1339.47,
+          "end": 1348.28,
+          "speech_end": 1347.43
+        }
+      ],
+      "end": 1348.28
+    },
+    {
+      "id": "rubric-first-feedback-loop",
+      "start": 1348.28,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 1348.28,
+          "end": 1350.84,
+          "speech_end": 1350.34
+        },
+        {
+          "id": "p02",
+          "start": 1350.84,
+          "end": 1352.42,
+          "speech_end": 1352.2
+        },
+        {
+          "id": "p03",
+          "start": 1352.42,
+          "end": 1358.28,
+          "speech_end": 1357.76
+        },
+        {
+          "id": "p04",
+          "start": 1358.28,
+          "end": 1377.37,
+          "speech_end": 1377.12
+        },
+        {
+          "id": "p05",
+          "start": 1377.37,
+          "end": 1384.11,
+          "speech_end": 1383.59
+        },
+        {
+          "id": "p06",
+          "start": 1384.11,
+          "end": 1386.31,
+          "speech_end": 1386.09
+        },
+        {
+          "id": "p07",
+          "start": 1386.31,
+          "end": 1403.22,
+          "speech_end": 1402.97
+        },
+        {
+          "id": "p08",
+          "start": 1403.22,
+          "end": 1407.62,
+          "speech_end": 1407.1
+        },
+        {
+          "id": "p09",
+          "start": 1407.62,
+          "end": 1409.85,
+          "speech_end": 1409.6
+        },
+        {
+          "id": "p10",
+          "start": 1409.85,
+          "end": 1423.48,
+          "speech_end": 1423.23
+        },
+        {
+          "id": "p11",
+          "start": 1423.48,
+          "end": 1435.24,
+          "speech_end": 1434.72
+        },
+        {
+          "id": "p12",
+          "start": 1435.24,
+          "end": 1437.61,
+          "speech_end": 1437.36
+        },
+        {
+          "id": "p13",
+          "start": 1437.61,
+          "end": 1451.66,
+          "speech_end": 1451.41
+        },
+        {
+          "id": "p14",
+          "start": 1451.66,
+          "end": 1459.41,
+          "speech_end": 1458.56
+        }
+      ],
+      "end": 1459.41
+    },
+    {
+      "id": "fading-the-scaffold-the-goal-is-independence",
+      "start": 1459.41,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 1459.41,
+          "end": 1463.47,
+          "speech_end": 1462.97
+        },
+        {
+          "id": "p02",
+          "start": 1463.47,
+          "end": 1477.96,
+          "speech_end": 1477.71
+        },
+        {
+          "id": "p03",
+          "start": 1477.96,
+          "end": 1496.28,
+          "speech_end": 1495.76
+        },
+        {
+          "id": "p04",
+          "start": 1496.28,
+          "end": 1516.67,
+          "speech_end": 1515.82
+        }
+      ],
+      "end": 1516.67
+    },
+    {
+      "id": "a-quick-rubric-for-any-ai-interaction",
+      "start": 1516.67,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 1516.67,
+          "end": 1520.13,
+          "speech_end": 1519.63
+        },
+        {
+          "id": "p02",
+          "start": 1520.13,
+          "end": 1524.39,
+          "speech_end": 1523.87
+        },
+        {
+          "id": "p03",
+          "start": 1524.39,
+          "end": 1531.49,
+          "speech_end": 1530.97
+        },
+        {
+          "id": "p04",
+          "start": 1531.49,
+          "end": 1537.61,
+          "speech_end": 1537.09
+        },
+        {
+          "id": "p05",
+          "start": 1537.61,
+          "end": 1546.15,
+          "speech_end": 1545.63
+        },
+        {
+          "id": "p06",
+          "start": 1546.15,
+          "end": 1550.91,
+          "speech_end": 1550.39
+        },
+        {
+          "id": "p07",
+          "start": 1550.91,
+          "end": 1558.09,
+          "speech_end": 1557.57
+        },
+        {
+          "id": "p08",
+          "start": 1558.09,
+          "end": 1576.56,
+          "speech_end": 1576.31
+        },
+        {
+          "id": "p09",
+          "start": 1576.56,
+          "end": 1582.8,
+          "speech_end": 1582.28
+        },
+        {
+          "id": "p10",
+          "start": 1582.8,
+          "end": 1583.68,
+          "speech_end": 1583.46
+        },
+        {
+          "id": "p11",
+          "start": 1583.68,
+          "end": 1597.27,
+          "speech_end": 1597.02
+        },
+        {
+          "id": "p12",
+          "start": 1597.27,
+          "end": 1603.27,
+          "speech_end": 1602.75
+        },
+        {
+          "id": "p13",
+          "start": 1603.27,
+          "end": 1604.71,
+          "speech_end": 1604.49
+        },
+        {
+          "id": "p14",
+          "start": 1604.71,
+          "end": 1609.78,
+          "speech_end": 1608.93
+        }
+      ],
+      "end": 1609.78
+    },
+    {
+      "id": "self-check-quiz",
+      "start": 1609.78,
+      "cues": [
+        {
+          "id": "p01",
+          "start": 1609.78,
+          "end": 1611.6,
+          "speech_end": 1611.1
+        },
+        {
+          "id": "p02",
+          "start": 1611.6,
+          "end": 1616.328,
+          "speech_end": 1615.86
+        }
+      ],
+      "end": 1616.328
+    }
+  ],
+  "speech_sha256": "81961fbc932f4af4b6f9a4bec6ef30764eea1b689c8d04576611e9867a1e40d1"
+}

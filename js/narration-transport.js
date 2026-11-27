@@ -109,7 +109,7 @@
         narration.textContent = cue.text;
         // A scene's own art region names what it shows; a player with one
         // screen shared by every scene labels that screen in its renderer.
-        const art = scenes[index].querySelector('.nja-art');
+        const art = scenes[index]?.querySelector('.nja-art');
         if (art) art.setAttribute('aria-label', cue.visual);
       }
       shownScene = index;
@@ -218,6 +218,7 @@
     let openBeforePrint = [];
     window.addEventListener('beforeprint', () => {
       if (beforePrint) beforePrint();
+      if (!transcript) return;
       openBeforePrint = [transcript, ...transcript.querySelectorAll('details')]
         .map(element => ({ element, open: element.open }));
       openBeforePrint.forEach(({ element }) => { element.open = true; });
@@ -279,7 +280,7 @@
       const cueTiming = sceneTiming.cues[cueIndex];
       if (presenter.show(index, cueIndex)) {
         root.querySelector('[data-action="previous"]').disabled = index === 0;
-        root.querySelector('[data-action="next"]').disabled = index === scenes.length - 1;
+        root.querySelector('[data-action="next"]').disabled = index === storyboard.scenes.length - 1;
       }
       currentScene = index;
       currentCue = cueIndex;
@@ -458,7 +459,7 @@
       const scene = storyboard.scenes[sceneIndex];
       if (cueIndex + 1 < scene.cues.length) {
         seekTo(timing.scenes[sceneIndex].cues[cueIndex + 1].start);
-      } else if (options.checkScenes.includes(sceneIndex) || sceneIndex === scenes.length - 1) {
+      } else if (options.checkScenes.includes(sceneIndex) || sceneIndex === storyboard.scenes.length - 1) {
         options.onSectionEnd(sceneIndex, resumePlayback);
         return;
       } else selectScene(sceneIndex + 1);
@@ -475,7 +476,7 @@
         else audio.pause();
       },
       previous() { selectScene(Math.max(0, currentScene - 1)); },
-      next() { selectScene(Math.min(scenes.length - 1, currentScene + 1)); },
+      next() { selectScene(Math.min(storyboard.scenes.length - 1, currentScene + 1)); },
     };
 
     // The full-screen button already has its own handler.
@@ -530,7 +531,7 @@
       if (renderPlayback(timing.duration)) return;
       render(timing.duration);
       status.textContent = 'Narration complete.';
-      if (options.onSectionEnd) options.onSectionEnd(scenes.length - 1);
+      if (options.onSectionEnd) options.onSectionEnd(storyboard.scenes.length - 1);
     });
     audio.addEventListener('error', () => {
       stopFrames();

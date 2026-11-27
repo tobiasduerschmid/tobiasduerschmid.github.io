@@ -1,0 +1,1249 @@
+# Narration text follows the existing article recording and its WebVTT cues.
+# Edit the companion visual package for artwork without changing the speech clock.
+version: 1
+id: blog_study_tips
+kind: video
+title: Evidence-Based Study Tips for College Students
+lesson:
+  name: Evidence-based study tips
+  chapter: /blog/evidence-based-study-tips-for-college-students/video/
+  views: /blog/evidence-based-study-tips-for-college-students/video
+  parts:
+    - Foundations
+    - Practice
+    - Put it to work
+  parts_label: Article topics
+speech:
+  voice: drama3-male-a
+  speed: 1
+  pronunciations:
+    UCLA: U C L A
+    CS: C S
+    Bjork: Byork
+media:
+  audio: /assets/audio/evidence-based-study-tips-for-college-students.mp3
+  captions: /assets/narration/evidence-based-study-tips-for-college-students.vtt
+  script: /assets/narration/evidence-based-study-tips-for-college-students.txt
+scenes:
+  - id: introduction
+    label: Introduction
+    title: Introduction
+    part: Foundations
+    purpose: Common habits before a college exam
+    takeaway: Judge your study routine by what you can use later.
+    cues:
+      - id: p01
+        say: Evidence-Based Study Tips for College Students
+        pause_after: 0.6
+        step: Rereading alone leads to weak recall
+        visual: >-
+          A textbook, a highlighter and a clock mark three familiar study habits: reread,
+          highlight and cram.
+        note: Rereading, highlighting and cramming are common college study habits.
+      - id: p02
+        say: >-
+          A Short Guide to Studying Effectively in College: How to Hack Your Brain for Better
+          Learning
+        pause_after: 0.52
+        step: Rereading alone leads to weak recall
+        visual: >-
+          A textbook, a highlighter and a clock mark three familiar study habits: reread,
+          highlight and cram.
+        note: Rereading, highlighting and cramming are common college study habits.
+      - id: p03
+        say: >-
+          If you are like many college students, your primary study strategies probably consist
+          of rereading your textbooks or lecture slides, highlighting key passages, and cramming
+          the day before an exam.
+        pause_after: 0.25
+        step: Rereading alone leads to weak recall
+        visual: >-
+          A textbook, a highlighter and a clock mark three familiar study habits: reread,
+          highlight and cram.
+        note: Rereading, highlighting and cramming are common college study habits.
+      - id: p04
+        say: >-
+          You might feel highly productive during these long study sessions, but the science of
+          learning tells a different story: rereading text and massed practice (cramming) are by
+          far the least productive study strategies. These common methods merely boost
+          short-term retrieval strength and create an “illusion of knowing”.
+        pause_after: 0.25
+        step: Familiarity can feel like mastery
+        visual: >-
+          A page of lecture notes gains highlights, and the repeated reading is labeled Feels
+          familiar.
+        note: >-
+          The illusion of knowing occurs when recognizing material feels like having mastered
+          it.
+      - id: p05
+        say: >-
+          When you read a text multiple times, the material becomes familiar, and you mistake
+          this perceptual fluency for true mastery of the subject.
+        pause_after: 0.25
+        step: Familiarity can feel like mastery
+        visual: >-
+          The highlighted notes lead to a separate page labeled Can I explain it?, which prompts
+          you to try explaining the material from memory.
+        note: >-
+          The illusion of knowing occurs when recognizing material feels like having mastered
+          it.
+      - id: p06
+        say: >-
+          To build deep, durable knowledge, you need to embrace “desirable
+          difficulties”—short-term impediments that make learning feel harder and slower, but
+          ultimately trigger cognitive processes that optimize long-term retention and the
+          transfer of skills.
+        pause_after: 0.52
+        step: Productive effort helps learning last
+        visual: >-
+          An effortful climb leads to a memory that lasts and to using that knowledge on a new
+          programming task.
+        note: >-
+          Desirable difficulties trade some immediate ease for durable memory and transfer to
+          new tasks.
+      - id: p07
+        say: >-
+          This post is intended to teach you actionable, research-backed study tips on how to
+          learn effectively, with specific examples for computer science students to enable
+          everyone to get the most out of their college experience!
+        pause_after: 0.25
+        step: Productive effort helps learning last
+        visual: >-
+          An effortful climb leads to a memory that lasts and to using that knowledge on a new
+          programming task.
+        note: >-
+          Desirable difficulties trade some immediate ease for durable memory and transfer to
+          new tasks.
+      - id: p08
+        say: >-
+          Interestingly, despite actually measurably learning more effectively, learners who
+          study based on these techniques often subjectively believe they have learned less
+          effectively, because short-term performance is often perceived to be worse due to the
+          additional struggle of desirable difficulties.
+        pause_after: 0.25
+        step: Learning shows up in future performance
+        visual: >-
+          A clock for perceived performance during study is paired with a brain for what you can
+          recall, understand or apply in the future.
+        note: Immediate performance is observable. Learning changes what you can do in the future.
+      - id: p09
+        say: >-
+          This illustrates that the perception of learning is not always aligned with the actual
+          learning. Actual learning is the permanent change in knowledge, understanding, or
+          high-order skills that affects your future ability to perform well. What you observe
+          is your past performance.
+        pause_after: 0.25
+        step: Learning shows up in future performance
+        visual: >-
+          A clock for perceived performance during study is paired with a brain for what you can
+          recall, understand or apply in the future.
+        note: Immediate performance is observable. Learning changes what you can do in the future.
+      - id: p10
+        say: >-
+          The study tips in this post are empirically validated to be effective and should help
+          you pick learning strategies that actually work rather than just feel like they work.
+        pause_after: 0.52
+        step: Retention shows which study habits work
+        visual: >-
+          A study checklist stands beside a research note credited to UCLA’s Bjork Learning and
+          Forgetting Lab.
+        note: Research from UCLA’s Bjork Lab informs several of the study techniques in this guide.
+      - id: p11
+        say: >-
+          Fun fact: a significant portion of the research presented in this post was actually
+          done at UCLA by the Bjork Learning and Forgetting Lab!
+        pause_after: 0.85
+        step: Retention shows which study habits work
+        visual: >-
+          A study checklist stands beside a research note credited to UCLA’s Bjork Learning and
+          Forgetting Lab.
+        note: Research from UCLA’s Bjork Lab informs several of the study techniques in this guide.
+  - id: desirable-difficulties-embrace-the-struggle
+    label: Desirable difficulties
+    title: 'Desirable Difficulties: Embrace the Struggle'
+    part: Foundations
+    purpose: Make the effort count
+    takeaway: Add challenges that make you think and still let you work out an answer.
+    cues:
+      - id: p01
+        say: 'Desirable Difficulties: Embrace the Struggle'
+        pause_after: 0.55
+        step: Productive struggle helps learning last
+        visual: >-
+          An open book represents effortless review. A staircase labeled Work it out represents
+          effort spent processing, connecting and retrieving what you study.
+        note: Desirable difficulties add effort to the mental work that supports lasting learning.
+      - id: p02
+        say: >-
+          It is a common misconception that if you are learning effectively, the process should
+          feel smooth, fast, and easy. In reality, the exact opposite is true! When learning is
+          completely effortless, it is almost always superficial and easily forgotten.
+        pause_after: 0.25
+        step: Productive struggle helps learning last
+        visual: >-
+          An open book represents effortless review. A staircase labeled Work it out represents
+          effort spent processing, connecting and retrieving what you study.
+        note: Desirable difficulties add effort to the mental work that supports lasting learning.
+      - id: p03
+        say: >-
+          To build truly durable knowledge, you have to lean into “desirable
+          difficulties“—intentional roadblocks that force your brain to work harder to process,
+          connect, and retrieve information.
+        pause_after: 0.25
+        step: Productive struggle helps learning last
+        visual: >-
+          An open book represents effortless review. A staircase labeled Work it out represents
+          effort spent processing, connecting and retrieving what you study.
+        note: Desirable difficulties add effort to the mental work that supports lasting learning.
+      - id: p04
+        say: >-
+          For example, instead of looking something up in your notes or textbook, you should
+          always try to recall it yourself or actively construct an answer to a question
+          yourself, even if you are not sure it is correct.
+        pause_after: 0.25
+        step: Effortful recall strengthens memory
+        visual: >-
+          Closed notes leave room to recall or build an answer. A memory illustration represents
+          the lasting benefit of working through uncertainty.
+        note: Try to recall the running time of an algorithm before you consult your notes.
+      - id: p05
+        say: >-
+          The mental sweat you experience when you can’t quite remember the time complexity of
+          an algorithm, or the frustration of grappling with a complex concept, isn’t a sign
+          that you aren’t smart enough.
+        pause_after: 0.25
+        step: Effortful recall strengthens memory
+        visual: >-
+          Closed notes leave room to recall or build an answer. A memory illustration represents
+          the lasting benefit of working through uncertainty.
+        note: Try to recall the running time of an algorithm before you consult your notes.
+      - id: p06
+        say: >-
+          Rather, that struggle is the biological mechanism of your brain building stronger,
+          more permanent neural pathways. Simply put: effective learning is effortful. However,
+          note that not all difficulties are desirable.
+        pause_after: 0.25
+        step: Effortful recall strengthens memory
+        visual: >-
+          Closed notes leave room to recall or build an answer. A memory illustration represents
+          the lasting benefit of working through uncertainty.
+        note: Try to recall the running time of an algorithm before you consult your notes.
+      - id: p07
+        say: >-
+          For example, studying while you are sleep-deprived, hungry, sick, or highly anxious;
+          reading the material in an unfamiliar language; or studying a topic without
+          pre-required fundamentals are undesirable difficulties and they should be reduced.
+        pause_after: 0.25
+        step: Helpful challenges stay within reach
+        visual: >-
+          Missing basics and too little sleep are barriers to remove. A reachable but demanding
+          problem asks you to do active work and still reach an answer.
+        note: Reduce obstacles such as fatigue and missing prerequisites.
+      - id: p08
+        say: >-
+          Only difficulties that present challenges to the learner but are not of such
+          difficulty that the learner cannot eventually meet or overcome them are desirable. A
+          rule of thumb is that what makes your brain do more active work while still reaching
+          an answer is helpful.
+        pause_after: 0.52
+        step: Helpful challenges stay within reach
+        visual: >-
+          Missing basics and too little sleep are barriers to remove. A reachable but demanding
+          problem asks you to do active work and still reach an answer.
+        note: Keep challenges the learner can overcome.
+      - id: p09
+        say: >-
+          Actionable Advice: When your study routine starts to feel too easy or comfortable, try
+          to add in some challenges that make it harder for yourself.
+        pause_after: 0.25
+        step: Shuffling cards tests what you remember
+        visual: >-
+          A stack of flashcards is shuffled, an explanation is spoken with notes put away, and a
+          map marks a different study spot.
+        note: >-
+          Break familiar study patterns by shuffling flashcards, explaining aloud or studying in
+          a different place.
+      - id: p10
+        say: >-
+          If you are breezing through your flashcards, shuffle them to remove predictable
+          patterns, or force yourself to explain the core concepts out loud to an empty room
+          without looking at your notes. Change the place where you study instead of returning
+          to the same spot.
+        pause_after: 0.25
+        step: Shuffling cards tests what you remember
+        visual: >-
+          A stack of flashcards is shuffled, an explanation is spoken with notes put away, and a
+          map marks a different study spot.
+        note: >-
+          Break familiar study patterns by shuffling flashcards, explaining aloud or studying in
+          a different place.
+      - id: p11
+        say: >-
+          When you feel that cognitive friction, remind yourself that the struggle is a
+          necessary part of the growth process.
+        pause_after: 0.52
+        step: Shuffling cards tests what you remember
+        visual: >-
+          A stack of flashcards is shuffled, an explanation is spoken with notes put away, and a
+          map marks a different study spot.
+        note: >-
+          Break familiar study patterns by shuffling flashcards, explaining aloud or studying in
+          a different place.
+      - id: p12
+        say: >-
+          Computer Science Examples: When working on a coding assignment, it is incredibly
+          tempting to rely on AI auto-complete tools (like GitHub Copilot, Cursor, or Codex) or
+          to copy-paste boilerplate code directly from a tutorial or online resource.
+        pause_after: 0.25
+        step: Writing code yourself builds skill
+        visual: >-
+          An editor shows a complete practice loop appearing as an autocomplete suggestion.
+        note: >-
+          Turn off autocomplete when you want to practice recalling syntax and building the
+          logic yourself.
+      - id: p13
+        say: >-
+          While this is efficient for workplace production, it bypasses the cognitive effort
+          required for actual learning. To create a desirable difficulty, turn off your AI
+          assistants and force yourself to type out the syntax and build the logic step-by-step
+          from scratch.
+        pause_after: 0.25
+        step: Writing code yourself builds skill
+        visual: >-
+          The Suggestions indicator switches from On to Off. The learner writes the loop header,
+          the instruction to review a task, and the matching closing brace one step at a time.
+        note: >-
+          Turn off autocomplete when you want to practice recalling syntax and building the
+          logic yourself.
+      - id: p14
+        say: >-
+          The mental challenge you feel when you have to manually track down a missing bracket
+          or debug a loop is exactly the kind of effortful struggle that ensures you will be
+          able to catch bugs more quickly tomorrow. Embrace challenges as welcome learning
+          opportunities!
+        pause_after: 0.85
+        step: Debugging now builds skill for later
+        visual: >-
+          The same loop is missing a closing brace. The learner checks for the matching brace
+          and fills the blank line to complete the loop.
+        note: Practice debugging today so you can catch similar bugs more quickly later.
+  - id: retrieval-practice-ditch-the-highlighter-and-quiz-yourself
+    label: Retrieval practice
+    title: 'Retrieval Practice: Ditch the Highlighter and Quiz Yourself'
+    part: Practice
+    purpose: Retrieving changes memory
+    takeaway: Close your notes and generate an answer before checking it.
+    cues:
+      - id: p01
+        say: 'Retrieval Practice: Ditch the Highlighter and Quiz Yourself'
+        pause_after: 0.55
+        step: Recall makes future recall easier
+        visual: >-
+          Flashcards introduce active retrieval. A digital storage cylinder gives the same
+          contents when read, while a brain labeled Easier to retrieve shows how human recall
+          helps future access.
+        note: Active retrieval strengthens access to the recalled material in human memory.
+      - id: p02
+        say: >-
+          One of the most powerful learning tools at your disposal is “active retrieval”. As a
+          computer scientist, you might think that recalling memory does not have any side
+          effects.
+        pause_after: 0.25
+        step: Recall makes future recall easier
+        visual: >-
+          Flashcards introduce active retrieval. A digital storage cylinder gives the same
+          contents when read, while a brain labeled Easier to retrieve shows how human recall
+          helps future access.
+        note: Active retrieval strengthens access to the recalled material in human memory.
+      - id: p03
+        say: >-
+          While this might be true for most digital storage media (unless they use caching or
+          log requests), it is not true for human memory. In fact, the act of retrieving
+          information from human memory makes that information much easier to access in the
+          future.
+        pause_after: 0.25
+        step: Recall makes future recall easier
+        visual: >-
+          Flashcards introduce active retrieval. A digital storage cylinder gives the same
+          contents when read, while a brain labeled Easier to retrieve shows how human recall
+          helps future access.
+        note: Active retrieval strengthens access to the recalled material in human memory.
+      - id: p04
+        say: >-
+          The more often you try to recall information, the easier it becomes to retrieve it in
+          the future. A single, simple quiz after reading a text produces better learning and
+          remembering than reading the text multiple times.
+        pause_after: 0.25
+        step: Self-testing shows what to revisit
+        visual: >-
+          Open lecture notes face an empty answer page labeled Recall an answer.
+        note: A simple self-quiz can improve retention and show you what to revisit.
+      - id: p05
+        say: >-
+          Passively re-consuming the material does not have a similar effect as active
+          retrieval. You have to recall the answers yourself, without looking at the material.
+        pause_after: 0.25
+        step: Self-testing shows what to revisit
+        visual: >-
+          A cover slides over the notes, and the learner writes part of an answer on a separate
+          page from memory.
+        note: A simple self-quiz can improve retention and show you what to revisit.
+      - id: p06
+        say: >-
+          Additionally, while simultaneously reinforcing this memory to move it towards more
+          durable storage, retrieval practice also tells you exactly what you know and what you
+          don’t.
+        pause_after: 0.25
+        step: Self-testing shows what to revisit
+        visual: >-
+          Recalled and Review tags mark what the learner retrieved and what to revisit.
+        note: A simple self-quiz can improve retention and show you what to revisit.
+      - id: p07
+        say: >-
+          Also consider that study methods in which you produce an answer yourself, even if it’s
+          purely recall, are more effective than if you just need to recognize a correct answer.
+        pause_after: 0.25
+        step: Producing answers strengthens recall
+        visual: >-
+          A flashcard asks the learner to produce an answer from memory. A multiple-choice
+          checklist asks them to recognize the correct answer.
+        note: Flashcards and open questions require you to generate answers from memory.
+      - id: p08
+        say: >-
+          For example, flash cards and open-ended questions are often more effective than
+          multiple choice questions, because you have to produce the entire answer yourself
+          rather than just identifying whether answers are correct or incorrect.
+        pause_after: 0.52
+        step: Producing answers strengthens recall
+        visual: >-
+          A flashcard asks the learner to produce an answer from memory. A multiple-choice
+          checklist asks them to recognize the correct answer.
+        note: Flashcards and open questions require you to generate answers from memory.
+      - id: p09
+        say: >-
+          Actionable Advice: Instead of rereading your notes, lecture slides, or books, put them
+          away and try to write out everything you can remember from the lecture. Create
+          flashcards to quiz yourself on important concepts.
+        pause_after: 0.25
+        step: Closed notes make you retrieve
+        visual: >-
+          A notebook represents summarizing from memory, and a checklist represents taking a
+          practice test with the notes closed.
+        note: Write a lecture summary from memory and take practice tests with the notes closed.
+      - id: p10
+        say: >-
+          Treat practice tests as real tests, forcing yourself to generate the answers without
+          notes rather than just looking at them and nodding. Write a summary of each lecture at
+          the end purely relying on your own memory.
+        pause_after: 0.25
+        step: Closed notes make you retrieve
+        visual: >-
+          A notebook represents summarizing from memory, and a checklist represents taking a
+          practice test with the notes closed.
+        note: Write a lecture summary from memory and take practice tests with the notes closed.
+      - id: p11
+        say: >-
+          Right before the next lecture, recall what you’ve learned in the previous lecture,
+          again purely from your own memory. Use your own memory as often as possible while
+          relying as little as possible on external resources. Favor active production and
+          recall over pure recognition of correct answers.
+        pause_after: 0.52
+        step: Recall between lectures reinforces memory
+        visual: >-
+          A loop connects a lecture to recalling it from memory before the next class. The same
+          routine can repeat after each lecture.
+        note: Before the next lecture, recall what you learned in the last one.
+      - id: p12
+        say: >-
+          Computer Science Examples: When you are starting to write a complex loop or pointer
+          arithmetic, try to recall the syntax from memory instead of looking it up.
+        pause_after: 0.25
+        step: Recall fits into everyday coding
+        visual: >-
+          Three programming prompts ask the learner to write loop syntax, remember a Git
+          command, and compare sorting algorithms from memory before checking a resource.
+        note: >-
+          Retrieve syntax, version-control commands and algorithm differences before looking
+          them up.
+      - id: p13
+        say: >-
+          When you are learning version control with Git, instead of looking up the
+          documentation of each command before you use it, try to recall it from memory.
+        pause_after: 0.25
+        step: Recall fits into everyday coding
+        visual: >-
+          Three programming prompts ask the learner to write loop syntax, remember a Git
+          command, and compare sorting algorithms from memory before checking a resource.
+        note: >-
+          Retrieve syntax, version-control commands and algorithm differences before looking
+          them up.
+      - id: p14
+        say: >-
+          When you are writing a sort function, try to remember all sorting algorithms you have
+          learned and how they are different. At every possible opportunity, try to use your own
+          memory before consulting other resources.
+        pause_after: 0.85
+        step: Recall fits into everyday coding
+        visual: >-
+          Three programming prompts ask the learner to write loop syntax, remember a Git
+          command, and compare sorting algorithms from memory before checking a resource.
+        note: >-
+          Retrieve syntax, version-control commands and algorithm differences before looking
+          them up.
+  - id: spaced-practice-space-out-your-study-sessions
+    label: Spaced practice
+    title: 'Spaced Practice: Space Out Your Study Sessions'
+    part: Practice
+    purpose: Spread the same study time
+    takeaway: Schedule shorter study sessions that revisit the same material over time.
+    cues:
+      - id: p01
+        say: 'Spaced Practice: Space Out Your Study Sessions'
+        pause_after: 0.55
+        step: Spaced sessions improve retention
+        visual: >-
+          A calendar compares study schedules across Week 1, Week 2 and exam week.
+        note: Spaced practice distributes the same amount of studying across multiple sessions.
+      - id: p02
+        say: >-
+          Cramming all your studying into one massive session might help you pass the mid-term
+          the next day, but that knowledge will melt away for the final. Massed practice feels
+          very productive in the moment, but it actively harms long-term retention.
+        pause_after: 0.25
+        step: Spaced sessions improve retention
+        visual: >-
+          The cramming row groups three hour blocks in a single sitting in exam week.
+        note: Spaced practice distributes the same amount of studying across multiple sessions.
+      - id: p03
+        say: >-
+          To build durable memory, you must space out your practice. Studying a little bit every
+          week is much more effective than studying for the cumulative duration of these
+          individual study sessions within one single day.
+        pause_after: 0.25
+        step: Spaced sessions improve retention
+        visual: >-
+          Three equal hour blocks move into separate weeks. The cramming row remains in place to
+          show the same total study time.
+        note: Spaced practice distributes the same amount of studying across multiple sessions.
+      - id: p04
+        say: >-
+          Spacing allows time for your memories to consolidate—a process where memory traces are
+          stabilized, given meaning, and connected to prior knowledge. A study session is more
+          effective after you start to forget a little bit of the material.
+        pause_after: 0.25
+        step: Gaps make the next recall more useful
+        visual: >-
+          A loop connects a gap, recalling after some forgetting, and scheduling the next review
+          of the same material after a longer interval.
+        note: Spacing gives memories time to consolidate.
+      - id: p05
+        say: >-
+          Repeating this process of incrementally studying the same material over increasing
+          intervals of time is one of the most effective ways to build durable memory, because
+          it feels more effortful and signals to your brain that the information is important
+          and needs to be retained long-term.
+        pause_after: 0.52
+        step: Gaps make the next recall more useful
+        visual: >-
+          A loop connects a gap, recalling after some forgetting, and scheduling the next review
+          of the same material after a longer interval.
+        note: Practice recall once it takes some effort, then revisit the material again.
+      - id: p06
+        say: >-
+          Actionable Advice: Set aside time every week to practice on both the current week’s
+          material and topics covered earlier in the quarter/semester. Let a little forgetting
+          set in between study sessions.
+        pause_after: 0.25
+        step: Weekly review keeps old topics accessible
+        visual: >-
+          A weekly calendar includes old and new material. A student recalls rusty material,
+          then takes unresolved questions to office hours.
+        note: >-
+          Practice new and earlier material each week. Bring remaining questions to office
+          hours.
+      - id: p07
+        say: >-
+          When you feel a bit rusty, the mental effort required to “reload” the information from
+          long-term memory triggers reconsolidation, which deepens the learning. If you identify
+          missing gaps that you can’t answer by consulting your notes, you can then discuss
+          these in office hours.
+        pause_after: 0.25
+        step: Weekly review keeps old topics accessible
+        visual: >-
+          A weekly calendar includes old and new material. A student recalls rusty material,
+          then takes unresolved questions to office hours.
+        note: >-
+          Practice new and earlier material each week. Bring remaining questions to office
+          hours.
+      - id: p08
+        say: >-
+          Your professor or TA will be happy to help you, especially if you are asking questions
+          in a week other than the crowded office hours right before the exam. To help you keep
+          track of your planned spacing sessions, add them to your calendar.
+        pause_after: 0.25
+        step: Scheduling makes spaced review easier
+        visual: >-
+          An office-hours conversation can resolve questions, a calendar keeps the study
+          sessions visible, and a group studies together.
+        note: >-
+          A calendar keeps spaced practice visible. Study groups help you explain your thinking
+          and stay motivated.
+      - id: p09
+        say: >-
+          To make them more fun and engaging, study together with other students. Study groups
+          are a great way to keep motivated, to express your thoughts verbally, and to learn
+          from each other’s unique experience and perspectives.
+        pause_after: 0.52
+        step: Scheduling makes spaced review easier
+        visual: >-
+          An office-hours conversation can resolve questions, a calendar keeps the study
+          sessions visible, and a group studies together.
+        note: >-
+          A calendar keeps spaced practice visible. Study groups help you explain your thinking
+          and stay motivated.
+      - id: p10
+        say: >-
+          Computer Science Examples: If your class has a project that is due at the end of the
+          term, do not follow the temptation to do most of the work in the last few weeks.
+        pause_after: 0.25
+        step: Weekly work builds steady progress
+        visual: >-
+          One workload crowds the deadline while smaller weekly code tasks spread progress
+          across the term.
+        note: Apply new course techniques to the project every week.
+      - id: p11
+        say: >-
+          Continuously apply the techniques taught in the course every week and make incremental
+          progress. If your course covered more theoretical concepts, periodically revisit older
+          concepts.
+        pause_after: 0.25
+        step: Weekly work builds steady progress
+        visual: >-
+          One workload crowds the deadline while smaller weekly code tasks spread progress
+          across the term.
+        note: Apply new course techniques to the project every week.
+      - id: p12
+        say: >-
+          For example, if you learned about Big-O notation in week one, test yourself on it
+          again in week four, even if it is not on the homework. The effort to retrieve older
+          concepts ensures they stay accessible.
+        pause_after: 0.85
+        step: Revisiting Big-O keeps it accessible
+        visual: >-
+          A week-one card shows that scanning three items once takes three visits. A week-four
+          card asks what happens when the list doubles. The answer appears after the prompt:
+          six visits, still linear time.
+        note: Test yourself on Big-O in week four even if the homework covers a different topic.
+  - id: interleaving--mix-up-your-problem-types
+    label: Interleaving
+    title: 'Interleaving: Mix Up Your Problem Types'
+    part: Practice
+    purpose: Practice choosing a method
+    takeaway: Mix related problem types so you practice deciding which method fits.
+    cues:
+      - id: p01
+        say: 'Interleaving: Mix Up Your Problem Types'
+        pause_after: 0.55
+        step: Mixed practice teaches which method fits
+        visual: >-
+          Blocked practice groups one topic before moving to the next. Interleaved practice
+          mixes related topics so the student has to recognize which method fits each problem.
+        note: >-
+          Interleaving makes learners distinguish related problem types and decide when to use
+          each method.
+      - id: p02
+        say: >-
+          Most textbooks and many courses use “blocked practice”: They first cover one topic
+          entirely, then the second topic, then the third. The problem with blocked practice is
+          that it never teaches you when to apply a specific solution.
+        pause_after: 0.25
+        step: Mixed practice teaches which method fits
+        visual: >-
+          Blocked practice groups one topic before moving to the next. Interleaved practice
+          mixes related topics so the student has to recognize which method fits each problem.
+        note: >-
+          Interleaving makes learners distinguish related problem types and decide when to use
+          each method.
+      - id: p03
+        say: >-
+          In contrast, interleaving mixes the practice of different but related topics or
+          skills. This helps you develop a broader understanding of the relationships between
+          conditions and improve your ability to discriminate between problem types.
+        pause_after: 0.25
+        step: Mixed practice teaches which method fits
+        visual: >-
+          Blocked practice groups one topic before moving to the next. Interleaved practice
+          mixes related topics so the student has to recognize which method fits each problem.
+        note: >-
+          Interleaving makes learners distinguish related problem types and decide when to use
+          each method.
+      - id: p04
+        say: >-
+          This often makes students feel less confident in their knowledge, because they start
+          working on the next topic before they feel they fully grasped the first one.
+        pause_after: 0.25
+        step: Switching prompts recall and comparison
+        visual: >-
+          Switching to a related topic leaves a gap before you recall the previous one and gives
+          you a chance to compare clues across problem types.
+        note: >-
+          Interleaving builds in spaced retrieval and encourages comparison across problem
+          types.
+      - id: p05
+        say: >-
+          But it is actually more effective for effective learning, because it naturally builds
+          in spaced retrieval practice and it also makes you pay more attention to the
+          connections, similarities, and differences between topics, which is more important for
+          real-world application of the taught skills.
+        pause_after: 0.52
+        step: Switching prompts recall and comparison
+        visual: >-
+          Switching to a related topic leaves a gap before you recall the previous one and gives
+          you a chance to compare clues across problem types.
+        note: >-
+          Interleaving builds in spaced retrieval and encourages comparison across problem
+          types.
+      - id: p06
+        say: >-
+          Actionable Advice: Once you understand a new problem type, scatter it throughout your
+          practice sequence so that you are alternating between different problems that call for
+          different solutions. For related problems or related topics, mix them up as much as
+          possible. Interleave study sessions between different courses.
+        pause_after: 0.25
+        step: Mixed practice builds on the basics
+        visual: >-
+          After learning a new problem type, add it to a mixed practice set. Shuffling topics in
+          a flashcard deck is one way to do this.
+        note: Mix a new problem type into review after you understand the basics.
+      - id: p07
+        say: >-
+          When quizzing yourself with flash cards or other quizzes, mix different course topics
+          in your deck rather than ordering them by topic.
+        pause_after: 0.52
+        step: Mixed practice builds on the basics
+        visual: >-
+          After learning a new problem type, add it to a mixed practice set. Shuffling topics in
+          a flashcard deck is one way to do this.
+        note: Shuffle topics within flashcard decks and review quizzes.
+      - id: p08
+        say: >-
+          Computer Science Examples: If you are studying sorting algorithms, do not do ten
+          practice problems on Merge Sort, followed by ten on Quick Sort, and ten on Bubble
+          Sort. Shuffle the problems randomly.
+        pause_after: 0.25
+        step: Mixed sets make you choose a sort
+        visual: >-
+          The blocked row groups pairs of merge-sort, quicksort and bubble-sort problems.
+          Matching symbols move into a mixed row showing the same problems in a different order.
+        note: >-
+          Unlabeled sorting problems make you analyze the dataset and constraints before
+          choosing an algorithm.
+      - id: p09
+        say: >-
+          By mixing them up, you force your brain to analyze the dataset and the constraints of
+          the problem to determine which algorithm is the most efficient choice before you write
+          the code. For personal projects or programming study sessions, vary the programming
+          languages you are using.
+        pause_after: 0.25
+        step: Mixed sets make you choose a sort
+        visual: >-
+          The mixed row makes you decide which sort to use from the problem’s dataset and
+          constraints. The same idea applies to practicing different languages.
+        note: >-
+          Unlabeled sorting problems make you analyze the dataset and constraints before
+          choosing an algorithm.
+      - id: p10
+        say: >-
+          Study topics from different courses together rather than separately. For example, when
+          you are taking operating systems and programming languages together, consider how the
+          choice of programming language impacts the design of operating systems.
+        pause_after: 0.25
+        step: Mixing courses reveals connections
+        visual: >-
+          An operating-system laptop faces a programming-language code panel. The prompt asks
+          how a language choice can shape system design.
+        note: >-
+          Connect courses by asking how programming-language choices affect operating-system
+          design.
+      - id: p11
+        say: >-
+          By mixing up your problem types, you force your brain to contextualize and connect
+          knowledge and achieve deeper learning.
+        pause_after: 0.85
+        step: Mixing courses reveals connections
+        visual: >-
+          An operating-system laptop faces a programming-language code panel. The prompt asks
+          how a language choice can shape system design.
+        note: >-
+          Connect courses by asking how programming-language choices affect operating-system
+          design.
+  - id: generation-struggle-first-check-the-solution-later
+    label: Generation
+    title: 'Generation: Struggle First, Check the Solution Later'
+    part: Put it to work
+    purpose: Try before seeing the answer
+    takeaway: Make an attempt before checking a solution, then use your errors to learn.
+    cues:
+      - id: p01
+        say: 'Generation: Struggle First, Check the Solution Later'
+        pause_after: 0.55
+        step: An attempt makes the answer clearer
+        visual: >-
+          A question starts a blank attempt. Errors are marked on that attempt, then a reference
+          answer appears for comparison.
+        note: Generation means attempting a problem before seeing an explanation.
+      - id: p02
+        say: >-
+          The act of trying to answer a question or solve a problem before being shown how to do
+          it is known as generation.
+        pause_after: 0.25
+        step: An attempt makes the answer clearer
+        visual: >-
+          A question starts a blank attempt. Errors are marked on that attempt, then a reference
+          answer appears for comparison.
+        note: Even an unsuccessful attempt can make the eventual solution easier to process.
+      - id: p03
+        say: >-
+          Even if you make errors in your attempt, wrestling with the problem makes your mind
+          far more receptive to the correct solution when it is finally provided. Unsuccessful
+          attempts at a solution encourage deep processing of the answer and create fertile
+          ground for its encoding.
+        pause_after: 0.52
+        step: An attempt makes the answer clearer
+        visual: >-
+          A question starts a blank attempt. Errors are marked on that attempt, then a reference
+          answer appears for comparison.
+        note: Generation means attempting a problem before seeing an explanation.
+      - id: p04
+        say: >-
+          Actionable Advice: Try to solve homework problems before you go to the lecture where
+          the solution will be taught. View errors not as failures, but as vital diagnostic
+          information that helps you adjust your strategies.
+        pause_after: 0.52
+        step: Early attempts make errors useful
+        visual: >-
+          A homework sketch precedes the lecture’s solution. Marked errors show which strategy
+          the student can adjust.
+        note: Try the homework before the solution is taught. Use errors as diagnostic information.
+      - id: p05
+        say: >-
+          Computer Science Examples: If your assignment is to traverse a binary search tree, try
+          to write the script entirely on your own before you search for the standard solution
+          on Stack Overflow or in your textbook.
+        pause_after: 0.25
+        step: A first attempt helps you see the gap
+        visual: >-
+          A binary search tree has root 8, children 4 and 12, and leaves 2, 6, 10 and 14. The
+          first in-order traversal attempt lists 2, 4, 8, 10, 12 and 14.
+        note: Write your own tree traversal before consulting the standard solution.
+      - id: p06
+        say: >-
+          When your code throws an exception you’ve never seen before, try to understand what it
+          means and how to fix it before looking for a quickfix. When you finally review the
+          correct implementation, the logic will click into place and stick with you much
+          longer.
+        pause_after: 0.25
+        step: A first attempt helps you see the gap
+        visual: >-
+          A count shows six visits for seven nodes. The reference lists 2, 4, 6, 8, 10, 12 and
+          14. It reveals that the attempt skipped node 6.
+        note: Investigate what an unfamiliar exception means before searching for a fix.
+      - id: p07
+        say: >-
+          Challenge yourself to create new knowledge before trying to find the answer somewhere
+          else.
+        pause_after: 0.85
+        step: A first attempt helps you see the gap
+        visual: >-
+          The attempt and the reference stay side by side with the skipped node 6 outlined on
+          the tree.
+        note: Write your own tree traversal before consulting the standard solution.
+  - id: component-skills-manage-your-cognitive-load
+    label: Component skills
+    title: 'Component Skills: Manage Your Cognitive Load'
+    part: Put it to work
+    purpose: Make a complex task manageable
+    takeaway: Practice the pieces separately when a complex task overwhelms you, then put them together.
+    cues:
+      - id: p01
+        say: 'Component Skills: Manage Your Cognitive Load'
+        pause_after: 0.55
+        step: Smaller pieces reduce working-memory load
+        visual: >-
+          Many unfamiliar tasks compete for the learner’s limited working memory. A stack of
+          component skills shows the same work split into pieces that can be learned separately.
+        note: Limited working memory makes complex tasks hard to learn all at once.
+      - id: p02
+        say: >-
+          Human cognitive architecture is characterized by a very limited short-term or working
+          memory. When a task is highly complex, trying to learn all aspects of it
+          simultaneously can overwhelm your working memory and impede learning. This can result
+          in undesirable difficulties.
+        pause_after: 0.25
+        step: Smaller pieces reduce working-memory load
+        visual: >-
+          Many unfamiliar tasks compete for the learner’s limited working memory. A stack of
+          component skills shows the same work split into pieces that can be learned separately.
+        note: Build fluency in component skills before combining them.
+      - id: p03
+        say: >-
+          However, if you break a complex task down and practice component skills in isolation,
+          you can develop mastery of these individual skills before combining them into a
+          coherent whole.
+        pause_after: 0.52
+        step: Smaller pieces reduce working-memory load
+        visual: >-
+          Many unfamiliar tasks compete for the learner’s limited working memory. A stack of
+          component skills shows the same work split into pieces that can be learned separately.
+        note: Limited working memory makes complex tasks hard to learn all at once.
+      - id: p04
+        say: >-
+          Actionable Advice: Decompose daunting, too complex tasks into smaller, manageable
+          sub-goals.
+        pause_after: 0.25
+        step: Early practice leaves time to combine
+        visual: >-
+          A difficult course is split into manageable goals. Early practice builds the
+          individual skills before they are combined in the week before the exam.
+        note: Begin individual skills early so exam review can focus on putting them together.
+      - id: p05
+        say: >-
+          For a very difficult course, start to study individual skills earlier so that in the
+          week before the exam you can focus on combining component skills rather than learning
+          all of them for the first time, which might overwhelm you.
+        pause_after: 0.25
+        step: Early practice leaves time to combine
+        visual: >-
+          A difficult course is split into manageable goals. Early practice builds the
+          individual skills before they are combined in the week before the exam.
+        note: Begin individual skills early so exam review can focus on putting them together.
+      - id: p06
+        say: >-
+          Note that managing load is complementary to the advice on interleaving. Interleaving
+          is useful if and only if the entire work fits into your cognitive load capacity. If
+          you reach a point of exhaustion, you should split up the learning into individual
+          component skills before combining them.
+        pause_after: 0.25
+        step: Interleaving helps when it’s manageable
+        visual: >-
+          One side shows interleaving related skills when the challenge is manageable. The other
+          shows practicing skills separately once mixed practice overwhelms working memory.
+        note: >-
+          When mixing problems overwhelms you, isolate the skills before you try combining them
+          again.
+      - id: p07
+        say: >-
+          Until then, practicing related concepts using interleaving is ideal. The difficulty
+          resulting from interleaving is only desirable if you can overcome it successfully.
+          Once it overloads your working memory, the difficulty becomes undesirable.
+        pause_after: 0.25
+        step: Interleaving helps when it’s manageable
+        visual: >-
+          One side shows interleaving related skills when the challenge is manageable. The other
+          shows practicing skills separately once mixed practice overwhelms working memory.
+        note: >-
+          When mixing problems overwhelms you, isolate the skills before you try combining them
+          again.
+      - id: p08
+        say: >-
+          Also note that based on previous experience with some course topics, some students
+          might have learned some component skills already and therefore might be able to
+          combine them into a coherent whole more easily than others.
+        pause_after: 0.25
+        step: Familiar skills combine sooner
+        visual: >-
+          Two learners join the same task with different prior experience. Familiar skills are
+          ready to combine for one learner, while the other needs more time on the pieces.
+        note: Prior experience changes when related skills are ready to combine.
+      - id: p09
+        say: >-
+          For some courses you will be able to combine the different topics earlier than others
+          while for other courses you will need to study the topics separately for longer than
+          others. Everyone goes through this struggle at different points in time and for
+          different topics.
+        pause_after: 0.25
+        step: Familiar skills combine sooner
+        visual: >-
+          Two learners join the same task with different prior experience. Familiar skills are
+          ready to combine for one learner, while the other needs more time on the pieces.
+        note: That timing varies by learner, course and topic.
+      - id: p10
+        say: This is a very common part of the college experience.
+        pause_after: 0.52
+        step: Familiar skills combine sooner
+        visual: >-
+          Two learners join the same task with different prior experience. Familiar skills are
+          ready to combine for one learner, while the other needs more time on the pieces.
+        note: Prior experience changes when related skills are ready to combine.
+      - id: p11
+        say: >-
+          Computer Science Examples: Suppose you are tasked with building a full-stack web
+          application (CS35L students should pay attention to this section).
+        pause_after: 0.25
+        step: Three unfamiliar layers can overload you
+        visual: >-
+          A full-stack app brings frontend, backend and database skills into the same
+          working-memory space. Trying to learn all three together can overwhelm a beginner, so
+          the advice is to isolate them.
+        note: >-
+          Frontend design, backend logic and database queries are separate skills a beginner can
+          isolate.
+      - id: p12
+        say: >-
+          If you try to learn frontend design (HTML/CSS/JS), backend logic (Python/Node.js), and
+          database querying (SQL) all at the exact same time without prior experience with any
+          of these, your cognitive load will be too high to learn them together. Instead,
+          isolate the component skills.
+        pause_after: 0.25
+        step: Three unfamiliar layers can overload you
+        visual: >-
+          A full-stack app brings frontend, backend and database skills into the same
+          working-memory space. Trying to learn all three together can overwhelm a beginner, so
+          the advice is to isolate them.
+        note: >-
+          Frontend design, backend logic and database queries are separate skills a beginner can
+          isolate.
+      - id: p13
+        say: >-
+          Build the static front end first. Then, separately, practice writing database queries
+          on simple examples. Once you have a fluent, automated grasp of these individual
+          pieces, you will have the cognitive capacity to successfully integrate them into a
+          dynamic application.
+        pause_after: 0.25
+        step: Separate practice makes integration easier
+        visual: >-
+          A study-notes page, save logic and database queries are practiced separately. Once
+          connected, a new note moves from the page through the back end to the database and
+          shows Note saved.
+        note: Start early. Build the static front end and practice database queries separately.
+      - id: p14
+        say: >-
+          To ensure you have enough time to study each individually, make sure you start early
+          right after each concept was taught in the lectures rather than waiting until you
+          really need it.
+        pause_after: 0.25
+        step: Separate practice makes integration easier
+        visual: The connected app stays visible while the reminder Practice after class appears.
+        note: Integrate the app once the component skills are familiar.
+      - id: p15
+        say: >-
+          When a skill is getting too complex for you to handle, you have to break it down into
+          smaller, manageable sub-goals to be studied individually.
+        pause_after: 0.85
+        step: Separate practice makes integration easier
+        visual: >-
+          Separate practice tasks sit above the working note-saving flow. A reminder tells you
+          to break the work into manageable goals.
+        note: Start early. Build the static front end and practice database queries separately.
+  - id: growth-mindset-the-foundation-for-desirable-difficulties
+    label: Growth mindset
+    title: 'Growth Mindset: The Foundation for Desirable Difficulties'
+    part: Put it to work
+    purpose: What does a struggle mean?
+    takeaway: Add “yet” when you get stuck, then adjust your strategy or ask for help.
+    cues:
+      - id: p01
+        say: 'Growth Mindset: The Foundation for Desirable Difficulties'
+        pause_after: 0.55
+        step: A fixed mindset treats struggle as a limit
+        visual: >-
+          A difficult concept appears next to the thought I’m not smart enough, illustrating the
+          fixed-mindset interpretation of a setback.
+        note: A fixed mindset interprets struggle as evidence of an unchangeable limit on ability.
+      - id: p02
+        say: >-
+          Adopting all of the strategies listed above is nearly impossible if you operate with a
+          “fixed mindset”—the belief that your intelligence and abilities are static traits you
+          are simply born with.
+        pause_after: 0.25
+        step: A fixed mindset treats struggle as a limit
+        visual: >-
+          A difficult concept appears next to the thought I’m not smart enough, illustrating the
+          fixed-mindset interpretation of a setback.
+        note: A fixed mindset interprets struggle as evidence of an unchangeable limit on ability.
+      - id: p03
+        say: >-
+          If you have a fixed mindset, struggling with a new concept feels like terrifying proof
+          that you just aren’t smart enough.
+        pause_after: 0.25
+        step: A fixed mindset treats struggle as a limit
+        visual: >-
+          A difficult concept appears next to the thought I’m not smart enough, illustrating the
+          fixed-mindset interpretation of a setback.
+        note: A fixed mindset interprets struggle as evidence of an unchangeable limit on ability.
+      - id: p04
+        say: >-
+          However, decades of psychological research demonstrate that a “growth mindset” is far
+          more accurate: your brain is highly plastic, and intellectual abilities are absolutely
+          developed through effort, strategic practice, and perseverance.
+        pause_after: 0.25
+        step: Abilities grow with strategic practice
+        visual: >-
+          A brain labeled Growth mindset is followed by a practice checklist and a staircase for
+          progress through strategic effort and perseverance.
+        note: A growth mindset treats effort, strategy and perseverance as ways to develop ability.
+      - id: p05
+        say: >-
+          To effectively use desirable difficulties, you have to let go of the need for learning
+          to feel “easy” and instead recognize that mental friction is the physical sensation of
+          your brain growing stronger.
+        pause_after: 0.52
+        step: Abilities grow with strategic practice
+        visual: >-
+          A brain labeled Growth mindset is followed by a practice checklist and a staircase for
+          progress through strategic effort and perseverance.
+        note: A growth mindset treats effort, strategy and perseverance as ways to develop ability.
+      - id: p06
+        say: >-
+          Actionable Advice: Pay attention to your internal monologue and add the word “yet”.
+          Change “I don’t understand this” to “I don’t understand this yet”. When you hit a
+          roadblock, do not view it as a limit of your natural ability.
+        pause_after: 0.25
+        step: “Yet” leaves room to change strategies
+        visual: >-
+          The word yet joins the thought I don’t understand this in one speech bubble.
+        note: Add ‘yet’ to the thought ‘I don’t understand this,’ then choose a next step.
+      - id: p07
+        say: >-
+          View it as a cue that you need to adjust your study strategies, increase your effort,
+          or seek out office hours. If you’ve done well in a class, don’t assume you’re a
+          “natural” at the subject.
+        pause_after: 0.25
+        step: “Yet” leaves room to change strategies
+        visual: >-
+          The sentence I don’t understand this yet branches to two next steps: Adjust your
+          strategy and Ask for help.
+        note: Add ‘yet’ to the thought ‘I don’t understand this,’ then choose a next step.
+      - id: p08
+        say: >-
+          Instead, recognize that your success is the result of effective strategies and
+          consistent effort, which you can replicate in more challenging courses. And if you
+          struggle too much, don’t be afraid to ask for help and visit office hours or email
+          your instructor(s).
+        pause_after: 0.25
+        step: You can reuse successful strategies
+        visual: >-
+          A checklist captures the strategies that worked, and an office-hours conversation
+          begins with what you tried and where you are stuck.
+        note: Reuse strategies that helped in earlier courses.
+      - id: p09
+        say: >-
+          All of them are always willing to help, especially if you let them know how hard
+          you’ve tried already.
+        pause_after: 0.52
+        step: You can reuse successful strategies
+        visual: >-
+          A checklist captures the strategies that worked, and an office-hours conversation
+          begins with what you tried and where you are stuck.
+        note: When asking for help, share what you’ve tried so far.
+      - id: p10
+        say: >-
+          Computer Science Examples: There is a pervasive and toxic myth in software engineering
+          that some people are just naturally born with a “coding gene”. This is entirely false.
+        pause_after: 0.25
+        step: Coding ability develops with practice
+        visual: >-
+          A laptop labeled Learning to code is joined by two debugging setbacks that can make
+          learners doubt their ability: a C program’s segfault and a messy Git rebase.
+        note: >-
+          Setbacks such as segfaults and difficult rebases are common experiences while learning
+          to program.
+      - id: p11
+        say: >-
+          When your C program segfaults for the fiftieth time, or you are trying to untangle a
+          messy git rebase, it is easy to feel like an imposter. A fixed mindset tells you to
+          give up because you aren’t cut out for computer science.
+        pause_after: 0.25
+        step: Coding ability develops with practice
+        visual: >-
+          A laptop labeled Learning to code is joined by two debugging setbacks that can make
+          learners doubt their ability: a C program’s segfault and a messy Git rebase.
+        note: >-
+          Setbacks such as segfaults and difficult rebases are common experiences while learning
+          to program.
+      - id: p12
+        say: >-
+          A growth mindset reminds you that every single expert developer started exactly where
+          you are. Bugs and compiler errors are not indictments of your intelligence. They are
+          simply the mechanism by which you build mastery.
+        pause_after: 0.25
+        step: Debugging practice builds mastery
+        visual: >-
+          A compiler error leads to another debugging attempt and to asking for help when the
+          learner needs it.
+        note: Use bugs and compiler errors as opportunities to practice. Seek help along the way.
+      - id: p13
+        say: >-
+          You are entirely capable of conquering these complex systems, provided you embrace the
+          resilient, effortful struggle required to learn them and you are not afraid to ask for
+          help when you need it.
+        pause_after: 0.85
+        step: Debugging practice builds mastery
+        visual: >-
+          A compiler error leads to another debugging attempt and to asking for help when the
+          learner needs it.
+        note: Use bugs and compiler errors as opportunities to practice. Seek help along the way.
+  - id: quiz--conclusion
+    label: Quiz and conclusion
+    title: Quiz & Conclusion
+    part: Put it to work
+    purpose: Put active retrieval to work
+    takeaway: Test yourself on these ideas and build them into your study routine.
+    cues:
+      - id: p01
+        say: Quiz & Conclusion
+        pause_after: 0.55
+        step: Self-testing strengthens what you learned
+        visual: >-
+          Flashcards and the quiz give you opportunities to recall the study strategies, while a
+          calendar invites you to revisit the questions later.
+        note: Test yourself with the article’s flashcards and quiz, then return to them later.
+      - id: p02
+        say: >-
+          As you just learned, recalling what you just learned is the best way to form lasting
+          memory. Use these flashcards and the quiz below to test your knowledge and start
+          forming memory via active retrieval. Revisit them every once in a while to further
+          strengthen your memory.
+        pause_after: 0.52
+        step: Self-testing strengthens what you learned
+        visual: >-
+          Flashcards and the quiz give you opportunities to recall the study strategies, while a
+          calendar invites you to revisit the questions later.
+        note: Test yourself with the article’s flashcards and quiz, then return to them later.
+      - id: p03
+        say: >-
+          After getting foundational knowledge, now it’s time for you to apply these tips in the
+          courses you are taking (especially the more challenging courses)! Try to slowly
+          integrate these learning practices into your study sessions and let them guide your
+          approach to learning!
+        pause_after: 0.52
+        step: Small changes build a study routine
+        visual: >-
+          A weekly study calendar brings the guide’s familiar flashcards and problem sets into
+          an actual college course.
+        note: Add study-practice changes gradually, especially in your most challenging courses.
+      - id: p04
+        say: >-
+          If you would like to know more about the science behind this post, I recommend reading
+          the book “Make It Stick: The Science of Successful Learning”. It is one of my favorite
+          books on learning because it helps both the learner and the teacher.
+        pause_after: 0.25
+        step: These resources explain why the tips work
+        visual: >-
+          A book labeled Make It Stick is accompanied by UCLA’s Bjork Lab research and Robert
+          Bjork’s Harvard talk.
+        note: >-
+          Explore Make It Stick, UCLA’s Bjork Lab research summary and Robert Bjork’s Harvard
+          talk.
+      - id: p05
+        say: >-
+          Also, check out the research summary of UCLA’s Bjork Learning and Forgetting Lab,
+          Robert Bjork’s talk at Harvard, and the other references linked below.
+        pause_after: 0.57
+        step: These resources explain why the tips work
+        visual: >-
+          A book labeled Make It Stick is accompanied by UCLA’s Bjork Lab research and Robert
+          Bjork’s Harvard talk.
+        note: >-
+          Explore Make It Stick, UCLA’s Bjork Lab research summary and Robert Bjork’s Harvard
+          talk.

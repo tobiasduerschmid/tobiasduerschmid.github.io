@@ -20,6 +20,7 @@
                  such as a lesson's code language
     settings     settings that only this kind of player offers
 {%- endcomment -%}
+{%- if include.article -%}{%- assign track_name = 'section' -%}{%- else -%}{%- assign track_name = 'scene' -%}{%- endif -%}
 {%- assign controls_duration = include.duration | default: 0 | floor -%}
 {%- assign controls_seconds = controls_duration | modulo: 60 -%}
 <div class="nja-controls nja-playback-controls vn-controls song-player-controls" hidden>
@@ -43,10 +44,12 @@
       {{- include.lead -}}
       {%- unless include.text_only %}
       <button type="button" class="vn-play" data-action="play" aria-label="Play narration" aria-keyshortcuts="k Space">{% include player-icon.html name='play' %}</button>
+      {% unless include.article %}
       <button type="button" class="vn-skip" data-vn-skip="-5" aria-label="Back 5 seconds" aria-keyshortcuts="ArrowLeft">{% include player-icon.html name='back' %}<span aria-hidden="true">5</span></button>
       <button type="button" class="vn-skip" data-vn-skip="5" aria-label="Forward 5 seconds" aria-keyshortcuts="ArrowRight">{% include player-icon.html name='forward' %}<span aria-hidden="true">5</span></button>
-      <button type="button" class="vn-track" data-action="previous" aria-label="Previous scene" title="Previous scene">{% include player-icon.html name='previous' %}</button>
-      <button type="button" class="vn-track" data-action="next" aria-label="Next scene" title="Next scene">{% include player-icon.html name='next' %}</button>
+      {% endunless %}
+      <button type="button" class="vn-track" data-action="previous" aria-label="Previous {{ track_name }}" title="Previous {{ track_name }}">{% include player-icon.html name='previous' %}</button>
+      <button type="button" class="vn-track" data-action="next" aria-label="Next {{ track_name }}" title="Next {{ track_name }}">{% include player-icon.html name='next' %}</button>
       <output class="nja-time" aria-label="Playback time">0:00 / {{ controls_duration | divided_by: 60 }}:{% if controls_seconds < 10 %}0{% endif %}{{ controls_seconds }}</output>
       {%- endunless %}
     </div>
@@ -71,8 +74,10 @@
       {%- endunless %}
       <label>Caption size<select class="vn-caption-size">{% include narration-caption-sizes.html %}</select></label>
       <label class="nja-motion"><input type="checkbox" class="vn-landscape" checked> Landscape in full screen</label>
+      {% unless include.article %}
       <label class="nja-motion"><input type="checkbox" data-setting="prediction" checked> Pause and predict</label>
       <label class="nja-motion"><input type="checkbox" data-setting="final-check-only"> Only pause for the final knowledge check</label>
+      {% endunless %}
       {{- include.settings -}}
     </div>
   </section>

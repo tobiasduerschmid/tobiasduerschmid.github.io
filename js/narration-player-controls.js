@@ -172,7 +172,7 @@
     const speed = root.querySelector('[data-setting="speed"]');
     const finalCheckOnly = root.querySelector('[data-setting="final-check-only"]');
     window.NarrationPreferences.subscribe(preferences => {
-      finalCheckOnly.checked = preferences.finalCheckOnly;
+      if (finalCheckOnly) finalCheckOnly.checked = preferences.finalCheckOnly;
       captionSize.value = String(preferences.captionSize);
       video.style.setProperty('--vn-caption-scale', String(preferences.captionSize));
       if (audio) {
@@ -183,7 +183,7 @@
         audio.playbackRate = preferences.speed;
       }
     });
-    listen(finalCheckOnly, 'change', () => window.NarrationPreferences.set({ finalCheckOnly: finalCheckOnly.checked }));
+    if (finalCheckOnly) listen(finalCheckOnly, 'change', () => window.NarrationPreferences.set({ finalCheckOnly: finalCheckOnly.checked }));
     if (audio) {
       listen(speed, 'change', () => window.NarrationPreferences.set({ speed: Number(speed.value) }));
       bindSound(root, audio, listen);

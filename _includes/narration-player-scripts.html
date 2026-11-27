@@ -11,13 +11,14 @@
 <script src="{{ '/js/narration-preferences.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/narration-player-controls.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/narration-timeline.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+{% if include.diagrams or include.article != true %}<script src="{{ '/js/narration-diagram.js' | relative_url }}?v={{ site.asset_version }}" defer></script>{% endif %}
+<script src="{{ '/js/narration-transport.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+{% unless include.article %}
 <script src="{{ '/js/narration-song.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/parsons-grading.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/tutorial-quiz.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
-<script src="{{ '/js/narration-diagram.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/narration-quiz.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/narration-prediction.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
-<script src="{{ '/js/narration-transport.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/narration-study-view.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/narration-practice.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/narration-study.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
@@ -27,4 +28,5 @@
 <script src="{{ '/js/narration-closer-look-view.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 {%- endunless %}
 <script src="{{ '/js/narration-closer-look.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+{% endunless %}
 <script src="{{ '/js/narration-player.js' | relative_url }}?v={{ site.asset_version }}" defer></script>

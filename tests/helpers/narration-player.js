@@ -1,5 +1,12 @@
 const { expect } = require('@playwright/test');
 
+const isArticleNarration = lesson => lesson.chapter.startsWith('/blog/');
+
+function narrationPlayer(page, { lesson, story }) {
+  const name = isArticleNarration(lesson) ? 'Animated article' : story.title;
+  return page.getByRole('region', { name, exact: true });
+}
+
 // Every narration player keeps its scene, speed, caption-size, and other
 // player choices behind the "Player settings" toggle of its control bar, as
 // the song player does (_includes/narration-player-controls.html); a lesson's
@@ -41,4 +48,4 @@ async function serveAudioRanges(page, audioPath) {
   });
 }
 
-module.exports = { openPlayerSettings, seekNarration, setSiteTheme, serveAudioRanges };
+module.exports = { isArticleNarration, narrationPlayer, openPlayerSettings, seekNarration, setSiteTheme, serveAudioRanges };

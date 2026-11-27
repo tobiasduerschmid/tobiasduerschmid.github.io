@@ -14,6 +14,7 @@
   {% include ai-training-opt-out-meta.html %}
   <meta name="robots" content="noindex">
   {%- include video-narration-stage-assets.html topic=page.topic part='styles' %}
+  {% if lesson.animation.theme == 'blog-essay' %}<link rel="stylesheet" href="{{ '/css/video-narration-blog-mobile.css' | relative_url }}?v={{ site.asset_version }}">{% endif %}
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}?v={{ site.asset_version }}">
 </head>
 <body class="is-fit">

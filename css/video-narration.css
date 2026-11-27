@@ -102,6 +102,41 @@
 .video-narration .vn-animation-poster { margin: 0; padding: 1.2em 1.4em; color: var(--nja-text); line-height: 1.5; text-align: center; }
 .video-narration .vn-panel--animation.is-ready .vn-animation-frame { visibility: visible; }
 .video-narration .vn-panel--animation.is-ready .vn-animation-poster { visibility: hidden; }
+.video-narration .vn-animation-cover { display: none; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.video-narration .vn-panel--animation.has-cover .vn-animation-cover { display: block; }
+.video-narration .vn-panel--animation.has-cover :is(.vn-animation-frame, .vn-animation-poster) { visibility: hidden; }
+.video-narration .vn-screen:has(.vn-panel--animation.has-cover) .vn-picture-control::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 66px;
+  height: 66px;
+  transform: translate(-50%, -50%);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #005587;
+}
+.video-narration .vn-screen:has(.vn-panel--animation.has-cover) .vn-picture-control::after {
+  content: '';
+  position: absolute;
+  top: calc(50% - 12px);
+  left: calc(50% - 7px);
+  border: 12px solid transparent;
+  border-left: 19px solid #fff;
+}
+
+/* Article playback puts the illustration edge to edge. Its chapter selector,
+   captions and transport carry all the navigation the article needs. */
+.video-narration[data-article-player] { margin: 0; }
+.video-narration[data-article-player] .vn-frame { margin: 0; border: 0; }
+.video-narration[data-article-player] .vn-screen.nja-stage { padding: 0; }
+.video-narration[data-article-player] .vn-panel--animation { border-radius: 0; }
+.video-narration[data-article-player] .vn-video:not(.is-fullscreen) .vn-captions { min-height: 0; }
+.video-narration[data-article-player] .vn-settings a { display: block; margin-block: 0.7em; }
+@container (min-width: 14em) and (max-width: 520px) {
+  .video-narration[data-article-player] .vn-toolbar .vn-track { order: 0; }
+}
 
 /* Code scrolls inside the screen; the reading view shows all of it. */
 .video-narration .vn-panel--code pre { max-height: 24em; overflow-y: auto; }
