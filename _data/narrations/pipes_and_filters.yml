@@ -236,6 +236,41 @@ scenes:
         source: >-
           CS 130 lecture 16, slide 18 (agnosticism: a filter must not know the identity of its
           upstream or downstream neighbors); Fairbanks 2010, section 14.8.
+        closer_look:
+          title: Blur faces never names its neighbors
+          notice: >-
+            Each filter sees only the stream it receives and the stream it returns; only the
+            pipeline builder knows which filter feeds which.
+          code: agnostic
+          groups:
+            - {id: builder, label: "Pipeline builder"}
+            - {id: filters, label: "«filter» Crop, Blur faces, Watermark"}
+          relations:
+            - {kind: call, from: builder.chain, to: filters.blur_in, label: [calls ↓, with crop's stream]}
+          steps:
+            - question: What does Blur faces know?
+              focus: [filters.blur_in, filters.blur_body]
+              text: >-
+                One stream of images comes in as its only parameter, and one stream of images goes
+                out. Nothing in the file names Crop, Watermark, or any other filter. A photo comes
+                in, a photo goes out.
+            - question: What does each filter import?
+              focus: [filters.imports]
+              text: >-
+                Only the shared <code>Image</code> type, the one format every pipe carries. No filter
+                imports another filter, so each one builds, runs, and tests alone.
+            - question: Who decides what feeds Blur faces?
+              focus: [builder.chain, filters.blur_in]
+              relation: call
+              text: >-
+                The pipeline builder. Its <code>run()</code> passes the stream that Crop returns
+                into Blur faces, and Blur faces' stream into Watermark. <strong>The connections live
+                in the builder, not in any filter.</strong>
+            - question: Move it anywhere
+              focus: [builder.chain]
+              text: >-
+                To blur faces before cropping, swap two lines of <code>run()</code>. Not one line of
+                any filter changes: knowing only its input and output is what lets a filter move.
         visual: >-
           A rule card: Rule 2, Agnosticism: don't know your neighbors, just item in, item out. A
           large Blur faces box, marked Knows: in, out, sits between a dashed Crop box and a dashed

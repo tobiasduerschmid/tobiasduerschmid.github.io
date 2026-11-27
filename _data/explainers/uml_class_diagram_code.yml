@@ -162,6 +162,36 @@ python:
         grouped: 4
         ownership: 14
         members: 13
+    # Closer look on dependency/join (scripts/narration/closer-look.js): a
+    # stored field against a parameter that is only used.
+    uses_server:
+      file: server.py
+      source: |
+        class Server:
+            def __init__(self, name: str, owner: Member) -> None:
+                self.__name: str = name
+                self.__members: list[Member] = [owner]
+                # owned: deleted with the server
+                self.__channels: list[Channel] = []
+
+            def join(self, invite: Invite, nickname: str) -> Member:
+                invite.redeem()
+                member = Member(nickname)
+                self.__members.append(member)
+                return member
+      focus: {stored: [4, 6], owned: [5, 6], param: [8], call: [9]}
+    uses_invite:
+      file: invite.py
+      source: |
+        class Invite:
+            def __init__(self, uses: int) -> None:
+                self.__uses_left: int = uses
+
+            def redeem(self) -> None:
+                if self.__uses_left == 0:
+                    raise ValueError("This invite is used up.")
+                self.__uses_left -= 1
+      focus: {header: [1], redeem: [5]}
 java:
   label: Java
   filename: ChatApp.java
@@ -380,6 +410,48 @@ java:
         grouped: 3
         ownership: 17
         members: 16
+    uses_server:
+      file: Server.java
+      source: |
+        class Server {
+            private final String name;
+            private final List<Member> members =
+                new ArrayList<>();
+            // owned: deleted with the server
+            private final List<Channel> channels =
+                new ArrayList<>();
+
+            Server(String name, Member owner) {
+                this.name = name;
+                members.add(owner);
+            }
+
+            public Member join(Invite invite, String nickname) {
+                invite.redeem();
+                Member member = new Member(nickname);
+                members.add(member);
+                return member;
+            }
+        }
+      focus: {stored: [3, 4, 6, 7], owned: [5, 6, 7], param: [14], call: [15]}
+    uses_invite:
+      file: Invite.java
+      source: |
+        class Invite {
+            private int usesLeft;
+
+            Invite(int uses) {
+                this.usesLeft = uses;
+            }
+
+            public void redeem() {
+                if (usesLeft == 0) {
+                    throw new IllegalStateException("used up");
+                }
+                usesLeft--;
+            }
+        }
+      focus: {header: [1], redeem: [8]}
 cpp:
   label: C++
   filename: chat_app.cpp
@@ -575,6 +647,43 @@ cpp:
         grouped: 9
         ownership: 43
         members: 42
+    uses_server:
+      file: server.h
+      source: |
+        class Server {
+        public:
+            std::shared_ptr<Member> join(Invite& invite,
+                                         std::string nickname) {
+                invite.redeem();
+                members.push_back(
+                    std::make_shared<Member>(std::move(nickname)));
+                return members.back();
+            }
+
+        private:
+            std::string name;
+            std::vector<std::shared_ptr<Member>> members;
+            // owned: deleted with the server
+            std::vector<std::unique_ptr<Channel>> channels;
+        };
+      focus: {stored: [13, 15], owned: [14, 15], param: [3, 4], call: [5]}
+    uses_invite:
+      file: invite.h
+      source: |
+        class Invite {
+        public:
+            explicit Invite(int uses) : usesLeft(uses) {}
+
+            void redeem() {
+                if (usesLeft == 0)
+                    throw std::runtime_error("used up");
+                --usesLeft;
+            }
+
+        private:
+            int usesLeft;
+        };
+      focus: {header: [1], redeem: [5]}
 typescript:
   label: TypeScript
   filename: chat_app.ts
@@ -776,3 +885,41 @@ typescript:
         grouped: 3
         ownership: 17
         members: 16
+    uses_server:
+      file: server.ts
+      source: |
+        class Server {
+          private readonly name: string;
+          private readonly members: Member[];
+          // owned: deleted with the server
+          private readonly channels: Channel[] = [];
+
+          constructor(name: string, owner: Member) {
+            this.name = name;
+            this.members = [owner];
+          }
+
+          join(invite: Invite, nickname: string): Member {
+            invite.redeem();
+            const member = new Member(nickname);
+            this.members.push(member);
+            return member;
+          }
+        }
+      focus: {stored: [3, 5], owned: [4, 5], param: [12], call: [13]}
+    uses_invite:
+      file: invite.ts
+      source: |
+        class Invite {
+          private usesLeft: number;
+
+          constructor(uses: number) {
+            this.usesLeft = uses;
+          }
+
+          redeem(): void {
+            if (this.usesLeft === 0) throw new Error("Used up.");
+            this.usesLeft -= 1;
+          }
+        }
+      focus: {header: [1], redeem: [8]}

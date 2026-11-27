@@ -1,0 +1,179 @@
+# Code for the Hugging Face 2026 lesson's closer looks (scripts/narration/closer-look.js).
+# A look's `code: <name>` uses the blocks `<name>_<group>` in every language.
+# Focus keys name line numbers; lines stay within 60 characters, and Python
+# is fully type-hinted. The code illustrates the lesson's proposed boundary B;
+# it is not Hugging Face's production code, and Compartment and
+# SandboxedTemplates are teaching names.
+python:
+  label: Python
+  blocks:
+    parsing_worker:
+      file: worker/preview_job.py
+      source: |
+        import os
+        from parsing.preview import Preview, parse_upload
+        from sandbox import Compartment
+
+        # Production credential the worker already holds.
+        SERVICE_TOKEN: str = os.environ["SERVICE_ACCOUNT_TOKEN"]
+
+        def preview_job(upload: bytes) -> Preview:
+            """Connector 4: the Hub sends one upload to preview."""
+            box = Compartment(network=False, env={}, files=[])
+            return box.run(parse_upload, upload)
+      focus: {secret: [5, 6], job: [8, 9], handoff: [10, 11]}
+    parsing_parser:
+      file: parsing/preview.py
+      source: |
+        from dataclasses import dataclass
+        from parsing.formats import read_table
+        from parsing.templates import SandboxedTemplates
+
+        # Cannot run commands, whatever the template says.
+        TEMPLATES: SandboxedTemplates = SandboxedTemplates()
+
+        @dataclass
+        class Preview:
+            rows: list[list[str]]
+            page: str
+
+        # Runs inside the compartment: it sees only the upload.
+        def parse_upload(upload: bytes) -> Preview:
+            table = read_table(upload)  # bytes a stranger wrote
+            rows = table.head(5)
+            page = TEMPLATES.render(table.page_template, rows)
+            return Preview(rows, page)
+      focus: {templates: [5, 6], entry: [13, 14], read: [15], template: [17], result: [18]}
+java:
+  label: Java
+  blocks:
+    parsing_worker:
+      file: worker/PreviewJob.java
+      source: |
+        package worker;
+
+        import java.util.List;
+        import java.util.Map;
+        import parsing.Preview;
+        import parsing.UploadParser;
+        import sandbox.Compartment;
+
+        final class PreviewJob {
+            // Production credential the worker already holds.
+            static final String SERVICE_TOKEN =
+                System.getenv("SERVICE_ACCOUNT_TOKEN");
+
+            /** Connector 4: the Hub sends one upload to preview. */
+            Preview run(byte[] upload) {
+                var box = Compartment.builder().network(false)
+                    .env(Map.of()).files(List.of()).build();
+                return box.run(UploadParser::parse, upload);
+            }
+        }
+      focus: {secret: [10, 11, 12], job: [14, 15], handoff: [16, 17, 18]}
+    parsing_parser:
+      file: parsing/UploadParser.java
+      source: |
+        package parsing;
+
+        import java.util.List;
+
+        public final class UploadParser {
+            // Cannot run commands, whatever the template says.
+            static final SandboxedTemplates TEMPLATES =
+                new SandboxedTemplates();
+
+            // Runs inside the compartment: it sees only the upload.
+            public static Preview parse(byte[] upload) {
+                // Bytes a stranger wrote.
+                Table table = Formats.readTable(upload);
+                List<List<String>> rows = table.head(5);
+                String page =
+                    TEMPLATES.render(table.pageTemplate(), rows);
+                return new Preview(rows, page);
+            }
+        }
+      focus: {templates: [6, 7, 8], entry: [10, 11], read: [12, 13], template: [15, 16], result: [17]}
+cpp:
+  label: C++
+  blocks:
+    parsing_worker:
+      file: worker/preview_job.h
+      source: |
+        #pragma once
+        #include <cstdlib>
+        #include "parsing/upload_parser.h"
+        #include "sandbox/compartment.h"
+
+        // Production credential the worker already holds.
+        inline const char* const serviceToken =
+            std::getenv("SERVICE_ACCOUNT_TOKEN");
+
+        // Connector 4: the Hub sends one upload to preview.
+        inline Preview previewJob(const Bytes& upload) {
+            Compartment box{
+                .network = false, .env = {}, .files = {}};
+            return box.run(parseUpload, upload);
+        }
+      focus: {secret: [6, 7, 8], job: [10, 11], handoff: [12, 13, 14]}
+    parsing_parser:
+      file: parsing/upload_parser.h
+      source: |
+        #pragma once
+        #include <string>
+        #include "parsing/formats.h"
+        #include "parsing/sandboxed_templates.h"
+
+        struct Preview { Rows rows; std::string page; };
+
+        // Cannot run commands, whatever the template says.
+        inline const SandboxedTemplates templates;
+
+        // Runs inside the compartment: it sees only the upload.
+        inline Preview parseUpload(const Bytes& upload) {
+            // Bytes a stranger wrote.
+            Table table = readTable(upload);
+            Rows rows = table.head(5);
+            auto page = templates.render(table.pageTemplate, rows);
+            return {rows, page};
+        }
+      focus: {templates: [8, 9], entry: [11, 12], read: [13, 14], template: [16], result: [17]}
+typescript:
+  label: TypeScript
+  blocks:
+    parsing_worker:
+      file: worker/preview-job.ts
+      source: |
+        import { parseUpload, Preview } from "../parsing/preview";
+        import { Compartment } from "../sandbox";
+
+        // Production credential the worker already holds.
+        const SERVICE_TOKEN = process.env.SERVICE_ACCOUNT_TOKEN;
+
+        // Connector 4: the Hub sends one upload to preview.
+        export function previewJob(upload: Uint8Array): Preview {
+          const box = new Compartment({
+            network: false, env: {}, files: [],
+          });
+          return box.run(parseUpload, upload);
+        }
+      focus: {secret: [4, 5], job: [7, 8], handoff: [9, 10, 11, 12]}
+    parsing_parser:
+      file: parsing/preview.ts
+      source: |
+        import { readTable } from "./formats";
+        import { SandboxedTemplates } from "./templates";
+
+        export interface Preview { rows: string[][]; page: string }
+
+        // Cannot run commands, whatever the template says.
+        const TEMPLATES = new SandboxedTemplates();
+
+        // Runs inside the compartment: it sees only the upload.
+        export function parseUpload(upload: Uint8Array): Preview {
+          const table = readTable(upload); // bytes a stranger wrote
+          const rows = table.head(5);
+          const page = TEMPLATES.render(table.pageTemplate, rows);
+          return { rows, page };
+        }
+      focus: {templates: [6, 7], entry: [9, 10], read: [11], template: [13], result: [14]}

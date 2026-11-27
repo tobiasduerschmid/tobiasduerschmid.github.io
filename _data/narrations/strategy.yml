@@ -271,6 +271,46 @@ scenes:
           Patterns
         step: Take the data to the strategy
         note: Parameters keep Strategy and Context decoupled; passing the Context couples them.
+        closer_look:
+          title: Parameters keep strategies independent
+          notice: >-
+            Compare what split receives: plain values keep PercentSplit free of Expense, while passing
+            the expense itself makes every strategy depend on it.
+          code: data
+          groups:
+            - {id: expense, label: "«Context» Expense"}
+            - {id: percent, label: "«Concrete Strategy» PercentSplit"}
+            - {id: variant, label: "Variant: split(expense)"}
+          relations:
+            - {kind: call, from: expense.forward, to: percent.split, label: [calls split ↓, total and people]}
+            - {kind: dependency, from: variant.param, to: expense.role, label: [depends on ↑, Expense itself]}
+          steps:
+            - question: What does Expense send?
+              focus: [expense.fields, expense.forward, percent.split]
+              relation: call
+              text: >-
+                Expense keeps the total and the people and passes both to <code>split</code> as
+                parameters. The strategy receives plain data, not the expense.
+            - question: What does PercentSplit know?
+              focus: [percent.split, percent.data]
+              text: >-
+                Its signature names only a total and a list of people, and its percentages live in its
+                own field. PercentSplit never names Expense, so a test needs nothing but a total and a
+                list of people.
+            - question: What if the Context passes itself?
+              focus: [variant.param, variant.reads]
+              relation: dependency
+              text: >-
+                In the variant, <code>split</code> receives the expense, and each strategy reads exactly
+                what it needs. Now every strategy names Expense, and Expense must make that data public:
+                <strong>more freedom for each strategy, tighter coupling to the Context</strong>.
+            - question: Remove the Context
+              focus: [percent.split]
+              remove: expense
+              text: >-
+                Delete Expense: PercentSplit still compiles and its tests still pass, while the variant
+                fails where it names Expense. Parameters have their own price: a new strategy that needs
+                data the interface does not pass forces a change to the interface.
         visual: >-
           The split signature with its total and people parameters is marked. SplitStrategy remains
           highlighted.

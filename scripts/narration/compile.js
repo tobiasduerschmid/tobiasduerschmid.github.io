@@ -1,7 +1,7 @@
 'use strict';
 const { createHash } = require('node:crypto');
 
-const SHARED_STYLES = ['/css/song-video-fonts.css', '/css/narrated-explainer.css', '/css/narration-study.css'];
+const SHARED_STYLES = ['/css/song-video-fonts.css', '/css/narrated-explainer.css', '/css/narration-study.css', '/css/narration-closer-look.css'];
 const PRESENTATIONS = {
   video: {
     include: 'video-narration.html',
@@ -16,7 +16,7 @@ const PRESENTATIONS = {
 };
 const ROOT_FIELDS = ['version', 'id', 'kind', 'title', 'description', 'references', 'lesson', 'speech', 'media', 'scenes'];
 const SCENE_FIELDS = ['id', 'label', 'title', 'part', 'outline', 'purpose', 'takeaway', 'evidence', 'sources', 'checkpoint', 'cues'];
-const CUE_FIELDS = ['id', 'say', 'pause_after', 'visual', 'step', 'note', 'source', 'prediction'];
+const CUE_FIELDS = ['id', 'say', 'pause_after', 'visual', 'step', 'note', 'source', 'prediction', 'closer_look'];
 
 /** Compile a versioned script and visual package without mutating either input.
  * Throws a source-addressed error for invalid author data or broken cue links.

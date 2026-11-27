@@ -181,6 +181,69 @@ python:
         edit: [6]
         click: [7]
         readonly: [8]
+    dependencies_screen:
+      files:
+        - file: views/view.py
+          source: |
+            from abc import abstractmethod
+            from model.dataset import Dataset
+            from model.observer import Observer
+
+            class View(Observer):
+                def __init__(self, model: Dataset) -> None:
+                    self.model: Dataset = model
+                    self.lines: list[str] = []
+
+                def update(self) -> None:
+                    self.lines = self.draw(self.model.rows())
+
+                @abstractmethod
+                def draw(self,
+                         rows: list[tuple[str, int]]) -> list[str]:
+                    ...
+          focus: {imports: [2, 3], implements: [5], update: [10, 11], reads: [11]}
+        - file: controllers/table_controller.py
+          source: |
+            from controllers.controller import Controller, Event
+
+            class TableController(Controller):
+                def handle_event(self, event: Event) -> None:
+                    if event.kind == "edit":
+                        self.model.set_minutes(event.category,
+                                               event.minutes)
+          focus: {change: [5, 6, 7]}
+    dependencies_model:
+      files:
+        - file: model/observer.py
+          source: |
+            from abc import ABC, abstractmethod
+
+            class Observer(ABC):
+                @abstractmethod
+                def update(self) -> None: ...
+          focus: {contract: [3, 4, 5]}
+        - file: model/dataset.py
+          source: |
+            from model.observer import Observer
+
+            class Dataset:
+                def __init__(self, minutes: dict[str, int]) -> None:
+                    self._minutes: dict[str, int] = dict(minutes)
+                    self._observers: list[Observer] = []
+
+                # attach() and detach() manage the list.
+                def notify(self) -> None:
+                    for observer in list(self._observers):
+                        observer.update()
+
+                def set_minutes(self, category: str,
+                                minutes: int) -> None:
+                    self._minutes[category] = minutes
+                    self.notify()
+
+                def rows(self) -> list[tuple[str, int]]:
+                    return list(self._minutes.items())
+          focus: {role: [3], registry: [6], notify: [9, 10, 11], call: [11], set: [13, 14, 15, 16], rows: [18, 19]}
 java:
   label: Java
   filename: MvcDemo.java
@@ -428,6 +491,76 @@ java:
         edit: [12]
         click: [13]
         readonly: [14]
+    dependencies_screen:
+      files:
+        - file: views/View.java
+          source: |
+            package views;
+
+            import model.Dataset;
+            import model.Observer;
+
+            public abstract class View implements Observer {
+                public final Dataset model;
+                List<String> lines = List.of();
+                protected View(Dataset model) { this.model = model; }
+                @Override
+                public void update() {
+                    lines = draw(model.rows());
+                }
+                abstract List<String> draw(Map<String, Integer> rows);
+            }
+          focus: {imports: [3, 4], implements: [6], update: [11, 12], reads: [12]}
+        - file: controllers/TableController.java
+          source: |
+            package controllers;
+
+            import views.View;
+
+            public class TableController extends Controller {
+                public TableController(View view) { super(view); }
+                @Override
+                public void handleEvent(Event event) {
+                    if (event.kind().equals("edit")) {
+                        model.setMinutes(event.category(),
+                                event.minutes());
+                    }
+                }
+            }
+          focus: {change: [9, 10, 11]}
+    dependencies_model:
+      files:
+        - file: model/Observer.java
+          source: |
+            package model;
+
+            public interface Observer {
+                void update();
+            }
+          focus: {contract: [3, 4, 5]}
+        - file: model/Dataset.java
+          source: |
+            package model;
+
+            public class Dataset {
+                private final Map<String, Integer> minutes;
+                private final List<Observer> observers =
+                    new ArrayList<>();
+                // attach() and detach() manage the list.
+                void notifyObservers() {
+                    for (Observer observer : List.copyOf(observers)) {
+                        observer.update();
+                    }
+                }
+                public void setMinutes(String category, int value) {
+                    minutes.put(category, value);
+                    notifyObservers();
+                }
+                public Map<String, Integer> rows() {
+                    return Collections.unmodifiableMap(minutes);
+                }
+            }
+          focus: {role: [3], registry: [5, 6], notify: [8, 9, 10], call: [10], set: [13, 14, 15], rows: [17, 18]}
 cpp:
   label: C++
   filename: mvc_demo.cpp
@@ -673,6 +806,74 @@ cpp:
         edit: [9]
         click: [10]
         readonly: [11]
+    dependencies_screen:
+      files:
+        - file: views/view.h
+          source: |
+            #pragma once
+            #include "model/dataset.h"
+            #include "model/observer.h"
+
+            class View : public Observer {
+            public:
+                explicit View(Dataset& model) : model(model) {}
+                void update() override { lines = draw(model.rows()); }
+                Dataset& model;
+                std::vector<std::string> lines;
+            protected:
+                virtual std::vector<std::string> draw(
+                    const Rows& rows) const = 0;
+            };
+          focus: {imports: [2, 3], implements: [5], update: [8], reads: [8]}
+        - file: controllers/table_controller.h
+          source: |
+            #pragma once
+            #include "controllers/controller.h"
+
+            class TableController : public Controller {
+            public:
+                using Controller::Controller;
+                void handleEvent(const Event& event) override {
+                    if (event.kind == "edit")
+                        model.setMinutes(event.category, event.minutes);
+                }
+            };
+          focus: {change: [8, 9]}
+    dependencies_model:
+      files:
+        - file: model/observer.h
+          source: |
+            #pragma once
+
+            class Observer {
+            public:
+                virtual ~Observer() = default;
+                virtual void update() = 0;
+            };
+          focus: {contract: [3, 6, 7]}
+        - file: model/dataset.h
+          source: |
+            #pragma once
+            #include "model/observer.h"
+            using Rows = std::vector<std::pair<std::string, int>>;
+            class Dataset {
+                Rows minutes;
+                std::vector<Observer*> observers;
+            public:
+                // attach() and detach() manage the list.
+                void notify() {
+                    for (Observer* observer : observers)
+                        observer->update();
+                }
+                void setMinutes(const std::string& category,
+                                int value) {
+                    for (auto& [name, current] : minutes)
+                        if (name == category) current = value;
+                    notify();
+                }
+                const Rows& rows() const { return minutes; }
+            };
+          focus: {role: [4], registry: [6], notify: [9, 10, 11], call: [11], set: [13, 14, 15, 16, 17], rows: [19]}
 typescript:
   label: TypeScript
   filename: mvc-demo.ts
@@ -885,3 +1086,69 @@ typescript:
         edit: [7]
         click: [8]
         readonly: [9]
+    dependencies_screen:
+      files:
+        - file: views/view.ts
+          source: |
+            import { Dataset, Rows } from "../model/dataset";
+            import { Observer } from "../model/observer";
+
+            export abstract class View implements Observer {
+              readonly model: Dataset;
+              lines: string[] = [];
+
+              constructor(model: Dataset) {
+                this.model = model;
+              }
+
+              update(): void {
+                this.lines = this.draw(this.model.rows());
+              }
+
+              protected abstract draw(rows: Rows): string[];
+            }
+          focus: {imports: [1, 2], implements: [4], update: [12, 13], reads: [13]}
+        - file: controllers/table-controller.ts
+          source: |
+            import { Controller, Event } from "./controller";
+
+            export class TableController extends Controller {
+              handleEvent(event: Event): void {
+                if (event.kind === "edit") {
+                  this.model.setMinutes(event.category,
+                                        event.minutes ?? 0);
+                }
+              }
+            }
+          focus: {change: [5, 6, 7]}
+    dependencies_model:
+      files:
+        - file: model/observer.ts
+          source: |
+            export interface Observer {
+              update(): void;
+            }
+          focus: {contract: [1, 2, 3]}
+        - file: model/dataset.ts
+          source: |
+            import { Observer } from "./observer";
+
+            export type Rows = ReadonlyArray<readonly [string, number]>;
+            export class Dataset {
+              private readonly minutes: Map<string, number>;
+              private readonly observers: Observer[] = [];
+              // attach() and detach() manage the list.
+              notify(): void {
+                for (const observer of [...this.observers]) {
+                  observer.update();
+                }
+              }
+              setMinutes(category: string, value: number): void {
+                this.minutes.set(category, value);
+                this.notify();
+              }
+              rows(): Rows {
+                return [...this.minutes];
+              }
+            }
+          focus: {role: [4], registry: [6], notify: [8, 9, 10], call: [10], set: [13, 14, 15], rows: [17, 18]}

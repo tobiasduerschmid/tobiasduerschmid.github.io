@@ -223,6 +223,42 @@ scenes:
           processes these queued updates after the event handler finishes.
         step: Request the next state
         note: The handler sees 0, calculates 0 + 1, and queues the value 1.
+        closer_look:
+          title: The next render sees the new state
+          notice: >-
+            Follow the 1: setLikes only queues it, and only the next call of the component
+            receives it.
+          code: snapshot
+          groups:
+            - {id: component, label: "LikeButton, a render function"}
+            - {id: react, label: "React, simplified"}
+          relations:
+            - {kind: call, from: react.render, to: component.read, label: [calls again ↑, next render]}
+          steps:
+            - question: What does setLikes change?
+              focus: [component.handler, react.queue]
+              text: >-
+                <code>setLikes(likes + 1)</code> does not assign <code>likes</code>. It adds the
+                value 1 to React’s queue: <strong>a request for the next state</strong>.
+            - question: What does this handler still see?
+              focus: [component.read, component.stale]
+              text: >-
+                <code>likes</code> belongs to this call of the component, a snapshot taken when it
+                rendered. The print on the next line still shows 0; nothing changes it halfway
+                through the call.
+            - question: When does the 1 arrive?
+              focus: [react.apply, react.slot, react.render, component.read]
+              relation: call
+              text: >-
+                After the handler returns, React applies the queue to the memory it keeps and calls
+                the component again. That new call receives 1, so its description says
+                <code>Like: 1</code>. <strong>New state means a new render.</strong>
+            - question: Who changes the page?
+              focus: [component.describe, react.commit]
+              text: >-
+                The component never edits the button. It returns a description, and React commits
+                only what differs from the page: here, the button’s text. To change the screen,
+                change the state and let the component describe the result.
         visual: >-
           A pointer presses Like: 0. The callback produces a queued request, next likes = 1, while
           the current render snapshot explicitly remains likes = 0.

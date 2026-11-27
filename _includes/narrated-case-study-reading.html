@@ -18,6 +18,7 @@
       </figure>
       <p class="case-diagram-description"><strong>Diagram description:</strong> {{ diagram.description | escape }}</p>
       {% if cue.note %}<p class="case-reading-note">{{ cue.note | escape }}</p>{% endif %}
+      {% if cue.closer_look %}{% capture closer_case_id %}{{ include.prefix }}-reading{% endcapture %}{% include narration-closer-look.html topic=include.topic id=closer_case_id scene=scene cue=cue mode='static' heading='h5' %}{% endif %}
     </section>
     {% endfor %}
     {% if scene.checkpoint %}

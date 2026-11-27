@@ -4,6 +4,7 @@ const path = require('node:path');
 const yaml = require('js-yaml');
 const { compileLesson } = require('./compile');
 const { validateStudy } = require('./study');
+const { compileCloserLooks } = require('./closer-look');
 const ROOT = path.resolve(__dirname, '../..');
 
 function lessonIds(root = ROOT) {
@@ -17,6 +18,8 @@ function loadLesson(topic, root = ROOT) {
     if (source.id !== topic) throw new Error('id must match the filename');
     const visuals = JSON.parse(readFileSync(path.join(root, '_data/narration_visuals', `${topic}.json`), 'utf8'));
     const lesson = compileLesson(source, visuals);
+    const examples = readOptionalYAML(path.join(root, '_data/explainers', `${topic}_code.yml`)) || {};
+    lesson.story = compileCloserLooks(lesson.story, examples);
     const study = readOptionalYAML(path.join(root, '_data/explainers', `${topic}_study.yml`));
     if (study) {
       const quizzes = readOptionalYAML(path.join(root, '_data/explainers', `${topic}_quizzes.yml`)) || {};

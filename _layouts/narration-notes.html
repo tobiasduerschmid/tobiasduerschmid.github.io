@@ -8,7 +8,14 @@
   {% include ai-training-opt-out-meta.html %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css"
         integrity="sha384-nRgPTkuX86pH8yjPJUAFuASXQSSl2/bBUiNV47vSYpKFxHJhbcrGnmlYpYJMeD7a" crossorigin="anonymous">
-  {% if notes_entry.lesson.animation %}{% include video-narration-stage-assets.html topic=page.topic part='styles' %}{% else %}
+  {% if notes_entry.lesson.animation %}{% include video-narration-stage-assets.html topic=page.topic part='styles' %}
+    {%- comment -%}Stage stills need no narration styles; a closer look (code after its cue) does.{%- endcomment -%}
+    {%- include narration-closer-look-count.html topic=page.topic -%}
+    {%- if closer_look_count > 0 %}
+    <link rel="stylesheet" href="{{ '/css/narrated-explainer.css' | relative_url }}?v={{ site.asset_version }}">
+    <link rel="stylesheet" href="{{ '/css/narration-closer-look.css' | relative_url }}?v={{ site.asset_version }}">
+    {%- endif %}
+  {% else %}
     {% for stylesheet in notes_entry.styles %}<link rel="stylesheet" href="{{ stylesheet | relative_url }}?v={{ site.asset_version }}">{% endfor %}
     <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}?v={{ site.asset_version }}">
   {% endif %}

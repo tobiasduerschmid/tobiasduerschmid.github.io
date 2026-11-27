@@ -23,6 +23,13 @@ description: >-
 
 ## Practice, inspection, and review
 
+For one important or counter-intuitive moment, a lesson may also offer a
+**closer look**: an optional code example the learner opens on demand, with
+steps that highlight its lines and arrows between them (for example the
+pull-or-push variant of an update). It reuses `<topic>_code.yml`, never
+changes the speech, and is documented in
+[`narration-authoring`](../narration-authoring/SKILL.md#closer-looks-optional-code-at-the-moment-it-helps).
+
 UML and pattern lessons use the shared study tools documented in
 [`narration-authoring`](../narration-authoring/SKILL.md#student-study-tools) and
 [`docs/narration-study.md`](../../../docs/narration-study.md). Author a

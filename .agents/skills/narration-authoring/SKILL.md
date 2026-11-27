@@ -350,6 +350,59 @@ search/jump, draft retention/reset, code-language inspection, summary-question
 review/return/retry, normal/accelerated prediction holds and opt-out, mobile fullscreen, and
 printed answers with the narration-study and prediction-review tests.
 
+## Closer looks: optional code at the moment it helps
+
+A **closer look** is an optional worked example on one cue, for an idea that
+is important or counter-intuitive, such as the Layers lesson's "control flow
+and dependency are different relations". While the cue plays, a **See it in
+code** offer shows at the picture's top right (a row under the picture on
+phones) and a marker stays on its own timeline row. Opening it (click, marker,
+or <kbd>E</kbd>) pauses the narration and puts the panel where the picture
+was; **Continue narration** resumes at the same moment. The schema, behavior,
+and file ownership are in
+[`docs/narration-format.md#closer-looks`](../../../docs/narration-format.md#closer-looks).
+
+- **Pedagogy.** Offer one where learners split: worked detail helps novices
+  and slows those who already have the idea (expertise reversal), so it is
+  never forced. The speech never mentions it, nothing waits for it, and the
+  narration never pauses by itself; do not add a hold, a check, or audio for
+  it. Ask questions in the steps ("Who calls whom?") whose answers the
+  highlighted lines show, end with a consequence (such as removing a layer),
+  and lay out the groups the way the lesson's view draws them, so the code
+  reads as the picture the learner just saw.
+- **Authoring.** Add `closer_look` to the cue in `_data/narrations/<id>.yml`
+  (`title`, `notice`, optional `offer`, a content kind such as `code`, `groups`,
+  optional `relations`, and `steps`). It is outside the speech fingerprint:
+  adding or editing one never re-renders audio. Code goes in
+  `_data/explainers/<id>_code.yml` in all four languages (python, java, cpp,
+  typescript), one block `<code>_<group>` per group (`file`, `source`, `focus`,
+  or `files` for several). Write idiomatic code, **always fully type-hinted
+  Python**, at most **60 characters per line**. Step text may use `<code>`,
+  `<strong>`, and `<em>`. The compiler rejects unknown groups, relations, or
+  focus keys and any missing language block.
+- **Where it shows.** The player panel; after its cue in the reading and print
+  views and the chapter transcript; and in the lesson notes, as a block after
+  the cue's row (not a `.vn-note` row; video-lesson notes then load the shared
+  narration styles, which can shift their pagination slightly).
+- **Extending.** The view reads only markup: an element marked
+  `data-closer-look-focus="group.key"` is an anchor, so a new content kind adds
+  a validator to `CONTENT` in `scripts/narration/closer-look.js`, a branch in
+  `narration-closer-look.html`, and an include that marks anchors; offer,
+  steps, and player behavior stay as they are (language switching and relation
+  lanes are code-specific). A new relation kind adds `RELATION_KINDS`, the view's
+  `RELATION_HEADS` entry, and its line style. Keep the offer, panel, and marker
+  in the shared player; never add a topic-specific closer look.
+- **Gotchas.** The page inverts every `.post-content svg` in dark mode, so the
+  closer look's SVGs opt out with `filter: none`. The offer's accessible name
+  is set as `aria-label` (visible label first) because a visually hidden title
+  inserts a stray space into the computed name. Pick the offer's corner for
+  the drafting-room art; a new theme must check that the top-right band is free.
+- **Verify** with `scripts/tests/narration-closer-look.test.js` and
+  `tests/narration-closer-look.spec.js` (offer timing, <kbd>E</kbd>, Continue
+  position, Escape, marker, play or seek leaving, replay, steps, every language
+  without wrapping, viewport full screen, phone, dark mode, a lesson without
+  looks), plus the notes and reading views in light, dark, and print.
+
 ## Verification
 
 Run `scripts/tests/narration-spec.test.js`, the affected topic content tests,

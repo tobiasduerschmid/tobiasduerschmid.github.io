@@ -1,0 +1,249 @@
+# Code for the Therac-25 lesson's closer looks (scripts/narration/closer-look.js).
+# A look's `code: <name>` uses the blocks `<name>_<group>` in every language.
+# Focus keys name line numbers; lines stay within 60 characters, and Python
+# is fully type-hinted. This is a teaching reconstruction in modern languages,
+# not the historical program; only the routine names Magnet, Ptime, and Datent
+# are historical.
+python:
+  label: Python
+  blocks:
+    flag_setup:
+      file: therac/magnet.py
+      source: |
+        from therac.ptime import ptime
+        from therac.settings import Settings, select_settings
+        from therac.shared import shared
+
+        def magnet(settings: Settings) -> bool:
+            """Set each bending magnet; False on a seen edit."""
+            shared.setting_flag = True       # setup in progress
+            for m in settings.bending_magnets:
+                m.start_moving()
+                if ptime(m.settle_seconds):  # several seconds
+                    return False             # reconcile the edit
+            return True                      # setup finished
+
+        def beam_setup() -> bool:
+            settings = select_settings(shared.request)  # reads X
+            return magnet(settings)
+      focus: {flag_on: [7], loop: [8, 9], call: [10], done: [12], read: [15]}
+    flag_delay:
+      file: therac/ptime.py
+      source: |
+        from therac.clock import ticks, wait_tick
+        from therac.shared import shared
+
+        def ptime(seconds: float) -> bool:
+            """Wait; True if an edit is seen while flag is on."""
+            for _ in range(ticks(seconds)):
+                wait_tick()                  # other tasks run here
+                if shared.setting_flag and shared.edited:
+                    return True              # edit seen
+            shared.setting_flag = False      # cleared on exit
+            return False
+      focus: {entry: [4], wait: [7], check: [8, 9], clear: [10]}
+    flag_state:
+      file: therac/shared.py
+      source: |
+        from dataclasses import dataclass
+
+        @dataclass
+        class Shared:
+            """Values shared by the tasks that take turns."""
+            request: str = "X"            # the mode entry
+            setting_flag: bool = False    # on: magnets being set
+            edited: bool = False          # an entry has changed
+
+        shared: Shared = Shared()
+
+        def datent_edit(mode: str) -> None:
+            """Data entry: the therapist corrects the mode."""
+            shared.request = mode
+            shared.edited = True
+      focus: {request: [6], flag: [7], edited: [8], edit: [12, 13, 14, 15]}
+java:
+  label: Java
+  blocks:
+    flag_setup:
+      file: therac/Magnet.java
+      source: |
+        package therac;
+
+        final class Magnet {
+            static boolean magnet(Settings s) {
+                Shared.settingFlag = true;     // setup in progress
+                for (BendingMagnet m : s.bendingMagnets()) {
+                    m.startMoving();
+                    if (Ptime.ptime(m.settleSeconds()))
+                        return false;          // reconcile the edit
+                }
+                return true;                   // setup finished
+            }
+
+            static boolean beamSetup() {
+                var s = Settings.select(Shared.request); // reads X
+                return magnet(s);
+            }
+        }
+      focus: {flag_on: [5], loop: [6, 7], call: [8], done: [11], read: [15]}
+    flag_delay:
+      file: therac/Ptime.java
+      source: |
+        package therac;
+
+        final class Ptime {
+            /** Wait; true if an edit is seen while flag is on. */
+            static boolean ptime(double seconds) {
+                for (long t = 0; t < Clock.ticks(seconds); t++) {
+                    Clock.waitTick();  // other tasks run here
+                    if (Shared.settingFlag && Shared.edited)
+                        return true;   // edit seen
+                }
+                Shared.settingFlag = false;  // cleared on exit
+                return false;
+            }
+        }
+      focus: {entry: [5], wait: [7], check: [8, 9], clear: [11]}
+    flag_state:
+      file: therac/Shared.java
+      source: |
+        package therac;
+
+        /** Values shared by the tasks that take turns. */
+        final class Shared {
+            static volatile char request = 'X';
+            /** On: the bending magnets are being set. */
+            static volatile boolean settingFlag = false;
+            static volatile boolean edited = false;
+
+            /** Data entry: the therapist corrects the mode. */
+            static void datentEdit(char mode) {
+                request = mode;
+                edited = true;
+            }
+        }
+      focus: {request: [5], flag: [6, 7], edited: [8], edit: [10, 11, 12, 13, 14]}
+cpp:
+  label: C++
+  blocks:
+    flag_setup:
+      file: therac/magnet.h
+      source: |
+        #pragma once
+        #include "therac/ptime.h"
+        #include "therac/settings.h"
+
+        inline bool magnet(Settings& s) {
+            shared.settingFlag = true;       // setup in progress
+            for (BendingMagnet& m : s.bendingMagnets) {
+                m.startMoving();
+                if (ptime(m.settleSeconds))
+                    return false;            // reconcile the edit
+            }
+            return true;                     // setup finished
+        }
+
+        inline bool beamSetup() {
+            Settings s = selectSettings(shared.request); // reads X
+            return magnet(s);
+        }
+      focus: {flag_on: [6], loop: [7, 8], call: [9], done: [12], read: [16]}
+    flag_delay:
+      file: therac/ptime.h
+      source: |
+        #pragma once
+        #include "therac/clock.h"
+        #include "therac/shared.h"
+
+        // Wait; true if an edit is seen while the flag is on.
+        inline bool ptime(double seconds) {
+            for (long t = 0; t < ticks(seconds); ++t) {
+                waitTick();                  // other tasks run here
+                if (shared.settingFlag && shared.edited)
+                    return true;             // edit seen
+            }
+            shared.settingFlag = false;      // cleared on exit
+            return false;
+        }
+      focus: {entry: [6], wait: [8], check: [9, 10], clear: [12]}
+    flag_state:
+      file: therac/shared.h
+      source: |
+        #pragma once
+        #include <atomic>
+
+        // Values shared by the tasks that take turns.
+        struct Shared {
+            std::atomic<char> request{'X'};
+            // On: the bending magnets are being set.
+            std::atomic<bool> settingFlag{false};
+            std::atomic<bool> edited{false};
+        };
+        inline Shared shared;
+
+        // Data entry: the therapist corrects the mode.
+        inline void datentEdit(char mode) {
+            shared.request = mode;
+            shared.edited = true;
+        }
+      focus: {request: [6], flag: [7, 8], edited: [9], edit: [13, 14, 15, 16, 17]}
+typescript:
+  label: TypeScript
+  blocks:
+    flag_setup:
+      file: therac/magnet.ts
+      source: |
+        import { ptime } from "./ptime";
+        import { Settings, selectSettings } from "./settings";
+        import { shared } from "./shared";
+
+        export async function magnet(s: Settings) {
+          shared.settingFlag = true; // setup in progress
+          for (const m of s.bendingMagnets) {
+            m.startMoving();
+            if (await ptime(m.settleSeconds))
+              return false; // reconcile the edit
+          }
+          return true; // setup finished
+        }
+
+        export async function beamSetup() {
+          const s = selectSettings(shared.request); // reads X
+          return magnet(s);
+        }
+      focus: {flag_on: [6], loop: [7, 8], call: [9], done: [12], read: [16]}
+    flag_delay:
+      file: therac/ptime.ts
+      source: |
+        import { ticks, waitTick } from "./clock";
+        import { shared } from "./shared";
+
+        // Wait; true if an edit is seen while the flag is on.
+        export async function ptime(seconds: number) {
+          for (let t = 0; t < ticks(seconds); t++) {
+            await waitTick(); // other tasks run here
+            if (shared.settingFlag && shared.edited)
+              return true; // edit seen
+          }
+          shared.settingFlag = false; // cleared on exit
+          return false;
+        }
+      focus: {entry: [5], wait: [7], check: [8, 9], clear: [11]}
+    flag_state:
+      file: therac/shared.ts
+      source: |
+        export type Mode = "X" | "E";
+
+        // Values shared by the tasks that take turns.
+        export const shared = {
+          request: "X" as Mode,
+          settingFlag: false, // on: magnets being set
+          edited: false,
+        };
+
+        // Data entry: the therapist corrects the mode.
+        export function datentEdit(mode: Mode): void {
+          shared.request = mode;
+          shared.edited = true;
+        }
+      focus: {request: [5], flag: [6], edited: [7], edit: [10, 11, 12, 13, 14]}

@@ -28,6 +28,14 @@ pause until **Reveal explanation**; the settings checkbox can opt out. Do not
 change audio timing or implement this gate in a topic choreography. The reader
 uses an answer disclosure and print reveals its contents.
 
+They also inherit **closer looks**: an optional, cue-anchored code example
+(**See it in code**) for an important or counter-intuitive moment, authored as
+`closer_look` on the cue with code in `<topic>_code.yml`; see
+[`narration-authoring`](../narration-authoring/SKILL.md#closer-looks-optional-code-at-the-moment-it-helps).
+Video lessons need no `languages` entry for it, because the panel carries its
+own language select. Keep the picture's top-right band free during a cue that
+offers one: the offer sits there, beside the RULE plaque.
+
 Follow [`narration-authoring`](../narration-authoring/SKILL.md#student-study-tools)
 and [`docs/narration-study.md`](../../../docs/narration-study.md) for optional
 `<topic>_study.yml` companions: question-specific review plus fresh retries,

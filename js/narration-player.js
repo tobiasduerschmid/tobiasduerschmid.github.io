@@ -128,6 +128,7 @@
     const nextStep = root.querySelector('[data-narration-action="next-step"]');
     let player;
     let study;
+    let closerLook = null;
     let resumeAfterCheck = Boolean(story.audio);
     window.NarrationPreferences.subscribe(preferences => {
       if (finalCheckOnly === preferences.finalCheckOnly) return;
@@ -185,21 +186,39 @@
       player.pause();
       player.dismissPrediction();
       if (study) study.close();
+      if (closerLook) closerLook.close({ focus: false });
       if (checks[index] && (review || shouldCheck(index))) quiz.open(index);
       else if (resume && index === story.scenes.length - 1) status.textContent = 'Narration complete.';
       else await continueAfter(index, resume);
     }
 
+    // Closer looks are optional detours: seeking or playing leaves an open one.
+    const leaveCloserLook = () => { if (closerLook) closerLook.close({ focus: false }); };
     player = window.NarrationTransport.mount(root, {
       storyboard: story, timing, checkScenes, shouldCheck,
-      render(frame) { renderVisuals(frame); steps.update(frame); if (study) study.update(frame); },
-      onSectionEnd: finishScene, onSeek: quiz.close,
+      looks: window.NarrationCloserLook.anchors(story, timing),
+      onLook: look => closerLook.open(look, { seek: true }),
+      render(frame) {
+        renderVisuals(frame);
+        steps.update(frame);
+        if (study) study.update(frame);
+        if (closerLook) closerLook.update(frame);
+      },
+      onSectionEnd: finishScene,
+      onSeek() { quiz.close(); leaveCloserLook(); },
+      onPlay: leaveCloserLook,
       canPlay: () => !quiz.isOpen() && !(study && study.isOpen()),
     });
     if (window.NarrationStudy) {
       study = window.NarrationStudy.create(root, data, player);
       player.refresh();
     }
+    const prediction = root.querySelector('[data-narration-prediction]');
+    closerLook = window.NarrationCloserLook.create(root, {
+      story, timing, player, status,
+      isBlocked: () => quiz.isOpen() || Boolean(study && study.isOpen()) || Boolean(prediction && !prediction.hidden),
+    });
+    if (closerLook) player.refresh();
     steps.bind(player, finishScene);
     linkNavigation(root, story, player);
     bindReading(root, player);

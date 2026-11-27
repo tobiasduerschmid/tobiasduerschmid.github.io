@@ -225,6 +225,45 @@ scenes:
           part that answers requests; the socket sits on the part that makes them.
         step: Answers requests → ball · makes requests → socket
         note: AlertService provides Watches and requires TextMessages.
+        closer_look:
+          title: Implement the ball, receive the socket
+          notice: >-
+            In code, a provided interface is one the component implements and answers, while a
+            required interface is one it receives from outside and calls.
+          code: offers
+          groups:
+            - {id: service, label: "«component» AlertService"}
+            - {id: contracts, label: "Interfaces in shared/"}
+          relations:
+            - {kind: dependency, from: service.requires, to: contracts.text_messages, label: [needs ↓, required]}
+            - {kind: call, from: service.request, to: contracts.send, label: [requests ↓, at run time]}
+          steps:
+            - question: Which service does it offer?
+              focus: [service.provides, service.answers, contracts.watches]
+              text: >-
+                AlertService implements Watches: it writes the bodies of <code>create</code> and
+                <code>cancel</code>, and web apps call them. An interface a component
+                <strong>implements and answers</strong> is provided: the ball.
+            - question: Which service does it need?
+              focus: [service.requires, contracts.text_messages]
+              relation: dependency
+              text: >-
+                AlertService never implements TextMessages. It receives one when it starts and
+                keeps it, typed by the interface alone, never by the SMS company's gateway. An
+                interface a component <strong>receives and calls</strong> is required: the socket.
+            - question: Who makes the request?
+              focus: [service.request, contracts.send]
+              relation: call
+              text: >-
+                When a seat opens, AlertService calls <code>send</code>: the request starts here
+                and goes to whichever part fills the socket. For Watches it runs the other way:
+                web apps ask, and AlertService answers.
+            - question: Both are imports
+              focus: [service.imports]
+              text: >-
+                The import names both interfaces, so an import alone cannot tell a ball from a
+                socket. Ask which side writes the operations and which side calls them: the side
+                that answers gets the ball, the side that asks gets the socket.
         visual: >-
           AlertService is highlighted. Callouts mark its Watches ball as a service it provides and
           its TextMessages socket as a service it requires.

@@ -142,6 +142,59 @@ python:
         first: [6, 7]
         switch: [8, 9]
         label: [3, 9]
+    data_expense:
+      file: expense.py
+      source: |
+        from split_strategy import SplitStrategy
+
+        class Expense:
+            def __init__(self, total: int, people: list[str],
+                         strategy: SplitStrategy) -> None:
+                self.total: int = total
+                self.people: list[str] = people
+                self._strategy: SplitStrategy = strategy
+
+            def shares(self) -> dict[str, int]:
+                return self._strategy.split(self.total,
+                                            self.people)
+      focus: {role: [3], fields: [6, 7], forward: [11, 12]}
+    data_percent:
+      file: percent_split.py
+      source: |
+        from split_strategy import SplitStrategy
+
+        class PercentSplit(SplitStrategy):
+            def __init__(self, percents: dict[str, int]) -> None:
+                if sum(percents.values()) != 100:
+                    raise ValueError("percentages must total 100")
+                self.percents: dict[str, int] = percents
+
+            def split(self, total: int,
+                      people: list[str]) -> dict[str, int]:
+                shares: dict[str, int] = {}
+                for p in people:
+                    shares[p] = total * self.percents[p] // 100
+                shares[people[0]] += total - sum(shares.values())
+                return shares
+      focus: {data: [4, 5, 6, 7], split: [9, 10]}
+    data_variant:
+      file: variant/percent_split.py
+      source: |
+        from expense import Expense
+        from split_strategy import SplitStrategy
+
+        class PercentSplit(SplitStrategy):
+            percents: dict[str, int]  # set in __init__, as before
+
+            def split(self, expense: Expense) -> dict[str, int]:
+                total: int = expense.total
+                people: list[str] = expense.people
+                shares: dict[str, int] = {}
+                for p in people:
+                    shares[p] = total * self.percents[p] // 100
+                shares[people[0]] += total - sum(shares.values())
+                return shares
+      focus: {param: [1, 7], reads: [8, 9]}
 java:
   label: Java
   filename: StrategyDemo.java
@@ -341,6 +394,70 @@ java:
         first: [9, 10]
         switch: [11, 12]
         label: [5, 12]
+    data_expense:
+      file: Expense.java
+      source: |
+        final class Expense {
+            private final int total;
+            private final List<String> people;
+            private SplitStrategy strategy;
+
+            Expense(int total, List<String> people,
+                    SplitStrategy strategy) {
+                this.total = total;
+                this.people = people;
+                this.strategy = strategy;
+            }
+
+            Map<String, Integer> shares() {
+                return strategy.split(total, people);
+            }
+        }
+      focus: {role: [1], fields: [2, 3], forward: [14]}
+    data_percent:
+      file: PercentSplit.java
+      source: |
+        final class PercentSplit implements SplitStrategy {
+            // The constructor checks that they add up to 100.
+            private final Map<String, Integer> percents;
+
+            public Map<String, Integer> split(int total,
+                    List<String> people) {
+                Map<String, Integer> shares = new LinkedHashMap<>();
+                int assigned = 0;
+                for (String person : people) {
+                    int share = total * percents.get(person) / 100;
+                    shares.put(person, share);
+                    assigned += share;
+                }
+                shares.merge(people.get(0), total - assigned,
+                        Integer::sum);
+                return shares;
+            }
+        }
+      focus: {data: [3], split: [5, 6]}
+    data_variant:
+      file: variant/PercentSplit.java
+      source: |
+        final class PercentSplit implements SplitStrategy {
+            private final Map<String, Integer> percents;
+
+            public Map<String, Integer> split(Expense expense) {
+                int total = expense.total();
+                List<String> people = expense.people();
+                Map<String, Integer> shares = new LinkedHashMap<>();
+                int assigned = 0;
+                for (String person : people) {
+                    int share = total * percents.get(person) / 100;
+                    shares.put(person, share);
+                    assigned += share;
+                }
+                shares.merge(people.get(0), total - assigned,
+                        Integer::sum);
+                return shares;
+            }
+        }
+      focus: {param: [4], reads: [5, 6]}
 cpp:
   label: C++
   filename: strategy_demo.cpp
@@ -534,6 +651,73 @@ cpp:
         first: [10, 11]
         switch: [12, 13, 14]
         label: [6, 14]
+    data_expense:
+      file: expense.h
+      source: |
+        #include "split_strategy.h"
+
+        class Expense {
+            int total;
+            std::vector<std::string> people;
+            std::shared_ptr<const SplitStrategy> strategy;
+        public:
+            Expense(int total, std::vector<std::string> people,
+                    std::shared_ptr<const SplitStrategy> strategy)
+                : total(total), people(std::move(people)),
+                  strategy(std::move(strategy)) {}
+            Shares shares() const {
+                return strategy->split(total, people);
+            }
+        };
+      focus: {role: [3], fields: [4, 5], forward: [13]}
+    data_percent:
+      file: percent_split.h
+      source: |
+        #include "split_strategy.h"
+
+        class PercentSplit : public SplitStrategy {
+            // The constructor checks that they add up to 100.
+            std::map<std::string, int> percents;
+        public:
+            Shares split(int total,
+                         const std::vector<std::string>& people)
+                const override {
+                Shares shares;
+                int assigned = 0;
+                for (const auto& person : people) {
+                    int share = total * percents.at(person) / 100;
+                    shares[person] = share;
+                    assigned += share;
+                }
+                shares[people.front()] += total - assigned;
+                return shares;
+            }
+        };
+      focus: {data: [5], split: [7, 8, 9]}
+    data_variant:
+      file: variant/percent_split.h
+      source: |
+        #include "expense.h"
+        #include "split_strategy.h"
+
+        class PercentSplit : public SplitStrategy {
+            std::map<std::string, int> percents;
+        public:
+            Shares split(const Expense& expense) const override {
+                const int total = expense.total();
+                const auto& people = expense.people();
+                Shares shares;
+                int assigned = 0;
+                for (const auto& person : people) {
+                    int share = total * percents.at(person) / 100;
+                    shares[person] = share;
+                    assigned += share;
+                }
+                shares[people.front()] += total - assigned;
+                return shares;
+            }
+        };
+      focus: {param: [1, 7], reads: [8, 9]}
 typescript:
   label: TypeScript
   filename: strategy-demo.ts
@@ -716,3 +900,72 @@ typescript:
         first: [6, 7]
         switch: [8, 9]
         label: [3, 9]
+    data_expense:
+      file: expense.ts
+      source: |
+        import { Shares, SplitStrategy } from "./split-strategy";
+
+        export class Expense {
+          private readonly total: number;
+          private readonly people: string[];
+          private strategy: SplitStrategy;
+
+          constructor(total: number, people: string[],
+                      strategy: SplitStrategy) {
+            this.total = total;
+            this.people = people;
+            this.strategy = strategy;
+          }
+
+          shares(): Shares {
+            return this.strategy.split(this.total, this.people);
+          }
+        }
+      focus: {role: [3], fields: [4, 5], forward: [16]}
+    data_percent:
+      file: percent-split.ts
+      source: |
+        import { Shares, SplitStrategy } from "./split-strategy";
+
+        export class PercentSplit implements SplitStrategy {
+          // The constructor checks that they add up to 100.
+          private readonly percents: Record<string, number>;
+
+          split(total: number, people: string[]): Shares {
+            const shares: Shares = new Map();
+            let left = total;
+            for (const p of people) {
+              const percent = this.percents[p];
+              const share = Math.floor((total * percent) / 100);
+              shares.set(p, share);
+              left -= share;
+            }
+            shares.set(people[0], shares.get(people[0])! + left);
+            return shares;
+          }
+        }
+      focus: {data: [5], split: [7]}
+    data_variant:
+      file: variant/percent-split.ts
+      source: |
+        import { Expense } from "../expense";
+        import { Shares, SplitStrategy } from "../split-strategy";
+
+        export class PercentSplit implements SplitStrategy {
+          private readonly percents: Record<string, number>;
+
+          split(expense: Expense): Shares {
+            const { total, people } = expense;
+            const shares: Shares = new Map();
+            let left = total;
+            for (const p of people) {
+              const percent = this.percents[p];
+              const share = Math.floor((total * percent) / 100);
+              shares.set(p, share);
+              left -= share;
+            }
+            shares.set(people[0], shares.get(people[0])! + left);
+            return shares;
+          }
+        }
+      focus: {param: [1, 7], reads: [8]}

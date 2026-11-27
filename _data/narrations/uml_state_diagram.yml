@@ -296,6 +296,45 @@ scenes:
         source: "OMG, UML 2.5.1, §13.3.3 ChangeEvent; Rumbaugh et al., UML Reference Manual, 2nd ed.: change event"
         step: "when(battery < 15%)"
         note: Change event fires when its condition becomes true · a guard alone never watches
+        closer_look:
+          title: A guard waits, a change event watches
+          notice: >-
+            The guard is tested only inside its event's method, while the change event needs code
+            that checks every battery reading and fires once, when the condition turns true.
+          code: change
+          groups:
+            - {id: robot, label: DeliveryRobot}
+            - {id: battery, label: BatterySensor}
+          relations:
+            - {kind: call, from: battery.fire, to: robot.handler, label: [calls ↑, once it turns true]}
+          steps:
+            - question: When is the guard checked?
+              focus: [robot.pin_event, robot.guard]
+              text: >-
+                The guard <em>pin matches</em> is the condition of an <code>if</code> inside the
+                method for <code>enterPin</code>. It runs only when that event arrives, once per
+                PIN; between PINs, nothing looks at it.
+            - question: Who watches the battery?
+              focus: [battery.watch, battery.crossing]
+              text: >-
+                A change event needs code that tests its condition all the time, not only when
+                some event arrives. The sensor tests every reading and notices the one where
+                <em>battery below 15 percent</em> turns <strong>from false to true</strong>.
+            - question: What does the crossing trigger?
+              focus: [battery.fire, robot.handler, robot.react]
+              relation: call
+              text: >-
+                Only that crossing calls <code>batteryLow</code>, once. The robot then reacts as to
+                any event: if it is Driving, it heads to Returning. Later low readings call
+                nothing, because the condition is already true.
+            - question: Remove the sensor
+              focus: [robot.handler, robot.react]
+              remove: battery
+              text: >-
+                The robot still builds, but nothing calls <code>batteryLow</code> any more: the
+                battery can sit at 3 percent while the robot drives on. A guard
+                <code>[battery &lt; 15%]</code> alone behaves the same way: nothing tests it until
+                its arrow's event arrives.
         visual: A new arrow from Driving to Returning reads when(battery < 15%).
         pause_after: 2.5
   - id: entry_exit

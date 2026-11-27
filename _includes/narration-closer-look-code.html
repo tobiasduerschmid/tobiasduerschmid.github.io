@@ -1,0 +1,42 @@
+{%- comment -%}
+  Code content of a closer look: for every language of <topic>_code.yml, the
+  look's groups top to bottom, each with the block `<code>_<group>` (one file,
+  or several under `files`). Every line that a focus key names carries
+  data-closer-look-focus="group.key", the anchor the view highlights and draws
+  relations between. Params: topic, look.
+{%- endcomment -%}
+{%- assign closer_code_key = include.topic | append: '_code' -%}
+{%- assign closer_examples = site.data.explainers[closer_code_key] -%}
+<div class="narration-closer-look-code" data-closer-look-content="code">
+  <div class="narration-closer-look-code-bar">
+    {%- if include.look.relations %}
+    <ul class="narration-closer-look-legend" aria-label="Key">
+      {%- for relation in include.look.relations %}
+      <li class="narration-closer-look-relation--{{ relation.kind }}" data-closer-look-relation="{{ relation.kind }}" data-from="{{ relation.from }}" data-to="{{ relation.to }}"><svg class="narration-closer-look-swatch" viewBox="0 0 36 12" aria-hidden="true" focusable="false"><path class="narration-closer-look-relation-line" d="M1 6H26"/><path class="narration-closer-look-relation-head" d="M34 6l-9 -5v10z"/></svg><strong>{{ relation.label[0] }}</strong> {{ relation.label[1] }}</li>
+      {%- endfor %}
+    </ul>
+    {%- endif %}
+    <label class="narration-closer-look-language">Example language <select data-closer-look-language>{% for language in closer_examples %}<option value="{{ language[0] }}">{{ language[1].label }}</option>{% endfor %}</select></label>
+  </div>
+  {%- for language in closer_examples %}
+  {%- assign closer_language = language[0] %}
+  <div class="narration-closer-look-languages nja-syntax" data-code-language="{{ closer_language }}"{% unless forloop.first %} hidden{% endunless %}>
+    {%- for group in include.look.groups %}
+    {%- capture block_name %}{{ include.look.code }}_{{ group.id }}{% endcapture %}
+    {%- assign block = language[1].blocks[block_name] %}
+    {%- if block.files %}{% assign first_file = block.files.first %}{% else %}{% assign first_file = block %}{% endif %}
+    <section class="narration-closer-look-group" data-closer-look-group="{{ group.id }}" role="group" aria-label="{{ group.label | escape }}">
+      <p class="narration-closer-look-group-tab"><span class="narration-closer-look-group-label">{{ group.label }}</span> <code class="narration-closer-look-file-name">{{ first_file.file }}</code> <span class="narration-closer-look-group-state" data-closer-look-state data-removed-label="· deleted" data-kept-label="· still builds ✓"></span></p>
+      {%- if block.files %}
+      {%- for file in block.files %}
+      {% include narration-closer-look-file.html file=file language=closer_language group=group.id first=forloop.first %}
+      {%- endfor %}
+      {%- else %}
+      {% include narration-closer-look-file.html file=block language=closer_language group=group.id first=true %}
+      {%- endif %}
+    </section>
+    {%- endfor %}
+    <svg class="narration-closer-look-relations" aria-hidden="true" focusable="false"></svg>
+  </div>
+  {%- endfor %}
+</div>

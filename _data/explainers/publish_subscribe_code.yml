@@ -1,0 +1,347 @@
+# Code for the Publish-Subscribe lesson's closer looks (scripts/narration/closer-look.js).
+# A look's `code: <name>` uses the blocks `<name>_<group>` in every language.
+# Focus keys name line numbers; lines stay within 60 characters, and Python
+# is fully type-hinted. The messaging infrastructure is a minimal in-process
+# sketch of the lesson's node.advertise / node.subscribe API.
+python:
+  label: Python
+  blocks:
+    subscribe_camera:
+      file: camera/driver.py
+      source: |
+        from camera.sensor import Sensor
+        from msgs.image import Frame
+        from pubsub.node import Node
+
+        def run(node: Node, sensor: Sensor) -> None:
+            pub = node.advertise("/camera/image")
+            while True:
+                frame: Frame = sensor.read()
+                pub.publish(frame)
+      focus: {imports: [1, 2, 3], names: [6], publish: [9]}
+    subscribe_topic:
+      files:
+        - file: pubsub/topic.py
+          source: |
+            from collections import deque
+            from typing import Callable, Generic, TypeVar
+
+            T = TypeVar("T")
+            Inbox = tuple[deque[T], Callable[[T], None]]
+
+            class Topic(Generic[T]):
+                def __init__(self) -> None:
+                    self.inboxes: list[Inbox[T]] = []
+
+                def publish(self, message: T) -> None:
+                    for queue, _ in self.inboxes:
+                        queue.append(message)
+
+                def deliver(self) -> None:  # run by the infrastructure
+                    for queue, callback in self.inboxes:
+                        while queue:
+                            callback(queue.popleft())
+          focus: {inboxes: [9], publish: [11, 12, 13], deliver: [15, 16, 17, 18]}
+        - file: pubsub/node.py
+          source: |
+            from collections import deque
+            from typing import Any, Callable
+            from pubsub.topic import Topic
+
+            class Node:
+                def __init__(self) -> None:
+                    self.topics: dict[str, Topic[Any]] = {}
+
+                def advertise(self, name: str) -> Topic[Any]:
+                    return self.topics.setdefault(name, Topic())
+
+                def subscribe(self, name: str,
+                              callback: Callable[[Any], None]) -> None:
+                    topic = self.advertise(name)
+                    topic.inboxes.append((deque(), callback))
+          focus: {subscribe: [12, 13, 14, 15]}
+    subscribe_counter:
+      file: counter/pedestrians.py
+      source: |
+        from counter.vision import find_people
+        from msgs.image import Frame
+        from pubsub.node import Node
+
+        class PedestrianCounter:
+            def __init__(self) -> None:
+                self.counted: int = 0
+
+            def on_frame(self, frame: Frame) -> None:
+                self.counted += len(find_people(frame))
+
+        def start(node: Node) -> None:
+            counter = PedestrianCounter()
+            node.subscribe("/camera/image", counter.on_frame)
+      focus: {callback: [9, 10], subscribe: [14]}
+java:
+  label: Java
+  blocks:
+    subscribe_camera:
+      file: camera/CameraDriver.java
+      source: |
+        package camera;
+
+        import msgs.Frame;
+        import pubsub.Node;
+        import pubsub.Topic;
+
+        public class CameraDriver {
+            public static void run(Node node, Sensor sensor) {
+                Topic<Frame> pub = node.advertise("/camera/image");
+                while (true) {
+                    Frame frame = sensor.read();
+                    pub.publish(frame);
+                }
+            }
+        }
+      focus: {imports: [3, 4, 5], names: [9], publish: [12]}
+    subscribe_topic:
+      files:
+        - file: pubsub/Topic.java
+          source: |
+            package pubsub;
+
+            import java.util.*;
+            import java.util.function.Consumer;
+
+            public class Topic<T> {
+                record Inbox<T>(Queue<T> queue,
+                                Consumer<T> callback) {}
+                final List<Inbox<T>> inboxes = new ArrayList<>();
+
+                public void publish(T message) {
+                    for (Inbox<T> in : inboxes) in.queue().add(message);
+                }
+
+                void deliver() {  // run by the infrastructure
+                    for (Inbox<T> in : inboxes)
+                        while (!in.queue().isEmpty())
+                            in.callback().accept(in.queue().poll());
+                }
+            }
+          focus: {inboxes: [9], publish: [11, 12, 13], deliver: [15, 16, 17, 18, 19]}
+        - file: pubsub/Node.java
+          source: |
+            package pubsub;
+
+            import java.util.*;
+            import java.util.function.Consumer;
+
+            public class Node {
+                private final Map<String, Topic<?>> topics =
+                    new HashMap<>();
+
+                @SuppressWarnings("unchecked")
+                public <T> Topic<T> advertise(String name) {
+                    return (Topic<T>) topics.computeIfAbsent(
+                        name, n -> new Topic<T>());
+                }
+
+                public <T> void subscribe(String name, Consumer<T> cb) {
+                    this.<T>advertise(name).inboxes.add(
+                        new Topic.Inbox<>(new ArrayDeque<>(), cb));
+                }
+            }
+          focus: {subscribe: [16, 17, 18, 19]}
+    subscribe_counter:
+      file: counter/PedestrianCounter.java
+      source: |
+        package counter;
+
+        import msgs.Frame;
+        import pubsub.Node;
+
+        public class PedestrianCounter {
+            private int counted = 0;
+
+            void onFrame(Frame frame) {
+                counted += Vision.findPeople(frame).size();
+            }
+
+            public static void start(Node node) {
+                var counter = new PedestrianCounter();
+                node.subscribe("/camera/image", counter::onFrame);
+            }
+        }
+      focus: {callback: [9, 10, 11], subscribe: [15]}
+cpp:
+  label: C++
+  blocks:
+    subscribe_camera:
+      file: camera/driver.cpp
+      source: |
+        #include "camera/sensor.h"
+        #include "msgs/frame.h"
+        #include "pubsub/node.h"
+
+        void run(Node& node, Sensor& sensor) {
+            auto& pub = node.advertise<Frame>("/camera/image");
+            while (true) {
+                Frame frame = sensor.read();
+                pub.publish(frame);
+            }
+        }
+      focus: {imports: [1, 2, 3], names: [6], publish: [9]}
+    subscribe_topic:
+      files:
+        - file: pubsub/topic.h
+          source: |
+            #pragma once
+            #include <deque>
+            #include <functional>
+            #include <utility>
+            #include <vector>
+
+            template <typename T>
+            struct Topic {
+                using Callback = std::function<void(const T&)>;
+                std::vector<std::pair<std::deque<T>, Callback>> inboxes;
+                void publish(const T& message) {
+                    for (auto& [queue, _] : inboxes)
+                        queue.push_back(message);
+                }
+                void deliver() {  // run by the infrastructure
+                    for (auto& [queue, callback] : inboxes)
+                        for (; !queue.empty(); queue.pop_front())
+                            callback(queue.front());
+                }
+            };
+          focus: {inboxes: [10], publish: [11, 12, 13, 14], deliver: [15, 16, 17, 18, 19]}
+        - file: pubsub/node.h
+          source: |
+            #pragma once
+            #include <any>
+            #include <map>
+            #include <string>
+            #include "pubsub/topic.h"
+
+            class Node {
+                std::map<std::string, std::any> topics;
+            public:
+                template <typename T>
+                Topic<T>& advertise(const std::string& name) {
+                    topics.try_emplace(name, Topic<T>{});
+                    return std::any_cast<Topic<T>&>(topics[name]);
+                }
+                template <typename T>
+                void subscribe(const std::string& name,
+                               typename Topic<T>::Callback cb) {
+                    advertise<T>(name).inboxes.push_back({{}, cb});
+                }
+            };
+          focus: {subscribe: [15, 16, 17, 18, 19]}
+    subscribe_counter:
+      file: counter/pedestrians.h
+      source: |
+        #pragma once
+        #include <cstddef>
+        #include "counter/vision.h"
+        #include "msgs/frame.h"
+        #include "pubsub/node.h"
+
+        struct PedestrianCounter {
+            std::size_t counted = 0;
+
+            void onFrame(const Frame& frame) {
+                counted += findPeople(frame).size();
+            }
+        };
+
+        inline void start(Node& node, PedestrianCounter& counter) {
+            node.subscribe<Frame>("/camera/image",
+                [&counter](const Frame& f) { counter.onFrame(f); });
+        }
+      focus: {callback: [10, 11, 12], subscribe: [16, 17]}
+typescript:
+  label: TypeScript
+  blocks:
+    subscribe_camera:
+      file: camera/driver.ts
+      source: |
+        import type { Frame } from "../msgs/frame";
+        import type { Node } from "../pubsub/node";
+        import type { Sensor } from "./sensor";
+
+        export async function run(
+          node: Node,
+          sensor: Sensor,
+        ): Promise<void> {
+          const pub = node.advertise<Frame>("/camera/image");
+          while (true) {
+            const frame = await sensor.read();
+            pub.publish(frame);
+          }
+        }
+      focus: {imports: [1, 2, 3], names: [9], publish: [12]}
+    subscribe_topic:
+      files:
+        - file: pubsub/topic.ts
+          source: |
+            export type Callback<T> = (message: T) => void;
+            type Inbox<T> = { queue: T[]; callback: Callback<T> };
+
+            export class Topic<T> {
+              readonly inboxes: Inbox<T>[] = [];
+
+              publish(message: T): void {
+                for (const inbox of this.inboxes) {
+                  inbox.queue.push(message);
+                }
+              }
+
+              deliver(): void { // run by the infrastructure
+                for (const { queue, callback } of this.inboxes) {
+                  for (const message of queue.splice(0)) {
+                    callback(message);
+                  }
+                }
+              }
+            }
+          focus: {inboxes: [5], publish: [7, 8, 9, 10, 11], deliver: [13, 14, 15, 16, 17, 18, 19]}
+        - file: pubsub/node.ts
+          source: |
+            import { type Callback, Topic } from "./topic";
+
+            export class Node {
+              private topics = new Map<string, Topic<any>>();
+
+              advertise<T>(name: string): Topic<T> {
+                if (!this.topics.has(name)) {
+                  this.topics.set(name, new Topic<T>());
+                }
+                return this.topics.get(name)!;
+              }
+
+              subscribe<T>(name: string, callback: Callback<T>): void {
+                const topic = this.advertise<T>(name);
+                topic.inboxes.push({ queue: [], callback });
+              }
+            }
+          focus: {subscribe: [13, 14, 15, 16]}
+    subscribe_counter:
+      file: counter/pedestrians.ts
+      source: |
+        import type { Frame } from "../msgs/frame";
+        import type { Node } from "../pubsub/node";
+        import { findPeople } from "./vision";
+
+        export class PedestrianCounter {
+          counted = 0;
+
+          onFrame(frame: Frame): void {
+            this.counted += findPeople(frame).length;
+          }
+        }
+
+        export function start(node: Node): void {
+          const counter = new PedestrianCounter();
+          node.subscribe<Frame>("/camera/image", (frame) => {
+            counter.onFrame(frame);
+          });
+        }
+      focus: {callback: [8, 9, 10], subscribe: [15, 16, 17]}

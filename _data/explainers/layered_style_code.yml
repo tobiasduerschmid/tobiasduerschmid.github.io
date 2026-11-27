@@ -1,0 +1,205 @@
+# Code for the Layers lesson's closer looks (scripts/narration/closer-look.js).
+# A look's `code: <name>` uses the blocks `<name>_<group>` in every language.
+# Focus keys name line numbers; lines stay within 60 characters, and Python
+# is fully type-hinted.
+python:
+  label: Python
+  blocks:
+    callbacks_game:
+      file: game/pearl_rules.py
+      source: |
+        from engine.core import Body, CollisionListener, Engine
+        from game.score import Score
+
+        class PearlHandler(CollisionListener):
+            def __init__(self, score: Score) -> None:
+                self.score = score
+
+            def on_collision(self, a: Body, b: Body) -> None:
+                if {a.kind, b.kind} == {"squirrel", "pearl"}:
+                    self.score.add(10)
+
+        def start(engine: Engine, score: Score) -> None:
+            engine.register(PearlHandler(score))
+      focus: {imports: [1], implements: [4], handler: [8, 9, 10], start: [12, 13]}
+    callbacks_engine:
+      file: engine/core.py
+      source: |
+        from abc import ABC, abstractmethod
+        from engine.body import Body
+
+        class CollisionListener(ABC):
+            @abstractmethod
+            def on_collision(self, a: Body, b: Body) -> None: ...
+
+        class Engine:
+            def __init__(self) -> None:
+                self.listeners: list[CollisionListener] = []
+
+            def register(self, listener: CollisionListener) -> None:
+                self.listeners.append(listener)
+
+            def step(self) -> None:
+                for a, b in self.touching_pairs():
+                    for listener in self.listeners:
+                        listener.on_collision(a, b)
+      focus: {imports: [1, 2], contract: [4, 5, 6], register: [12, 13], call: [18]}
+java:
+  label: Java
+  blocks:
+    callbacks_game:
+      file: game/PearlHandler.java
+      source: |
+        package game;
+
+        import engine.Body;
+        import engine.CollisionListener;
+        import engine.Engine;
+
+        public class PearlHandler implements CollisionListener {
+            private final Score score;
+
+            PearlHandler(Score score) { this.score = score; }
+
+            @Override
+            public void onCollision(Body a, Body b) {
+                if (a.is("squirrel") && b.is("pearl"))
+                    score.add(10);
+            }
+
+            static void start(Engine engine, Score score) {
+                engine.register(new PearlHandler(score));
+            }
+        }
+      focus: {imports: [3, 4, 5], implements: [7], handler: [13, 14, 15, 16], start: [18, 19, 20]}
+    callbacks_engine:
+      files:
+        - file: engine/CollisionListener.java
+          source: |
+            package engine;
+
+            public interface CollisionListener {
+                void onCollision(Body a, Body b);
+            }
+          focus: {contract: [3, 4, 5]}
+        - file: engine/Engine.java
+          source: |
+            package engine;
+
+            import java.util.ArrayList;
+            import java.util.List;
+
+            public class Engine {
+                private final List<CollisionListener> listeners =
+                    new ArrayList<>();
+
+                public void register(CollisionListener listener) {
+                    listeners.add(listener);
+                }
+
+                public void step() {
+                    for (Contact c : touchingPairs())
+                        for (CollisionListener listener : listeners)
+                            listener.onCollision(c.a(), c.b());
+                }
+            }
+          focus: {imports: [3, 4], register: [10, 11, 12], call: [17]}
+cpp:
+  label: C++
+  blocks:
+    callbacks_game:
+      file: game/pearl_handler.h
+      source: |
+        #pragma once
+        #include "engine/engine.h"
+
+        class PearlHandler : public CollisionListener {
+        public:
+            explicit PearlHandler(Score& score) : score(score) {}
+
+            void onCollision(Body& a, Body& b) override {
+                if (a.is("squirrel") && b.is("pearl"))
+                    score.add(10);
+            }
+
+        private:
+            Score& score;
+        };
+
+        inline void start(Engine& engine, PearlHandler& pearls) {
+            engine.registerListener(pearls);
+        }
+      focus: {imports: [2], implements: [4], handler: [8, 9, 10, 11], start: [17, 18, 19]}
+    callbacks_engine:
+      file: engine/engine.h
+      source: |
+        #pragma once
+        #include <vector>
+        #include "engine/body.h"
+
+        class CollisionListener {
+        public:
+            virtual ~CollisionListener() = default;
+            virtual void onCollision(Body& a, Body& b) = 0;
+        };
+
+        class Engine {
+        public:
+            void registerListener(CollisionListener& listener) {
+                listeners.push_back(&listener);
+            }
+            void step() {
+                for (auto [a, b] : touchingPairs())
+                    for (CollisionListener* listener : listeners)
+                        listener->onCollision(*a, *b);
+            }
+
+        private:
+            std::vector<CollisionListener*> listeners;
+        };
+      focus: {imports: [2, 3], contract: [5, 6, 7, 8, 9], register: [13, 14, 15], call: [19]}
+typescript:
+  label: TypeScript
+  blocks:
+    callbacks_game:
+      file: game/pearl-rules.ts
+      source: |
+        import type { Body } from "../engine";
+        import { CollisionListener, Engine } from "../engine";
+
+        export class PearlHandler implements CollisionListener {
+          constructor(private score: Score) {}
+
+          onCollision(a: Body, b: Body): void {
+            if (a.is("squirrel") && b.is("pearl"))
+              this.score.add(10);
+          }
+        }
+
+        export function start(engine: Engine, score: Score) {
+          engine.register(new PearlHandler(score));
+        }
+      focus: {imports: [1, 2], implements: [4], handler: [7, 8, 9, 10], start: [13, 14, 15]}
+    callbacks_engine:
+      file: engine/index.ts
+      source: |
+        import type { Body } from "./body";
+
+        export interface CollisionListener {
+          onCollision(a: Body, b: Body): void;
+        }
+
+        export class Engine {
+          private listeners: CollisionListener[] = [];
+
+          register(listener: CollisionListener): void {
+            this.listeners.push(listener);
+          }
+
+          step(): void {
+            for (const [a, b] of this.touchingPairs())
+              for (const listener of this.listeners)
+                listener.onCollision(a, b);
+          }
+        }
+      focus: {imports: [1], contract: [3, 4, 5], register: [10, 11, 12], call: [17]}

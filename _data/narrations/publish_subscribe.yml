@@ -212,6 +212,48 @@ scenes:
           four, or none at all, the camera's code is exactly the same.
         step: The counter just subscribes
         note: Adding a subscriber changes no publisher.
+        closer_look:
+          title: The camera never names a subscriber
+          notice: >-
+            The camera names only a topic; the topic keeps the subscribers and runs their callbacks,
+            so adding the counter touches no camera code.
+          code: subscribe
+          groups:
+            - {id: camera, label: "Publisher: Camera driver"}
+            - {id: topic, label: "«topic» Messaging infrastructure"}
+            - {id: counter, label: "Subscriber: Pedestrian counter"}
+          relations:
+            - {kind: call, from: topic.deliver, to: counter.callback, label: [calls ↓, at run time]}
+            - {kind: dependency, from: counter.subscribe, to: topic.subscribe, label: [subscribes ↑, by topic name]}
+          steps:
+            - question: What does the camera name?
+              focus: [camera.imports, camera.names, camera.publish]
+              text: >-
+                The sensor, the frame type, the infrastructure, and one topic name,
+                <code>/camera/image</code>. No detector, logger, dashboard, or counter appears
+                anywhere in the camera driver.
+            - question: Who calls the counter?
+              focus: [topic.publish, topic.deliver, counter.callback]
+              relation: call
+              text: >-
+                <code>publish()</code> only puts a copy of the frame in every subscriber's queue and
+                returns, so the camera never waits. Later, the infrastructure's
+                <code>deliver()</code> takes the frame from the counter's queue and runs its
+                callback. <strong>The camera never calls the counter.</strong>
+            - question: Who keeps the list?
+              focus: [counter.subscribe, topic.subscribe, topic.inboxes]
+              relation: dependency
+              text: >-
+                The counter registers its callback under the topic's name, and the topic files it in a
+                new inbox. The counter names the topic, not the camera, and the list of subscribers
+                lives in the topic, not in the publisher.
+            - question: Add or remove the counter
+              focus: [counter.subscribe]
+              remove: counter
+              text: >-
+                Delete <code>counter/</code>, or add it for your ticket: the camera driver's diff is
+                empty either way. Only the topic's list changes, at run time, one inbox shorter or
+                longer.
         visual: >-
           The Pedestrian counter card slides in as a fourth subscriber with its own queue, and frame
           copies start reaching it too. Its count rises from Counted: 3 to Counted: 7. A green

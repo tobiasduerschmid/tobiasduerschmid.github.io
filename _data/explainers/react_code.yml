@@ -1,0 +1,198 @@
+# Code for the React lesson's closer looks (scripts/narration/closer-look.js).
+# A look's `code: <name>` uses the blocks `<name>_<group>` in every language.
+# Focus keys name line numbers; lines stay within 60 characters, and Python
+# is fully type-hinted. Every language shows the same tiny model of React:
+# the component receives this render's snapshot and a setter.
+python:
+  label: Python
+  blocks:
+    snapshot_component:
+      file: like_button.py
+      source: |
+        from mini_dom import Element
+        from mini_react import Setter
+
+        def like_button(likes: int, set_likes: Setter) -> Element:
+            def handle_like() -> None:
+                set_likes(likes + 1)
+                print(likes)  # still 0 in this render
+
+            return Element("button", f"Like: {likes}",
+                           on_click=handle_like)
+      focus: {read: [4], handler: [6], stale: [7], describe: [9, 10]}
+    snapshot_react:
+      file: mini_react.py
+      source: |
+        # A simplified model of what React does for us.
+        from typing import Callable
+        from mini_dom import Dom, Element
+
+        Setter = Callable[[int], None]
+        Component = Callable[[int, Setter], Element]
+
+        class Root:
+            def __init__(self, component: Component) -> None:
+                self.component: Component = component
+                self.dom: Dom = Dom()
+                self.likes: int = 0  # memory kept by React
+                self.queue: list[int] = []
+
+            def set_likes(self, value: int) -> None:
+                self.queue.append(value)  # a request only
+
+            def after_handler(self) -> None:
+                for value in self.queue:
+                    self.likes = value
+                self.queue.clear()
+                view = self.component(self.likes, self.set_likes)
+                self.dom.commit(view)  # change what differs
+      focus: {slot: [12], queue: [15, 16], apply: [19, 20, 21], render: [22], commit: [23]}
+java:
+  label: Java
+  blocks:
+    snapshot_component:
+      file: LikeButton.java
+      source: |
+        import mini.react.Element;
+        import mini.react.Setter;
+
+        final class LikeButton {
+            static Element render(int likes, Setter setLikes) {
+                Runnable handleLike = () -> {
+                    setLikes.request(likes + 1);
+                    System.out.println(likes); // still 0 here
+                };
+                return new Element("button", "Like: " + likes,
+                    handleLike);
+            }
+        }
+      focus: {read: [5], handler: [7], stale: [8], describe: [10, 11]}
+    snapshot_react:
+      file: Root.java
+      source: |
+        package mini.react;
+
+        import java.util.ArrayList;
+        import java.util.List;
+
+        // A simplified model of what React does for us.
+        public final class Root {
+            private final Component component;
+            private final Dom dom = new Dom();
+            private int likes = 0; // memory kept by React
+            private final List<Integer> queue = new ArrayList<>();
+
+            Root(Component c) { component = c; }
+
+            void setLikes(int value) { queue.add(value); }
+
+            void afterHandler() {
+                for (int value : queue) likes = value;
+                queue.clear();
+                var view = component.render(likes, this::setLikes);
+                dom.commit(view); // change what differs
+            }
+        }
+      focus: {slot: [10], queue: [15], apply: [18, 19], render: [20], commit: [21]}
+cpp:
+  label: C++
+  blocks:
+    snapshot_component:
+      file: like_button.cpp
+      source: |
+        #include <iostream>
+        #include <string>
+        #include "mini_react.h"
+
+        Element likeButton(int likes, Setter setLikes) {
+            auto handleLike = [likes, setLikes] {
+                setLikes(likes + 1);
+                std::cout << likes << '\n';  // still 0 here
+            };
+            return Element{"button",
+                           "Like: " + std::to_string(likes),
+                           handleLike};
+        }
+      focus: {read: [5], handler: [7], stale: [8], describe: [10, 11, 12]}
+    snapshot_react:
+      file: mini_react.h
+      source: |
+        #pragma once
+        #include <functional>
+        #include <vector>
+        #include "mini_dom.h"
+
+        // A simplified model of what React does for us.
+        using Setter = std::function<void(int)>;
+        using Component = std::function<Element(int, Setter)>;
+
+        class Root {
+        public:
+            explicit Root(Component c) : component(c) {}
+            void setLikes(int value) { queue.push_back(value); }
+            void afterHandler() {
+                for (int value : queue) likes = value;
+                queue.clear();
+                auto set = [this](int v) { setLikes(v); };
+                Element view = component(likes, set);
+                dom.commit(view);  // change what differs
+            }
+        private:
+            Component component;
+            Dom dom;
+            int likes = 0;  // memory kept by React
+            std::vector<int> queue;
+        };
+      focus: {slot: [24], queue: [13], apply: [15, 16], render: [17, 18], commit: [19]}
+typescript:
+  label: TypeScript
+  blocks:
+    snapshot_component:
+      file: like-button.ts
+      source: |
+        import type { Element } from "./mini-dom";
+        import type { Setter } from "./mini-react";
+
+        export function likeButton(
+          likes: number,
+          setLikes: Setter,
+        ): Element {
+          function handleLike(): void {
+            setLikes(likes + 1);
+            console.log(likes); // still 0 in this render
+          }
+          return {
+            tag: "button",
+            text: `Like: ${likes}`,
+            onClick: handleLike,
+          };
+        }
+      focus: {read: [4, 5, 6, 7], handler: [9], stale: [10], describe: [12, 13, 14, 15, 16]}
+    snapshot_react:
+      file: mini-react.ts
+      source: |
+        // A simplified model of what React does for us.
+        import { Dom, type Element } from "./mini-dom";
+
+        export type Setter = (value: number) => void;
+        type Component = (likes: number, set: Setter) => Element;
+
+        export class Root {
+          private likes = 0; // memory kept by React
+          private queue: number[] = [];
+          private dom = new Dom();
+
+          constructor(private component: Component) {}
+
+          setLikes = (value: number): void => {
+            this.queue.push(value); // a request only
+          };
+
+          afterHandler(): void {
+            for (const value of this.queue) this.likes = value;
+            this.queue = [];
+            const view = this.component(this.likes, this.setLikes);
+            this.dom.commit(view); // change what differs
+          }
+        }
+      focus: {slot: [8], queue: [14, 15, 16], apply: [19, 20], render: [21], commit: [22]}

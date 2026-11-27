@@ -327,6 +327,8 @@
 
     async function play() {
       if (options.canPlay && !options.canPlay()) return;
+      // A player may close a detour (such as a closer look) when playback resumes.
+      if (options.onPlay) options.onPlay();
       if (prediction && prediction.isHolding()) { prediction.focusReveal(); return; }
       if (!audio.paused) return;
       if (position >= timing.duration - 0.1) seekTo(0);
@@ -420,6 +422,7 @@
     root.querySelectorAll('.nja-controls').forEach((controls) => { controls.hidden = false; });
     const timeline = window.NarrationTimeline.bind(root, {
       story: storyboard, timing, checkScenes: options.checkScenes,
+      looks: options.looks, onLook: options.onLook,
       onCheck(index) {
         audio.pause();
         seekTo(timing.scenes[index].end - 0.002);
