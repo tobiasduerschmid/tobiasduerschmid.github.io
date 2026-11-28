@@ -71,25 +71,25 @@
     return `
       <g stroke="${ink}" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round">
         <path d="M65 265 H815" stroke-width="2"/>
-        <g data-be-item="0">
+        <g data-be-item="0" class="be-person">
           <ellipse cx="228" cy="255" rx="101" ry="10" fill="${shadow}" stroke="none"/>
           <path d="M185 177 Q206 171 247 179 L253 203 L253 240 L222 240
-                   L215 211 L203 240 L170 240 Z" fill="${blueTint}"/>
+                   L215 211 L203 240 L170 240 Z" fill="var(--be-denim)"/>
           <path d="M170 237 H203 L207 252 H160 Q157 245 170 237 Z
-                   M222 237 H253 L268 248 V253 H222 Z" fill="${paper}"/>
+                   M222 237 H253 L268 248 V253 H222 Z" fill="var(--be-ivory)"/>
           <path d="M179 122 Q169 129 164 149 L151 181 Q157 195 175 194
                    H250 Q261 194 259 182 L252 153 Q241 130 221 126 Z" fill="${blue}"/>
           <path d="M180 134 Q193 145 224 142 Q236 144 243 155"
-                stroke="${blueTint}" stroke-width="4" fill="none"/>
+                stroke="var(--be-ivory)" stroke-opacity=".65" stroke-width="4" fill="none"/>
           <path d="M166 171 Q184 176 207 169 L212 180 Q199 187 177 184
                    M212 175 L236 173 L240 191" fill="none"/>
-          <path d="M187 106 L219 103 L226 136 Q208 151 186 135 Z" fill="${goldTint}"/>
-          <path d="M170 100 Q159 88 167 71 Q170 58 183 58 Q190 43 209 50
-                   Q226 43 240 57 Q254 61 255 77 L249 99 L237 114 H182 Z" fill="${ink}"/>
-          <path d="M180 81 Q189 73 195 64 Q206 75 238 74
+          <path class="be-skin-shade" d="M187 106 L219 103 L226 136 Q208 151 186 135 Z"/>
+          <path class="be-hair be-hair--back" d="M170 100 Q159 88 167 71 Q170 58 183 58 Q190 43 209 50
+                   Q226 43 240 57 Q254 61 255 77 L249 99 L237 114 H182 Z"/>
+          <path class="be-skin" d="M180 81 Q189 73 195 64 Q206 75 238 74
                    Q240 87 254 92 Q257 97 245 101 Q247 117 229 125
                    Q212 130 198 119 Q187 117 184 106 Q173 105 174 96
-                   Q174 91 181 92 Z" fill="${goldTint}"/>
+                   Q174 91 181 92 Z"/>
           <path d="M224 85 Q229 81 235 84 M222 112 Q231 115 237 110"
                 fill="none" stroke-width="2.4"/>
           <path d="M231 89 V94" stroke-width="4"/>

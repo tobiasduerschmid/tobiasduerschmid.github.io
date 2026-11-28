@@ -4,7 +4,7 @@ plugins:
   - jekyll-scholar
 
 env: production
-asset_version: "20261127-blog-caption-layout"
+asset_version: "20261127-blog-illustration-palette"
 
 # Feature flags
 personal_gym: true

@@ -24,12 +24,29 @@ html.dark-mode:not(.print-light-mode) .stage.theme-blog-essay {
   --be-muted: #c3d6e6;
   --be-blue: #6bbdf6;
   --be-blue-tint: #254967;
-  --be-gold-tint: #554719;
+  --be-gold-tint: #353d52; /* Slate behind UCLA gold accents. */
   --be-shadow: #081828;
   --be-rule: #718da4;
   --be-wash-warm: #262f43;
   --be-wash-cool: #192f4a;
   --be-backdrop-ink: #374b62;
+}
+
+/* Keep the students' pigments independent of the slide's text and panel colors. */
+.be-person {
+  --be-ivory: #fff8eb;
+  --be-denim: #a6c7df;
+  color: #352a32;
+  stroke: currentColor;
+}
+.be-skin { fill: #dfa782; }
+.be-skin-shade { fill: #be8164; }
+.be-hair { fill: #513930; }
+.be-hair-highlight { stroke: #916c58; }
+
+@media screen {
+  /* A warm rim separates dark hair from the navy background. */
+  html.dark-mode:not(.print-light-mode) .be-hair--back { stroke: #b29280; }
 }
 
 .be-backdrop {

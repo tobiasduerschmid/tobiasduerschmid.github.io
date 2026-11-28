@@ -209,42 +209,40 @@
 
     student: illustration(`
       <ellipse cx="103" cy="146" rx="72" ry="8" fill="var(--be-shadow)" stroke="none"/>
-      <path d="M81 101 H121 Q148 101 156 131 L159 146 H41 L44 132
-               Q50 102 81 101 Z" fill="var(--be-accent)"/>
-      <path d="M61 115 Q68 111 78 110 M137 116 Q144 122 147 133"
-            stroke="var(--be-paper)" stroke-width="2.25" stroke-opacity=".8"/>
-      <path d="M80 103 Q100 114 121 103 L112 123 H90 Z" fill="var(--be-blue-tint)"/>
-      <path d="M89 86 H112 L114 105 Q106 116 98 114 Q91 113 86 105 Z"
-            fill="var(--be-gold-tint)"/>
-      <g data-art-part="head">
-        <path d="M67 70 Q56 53 66 36 C65 25 76 18 86 21
-                 C94 11 111 14 118 22 C129 20 141 31 138 42
-                 Q151 55 138 76 L131 90 H70 Z" fill="var(--be-blue)"/>
-        <path d="M70 55 C67 49 72 40 82 40 C84 34 93 32 98 37
-                 C109 38 112 45 129 46 L130 63 C139 56 146 64 142 73
-                 C140 78 135 80 130 79 Q123 98 105 102 Q88 104 77 87
-                 Q67 83 65 73 Q62 64 70 62 Z" fill="var(--be-gold-tint)"/>
-        <path d="M128 80 Q120 95 106 99 Q94 101 87 92 Q100 97 115 88 Z"
-              fill="var(--be-gold)" fill-opacity=".35" stroke="none"/>
-        <path d="M72 58 Q79 48 90 50 Q96 41 106 46 Q116 53 131 53
-                 C132 40 125 34 119 31 Q103 19 87 26 Q65 34 67 52 Z" fill="var(--be-blue)"/>
-        <path d="M77 43 Q88 30 103 32 Q111 33 118 39"
-              stroke="var(--be-paper)" stroke-opacity=".65" stroke-width="2.1"/>
-        <path d="M79 62 Q84 59 90 62 M108 62 Q113 61 119 65 M98 72 Q95 76 100 78
-                 M90 85 Q98 91 108 85 M135 73 Q134 70 138 67" stroke-width="2"/>
-        <path d="M79 67 Q85 65 92 67 Q86 74 79 67 Z
-                 M107 68 Q114 66 120 69 Q113 75 107 68 Z" fill="var(--be-paper)" stroke-width="1.6"/>
-        <circle cx="86" cy="69" r="1.8" fill="var(--be-ink)" stroke="none"/>
-        <circle cx="114" cy="70" r="1.8" fill="var(--be-ink)" stroke="none"/>
-        <path d="M79 77 L84 78 M115 80 L120 79" stroke="var(--be-gold)" stroke-width="2.6"/>
-      </g>
-      <g data-art-part="open-book">
-        <path d="M34 125 Q65 117 100 133 Q131 118 164 124 L171 145
-                 Q137 140 101 153 Q65 139 28 146 Z" fill="var(--be-gold)"/>
-        <path d="M37 120 Q67 115 100 129 Q133 115 162 120 L166 140
-                 Q135 136 100 148 Q67 136 33 141 Z" fill="var(--be-paper)"/>
-        <path d="M100 129 V148 M48 126 Q70 126 87 134 M47 132 Q66 132 82 138
-                 M113 134 Q131 125 151 127 M114 140 Q129 134 142 134" stroke-width="1.8"/>
+      <g class="be-person">
+        <path d="M81 101 H121 Q148 101 156 131 L159 146 H41 L44 132
+                 Q50 102 81 101 Z" fill="var(--be-accent)"/>
+        <path d="M61 115 Q68 111 78 110 M137 116 Q144 122 147 133"
+              stroke="var(--be-ivory)" stroke-width="2.25" stroke-opacity=".65"/>
+        <path d="M80 103 Q100 114 121 103 L112 123 H90 Z" fill="var(--be-denim)"/>
+        <path class="be-skin-shade" d="M89 86 H112 L114 105 Q106 116 98 114 Q91 113 86 105 Z"/>
+        <g data-art-part="head">
+          <path class="be-hair be-hair--back" d="M67 70 Q56 53 66 36 C65 25 76 18 86 21
+                   C94 11 111 14 118 22 C129 20 141 31 138 42 Q151 55 138 76 L131 90 H70 Z"/>
+          <path class="be-skin" d="M70 55 C67 49 72 40 82 40 C84 34 93 32 98 37
+                   C109 38 112 45 129 46 L130 63 C139 56 146 64 142 73
+                   C140 78 135 80 130 79 Q123 98 105 102 Q88 104 77 87
+                   Q67 83 65 73 Q62 64 70 62 Z"/>
+          <path class="be-skin-shade" d="M128 80 Q120 95 106 99 Q94 101 87 92 Q100 97 115 88 Z"
+                fill-opacity=".65" stroke="none"/>
+          <path class="be-hair" d="M72 58 Q79 48 90 50 Q96 41 106 46 Q116 53 131 53
+                   C132 40 125 34 119 31 Q103 19 87 26 Q65 34 67 52 Z"/>
+          <path class="be-hair-highlight" d="M77 43 Q88 30 103 32 Q111 33 118 39" stroke-width="2.1"/>
+          <path d="M79 62 Q84 59 90 62 M108 62 Q113 61 119 65 M98 72 Q95 76 100 78
+                   M90 85 Q98 91 108 85 M135 73 Q134 70 138 67" stroke-width="2"/>
+          <path d="M79 67 Q85 65 92 67 Q86 74 79 67 Z
+                   M107 68 Q114 66 120 69 Q113 75 107 68 Z" fill="var(--be-ivory)" stroke-width="1.6"/>
+          <circle cx="86" cy="69" r="1.8" fill="currentColor" stroke="none"/>
+          <circle cx="114" cy="70" r="1.8" fill="currentColor" stroke="none"/>
+        </g>
+        <g data-art-part="open-book">
+          <path d="M34 125 Q65 117 100 133 Q131 118 164 124 L171 145
+                   Q137 140 101 153 Q65 139 28 146 Z" fill="var(--be-gold)"/>
+          <path d="M37 120 Q67 115 100 129 Q133 115 162 120 L166 140
+                   Q135 136 100 148 Q67 136 33 141 Z" fill="var(--be-ivory)"/>
+          <path d="M100 129 V148 M48 126 Q70 126 87 134 M47 132 Q66 132 82 138
+                   M113 134 Q131 125 151 127 M114 140 Q129 134 142 134" stroke-width="1.8"/>
+        </g>
       </g>
     `),
 

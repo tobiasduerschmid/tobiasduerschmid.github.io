@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { loadLesson, ROOT } = require('../scripts/narration/source');
-const { openPlayerSettings, seekNarration, serveAudioRanges } = require('./helpers/narration-player');
+const { openPlayerSettings, seekNarration, serveAudioRanges, setSiteTheme } = require('./helpers/narration-player');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
 for (const [topic, slug, photoDescription] of [
@@ -108,6 +108,31 @@ for (const [topic, slug, photoDescription] of [
     expect(overBudget).toEqual([]);
   });
 }
+
+test('changing the article theme preserves the illustrated reader’s facial colors', async ({ page }) => {
+  const { story } = loadLesson('blog_ai_usage');
+  await serveAudioRanges(page, story.audio);
+  await page.goto('/blog/how-should-i-use-ai-as-a-college-student/');
+  const player = page.getByRole('region', { name: 'Animated article', exact: true });
+  await setSiteTheme(page, false);
+  await page.getByRole('button', { name: 'Play animated article', exact: true }).click();
+  await player.getByRole('button', { name: 'Pause narration', exact: true }).click();
+  await seekNarration(player, 1);
+  const art = player.frameLocator('iframe[title$=" animation"]');
+  const stage = art.locator('#stage');
+  const head = art.locator('[data-art-part="head"]');
+  await expect(head).toBeVisible();
+  const faceColors = () => head.evaluate(group => Array.from(group.children, shape => {
+    const { fill, stroke } = getComputedStyle(shape);
+    return fill === 'none' ? stroke : fill;
+  }));
+  const lightFace = await faceColors();
+  const lightBackground = await stage.evaluate(node => getComputedStyle(node).backgroundColor);
+
+  await setSiteTheme(page, true);
+  await expect(stage).not.toHaveCSS('background-color', lightBackground);
+  expect(await faceColors()).toEqual(lightFace);
+});
 
 test('the Big-O answer stays fully visible for at least three seconds at double speed', async ({ page }) => {
   const { story } = loadLesson('blog_study_tips');
