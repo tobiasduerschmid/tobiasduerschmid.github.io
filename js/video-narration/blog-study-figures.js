@@ -2,85 +2,194 @@
 (function () {
   'use strict';
 
-  function lectureNotes() {
+  const ink = 'var(--be-ink)';
+  const paper = 'var(--be-paper)';
+  const blue = 'var(--be-blue)';
+  const blueTint = 'var(--be-blue-tint)';
+  const gold = 'var(--be-gold)';
+  const rule = 'var(--be-rule)';
+  const shadow = 'var(--be-shadow)';
+
+  function queueNotes() {
+    const rings = [91, 143, 195, 247, 299, 351].map(x => `
+      <circle cx="${x}" cy="57" r="5" fill="${ink}"/>
+      <path d="M${x - 9} 41 Q${x - 12} 19 ${x - 2} 22 Q${x + 6} 23 ${x} 56" fill="none" stroke-width="4"/>`).join('');
     return `
-      <rect x="40" y="36" width="342" height="252" rx="14" fill="var(--be-shadow)"/>
-      <rect x="35" y="30" width="342" height="252" rx="14" fill="var(--be-paper)"
-            stroke="var(--be-ink)" stroke-width="2.5"/>
-      <text x="62" y="80" font-size="30" font-weight="800">Lecture notes</text>
-      <path d="M63 101 H347" stroke="var(--be-blue)" stroke-width="2"/>
-      <path d="M66 135 H193 M209 135 H324 M66 174 H151 M167 174 H302 M66 213 H221 M238 213 H317 M66 249 H173"
-            fill="none" stroke="var(--be-ink)" stroke-width="3" stroke-linecap="round"/>`;
+      <path d="M48 53 H397 V284 L378 301 H48 Z" fill="${shadow}" stroke="none"/>
+      <path d="M40 42 H388 V273 L370 290 H40 Z" fill="${blueTint}"/>
+      <path d="M35 36 H382 V265 L365 282 H35 Z" fill="${paper}"/>
+      ${rings}
+      <path d="M75 112 H349 M75 170 H349 M75 221 H349 M75 255 H349" fill="none" stroke="${rule}" stroke-width="1.6"/>
+      <path d="M367 278 V263 H379" fill="none" stroke="${rule}"/>
+      <g fill="${ink}" stroke="none">
+        <text x="78" y="101" font-size="35" font-weight="800">Queues</text>
+        <text x="80" y="159" font-size="34">First in,</text>
+        <text x="80" y="209" font-size="34">first out.</text>
+      </g>
+      <g data-be-item="1" fill="none">
+        <path d="M80 167 Q137 164 198 167 M81 217 Q153 214 220 217" stroke="${ink}" stroke-width="6"/>
+        <path data-be-trace="" d="M80 167 Q137 164 198 167 M81 217 Q153 214 220 217" stroke="${gold}" stroke-width="4"/>
+        <g transform="translate(252 239) rotate(-22)">
+          <path d="M0 0 L13 -6 H88 L96 0 V13 H13 L0 9 Z" fill="${gold}"/>
+          <path d="M0 1 L-11 5 V10 L1 9 Z" fill="${ink}"/>
+          <path d="M16 -4 V12 M73 -4 V12" stroke-width="2"/>
+        </g>
+      </g>`;
   }
 
-  function answerPage(label) {
-    return `
-      <rect x="505" y="36" width="342" height="224" rx="14" fill="var(--be-shadow)"/>
-      <rect x="500" y="30" width="342" height="224" rx="14" fill="var(--be-blue-tint)"
-            stroke="var(--be-ink)" stroke-width="2.5"/>
-      <text x="532" y="80" font-size="30" font-weight="800">${label}</text>
-      <path d="M529 101 H814 M534 154 H806 M534 194 H806 M534 234 H806"
-            fill="none" stroke="var(--be-blue)" stroke-width="2"/>`;
+  function rereading() {
+    return `<g stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <g data-be-item="0">${queueNotes()}</g>
+      <g data-be-item="2">
+        <rect x="483" y="64" width="361" height="210" rx="13" fill="${shadow}" stroke="none"/>
+        <rect x="477" y="57" width="361" height="210" rx="13" fill="${paper}"/>
+        <path d="M477 99 V71 Q477 57 491 57 H824 Q838 57 838 71 V99 Z" fill="${blueTint}"/>
+        <path d="M497 61 V45 M819 61 V45" stroke-width="5"/>
+        <g stroke="none" text-anchor="middle">
+          <text x="658" y="87">Tomorrow’s quiz</text>
+          <text x="658" y="161" font-size="34" font-weight="780">What’s the rule?</text>
+        </g>
+        <path d="M528 213 H787" stroke="${blue}" stroke-width="3" stroke-dasharray="7 7"/>
+      </g>
+    </g>`;
   }
 
-  const recallArrow = `
-    <path d="M407 144 H470 M459 134 L470 144 L459 154" fill="none" stroke="var(--be-blue)"
-          stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  function orderTicket(x, y, customer) {
+    return `<g transform="translate(${x} ${y})">
+      <path d="M0 0 H129 V58 L121 65 L112 59 L103 65 L94 59 L85 65 L76 59 L67 65
+               L58 59 L49 65 L40 59 L31 65 L22 59 L13 65 L4 59 L0 61 Z" fill="${paper}"/>
+      <path d="M7 12 H122" stroke="${rule}" stroke-dasharray="3 5" stroke-width="2"/>
+      <path d="M12 27 H34 V38 Q34 45 23 45 Q12 44 12 37 Z M34 28 H38 Q45 30 40 36 H35"
+            fill="${blueTint}" stroke-width="2"/>
+      <text x="83" y="46" text-anchor="middle" stroke="none" font-size="29" font-weight="750">${customer}</text>
+    </g>`;
+  }
+
+  function cafeQueue(first, next, servedAt) {
+    const stripes = Array.from({ length: 6 }, (_, i) => {
+      const top = 26 + i * 55;
+      const hem = 5 + i * 62;
+      return `<path d="M${top} 14 h55 L${hem + 62} 55 v7 q-31 21 -62 0 v-7 Z"
+                    fill="${i % 2 ? paper : blue}" stroke-width="2.25"/>`;
+    }).join('');
+    return `<g transform="translate(465 10)">
+      <rect x="23" y="54" width="339" height="199" rx="5" fill="${blueTint}"/>
+      ${stripes}
+      <rect x="5" y="237" width="374" height="17" rx="6" fill="${paper}"/>
+      <path d="M19 255 H365 L356 270 H29 Z" fill="${blue}"/>
+      <path d="M36 147 H349" stroke="${ink}" stroke-width="7"/>
+      <path d="M37 146 H348" stroke="${rule}" stroke-width="2"/>
+      <g text-anchor="middle" stroke="none">
+        <text x="193" y="103" font-size="27" font-weight="800">Campus café</text>
+        <text x="103" y="134" font-size="24">First</text>
+        <text x="277" y="134" font-size="24">Then</text>
+      </g>
+      <g${servedAt === undefined ? '' : ` data-be-exit="${servedAt}"`}>${orderTicket(39, 150, first)}</g>
+      ${orderTicket(213, 150, next)}
+    </g>`;
+  }
 
   function familiarity() {
-    return `
-      <g data-be-item="0">${lectureNotes()}</g>
-      <g data-be-item="1">
-        <g data-be-item="1" data-be-move="-12 0">
-          <path d="M64 135 H327 M63 174 H305" fill="none" stroke="var(--be-gold)"
-                stroke-width="17" stroke-linecap="round" stroke-opacity=".55"/>
-          <path d="M66 135 H193 M209 135 H324 M66 174 H151 M167 174 H302"
-                fill="none" stroke="var(--be-ink)" stroke-width="3" stroke-linecap="round"/>
-        </g>
-        <text x="205" y="313" text-anchor="middle" font-weight="750">Feels familiar</text>
-      </g>
+    return `<g stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <g data-be-item="0">${queueNotes()}</g>
       <g data-be-item="2">
-        ${recallArrow}
-        ${answerPage('Can I explain it?')}
-        <path d="M544 135 C548 130 552 137 561 131 M570 132 C579 136 586 125 599 132"
-              fill="none" stroke="var(--be-ink)" stroke-width="3" stroke-linecap="round"/>
-        <text x="671" y="313" text-anchor="middle" font-weight="750">Try it from memory</text>
-      </g>`;
+        ${cafeQueue('Inez', 'Kai')}
+        <text x="657" y="312" text-anchor="middle" stroke="none">Who gets served first?</text>
+      </g>
+    </g>`;
   }
 
   function selfTest() {
-    return `
-      <g data-be-item="0">${lectureNotes()}</g>
+    return `<g stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <g data-be-item="0">
+        ${cafeQueue('Kai', 'Inez', 2)}
+        <rect x="32" y="36" width="389" height="250" rx="16" fill="${shadow}" stroke="none"/>
+        <rect x="26" y="30" width="389" height="250" rx="16" fill="${paper}"/>
+        <path d="M28 83 V46 Q28 32 44 32 H396 Q413 32 413 46 V83 Z" fill="${blueTint}"/>
+        <text x="220" y="67" text-anchor="middle" stroke="none" font-size="29" font-weight="800">Pickup</text>
+        <ellipse cx="119" cy="219" rx="61" ry="9" fill="${shadow}" stroke="none"/>
+        <path d="M154 166 H166 Q186 166 180 183 Q176 198 152 198" fill="none" stroke-width="8"/>
+        <path d="M79 161 H156 L150 200 Q145 215 119 216 Q91 216 86 200 Z" fill="${blue}"/>
+        <ellipse cx="117.5" cy="161" rx="38" ry="7" fill="${paper}"/>
+        <path d="M94 160 Q114 154 141 160" fill="none" stroke-width="2"/>
+        <rect x="224" y="154" width="140" height="76" rx="8" fill="none" stroke="${rule}" stroke-dasharray="6 6"/>
+      </g>
       <g data-be-item="1">
-        ${recallArrow}
-        ${answerPage('Recall an answer')}
+        <text x="220" y="126" text-anchor="middle" stroke="none" font-size="29">Who gets the cup?</text>
+        <g data-be-exit="2"><text x="294" y="206" text-anchor="middle" stroke="none" font-size="37">?</text></g>
       </g>
       <g data-be-item="2">
-        <g data-be-item="2" data-be-move="0 15">
-          <rect x="52" y="112" width="309" height="153" rx="9" fill="var(--be-gold-tint)"
-                stroke="var(--be-ink)" stroke-width="2.5"/>
-          <path d="M175 158 Q203 138 230 158 Q203 179 175 158 Z M184 175 L220 141"
-                fill="none" stroke="var(--be-ink)" stroke-width="3.5" stroke-linecap="round"/>
-          <text x="207" y="221" text-anchor="middle" font-size="29" font-weight="800">Notes covered</text>
+        <g data-be-item="2" data-be-move="275 0">${orderTicket(229, 160, 'Kai')}</g>
+        <text x="220" y="264" text-anchor="middle" stroke="none">Kai arrived first.</text>
+      </g>
+    </g>`;
+  }
+
+  function cafeteriaTray(y, top = false) {
+    return `<g transform="translate(525 ${y})">
+      <path d="M1 23 L41 0 H277 Q286 0 282 7 L251 32 Q246 36 238 36 H12 Q3 36 1 29 Z"
+            fill="${top ? 'var(--be-gold-tint)' : blueTint}"/>
+      <path d="M17 23 L46 8 H264 L240 25 H17 Z" fill="none" stroke-width="2"/>
+      <path d="M4 28 H240 Q247 28 251 25" fill="none" stroke="${top ? gold : ink}" stroke-width="${top ? 3.5 : 1.5}"/>
+    </g>`;
+  }
+
+  function chooseServiceOrder() {
+    return `<g stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <g data-be-item="0">
+        <g transform="translate(-435 0)">${cafeQueue('Inez', 'Kai')}</g>
+        <text x="671" y="63" text-anchor="middle" stroke="none" font-size="30" font-weight="800">Returned trays</text>
+        <path d="M521 224 H808 L792 240 H505 Z" fill="${shadow}" stroke="none"/>
+        ${cafeteriaTray(190)}${cafeteriaTray(172)}
+        <g data-be-exit="2">${cafeteriaTray(154, true)}</g>
+        <path d="M466 57 V248" stroke="${rule}" stroke-width="2" stroke-dasharray="4 7"/>
+      </g>
+      <g data-be-item="1">
+        <path data-be-trace="" d="M70 237 Q120 233 196 237" fill="none" stroke="${blue}" stroke-width="5"/>
+        <text x="222" y="310" text-anchor="middle" stroke="none">Queue serves the first order</text>
+      </g>
+      <g data-be-item="2">
+        <g data-be-item="2" data-be-move="0 56">${cafeteriaTray(98, true)}</g>
+        <path d="M677 173 V143 M668 152 L677 143 L686 152" fill="none" stroke="${blue}" stroke-width="4"/>
+        <text x="666" y="310" text-anchor="middle" stroke="none">Stack returns the last tray added</text>
+      </g>
+    </g>`;
+  }
+
+  function arrayBoundary() {
+    const cells = [0, 1, 2].map((index) => {
+      const x = 68 + index * 104;
+      return `<rect x="${x}" y="119" width="96" height="82" rx="8" fill="${blueTint}"/>
+        <text x="${x + 48}" y="173" text-anchor="middle" stroke="none" font-size="36">${index}</text>`;
+    }).join('');
+    return `<g stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <g data-be-item="0">
+        <text x="219" y="79" text-anchor="middle" stroke="none" font-weight="800">Three array slots</text>
+        ${cells}
+        <path d="M69 213 V227 H370 V213" fill="none"/>
+        <text x="219" y="265" text-anchor="middle" stroke="none">Valid indices</text>
+        <path d="M556 39 H825 Q840 39 840 54 V275 H542 V54 Q542 39 556 39 Z" fill="${paper}"/>
+        <path d="M543 90 V56 Q543 41 558 41 H824 Q838 41 838 56 V90 Z" fill="${blueTint}"/>
+        <text x="691" y="75" text-anchor="middle" stroke="none" font-weight="800">Loop from zero</text>
+        <text x="691" y="148" text-anchor="middle" stroke="none" font-family="monospace" font-size="31">i &lt;= 3</text>
+        <text x="691" y="198" text-anchor="middle" stroke="none">Which index fails?</text>
+        <g data-be-exit="1"><text x="431" y="174" text-anchor="middle" stroke="none" font-size="42">?</text></g>
+      </g>
+      <g data-be-item="1">
+        <rect x="383" y="119" width="96" height="82" rx="9" fill="${paper}" stroke-dasharray="7 6"/>
+        <text x="431" y="173" text-anchor="middle" stroke="none" font-size="36">3</text>
+        <g data-be-item="1" data-be-move="-104 0">
+          <circle cx="431" cy="159" r="51" fill="none" stroke="${blue}" stroke-width="7"/>
+          <path d="M469 197 L496 225" stroke="${ink}" stroke-width="16"/>
+          <path d="M469 197 L496 225" stroke="${gold}" stroke-width="8"/>
         </g>
       </g>
-      <g data-be-item="3">
-        <g data-be-item="3" data-be-move="-14 0" fill="none" stroke="var(--be-ink)" stroke-width="3.5" stroke-linecap="round">
-          <path d="M547 143 Q560 132 573 142 T608 138 Q629 142 652 138 M669 138 Q681 147 699 137 T735 139
-                   M547 183 Q562 171 581 182 Q608 170 621 184 Q632 174 648 179 M665 178 Q681 184 698 177"/>
-        </g>
+      <g data-be-item="2">
+        <path d="M565 210 H818" stroke="${rule}" stroke-width="2"/>
+        <text x="573" y="252" stroke="none">Fix</text>
+        <text x="802" y="252" text-anchor="end" stroke="none" font-family="monospace" font-size="30">i &lt; 3</text>
       </g>
-      <g data-be-item="4">
-        <rect x="501" y="271" width="163" height="43" rx="9" fill="var(--be-blue-tint)"
-              stroke="var(--be-ink)" stroke-width="2"/>
-        <path d="M517 293 L523 299 L534 287" fill="none" stroke="var(--be-ink)"
-              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <text x="544" y="302" font-size="24">Recalled</text>
-        <rect x="677" y="271" width="165" height="43" rx="9" fill="var(--be-gold-tint)"
-              stroke="var(--be-ink)" stroke-width="2"/>
-        <circle cx="701" cy="293" r="8" fill="none" stroke="var(--be-ink)" stroke-width="2.5"/>
-        <text x="721" y="302" font-size="24">Review</text>
-      </g>`;
+    </g>`;
   }
 
   const loopHeader = `
@@ -496,6 +605,9 @@
   }
 
   Object.assign(window.BlogEssayFigures ||= {}, {
+    'study-rereading': rereading,
+    'study-array-boundary': arrayBoundary,
+    'study-cafe-structures': chooseServiceOrder,
     'study-big-o': bigORetrieval,
     'study-familiarity': familiarity,
     'study-self-test': selfTest,

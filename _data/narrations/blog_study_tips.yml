@@ -37,8 +37,7 @@ scenes:
         pause_after: 0.6
         step: Rereading alone leads to weak recall
         visual: >-
-          A textbook, a highlighter and a clock mark three familiar study habits: reread,
-          highlight and cram.
+          A spiral notebook lies open to the queue rule, first in, first out.
         note: Rereading, highlighting and cramming are common college study habits.
       - id: p02
         say: >-
@@ -47,8 +46,7 @@ scenes:
         pause_after: 0.52
         step: Rereading alone leads to weak recall
         visual: >-
-          A textbook, a highlighter and a clock mark three familiar study habits: reread,
-          highlight and cram.
+          The answer is visible on the notebook page while the student studies.
         note: Rereading, highlighting and cramming are common college study habits.
       - id: p03
         say: >-
@@ -58,8 +56,8 @@ scenes:
         pause_after: 0.25
         step: Rereading alone leads to weak recall
         visual: >-
-          A textbook, a highlighter and a clock mark three familiar study habits: reread,
-          highlight and cram.
+          A highlighter underlines the rule. Beside it, tomorrow’s quiz asks for the rule and
+          leaves a blank line.
         note: Rereading, highlighting and cramming are common college study habits.
       - id: p04
         say: >-
@@ -68,10 +66,10 @@ scenes:
           far the least productive study strategies. These common methods merely boost
           short-term retrieval strength and create an “illusion of knowing”.
         pause_after: 0.25
-        step: Familiarity can feel like mastery
+        step: Familiar notes can hide gaps in recall
         visual: >-
-          A page of lecture notes gains highlights, and the repeated reading is labeled Feels
-          familiar.
+          Highlighting first in, first out makes the words easy to recognize on the open
+          notebook page.
         note: >-
           The illusion of knowing occurs when recognizing material feels like having mastered
           it.
@@ -80,10 +78,10 @@ scenes:
           When you read a text multiple times, the material becomes familiar, and you mistake
           this perceptual fluency for true mastery of the subject.
         pause_after: 0.25
-        step: Familiarity can feel like mastery
+        step: Familiar notes can hide gaps in recall
         visual: >-
-          The highlighted notes lead to a separate page labeled Can I explain it?, which prompts
-          you to try explaining the material from memory.
+          Two order tickets hang in a café window. Inez arrived first and Kai came next. Who
+          gets served first under the queue rule?
         note: >-
           The illusion of knowing occurs when recognizing material feels like having mastered
           it.
@@ -374,19 +372,20 @@ scenes:
           the future. A single, simple quiz after reading a text produces better learning and
           remembering than reading the text multiple times.
         pause_after: 0.25
-        step: Self-testing shows what to revisit
+        step: Test recall by changing the example
         visual: >-
-          Open lecture notes face an empty answer page labeled Recall an answer.
+          The café returns with the arrival order reversed. Kai’s ticket is first and Inez’s is
+          second. A cup waits at pickup. Who gets it?
         note: A simple self-quiz can improve retention and show you what to revisit.
       - id: p05
         say: >-
           Passively re-consuming the material does not have a similar effect as active
           retrieval. You have to recall the answers yourself, without looking at the material.
         pause_after: 0.25
-        step: Self-testing shows what to revisit
+        step: Test recall by changing the example
         visual: >-
-          A cover slides over the notes, and the learner writes part of an answer on a separate
-          page from memory.
+          Kai’s ticket moves from the front of the queue to the cup. Kai arrived first. Inez’s
+          ticket stays on the rail.
         note: A simple self-quiz can improve retention and show you what to revisit.
       - id: p06
         say: >-
@@ -394,9 +393,10 @@ scenes:
           durable storage, retrieval practice also tells you exactly what you know and what you
           don’t.
         pause_after: 0.25
-        step: Self-testing shows what to revisit
+        step: Test recall by changing the example
         visual: >-
-          Recalled and Review tags mark what the learner retrieved and what to revisit.
+          The filled pickup slip provides feedback. If you predicted Inez again, revisit what
+          determines service order in a queue.
         note: A simple self-quiz can improve retention and show you what to revisit.
       - id: p07
         say: >-
@@ -644,10 +644,10 @@ scenes:
       - id: p01
         say: 'Interleaving: Mix Up Your Problem Types'
         pause_after: 0.55
-        step: Mixed practice teaches which method fits
+        step: Mix problems to learn which rule fits
         visual: >-
-          Blocked practice groups one topic before moving to the next. Interleaved practice
-          mixes related topics so the student has to recognize which method fits each problem.
+          At one café station, Inez’s order arrived before Kai’s. At another, three returned
+          trays sit on top of one another. Which item comes out next at each station?
         note: >-
           Interleaving makes learners distinguish related problem types and decide when to use
           each method.
@@ -657,10 +657,10 @@ scenes:
           entirely, then the second topic, then the third. The problem with blocked practice is
           that it never teaches you when to apply a specific solution.
         pause_after: 0.25
-        step: Mixed practice teaches which method fits
+        step: Mix problems to learn which rule fits
         visual: >-
-          Blocked practice groups one topic before moving to the next. Interleaved practice
-          mixes related topics so the student has to recognize which method fits each problem.
+          The first order ticket is marked. The service line follows a queue, so Inez goes
+          first.
         note: >-
           Interleaving makes learners distinguish related problem types and decide when to use
           each method.
@@ -670,10 +670,10 @@ scenes:
           skills. This helps you develop a broader understanding of the relationships between
           conditions and improve your ability to discriminate between problem types.
         pause_after: 0.25
-        step: Mixed practice teaches which method fits
+        step: Mix problems to learn which rule fits
         visual: >-
-          Blocked practice groups one topic before moving to the next. Interleaved practice
-          mixes related topics so the student has to recognize which method fits each problem.
+          The top tray lifts off the pile. The tray stack gives the most recently added tray
+          first. Switching examples makes the learner choose a rule from the situation.
         note: >-
           Interleaving makes learners distinguish related problem types and decide when to use
           each method.
@@ -1167,10 +1167,10 @@ scenes:
           you are. Bugs and compiler errors are not indictments of your intelligence. They are
           simply the mechanism by which you build mastery.
         pause_after: 0.25
-        step: Debugging practice builds mastery
+        step: Build debugging skill by tracing one mistake
         visual: >-
-          A compiler error leads to another debugging attempt and to asking for help when the
-          learner needs it.
+          A loop counts up from zero while i is less than or equal to three. A three-slot array
+          has indices zero, one, and two. Which index is outside it?
         note: Use bugs and compiler errors as opportunities to practice. Seek help along the way.
       - id: p13
         say: >-
@@ -1178,10 +1178,10 @@ scenes:
           resilient, effortful struggle required to learn them and you are not afraid to ask for
           help when you need it.
         pause_after: 0.85
-        step: Debugging practice builds mastery
+        step: Build debugging skill by tracing one mistake
         visual: >-
-          A compiler error leads to another debugging attempt and to asking for help when the
-          learner needs it.
+          A magnifier finds index three past the last slot. Changing the loop condition to i
+          less than three keeps the index within the array.
         note: Use bugs and compiler errors as opportunities to practice. Seek help along the way.
   - id: quiz--conclusion
     label: Quiz and conclusion

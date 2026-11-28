@@ -24,6 +24,133 @@
     return `<g stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${inner}</g>`;
   }
 
+  // Both tours visit the same four stops on a 4-by-3 grid. Only the order changes.
+  function campusMap({ x, y, width, crossed, showLengths = false }) {
+    const stops = [[70, 45], [230, 45], [230, 165], [70, 165]];
+    const route = crossed ? 'M70 45 L230 165 V45 L70 165 Z' : 'M70 45 H230 V165 H70 Z';
+    return `<svg x="${x}" y="${y}" width="${width}" height="${width * 0.7}" viewBox="0 0 300 210">
+      <path d="M8 15 L97 7 L199 15 L291 7 V194 L201 203 L98 194 L8 202 Z" fill="${shadow}" stroke="none"/>
+      <path d="M5 10 L97 2 L199 10 L287 2 V188 L199 197 L97 188 L5 197 Z" fill="${paper}"/>
+      <path d="M97 4 L199 12 V195 L97 186 Z" fill="${blueTint}" stroke="none"/>
+      <g fill="none" stroke="var(--be-rule)" stroke-width="1.5">
+        <path d="M97 4 V186 M199 12 V195 M29 26 V181 M263 23 V171"/>
+        <path d="M47 76 H249 M47 135 H249 M109 29 V181 M190 27 V181" stroke-dasharray="3 5"/>
+      </g>
+      <path d="M122 132 L146 121 L170 132 Z M126 152 H166 M131 133 V147 M146 133 V147 M161 133 V147"
+            fill="${blueTint}" stroke="var(--be-muted)" stroke-width="2"/>
+      <path d="${route}" data-be-trace="" fill="none" stroke="${blue}" stroke-width="5.5"/>
+      ${stops.map(([cx, cy], i) => `<circle cx="${cx}" cy="${cy}" r="${i ? 6 : 9}" fill="${i ? paper : gold}"/>`).join('')}
+      <circle cx="70" cy="45" r="2.5" fill="#142841" stroke="none"/>
+      ${showLengths ? `<g text-anchor="middle" fill="${ink}" stroke="${paper}" stroke-width="4"
+                         paint-order="stroke" font-size="23">
+        <text x="${crossed ? 183 : 132}" y="${crossed ? 73 : 37}">${crossed ? '5' : '4'}</text>
+        <text x="247" y="111">3</text>
+      </g>` : ''}
+    </svg>`;
+  }
+
+  function hintConversation() {
+    return strokes(`
+      <g data-be-item="0">
+        <circle cx="151" cy="196" r="101" fill="${blueTint}" stroke="none"/>
+        <svg x="17" y="92" width="268" height="218" viewBox="0 0 200 164">${window.BlogEssayArt.student}</svg>
+        <path d="M77 12 H288 Q307 12 307 31 V60 Q307 78 288 78 H197 L172 98 L176 78
+                 H77 Q59 78 59 60 V31 Q59 12 77 12 Z" fill="${paper}"/>
+        ${label(183, 54, 'One hint?', 'middle')}
+        ${campusMap({ x: 300, y: 90, width: 275, crossed: true })}
+      </g>
+      <g data-be-item="1">
+        <svg x="611" y="98" width="246" height="202" viewBox="0 0 200 164">${window.BlogEssayArt.robot}</svg>
+        <path d="M529 12 H792 Q810 12 810 30 V64 Q810 80 792 80 H739 L747 100 L715 80
+                 H529 Q511 80 511 62 V30 Q511 12 529 12 Z" fill="${blueTint}"/>
+        ${label(661, 55, 'Which paths cross?', 'middle')}
+      </g>
+      <g data-be-item="2">
+        <ellipse cx="437" cy="186" rx="23" ry="21" fill="none" stroke="${ink}" stroke-width="6"/>
+        <ellipse cx="437" cy="186" rx="23" ry="21" fill="none" stroke="${gold}" stroke-width="3"/>
+        ${label(440, 305, 'I’ll try a swap.', 'middle')}
+      </g>`);
+  }
+
+  function routeSwap() {
+    return strokes(`
+      <g data-be-item="0">
+        ${label(218, 34, 'Can you shorten the tour?', 'middle')}
+        ${campusMap({ x: 58, y: 45, width: 320, crossed: true, showLengths: true })}
+        ${label(218, 303, '16 units', 'middle')}
+        <g data-be-exit="1">
+          <path d="M620 92 Q686 58 737 111 Q773 157 734 206 Q700 244 643 225
+                   L600 238 L609 206 Q574 160 597 119 Z" fill="${blueTint}" stroke-dasharray="7 7"/>
+          <text x="672" y="185" text-anchor="middle" fill="${ink}" stroke="none" font-size="65">?</text>
+        </g>
+      </g>
+      <g data-be-item="1">
+        <path d="M404 156 H462 M450 144 L462 156 L450 168" fill="none" stroke="${blue}" stroke-width="5"/>
+        ${label(659, 34, 'Uncross two legs', 'middle')}
+        ${campusMap({ x: 499, y: 45, width: 320, crossed: false, showLengths: true })}
+        ${label(659, 303, '14 units', 'middle')}
+      </g>`);
+  }
+
+  function zeroBoundary() {
+    return strokes(`
+      <g data-be-item="0">
+        ${card({ x: 26, y: 30, width: 383, height: 255 })}
+        ${label(218, 83, 'Keep zero and positives', 'middle')}
+        <path d="M64 166 H367 M357 156 L369 166 L357 176" fill="none" stroke-width="4"/>
+        <path d="M217 165 H347" stroke="${blue}" stroke-width="12"/>
+        <path d="M102 154 V178 M217 154 V178 M332 154 V178" stroke-width="3.5"/>
+        <circle cx="217" cy="165" r="12" fill="${gold}"/>
+        ${label(102, 218, '−1', 'middle')}${label(217, 218, '0', 'middle')}${label(332, 218, '1', 'middle')}
+        ${card({ x: 445, y: 30, width: 409, height: 255, tint: blueTint })}
+        ${label(476, 83, 'AI suggests')}
+        <rect x="473" y="99" width="353" height="62" rx="8" fill="${paper}"/>
+        <text x="650" y="141" text-anchor="middle" fill="${ink}" stroke="none" font-family="monospace" font-size="32">n &gt; 0</text>
+        ${label(476, 208, 'Does 0 pass?')}
+        <g data-be-exit="1"><circle cx="751" cy="198" r="17" stroke-dasharray="4 5" fill="${paper}"/></g>
+      </g>
+      <g data-be-item="1">
+        ${label(751, 208, 'False', 'middle')}
+        <path d="M475 226 H825" stroke="var(--be-rule)" stroke-width="2"/>
+        ${label(476, 264, 'Fix')}
+        <text x="771" y="265" text-anchor="end" fill="${ink}" stroke="none" font-family="monospace" font-size="29">n &gt;= 0</text>
+      </g>`);
+  }
+
+  function recursionTeachBack() {
+    const calls = [2, 1, 0].map((n, index) => {
+      const x = 460 + index * 68;
+      const y = 47 + index * 69;
+      return `<g data-be-item="${index + 1}">
+        ${index ? `<path data-be-trace="" d="M${x - 40} ${y - 20} V${y + 20} H${x - 5}" fill="none" stroke="${blue}" stroke-width="4"/>` : ''}
+        <rect x="${x}" y="${y}" width="188" height="48" rx="10" fill="${n === 0 ? blueTint : paper}"/>
+        <text x="${x + 94}" y="${y + 33}" text-anchor="middle" fill="${ink}" stroke="none" font-family="monospace">down(${n})</text>
+      </g>`;
+    }).join('');
+    return strokes(`
+      <g data-be-item="0">
+        <svg x="10" y="3" width="121" height="101" viewBox="0 0 200 164">${window.BlogEssayArt.robot}</svg>
+        <path d="M146 19 H388 Q404 19 404 35 V63 Q404 79 388 79 H146 Q131 79 131 63 V61
+                 L115 66 L131 45 V35 Q131 19 146 19 Z" fill="${paper}"/>
+        ${label(268, 58, 'Why does it stop?', 'middle')}
+        ${card({ x: 35, y: 107, width: 371, height: 194 })}
+        <g font-family="monospace" fill="${ink}" stroke="none" font-weight="650">
+          <text x="57" y="149">def down(n):</text>
+          <text x="84" y="192">if n == 0:</text>
+          <text x="112" y="231">return</text>
+          <text x="84" y="274">down(n - 1)</text>
+        </g>
+      </g>
+      ${calls}
+      <g data-be-item="3" data-be-exit="4">${label(685, 279, 'Another call?', 'middle')}</g>
+      <g data-be-item="4">
+        <path data-be-trace="" d="M56 175 H48 V239 H56" fill="none" stroke="${blue}" stroke-width="5"/>
+        <path d="M685 233 V249" stroke="${blue}" stroke-width="4"/>
+        <rect x="637" y="246" width="96" height="36" rx="18" fill="${gold}"/>
+        <text x="685" y="272" text-anchor="middle" fill="#142841" stroke="none" font-size="23">return</text>
+      </g>`);
+  }
+
   function mergeChanges() {
     return `
       <g stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -464,6 +591,10 @@
   }
 
   Object.assign(window.BlogEssayFigures ||= {}, {
+    'ai-hint-conversation': hintConversation,
+    'ai-route-swap': routeSwap,
+    'ai-zero-boundary': zeroBoundary,
+    'ai-recursion-teach-back': recursionTeachBack,
     'ai-python-filters': pythonFilters,
     'ai-merge': mergeChanges,
     'ai-gym': robotAtGym,

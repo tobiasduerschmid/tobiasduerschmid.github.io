@@ -29,29 +29,27 @@
           {
             "from": 1,
             "to": 3,
-            "layout": "feature",
-            "title": "Use AI to strengthen your own thinking",
-            "subtitle": "A guide for computer science students",
+            "layout": "figure",
+            "title": "Ask AI for a hint, then make the move",
             "items": [
               {
                 "art": "student",
-                "label": "Your education",
-                "cue": 1,
-                "tone": "blue"
+                "label": "You ask for one hint.",
+                "cue": 1
               },
               {
                 "art": "robot",
-                "label": "AI as a tool",
+                "label": "AI asks which paths cross.",
                 "cue": 2,
-                "tone": "gold",
                 "word": "tool"
+              },
+              {
+                "art": "map",
+                "label": "You choose a swap.",
+                "cue": 3
               }
             ],
-            "signal": {
-              "cue": 2,
-              "word": "outsourcing",
-              "text": "Keep the thinking in your hands."
-            }
+            "figure": "ai-hint-conversation"
           },
           {
             "from": 4,
@@ -592,29 +590,22 @@
           {
             "from": 1,
             "to": 3,
-            "layout": "compare",
-            "title": "Outsourcing the route skips the skill",
-            "subtitle": "Traveling salesperson assignment",
+            "layout": "figure",
+            "title": "The practice is finding the shorter tour",
             "items": [
               {
                 "art": "map",
-                "label": "Design the route",
-                "cue": 1,
-                "tone": "blue"
+                "label": "Can you shorten the 16-unit tour?",
+                "cue": 1
               },
               {
-                "art": "robot",
-                "label": "Receive a solution",
+                "art": "pencil",
+                "label": "Uncross the legs for a 14-unit tour.",
                 "cue": 2,
-                "tone": "gold",
-                "word": "asking"
+                "word": "optimization"
               }
             ],
-            "signal": {
-              "cue": 2,
-              "word": "defeats",
-              "text": "The optimization is the assignment."
-            }
+            "figure": "ai-route-swap"
           },
           {
             "from": 4,
@@ -1337,35 +1328,40 @@
           {
             "from": 7,
             "to": 10,
-            "layout": "feature",
-            "title": "Small examples make the why easier to trace",
+            "layout": "figure",
+            "title": "Explain why the base case stops the calls",
             "items": [
               {
-                "art": "code",
-                "label": "Explain the base case",
-                "cue": 7,
-                "tone": "blue"
+                "art": "robot",
+                "label": "Why does down(2) stop?",
+                "cue": 7
               },
               {
-                "art": "blocks",
-                "label": "Connect the steps",
-                "cue": 9,
-                "tone": "gold",
-                "word": "connect"
+                "art": "stairs",
+                "label": "Start with 2.",
+                "cue": 8,
+                "word": "concept"
               },
               {
-                "art": "notebook",
-                "label": "Keep it small",
-                "cue": 10,
-                "tone": "blue",
-                "word": "small"
+                "art": "stairs",
+                "label": "Call with 1.",
+                "cue": 8,
+                "word": "questions"
+              },
+              {
+                "art": "question",
+                "label": "Then 0. Another call?",
+                "cue": 8,
+                "word": "base"
+              },
+              {
+                "art": "checklist",
+                "label": "At zero, return ends this call.",
+                "cue": 8,
+                "word": "missing"
               }
             ],
-            "signal": {
-              "cue": 8,
-              "word": "base",
-              "text": "What happens without a base case?"
-            }
+            "figure": "ai-recursion-teach-back"
           },
           {
             "from": 11,
@@ -2249,30 +2245,22 @@
           {
             "from": 1,
             "to": 4,
-            "layout": "compare",
-            "title": "Verify the output and check the goal",
+            "layout": "figure",
+            "title": "Check AI code against the goal",
             "items": [
               {
-                "art": "checklist",
-                "label": "Accuracy",
-                "cue": 1,
-                "tone": "blue",
-                "detail": "Can I verify it?"
+                "art": "code",
+                "label": "Keep zero and positives. Does 0 pass n > 0?",
+                "cue": 1
               },
               {
-                "art": "map",
-                "label": "Alignment",
+                "art": "checklist",
+                "label": "False. Use n >= 0 to include zero.",
                 "cue": 4,
-                "tone": "gold",
-                "word": "objective",
-                "detail": "Does it serve the goal?"
+                "word": "objective"
               }
             ],
-            "signal": {
-              "cue": 3,
-              "word": "verify",
-              "text": "Verify facts, behavior, or citations."
-            }
+            "figure": "ai-zero-boundary"
           },
           {
             "from": 5,

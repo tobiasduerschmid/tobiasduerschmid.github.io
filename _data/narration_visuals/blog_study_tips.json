@@ -29,61 +29,51 @@
           {
             "from": 1,
             "to": 3,
-            "layout": "collection",
+            "layout": "figure",
             "title": "Rereading alone leads to weak recall",
-            "subtitle": "Common habits that can feel productive",
             "items": [
               {
                 "art": "book",
-                "label": "Rereading",
-                "cue": 1,
-                "tone": "blue",
-                "detail": "The page feels familiar"
+                "label": "Queues follow first in, first out.",
+                "cue": 1
               },
               {
                 "art": "highlighter",
-                "label": "Highlighting",
+                "label": "The rule feels familiar.",
                 "cue": 3,
-                "word": "highlighting",
-                "tone": "gold",
-                "detail": "The answer stays in view"
+                "word": "rereading"
               },
               {
-                "art": "clock",
-                "label": "Cramming",
+                "art": "question",
+                "label": "Recall it on tomorrow’s quiz.",
                 "cue": 3,
-                "word": "cramming",
-                "tone": "blue",
-                "detail": "Little time between attempts"
+                "word": "cramming"
               }
-            ]
+            ],
+            "figure": "study-rereading"
           },
           {
             "from": 4,
             "to": 5,
             "layout": "figure",
-            "title": "Familiarity can feel like mastery",
+            "title": "Familiar notes can hide gaps in recall",
             "items": [
               {
                 "art": "book",
-                "label": "Lecture notes",
-                "cue": 4,
-                "word": "productive",
-                "tone": "blue"
+                "label": "Queues follow first in, first out.",
+                "cue": 4
               },
               {
                 "art": "highlighter",
-                "label": "Feels familiar",
+                "label": "Reading it again feels easy.",
                 "cue": 4,
-                "word": "rereading",
-                "tone": "gold"
+                "word": "rereading"
               },
               {
                 "art": "question",
-                "label": "Can I explain it?",
+                "label": "Inez arrives before Kai. Who gets served first?",
                 "cue": 5,
-                "word": "familiar",
-                "tone": "blue"
+                "word": "familiar"
               }
             ],
             "figure": "study-familiarity"
@@ -466,42 +456,24 @@
             "from": 4,
             "to": 6,
             "layout": "figure",
-            "title": "Self-testing shows what to revisit",
+            "title": "Test recall by changing the example",
             "items": [
               {
                 "art": "book",
-                "label": "Open lecture notes",
-                "cue": 4,
-                "word": "often",
-                "tone": "blue"
+                "label": "Kai arrives before Inez this time.",
+                "cue": 4
               },
               {
                 "art": "question",
-                "label": "Recall an answer",
+                "label": "Who gets the cup?",
                 "cue": 4,
-                "word": "quiz",
-                "tone": "blue"
-              },
-              {
-                "art": "notebook",
-                "label": "Notes covered",
-                "cue": 5,
-                "word": "without",
-                "tone": "gold"
-              },
-              {
-                "art": "pencil",
-                "label": "Write from memory",
-                "cue": 5,
-                "word": "material2",
-                "tone": "blue"
+                "word": "quiz"
               },
               {
                 "art": "checklist",
-                "label": "Check what to review",
-                "cue": 6,
-                "word": "exactly",
-                "tone": "gold"
+                "label": "Kai arrived first, so Kai gets served first.",
+                "cue": 5,
+                "word": "without"
               }
             ],
             "figure": "study-self-test"
@@ -854,30 +826,29 @@
           {
             "from": 1,
             "to": 3,
-            "layout": "compare",
-            "title": "Mixed practice teaches which method fits",
+            "layout": "figure",
+            "title": "Mix problems to learn which rule fits",
+            "subtitle": "Which item comes out next?",
             "items": [
               {
-                "art": "blocks",
-                "label": "Blocked practice",
-                "detail": "One topic at a time",
-                "cue": 2,
-                "word": "blocked",
-                "tone": "blue"
+                "art": "question",
+                "label": "Two orders. Three trays.",
+                "cue": 1
               },
               {
                 "art": "cards",
-                "label": "Interleaved practice",
-                "detail": "Choose what fits",
+                "label": "A queue serves Inez, the first arrival.",
+                "cue": 2,
+                "word": "when"
+              },
+              {
+                "art": "blocks",
+                "label": "A stack gives the most recently added tray.",
                 "cue": 3,
-                "word": "interleaving",
-                "tone": "gold",
-                "detail_at": {
-                  "cue": 3,
-                  "word": "discriminate"
-                }
+                "word": "mixes"
               }
-            ]
+            ],
+            "figure": "study-cafe-structures"
           },
           {
             "from": 4,
@@ -1583,31 +1554,27 @@
           {
             "from": 12,
             "to": 13,
-            "layout": "sequence",
-            "title": "Debugging practice builds mastery",
+            "layout": "figure",
+            "title": "Build debugging skill by tracing one mistake",
             "items": [
               {
-                "art": "bug",
-                "label": "Inspect the error",
-                "cue": 12,
-                "word": "bugs",
-                "tone": "blue"
-              },
-              {
                 "art": "code",
-                "label": "Practice debugging",
-                "cue": 12,
-                "word": "mastery",
-                "tone": "gold"
+                "label": "Slots run from 0 to 2. The loop reaches 3.",
+                "cue": 12
               },
               {
-                "art": "chat",
-                "label": "Ask for help",
-                "cue": 13,
-                "word": "help",
-                "tone": "blue"
+                "art": "bug",
+                "label": "Index 3 is outside the array.",
+                "cue": 12,
+                "word": "mastery"
+              },
+              {
+                "art": "pencil",
+                "label": "Stop before i reaches 3.",
+                "cue": 13
               }
-            ]
+            ],
+            "figure": "study-array-boundary"
           }
         ]
       },

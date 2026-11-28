@@ -391,6 +391,8 @@ A beat can arrange shared illustrations or name a
 topic-specific SVG figure. In a figure, `data-be-item` identifies the
 zero-based item whose cue reveals a group. A group with `data-be-move` moves
 from the given horizontal and vertical offsets to its drawn position.
+A path with `data-be-trace` draws its stroke when its enclosing item appears.
+With reduced motion, the complete stroke appears alongside the item.
 Use `data-be-exit` with an item index to retire a state when the next one appears.
 Keep each cue's visual description up to date with the artwork for the
 reading and print views.

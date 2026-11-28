@@ -150,16 +150,21 @@
   }
 
   function animateFigure(art, beat, times) {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const parts = [...art.querySelectorAll('[data-be-item]')];
     parts.forEach(node => {
       const when = times[Number(node.dataset.beItem)];
       if (node.dataset.beMove) {
         const [dx, dy] = node.dataset.beMove.split(' ').map(Number);
         node.style.translate = `${dx}px ${dy}px`;
-        tween(node, { translate: '0 0' }, when, 0.7, EASE.inOut);
+        tween(node, { translate: '0 0' }, when, reducedMotion ? 0.001 : 0.7, EASE.inOut);
       } else {
         enter(node, when, 0, 8);
       }
+    });
+    art.querySelectorAll('[data-be-trace]').forEach(path => {
+      const owner = path.closest('[data-be-item]');
+      fx.draw(path, times[Number(owner.dataset.beItem)], 0.7);
     });
     art.querySelectorAll('[data-be-exit]').forEach(node => {
       fx.fadeOut(node, times[Number(node.dataset.beExit)], 0.28);

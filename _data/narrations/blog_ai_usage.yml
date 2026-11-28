@@ -38,10 +38,10 @@ scenes:
       - id: p01
         say: How Should I Use AI as a College Student? — A Science-Backed Guide for CS Students
         pause_after: 0.6
-        step: Use AI to strengthen your own thinking
+        step: Ask AI for a hint, then make the move
         visual: >-
-          A student is the central figure, with a robot beside them representing the help they
-          can choose to use.
+          A student opens a folded campus map. Two legs of the tour cross. The student asks for
+          one hint.
         note: Use AI to expand what you can learn while keeping responsibility for your reasoning.
       - id: p02
         say: >-
@@ -49,10 +49,9 @@ scenes:
           a tool to supercharge my education without accidentally outsourcing my own
           intelligence?”
         pause_after: 0.25
-        step: Use AI to strengthen your own thinking
+        step: Ask AI for a hint, then make the move
         visual: >-
-          A student is the central figure, with a robot beside them representing the help they
-          can choose to use.
+          The robot asks which paths cross. The map stays in front of the student.
         note: Use AI to expand what you can learn while keeping responsibility for your reasoning.
       - id: p03
         say: >-
@@ -60,10 +59,9 @@ scenes:
           college students will take out of their educational experience, because AI
           capabilities are growing at a very fast pace.
         pause_after: 0.25
-        step: Use AI to strengthen your own thinking
+        step: Ask AI for a hint, then make the move
         visual: >-
-          A student is the central figure, with a robot beside them representing the help they
-          can choose to use.
+          The student circles the crossing and decides to try swapping two stops.
         note: Use AI to expand what you can learn while keeping responsibility for your reasoning.
       - id: p04
         say: >-
@@ -449,10 +447,10 @@ scenes:
       - id: p01
         say: 'The Bad: Detrimental Offloading (Outsourcing)'
         pause_after: 0.5
-        step: Outsourcing the route skips the skill
+        step: The practice is finding the shorter tour
         visual: >-
-          A route map stands for practicing optimization. A robot stands for receiving a
-          finished route without getting to work out the optimization yourself.
+          Four stops sit at the corners of a rectangle. A 16-unit tour visits each stop and
+          returns to its starting point. Can you shorten it?
         note: Detrimental offloading hands off reasoning the learner needs to practice.
       - id: p02
         say: >-
@@ -460,18 +458,18 @@ scenes:
           intrinsic load. Asking AI to solve the traveling salesperson problem for you, for
           example, defeats an assignment meant to teach algorithmic optimization.
         pause_after: 0.52
-        step: Outsourcing the route skips the skill
+        step: The practice is finding the shorter tour
         visual: >-
-          A route map stands for practicing optimization. A robot stands for receiving a
-          finished route without getting to work out the optimization yourself.
+          Both tours keep two legs of length three. Replacing two crossing legs of length five
+          with two sides of length four cuts the round trip from 16 units to 14.
         note: Detrimental offloading hands off reasoning the learner needs to practice.
       - id: p03
         say: 'Two risks follow:'
         pause_after: 0.52
-        step: Outsourcing the route skips the skill
+        step: The practice is finding the shorter tour
         visual: >-
-          A route map stands for practicing optimization. A robot stands for receiving a
-          finished route without getting to work out the optimization yourself.
+          Both tours remain visible. Choosing how to reconnect the stops gives the student
+          practice with optimization.
         note: Detrimental offloading hands off reasoning the learner needs to practice.
       - id: p04
         say: >-
@@ -1025,10 +1023,10 @@ scenes:
       - id: p07
         say: 'How and Why it Works:'
         pause_after: 0.22
-        step: Small examples make the why easier to trace
+        step: Explain why the base case stops the calls
         visual: >-
-          A recursion base case anchors the scene. Connecting the steps shows why recursion
-          stops, and a small example keeps that explanation manageable.
+          A robot classmate asks why the Python function down stops. Its code checks for zero,
+          returns at zero and otherwise calls down with one less.
         note: Explain why a base case stops recursion and what happens without it.
       - id: p08
         say: >-
@@ -1037,10 +1035,10 @@ scenes:
           for example, explaining why a base case stops recursion or working out what happens if
           it is missing.
         pause_after: 0.25
-        step: Small examples make the why easier to trace
+        step: Explain why the base case stops the calls
         visual: >-
-          A recursion base case anchors the scene. Connecting the steps shows why recursion
-          stops, and a small example keeps that explanation manageable.
+          Three nested calls count down from two to one to zero. Will the last call make
+          another call?
         note: Keep the example small enough to reason through each connection.
       - id: p09
         say: >-
@@ -1048,20 +1046,20 @@ scenes:
           building reusable mental patterns: explaining how the steps connect can help you
           organize knowledge for future problems.
         pause_after: 0.25
-        step: Small examples make the why easier to trace
+        step: Explain why the base case stops the calls
         visual: >-
-          A recursion base case anchors the scene. Connecting the steps shows why recursion
-          stops, and a small example keeps that explanation manageable.
+          At zero, the if condition is true. The highlighted return ends this call before the
+          recursive line can run, and the earlier calls finish.
         note: Explain why a base case stops recursion and what happens without it.
       - id: p10
         say: >-
           Keep the explanation small enough to reason through; useful effort still needs to fit
           within working memory.
         pause_after: 0.52
-        step: Small examples make the why easier to trace
+        step: Explain why the base case stops the calls
         visual: >-
-          A recursion base case anchors the scene. Connecting the steps shows why recursion
-          stops, and a small example keeps that explanation manageable.
+          The code and its three calls remain side by side so the student can explain the
+          stopping condition from this small example.
         note: Keep the example small enough to reason through each connection.
       - id: p11
         say: >-
@@ -1741,36 +1739,34 @@ scenes:
       - id: p01
         say: A Quick Rubric for Any AI Interaction
         pause_after: 0.5
-        step: Verify the output and check the goal
+        step: Check AI code against the goal
         visual: >-
-          A checklist for accuracy asks whether the output can be verified. A map for alignment
-          asks whether the response serves the assignment's learning goal.
+          A number line includes zero and extends toward positive numbers. The suggested
+          expression is n greater than zero.
         note: Accuracy asks whether you can verify facts, code behavior, math steps, or citations.
       - id: p02
         say: 'Before you use an AI output in your coursework, ask:'
         pause_after: 0.52
-        step: Verify the output and check the goal
+        step: Check AI code against the goal
         visual: >-
-          A checklist for accuracy asks whether the output can be verified. A map for alignment
-          asks whether the response serves the assignment's learning goal.
+          Does zero pass the suggested test? The number line shows that the goal includes zero.
         note: Alignment asks whether the help serves the intended learning objective.
       - id: p03
         say: 'Accuracy: Can I verify the factual claims, code behavior, math steps, or citations?'
         pause_after: 0.52
-        step: Verify the output and check the goal
+        step: Check AI code against the goal
         visual: >-
-          A checklist for accuracy asks whether the output can be verified. A map for alignment
-          asks whether the response serves the assignment's learning goal.
+          Trying zero gives false. That example exposes a difference between the code and the
+          goal.
         note: Accuracy asks whether you can verify facts, code behavior, math steps, or citations.
       - id: p04
         say: >-
           Alignment: Does the response support the learning objective, or did it solve a
           different problem?
         pause_after: 0.52
-        step: Verify the output and check the goal
+        step: Check AI code against the goal
         visual: >-
-          A checklist for accuracy asks whether the output can be verified. A map for alignment
-          asks whether the response serves the assignment's learning goal.
+          Changing the test to n greater than or equal to zero includes the boundary value.
         note: Alignment asks whether the help serves the intended learning objective.
       - id: p05
         say: 'Scaffolding: Did it make me retrieve, explain, compare, debug, revise, or self-assess?'

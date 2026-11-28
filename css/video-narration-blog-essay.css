@@ -246,6 +246,13 @@ html.dark-mode:not(.print-light-mode) .stage.theme-blog-essay {
 }
 .be-prop-art [data-art-part="highlight"] { transform-box: fill-box; }
 .be-figure text:not([fill]) { fill: var(--be-ink); }
+.be-figure [data-be-trace] { stroke-dasharray: 1; stroke-dashoffset: 1; }
+
+/* Keep the cue sequence and its answers visible with reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .be-picture .is-staged { translate: none !important; }
+  .be-figure [data-be-trace] { stroke-dashoffset: 0 !important; }
+}
 
 /* The live player supplies a native link. Standalone stage and notes keep the text. */
 .has-native-video-links .be-signal--linked { visibility: hidden; }

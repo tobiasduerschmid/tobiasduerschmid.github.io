@@ -81,7 +81,7 @@ for (const [topic, slug, photoDescription] of [
     await a11yCheckpoint(page, `${slug} video`, { include: `#${topic}-video`, feature: 'blog-video-narration' });
   });
 
-  test(`${slug}: the full text of each illustration fits its double-speed reading time`, async ({ page }) => {
+  test(`${slug}: each illustration clears its heading and fits its double-speed reading time`, async ({ page }) => {
     const { story, lesson } = loadLesson(topic);
     const timing = require(`${ROOT}/_data/explainers/${topic}_timing.json`);
     const beats = story.scenes.flatMap((scene, i) => scene.essay_beats.map(beat => ({
@@ -89,7 +89,7 @@ for (const [topic, slug, photoDescription] of [
     })));
     await page.goto(lesson.animation.page);
     await page.waitForFunction(() => Boolean(window.VideoNarrationStage));
-    const overBudget = await page.evaluate(async beats => {
+    const failures = await page.evaluate(async beats => {
       await window.VideoNarrationStage.ready;
       const counts = (picture, selectors) => [...picture.querySelectorAll(selectors)]
         .map(node => node.textContent.trim().split(/\s+/u).length).reduce((total, words) => total + words, 0);
@@ -98,6 +98,14 @@ for (const [topic, slug, photoDescription] of [
         window.VideoNarrationStage.seek(end - 0.2);
         const picture = document.querySelector('#stage .be-picture');
         if (picture?.querySelector('.be-title')?.textContent !== title) throw new Error(`Missing slide: ${title}`);
+        const header = picture.querySelector('.be-heading').getBoundingClientRect();
+        const shapes = picture.querySelectorAll('.be-figure :is(text, path, rect, circle, ellipse, polygon)');
+        const overlap = Array.from(shapes).find(shape => {
+          const box = shape.getBoundingClientRect();
+          return box.width && box.height && box.top < header.bottom && box.bottom > header.top
+            && box.left < header.right && box.right > header.left && shape.checkVisibility({ opacityProperty: true });
+        });
+        if (overlap) failures.push({ title, overlappingShape: overlap.localName });
         const shared = counts(picture, '.be-title,.be-subtitle,.be-signal,.be-prop-label,.be-prop-detail');
         const words = shared + Math.max(counts(picture, '.be-figure text'), counts(picture, '.be-figure-label'));
         const seconds = (end - start) / 2;
@@ -105,7 +113,7 @@ for (const [topic, slug, photoDescription] of [
       }
       return failures;
     }, beats);
-    expect(overBudget).toEqual([]);
+    expect(failures).toEqual([]);
   });
 }
 
